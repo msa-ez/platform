@@ -1,0 +1,147 @@
+# Deploy to Azure Kubernetes Service
+# Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- master
+
+resources:
+- repo: self
+
+variables:
+- group: common-value
+  # containerRegistry: 'event.azurecr.io'
+  # containerRegistryDockerConnection: 'acr'
+  # environment: 'aks.default'
+- name: imageRepository
+  value: '{{name}}'
+- name: dockerfilePath
+  value: '**/Dockerfile'
+- name: tag
+  value: '$(Build.BuildId)'
+  # Agent VM image name
+- name: vmImageName
+  value: 'ubuntu-latest'
+- name: MAVEN_CACHE_FOLDER
+  value: $(Pipeline.Workspace)/.m2/repository
+- name: MAVEN_OPTS
+  value: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+
+
+stages:
+- stage: Build
+  displayName: Build stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: CacheBeta@1
+      inputs:
+        key: 'maven | "$(Agent.OS)" | **/pom.xml'
+        restoreKeys: |
+           maven | "$(Agent.OS)"
+           maven
+        path: $(MAVEN_CACHE_FOLDER)
+      displayName: Cache Maven local repo
+    - task: Maven@3
+      inputs:
+        mavenPomFile: 'pom.xml'
+        options: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+        javaHomeOption: 'JDKVersion'
+        jdkVersionOption: '1.8'
+        jdkArchitectureOption: 'x64'
+        goals: 'package'
+    - task: Docker@2
+      inputs:
+        containerRegistry: $(containerRegistryDockerConnection)
+        repository: $(imageRepository)
+        command: 'buildAndPush'
+        Dockerfile: '**/Dockerfile'
+        tags: |
+          $(tag)
+
+- stage: Deploy
+  displayName: Deploy stage
+  dependsOn: Build
+
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy
+    pool:
+      vmImage: $(vmImageName)
+    environment: $(environment)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: Kubernetes@1
+            inputs:
+              connectionType: 'Kubernetes Service Connection'
+              namespace: 'default'
+              command: 'apply'
+              useConfigurationFile: true
+              configurationType: 'inline'
+              inline: |
+                apiVersion: apps/v1
+                kind: Deployment
+                metadata:
+                  name: $(imageRepository)
+                  labels:
+                    app: $(imageRepository)
+                spec:
+                  replicas: 1
+                  selector:
+                    matchLabels:
+                      app: $(imageRepository)
+                  template:
+                    metadata:
+                      labels:
+                        app: $(imageRepository)
+                    spec:
+                      containers:
+                        - name: $(imageRepository)
+                          image: $(containerRegistry)/$(imageRepository):$(tag)
+                          ports:
+                            - containerPort: 8080
+                          readinessProbe:
+                            httpGet:
+                              path: /actuator/health
+                              port: 8080
+                            initialDelaySeconds: 10
+                            timeoutSeconds: 2
+                            periodSeconds: 5
+                            failureThreshold: 10
+                          livenessProbe:
+                            httpGet:
+                              path: /products/1
+                              port: 8080
+                            initialDelaySeconds: 120
+                            timeoutSeconds: 2
+                            periodSeconds: 5
+                            failureThreshold: 5
+              secretType: 'dockerRegistry'
+              containerRegistryType: 'Azure Container Registry'
+          - task: Kubernetes@1
+            inputs:
+              connectionType: 'Kubernetes Service Connection'
+              namespace: 'default'
+              command: 'apply'
+              useConfigurationFile: true
+              configurationType: 'inline'
+              inline: |
+                apiVersion: v1
+                kind: Service
+                metadata:
+                  name: $(imageRepository)
+                  labels:
+                    app: $(imageRepository)
+                spec:
+                  ports:
+                    - port: 8080
+                      targetPort: 8080
+                  selector:
+                    app: $(imageRepository)
+              secretType: 'dockerRegistry'
+              containerRegistryType: 'Azure Container Registry'

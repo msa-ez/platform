@@ -1,0 +1,156 @@
+server:
+  port: 8080
+{{#circuitBreaker}}
+//<<< Resilency / Circuit Breaker
+feign:
+  hystrix:
+    enabled: true
+hystrix:
+  command:
+    default:
+      execution.isolation.thread.timeoutInMilliseconds: 500
+//>>> Resilency / Circuit Breaker
+{{/circuitBreaker}}
+spring:
+  application:
+    name: {{toLowerCase name}}
+---
+spring:
+  profiles: default
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: localhost:9092
+        streams:
+          binder:
+            configuration:
+              default:
+                key:
+                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+                value:
+                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+      bindings:
+        event-in:
+          group: {{name}}
+//<<< EDA / Topic Name
+          destination: {{options.package}}
+//>>> EDA / Topic Name
+          contentType: application/json
+        event-out:
+//<<< EDA / Topic Name
+          destination: {{options.package}}
+//>>> EDA / Topic Name
+          contentType: application/json
+
+logging:
+  level:
+    org.hibernate.type: trace
+    org.springframework.cloud: debug
+
+{{#checkCommandRelation relationCommandInfo}}
+api:
+  url:
+{{#setApiUrl relationCommandInfo true}}{{/setApiUrl}}
+{{/checkCommandRelation}}
+
+server:
+  port: {{portGenerated}}
+{{#if (checkException aggregates)}}
+  error:
+    include-message: always
+{{/if}}
+
+---
+spring:
+  profiles: docker
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: my-kafka:9092
+        streams:
+          binder:
+            configuration:
+              default:
+                key:
+                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+                value:
+                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+      bindings:
+        event-in:
+          group: {{name}}
+          destination: {{options.package}}
+          contentType: application/json
+        event-out:
+          destination: {{options.package}}
+          contentType: application/json
+
+{{#checkCommandRelation relationCommandInfo}}
+api:
+  url:
+{{#setApiUrl relationCommandInfo false}}{{/setApiUrl}}
+{{/checkCommandRelation}}
+
+
+<function>
+window.$HandleBars.registerHelper('checkException', function (aggregates) {
+  try {
+    if(!aggregates) {
+        return false;
+    }
+    var res = false;
+    for(var i = 0; i<aggregates.length; i++){
+      if(aggregates[i].aggregateRoot.entities.elements) {
+        Object.values(aggregates[i].aggregateRoot.entities.elements).forEach(function(item) {
+          if(item) {
+            if(item._type.endsWith('Exception')) {
+              res = true;
+            }
+          }
+        })
+      }
+    }
+    return res;
+  } catch(e){
+    console.log(e)
+  }
+});
+
+window.$HandleBars.registerHelper('checkCommandRelation', function (relationCommandInfo, options) {
+    if(!relationCommandInfo){
+      return options.inverse(this)
+    }
+    else{
+      if(relationCommandInfo.length < 0){
+        return options.inverse(this)
+      }
+      return options.fn(this)
+    }
+});
+
+window.$HandleBars.registerHelper('setApiUrl', function (relationCommandInfo, isPortGen) {
+  var text = "";
+  relationCommandInfo.forEach(function(item) {
+    if(!text.includes(item.commandValue.boundedContext.name)) {
+      // text += "    " + item.commandValue.boundedContext.name + ": " + item.commandValue.boundedContext.name;
+      text += "    " + item.commandValue.boundedContext.name + ": " + "localhost";
+      if(isPortGen) {
+        text += ":" + item.commandValue.boundedContext.portGenerated + "\n";
+      } else {
+        text += ":8080\n";
+      }
+    }
+  })
+  return text;
+});
+
+window.$HandleBars.registerHelper('toLowerCase', function(str) {
+  return str.toLowerCase();
+});
+</function>

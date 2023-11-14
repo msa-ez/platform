@@ -1,0 +1,21 @@
+{
+  "name": "apollo-graphQL",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "type": "module",
+  "devDependencies": {
+    "@babel/core": "^7.15.8",
+    "@babel/node": "^7.15.8",
+    "@babel/preset-env": "^7.15.8",
+    "nodemon": "^2.0.14"
+  },
+  "dependencies": {
+    "apollo-datasource-rest": "^3.3.0",
+    "apollo-server": "^3.4.0",
+    "graphql": "^15.6.1",
+    "node": "^17.0.1"
+  },
+  "scripts": {
+    "start": "nodemon --exec babel-node src/index.js"
+  }
+}

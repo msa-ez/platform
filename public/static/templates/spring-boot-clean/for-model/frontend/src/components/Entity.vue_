@@ -1,0 +1,567 @@
+forEach: Aggregate
+fileName: {{namePascalCase}}.vue
+path: frontend/src/components
+---
+<template>
+
+<v-card style="width:300px; margin-left:5%;" outlined>
+    <template slot="progress">
+      <v-progress-linear
+        color="deep-purple"
+        height="10"
+        indeterminate
+      ></v-progress-linear>
+    </template>
+
+    <v-img
+      style="width:290px; height:150px; border-radius:10px; position:relative; margin-left:5px; top:5px;"
+      src="https://cdn.vuetifyjs.com/images/cards/cooking.png"
+    ></v-img>
+
+    <v-card-title v-if="value._links">
+        {{namePascalCase}} # \{{value._links.self.href.split("/")[value._links.self.href.split("/").length - 1]}}
+    </v-card-title >
+    <v-card-title v-else>
+        {{namePascalCase}}
+    </v-card-title >
+
+    <v-card-text style = "margin-left:-15px; margin-top:10px;">
+
+      {{#aggregateRoot.fieldDescriptors}}
+        {{#if (isNotId nameCamelCase)}}
+          {{#if (isText className)}}
+          <div class="grey--text ml-4" v-if="editMode" style = "margin-top:-20px;">
+            <v-text-field label="{{namePascalCase}}" v-model="value.{{nameCamelCase}}"/>
+          </div>
+          <div class="grey--text ml-4" v-else>
+            {{namePascalCase}} :  \{{value.{{nameCamelCase}} }}
+          </div>
+
+          {{/if}}
+          {{#if (isNumber className)}}
+          <div class="grey--text ml-4" v-if="editMode" style = "margin-top:-20px;">
+            <v-text-field type="number" label="{{namePascalCase}}" v-model="value.{{nameCamelCase}}"/>
+          </div>
+          <div class="grey--text ml-4" v-else>
+            {{namePascalCase}} :  \{{value.{{nameCamelCase}} }}
+          </div>
+          {{/if}}
+          {{#if (isBoolean className)}}
+          <div class="grey--text ml-4" v-if="editMode" style = "margin-top:-20px;">
+
+            <v-radio-group
+              v-model="value.{{nameCamelCase}}"
+              row
+            >
+                <template v-slot:label>
+                    <div>{{nameCamelCase}}</div>
+                </template>
+              <v-radio
+                label="Y"
+                value="true"
+              ></v-radio>
+              <v-radio
+                label="N"
+                value="false"
+              ></v-radio>
+            </v-radio-group>
+          </div>
+          <div class="grey--text ml-4" v-else>
+            {{namePascalCase}} :  \{{value.{{nameCamelCase}} }}
+          </div>
+          {{/if}}
+          {{#if (isDate className)}}
+          <div class="grey--text ml-4" v-if="editMode" style = "margin-top:-20px;">
+            <v-menu
+                v-model="menu"
+                width="290px"
+            >
+                <template v-slot:activator="{ on, attrs }">
+                <v-text-field
+                    v-model="value.{{nameCamelCase}}"
+                    label="{{namePascalCase}}"
+                    prepend-icon="mdi-calendar"
+                    readonly
+                    v-bind="attrs"
+                    v-on="on"
+                ></v-text-field>
+                </template>
+                <v-date-picker
+                v-model="value.{{nameCamelCase}}"
+                :min="new Date().toISOString().substr(0, 10)"
+                @input="menu = false"
+                ></v-date-picker>
+            </v-menu>
+          </div>
+          <div class="grey--text ml-4" v-else>
+            {{namePascalCase}} :  \{{value.{{nameCamelCase}} }}
+          </div>
+          {{/if}}
+          {{#checkVO className}}
+          <div>
+            <{{className}} label:={{namePascalCase}} v-model="value.{{nameCamelCase}}" :editMode="editMode"/>
+          </div>
+          {{/checkVO}}
+          {{#checkAggregation ../aggregateRoot.entities.relations className isVO}}
+          <div>
+            <{{namePascalCase}} v-for="(val, index) in value.{{#toURL nameCamelCase}}{{/toURL}}" v-model="value.{{nameCamelCase}}[index]" 
+            :editMode="false" v-bind:key="index" :inCard="true"/>
+          </div>
+          {{/checkAggregation}}
+
+      {{/if}}
+      {{/aggregateRoot.fieldDescriptors}}
+
+    </v-card-text>
+
+    <v-divider class="mx-4"></v-divider>
+
+    <v-card-actions style = "position:absolute; right:0; bottom:0;">
+      <v-btn
+        color="deep-purple lighten-2"
+        text
+        @click="edit"
+        v-if="!editMode"
+      >
+        Edit
+      </v-btn>
+      <v-btn
+        color="deep-purple lighten-2"
+        text
+        @click="save"
+        v-else
+      >
+        Save
+      </v-btn>
+      <v-btn
+        color="deep-purple lighten-2"
+        text
+        @click="remove"
+        v-if="!editMode"
+      >
+        Delete
+      </v-btn>
+      {{#aggregateRoot.fieldDescriptors}}
+      {{#checkAggregation ../aggregateRoot.entities.relations className isVO}}
+      <v-btn
+        color="deep-purple lighten-2"
+        text
+        @click="{{nameCamelCase}}"
+        v-if="!editMode"
+      >
+        {{namePascalCase}}
+      </v-btn>
+
+      <v-btn
+        color="deep-purple lighten-2"
+        text
+        @click="show{{namePascalCase}}"
+        v-if="!editMode"
+      >
+        Show {{namePascalCase}}
+      </v-btn>
+      {{/checkAggregation}}  
+      {{/aggregateRoot.fieldDescriptors}}
+      
+      {{#commands}}
+      {{^isRestRepository}}
+      <v-btn
+        color="deep-purple lighten-2"
+        text
+        @click="{{nameCamelCase}}"
+        v-if="!editMode"
+      >
+        {{namePascalCase}}
+      </v-btn>
+      {{/isRestRepository}}
+      {{/commands}}
+    </v-card-actions>
+  </v-card>
+
+
+</template>
+
+<script>
+  const axios = require('axios').default;
+  {{#aggregateRoot.fieldDescriptors}}
+  {{#checkVO className}}
+  import {{className}} from './vo/{{className}}.vue'
+  {{/checkVO}}
+  {{#checkAggregation ../aggregateRoot.entities.relations className isVO}}
+  import {{namePascalCase}} from './{{namePascalCase}}.vue
+  {{/checkAggregation}}  
+  
+  {{/aggregateRoot.fieldDescriptors}}
+  export default {
+    name: '{{namePascalCase}}',
+    components:{
+      {{#aggregateRoot.fieldDescriptors}}
+      {{#checkVO className}}
+      {{className}},
+      {{/checkVO}}
+      {{#checkAggregation ../aggregateRoot.entities.relations className isVO}}
+      {{namePascalCase}},
+      {{/checkAggregation}}  
+      {{/aggregateRoot.fieldDescriptors}}
+    },
+    props: {
+      value: Object,
+      editMode: Boolean,
+      isNew: Boolean
+    },
+    data: () => ({
+        date: new Date().toISOString().substr(0, 10),
+        {{#aggregateRoot.fieldDescriptors}}
+        {{#checkAggregation ../aggregateRoot.entities.relations className isVO}}
+        {{nameCamelCase}} : [],
+        selected{{namePascalCase}} : [],
+        {{nameCamelCase}}Btn : false,
+        {{nameCamelCase}}ShowBtn : false,
+        {{/checkAggregation}}  
+        {{/aggregateRoot.fieldDescriptors}}
+    }),
+    created(){
+      {{#aggregateRoot.fieldDescriptors}}
+      {{#checkVO className}}
+      if(typeof this.value.{{nameCamelCase}} === 'undefined'){
+        this.value.{{nameCamelCase}} = {}
+      }
+      {{/checkVO}}
+      {{/aggregateRoot.fieldDescriptors}}
+    },
+
+    methods: {
+      edit(){
+        this.editMode = true;
+      },
+      async save(){
+        try{
+          var temp = null;
+          {{#aggregateRoot.fieldDescriptors}}
+          {{#checkAggregation ../aggregateRoot.entities.relations className isVO}}
+          this.value.{{nameCamelCase}} = this.selected{{namePascalCase}}
+          {{/checkAggregation}}  
+          {{/aggregateRoot.fieldDescriptors}}
+          if(this.isNew){
+            temp = await axios.post(axios.fixUrl('/{{namePlural}}'), this.value)
+          }else{
+            temp = await axios.put(axios.fixUrl(this.value._links.self.href), this.value)
+          }
+
+          this.value = temp.data;
+
+          this.editMode = false;
+          this.$emit('input', this.value);
+
+          if(this.isNew){
+            this.$emit('add', this.value);
+          }else{
+            this.$emit('edit', this.value);
+          }
+
+        }catch(e){
+          alert(e.message)
+        }
+      },
+      async remove(){
+        try{
+          await axios.delete(axios.fixUrl(this.value._links.self.href))
+          this.editMode = false;
+          this.isDeleted = true;
+
+          this.$emit('input', this.value);
+          this.$emit('delete', this.value);
+
+        }catch(e){
+          alert(e.message)
+        }
+      },
+      {{#commands}}
+      {{^isRestRepository}}
+      {{#checkCommandPut controllerInfo.method}}
+      async {{nameCamelCase}}(){
+        try{
+          var temp = await axios.put(axios.fixUrl(this.value._links['{{nameCamelCase}}'].href))
+          this.value = temp.data;
+          this.editMode = false;
+        }catch(e){
+          alert(e.message)
+        }
+      },
+      {{/checkCommandPut}}
+      {{#checkCommandDelete controllerInfo.method}}
+      async {{nameCamelCase}}(){
+        try{
+          await axios.delete(axios.fixUrl(this.value._links['{{nameCamelCase}}'].href))
+          this.editMode = false;
+          this.isDelete = true;
+          
+          this.$emit('input', this.value);
+          this.$emit('delete', this.value);
+        }catch(e){
+          alert(e.message)
+        }
+      },
+      {{/checkCommandDelete}}
+      {{#checkCommandPost controllerInfo.method}}
+      async {{nameCamelCase}}(){
+        try{
+          var temp = await axios.post(axios.fixUrl(this.value._links['{{nameCamelCase}}'].href))
+          this.value = temp.data;
+          this.editMode = false;
+          
+          this.$emit('input', this.value);
+          this.$emit('delete', this.value);
+        }catch(e){
+          alert(e.message)
+        }
+      },
+      {{/checkCommandPost}}
+      
+      {{/isRestRepository}}
+      {{/commands}}
+    },
+    {{#aggregateRoot.fieldDescriptors}}
+    {{#checkAggregation ../aggregateRoot.entities.relations className isVO}}
+    async {{nameCamelCase}}(){
+      if(!this.{{nameCamelCase}}Btn){
+        var temp = await axios.get(axios.fixUrl('/{{#toURL nameCamelCase}}{{/toURL}}'))
+        this.{{nameCamelCase}} = temp.data._embedded.{{#toURL nameCamelCase}}{{/toURL}}
+        
+      }
+      this.{{nameCamelCase}}Btn = !this.{{nameCamelCase}}Btn
+    },
+    async show{{nmaePascalCase}}(){
+        
+        if(!this.{{nameCamelCase}}ShowBtn){
+          var temp = await axios.get(axios.fixUrl(this.value._links['{{nameCamelCase}}'].href));
+          this.value.{{nameCamelCase}} = temp.data._embedded.{{#toURL nameCamelCase}}{{/toURL}}
+          
+        }
+        this.{{nameCamelCase}}ShowBtn = !this.{{nameCamelCase}}ShowBtn
+      }
+    {{/checkAggregation}}  
+    {{/aggregateRoot.fieldDescriptors}}
+  }
+</script>
+
+
+<function>
+  window.$HandleBars.registerHelper('checkCommandPut', function (info, options) {
+    if(info.endsWith('PUT')){
+      return options.fn(this);
+    }
+    else{
+      options.inverse(this);
+    }
+  }) 
+  window.$HandleBars.registerHelper('checkCommandDelete', function (info, options) {
+    if(info.endsWith('DELETE')){
+      return options.fn(this);
+    }
+    else{
+      options.inverse(this);
+    }
+  }) 
+  window.$HandleBars.registerHelper('checkCommandPost', function (info, options) {
+    if(info.endsWith('POST')){
+      return options.fn(this);
+    }
+    else{
+      options.inverse(this);
+    }
+  }) 
+  window.$HandleBars.registerHelper('isNotId', function (className) {
+    return (className != 'id')
+  })
+
+  window.$HandleBars.registerHelper('isText', function (className) {
+    return (className.endsWith("String"))  
+  })
+
+  window.$HandleBars.registerHelper('isBoolean', function (className) {
+    return (className.endsWith("Boolean"))  
+  })
+
+  window.$HandleBars.registerHelper('isNumber', function (className) {
+    return (className.endsWith("Long") || className.endsWith("Integer"))  
+  })
+
+  window.$HandleBars.registerHelper('isDate', function (className) {
+    return (className.endsWith("Date"))  
+  })
+  window.$HandleBars.registerHelper('isAddress', function (className) {
+    return (className.endsWith("Address"))  
+  })
+  window.$HandleBars.registerHelper('isPhoto', function (className) {
+    return (className.endsWith("Photo"))  
+  })
+  window.$HandleBars.registerHelper('isUser', function (className) {
+    return (className.endsWith("User"))  
+  })
+  window.$HandleBars.registerHelper('isEmail', function (className) {
+    return (className.endsWith("Email"))  
+  })
+  window.$HandleBars.registerHelper('isPayment', function (className) {
+    return (className.endsWith("Payment"))
+  })
+
+  window.$HandleBars.registerHelper('checkVO', function (className, options) {
+    if(className.endsWith("Address") || className.endsWith("Photo") || className.endsWith("User") || className.endsWith("Email") 
+    || className.endsWith("Payment")){
+      return options.fn(this);
+    }
+    else
+      return options.inverse(this);
+  })
+
+  window.$HandleBars.registerHelper('checkAggregation', function (relations, name, isVO, options) {
+      try{
+          var flag = false;
+            if(!isVO) {
+                for(var i = 0; i < relations.length; i ++ ){
+                    if(relations[i] != null) {
+                        if(relations[i].targetElement.name == name && relations[i].relationType.includes("Aggregation")) {
+                            if(relations[i] && relations[i].sourceMultiplicity == "1" && relations[i].targetMultiplicity == "1..n"){
+                                console.log(name)
+                                flag = true;
+                                return options.fn(this);
+                            } else if(relations[i] && relations[i].sourceMultiplicity == "1..n" && relations[i].targetMultiplicity == "1"){
+                                flag = true;
+                                return options.fn(this);
+                            } else if(relations[i] && relations[i].sourceMultiplicity == "1" && relations[i].targetMultiplicity == "1"){
+                                flag = true;
+                                return options.fn(this);
+                            }
+                        }
+                    }
+                }
+
+                if(!flag){
+                  return options.inverse(this);
+                }
+                return options.inverse(this);
+            }
+      } catch(e){
+        console.log(e)
+      }
+  });
+
+  window.$HandleBars.registerHelper('toURL', function (className) {
+
+    var pluralize = function(value, revert){
+
+      var plural = {
+          '(quiz)$'               : "$1zes",
+          '^(ox)$'                : "$1en",
+          '([m|l])ouse$'          : "$1ice",
+          '(matr|vert|ind)ix|ex$' : "$1ices",
+          '(x|ch|ss|sh)$'         : "$1es",
+          '([^aeiouy]|qu)y$'      : "$1ies",
+          '(hive)$'               : "$1s",
+          '(?:([^f])fe|([lr])f)$' : "$1$2ves",
+          '(shea|lea|loa|thie)f$' : "$1ves",
+          'sis$'                  : "ses",
+          '([ti])um$'             : "$1a",
+          '(tomat|potat|ech|her|vet)o$': "$1oes",
+          '(bu)s$'                : "$1ses",
+          '(alias)$'              : "$1es",
+          '(octop)us$'            : "$1i",
+          '(ax|test)is$'          : "$1es",
+          '(us)$'                 : "$1es",
+          '([^s]+)$'              : "$1s"
+      };
+
+      var singular = {
+          '(quiz)zes$'             : "$1",
+          '(matr)ices$'            : "$1ix",
+          '(vert|ind)ices$'        : "$1ex",
+          '^(ox)en$'               : "$1",
+          '(alias)es$'             : "$1",
+          '(octop|vir)i$'          : "$1us",
+          '(cris|ax|test)es$'      : "$1is",
+          '(shoe)s$'               : "$1",
+          '(o)es$'                 : "$1",
+          '(bus)es$'               : "$1",
+          '([m|l])ice$'            : "$1ouse",
+          '(x|ch|ss|sh)es$'        : "$1",
+          '(m)ovies$'              : "$1ovie",
+          '(s)eries$'              : "$1eries",
+          '([^aeiouy]|qu)ies$'     : "$1y",
+          '([lr])ves$'             : "$1f",
+          '(tive)s$'               : "$1",
+          '(hive)s$'               : "$1",
+          '(li|wi|kni)ves$'        : "$1fe",
+          '(shea|loa|lea|thie)ves$': "$1f",
+          '(^analy)ses$'           : "$1sis",
+          '((a)naly|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)ses$': "$1$2sis",        
+          '([ti])a$'               : "$1um",
+          '(n)ews$'                : "$1ews",
+          '(h|bl)ouses$'           : "$1ouse",
+          '(corpse)s$'             : "$1",
+          '(us)es$'                : "$1",
+          's$'                     : ""
+      };
+
+      var irregular = {
+          'move'   : 'moves',
+          'foot'   : 'feet',
+          'goose'  : 'geese',
+          'sex'    : 'sexes',
+          'child'  : 'children',
+          'man'    : 'men',
+          'tooth'  : 'teeth',
+          'person' : 'people',
+          'index'  : 'indexes'
+      };
+
+      var uncountable = [
+          'sheep', 
+          'fish',
+          'deer',
+          'moose',
+          'series',
+          'species',
+          'money',
+          'rice',
+          'information',
+          'equipment'
+      ];
+
+      // save some time in the case that singular and plural are the same
+      console.log("value = " + value)
+      if(uncountable.indexOf(value.toLowerCase()) >= 0)
+      return this;
+
+      // check for irregular forms
+      for(var word in irregular){
+
+          if(revert){
+                  var pattern = new RegExp(irregular[word]+'$', 'i');
+                  var replace = word;
+          } else{ var pattern = new RegExp(word+'$', 'i');
+                  var replace = irregular[word];
+          }
+          if(pattern.test(value))
+              return value.replace(pattern, replace);
+      }
+
+      if(revert) var array = singular;
+          else  var array = plural;
+
+      // check for matches using regular expressions
+      for(var reg in array){
+
+          var pattern = new RegExp(reg, 'i');
+
+          if(pattern.test(value))
+              return value.replace(pattern, array[reg]);
+      }
+
+      return value;
+    }
+
+    return pluralize(className.toLowerCase())
+  })
+
+</function>

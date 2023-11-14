@@ -1,0 +1,5 @@
+Flask==2.0.1
+flask-kafka==0.0.3
+kafka-python==2.0.2
+requests==2.25.1
+SQLAlchemy==1.4.17

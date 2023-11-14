@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: eventstorming-tool
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: eventstorming-tool
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: acebase
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5757
+      targetPort: 5757
+      protocol: TCP
+      name: http
+  selector:
+    app: acebase

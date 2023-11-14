@@ -1,0 +1,52 @@
+server:
+  port: 8088
+
+---
+spring:
+  profiles: default
+  cloud:
+    gateway:
+      routes:
+        {{#boundedContexts}}
+        - id: {{name}}
+          uri: http://localhost:{{portGenerated}}
+          predicates:
+            - Path={{#aggregates}}/{{namePlural}}/**,/{{name}}/**{{/aggregates}} {{#views}}/{{namePlural}}/**{{/views}}
+        {{/boundedContexts}}
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+
+---
+spring:
+  profiles: docker
+  cloud:
+    gateway:
+      routes:
+        {{#boundedContexts}}
+        - id: {{name}}
+          uri: http://{{name}}:8080
+          predicates:
+            - Path={{#aggregates}}/{{namePlural}}/**,/{{name}}/**{{/aggregates}} {{#views}}/{{namePlural}}/**{{/views}}
+        {{/boundedContexts}}
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+server:
+  port: 8080

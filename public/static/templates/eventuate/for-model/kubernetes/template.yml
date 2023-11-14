@@ -1,0 +1,59 @@
+{{#boundedContexts}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{name}}
+  labels:
+    app: {{name}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{name}}
+  template:
+    metadata:
+      labels:
+        app: {{name}}
+    spec:
+      containers:
+        - name: {{name}}
+          image: username/{{name}}:latest
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: '/actuator/health'
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 2
+            periodSeconds: 5
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: '/actuator/health'
+              port: 8080
+            initialDelaySeconds: 120
+            timeoutSeconds: 2
+            periodSeconds: 5
+            failureThreshold: 5
+
+{{/boundedContexts}}
+{{#boundedContexts}}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{name}}
+  labels:
+    app: {{name}}
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: {{name}}
+
+{{/boundedContexts}}

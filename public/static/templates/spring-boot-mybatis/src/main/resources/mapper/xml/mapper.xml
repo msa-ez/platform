@@ -1,0 +1,74 @@
+forEach: Aggregate
+fileName: mapper-{{namePascalCase}}.xml
+
+---
+
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="{{options.package}}.mapper.{{namePascalCase}}Mapper">
+    <select id="findList" resultType="{{nameCamelCase}}">
+        SELECT {{#aggregateRoot.fieldDescriptors}}
+            {{#if @last}}
+            {{nameCamelCase}}
+            {{else}}
+            {{nameCamelCase}},
+            {{/if}}
+            {{/aggregateRoot.fieldDescriptors}}
+        FROM {{nameCamelCase}}
+    </select>
+    
+    
+    <select id="findOneById" parameterType="long" resultType="{{nameCamelCase}}">
+        SELECT {{#aggregateRoot.fieldDescriptors}}
+            {{#if @last}}
+            {{nameCamelCase}}
+            {{else}}
+            {{nameCamelCase}},
+            {{/if}}
+            {{/aggregateRoot.fieldDescriptors}}
+        FROM {{nameCamelCase}}
+        WHERE id = #{id}
+    </select>
+    
+    <insert id="save" parameterType="{{nameCamelCase}}" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO {{nameCamelCase}} (
+            {{#aggregateRoot.fieldDescriptors}}
+            {{^isKey}}
+            {{#if @last}}
+            {{nameCamelCase}}
+            {{else}}
+            {{nameCamelCase}},
+            {{/if}}
+            {{/isKey}}
+            {{/aggregateRoot.fieldDescriptors}}) 
+        VALUES (
+            {{#aggregateRoot.fieldDescriptors}}
+            {{^isKey}}
+            {{#if @last}}
+            #{ {{nameCamelCase}} }
+            {{else}}
+            #{ {{nameCamelCase}} },
+            {{/if}}
+            {{/isKey}}
+            {{/aggregateRoot.fieldDescriptors}})
+    </insert>
+    
+    <update id="update" parameterType="{{nameCamelCase}}">
+        UPDATE reservation
+        SET {{#aggregateRoot.fieldDescriptors}}
+            {{^isKey}}
+            {{#if @last}}
+            {{nameCamelCase}} = #{ {{nameCamelCase}} }
+            {{else}} 
+            {{nameCamelCase}} = #{ {{nameCamelCase}} },
+            {{/if}}
+            {{/isKey}}
+            {{/aggregateRoot.fieldDescriptors}}
+        WHERE id = #{id}
+    </update>
+    
+    <delete id = "deleteById" parameterType="long">
+        DELETE FROM {{nameCamelCase}} WHERE id = #{id}
+    </delete>
+</mapper>

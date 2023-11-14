@@ -1,0 +1,84 @@
+server:
+  port: 8088
+---
+spring:
+  profiles: default
+  cloud:
+    gateway:
+      routes:
+        {{#boundedContexts}}
+        - id: {{name}}
+          uri: http://localhost:{{portGenerated}}
+          predicates:
+            - Path={{#printRoute aggregates}}{{/printRoute}} {{#printRoute views}}{{/printRoute}}
+        {{/boundedContexts}}
+        - id: frontend
+          uri: http://localhost:8080
+          predicates:
+            - Path=/**
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+
+---
+spring:
+  profiles: docker
+  cloud:
+    gateway:
+      routes:
+        {{#boundedContexts}}
+        - id: {{name}}
+          uri: http://{{name}}:8080
+          predicates:
+            - Path={{#printRoute aggregates}}{{/printRoute}} {{#printRoute views}}{{/printRoute}}
+        {{/boundedContexts}}
+        - id: frontend
+          uri: http://frontend:8080
+          predicates:
+            - Path=/**
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+server:
+  port: 8080
+
+<function>
+window.$HandleBars.registerHelper('printRoute', function (aggregates) {
+    try {
+      var route = "";
+      if(aggregates) {
+        for(var i = 0; i<aggregates.length; i++){
+          if(i == aggregates.length-1){
+            route = route + "/" + aggregates[i].namePlural + "/**"
+          }
+          else{
+            route = route + "/" +aggregates[i].namePlural + "/**, "
+          }
+        }
+
+        return route
+      }
+
+    } catch(e) {
+      console.log(e)
+    }
+
+    
+});
+</function>

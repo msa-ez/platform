@@ -1,0 +1,181 @@
+forEach: Aggregate
+fileName: {{namePascalCase}}Detail.vue
+path: frontend/src/components/listers
+---
+<template>
+    <v-card outlined>
+        <v-card-title>
+            {{namePascalCase}} # \{{item._links.self.href.split("/")[item._links.self.href.split("/").length - 1]}}
+        </v-card-title>
+
+        <v-card-text>
+        {{#aggregateRoot.fieldDescriptors}}
+        {{#if (isNotId nameCamelCase)}}
+        {{#if (isPrimitive className)}}
+            <div>
+                <{{getPrimitiveType className}} label="{{namePascalCase}}" v-model="item.{{nameCamelCase}}" :editMode="editMode" @change="change" />
+            </div>
+        {{else}}
+            {{#checkVO className}}
+            <{{className}} offline label="{{namePascalCase}}" v-model="item.{{nameCamelCase}}" :editMode="false" @change="change" />
+            {{/checkVO}}
+            {{#checkEntityMember className}}
+            <{{className}} offline label="{{namePascalCase}}" v-model="item.{{nameCamelCase}}" :editMode="false" :key="false" @change="change" />
+            {{/checkEntityMember}}
+            {{#checkListOfEntityMember className}}
+            <{{getEntityClassNameOfList className}}Manager offline label="{{namePascalCase}}" v-model="item.{{nameCamelCase}}" :editMode="false" @change="change" />
+            {{/checkListOfEntityMember}}
+        {{/if}}
+        {{/if}}
+        {{/aggregateRoot.fieldDescriptors}}
+        </v-card-text>
+
+        <v-card-actions>
+            <v-btn text color="deep-purple lighten-2" large @click="goList">List</v-btn>
+            <v-spacer></v-spacer>
+            <v-btn
+                    color="deep-purple lighten-2"
+                    text
+                    @click="edit"
+                    v-if="!editMode"
+            >
+                Edit
+            </v-btn>
+            <v-btn
+                    color="deep-purple lighten-2"
+                    text
+                    @click="save"
+                    v-else
+            >
+                Save
+            </v-btn>
+            <v-btn
+                    color="deep-purple lighten-2"
+                    text
+                    @click="remove"
+                    v-if="!editMode"
+            >
+                Delete
+            </v-btn>
+            <v-btn
+                    color="deep-purple lighten-2"
+                    text
+                    @click="editMode = false"
+                    v-if="editMode"
+            >
+                Cancel
+            </v-btn>
+        </v-card-actions>
+    </v-card>
+</template>
+
+
+<script>
+    const axios = require('axios').default;
+
+    export default {
+        name: '{{namePascalCase}}Detail',
+        components:{},
+        props: {
+        },
+        data: () => ({
+            item: null,
+            editMode: false,
+        }),
+        async created() {
+            var me = this;
+            var params = this.$route.params;
+            var temp = await axios.get(axios.fixUrl('/{{namePlural}}/' + params.id))
+            if(temp.data) {
+                me.item = temp.data
+            }
+        },
+        methods: {
+            goList() {
+                var path = window.location.href.slice(window.location.href.indexOf("/#/"), window.location.href.lastIndexOf("/#"));
+                path = path.replace("/#/", "/");
+                this.$router.push(path);
+            },
+            edit() {
+                this.editMode = true;
+            },
+            async remove(){
+                try {
+                    if (!this.offline) {
+                        await axios.delete(axios.fixUrl(this.item._links.self.href))
+                    }
+
+                    this.editMode = false;
+
+                    this.$emit('input', this.item);
+                    this.$emit('delete', this.item);
+
+                } catch(e) {
+                    console.log(e)
+                }
+            },
+        },
+    };
+</script>
+
+<function>
+
+    window.$HandleBars.registerHelper('isNotId', function (className) {
+        return (className != 'id')
+    })
+
+    window.$HandleBars.registerHelper('isPrimitive', function (className) {
+        if(className.endsWith("String") || className.endsWith("Integer") || className.endsWith("Long") || className.endsWith("Double") || className.endsWith("Float")
+                || className.endsWith("Boolean") || className.endsWith("Date")){
+            return true;
+        } else {
+            return false;
+        }
+    })
+
+    window.$HandleBars.registerHelper('getPrimitiveType', function (className) {
+        if(className.endsWith("String")) {
+            return "String";
+        } else if(className.endsWith("Integer") || className.endsWith("Long") || className.endsWith("Double") || className.endsWith("Float")) {
+            return "Number";
+        } else if(className.endsWith("Boolean")) {
+            return "Boolean";
+        } else if(className.endsWith("Date")) {
+            return "Date";
+        }
+    })
+
+    window.$HandleBars.registerHelper('checkVO', function (className, options) {
+        if(className.endsWith("Address") || className.endsWith("Photo") || className.endsWith("User") || className.endsWith("Email") 
+                || className.endsWith("Payment") || className.endsWith("Money")){
+            return options.fn(this);
+        }
+    })
+
+    window.$HandleBars.registerHelper('checkEntityMember', function (className, options) {
+        if(!(className.endsWith("Address") || className.endsWith("Photo") || className.endsWith("User") || className.endsWith("Email") 
+                || className.endsWith("Payment") || className.endsWith("Money")) && className.indexOf("java.")==-1 && className.indexOf("List")==-1) {
+            return options.fn(this);
+        } else {
+            return options.inverse(this);
+        }
+    })
+
+    window.$HandleBars.registerHelper('checkListOfEntityMember', function (className, options) {
+        if(className.indexOf("List")==0){
+            return options.fn(this);
+        } else {
+            return options.inverse(this);
+        }
+    })
+
+    window.$HandleBars.registerHelper('getEntityClassNameOfList', function (listClassName) {
+        var regex = /\<(.*?)\>/g;
+        var match = regex.exec(listClassName);
+        if (match) {
+            return (match[1]);
+        }
+        return "NO-CLASS";
+    })
+
+</function>

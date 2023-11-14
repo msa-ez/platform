@@ -1,0 +1,405 @@
+<template>
+    <common-panel
+            v-model="value"
+            :image="image"
+            :is-read-only="canvas.isReadOnlyModel"
+            :width-style="widthStyle"
+            :related-url="relatedUrl"
+            :validation-lists="validationLists"
+            :translate-obj="translateObj"
+            :element-author-display="elementAuthorDisplay"
+            @close="closePanel"
+            @changeTranslate="changeTranslate"
+    >
+        <template slot="t-description-text">
+            행동, 결정 등의 값들에 대한 정의 (UI 혹은 API)
+        </template>
+
+        <template slot="t-generation-text">
+            Commands become the inbound Adaptor implementations and the Port methods of the Aggregate Root according to the Hexagonal / Clean Architecture.
+        </template>
+
+        <template slot="t-edit-user">
+            <div
+                    v-if="newEditUserImg.length > 0 && canvas.isReadOnlyModel && !value.mirrorElement"
+                    style="text-align:center"
+            >
+                <v-chip
+                        small
+                        color="orange"
+                        text-color="white"
+                        style="font-weight:bold"
+                        @click.once="forceEditPanel()"
+                >
+                    <v-avatar left>
+                        <v-icon>mdi-lead-pencil</v-icon>
+                    </v-avatar>
+                    <v-row>
+                        <div style="margin-left: 10px;"> {{newEditUserImg[0].name}} is now editing...</div>
+                        <div style="font-size: 12px; margin-right: 10px;"> ( Click to force editing ) </div>
+                    </v-row>
+                </v-chip>
+            </div>
+        </template>
+
+        <template slot="md-title-side">
+            <v-btn
+            text
+            color="primary"
+            style="margin-left: 10px; margin-top: -12px;"
+            :disabled="canvas.isReadOnlyModel"
+            @click="openExampleDialog()"
+            >Examples</v-btn>
+        </template>
+        
+        <template slot="element">
+            <div>
+                <RuleExampleDialog v-if="openExample" v-model="value" @closeExampleDialog="closeExampleDialog()" />
+                <v-card flat>
+                    <v-card-text>
+                        <v-col>
+                            <span class="panel-title" style="margin-left:-10px;">Associated Aggregate</span>
+                            <v-text-field
+                                    v-model="relatedAggregateName"
+                                    label="Attach Aggregate && check Name"
+                                    single-line
+                                    disabled
+                                    style="margin-left:-10px; margin-top:-15px; min-width:105%;"
+                            ></v-text-field>
+
+
+                            <span class="panel-title" style="margin-left:-10px;">Method</span>
+                            <v-radio-group v-model="value.isRestRepository" :disabled="canvas.isReadOnlyModel"
+                                           style="margin-left:-13px;" row>
+                                <v-radio label="Default Verbs" :value="true"></v-radio>
+                                <v-radio label="Extend Verb URI" :value="false"></v-radio>
+                            </v-radio-group>
+
+                            <v-col v-if="value.isRestRepository">
+                                <v-autocomplete
+                                        :disabled="canvas.isReadOnlyModel"
+                                        v-model="value.restRepositoryInfo.method"
+                                        :items="getRestfulList"
+                                        style="margin-left: -22px; min-width:111%;"
+                                        label="Method"
+                                        persistent-hint>
+                                </v-autocomplete>
+                            </v-col>
+
+
+                            <v-col v-else>
+                                <v-row style="align-items: center">
+                                    <v-text-field
+                                            v-model="value.controllerInfo.apiPath"
+                                            :disabled="canvas.isReadOnlyModel"
+                                            style="margin-left: -10px; min-width:105%;"
+                                            label="API Path"
+                                            :prefix="`${elementPrefix}`"
+                                    ></v-text-field>
+                                </v-row>
+                                <v-autocomplete
+                                        v-model="value.controllerInfo.method"
+                                        :disabled="canvas.isReadOnlyModel"
+                                        style="margin-left: -22px; min-width:111%;"
+                                        label="Method"
+                                        persistent-hint
+                                        :items="getControllerList"
+                                ></v-autocomplete>
+                                <event-storming-attribute
+                                        label="Request Body"
+                                        v-model="value.fieldDescriptors"
+                                        :entities="entities"
+                                        :isReadOnly="canvas.isReadOnlyModel"
+                                        :type="value._type"
+                                        :elementId="value.elementView.id"
+                                        style="margin-left: -22px; margin-right: -22px;"
+                                        @sync-attribute="syncFromAggregate"
+                                ></event-storming-attribute>
+                            </v-col>
+
+                            <span class="panel-title" style="margin-left:-10px;">Httpie command usages</span>
+                            <v-row style="align-items: center;">
+                                <v-btn icon small @click="copyRestRepositoryMethod()"
+                                       style="align-self: start; margin-top: 15px;">
+                                    <v-icon small> mdi-content-copy</v-icon>
+                                </v-btn>
+                                <v-textarea
+                                        v-model="commandExample"
+                                        solo
+                                        class="mx-2"
+                                        style="margin-top: 20px;"
+                                        rows="3"
+                                ></v-textarea>
+                            </v-row>
+                        </v-col>
+                    </v-card-text>
+                </v-card>
+            </div>
+        </template>
+    </common-panel>
+</template>
+
+
+<script>
+    import CommonPanel from "./CommonPanel";
+    import EventStormingModelPanel from "../EventStormingModelPanel";
+    import RuleExampleDialog from "../RuleExampleDialog"
+
+    var googleTranslate = require('google-translate')(process.env.VUE_APP_TRANSLATE_KEY);
+    var changeCase = require('change-case');
+    var pluralize = require('pluralize');
+
+    export default {
+        mixins: [EventStormingModelPanel],
+        name: 'command-panel',
+        props:{
+            entities: {
+                type: Object,
+                default: function () {
+                    return {}
+                }
+            },
+        },
+        components: {
+            CommonPanel,
+            RuleExampleDialog
+        },
+        data() {
+            return {
+                show: false,
+                httpCommand: null,
+                commandExample: null,
+                relatedAggregate: null,
+            }
+        },
+        computed: {
+            relatedAggregateName(){
+              if(this.relatedAggregate){
+                  return this.relatedAggregate.name
+              }
+              return null;
+            },
+            getRestfulList(){
+                return this.restfulList.slice(1)
+            },
+            getControllerList(){
+                return this.restfulList.slice(1,3).reverse()
+            },
+            elementPrefix(){
+                var me = this
+                if(me.value){
+                    if(me.value.isRestRepository){
+                        return null
+                    }else{
+                        if(me.value && me.relatedAggregateName){
+                            var aggName = me.relatedAggregateName
+                            if(me.value.controllerInfo.method == 'POST') {
+                                me.setApiPath();
+                                return `/${pluralize(changeCase.camelCase(aggName))}`;
+                            } else {
+                                return `/${pluralize(changeCase.camelCase(aggName))}/{id}/`;
+                            }
+                        }else{
+                            return '/{ Aggregate }/{id}/'
+                        }
+                    }
+                }
+                return null
+
+            },
+        },
+        beforeDestroy() {
+
+        },
+        created: function () {
+            this.panelInit()
+        },
+        watch: {
+            "value.controllerInfo":{
+                deep: true,
+                handler: function (newVal, oldVal) {
+                    this.setHttpCommand()
+                }
+            },
+
+            "value.restRepositoryInfo.method":function(newVal){
+                this.setHttpCommand()
+            },
+            "value.isRestRepository":function(newVal){
+                this.setHttpCommand()
+            },
+            "value.name":function(newVal){
+                this.setHttpCommand()
+            },
+            "value.fieldDescriptors":{
+                deep: true,
+                handler: function () {
+                    this.setHttpCommand()
+                }
+            },
+        },
+        methods: {
+            panelInit(){
+                var me = this
+                // Element
+                me.relatedAggregate = me.canvas.getAttachedAggregate(me.value)
+                me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#%C2%B7-command-sticker'
+
+                // Common
+                me.$super(EventStormingModelPanel).panelInit()
+            },
+            setApiPath(){
+                var me = this
+                try {
+                    if(!me.value.controllerInfo.apiPath && me.value.controllerInfo.method != 'POST'){
+                        var getName = me.value.name
+                        var lowerCase = JSON.parse(JSON.stringify(getName)).toLowerCase()
+                        lowerCase = lowerCase.replace(' ', '');
+                        me.value.controllerInfo.apiPath = lowerCase
+                    }else if(me.value.controllerInfo.apiPath && me.value.controllerInfo.method == 'POST'){
+                        me.value.controllerInfo.apiPath = null;
+                        // var lowerCase = JSON.parse(JSON.stringify(me.value.controllerInfo.apiPath)).toLowerCase()
+                        // lowerCase = lowerCase.replace(' ', '');
+                        // me.value.controllerInfo.apiPath = lowerCase
+                    }
+                } catch {
+                    console.log('methods : setApiPath() Error')
+                }
+                
+            },
+            async changedNamePanel(newVal) {
+                var me = this
+                // element 전달.
+                me.canvas.$refs[`${me.value.elementView.id}`][0].namePanel = newVal.replace(/\n/g, "").replace(/ /gi, "")
+
+                var translateObj = await me.getTranslate(newVal);
+                me.usedTranslate = translateObj.usedTranslate
+                me.translateText = translateObj.translateText
+            },
+            getTranslate(newVal) {
+                try {
+                    return new Promise(async function (resolve) {
+                        googleTranslate.detectLanguage(newVal, function (err, detection) {
+                            if(detection){
+                                if (detection.language != 'en') {
+                                    googleTranslate.translate(newVal, 'en', function (err, translation) {
+                                        var obj = {
+                                            'usedTranslate': true,
+                                            'translateText': changeCase.pascalCase(translation.translatedText)
+                                        }
+                                        resolve(obj)
+                                    });
+                                }
+                            }
+                        });
+                    })
+                } catch (e) {
+                    return undefined;
+                }
+            },
+            setHttpCommand(){
+                var me = this
+                var aggName = 'aggs'
+                var descriptor = me.value.fieldDescriptors.find(descriptor => descriptor.name);
+                var descriptorName = descriptor ? descriptor.name : undefined;
+
+
+                if(me.value.isRestRepository){
+                    var fieldDescriptorsName = 'aggFieldName="value" '
+                    if(me.value && me.relatedAggregateName){
+                        aggName = me.relatedAggregateName
+                        aggName = pluralize(changeCase.camelCase(aggName))
+                        aggName = aggName.toLowerCase()
+
+                        if(me.relatedAggregate && me.relatedAggregate.aggregateRoot && me.relatedAggregate.aggregateRoot.fieldDescriptors.length > 1 ){
+                            fieldDescriptorsName = ''
+                            me.relatedAggregate.aggregateRoot.fieldDescriptors.forEach(function (fieldItem) {
+                                if(!fieldItem.isKey){
+                                    fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}="value" ` )
+                                }
+                            })
+                        }
+                    }
+
+                    // RestRepository  -> Default Verbs
+                    if(me.value.restRepositoryInfo.method == 'POST'){
+                        me.commandExample = `http POST localhost:8080/${aggName} ${fieldDescriptorsName}`
+                    }else if(me.value.restRepositoryInfo.method == 'PATCH'){
+                        me.commandExample = `http PATCH localhost:8080/${aggName}/1 ${fieldDescriptorsName}`
+                    }else if(me.value.restRepositoryInfo.method == 'DELETE'){
+                        me.commandExample = `http DELETE localhost:8080/${aggName}/1`
+                    }else if(me.value.restRepositoryInfo.method == 'PUT'){
+                        me.commandExample = `http PUT localhost:8080/${aggName}/1 ${fieldDescriptorsName}`
+                    }
+                    // var fieldDescriptorsName =  'FieldName'
+                }else{
+                    var fieldDescriptorsName = 'fieldName="value" '
+                    if(me.value && me.value.fieldDescriptors){
+                        if(me.value.fieldDescriptors && me.value.fieldDescriptors.length > 0 ){
+                            fieldDescriptorsName = ''
+                            me.value.fieldDescriptors.forEach(function (fieldItem) {
+                                if(!fieldItem.isKey){
+                                    fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}="value" ` )
+                                }
+                            })
+                        }
+                    }
+
+                    // Controller -> Extend Verb
+                    if(me.value.controllerInfo.method == 'POST'){
+                        me.commandExample = `http POST localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))}`
+                    }else{
+                        me.commandExample = `http PUT localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))}/1/${me.value.controllerInfo.apiPath} ${descriptorName}= "${descriptorName}" ${me.value.controllerInfo.apiPath}=1`
+                    }
+                    me.setApiPath()
+                }
+
+            },
+            copyRestRepositoryMethod(){
+                const t = document.createElement("textarea");
+                document.body.appendChild(t);
+                t.value = this.commandExample
+                t.select();
+                document.execCommand('copy');
+                document.body.removeChild(t);
+
+                this.$EventBus.$emit('snackbar', {show :true, text : 'Copied to clipboard!', timeout: 1000 ,bottom: true })
+            },
+            syncFromAggregate() {
+                var me = this
+                var aggregateField = null
+                var entityTypeList =  ['Integer', 'String', 'Boolean', 'Float', 'Double', 'Long', 'Date']
+
+                if (me.isEmptyObject(me.relatedAggregate)) {
+                    alert("Attach 'Associated aggregate'. ")
+                } else {
+                    var aggLists = me.canvas.attachedLists.aggregateLists;
+
+                    if( Object.keys(aggLists).length > 0 ){
+                        var eventFields = JSON.parse(JSON.stringify(me.value.fieldDescriptors));
+                        aggregateField = aggLists[me.relatedAggregate.elementView.id] ? aggLists[me.relatedAggregate.elementView.id].aggregateRoot.fieldDescriptors : null;
+
+                        if (aggregateField) {
+                            aggregateField.forEach(function (aggField) {
+
+                                let eventKey = -1
+                                if(aggField.isKey){
+                                    eventKey = eventFields.findIndex(eventField => eventField.isKey)
+                                }else{
+                                    eventKey = eventFields.findIndex(eventField => !eventField.isKey && eventField.name == aggField.name && eventField.className == aggField.className)
+                                }
+
+                                if (eventKey == -1) {
+                                    me.value.fieldDescriptors.push(aggField)
+                                } else {
+                                    me.value.fieldDescriptors[eventKey] = aggField
+                                }
+                                me.value.fieldDescriptors.__ob__.dep.notify();
+                            })
+                        }
+                    }
+                }
+            },
+        }
+    }
+</script>

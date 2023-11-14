@@ -1,0 +1,124 @@
+
+apiVersion: "networking.istio.io/v1alpha3"
+kind: "Gateway"
+metadata: 
+  name: {{projectName}}
+spec: 
+  selector: 
+    istio: "ingressgateway"
+  servers: 
+    - 
+      port: 
+        number: 80
+        name: "http"
+        protocol: "HTTP"
+      hosts: 
+        - "*"
+
+
+{{#boundedContexts}}
+---
+
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: rollout-{{nameCamelCase}}
+spec:
+  replicas: 5
+  strategy:
+    canary:
+      trafficRouting:
+        istio:
+          virtualService: 
+            name: vsvc-{{nameCamelCase}}        # required
+            routes:
+            - primary                 # required
+          destinationRule:
+            name: destrule-{{nameCamelCase}}    # required
+            canarySubsetName: canary  # required
+            stableSubsetName: stable  # required
+      steps:
+      - setWeight: 5
+      - pause:
+          duration: 10s
+      - setWeight: 20
+      - pause:
+          duration: 10s
+      - setWeight: 40
+      - pause:
+          duration: 10s
+      - setWeight: 60
+      - pause:
+          duration: 10s
+      - setWeight: 80
+      - pause:
+          duration: 10s
+
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: {{nameCamelCase}}
+  template:
+    metadata:
+      labels:
+        app: {{nameCamelCase}}
+    spec:
+      containers:
+      - name: {{nameCamelCase}}
+        image: "userid/{{nameCamelCase}}:version"
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        resources:
+          requests:
+            memory: 32Mi
+            cpu: 5m
+
+--- 
+
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: vsvc-{{nameCamelCase}}
+spec:
+  gateways:
+  - {{../projectName}}
+  hosts:
+  - "*"
+  http:
+  - name: primary       # referenced in canary.trafficRouting.istio.virtualService.routes
+    match: 
+    - uri: 
+        exact: "/{{namePlural}}"
+    rewrite:
+      uri: "/"
+    route:
+    - destination:
+        host: {{nameCamelCase}}
+        subset: stable  # referenced in canary.trafficRouting.istio.destinationRule.stableSubsetName
+      weight: 100
+    - destination:
+        host: {{nameCamelCase}}
+        subset: canary  # referenced in canary.trafficRouting.istio.destinationRule.canarySubsetName
+      weight: 0
+
+
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: destrule-{{nameCamelCase}}
+spec:
+  host: {{nameCamelCase}}
+  subsets:
+  - name: canary   # referenced in canary.trafficRouting.istio.destinationRule.canarySubsetName
+    labels:        # labels will be injected with canary rollouts-pod-template-hash value
+      app: {{name}}
+  - name: stable   # referenced in canary.trafficRouting.istio.destinationRule.stableSubsetName
+    labels:        # labels will be injected with canary rollouts-pod-template-hash value
+      app: {{name}}
+
+
+{{/boundedContexts}}

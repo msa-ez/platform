@@ -1,0 +1,237 @@
+server:
+  port: 8088
+
+---
+spring:
+  profiles: default
+  cloud:
+    gateway:
+      routes:
+        {{#boundedContexts}}
+        - id: {{name}}
+          uri: http://localhost:{{portGenerated}}
+          predicates:
+            - Path={{#printRoute aggregates}}{{/printRoute}}, {{#printRouteView views}}{{/printRouteView}}{{#each aggregates}}{{#each aggregateRoot.entities.relations}}{{#if (isGeneralization targetElement.namePascalCase ../namePascalCase relationType)}}, /{{#toURL sourceElement.nameCamelCase}}{{/toURL}}/**{{/if}}{{/each}}{{/each}}
+        {{/boundedContexts}}
+        - id: frontend
+          uri: http://localhost:8080
+          predicates:
+            - Path=/**
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+
+---
+spring:
+  profiles: docker
+  cloud:
+    gateway:
+      routes:
+        {{#boundedContexts}}
+        - id: {{name}}
+          uri: http://{{nameCamelCase}}:8080
+          predicates:
+            - Path={{#printRoute aggregates}}{{/printRoute}}, {{#printRouteView views}}{{/printRouteView}}{{#each aggregates}}{{#each aggregateRoot.entities.relations}}{{#if (isGeneralization targetElement.namePascalCase ../namePascalCase relationType)}}, /{{#toURL sourceElement.nameCamelCase}}{{/toURL}}/**{{/if}}{{/each}}{{/each}}
+        {{/boundedContexts}}
+        - id: frontend
+          uri: http://frontend:8080
+          predicates:
+            - Path=/**
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+server:
+  port: 8080
+
+<function>
+  window.$HandleBars.registerHelper('printRoute', function (aggregates) {
+    try{
+      if(!aggregates)
+          return;
+        var route = "";
+        for(var i = 0; i<aggregates.length; i++){
+          if(i == aggregates.length-1){
+            route = route + "/" + aggregates[i].namePlural + "/**"
+          }
+          else{
+            route = route + "/" +aggregates[i].namePlural + "/**, "
+          }
+        }
+
+        return route
+    } catch(e){
+      console.log(e)
+    }
+  });
+
+  window.$HandleBars.registerHelper('printRouteView', function (views) {
+    try{
+      if(!views)
+          return;
+        var route = "";
+        for(var i = 0; i<views.length; i++){
+          if(i == views.length-1){
+            route = route + "/" + views[i].namePlural + "/**"
+          }
+          else{
+            route = route + "/" +views[i].namePlural + "/**, "
+          }
+        }
+
+        return route
+    } catch(e){
+      console.log(e)
+    }
+  });
+
+  window.$HandleBars.registerHelper('isGeneralization', function (toName, name, type) {
+    try {
+      if(toName == null || name == null || type == null) {
+        return false;
+      } else {
+        if(toName == name && type.includes("Generalization")) {
+            return true;
+        } else {
+            return false;
+        }
+      }
+    } catch(e) {
+      console.log(e)
+    }
+  });
+
+  window.$HandleBars.registerHelper('toURL', function (className) {
+  
+    var pluralize = function(value, revert){
+
+      var plural = {
+        '(quiz)$'               : "$1zes",
+        '^(ox)$'                : "$1en",
+        '([m|l])ouse$'          : "$1ice",
+        '(matr|vert|ind)ix|ex$' : "$1ices",
+        '(x|ch|ss|sh)$'         : "$1es",
+        '([^aeiouy]|qu)y$'      : "$1ies",
+        '(hive)$'               : "$1s",
+        '(?:([^f])fe|([lr])f)$' : "$1$2ves",
+        '(shea|lea|loa|thie)f$' : "$1ves",
+        'sis$'                  : "ses",
+        '([ti])um$'             : "$1a",
+        '(tomat|potat|ech|her|vet)o$': "$1oes",
+        '(bu)s$'                : "$1ses",
+        '(alias)$'              : "$1es",
+        '(octop)us$'            : "$1i",
+        '(ax|test)is$'          : "$1es",
+        '(us)$'                 : "$1es",
+        '([^s]+)$'              : "$1s"
+      };
+
+      var singular = {
+        '(quiz)zes$'             : "$1",
+        '(matr)ices$'            : "$1ix",
+        '(vert|ind)ices$'        : "$1ex",
+        '^(ox)en$'               : "$1",
+        '(alias)es$'             : "$1",
+        '(octop|vir)i$'          : "$1us",
+        '(cris|ax|test)es$'      : "$1is",
+        '(shoe)s$'               : "$1",
+        '(o)es$'                 : "$1",
+        '(bus)es$'               : "$1",
+        '([m|l])ice$'            : "$1ouse",
+        '(x|ch|ss|sh)es$'        : "$1",
+        '(m)ovies$'              : "$1ovie",
+        '(s)eries$'              : "$1eries",
+        '([^aeiouy]|qu)ies$'     : "$1y",
+        '([lr])ves$'             : "$1f",
+        '(tive)s$'               : "$1",
+        '(hive)s$'               : "$1",
+        '(li|wi|kni)ves$'        : "$1fe",
+        '(shea|loa|lea|thie)ves$': "$1f",
+        '(^analy)ses$'           : "$1sis",
+        '((a)naly|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)ses$': "$1$2sis",
+        '([ti])a$'               : "$1um",
+        '(n)ews$'                : "$1ews",
+        '(h|bl)ouses$'           : "$1ouse",
+        '(corpse)s$'             : "$1",
+        '(us)es$'                : "$1",
+        's$'                     : ""
+      };
+
+      var irregular = {
+        'move'   : 'moves',
+        'foot'   : 'feet',
+        'goose'  : 'geese',
+        'sex'    : 'sexes',
+        'child'  : 'children',
+        'man'    : 'men',
+        'tooth'  : 'teeth',
+        'person' : 'people',
+        'index'  : 'indexes'
+      };
+
+      var uncountable = [
+        'sheep',
+        'fish',
+        'deer',
+        'moose',
+        'series',
+        'species',
+        'money',
+        'rice',
+        'information',
+        'equipment'
+      ];
+
+      // save some time in the case that singular and plural are the same
+      // console.log("value = " + value)
+      if(uncountable.indexOf(value.toLowerCase()) >= 0)
+      return this;
+
+      // check for irregular forms
+      for(var word in irregular){
+
+        if(revert) {
+          var pattern = new RegExp(irregular[word]+'$', 'i');
+          var replace = word;
+        } else { 
+          var pattern = new RegExp(word+'$', 'i');
+          var replace = irregular[word];
+        }
+        if(pattern.test(value))
+          return value.replace(pattern, replace);
+      }
+
+      if(revert) var array = singular;
+        else  var array = plural;
+
+      // check for matches using regular expressions
+      for(var reg in array) {
+
+        var pattern = new RegExp(reg, 'i');
+
+        if(pattern.test(value))
+          return value.replace(pattern, array[reg]);
+      }
+
+      return value;
+    }
+
+    return pluralize(className.toLowerCase())
+  });
+
+</function>

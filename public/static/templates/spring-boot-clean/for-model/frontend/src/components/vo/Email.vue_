@@ -1,0 +1,61 @@
+fileName: Email.vue
+path: frontend/src/components/vo
+---
+<template>
+    <div>
+        <v-card style="width:300px; margin-left:5%;" outlined>
+            
+            <v-card-title>
+                {{label}}
+            </v-card-title>
+            <v-card-text style = "margin-left:-15px; margin-top:10px;">
+                <div class="grey--text ml-4" v-if="editMode" style = "margin-top:-20px;">
+                    <v-text-field label="Address" v-model="value.address"/>
+                </div>
+                <div class="grey--text ml-4" v-else>
+                    Address :  \{{value.address }}
+                </div>
+                <div class="grey--text ml-4" v-if="editMode" style = "margin-top:-20px;">
+                    <v-text-field label="Subject" v-model="value.subject"/>
+                </div>
+                <div class="grey--text ml-4" v-else>
+                    Subject :  \{{value.subject }}
+                </div>
+                <div class="grey--text ml-4" v-if="editMode" style = "margin-top:-20px;">
+                    <v-text-field label="Content" v-model="value.content"/>
+                </div>
+                <div class="grey--text ml-4" v-else>
+                    Content :  \{{value.content }}
+                </div>
+            </v-card-text>
+        
+        </v-card>
+    </div>
+</template>
+
+<script>
+export default {
+    name:"Email",
+    props: {
+        editMode: Boolean,
+        value : Object,
+        label : String,
+    },
+
+
+    data: () => ({
+        date: new Date().toISOString().substr(0, 10),
+    }),
+    
+    
+}
+</script>
+
+<style scoped>
+    .address-v-card-title {
+        display: contents;
+    }
+    .address-v-text-field {
+        margin-top:5px;
+    }
+</style>

@@ -1,0 +1,65 @@
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   annotations:
+#     cert-manager.io/issuer: onprem-issuer
+#     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+#     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+#   name: example
+# spec:
+#   ingressClassName: nginx
+#   rules:
+#   - host: '*.uengine.solutions'
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#             name: ide-proxy
+#             port:
+#               number: 1338
+#         path: /
+#         pathType: Prefix
+#   - host: www.uengine.solutions
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#             name: on-prem-on-prem-helm
+#             port:
+#               number: 80
+#         path: /
+#         pathType: Prefix
+#   - host: acebase.uengine.solutions
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#             name: acebase
+#             port:
+#               number: 5757
+#         path: /
+#         pathType: Prefix
+#   - host: api.uengine.solutions
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#             name: api-server
+#             port:
+#               number: 8080
+#         path: /
+#         pathType: Prefix
+#   - host: file.uengine.solutions
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#             name: file-server
+#             port:
+#               number: 8080
+#         path: /
+#         pathType: Prefix
+#   tls:
+#   - hosts:
+#     - '*.uengine.solutions'
+#     secretName: onprem-tls

@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:  
+  keycloak:
+    container_name: keycloak
+    image: quay.io/keycloak/keycloak:18.0.1
+    ports:
+      - 9090:8080
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_LOGLEVEL: debug
+      KC_METRICS_ENABLED: "true"
+      KC_HTTP_ENABLED: "false"
+      KC_PROXY: edge
+    command:
+      - start-dev

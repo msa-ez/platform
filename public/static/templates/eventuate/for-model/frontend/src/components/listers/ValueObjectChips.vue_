@@ -1,0 +1,234 @@
+forEach: ValueObject
+fileName: {{namePascalCase}}Chips.vue
+path: frontend/src/components/listers
+---
+<template>
+    <div style="margin: 0 -15px 0 -15px;">
+        <v-list two-line v-if="value.length > 0">
+            <v-list-group v-model="isExpansion">
+                <template v-slot:activator>
+                    <v-list-item-content>
+                        <v-list-item-title>{{namePascalCase}}</v-list-item-title>
+                    </v-list-item-content>
+                </template>
+            
+                <v-list-item v-for="(item, idx) in value" :key="idx">
+                    <v-list-item-content>
+                        <v-list-item-title>Message \{{idx+1}}</v-list-item-title>
+                        <v-list-item-subtitle>
+                        {{#photoVO namePascalCase}}
+                            <v-img
+                                style="width:400px; height:300px; border-radius:10px; position:relative; margin-left:5px; top:5px;"
+                                :style="editMode ? 'cursor:pointer;':''"
+                                :src="item.imgFile ? item.imgFile:'https://cdn.vuetifyjs.com/images/cards/cooking.png'"
+                                class="mx-auto"
+                                @click="selectFile()"
+                            ></v-img><br>
+                        {{/photoVO}}
+                        {{#fieldDescriptors}}
+                            {{namePascalCase}} :  \{{item.{{nameCamelCase}} }} <br>
+                        {{/fieldDescriptors}}
+                        </v-list-item-subtitle>
+                    </v-list-item-content>
+                    <v-list-item-action v-if="editMode">
+                        <v-btn icon @click="deleteItem(item)">
+                            <v-icon small color="grey lighten-1">mdi-delete</v-icon>
+                        </v-btn>
+                    </v-list-item-action>
+                </v-list-item>
+            </v-list-group>
+        </v-list>
+
+        <{{namePascalCase}} v-if="editMode && tick" offline :isNew="true" :inList="true"
+                :editMode="editMode" v-model="newValue" @add="append">
+            <template slot="actions">
+                <v-spacer></v-spacer>
+                <v-btn
+                        color="deep-purple lighten-2"
+                        text
+                        @click="edit"
+                        v-if="!editMode"
+                >
+                    Edit
+                </v-btn>
+                
+                <v-btn
+                        color="deep-purple lighten-2"
+                        text
+                        @click="append(newValue)"
+                        v-else
+                >
+                    Add
+                </v-btn>
+                <v-btn
+                        color="deep-purple lighten-2"
+                        text
+                        @click="remove"
+                        v-if="!editMode"
+                >
+                    Delete
+                </v-btn>
+            </template>
+        </{{namePascalCase}}>
+    </div>
+</template>
+
+<script>
+    {{#if (checkVOTemplate _type)}}
+    import {{namePascalCase}} from '../vo/{{namePascalCase}}.vue';
+    {{else}}
+    import {{namePascalCase}} from '../{{namePascalCase}}.vue';
+    {{/if}}
+
+    export default {
+        name: '{{namePascalCase}}Manager',
+        components: {
+            {{namePascalCase}}
+        },
+        props: {
+            value: [Object, String, Number, Boolean, Array],
+            offline: Boolean,
+            editMode: Boolean
+        },
+        data: () => ({
+            newValue: {},
+            tick : true,
+            isExpansion: false,
+        }),
+        async created() {
+            if (!this.value) {
+                this.value = [];
+            }
+        },
+        methods: {
+            append(value){
+                this.tick = false
+                this.newValue = {}
+
+                if(!this.value){
+                    this.value = [];
+                }
+
+                this.value.push(value)
+                
+                this.$emit('input', this.value);
+
+                this.$nextTick(function(){
+                    this.tick=true
+                })
+            },
+            remove(value) {
+                var where = -1;
+                for (var i=0; i<this.value.length; i++) {
+                    if(this.value[i]._links.self.href == value._links.self.href) {
+                        where = i;
+                        break;
+                    }
+                }
+
+                if(where > -1) {
+                    this.value.splice(i, 1);
+                    this.$emit('input', this.value);
+                }
+            },
+            deleteItem(val) {
+                this.value.splice(this.value.indexOf(val), 1);
+                this.$emit('input', this.value);
+            },
+        }
+    };
+    
+</script>
+
+
+<function>
+    window.$HandleBars.registerHelper('isNotId', function (className) {
+        return (className != 'id')
+    })
+
+    window.$HandleBars.registerHelper('isPrimitive', function (className) {
+        if(className.includes("String") || className.includes("Integer") || className.includes("Long") || className.includes("Double") || className.includes("Float")
+                || className.includes("Boolean") || className.includes("Date")){
+            return true;
+        } else {
+            return false;
+        }
+    })
+
+    window.$HandleBars.registerHelper('getPrimitiveType', function (className) {
+        if(className.includes("String")) {
+            return "String";
+        } else if(className.includes("Integer") || className.includes("Long") || className.includes("Double") || className.includes("Float")) {
+            return "Number";
+        } else if(className.includes("Boolean")) {
+            return "Boolean";
+        } else if(className.includes("Date")) {
+            return "Date";
+        }
+    })
+
+    window.$HandleBars.registerHelper('checkVO', function (className, options) {
+        if(className.endsWith("Address") || className.endsWith("Photo") || className.endsWith("User") || className.endsWith("Email") 
+                || className.endsWith("Payment") || className.endsWith("Money") || className.endsWith("Weather") || className.endsWith("Rating") ){
+            return options.fn(this);
+        }
+    })
+
+    window.$HandleBars.registerHelper('checkVOTemplate', function (type) {
+        if(!type.includes('vo.Class')) {
+            return true;
+        } else {
+            return false;
+        }
+    })
+
+     window.$HandleBars.registerHelper('photoVO', function (className, options) {
+        if( className.endsWith("Photo") ){
+            return options.fn(this);
+        }
+    })
+
+    window.$HandleBars.registerHelper('checkEntityMember', function (className, options) {
+        if(!(className.endsWith("Address") || className.endsWith("Photo") || className.endsWith("User") || className.endsWith("Email") 
+                || className.endsWith("Payment") || className.endsWith("Money") || className.endsWith("Weather") || className.endsWith("Rating")) && className.indexOf("java.") == -1 && className.indexOf("List") == -1){
+            return options.fn(this);
+        } else {
+            return options.inverse(this);
+        }
+    })
+
+    window.$HandleBars.registerHelper('checkListOfEntityMember', function (className, options) {
+        if(className.indexOf("List") == 0) {
+            return options.fn(this);
+        } else {
+            return options.inverse(this);
+        }
+    })
+
+    window.$HandleBars.registerHelper('getEntityClassNameOfList', function (listClassName) {
+        var regex = /\<(.*?)\>/g;
+        var match = regex.exec(listClassName);
+        if (match) {
+            return (match[1]);
+        }
+        return "NO-CLASS";
+    })
+
+    window.$HandleBars.registerHelper('setDefaultValue', function (className) {
+        var date = (new Date(Date.now() - (new Date()).getTimezoneOffset() * 60000)).toISOString().substr(0, 10);
+        if(className.endsWith("String")) {
+            return "''";
+        } else if(className.endsWith("Integer") || className.endsWith("Long") || className.endsWith("Double") || className.endsWith("Float")) {
+            return 0;
+        } else if(className.endsWith("Boolean")) {
+            return false;
+        } else if(className.endsWith("Date")) {
+            return "'" + date + "'";
+        } else if(className.includes("List")) {
+            return "[]"
+        } else {
+            return "{}"
+        }
+    })
+
+</function>

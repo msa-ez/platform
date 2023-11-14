@@ -1,0 +1,6 @@
+dependencies:
+- name: gitlab
+  repository: https://charts.gitlab.io/
+  version: 6.2.2
+digest: sha256:32201bf9d40db03d227399d40b8b6be06e04ee6e703cbe02d6e3a79c11971578
+generated: "2022-08-17T14:52:07.203936+09:00"

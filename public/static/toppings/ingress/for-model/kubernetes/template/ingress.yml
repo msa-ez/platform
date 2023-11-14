@@ -1,0 +1,21 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata: 
+  name: {{projectName}}
+  annotations: 
+    kubernetes.io/ingress.class: "nginx"
+spec: 
+  rules: 
+    - host: ""
+      http: 
+        paths: 
+          {{#boundedContexts}}
+          - path: /{{namePlural}}
+            pathType: Prefix
+            backend: 
+              serviceName: {{nameCamelCase}}
+              servicePort: 8080
+          {{/boundedContexts}}
+
+{{#boundedContexts}}

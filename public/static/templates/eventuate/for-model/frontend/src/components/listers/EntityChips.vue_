@@ -1,0 +1,430 @@
+forEach: Entity
+fileName: {{namePascalCase}}Chips.vue
+path: frontend/src/components/listers
+---
+<template>
+    <div style="margin: 0 -15px 0 -15px;">
+        <v-list two-line v-if="value.length > 0">
+            <v-list-group v-model="isExpansion">
+                <template v-slot:activator>
+                    <v-list-item-content>
+                        <v-list-item-title>{{namePascalCase}}</v-list-item-title>
+                    </v-list-item-content>
+                </template>
+            
+                <v-list-item v-for="(item, idx) in value" :key="idx">
+                    <v-list-item-content>
+                        <v-list-item-title>Message \{{idx+1}}</v-list-item-title>
+                        <v-list-item-subtitle>
+                        {{#photoVO namePascalCase}}
+                            <v-img
+                                style="width:400px; height:300px; border-radius:10px; position:relative; margin-left:5px; top:5px;"
+                                :style="editMode ? 'cursor:pointer;':''"
+                                :src="item.imgFile ? item.imgFile:'https://cdn.vuetifyjs.com/images/cards/cooking.png'"
+                                class="mx-auto"
+                                @click="selectFile()"
+                            ></v-img><br>
+                        {{/photoVO}}
+                        {{#fieldDescriptors}}
+                            {{namePascalCase}} :  \{{item.{{nameCamelCase}} }} <br>
+                        {{/fieldDescriptors}}
+                        </v-list-item-subtitle>
+                    </v-list-item-content>
+                    <v-list-item-action v-if="editMode">
+                        <v-btn icon @click="deleteItem(item)">
+                            <v-icon small color="grey lighten-1">mdi-delete</v-icon>
+                        </v-btn>
+                    </v-list-item-action>
+                </v-list-item>
+            </v-list-group>
+        </v-list>
+
+        <{{namePascalCase}} v-if="editMode && tick" offline :isNew="true" :inList="true"
+                :editMode="editMode" v-model="newValue" @add="append">
+            <template slot="actions">
+                <v-spacer></v-spacer>
+                <v-btn
+                        color="deep-purple lighten-2"
+                        text
+                        @click="edit"
+                        v-if="!editMode"
+                >
+                    Edit
+                </v-btn>
+                
+                <v-btn
+                        color="deep-purple lighten-2"
+                        text
+                        @click="append(newValue)"
+                        v-else
+                >
+                    Add
+                </v-btn>
+                <v-btn
+                        color="deep-purple lighten-2"
+                        text
+                        @click="remove"
+                        v-if="!editMode"
+                >
+                    Delete
+                </v-btn>
+            </template>
+        </{{namePascalCase}}>
+    </div>
+</template>
+
+<script>
+    {{#checkVO namePascalCase}}
+    import {{namePascalCase}} from '../vo/{{namePascalCase}}.vue';
+    {{/checkVO}}
+    {{#checkEntityMember namePascalCase}}
+    import {{namePascalCase}} from '../{{namePascalCase}}.vue';
+    {{/checkEntityMember}}
+    {{#checkListOfEntityMember namePascalCase}}
+    import {{namePascalCase}} from '../{{namePascalCase}}.vue';
+    {{/checkListOfEntityMember}}
+
+    export default {
+        name: '{{namePascalCase}}Manager',
+        components: {
+            {{namePascalCase}}
+        },
+        props: {
+            value: [Object, String, Number, Boolean, Array],
+            offline: Boolean,
+            editMode: Boolean
+        },
+        data: () => ({
+            newValue: {},
+            tick : true,
+            isExpansion: false,
+        }),
+        async created() {
+            if (!this.value) {
+                this.value = [];
+            }
+
+            if(this.editMode){
+                this.isExpansion = true
+            }
+        },
+        methods: {
+            append(value){
+                this.tick = false
+                this.newValue = {}
+
+                if(!this.value){
+                    this.value = [];
+                }
+
+                this.value.push(value)
+                
+                this.$emit('input', this.value);
+
+                this.$nextTick(function(){
+                    this.tick=true
+                })
+            },
+            remove(value) {
+                var where = -1;
+                for (var i=0; i<this.value.length; i++) {
+                    if(this.value[i]._links.self.href == value._links.self.href) {
+                        where = i;
+                        break;
+                    }
+                }
+
+                if(where > -1) {
+                    this.value.splice(i, 1);
+                    this.$emit('input', this.value);
+                }
+            },
+            deleteItem(val) {
+                this.value.splice(this.value.indexOf(val), 1);
+                this.$emit('input', this.value);
+            },
+        }
+    };
+    
+</script>
+
+
+<function>
+    window.$HandleBars.registerHelper('print', function (value) {
+        console.log(value)
+    });
+
+    window.$HandleBars.registerHelper('classType', function (type, options) {
+        if(type.endsWith('Class')){
+            return true;
+        } else {
+            return false;
+        }
+    })
+
+    window.$HandleBars.registerHelper('checkCommandPut', function (info, options) {
+        if(info.endsWith('PUT')){
+            return options.fn(this);
+        } else {
+            options.inverse(this);
+        }
+    })
+
+    window.$HandleBars.registerHelper('checkCommandDelete', function (info, options) {
+        if(info.endsWith('DELETE')){
+            return options.fn(this);
+        } else {
+            options.inverse(this);
+        }
+    })
+
+    window.$HandleBars.registerHelper('checkCommandPost', function (info, options) {
+        if(info.endsWith('POST')) {
+            return options.fn(this);
+        } else {
+            options.inverse(this);
+        }
+    })
+
+    window.$HandleBars.registerHelper('isNotId', function (className) {
+        return (className != 'id')
+    })
+
+    window.$HandleBars.registerHelper('isPrimitive', function (className) {
+        if(className.includes("String") || className.includes("Integer") || className.includes("Long") || className.includes("Double") || className.includes("Float")
+                || className.includes("Boolean") || className.includes("Date")){
+            return true;
+        } else {
+            return false;
+        }
+    })
+
+    window.$HandleBars.registerHelper('getPrimitiveType', function (className) {
+        if(className.includes("String")) {
+            return "String";
+        } else if(className.includes("Integer") || className.includes("Long") || className.includes("Double") || className.includes("Float")) {
+            return "Number";
+        } else if(className.includes("Boolean")) {
+            return "Boolean";
+        } else if(className.includes("Date")) {
+            return "Date";
+        }
+    })
+
+    window.$HandleBars.registerHelper('checkVO', function (className, options) {
+        if(className.endsWith("Address") || className.endsWith("Photo") || className.endsWith("User") || className.endsWith("Email") 
+                || className.endsWith("Payment") || className.endsWith("Money") || className.endsWith("Weather") || className.endsWith("Rating") ){
+            return options.fn(this);
+        }
+    })
+
+     window.$HandleBars.registerHelper('photoVO', function (className, options) {
+        if( className.endsWith("Photo") ){
+            return options.fn(this);
+        }
+    })
+
+    window.$HandleBars.registerHelper('checkEntityMember', function (className, options) {
+        if(!(className.endsWith("Address") || className.endsWith("Photo") || className.endsWith("User") || className.endsWith("Email") 
+                || className.endsWith("Payment") || className.endsWith("Money") || className.endsWith("Weather") || className.endsWith("Rating")) && className.indexOf("java.") == -1 && className.indexOf("List") == -1){
+            return options.fn(this);
+        } else {
+            return options.inverse(this);
+        }
+    })
+
+    window.$HandleBars.registerHelper('checkListOfEntityMember', function (className, options) {
+        if(className.indexOf("List") == 0) {
+            return options.fn(this);
+        } else {
+            return options.inverse(this);
+        }
+    })
+
+    window.$HandleBars.registerHelper('getEntityClassNameOfList', function (listClassName) {
+        var regex = /\<(.*?)\>/g;
+        var match = regex.exec(listClassName);
+        if (match) {
+            return (match[1]);
+        }
+        return "NO-CLASS";
+    })
+
+    window.$HandleBars.registerHelper('setDefaultValue', function (className) {
+        var date = (new Date(Date.now() - (new Date()).getTimezoneOffset() * 60000)).toISOString().substr(0, 10);
+        if(className.endsWith("String")) {
+            return "''";
+        } else if(className.endsWith("Integer") || className.endsWith("Long") || className.endsWith("Double") || className.endsWith("Float")) {
+            return 0;
+        } else if(className.endsWith("Boolean")) {
+            return false;
+        } else if(className.endsWith("Date")) {
+            return "'" + date + "'";
+        } else if(className.includes("List")) {
+            return "[]"
+        } else {
+            return "{}"
+        }
+    })
+
+    window.$HandleBars.registerHelper('checkAggregation', function (relations, name, isVO, options) {
+        try {
+            var flag = false;
+            if(!isVO) {
+                if(relations) {
+                    for(var i = 0; i < relations.length; i ++ ){
+                        if(relations[i] != null) {
+                            if(relations[i].targetElement.name == name && relations[i].relationType.includes("Aggregation")) {
+                                if(relations[i] && relations[i].sourceMultiplicity == "1" && relations[i].targetMultiplicity == "1..n"){
+                                    // console.log(name)
+                                    flag = true;
+                                    return options.fn(this);
+                                } else if(relations[i] && relations[i].sourceMultiplicity == "1..n" && relations[i].targetMultiplicity == "1"){
+                                    flag = true;
+                                    return options.fn(this);
+                                } else if(relations[i] && relations[i].sourceMultiplicity == "1" && relations[i].targetMultiplicity == "1"){
+                                    flag = true;
+                                    return options.fn(this);
+                                }
+                            }
+                        }
+                    }
+                }
+                if(!flag){
+                    // console.log(flag)
+                    return options.inverse(this);
+                }
+                // console.log(flag)
+                return options.inverse(this);
+            }
+        } catch(e) {
+          console.log(e)
+        }      
+    });
+
+    window.$HandleBars.registerHelper('toURL', function (className) {
+
+        var pluralize = function(value, revert) {
+
+            var plural = {
+                '(quiz)$'               : "$1zes",
+                '^(ox)$'                : "$1en",
+                '([m|l])ouse$'          : "$1ice",
+                '(matr|vert|ind)ix|ex$' : "$1ices",
+                '(x|ch|ss|sh)$'         : "$1es",
+                '([^aeiouy]|qu)y$'      : "$1ies",
+                '(hive)$'               : "$1s",
+                '(?:([^f])fe|([lr])f)$' : "$1$2ves",
+                '(shea|lea|loa|thie)f$' : "$1ves",
+                'sis$'                  : "ses",
+                '([ti])um$'             : "$1a",
+                '(tomat|potat|ech|her|vet)o$': "$1oes",
+                '(bu)s$'                : "$1ses",
+                '(alias)$'              : "$1es",
+                '(octop)us$'            : "$1i",
+                '(ax|test)is$'          : "$1es",
+                '(us)$'                 : "$1es",
+                '([^s]+)$'              : "$1s"
+            };
+
+            var singular = {
+                '(quiz)zes$'             : "$1",
+                '(matr)ices$'            : "$1ix",
+                '(vert|ind)ices$'        : "$1ex",
+                '^(ox)en$'               : "$1",
+                '(alias)es$'             : "$1",
+                '(octop|vir)i$'          : "$1us",
+                '(cris|ax|test)es$'      : "$1is",
+                '(shoe)s$'               : "$1",
+                '(o)es$'                 : "$1",
+                '(bus)es$'               : "$1",
+                '([m|l])ice$'            : "$1ouse",
+                '(x|ch|ss|sh)es$'        : "$1",
+                '(m)ovies$'              : "$1ovie",
+                '(s)eries$'              : "$1eries",
+                '([^aeiouy]|qu)ies$'     : "$1y",
+                '([lr])ves$'             : "$1f",
+                '(tive)s$'               : "$1",
+                '(hive)s$'               : "$1",
+                '(li|wi|kni)ves$'        : "$1fe",
+                '(shea|loa|lea|thie)ves$': "$1f",
+                '(^analy)ses$'           : "$1sis",
+                '((a)naly|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)ses$': "$1$2sis",        
+                '([ti])a$'               : "$1um",
+                '(n)ews$'                : "$1ews",
+                '(h|bl)ouses$'           : "$1ouse",
+                '(corpse)s$'             : "$1",
+                '(us)es$'                : "$1",
+                's$'                     : ""
+            };
+
+            var irregular = {
+                'move'   : 'moves',
+                'foot'   : 'feet',
+                'goose'  : 'geese',
+                'sex'    : 'sexes',
+                'child'  : 'children',
+                'man'    : 'men',
+                'tooth'  : 'teeth',
+                'person' : 'people',
+                'index'  : 'indexes'
+            };
+
+            var uncountable = [
+                'sheep', 
+                'fish',
+                'deer',
+                'moose',
+                'series',
+                'species',
+                'money',
+                'rice',
+                'information',
+                'equipment'
+            ];
+
+            // save some time in the case that singular and plural are the same
+            // console.log("value = " + value)
+            if(uncountable.indexOf(value.toLowerCase()) >= 0) {
+                return this;
+            }
+
+            // check for irregular forms
+            for(var word in irregular){
+
+                if(revert) {
+                    var pattern = new RegExp(irregular[word]+'$', 'i');
+                    var replace = word;
+                } else {
+                    var pattern = new RegExp(word+'$', 'i');
+                    var replace = irregular[word];
+                }
+
+                if(pattern.test(value)) {
+                    return value.replace(pattern, replace);
+                }
+            }
+
+            if(revert) {
+                var array = singular;
+            } else {
+                var array = plural;
+            }
+
+            // check for matches using regular expressions
+            for(var reg in array) {
+
+                var pattern = new RegExp(reg, 'i');
+
+                if(pattern.test(value)) {
+                    return value.replace(pattern, array[reg]);
+                }
+            }
+
+            return value;
+        }
+
+        return pluralize(className.toLowerCase())
+    })
+
+</function>

@@ -1,0 +1,460 @@
+<template>
+    <div>
+        <v-row v-if="!generateDone" style="position:absolute; top:75px; right:35px; z-index:999;">
+            <v-progress-circular
+                indeterminate
+                color="primary"
+            ></v-progress-circular>
+            <div style="margin:5px 0px 0px 5px;">Creating Aggregate... <v-btn @click="stop" text>stop</v-btn></div>
+        </v-row>
+        <geometry-element
+                :selectable="selectable"
+                :movable="movable"
+                :resizable="resizable"
+                :deletable="deletable"
+                connectable
+                :id.sync="value.elementView.id"
+                :x.sync="elementCoordinate.x"
+                :y.sync="elementCoordinate.y"
+                :width.sync="elementCoordinate.width"
+                :height.sync="elementCoordinate.height"
+                :angle.sync="elementCoordinate.angle"
+                :customMoveActionExist="canvas.isCustomMoveExist"
+                v-on:customMoveAction="delayedMove"
+                v-on:moveShape="onMoveShape"
+                v-on:removeShape="onRemoveShape"
+                v-on:selectShape="selectedActivity"
+                v-on:deSelectShape="deSelectedActivity"
+                v-on:dblclick="openPanel"
+                v-on:rotateShape="onRotateShape"
+                v-on:addedToGroup="onAddedToGroup"
+                :label="getFieldDescriptors ? '': getNamePanel"
+                :image.sync="refreshedImg"
+                :_style="{
+                'label-angle':value.elementView.angle,
+                'font-weight': 'bold','font-size': '16'
+                }"
+        >
+            <!--v-on:dblclick="$refs['dialog'].open()"-->
+            <geometry-rect
+                    v-if="movingElement"
+                    :_style="{
+                        'fill-r': 1,
+                        'fill-cx': .1,
+                        'fill-cy': .1,
+                        'stroke-width': 1.4,
+                        'stroke': '#5FC08B',
+                        fill: '#5FC08B',
+                        'fill-opacity': .5,
+                        r: '1'
+                    }"
+            ></geometry-rect>
+
+            <geometry-rect
+                    v-else
+                    :_style="{
+                        'fill-r': 1,
+                        'fill-cx': .1,
+                        'fill-cy': .1,
+                        'stroke-width': 1.4,
+                        'stroke': '#5FC08B',
+                        fill: '#5FC08B',
+                        'fill-opacity': 1,
+                        r: '1'
+                    }"
+            ></geometry-rect>
+
+            <sub-elements v-for="(index) in newEditUserImg.length" :key="index">
+                <image-element
+                        v-bind:image="newEditUserImg[index-1].picture"
+                        :sub-width="'24px'"
+                        :sub-height="'24px'"
+                        :sub-right="(10*(index-1))+'px'"
+                        :sub-bottom="elementCoordinate.height"
+                >
+                </image-element>
+            </sub-elements>
+
+            <sub-elements>
+                <geometry-point
+                        :coordinate="[95,5]"
+                        :_style="statusCompleteStyle"
+                ></geometry-point>
+
+                <!--title-->
+                <text-element
+                        :sub-width="'100%'"
+                        :sub-height="titleH"
+                        :sub-top="0"
+                        :sub-left="0"
+                        :text="value.classReference ? value.classReference : '<< ReadModel >>'">
+                </text-element>
+
+                <text-element
+                        v-if="getFieldDescriptors"
+                        :sub-width="'100%'"
+                        :sub-height="subjectHeight"
+                        :sub-top="subjectTop"
+                        :sub-left="0"
+                        :subStyle="{'font-size': '16px', 'font-weight': 'bold'}"
+                        :text="getNamePanel"
+                ></text-element>
+
+                <text-element
+                        class="discStyle"
+                        v-if="getFieldDescriptors"
+                        :sub-width="'120%'"
+                        :sub-height="detailHeight"
+                        :sub-top="detailTop"
+                        :sub-left="detailLeft"
+                        :subStyle="{'font-size': '12px', 'text-anchor':'start'}"
+                        :text="getFieldDescriptors"
+                ></text-element>
+
+                <image-element
+                        v-if="showValidation"
+                        v-bind:image="showValidationImg"
+                        :sub-width="'20px'"
+                        :sub-height="'20px'"
+                        :sub-right="'5px'"
+                        :sub-bottom="'5px'"
+                ></image-element>
+                
+                <storming-sub-controller 
+                        :type="value._type"
+                        :value="value"
+                        :readOnly="isReadOnly"
+                ></storming-sub-controller>
+            </sub-elements>
+        </geometry-element>
+
+        <view-definition-panel
+                v-if="propertyPanel"
+                v-model="value"
+                :readOnly="!isEditElement"
+                :newEditUserImg="newEditUserImg"
+                :image="image"
+                :validationLists="filteredElementValidationResults"
+                @close="closePanel"
+                @changedPanelValue="changedPanelValue"
+                :generateDone.sync="generateDone"
+                :generator="generator"
+        ></view-definition-panel>
+
+    </div>
+</template>
+
+<script>
+    import Element from './EventStormingModelElement'
+    import ViewDefinitionPanel from "../panels/ViewDefinitionPanel";
+    import StormingSubController from "../../modeling/StormingSubController";
+    import Generator from "../../modeling/generators/ReadModelGenerator";
+
+    var changeCase = require('change-case');
+    var pluralize = require('pluralize');
+
+    export default {
+        mixins: [Element],
+        name: 'view-definition',
+        components:{
+            ViewDefinitionPanel,
+            'storming-sub-controller' : StormingSubController
+        },
+        computed: {
+            subjectTop() {
+                return 30
+            },
+            subjectHeight() {
+                return 8
+            },
+            detailHeight() {
+                var count = null
+                if(this.value.elementView.height <= 270){
+                    count = this.viewfieldDescriptorsCount
+                } else if(this.value.elementView.height > 270){
+                    count = this.value.fieldDescriptors.length
+                }
+                return this.subjectHeight + (count * 5)
+            },
+            detailLeft() {
+                var width = this.value.elementView.width * 0.1
+                return width
+            },
+            detailTop() {
+                return this.subjectTop + this.detailHeight
+            },
+            getFieldDescriptors() {
+                if (this.value.fieldDescriptors) {
+                    if (this.value.fieldDescriptors.length == 1
+                        && this.value.fieldDescriptors[0].name == 'id') {
+                        return false
+                    }
+
+                    var text = ''
+                    var value = 0
+                    if(this.value.elementView.height <= 100){
+                        value = 42
+                    } else if(this.value.elementView.height <= 150){
+                        value = 30
+                    } else if(this.value.elementView.height <= 270){
+                        value = 23
+                    } else if(this.value.elementView.height > 270){
+                        value = 17
+                    }
+                    var y = Math.ceil(this.value.elementView.height/value)
+                    this.viewfieldDescriptorsCount = y
+                    if(this.value.fieldDescriptors.length > y){
+                        for(var i = 0; i <= y; i++){
+                            if(i == y) text = text + 'ㆍ ' + this.value.fieldDescriptors[i].name + '  ...'
+                            else text = text + 'ㆍ ' + this.value.fieldDescriptors[i].name + '\n'
+                        }
+                    } else {
+                        this.value.fieldDescriptors.forEach(function (field) {
+                            text = text + 'ㆍ ' + field.name + '\n'
+                        })
+                    }
+                    return text
+
+                }
+                return null
+            },
+            // showError() {
+            //     var me = this
+            //     if (me.value.name == '' && !me.attachedBoundedContext) {
+            //         return 'Element must be in a Bounded Context and Must have a name.'
+            //     } else if (me.value.name == '') {
+            //         return 'Must have a name.'
+            //     } else if (!me.attachedBoundedContext) {
+            //         return 'Element must be in a Bounded Context.'
+            //     }
+            //     return null
+            // },
+            defaultStyle() {
+                return {}
+            },
+            className() {
+                return 'org.uengine.modeling.model.View'
+            },
+            createNew(canvas, elementId, x, y, width, height, description, label) {
+                return {
+                    _type: 'org.uengine.modeling.model.View',
+                    id: elementId,
+                    visibility : 'public',
+                    name: '',
+                    oldName: '',
+                    namePascalCase: '',
+                    namePlural: '',
+                    aggregate: {},
+                    description: null,
+                    author: null,
+                    boundedContext: {},
+                    fieldDescriptors: [
+                        {
+                            _type: "org.uengine.model.FieldDescriptor",
+                            name: "id",
+                            className: "Long",
+                            nameCamelCase: 'id',
+                            namePascalCase: 'Id',
+                            isKey: true
+                        }
+                    ],
+                    queryParameters:[],
+                    queryOption:{
+                        apiPath: "",
+                        useDefaultUri: true,
+                        multipleResult: false
+                    },
+                    controllerInfo: {url:""},
+                    elementView: {
+                        '_type': 'org.uengine.modeling.model.View',
+                        'id': elementId,
+                        'x': x,
+                        'y': y,
+                        'width': width,
+                        'height': height,
+                        'style': JSON.stringify({})
+                    },
+                    editingView: false,
+                    dataProjection: 'cqrs',
+                    createRules: [
+                        {
+                            _type: 'viewStoreRule',
+                            operation: 'CREATE',
+                            when: null,
+                            fieldMapping: [{"viewField": null, "eventField": null}],
+                            where: [{"viewField": null, "eventField": null}],
+                        }
+                    ],
+                    updateRules: [
+                        {
+                            _type: 'viewStoreRule',
+                            operation: 'UPDATE',
+                            when: null,
+                            fieldMapping: [{"viewField": null, "eventField": null}],
+                            where: [{"viewField": null, "eventField": null}],
+                        }
+                    ],
+                    deleteRules: [
+                        {
+                            _type: 'viewStoreRule',
+                            operation: 'DELETE',
+                            when: null,
+                            fieldMapping: [{"viewField": null, "eventField": null}],
+                            where: [{"viewField": null, "eventField": null}],
+                        }
+                    ],
+                }
+            },
+            input(){
+                let parent = this.$parent;
+                while(parent.$vnode.tag.indexOf('event-storming-model-canvas') == -1) parent = parent.$parent;
+
+                let model = Object.assign([], parent.value)
+
+                return{ 
+                    description: this.value.description,
+                    value: this.value,
+                    model: model,
+                }
+            },
+        },
+        data: function () {
+            return {
+                viewfieldDescriptorsCount: 0,
+                itemH: 20,
+                titleH: (this.value.classReference ? 60 : 30),
+                reference: this.value.classReference != null,
+                referenceClassName: this.value.classReference,
+                generateDone: true,
+                generator: null,
+            };
+        },
+        created: function () {
+            var me = this;
+            // this.image = `${window.location.protocol + "//" + window.location.host}/static/image/event/view.png`
+            me.init(); // generator
+        },
+        watch: {
+            "value.fieldDescriptors": {
+                deep: true,
+                handler: _.debounce(function (newVal, oldVal) {
+                    var me = this
+                    me.validate(false, null)
+                    me.refreshImg()
+                }, 200)
+            },
+        },
+        mounted: function () {
+        },
+        methods: {
+            init(){
+                this.generator = new Generator(this);
+            },
+            onModelCreated(model){
+                this.$EventBus.$emit('onModelCreated', model);
+            },
+            async onGenerationFinished(model){
+                this.generateDone = true;
+                this.$emit('update:generateDone', true);
+            },  
+            generate(){
+                this.generator.generate();
+                this.generateDone = false;           
+            },
+            stop(){
+                this.generator.stop()
+                this.generateDone = true
+            },
+            // close(){
+            //     this.closePanel()
+            // },
+            onMoveAction(){
+                this.$super(Element).onMoveAction()
+            },
+            validate(executeRelateToValidate, panelValue) {
+                var me = this
+                var notPK = false
+                var duplicateField = false
+                var executeValidate = executeRelateToValidate == false ? false :true
+                var validateValue = me.propertyPanel && panelValue ? panelValue : me.value
+
+                // Common
+                this.$super(Element).validate()
+
+                // execute Relate Validate ex) 자신의 element에서 다른 element의 validate 실행여부.
+                if(executeValidate) {
+
+                }
+
+                // Element
+                if(validateValue.name){
+                    var validationResultIndex = me.elementValidationResults.findIndex(x=> (x.code == me.ESE_NOT_NAME))
+                    var isExistValidationResult = validationResultIndex == -1 ? false: true
+                    if( isExistValidationResult ){
+                        me.elementValidationResults.splice(validationResultIndex,1)
+                    }
+                }else{
+                    var validationResultIndex = me.elementValidationResults.findIndex(x=> (x.code == me.ESE_NOT_NAME) )
+                    var isExistValidationResult = validationResultIndex == -1 ? false: true
+                    if( !isExistValidationResult ){
+                        me.elementValidationResults.push(me.validationFromCode(me.ESE_NOT_NAME))
+                    }
+                }
+
+                if(validateValue && validateValue.fieldDescriptors){
+                    notPK =  validateValue.fieldDescriptors.findIndex(fieldDescriptor => ( fieldDescriptor.isKey == true) ) == -1
+                    var filteredArray = validateValue.fieldDescriptors.filter(function(fieldDescriptor,index){
+                        const fRules = (element,idx) => element.name.toLowerCase() == fieldDescriptor.name.toLowerCase()
+                            && element.className == fieldDescriptor.className
+                            && idx != index ;
+                        return validateValue.fieldDescriptors.findIndex(fRules) == -1 ? false: true
+                    })
+
+                    if(filteredArray.length != 0 ){
+                        duplicateField = true
+                    }
+                }
+
+
+                if(notPK){
+                    var validationResultIndex = me.elementValidationResults.findIndex(x=> (x.code == me.ESE_NOT_PK) )
+                    if( validationResultIndex == -1 ){
+                        me.elementValidationResults.push(me.validationFromCode(me.ESE_NOT_PK))
+                        
+                    }
+                }else{
+                    var validationResultIndex = me.elementValidationResults.findIndex(x=> (x.code == me.ESE_NOT_PK))
+                    if( validationResultIndex != -1 ){
+                        me.elementValidationResults.splice(validationResultIndex,1)
+                    }
+                }
+
+                if(duplicateField){
+                    var validationResultIndex = me.elementValidationResults.findIndex(x=> (x.code == me.ESE_DUPLICATE_FIELD) )
+                    if( validationResultIndex == -1 ){
+                        me.elementValidationResults.push(me.validationFromCode(me.ESE_DUPLICATE_FIELD))
+                    }
+                }else{
+                    var validationResultIndex = me.elementValidationResults.findIndex(x=> (x.code == me.ESE_DUPLICATE_FIELD))
+                    if( validationResultIndex != -1 ){
+                        me.elementValidationResults.splice(validationResultIndex,1)
+                    }
+                }
+            }
+        }
+    }
+</script>
+
+
+
+
+<style scoped lang="scss" rel="stylesheet/scss">
+    .panel-title {
+        font-size: 25px;
+        color: #757575;
+    }
+    .cqrs-add-btn {
+        margin:5px 30px 50px 0;
+        color: #757575;
+    }
+</style>

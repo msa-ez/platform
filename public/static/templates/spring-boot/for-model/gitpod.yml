@@ -1,0 +1,4 @@
+fileName: .gitpod.yml
+---
+tasks:
+ - init: sudo chmod u+x init.sh && ./init.sh

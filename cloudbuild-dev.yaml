@@ -1,0 +1,55 @@
+steps:
+  ### Build
+  - id: 'install'
+    name: nikolaik/python-nodejs:python3.6-nodejs10
+    entrypoint: npm
+    args: ['install']
+  - id: 'create pem'
+    name: 'vishnunair/docker-mkcert'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        mkcert "*.msaez.io"
+  - id: 'source build'
+    name: nikolaik/python-nodejs:python3.6-nodejs10
+    entrypoint: npm
+    args: ['run','build']
+  - id: 'docker build'
+    name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo '$COMMIT_SHA =' $COMMIT_SHA
+        docker build -t gcr.io/$PROJECT_ID/eventstorming-ui-dev:$COMMIT_SHA .
+  ### Publish
+  - id: 'publish'
+    name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        docker push gcr.io/$PROJECT_ID/eventstorming-ui-dev:$COMMIT_SHA
+  - id: 'deploy'
+    name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        PROJECT=$$(gcloud config get-value core/project)
+        gcloud container clusters get-credentials "$${CLOUDSDK_CONTAINER_CLUSTER}" \
+          --project eventstorming-tool \
+          --zone "$${CLOUDSDK_COMPUTE_ZONE}"
+        cat <<EOF | kubectl set image deploy/msaschool-labs-dev msaschool-labs-dev=gcr.io/$PROJECT_ID/eventstorming-ui-dev:$COMMIT_SHA
+        EOF
+images:
+  - gcr.io/eventstorming-tool/eventstorming-ui-dev:$COMMIT_SHA
+timeout: 3600s
+options:
+  machineType: 'E2_HIGHCPU_8'
+  env:
+    #    # location/name of GKE cluster (used by all kubectl commands)
+    - CLOUDSDK_COMPUTE_ZONE=asia-northeast1-a
+    - CLOUDSDK_CONTAINER_CLUSTER=cluster-4
+

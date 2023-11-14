@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eventstorming-tool
+  labels:
+    name: eventstorming-tool
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eventstorming-tool
+  template:
+    metadata:
+      labels:
+        app: eventstorming-tool
+    spec:
+      containers:
+        - name: eventstorming-tool
+          env:
+            - name: VUE_APP_DB_HOST
+              value: {{ .Values.image.db.host }}
+            - name: VUE_APP_DB_PORT
+              value: "443"
+            - name: VUE_APP_DB_NAME
+              value: "mydb"
+            - name: VUE_APP_MODE
+              value: "onprem"
+            - name: VUE_APP_GITLAB
+              value: {{ .Values.image.gitlab.url }}
+            - name: VUE_APP_OAUTH_ID
+              value: {{ .Values.image.gitlab.oauth.id }}
+            - name: VUE_APP_OAUTH_SECRET
+              value: {{ .Values.image.gitlab.oauth.secret }}
+          image: {{ .Values.image.repository }}/{{ .Values.image.eventstorming }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acebase
+  labels:
+    name: acebase
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: acebase
+  template:
+    metadata:
+      labels:
+        app: acebase
+    spec:
+      containers:
+        - name: acebase
+          image: {{ .Values.image.repository }}/{{ .Values.image.acebase }}
+          env:
+            - name: DB_HOST
+              value: {{ .Values.db.host }}
+          volumeMounts:
+          - mountPath: /acebase
+            name: acebase
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+      volumes:
+      - name: acebase
+        persistentVolumeClaim:
+          claimName: acebase-pvc

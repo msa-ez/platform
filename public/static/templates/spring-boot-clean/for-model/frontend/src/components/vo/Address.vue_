@@ -1,0 +1,58 @@
+fileName: Address.vue
+path: frontend/src/components/vo
+---
+<template>
+    <div>
+        <v-card-title>
+            {{label}}
+        </v-card-title>
+        <v-card-text style = "margin-left:-15px;">
+            <div class="grey--text ml-4 address-v-text-field" v-if="editMode" style = "margin-top:-20px;">
+                <v-text-field label="Street" v-model="value.street"/>
+            </div>
+            <div class="grey--text ml-4" style="margin-top:-15px;" v-else>
+                Street :  \{{value.street }}
+            </div>
+            <div class="grey--text ml-4 address-v-text-field" v-if="editMode" style = "margin-top:-20px;">
+                <v-text-field label="City" v-model="value.city"/>
+            </div>
+            <div class="grey--text ml-4" v-else>
+                City : \{{value.city }}
+            </div>
+            <div class="grey--text ml-4 address-v-text-field" v-if="editMode" style = "margin-top:-20px;">
+                <v-text-field label="State" v-model="value.state"/>
+            </div>
+            <div class="grey--text ml-4" v-else>
+                State :  \{{value.state }}
+            </div>
+            <div class="grey--text ml-4 address-v-text-field" v-if="editMode" style = "margin-top:-20px;">
+                <v-text-field label="Zip" v-model="value.zip"/>
+            </div>
+            <div class="grey--text ml-4" v-else>
+                Zip :  \{{value.zip }}
+            </div>
+        </v-card-text>
+    </div>
+</template>
+
+<script>
+export default {
+    name:"Address",
+    props: {
+        editMode: Boolean,
+        value : Object,
+        label : String,
+    },
+
+    data: () => ({
+        date: new Date().toISOString().substr(0, 10),
+    }),
+    
+}
+</script>
+
+<style scoped>
+    .address-v-text-field {
+        margin-right:-30px;
+    }
+</style>

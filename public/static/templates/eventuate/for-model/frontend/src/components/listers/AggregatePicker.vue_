@@ -1,0 +1,311 @@
+forEach: Aggregate
+fileName: {{namePascalCase}}Picker.vue
+path: frontend/src/components/listers
+---
+<template>
+    <div>
+        <v-card-title @click="openDialog" style="cursor: pointer;">
+            {{namePascalCase}} : {{#aggregateRoot.fieldDescriptors}}{{#isName}} \{{ referenceValue.{{nameCamelCase}} }} {{/isName}}{{/aggregateRoot.fieldDescriptors}}
+        </v-card-title>
+
+        <v-dialog v-model="pickerDialog">
+            <v-card>
+                <v-card-title>{{namePascalCase}}</v-card-title>
+                <v-card-text>
+                    <v-list two-line v-if="list.length > 0">
+                        <v-list-item-group 
+                                v-model="selected" 
+                                color="indigo"
+                                @change="select"
+                        >
+                            <v-list-item v-for="(item, idx) in list" :key="idx">
+                                <template v-slot:default="{ active }">
+                                    <v-list-item-avatar color="grey darken-1">
+                                    {{#aggregateRoot.fieldDescriptors}}
+                                        {{#isLob}}
+                                        <v-img :src="item.{{nameCamelCase}}"></v-img>
+                                        {{/isLob}}
+                                    {{/aggregateRoot.fieldDescriptors}}
+                                    </v-list-item-avatar>
+                                    
+                                    <v-list-item-content>
+                                        <v-list-item-title>
+                                        {{#aggregateRoot.fieldDescriptors}}
+                                        {{#isName}}
+                                            \{{item.{{nameCamelCase}} }}
+                                        {{/isName}}
+                                        {{/aggregateRoot.fieldDescriptors}}
+                                        </v-list-item-title>
+                                        {{#aggregateRoot.fieldDescriptors}}
+                                        {{#if (isNotId nameCamelCase)}}
+                                        {{^isLob}}
+                                        <v-list-item-subtitle>
+                                            {{namePascalCase}} :  \{{item.{{nameCamelCase}} }}
+                                        </v-list-item-subtitle>
+                                        {{/isLob}}
+                                        {{/if}}
+                                        {{/aggregateRoot.fieldDescriptors}}
+                                    </v-list-item-content>
+
+                                    <v-list-item-action>
+                                        <v-checkbox :input-value="active" color="indigo"></v-checkbox>
+                                    </v-list-item-action>
+                                </template>
+                            </v-list-item>
+                        </v-list-item-group>
+                    </v-list>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="deep-purple lighten-2" text @click="pickerDialog = false">Close</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+    </div>
+</template>
+
+
+<script>
+    const axios = require('axios').default;
+
+    export default {
+        name: '{{namePascalCase}}Picker',
+        props: {
+            value: [String, Object, Array, Number, Boolean],
+            editMode: Boolean,
+        },
+        data: () => ({
+            list: [],
+            selected: null,
+            referenceValue: null,
+            pickerDialog: false,
+        }),
+        async created() {
+            var me = this;
+            var temp = await axios.get(axios.fixUrl('/{{namePlural}}'))
+            if(temp.data) {
+                {{#if (checkGeneralization aggregateRoot.entities.relations nameCamelCase)}}
+                if(temp.data._embedded) {
+                    Object.values(temp.data._embedded).forEach(function(val) {
+                        if(val.length > 0) {
+                            me.list = [...me.list, ...val]
+                        }
+                    })
+                }
+                {{else}}
+                me.list = temp.data._embedded.{{namePlural}};
+                {{/if}}
+            }
+
+            if(me.value && typeof me.value == "object" && Object.values(me.value)[0]) {
+                {{#aggregateRoot.fieldDescriptors}}
+                {{#isKey}}var idKey = '{{nameCamelCase}}'{{/isKey}}
+                {{/aggregateRoot.fieldDescriptors}}
+                var id = me.value[idKey];
+                var tmpValue = await axios.get(axios.fixUrl('/{{namePlural}}/' + id))
+                if(tmpValue.data) {
+                    var val = tmpValue.data
+                    {{#aggregateRoot.fieldDescriptors}}
+                    {{#isName}}me.selected = me.list.findIndex((item) => item.{{nameCamelCase}} == val.{{nameCamelCase}}){{/isName}}
+                    {{/aggregateRoot.fieldDescriptors}}
+                    me.referenceValue = val
+                }
+            }
+        },
+        methods: {
+            openDialog() {
+                if (this.editMode) {
+                    this.pickerDialog = true
+                } else {
+                    {{#aggregateRoot.fieldDescriptors}}
+                    {{#isKey}}var idKey = '{{nameCamelCase}}'{{/isKey}}
+                    {{/aggregateRoot.fieldDescriptors}}
+                    var id = this.value[idKey];
+                    var path = '/{{#toURL namePascalCase}}{{/toURL}}/';
+                    this.$router.push(path + id);
+                }
+            },
+            select(val) {
+                var obj = {}
+                if(val != undefined) {
+                    var arr = this.list[val]._links.self.href.split('/');
+                    {{#aggregateRoot.fieldDescriptors}}
+                    {{#isKey}}obj['{{nameCamelCase}}'] = arr[4]; {{/isKey}}
+                    {{/aggregateRoot.fieldDescriptors}}
+                    this.$emit('selected', obj);
+                    this.referenceValue = this.list[val];
+                }
+            },
+        },
+    };
+</script>
+
+
+<function>
+    window.$HandleBars.registerHelper('isNotId', function (className) {
+        return (className != 'id')
+    });
+
+    window.$HandleBars.registerHelper('checkGeneralization', function (relations, name) {
+        try {
+            if (typeof relations == "undefined") {
+                return 
+            } else {
+                for (var i = 0; i < relations.length; i ++ ) {
+                    if (relations[i] != null) {
+                        if (relations[i].targetElement != "undefined") {
+                            if(relations[i].targetElement.name.toLowerCase() == name && relations[i].relationType.includes("Generalization")) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+        } catch(e) {
+            console.log(e)
+        }
+    });
+
+    window.$HandleBars.registerHelper('isGeneralization', function (toName, name, type) {
+        try {
+            if(toName == null || name == null || type == null) {
+                return false;
+            } else {
+                if(toName == name && type.includes("Generalization")) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        } catch(e) {
+            console.log(e)
+        }
+    });
+
+    window.$HandleBars.registerHelper('toURL', function (className) {
+
+        var pluralize = function(value, revert) {
+
+            var plural = {
+                '(quiz)$'               : "$1zes",
+                '^(ox)$'                : "$1en",
+                '([m|l])ouse$'          : "$1ice",
+                '(matr|vert|ind)ix|ex$' : "$1ices",
+                '(x|ch|ss|sh)$'         : "$1es",
+                '([^aeiouy]|qu)y$'      : "$1ies",
+                '(hive)$'               : "$1s",
+                '(?:([^f])fe|([lr])f)$' : "$1$2ves",
+                '(shea|lea|loa|thie)f$' : "$1ves",
+                'sis$'                  : "ses",
+                '([ti])um$'             : "$1a",
+                '(tomat|potat|ech|her|vet)o$': "$1oes",
+                '(bu)s$'                : "$1ses",
+                '(alias)$'              : "$1es",
+                '(octop)us$'            : "$1i",
+                '(ax|test)is$'          : "$1es",
+                '(us)$'                 : "$1es",
+                '([^s]+)$'              : "$1s"
+            };
+
+            var singular = {
+                '(quiz)zes$'             : "$1",
+                '(matr)ices$'            : "$1ix",
+                '(vert|ind)ices$'        : "$1ex",
+                '^(ox)en$'               : "$1",
+                '(alias)es$'             : "$1",
+                '(octop|vir)i$'          : "$1us",
+                '(cris|ax|test)es$'      : "$1is",
+                '(shoe)s$'               : "$1",
+                '(o)es$'                 : "$1",
+                '(bus)es$'               : "$1",
+                '([m|l])ice$'            : "$1ouse",
+                '(x|ch|ss|sh)es$'        : "$1",
+                '(m)ovies$'              : "$1ovie",
+                '(s)eries$'              : "$1eries",
+                '([^aeiouy]|qu)ies$'     : "$1y",
+                '([lr])ves$'             : "$1f",
+                '(tive)s$'               : "$1",
+                '(hive)s$'               : "$1",
+                '(li|wi|kni)ves$'        : "$1fe",
+                '(shea|loa|lea|thie)ves$': "$1f",
+                '(^analy)ses$'           : "$1sis",
+                '((a)naly|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)ses$': "$1$2sis",        
+                '([ti])a$'               : "$1um",
+                '(n)ews$'                : "$1ews",
+                '(h|bl)ouses$'           : "$1ouse",
+                '(corpse)s$'             : "$1",
+                '(us)es$'                : "$1",
+                's$'                     : ""
+            };
+
+            var irregular = {
+                'move'   : 'moves',
+                'foot'   : 'feet',
+                'goose'  : 'geese',
+                'sex'    : 'sexes',
+                'child'  : 'children',
+                'man'    : 'men',
+                'tooth'  : 'teeth',
+                'person' : 'people',
+                'index'  : 'indexes'
+            };
+
+            var uncountable = [
+                'sheep', 
+                'fish',
+                'deer',
+                'moose',
+                'series',
+                'species',
+                'money',
+                'rice',
+                'information',
+                'equipment'
+            ];
+
+            // save some time in the case that singular and plural are the same
+            // console.log("value = " + value)
+            if(uncountable.indexOf(value.toLowerCase()) >= 0) {
+                return this;
+            }
+
+            // check for irregular forms
+            for(var word in irregular){
+
+                if(revert) {
+                    var pattern = new RegExp(irregular[word]+'$', 'i');
+                    var replace = word;
+                } else {
+                    var pattern = new RegExp(word+'$', 'i');
+                    var replace = irregular[word];
+                }
+
+                if(pattern.test(value)) {
+                    return value.replace(pattern, replace);
+                }
+            }
+
+            if(revert) {
+                var array = singular;
+            } else {
+                var array = plural;
+            }
+
+            // check for matches using regular expressions
+            for(var reg in array) {
+
+                var pattern = new RegExp(reg, 'i');
+
+                if(pattern.test(value)) {
+                    return value.replace(pattern, array[reg]);
+                }
+            }
+
+            return value;
+        }
+
+        return pluralize(className.toLowerCase())
+    });
+
+</function>

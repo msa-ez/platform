@@ -1,0 +1,39 @@
+{
+    "url": "www.msaez.io/{{URL}}"{{checkGit boundedContexts}}{{#if gitURL}},{{/if}}
+    {{#if gitURL}}
+    "model": "{{gitURL}}"
+    {{else}}
+    {{{gitLists boundedContexts}}}
+    {{/if}}
+}
+
+<function>
+window.$HandleBars.registerHelper('checkGit', function (boundedContexts, options) {
+    var result;
+    boundedContexts.some(function(bounded, idx){
+        if(bounded.gitURL) {
+            result = ","
+            return true
+        }
+    })
+    return result;
+});
+window.$HandleBars.registerHelper('gitLists', function (boundedContexts, options) {
+    var result = "";
+    boundedContexts.forEach(function(bounded, idx){
+        if(bounded.gitURL) {
+            if(idx != 0)
+                result = result.concat(",    ")
+
+            var concatString = `"${bounded.name}" : "${bounded.gitURL}"`
+            result = result.concat(concatString);
+        }
+        if(idx == boundedContexts.length - 1) {
+            result = result.replace(/\,/gi, "\,\n");
+            console.log(result)
+            return result
+        }
+    })
+    return result
+});
+</function>

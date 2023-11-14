@@ -1,0 +1,8 @@
+# apiVersion: v1
+# data:
+#   secretAccessKey: N1ZaR214RnZBY1dGTG1tNzlzQUxuUkN5ZGllTktVWG5VQmpsZk1LcQo=
+# kind: Secret
+# metadata:
+#   name: tls-msastudy
+#   namespace: cert-manager
+# type: Opaque

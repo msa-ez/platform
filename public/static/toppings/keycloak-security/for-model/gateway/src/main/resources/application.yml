@@ -1,0 +1,94 @@
+server:
+  port: 8088
+
+---
+
+keycloak-client:
+  server-url: http://localhost:9090
+  realm: master
+
+spring:
+  profiles: default
+  cloud:
+    gateway:
+      routes:
+        {{#boundedContexts}}
+        - id: {{name}}
+          uri: http://localhost:{{portGenerated}}
+          predicates:
+            - Path={{#aggregates}}/{{namePlural}}/**{{/aggregates}} {{#views}}/{{namePlural}}/**{{/views}}
+        {{/boundedContexts}}
+        - id: frontend
+          uri: http://localhost:8080
+          predicates:
+            - Path=/**
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOriginPatterns:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: ${keycloak-client.server-url}/realms/${keycloak-client.realm}
+            user-name-attribute: preferred_username
+        registration:
+          keycloak:
+            client-id: "<client-id>"
+            client-secret: 
+            redirect-uri: "gateway-path/login/oauth2/code/client-name"
+            authorization-grant-type: authorization_code
+            scope: openid
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${keycloak-client.server-url}/realms/${keycloak-client.realm}/protocol/openid-connect/certs
+
+---
+spring:
+  profiles: docker
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: ${keycloak-client.server-url}/realms/${keycloak-client.realm}
+            user-name-attribute: preferred_username
+        registration:
+          keycloak:
+            client-id: "<client-id>"
+            client-secret: 
+            redirect-uri: "{baseUrl}/login/oauth2/code/keycloak"
+            authorization-grant-type: authorization_code
+            scope: openid
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${keycloak-client.server-url}/realms/${keycloak-client.realm}/protocol/openid-connect/certs
+  cloud:
+    gateway:
+      routes:
+        {{#boundedContexts}}
+        - id: {{name}}
+          uri: http://{{name}}:8080
+          predicates:
+            - Path={{#aggregates}}/{{namePlural}}/**{{/aggregates}} {{#views}}/{{namePlural}}/**{{/views}}
+        {{/boundedContexts}}
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+server:
+  port: 8080

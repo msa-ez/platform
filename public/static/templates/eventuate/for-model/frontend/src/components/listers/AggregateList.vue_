@@ -1,0 +1,293 @@
+forEach: Aggregate
+fileName: {{namePascalCase}}List.vue
+path: frontend/src/components/listers
+---
+<template>
+    <div>
+        <v-list two-line>
+            <template>
+                <v-list-item v-for="(data, n) in values" :key="n">
+                    <v-list-item-avatar color="grey darken-1">
+                        <v-img :src="data.photo ? data.photo:'https://cdn.vuetifyjs.com/images/cards/cooking.png'"/>
+                    </v-list-item-avatar>
+
+                    <v-list-item-content>
+                        <v-list-item-title style="margin-bottom:10px;">
+                        {{#aggregateRoot.fieldDescriptors}}
+                            {{#isName}} {{namePascalCase}} {{/isName}}
+                        {{/aggregateRoot.fieldDescriptors}}
+                        </v-list-item-title>
+
+                        <v-list-item-subtitle style="font-size:25px; font-weight:700;">
+                        {{#aggregateRoot.fieldDescriptors}}
+                            [ {{namePascalCase}} :  \{{data.{{nameCamelCase}} }} ] &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        {{/aggregateRoot.fieldDescriptors}}                        
+                        </v-list-item-subtitle>
+
+                    </v-list-item-content>
+                </v-list-item>
+
+                <v-divider v-if="n !== 6" :key="`divider-${n}`" inset></v-divider>
+            </template>
+        </v-list>
+
+        <v-col style="margin-bottom:40px;">
+            <div class="text-center">
+                <v-dialog
+                        v-model="openDialog"
+                        width="332.5"
+                        fullscreen
+                        hide-overlay
+                        transition="dialog-bottom-transition"
+                >
+                    <template v-slot:activator="{ on, attrs }">
+                        <v-fab-transition>
+                            <v-btn
+                                    color="blue"
+                                    fab
+                                    dark
+                                    large
+                                    style="position:absolute; bottom: 5%; right: 2%; z-index:99"
+                                    @click="openDialog=true;"
+                            >
+                                <v-icon v-bind="attrs" v-on="on">mdi-plus</v-icon>
+                            </v-btn>
+                        </v-fab-transition>
+                    </template>
+
+                    <{{namePascalCase}} :offline="offline" class="video-card" :isNew="true" :editMode="true" v-model="newValue" @add="append" v-if="tick"/>
+                
+                    <v-btn
+                            style="postition:absolute; top:2%; right:2%"
+                            @click="closeDialog()"
+                            depressed 
+                            icon 
+                            absolute
+                    >
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                </v-dialog>
+            </div>
+        </v-col>
+    </div>
+</template>
+
+<script>
+    const axios = require('axios').default;
+    import {{namePascalCase}} from './../{{namePascalCase}}.vue';
+
+    export default {
+        name: '{{namePascalCase}}Manager',
+        components: {
+            {{namePascalCase}},
+        },
+        props: {
+            offline: Boolean,
+            editMode: Boolean,
+            isNew: Boolean
+        },
+        data: () => ({
+            values: [],
+            newValue: {},
+            tick : true,
+            openDialog : false,
+        }),
+        async created() {
+            if(this.offline){
+                if(!this.values) this.values = [];
+                return;
+            } 
+
+            var temp = await axios.get(axios.fixUrl('/{{toURL nameCamelCase}}'))
+            temp.data._embedded.{{toURL nameCamelCase}}.map(obj => obj.id=obj._links.self.href.split("/")[obj._links.self.href.split("/").length - 1])
+            this.values = temp.data._embedded.{{toURL nameCamelCase}};
+            
+            this.newValue = {
+            {{#aggregateRoot.fieldDescriptors}}
+            {{#if (isNotId nameCamelCase)}}
+                '{{nameCamelCase}}': {{#setDefaultValue className isVO}}{{/setDefaultValue}},
+            {{/if}}
+            {{/aggregateRoot.fieldDescriptors}}
+            }
+        },
+        methods: {
+            closeDialog(){
+                this.openDialog = false
+            },
+            append(value){
+                this.tick = false
+                this.newValue = {}
+                this.values.push(value)
+                
+                this.$emit('input', this.values);
+
+                this.$nextTick(function(){
+                    this.tick=true
+                })
+            }
+        },
+    };
+</script>
+
+
+<style>
+    .video-card {
+        width:300px; 
+        margin-left:4.5%; 
+        margin-top:50px; 
+        margin-bottom:50px;
+    }
+</style>
+
+
+<function>
+    window.$HandleBars.registerHelper('isNotId', function (className) {
+        return (className != 'id')
+    })
+
+    window.$HandleBars.registerHelper('setDefaultValue', function (className, isVO) {
+        var date = (new Date(Date.now() - (new Date()).getTimezoneOffset() * 60000)).toISOString().substr(0, 10);
+        if(className.endsWith("String")) {
+            return "''";
+        } else if(className.endsWith("Integer") || className.endsWith("Long") || className.endsWith("Double") || className.endsWith("Float")) {
+            return "0";
+        } else if(className.endsWith("Boolean")) {
+            return "false";
+        } else if(className.endsWith("Date")) {
+            return "'" + date + "'";
+        } else if(className.includes("List")) {
+            return "[]";
+        } else {
+            if(isVO) {
+               return "{}";
+            } else {
+                return "''";
+            }
+        }
+    })
+
+    window.$HandleBars.registerHelper('toURL', function (className) {
+
+        var pluralize = function(value, revert) {
+
+            var plural = {
+                '(quiz)$'               : "$1zes",
+                '^(ox)$'                : "$1en",
+                '([m|l])ouse$'          : "$1ice",
+                '(matr|vert|ind)ix|ex$' : "$1ices",
+                '(x|ch|ss|sh)$'         : "$1es",
+                '([^aeiouy]|qu)y$'      : "$1ies",
+                '(hive)$'               : "$1s",
+                '(?:([^f])fe|([lr])f)$' : "$1$2ves",
+                '(shea|lea|loa|thie)f$' : "$1ves",
+                'sis$'                  : "ses",
+                '([ti])um$'             : "$1a",
+                '(tomat|potat|ech|her|vet)o$': "$1oes",
+                '(bu)s$'                : "$1ses",
+                '(alias)$'              : "$1es",
+                '(octop)us$'            : "$1i",
+                '(ax|test)is$'          : "$1es",
+                '(us)$'                 : "$1es",
+                '([^s]+)$'              : "$1s"
+            };
+
+            var singular = {
+                '(quiz)zes$'             : "$1",
+                '(matr)ices$'            : "$1ix",
+                '(vert|ind)ices$'        : "$1ex",
+                '^(ox)en$'               : "$1",
+                '(alias)es$'             : "$1",
+                '(octop|vir)i$'          : "$1us",
+                '(cris|ax|test)es$'      : "$1is",
+                '(shoe)s$'               : "$1",
+                '(o)es$'                 : "$1",
+                '(bus)es$'               : "$1",
+                '([m|l])ice$'            : "$1ouse",
+                '(x|ch|ss|sh)es$'        : "$1",
+                '(m)ovies$'              : "$1ovie",
+                '(s)eries$'              : "$1eries",
+                '([^aeiouy]|qu)ies$'     : "$1y",
+                '([lr])ves$'             : "$1f",
+                '(tive)s$'               : "$1",
+                '(hive)s$'               : "$1",
+                '(li|wi|kni)ves$'        : "$1fe",
+                '(shea|loa|lea|thie)ves$': "$1f",
+                '(^analy)ses$'           : "$1sis",
+                '((a)naly|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)ses$': "$1$2sis",
+                '([ti])a$'               : "$1um",
+                '(n)ews$'                : "$1ews",
+                '(h|bl)ouses$'           : "$1ouse",
+                '(corpse)s$'             : "$1",
+                '(us)es$'                : "$1",
+                's$'                     : ""
+            };
+
+            var irregular = {
+                'move'   : 'moves',
+                'foot'   : 'feet',
+                'goose'  : 'geese',
+                'sex'    : 'sexes',
+                'child'  : 'children',
+                'man'    : 'men',
+                'tooth'  : 'teeth',
+                'person' : 'people',
+                'index'  : 'indexes'
+            };
+
+            var uncountable = [
+                'sheep',
+                'fish',
+                'deer',
+                'moose',
+                'series',
+                'species',
+                'money',
+                'rice',
+                'information',
+                'equipment'
+            ];
+
+            // save some time in the case that singular and plural are the same
+            // console.log("value = " + value)
+            if(uncountable.indexOf(value.toLowerCase()) >= 0) {
+                return this;
+            }
+
+            // check for irregular forms
+            for(var word in irregular) {
+                if(revert) {
+                    var pattern = new RegExp(irregular[word]+'$', 'i');
+                    var replace = word;
+                } else {
+                    var pattern = new RegExp(word+'$', 'i');
+                    var replace = irregular[word];
+                }
+                if(pattern.test(value)) {
+                    return value.replace(pattern, replace);
+                }
+            }
+
+            if(revert) {
+                var array = singular;
+            } else {
+                var array = plural;
+            }
+
+            // check for matches using regular expressions
+            for(var reg in array) {
+                var pattern = new RegExp(reg, 'i');
+
+                if(pattern.test(value)) {
+                    return value.replace(pattern, array[reg]);
+                }
+            }
+
+            return value;
+        }
+        //console.log(className)
+        //console.log(pluralize(className.toLowerCase()))
+        return pluralize(className.toLowerCase())
+        //return (className.toLowerCase())
+    })
+
+</function>

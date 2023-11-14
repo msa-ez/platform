@@ -1,0 +1,26 @@
+spring:
+  jpa:
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+
+---
+spring:
+  profiles: default
+server:
+  port: 8090
+
+#logging:
+#  level:
+#    org.springframework: debug
+---
+spring:
+  profiles: docker
+
+server:
+  port: 8080
+
