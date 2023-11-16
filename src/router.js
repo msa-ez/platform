@@ -63,10 +63,10 @@ const ClazzListPage = () =>
   import(
     /* webpackChunkName: "ClazzListPage" */ "./components/labs/ClazzListPage"
   );
-const labAdminTest = () =>
-  import(
-    /* webpackChunkName: "labAdminTest" */ "./components/labs/labAdminTest"
-  );
+// const labAdminTest = () =>
+//   import(
+//     /* webpackChunkName: "labAdminTest" */ "./components/labs/labAdminTest"
+//   );
 const ManagePurchaseItemListPage = () =>
   import(
     /* webpackChunkName: "ManagePurchaseItemListPage" */ "./components/ManagePurchaseItemListPage"
@@ -197,11 +197,11 @@ var options = {
         name: "classList",
         component: ClazzListPage,
     },
-    {
-        path: "/courses/labAdminTest",
-        name: "labAdminTest",
-        component: labAdminTest,
-    },
+    // {
+    //     path: "/courses/labAdminTest",
+    //     name: "labAdminTest",
+    //     component: labAdminTest,
+    // },
     {
         path: "/manager",
         name: "ManagePurchaseItemListPage",
