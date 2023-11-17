@@ -6,7 +6,7 @@ const _ = require("lodash");
 const host = process.env.DB_HOST;
 const dbname = "mydb";
 const server = new AceBaseServer(dbname, {
-    host: "localhost",
+    host: "0.0.0.0",
     port: 5757,
     // storage: {
     //     path: "/acebase"

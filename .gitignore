@@ -8,11 +8,11 @@ authorized_keys
 .env.local
 .env.*.local
 .env
-/public/static/env.txt
 .git-back
 .firebase
 pusher
-*.acebase
+*.db
+*.idx
 
 # Log files
 npm-debug.log*

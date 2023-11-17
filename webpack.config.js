@@ -43,10 +43,4 @@ module.exports = {
             },
         ],
     },
-
-    devServer: {
-        host: "http://es2cd.io",
-        port: 8080,
-        disableHostCheck: true,
-    },
 };
