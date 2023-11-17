@@ -43,7 +43,6 @@
 </template>
 
 <script>
-    var Minio = require('minio');
     import LogViewer from './LogViewer'
 
     export default {
@@ -115,28 +114,6 @@
             },
             getLog(labName) {
                 var me = this
-                var stream = this.$minioClient.listObjects('labs', this.$route.params.course + '/runningClass/' + this.$route.params.clazzName + '/' + labName + '/' + window.localStorage.getItem('email') + '/', false);
-                stream.on('data', function (data) {
-                    if (data.name) {
-                        if (data.name.includes('result.log')) {
-                            me.$minioClient.getObject('labs', data.name, function (err, dataStream) {
-                                if (err) {
-                                    clearInterval(labName)
-                                    return console.log(err)
-                                }
-                                dataStream.on('data', function (chunk) {
-                                    var string = new TextDecoder("utf-8").decode(chunk);
-                                    var testLog = string.replace(/[\n\r]/g, '')
-                                    me.labsList[labName].checkPoints.forEach(function (item, idx) {
-                                        me.labsList[labName].checkPoints[idx]["status"] = me.checkingCheckPoint(item, string)
-                                    })
-                                    me.$set(me.labsList[labName], 'logs', string);
-                                    me.$EventBus.$emit('updateLog', string)
-                                })
-                            })
-                        }
-                    }
-                })
             },
             async startLab(lab, key, index) {
                 var me = this
@@ -167,44 +144,7 @@
                 var me = this
                 // kubernetes1/runningClass/sk1st/
                 var labsPath = `${this.$route.params.course}/runningClass/${this.$route.params.clazzName}/`
-                var stream = this.$minioClient.listObjects('labs', labsPath, true)
-                stream.on('data', function (obj) {
-                    if (obj.name.includes('Class_Metadata'))
-                        me.$minioClient.getObject('labs', obj.name, function (err, dataStream) {
-                            if (err) {
-                                return console.log(err)
-                            }
-                            dataStream.on('data', function (chunk) {
-                                var string = new TextDecoder("utf-8").decode(chunk);
-                                var json = JSON.parse(string)
-                                var tmpArray = labsPath.split('/');
-                                var path = tmpArray[0] + '/planed/'
-                                json.labsList.forEach(function (lab) {
-                                    var labStream = me.$minioClient.listObjects('labs', path + lab, true)
-                                    labStream.on('data', function (obj) {
-                                        if (obj.name.includes('Lab_Metadata.json')) {
-                                            me.$minioClient.getObject('labs', obj.name, function (err, labDataStream) {
-                                                if (err) {
-                                                    return console.log(err)
-                                                }
-                                                labDataStream.on('data', function (labChunk) {
-                                                    var string = new TextDecoder("utf-8").decode(labChunk);
-                                                    var json = JSON.parse(string)
-                                                    json["overlay"] = false;
-                                                    // me.labsList.push(json)
-                                                    me.$set(me.labsList, lab, json)
-                                                })
-                                            })
-                                        }
-                                    })
-                                })
-
-                            })
-                        })
-                })
-                stream.on('error', function (err) {
-                    console.log(err)
-                })
+                
             },
             hashCode(s) {
                 return s.split("").reduce(function (a, b) {
@@ -225,211 +165,12 @@
             async startIDE(labs, templateFlie, idx) {
                 var me = this
                 // me.overlay = true
-                var email = window.localStorage.getItem('email')
-                var lab = labs.replace(/\s/g, '_');
-
-                var course = me.$route.params.course;
-                var clazz = me.$route.params.clazzName
-                var filePath = course + '/runningClass/' + clazz + '/' + lab + '/' + email;
-                var hashName = "labs-" + me.hashCode(filePath);
-                var ideExistChecked = await this.ideExistCheck(hashName);
-                if (ideExistChecked) {
-                    me.labsList[idx].overlay = false;
-                    Object.keys(me.labsList).forEach(function (key) {
-                        if (key != labs) {
-                            clearInterval(me.labsList[key].logInterval)
-                        }
-                    })
-                    var instruction = await me.getInstruction(labs);
-                    var emitData = {
-                        "labName": labs,
-                        "ideURL": `${me.getProtocol()}//${hashName}.msaez.io`,
-                        "instruction": instruction,
-                        "checkPoints": me.labsList[idx].checkPoints,
-                        "hints": me.labsList[idx].hints,
-                    }
-
-                    me.$EventBus.$on('clearInterval', function (intervalLab) {
-                        console.log("clearInterVal", me.labsList[intervalLab])
-                        clearInterval(me.labsList[intervalLab].logInterval)
-                    })
-                    me.$EventBus.$emit('ide-open', emitData)
-                }
-                // console.log("unzip", "-n", `/home/project/${course}/${labs}/${templateFlie}.zip`, "-d", `/home/project/${filePath}`);
-                me.$http.post(`${me.getProtocol()}//api.${me.getTenantId()}/api/v1/namespaces/default/pods`, {
-                    "apiVersion": "v1",
-                    "kind": "Pod",
-                    "metadata": {
-                        "name": `${hashName}`,
-                        "labels": {
-                            "environment": "labs",
-                            "app": `${hashName}`
-                        }
-                    },
-                    "spec": {
-                        "initContainers": [
-                            {
-                                "name": "mkdir",
-                                "image": "busybox",
-                                "command": ["mkdir", "-p", `/home/project/${filePath}/${templateFlie}`],
-                                "volumeMounts": [
-                                    {
-                                        "mountPath": "/home/project",
-                                        "name": "test-storage",
-                                        "subPath": "labs"
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "unzip",
-                                "image": "busybox",
-                                "command": ["unzip", "-n", `/home/project/${course}/planed/${labs}/${templateFlie}`, "-d", `/home/project/${filePath}/${templateFlie}`],
-                                "volumeMounts": [
-                                    {
-                                        "mountPath": "/home/project",
-                                        "name": "test-storage",
-                                        "subPath": "labs"
-                                    }
-                                ]
-                            }
-                        ],
-                        "containers": [
-                            {
-                                "name": `${hashName}`,
-                                "image": "sanghoon01/theia-kafka",
-                                "securityContext": {
-                                    "privileged": true,
-                                    "runAsUser": 0
-                                },
-                                "env": [
-                                    {
-                                        "name": "COURSE",
-                                        "value": `${course}`
-                                    },
-                                    {
-                                        "name": "LABS",
-                                        "value": `${labs}`
-                                    },
-                                    {
-                                        "name": "CLAZZ",
-                                        "value": `${clazz}`
-                                    },
-                                    {
-                                        "name": "EMAIL",
-                                        "value": `${email}`
-                                    },
-
-                                ],
-                                "resources": {
-                                    "requests": {
-                                        "memory": "2Gi"
-                                    }
-                                },
-                                "volumeMounts": [
-                                    {
-                                        "mountPath": "/var/run/docker.sock",
-                                        "name": "dockersock"
-                                    },
-                                    {
-                                        "mountPath": "/home/project",
-                                        "name": "test-storage",
-                                        "subPath": `labs/${filePath}/${templateFlie}`
-                                    }
-                                ],
-                            }
-                        ],
-                        "volumes": [
-                            {
-                                "name": "dockersock",
-                                "hostPath": {
-                                    "path": "/var/run/docker.sock",
-                                    "type": "File"
-                                }
-                            },
-                            {
-                                "name": "test-storage",
-                                "persistentVolumeClaim": {
-                                    "claimName": "nfs"
-                                }
-                            }
-                        ]
-                    }
-                }).then(function () {
-                    me.$http.post(`${me.getProtocol()}//api.${me.getTenantId()}/api/v1/namespaces/default/services`, {
-                        "apiVersion": "v1",
-                        "kind": "Service",
-                        "metadata": {
-                            "labels": {
-                                "environment": "labs",
-                                "app": `${hashName}`
-                            },
-                            "name": `${hashName}`,
-                            "namespace": "default"
-                        },
-                        "spec": {
-                            "ports": [
-                                {
-                                    "port": 3000,
-                                    "protocol": "TCP",
-                                    "targetPort": 3000
-                                }
-                            ],
-                            "selector": {
-                                "app": `${hashName}`
-                            },
-                            "sessionAffinity": "None",
-                            "type": "ClusterIP"
-                        },
-                        "status": {
-                            "loadBalancer": {}
-                        }
-                    }).then(
-                        function () {
-                            setTimeout(async function () {
-                                me.labsList[idx].overlay = false;
-                                Object.keys(me.labsList).forEach(function (key) {
-                                    if (key != labs) {
-                                        clearInterval(me.labsList[key].logInterval)
-                                    }
-                                })
-                                var instruction = await me.getInstruction(labs);
-                                var emitData = {
-                                    "labName": labs,
-                                    "ideURL": `http://${hashName}.msaez.io`,
-                                    "instruction": instruction,
-                                    "checkPoints": me.labsList[idx].checkPoints,
-                                    "hints": me.labsList[idx].hints,
-                                }
-                                me.$EventBus.$emit('ide-open', emitData)
-                                // window.open(`http://${hashName}.msaez.io`, '_blank')
-                            }, 30000)
-                            me.$EventBus.$on('clearInterval', function (intervalLab) {
-                                clearInterval(me.labsList[intervalLab].logInterval)
-                            })
-                            var metaData = {
-                                email: email,
-                                status: "start",
-                                startTime: new Date(),
-                                result: false
-                            }
-                            me.$minioClient.putObject('labs', `${filePath}/User_Lab_Metadata.json`, JSON.stringify(metaData))
-                        }
-                    )
-                })
             },
             getInstruction(labs) {
                 var me = this
                 return new Promise(function (resolve) {
                     var path = `${me.$route.params.course}/planed/${labs}/instruction.md`
                     console.log(path)
-
-                    me.$minioClient.getObject('labs', path, function (err, dataStream) {
-                        dataStream.on('data', function (chunk) {
-                            var string = new TextDecoder("utf-8").decode(chunk);
-
-                            resolve(string)
-                        })
-                    })
                 })
             },
             checkCheckPointStatus(lab) {

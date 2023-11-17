@@ -44,7 +44,6 @@
 <script>
     import LogViewer from './LogViewer'
 
-    var Minio = require('minio');
     var _ = require('lodash');
     export default {
         name: "ClazzListPage",
@@ -98,33 +97,6 @@
                     }, 5000)
                 })
                 var path = this.$route.params.course + '/runningClass/' + this.$route.params.clazzName + '/' + this.$route.params.labName + '/'
-                userNameList.forEach(function (id) {
-                    var userStream = me.$minioClient.listObjects('labs', path + id, false);
-                    userStream.on('data', function (userObj) {
-                        var userInfoStream = me.$minioClient.listObjects('labs', userObj.prefix, false);
-                        userInfoStream.on('data', function (userInfoObj) {
-                            if (userInfoObj.name) {
-                                if (userInfoObj.name.includes('User_Lab_Metadata')) {
-                                    me.$minioClient.getObject('labs', userInfoObj.name, function (err, dataStream) {
-                                        if (err) {
-                                            return console.log(err)
-                                        }
-                                        dataStream.on('data', async function (chunk) {
-                                            var string = new TextDecoder("utf-8").decode(chunk);
-                                            var json = JSON.parse(string)
-                                            var ideStatus = await me.getIDEStatus(id);
-                                            json["ideStatus"] = ideStatus
-                                            json["checkPoints"] = me.labsData.checkPoints;
-
-                                            me.$set(me.userList, id, json)
-                                        })
-                                    })
-                                }
-                            }
-                        })
-                    })
-                })
-
             }
         },
         mounted() {
@@ -140,66 +112,9 @@
                 var me = this
                 // kubernetes1/runningClass/sk1st/
                 var labsPath = `${this.$route.params.course}/runningClass/${this.$route.params.clazzName}/`
-                var stream = this.$minioClient.listObjects('labs', labsPath, true)
-                stream.on('data', function (obj) {
-                    if (obj.name.includes('Class_Metadata'))
-                        me.$minioClient.getObject('labs', obj.name, function (err, dataStream) {
-                            if (err) {
-                                return console.log(err)
-                            }
-                            dataStream.on('data', function (chunk) {
-                                var string = new TextDecoder("utf-8").decode(chunk);
-                                var json = JSON.parse(string)
-                                var tmpArray = labsPath.split('/');
-                                var path = tmpArray[0] + '/planed/'
-                                json.labsList.forEach(function (lab) {
-                                    var labStream = me.$minioClient.listObjects('labs', path + lab, true)
-                                    labStream.on('data', function (obj) {
-                                        if (obj.name.includes('Lab_Metadata.json')) {
-                                            me.$minioClient.getObject('labs', obj.name, function (err, labDataStream) {
-                                                if (err) {
-                                                    return console.log(err)
-                                                }
-                                                labDataStream.on('data', function (labChunk) {
-                                                    var string = new TextDecoder("utf-8").decode(labChunk);
-                                                    var json = JSON.parse(string)
-                                                    json["overlay"] = false;
-                                                    // me.labsList.push(json)
-                                                    me.$set(me, 'labsData', json)
-                                                })
-                                            })
-                                        }
-                                    })
-                                })
-
-                            })
-                        })
-                })
-                stream.on('error', function (err) {
-                    console.log(err)
-                })
             },
             getAdminUserList() {
                 var me = this
-                var stream = this.$minioClient.listObjects('labs', this.$route.params.course + '/runningClass/' + this.$route.params.clazzName + '/', false);
-                stream.on('data', function (obj) {
-                    if (obj.name) {
-                        if (obj.name.includes('Metadata')) {
-                            me.$minioClient.getObject('labs', obj.name, function (err, dataStream) {
-                                if (err) {
-                                    return console.log(err)
-                                }
-                                dataStream.on('data', function (chunk) {
-                                    var string = new TextDecoder("utf-8").decode(chunk);
-                                    var json = JSON.parse(string)
-                                    json.availableUserList.forEach(function (user) {
-                                        me.$set(me.userList, user, {})
-                                    })
-                                })
-                            })
-                        }
-                    }
-                })
             },
             hashCode(s) {
                 return s.split("").reduce(function (a, b) {
@@ -226,27 +141,6 @@
             },
             getLog(userId) {
                 var me = this
-                var stream = this.$minioClient.listObjects('labs', this.$route.params.course + '/runningClass/' + this.$route.params.clazzName + '/' + this.$route.params.labName + '/' + userId + '/', false);
-                stream.on('data', function (data) {
-                    if (data.name) {
-                        if (data.name.includes('result.log')) {
-                            me.$minioClient.getObject('labs', data.name, function (err, dataStream) {
-                                if (err) {
-                                    return console.log(err)
-                                }
-                                dataStream.on('data', function (chunk) {
-                                    var string = new TextDecoder("utf-8").decode(chunk);
-                                    me.$set(me.userList[userId], 'logs', string);
-                                    me.labsData.checkPoints.forEach(function (item, idx) {
-                                        me.userList[userId]["checkPoints"][idx]["status"] = me.checkingCheckPoint(item, string)
-                                    })
-                                    me.$EventBus.$emit('updateLog', string)
-                                    // me.$modal.show('code-modal');
-                                })
-                            })
-                        }
-                    }
-                })
             },
             checkingCheckPoint(checkPoint, log) {
                 var testLog = log.replace(/[\n\r]/g, '')
@@ -290,16 +184,6 @@
             },
             getInstruction(labs) {
                 var me = this
-                return new Promise(function (resolve) {
-                    var path = `${me.$route.params.course}/planed/${labs}/instruction.md`
-                    me.$minioClient.getObject('labs', path, function (err, dataStream) {
-                        dataStream.on('data', function (chunk) {
-                            var string = new TextDecoder("utf-8").decode(chunk);
-
-                            resolve(string)
-                        })
-                    })
-                })
             },
         }
     };

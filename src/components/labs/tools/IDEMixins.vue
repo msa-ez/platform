@@ -697,7 +697,6 @@
                                 startTime: new Date(),
                                 result: false
                             }
-                            me.$minioClient.putObject(`labs-${me.getTenantId()}`, `${archivePath}/${filePath}/User_Lab_Metadata.json`, JSON.stringify(metaData))
                             resolve(hashName)
                         } catch
                             (e) {

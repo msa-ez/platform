@@ -729,8 +729,6 @@
 </template>
 
 <script>
-var Minio = require('minio'); 
-
     import LabBase from './LabStorageBase'
     import { ValidationObserver, ValidationProvider } from 'vee-validate'
     import { v1 } from 'uuid';

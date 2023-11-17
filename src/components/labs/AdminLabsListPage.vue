@@ -37,8 +37,6 @@
 </template>
 
 <script>
-    var Minio = require('minio');
-
     export default {
         name: "ClazzListPage",
 
@@ -82,59 +80,6 @@
                 var me = this
                 var path = this.$route.params.course + '/runningClass/' + this.$route.params.clazzName + '/'
                 console.log(path)
-                var rootStream = this.$minioClient.listObjects('labs', path, false)
-                rootStream.on('data', function (obj) {
-                    if (obj.name.includes('Metadata')) {
-                        me.$minioClient.getObject('labs', obj.name, function (err, classDataStream) {
-                            if (err) {
-                                return console.log(err)
-                            }
-                            classDataStream.on('data', function (classChunk) {
-                                var string = new TextDecoder("utf-8").decode(classChunk);
-                                var json = JSON.parse(string)
-                                json.labsList.forEach(function (lab) {
-                                    var labMetadataPath = `${me.$route.params.course}/planed/${lab}/Lab_Metadata.json`
-                                    me.$minioClient.getObject('labs', labMetadataPath, function (err, labDataStream) {
-                                        if (err) {
-                                            return console.log(err)
-                                        }
-                                        labDataStream.on('data', function (labChunk) {
-                                            var string = new TextDecoder("utf-8").decode(labChunk);
-                                            var json = JSON.parse(string)
-                                            // me.labsList.push(json)
-                                            me.$set(me.labsList, lab, json)
-                                        })
-                                    })
-
-                                })
-                                // me.labsList.push(json)
-                                // me.$set(me.labsList, obj.name.split('/')[2], json)
-                            })
-                        })
-                    }
-
-                    // if(obj.prefix  && obj.size == 0) {
-                    //     // 얘는 폴더인 경우
-                    //
-                    //     var labMetaPath = obj.prefix.replace('runningClass', 'planed').replace(me.$route.params.clazzName + '/', '')
-                    //     var labsStream = me.$minioClient.listObjects('labs', labMetaPath, false)
-                    //     labsStream.on('data', function (labsObj) {
-                    //         if(labsObj.name.includes('Metadata')) {
-                    //             me.$minioClient.getObject('labs', labsObj.name, function (err, labDataStream) {
-                    //                 if (err) {
-                    //                     return console.log(err)
-                    //                 }
-                    //                 labDataStream.on('data', function (labChunk) {
-                    //                     var string = new TextDecoder("utf-8").decode(labChunk);
-                    //                     var json = JSON.parse(string)
-                    //                     // me.labsList.push(json)
-                    //                     me.$set(me.labsList, labsObj.name.split('/')[2], json)
-                    //                 })
-                    //             })
-                    //         }
-                    //     })
-                    // }
-                })
             },
         }
     };

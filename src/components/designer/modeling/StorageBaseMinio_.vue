@@ -1,4 +1,4 @@
-<template></template>
+<!-- <template></template>
 
 <script>
     var Minio = require('minio');
@@ -165,4 +165,4 @@
             clearInterval(this.pollingJob)
         }
     };
-</script>
+</script> -->

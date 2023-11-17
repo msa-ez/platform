@@ -1,4 +1,4 @@
-<template></template>
+<!-- <template></template>
 
 <script>
     var Minio = require('minio');
@@ -168,4 +168,4 @@
 
         }
     };
-</script>
+</script> -->

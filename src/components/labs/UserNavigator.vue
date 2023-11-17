@@ -53,7 +53,7 @@
         </v-list>
         <v-divider></v-divider>
         <v-btn primary v-if="isAdmin || value.userInfo.email == email"
-               @click="startLab(value.userInfo.labsData,value.userInfo.email)">Start
+            @click="startLab(value.userInfo.labsData,value.userInfo.email)">Start
         </v-btn>
     </v-navigation-drawer>
 </template>
@@ -61,7 +61,6 @@
 <script>
     import LogViewer from './LogViewer'
 
-    var Minio = require('minio');
     export default {
         name: "UserNavigator",
         components: {
@@ -141,15 +140,6 @@
             },
             getInstruction(labs) {
                 var me = this
-                return new Promise(function (resolve) {
-                    var path = `${me.$route.params.course}/planed/${labs}/instruction.md`
-                    me.$minioClient.getObject('labs', path, function (err, dataStream) {
-                        dataStream.on('data', function (chunk) {
-                            var string = new TextDecoder("utf-8").decode(chunk);
-                            resolve(string)
-                        })
-                    })
-                })
             },
             async startLab(lab, index) {
                 var me = this
@@ -190,208 +180,6 @@
             },
             async startIDE(labs, templateFlie, idx) {
                 var me = this
-                // me.overlay = true
-                if (typeof window == 'undefined') {
-                    var email = localStorage.getItem('email')
-                }else{
-                    var email = window.localStorage.getItem('email')
-                }
-                var lab = this.$route.params.labName.replace(/\s/g, '_');
-                console.log(lab)
-                var course = me.$route.params.course;
-                var clazz = me.$route.params.clazzName
-                var filePath = course + '/classes/' + clazz + '/' + lab + '/' + email;
-                var hashName = "labs-" + me.hashCode(filePath);
-                var ideExistChecked = await this.ideExistCheck(hashName);
-                console.log(`/home/project/${filePath}/${templateFlie}`);
-                if (ideExistChecked) {
-                    // me.labsList[idx].overlay = false;
-                    // Object.keys(me.labsList).forEach(function (key) {
-                    //     console.log("key: ", key, "labs: ", labs)
-                    //     if (key != labs) {
-                    //         console.log("clearInterval");
-                    //         clearInterval(me.labsList[key].logInterval)
-                    //     }
-                    // })
-                    var key = me.$route.params.labName
-                    var instruction = await me.getInstruction(key);
-                    var emitData = {
-                        "labData": labs,
-                        "ideURL": `http://${hashName}.es2cd.io`,
-                        "instruction": instruction,
-                        "checkPoints": labs.checkPoints,
-                        "hints": labs.hints,
-                        "email": email
-                    }
-
-                    // me.$EventBus.$on('clearInterval', function (intervalLab) {
-                    //     console.log("clearInterVal", me.labsList[intervalLab])
-                    //     clearInterval(me.labsList[intervalLab].logInterval)
-                    // })
-                    me.$EventBus.$emit('ide-open', emitData)
-                }
-                // console.log("unzip", "-n", `/home/project/${course}/${labs}/${templateFlie}.zip`, "-d", `/home/project/${filePath}`);
-                me.$http.post(`http://api.${me.getTenantId()}/api/v1/namespaces/default/pods`, {
-                    "apiVersion": "v1",
-                    "kind": "Pod",
-                    "metadata": {
-                        "name": `${hashName}`,
-                        "labels": {
-                            "environment": "labs",
-                            "app": `${hashName}`
-                        }
-                    },
-                    "spec": {
-                        "initContainers": [
-                            {
-                                "name": "mkdir",
-                                "image": "busybox",
-                                "command": ["mkdir", "-p", `/home/project/${filePath}/${labs.templateFlie}`],
-                                "volumeMounts": [
-                                    {
-                                        "mountPath": "/home/project",
-                                        "name": "test-storage",
-                                        "subPath": "labs"
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "unzip",
-                                "image": "busybox",
-                                "command": ["unzip", "-n", `/home/project/${course}/planed/${lab}/${labs.templateFlie}`, "-d", `/home/project/${filePath}/${labs.templateFlie}`],
-                                "volumeMounts": [
-                                    {
-                                        "mountPath": "/home/project",
-                                        "name": "test-storage",
-                                        "subPath": "labs"
-                                    }
-                                ]
-                            }
-                        ],
-                        "containers": [
-                            {
-                                "name": `${hashName}`,
-                                "image": "sanghoon01/theia-kafka",
-                                "securityContext": {
-                                    "privileged": true
-                                },
-                                "env": [
-                                    {
-                                        "name": "COURSE",
-                                        "value": `${course}`
-                                    },
-                                    {
-                                        "name": "LABS",
-                                        "value": `${lab}`
-                                    },
-                                    {
-                                        "name": "CLAZZ",
-                                        "value": `${clazz}`
-                                    },
-                                    {
-                                        "name": "EMAIL",
-                                        "value": `${email}`
-                                    },
-
-                                ],
-                                "resources": {
-                                    "requests": {
-                                        "memory": "2Gi"
-                                    }
-                                },
-                                "volumeMounts": [
-                                    {
-                                        "mountPath": "/var/run/docker.sock",
-                                        "name": "dockersock"
-                                    },
-                                    {
-                                        "mountPath": "/home/project",
-                                        "name": "test-storage",
-                                        "subPath": `labs/${filePath}/${labs.templateFlie}`
-                                    }
-                                ],
-                            }
-                        ],
-                        "volumes": [
-                            {
-                                "name": "dockersock",
-                                "hostPath": {
-                                    "path": "/var/run/docker.sock",
-                                    "type": "File"
-                                }
-                            },
-                            {
-                                "name": "test-storage",
-                                "persistentVolumeClaim": {
-                                    "claimName": "nfs"
-                                }
-                            }
-                        ]
-                    }
-                }).then(function () {
-                    me.$http.post(`http://api.${me.getTenantId()}/api/v1/namespaces/default/services`, {
-                        "apiVersion": "v1",
-                        "kind": "Service",
-                        "metadata": {
-                            "labels": {
-                                "environment": "labs",
-                                "app": `${hashName}`
-                            },
-                            "name": `${hashName}`,
-                            "namespace": "default"
-                        },
-                        "spec": {
-                            "ports": [
-                                {
-                                    "port": 3000,
-                                    "protocol": "TCP",
-                                    "targetPort": 3000
-                                }
-                            ],
-                            "selector": {
-                                "app": `${hashName}`
-                            },
-                            "sessionAffinity": "None",
-                            "type": "ClusterIP"
-                        },
-                        "status": {
-                            "loadBalancer": {}
-                        }
-                    }).then(
-                        function () {
-                            setTimeout(async function () {
-                                // me.labsList[idx].overlay = false;
-                                // Object.keys(me.labsList).forEach(function (key) {
-                                //     if (key != labs) {
-                                //         clearInterval(me.labsList[key].logInterval)
-                                //     }
-                                // })
-                                var key = me.$route.params.labName
-                                var instruction = await me.getInstruction(key);
-                                var emitData = {
-                                    "labData": labs,
-                                    "ideURL": `http://${hashName}.es2cd.io`,
-                                    "instruction": instruction,
-                                    "checkPoints": labs.checkPoints,
-                                    "hints": labs.hints,
-                                    "email": email
-                                }
-                                me.$EventBus.$emit('ide-open', emitData)
-                                // window.open(`http://${hashName}.msaez.io`, '_blank')
-                            }, 30000)
-                            // me.$EventBus.$on('clearInterval', function (intervalLab) {
-                            //     clearInterval(me.labsList[intervalLab].logInterval)
-                            // })
-                            var metaData = {
-                                email: email,
-                                status: "start",
-                                startTime: new Date(),
-                                result: false
-                            }
-                            me.$minioClient.putObject('labs', `${filePath}/User_Lab_Metadata.json`, JSON.stringify(metaData))
-                        }
-                    )
-                })
             },
             hashCode(s) {
                 return s.split("").reduce(function (a, b) {

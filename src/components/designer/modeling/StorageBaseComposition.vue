@@ -1,12 +1,11 @@
 <template></template>
 
 <script>
-    var Minio = require('minio');
     import StorageBaseAbstract from "./StorageBaseAbstract";
     import StorageBaseFireBase from "./StorageBaseFireBase";
     import StorageBaseAceBase from "./StorageBaseAceBase";
     import StorageBaseLocalStorage from "./StorageBaseLocalStorage";
-    import StorageBaseMinio from "./StorageBaseMinio";
+
     import StorageBaseCloudStorage from "./StorageBaseCloudStorage";
 
     // 2
@@ -18,8 +17,6 @@
                 localstorage: null,
                 db: null,
                 standalone: null,
-                minio: null,
-                clusterminio: null,
                 storage: null
             }
         },
@@ -41,24 +38,6 @@
             me.storage = new StorageBaseCloudStorageClazz();
             me.localstorage = new StorageBaseLocalClass();
             me.db = new StorageBaseDBClass();
-            // var policy = me.clusterminio.minioClient.newPostPolicy();
-            // policy.setBucket("labs-eventstorming");
-            // policy.setKey("*");
-            // var expires = new Date();
-            // expires.setSeconds(0);
-            // policy.setExpires(expires);
-            // policy.formData['Cache-Control'] = 'public, max-age=0';
-            // policy.policy.conditions.push(['eq', '$Cache-Control', 'public, max-age=0'])
-            //
-            // me.clusterminio.minioClient.presignedPostPolicy(policy, function (err, data) {
-            //     if (err) return console.log(err)
-            //     console.log(data)
-            //     // var req = superagent.post(data.postURL)
-            //     // _.each(data.formData, function (value, key) {
-            //     //     req.field(key, value)
-            //     // })
-            // });
-
         },
         computed: {
             now() {
@@ -211,14 +190,8 @@
                             return me.localstorage
                         } else if (distributedPath.toLowerCase().includes('db')) {
                             return me.db
-                        } else if (distributedPath.toLowerCase().includes('minio')) {
-                            return me.minio
-                        } else if (distributedPath.toLowerCase().includes('labstorage')) {
-                            return me.minio
                         } else if (distributedPath.toLowerCase().includes('standalone')) {
                             return me.standalone
-                        } else if (distributedPath.toLowerCase().includes('cluster')) {
-                            return me.minio
                         } else if (distributedPath.toLowerCase().includes('storage')) {
                             return me.storage
                         }

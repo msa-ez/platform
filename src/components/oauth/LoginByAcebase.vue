@@ -190,7 +190,6 @@
                 me.authorized = false
             }
 
-            // me.tenantLogo = await me.getImageURL("minio://logo.png");
 
         },
         methods: {

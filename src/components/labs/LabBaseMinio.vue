@@ -1,4 +1,4 @@
-<template></template>
+<!-- <template></template>
 
 <script>
     var Minio = require('minio');
@@ -9,4 +9,4 @@
         name: "LabBaseMinio",
         mixins: [LabBaseAbstract, LabBaseMinio_]
     };
-</script>
+</script> -->
