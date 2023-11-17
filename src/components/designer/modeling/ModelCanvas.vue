@@ -56,7 +56,6 @@
 
     var fs = require('fs');
     var _ = require('lodash');
-    var Minio = require('minio');
     var Base64 = require('js-base64').Base64;
     var yamlpaser = require('js-yaml');
     var FileSaver = require('file-saver');
@@ -2355,7 +2354,6 @@
 
                     me.afterSnapshotLoad();
                 } else {
-                    // clazz Local - minio
                     me.isOwnModel = true
 
                     if (!me.value)

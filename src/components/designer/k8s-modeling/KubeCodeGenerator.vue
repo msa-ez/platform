@@ -6018,10 +6018,6 @@
                         });
                     }
                     await me.makeDir(`labs-eventstorming/running/${userGroup}/classes/users/labs/${localStorage.getItem("email")}/${projectId}`)
-                    /* me.$http.post(`${me.fileServerUrl}/api/makeDir`, {
-                         "hashName": hashName,
-                         "path": `home/minio/labs-eventstorming/running/${userGroup}/classes/users/labs/${localStorage.getItem("email")}/${projectId}`
-                     }).catch(e => console.log(e));*/
                     me.pathTmp.forEach(function (generateData) {
                         console.log(generateData);
                         if (generateData.path.includes('/')) {

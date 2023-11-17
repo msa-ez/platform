@@ -90,7 +90,6 @@
     "markdown-diff": "^1.0.3",
     "markdown-it": "^12.0.2",
     "marked": "^1.2.9",
-    "minio": "^7.0.16",
     "module": "^1.2.5",
     "moment": "^2.29.4",
     "monaco-editor-vue": "^1.0.10",

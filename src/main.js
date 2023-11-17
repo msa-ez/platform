@@ -133,7 +133,6 @@ Vue.prototype.$searchName = ALGOLIA_POSTS_INDEX_NAME;
 Vue.use(InstantSearch);
 
 var options = {'keyName': 'accessToken'};
-var Minio = require('minio');
 Vue.component('vue-context-menu', VueSimpleContextMenu)
 Vue.use(VueJWT, options)
 Vue.use(VueYouTubeEmbed, {global: true, componentId: "youtube-media"})
@@ -192,8 +191,6 @@ if (process.env.NODE_ENV == "development") {
 }
 window.vueFilePath = process.env.VUE_APP_FILE_PATH
 
-window.distributeMinioPath = process.env.VUE_APP_MINIO_DISTRIBUTE
-// // console.log(templateFiles.keys())
 
 
 /////////////// template & Base /////////////////////

@@ -1,4 +1,4 @@
-<template></template>
+<!-- <template></template>
 
 <script>
     import StorageBaseMinio_ from "./StorageBaseMinio_";
@@ -44,4 +44,4 @@
             },
         }
     };
-</script>
+</script> -->

@@ -79,7 +79,6 @@
 </template>
 
 <script>
-    var Minio = require('minio');
     import TenantAware from "../../labs/TenantAware";
     import isAttached from "../../../utils/isAttached";
     import getParent from '../../../utils/getParent'
@@ -294,36 +293,12 @@
             clear() {
                 var me = this
                 var objectsList = []
-                var minioClient = new Minio.Client({
-                    endPoint: 'minio-std.msaez.io',
-                    port: 443,
-                    useSSL: true,
-                    accessKey: 'minio',
-                    secretKey: 'minio123'
-                });
+                
                 var userName = localStorage.getItem("author").split('@')[0].toLowerCase();
                 var userGroup = localStorage.getItem("author").split('@')[1].split('.')[0].toLowerCase();
                 var modelingDesigner = me.getComponent('event-storming-model-canvas')
                 console.log(`${userGroup}-${userName}-${modelingDesigner.projectName}-${me.$parent.$parent.value.name}`)
-                var objectsStream = minioClient.listObjects('eventstorming', `${userGroup}/${userName}/${modelingDesigner.projectName.toLowerCase()}/${me.$parent.$parent.value.name}`, true);
-                objectsStream.on('data', function (obj) {
-                    console.log(obj)
-                    objectsList.push(obj.name);
-                })
-
-                objectsStream.on('error', function (e) {
-                    console.log(e);
-                })
-
-                objectsStream.on('end', function () {
-                    minioClient.removeObjects('eventstorming', objectsList, function (e) {
-                        if (e) {
-                            return console.log('Unable to remove Objects ', e)
-                        }
-                        modelingDesigner.deleteBounded = me.$parent.$parent.value.name;
-                        modelingDesigner.deleteSnackbar = true;
-                    })
-                })
+                
             },
             rotate() {
                 var me = this

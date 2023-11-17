@@ -2036,10 +2036,8 @@
 
                         if (me.editCourseMandatory) {
                             copyCourseInfo.certification = newCourseCertification
-                            // minio
                             me.putObject(`storage://labs-msaez.io/running/${me.courseId}/Course_Metadata.json`, copyCourseInfo)
                         }
-                        // minio
                         me.putObject(`storage://labs-msaez.io/${me.rootPath + me.courseId}/classes/${editClassId}/Class_Metadata.json`, copyClassInfo)
                         me.setString(`db://pricing/${me.courseId}@${editClassId}@${editLabInfo.labId}`, Number(editLabInfo.price) * 100)
                     }
@@ -2139,7 +2137,7 @@
                 var me = this
                 try {
                     var editClassId = me.classId.replace('running@', '')
-                    // minio
+                    
                     me.putString('storage://labs-msaez.io/running/' + me.courseId + "/classes/" + editClassId + "/introduction.md", newIntroduction)
                     this.editClassIntroduction = false
                 } catch (e) {
@@ -2276,7 +2274,6 @@
                         }
                         var Labinstruction = '## Instruction'
                         if (newLab.LabId && newLab.Labtool && newLab.LabName) {
-                            // minio
                             me.putObject('storage://labs-msaez.io/running/' + me.courseId + "/labs/" + newLab.LabId + "/Lab_Metadata.json", labinfo)
                             me.putObject('storage://labs-msaez.io/running/' + me.courseId + "/labs/" + newLab.LabId + "/instruction.md", Labinstruction)
                             var copyClassInfo = JSON.parse(JSON.stringify(me.classInfo))

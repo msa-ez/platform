@@ -243,10 +243,8 @@
                 var me = this
                 try {
                     me.quizList[me.setQuizNumber] = setQuizText
-                    //minio
                     me.putString('storage://labs-msaez.io/' + me.pathforEditQuiz[me.setQuizNumber].name, setQuizText)
                     me.setString('db://labs/' + me.getBucketByTenantId() + '/' + me.getClassPath(`labs/${me.labId}/quizList/${me.setQuizNumber}`), setQuizText)
-                    // console.log(this.pathforEditQuiz[this.setQuizNumber], setQuizText)
                     me.setQuizNumber = null
                 } catch(e){
                     alert(e.message)

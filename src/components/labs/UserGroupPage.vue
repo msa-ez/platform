@@ -102,24 +102,6 @@
                 // analysis/runningClass/first/
 
                 var userMetadataPath = `${this.$route.params.course}/runningClass/${this.$route.params.clazzName}/${this.$route.params.labName}/${me.groupList[groupIdx]["users"][userIdx].email}/Labs_Metadata.json`
-
-                me.$minioClient.getObject('labs', userMetadataPath, function (err, dataStream) {
-                    if (err) {
-                        me.$set(me.groupList[groupIdx]["users"][userIdx], "labsData", JSON.parse(JSON.stringify(me.labsData)))
-                        me.$minioClient.putObject('labs', userMetadataPath, JSON.stringify(me.labsData.checkPoints))
-                    }
-                    dataStream.on('data', function (chunk) {
-                        console.log(userMetadataPath)
-                        var string = new TextDecoder("utf-8").decode(chunk);
-                        var json = JSON.parse(string)
-                        console.log(json)
-                        me.$set(me.groupList[groupIdx]["users"][userIdx], "labsData", JSON.parse(JSON.stringify(me.labsData)))
-                        me.$set(me.groupList[groupIdx]["users"][userIdx]["labsData"], "checkPoints", json)
-                        me.$nextTick(function(){
-                            console.log(me.groupList[groupIdx]["users"][userIdx]["labsData"])
-                        })
-                    })
-                })
             },
             userNaviOpen(user, groupIdx, userIdx) {
                 var me = this
@@ -136,68 +118,9 @@
                 var me = this
                 // kubernetes1/runningClass/sk1st/
                 var labsPath = `${this.$route.params.course}/runningClass/${this.$route.params.clazzName}/`
-                var stream = this.$minioClient.listObjects('labs', labsPath, true)
-                stream.on('data', function (obj) {
-                    if (obj.name.includes('Class_Metadata'))
-                        me.$minioClient.getObject('labs', obj.name, function (err, dataStream) {
-                            if (err) {
-                                return console.log(err)
-                            }
-                            dataStream.on('data', function (chunk) {
-                                var string = new TextDecoder("utf-8").decode(chunk);
-                                var json = JSON.parse(string)
-                                var tmpArray = labsPath.split('/');
-                                console.log(labsPath)
-
-                                // planed metadata 가지고 오는 부분
-                                var path = tmpArray[0] + '/planed/'
-                                json.labsList.forEach(function (lab) {
-                                    var labStream = me.$minioClient.listObjects('labs', path + lab, true)
-                                    labStream.on('data', function (obj) {
-                                        if (obj.name.includes('Lab_Metadata.json')) {
-                                            me.$minioClient.getObject('labs', obj.name, function (err, labDataStream) {
-                                                if (err) {
-                                                    return console.log(err)
-                                                }
-                                                labDataStream.on('data', function (labChunk) {
-                                                    var string = new TextDecoder("utf-8").decode(labChunk);
-                                                    var json = JSON.parse(string)
-                                                    json["overlay"] = false;
-                                                    // me.labsList.push(json)
-                                                    me.$set(me, 'labsData', json)
-                                                })
-                                            })
-                                        }
-                                    })
-                                })
-
-                            })
-                        })
-                })
-                stream.on('error', function (err) {
-                    console.log(err)
-                })
             },
             getAdminGroupList() {
                 var me = this
-                var stream = this.$minioClient.listObjects('labs', this.$route.params.course + '/runningClass/' + this.$route.params.clazzName + '/', false);
-                stream.on('data', function (obj) {
-                    if (obj.name) {
-                        if (obj.name.includes('Metadata')) {
-                            me.$minioClient.getObject('labs', obj.name, function (err, dataStream) {
-                                if (err) {
-                                    return console.log(err)
-                                }
-                                dataStream.on('data', function (chunk) {
-                                    var string = new TextDecoder("utf-8").decode(chunk);
-                                    var json = JSON.parse(string)
-                                    json["labData"] = me.labsData;
-                                    me.groupList = json.groupedUsers;
-                                })
-                            })
-                        }
-                    }
-                })
             },
             getIDEStatus(userId) {
                 var me = this
@@ -213,26 +136,6 @@
             },
             getLog(userId, groupIdx, userIdx) {
                 var me = this
-                var stream = this.$minioClient.listObjects('labs', this.$route.params.course + '/runningClass/' + this.$route.params.clazzName + '/' + this.$route.params.labName + '/' + userId + '/', false);
-                stream.on('data', function (data) {
-                    if (data.name) {
-                        if (data.name.includes('result.log')) {
-                            me.$minioClient.getObject('labs', data.name, function (err, dataStream) {
-                                if (err) {
-                                    // alert(err)
-                                }
-                                dataStream.on('data', function (chunk) {
-                                    var string = new TextDecoder("utf-8").decode(chunk);
-                                    me.$set(me.groupList[groupIdx]["users"][userIdx], "logs", string)
-
-                                    me.groupList[groupIdx]["users"][userIdx]["labsData"]["checkPoints"].forEach(function (checkPoint, checkIdx) {
-                                        me.groupList[groupIdx]["users"][userIdx]["labsData"]["checkPoints"][checkIdx]["status"] = me.checkingCheckPoint(checkPoint, string)
-                                    })
-                                })
-                            })
-                        }
-                    }
-                })
             },
             checkingCheckPoint(checkPoint, log) {
                 var testLog = log.replace(/[\n\r]/g, '')

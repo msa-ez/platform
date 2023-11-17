@@ -58,7 +58,6 @@
 </template>
 
 <script>
-    var Minio = require('minio');
     import marked from 'marked'
     
     export default {
@@ -104,7 +103,6 @@
                 handler() {
                     var me = this
                     var userMetadataPath = `${this.$route.params.course}/classes/${this.$route.params.clazzName}/${this.$route.params.labName}/${me.value.email}/Labs_Metadata.json`
-                    me.$minioClient.putObject('labs', userMetadataPath, JSON.stringify(me.value.checkPoints))
                 }
             },
             "eventstorming": {
@@ -141,21 +139,6 @@
                     if (val.javascript) {
                         if (val.javascript.includes('.js')) {
                             var jsPath = `${me.$route.params.course}/labs/${me.value.lab}/${val.javascript}`
-                            var stream = me.$minioClient.getObject('labs', `${me.$route.params.course}/labs/${me.value.lab}/${val.javascript}`, function (err, dataStream) {
-                                dataStream.on('data', function (chunk) {
-                                    var string = new TextDecoder("utf-8").decode(chunk);
-                                    var result = me.eventstorming.definition;
-                                    var returnValue;
-
-                                    function returnValue(value) {
-                                        returnValue = value
-                                    }
-
-                                    eval(string);
-                                    val.status = returnValue
-                                    me.forceRerender();
-                                })
-                            })
                         } else {
 
                         }

@@ -2774,20 +2774,7 @@
                 var me = this;
                 var listObj = [];
 
-                return new Promise((resolve, reject) => {
-                    this.$minioClient.listObjects('labs', path, true)
-                        .on('data', function (obj) {
-                            if (obj.name) {
-                                listObj.push(obj)
-                            }
-                        })
-                        .on('error', function (err) {
-                            reject(err);
-                        })
-                        .on('end', function (err) {
-                            resolve(listObj)
-                        })
-                });
+                return;
             },
             async startLab(status) {
                 var me = this;

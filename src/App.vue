@@ -1704,26 +1704,6 @@
             // onIframeLoad() {
             //     console.log('iframe loaded');
             // },
-
-            // getLog(userId) {
-            //     var me = this
-            //     var stream = this.$minioClient.listObjects('labs', this.$route.params.course + '/runningClass/' + this.$route.params.clazzName + '/' + this.$route.params.labName + '/' + userId + '/', false);
-            //     stream.on('data', function (data) {
-            //         if (data.name) {
-            //             if (data.name.includes('result.log')) {
-            //                 me.$minioClient.getObject('labs', data.name, function (err, dataStream) {
-            //                     if (err) {
-            //                         // alert(err)
-            //                     }
-            //                     dataStream.on('data', function (chunk) {
-            //                         var string = new TextDecoder("utf-8").decode(chunk);
-            //                         me.naviObject.logs = string
-            //                     })
-            //                 })
-            //             }
-            //         }
-            //     })
-            // },
             dbuid: function () {
                 function s4() {
                     return Math.floor((1 + Math.random()) * 0x10000)

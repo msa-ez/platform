@@ -2177,7 +2177,6 @@ var yamlpaser = require("js-yaml");
 var changeCase = require("change-case");
 var pluralize = require("pluralize");
 var path = require("path");
-var Minio = require("minio");
 var ConfigIniParser = require("config-ini-parser").ConfigIniParser;
 var delimiter = "\r\n"; //or "\n" for *nux
 var _ = require("lodash");
@@ -5418,21 +5417,6 @@ export default {
                     .catch(function (e) {
                         resolve(false);
                     });
-            });
-        },
-        presignedURL(path) {
-            var me = this;
-            return new Promise((resolve, reject) => {
-                me.$minioClient.presignedUrl(
-                    "GET",
-                    "eventstorming",
-                    path,
-                    24 * 60 * 60,
-                    function (err, presignedUrl) {
-                        if (err) return reject(err);
-                        resolve(presignedUrl);
-                    }
-                );
             });
         },
         deleteService(userName, userGroup, projectName) {

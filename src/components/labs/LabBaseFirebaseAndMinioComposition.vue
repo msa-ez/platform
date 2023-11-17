@@ -1,9 +1,9 @@
 <template></template>
 
 <script>
-    var Minio = require('minio');
+    // var Minio = require('minio');
     import LabBaseAbstract from './LabBaseAbstract'
-    import LabBaseMinio_ from './LabBaseMinio_';
+    // import LabBaseMinio_ from './LabBaseMinio_';
     import LabBaseFirebase_ from './LabBaseFirebase_';
 
 
@@ -21,10 +21,10 @@
 
             var me= this
 
-            var LabBaseMinioClass = Vue.extend(LabBaseMinio_)
+            // var LabBaseMinioClass = Vue.extend(LabBaseMinio_)
 
-            this.standalone = new LabBaseMinioClass();
-            this.distributed = new LabBaseMinioClass();
+            // this.standalone = new LabBaseMinioClass();
+            // this.distributed = new LabBaseMinioClass();
             var LabBaseFirebaseClass = Vue.extend(LabBaseFirebase_)
             this.firebase = new LabBaseFirebaseClass();
 

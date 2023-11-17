@@ -27,8 +27,6 @@
 </template>
 
 <script>
-    var Minio = require('minio');
-
     export default {
         name: "ClazzListPage",
 
@@ -70,43 +68,6 @@
         methods: {
             getAdminClazzList() {
                 var me = this
-                var stream = this.$minioClient.listObjects('labs', '', true);
-                stream.on('data', function (obj) {
-                    if (obj.name.includes('Class_Metadata') && obj.size != 0) {
-                        me.$minioClient.getObject('labs', obj.name, function (err, dataStream) {
-                            if (err) {
-                                return console.log(err)
-                            }
-                            dataStream.on('data', function (chunk) {
-                                var string = new TextDecoder("utf-8").decode(chunk);
-                                var json = JSON.parse(string)
-                                json["path"] = obj.name.replace('Class_Metadata.json', '')
-                                var thumbnailURL = obj.name.replace('Class_Metadata.json', 'thumbnail.png')
-                                me.$minioClient.getObject('labs', thumbnailURL, function (err, dataStream) {
-                                    if (err) {
-                                        return console.log(err)
-                                    }
-                                    dataStream.on('data', function (chunk) {
-                                        var base64Data = btoa(String.fromCharCode.apply(null, chunk))
-                                        json['imgSrc'] = 'data:image/png;base64,' + base64Data
-                                        // me.clazzList.push(json)
-                                        json["course"] = obj.name.split('/')[0];
-                                        me.$set(me.clazzList, obj.name.split('/')[0] + '/' + obj.name.split('/')[2], json)
-                                    })
-                                    dataStream.on('error', function (err) {
-                                        console.log(err)
-                                    })
-                                })
-                            })
-                            dataStream.on('error', function (err) {
-                                console.log(err)
-                            })
-                        })
-                    }
-                })
-                stream.on('error', function (err) {
-                    console.log(err)
-                })
             },
             hashCode(s) {
                 return s.split("").reduce(function (a, b) {
