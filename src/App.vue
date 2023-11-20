@@ -456,7 +456,7 @@
         </v-dialog>
 
         <v-alert type="info" outlined border="top" dismissible v-if="progressing"
-                 style="position: fixed; bottom: 0; margin-bottom: 0px; z-index:999; width: 100%; background-color: #ffffff !important">
+                style="position: fixed; bottom: 0; margin-bottom: 0px; z-index:999; width: 100%; background-color: #ffffff !important">
             <h3>{{$t('word.progressState')}}</h3>
             <v-stepper
                     style="box-shadow: 0px 0px 0px 0px rgb(0 0 0 / 0%), 0px 0px 0px 0px rgb(0 0 0 / 0%), 0px 0px 0px 0px rgb(0 0 0 / 0%)"
