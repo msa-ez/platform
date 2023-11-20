@@ -209,6 +209,7 @@
         },
         data() {
             return {
+                copySelectedCodeList: null,
                 isFirstCommit: true,
                 savedGeneratedErrorLog: null,
                 dialogRenderKey: 0,
@@ -250,6 +251,7 @@
         },
         mounted: function () { 
             var me = this
+            me.copySelectedCodeList = JSON.parse(JSON.stringify(me.selectedCodeList))
             me.generate();
 
             me.$EventBus.$on('getActionLogs', function (log) {
@@ -270,8 +272,8 @@
             },
             editCode(obj){
                 var me = this
-                if(me.selectedCodeList[obj.name]){
-                    me.selectedCodeList[obj.name] = obj.code
+                if(me.copySelectedCodeList[obj.name]){
+                    me.copySelectedCodeList[obj.name] = obj.code
                 }
                 me.updateList.forEach(function (solution){
                     solution.codeChanges.forEach(function (changes){
@@ -310,6 +312,7 @@
                 var me = this
                 me.startGitAction = true
                 me.isFirstCommit = false
+                me.selectedCodeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
                 me.$emit("startCommitWithSigpt", me.updateList)
             },
             setDialog(model, option){
@@ -339,7 +342,7 @@
                                     changes.modifiedFile[0].name = changes.fileName
                                     changes.expansionValue = 0
                                     if(changes && changes.fileName){
-                                        me.selectedCodeList[changes.fileName] = changes.modifiedFileCode
+                                        me.copySelectedCodeList[changes.fileName] = changes.modifiedFileCode
                                     }
                                 })
                                 me.siTestResults[me.resultLength + solutionIdx] = solution
