@@ -101,15 +101,13 @@
         },
         created(){
             this.autoModel = getParent(this.$parent, 'auto-modeling-dialog');
-            this.init()
         },
         watch: {
         },
         mounted(){
             var me = this;
             me.setUIStyle(me.uiStyle);
-            this.generator = new Generator(this);
-            me.generate();
+            me.init();
         },
         data() {
             return {
@@ -146,7 +144,12 @@
             },
             init(){
                 var me = this 
-                if(me.value){
+                if(!me.value){
+                    me.value = {
+                        userStory: ''
+                    }
+                    me.generate();
+                } else {
                     me.done = true;
                 }
             },
@@ -164,14 +167,9 @@
             },  
 
             generate(){
-                if(!this.value){
-                    this.value = {
-                        userStory: ''
-                    }
-                }
                 this.value.userStory = '';
                 this.input.businessModel = this.cachedModels["BMGenerator"]
-
+                this.generator = new Generator(this);
                 this.generator.generate();
                 this.state.startTemplateGenerate = true
                 this.done = false;            
