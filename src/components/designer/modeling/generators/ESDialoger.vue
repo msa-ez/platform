@@ -146,11 +146,7 @@
             },
             init(){
                 var me = this 
-                if(!me.value){
-                    me.value = {
-                        userStory: '',
-                    }
-                } else {
+                if(me.value){
                     me.done = true;
                 }
             },
@@ -168,6 +164,11 @@
             },  
 
             generate(){
+                if(!this.value){
+                    this.value = {
+                        userStory: ''
+                    }
+                }
                 this.value.userStory = '';
                 this.input.businessModel = this.cachedModels["BMGenerator"]
 
