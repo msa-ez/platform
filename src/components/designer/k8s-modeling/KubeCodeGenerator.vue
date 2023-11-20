@@ -100,64 +100,6 @@
                         </v-menu>
                     </div>
 
-                    <div>
-                        <v-menu
-                                v-model="openaiPopup"
-                                :close-on-click="false"
-                                :close-on-content-click="false"
-                                offset-y
-                        >
-                            <template v-slot:activator="{ on: menu, attrs }">
-                                <v-tooltip bottom>
-                                    <template v-slot:activator="{ on: tooltip }">
-                                        <v-btn
-                                                :loading="startGenerate"
-                                                @click="stopGenerate()"
-                                                :disabled="!isGeneratorDone"
-                                                class="code-preview-btn"
-                                                icon x-small
-                                                v-bind="attrs"
-                                                v-on="{ ...tooltip, ...menu }"
-                                        >
-                                            <v-icon size="22" :color="openaiPopup ? 'primary':''">
-                                                mdi-auto-fix
-                                            </v-icon>
-                                        </v-btn>
-                                        <!-- <div v-else>
-                                            <v-progress-circular
-                                                size="15"
-                                                :width="3"
-                                                indeterminate
-                                                color="primary"
-                                            ></v-progress-circular>
-                                        </div> -->
-                                    </template>
-                                    <span>input openai token</span>
-                                </v-tooltip>
-                            </template>
-                            <!-- <div v-if="openaiPopup">
-                                <v-container fluid style="background-color: white;">
-                                    <v-btn style="float: right; margin-top: -17px; margin-right: -17px;" icon @click="closeOpenaiPopup()">
-                                        <v-icon small>mdi-close</v-icon>
-                                    </v-btn>
-                                    <v-text-field
-                                            v-model="openaiToken"
-                                            style="width: 400px; font-size: small;"
-                                            :append-icon="showOpenaiToken ? 'mdi-eye' : 'mdi-eye-off'"
-                                            :type="showOpenaiToken ? 'text' : 'password'"
-                                            name="openaiToken"
-                                            label="openAI Token"
-                                            @click:append="showOpenaiToken = !showOpenaiToken"
-                                    ></v-text-field>
-                                    <div style="font-size: small;">
-                                        <v-icon small style="margin-right: 5px;">mdi-help-circle-outline</v-icon>
-                                        <a href="https://beta.openai.com/account/api-keys" target="_blank">how to get token</a>
-                                    </div>
-                                </v-container>
-                            </div> -->
-                        </v-menu>
-                    </div>
-
                     <v-tooltip bottom v-if="editableTemplate">
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn v-on="on" class="code-preview-btn"
@@ -6046,8 +5988,10 @@
                             } catch (e) {
                                 checkConfigFile = null
                             }
+
                             if (podStatus) {
                                 me.$EventBus.$emit("nextStep")
+
                                 me.$EventBus.$emit("nextStep");
                                 me.$EventBus.$emit("nextStep");
                                 // Pod가 존재 한다면 파일만 추가
@@ -6057,6 +6001,7 @@
                                 else
                                     me.ideWindow = window.open(`IdeLoadingPage?param=${hashName}&projectName=${me.$route.params.labId ? me.$route.params.labId : projectId}`, '_blank')
                                 me.$EventBus.$emit("nextStep");
+
                                 me.$nextTick(function () {
                                     me.overlayText = null
                                     me.pathTmp = []

@@ -9,7 +9,7 @@
                         Git Action Test Result
                     </v-card-title>
 
-                    <div style="height: 330px;">
+                    <div style="height: 330px;" :key="dialogRenderKey">
                         <v-list
                             nav 
                             dense
@@ -42,7 +42,7 @@
                                 </template>
                                 <v-list-group
                                     v-for="(test, testIdx) in siTestResults" :key="testIdx"
-                                    :value="test.solution ? true:false"
+                                    :value="test && test.solution ? true:false"
                                     style="margin-left: 15px;"
                                     no-action
                                     sub-group
@@ -78,50 +78,84 @@
                 <v-card-text style="max-height: 100%; overflow-y: scroll;">
                     <div v-for="(result, resIdx) in siTestResults" :key="resIdx">
                         <div v-if="result.solution">
-                            <v-card-title>Reason for modifying the code: </v-card-title>
+                            <!-- <v-card-title>Reason for modifying the code: </v-card-title> -->
                             <v-card-text>
-                                <b>{{ result.solution }}</b>
+                                <b>Solution: {{ result.solution }}</b>
                             </v-card-text>
                         </div>
                         <div v-for="(changes, changesIdx) in result.codeChanges" :key="changesIdx">
-                            <v-card-text :id="resIdx + '_' + changesIdx">
-                                <b>{{ changes.fileName }}</b>
-                            </v-card-text>
-                            <code-viewer
-                                class="gs-git-action-code-viewer"
-                                :type="'diff'"
-                                :create-value="changes.originFile"
-                                v-model="changes.modifiedFile"
-                                :editMode="true"
-                                :readOnly="false"
-                                :isGitActionDialog="true"
-                                style="padding: 0 !important;"
-                                @editCodeForActionDialog="editCode"
-                            ></code-viewer>
+                            <v-expansion-panels v-model="changes.expansionValue">
+                                <v-expansion-panel>
+                                    <v-expansion-panel-header :id="resIdx + '_' + changesIdx">
+                                        <div :key="dialogRenderKey">
+                                            <b>{{ changes.fileName }}</b>
+                                        </div>
+                                    </v-expansion-panel-header>
+                                    <v-expansion-panel-content>
+                                        <code-viewer
+                                            class="gs-git-action-code-viewer"
+                                            :type="'diff'"
+                                            :create-value="changes.originFile"
+                                            v-model="changes.modifiedFile"
+                                            :editMode="true"
+                                            :readOnly="false"
+                                            :isGitActionDialog="true"
+                                            style="padding: 0 !important;"
+                                            @editCodeForActionDialog="editCode"
+                                        ></code-viewer>
+                                    </v-expansion-panel-content>
+                                </v-expansion-panel>
+                            </v-expansion-panels>
                         </div>
 
-                        <div v-if="result.errorLog">
-                            <v-card-title>Bulid error log: </v-card-title>
-                            <v-card-text style="color: red; height: 85px; overflow-y: scroll; margin-top: -15px;">
-                                <b>{{ result.errorLog }}</b>
-                            </v-card-text>
+                        <div v-if="result.errorLog" style="margin-top: 10px; margin-bottom: 10px;">
+                            <div style="font-weight: bolder; font-size: .875rem;">
+                                The following error occurred during testing
+                            </div>
+                            <v-expansion-panels>
+                                <v-expansion-panel>
+                                    <v-expansion-panel-header style="color: red; display: table-row; background-color: #fee2e3;">
+                                        <div v-for="(err, idx) in result.errorLog" :key="idx" style="display: table-row; font-weight: bolder; font-size: .875rem; margin-bottom: 5px;">
+                                            [ERROR] {{ err.fileName }}: {{ err.errorDetails }}
+                                        </div>
+                                    </v-expansion-panel-header>
+                                    <v-expansion-panel-content>
+                                        {{ result.fullErrorLog }}
+                                    </v-expansion-panel-content>
+                                </v-expansion-panel>
+                            </v-expansion-panels>
                         </div>
 
                         <v-divider></v-divider>
                     </div>
-                    <div style="bottom: 3%; position: absolute; margin-top: 1%; right: 15px;">
-                        <v-btn v-if="!isFixErrorMode" :disabled="startGitAction" :loading="startGitAction" @click="regenerate()" 
-                            style="margin-right: 10px;">
-                            Regenerate
-                        </v-btn>
-                        <v-btn v-if="isFixErrorMode" :disabled="startGitAction" :loading="startGitAction" @click="generate()" 
-                            style="margin-right: 10px;" color="primary">
-                            Request fix error
-                        </v-btn>
-                        <v-btn v-else :disabled="startGitAction" :loading="startGitAction" @click="commitToGit()" 
-                            style="margin-right: 10px;" color="primary">
-                            Push
-                        </v-btn>
+                    <div style="float: right; margin-top: 10px;">
+                        <div v-if="!startGitAction">
+                            <v-btn @click="regenerate()" 
+                                style="margin-right: 10px;">
+                                Regenerate
+                            </v-btn>
+                            <v-btn @click="commitToGit()" 
+                                style="margin-right: 10px;" color="primary">
+                                Push
+                            </v-btn>
+                        </div>
+                        <div v-else>
+                            <div style="margin-bottom: 5px;">
+                                <b v-if="isFirstCommit">
+                                    Generating the business logic to pass the test ... 
+                                </b>
+                                <b v-else-if="!isFirstCommit">
+                                    Mvn testing is in progress ... 
+                                </b>
+                                <b v-else-if="isSolutionCreating">
+                                    Generating a code fix for the file in error ...
+                                </b>
+                            </div>
+                            <v-btn :loading="!isSolutionCreating" :disabled="!isSolutionCreating" @click="stop()" style="margin-right: 10px; position: relative; float: right;">
+                                <v-icon style="margin-right: 10px;">mdi-spin mdi-loading</v-icon>
+                                Stop generating
+                            </v-btn>
+                        </div>
                     </div>
                 </v-card-text>
             </div>
@@ -170,18 +204,25 @@
             CodeViewer,
         },
         props: {
-            messageList: Array,
+            selectedCodeList: Object,
             testFile: Object,
         },
         data() {
             return {
+                isFirstCommit: true,
+                savedGeneratedErrorLog: null,
+                dialogRenderKey: 0,
+                lastIndex: 0,
+                resultLength: 0,
+                fullErrorLog: null,
+                generatedErrorLog: null,
                 selectedIdx: null,
                 generator: null,
-                isFixErrorMode: false,
                 updateList: [],
                 siTestResults: [],
                 startGitAction: true,
-                savedOpenAiMessageList: null,
+                isSolutionCreating: false,
+                model: 'gpt-4',
                 openAiMessageList: null,
                 gitActionSnackBar: {
                     Text: '',
@@ -203,7 +244,6 @@
             if(this.testFile){
                 this.testFile.subPath = this.testFile.fullPath.replace(this.testFile.name, '')
             }
-            this.openAiMessageList = JSON.parse(JSON.stringify(this.messageList))
         },
         beforeDestroy: function () {
 
@@ -213,21 +253,26 @@
             me.generate();
 
             me.$EventBus.$on('getActionLogs', function (log) {
-                console.log(log)
                 if(log === "All tests succeeded"){
                     alert("All tests succeeded")
                 } else {
-                    me.isErrGenMode = true
-                    me.savedOpenAiMessageList = JSON.parse(JSON.stringify(me.openAiMessageList))
+                    me.fullErrorLog = log
                     me.openAiMessageList = null
+                    me.model = null
                     me.generator = new ErrorLogGenerator(me);
                     me.generator.generate();
                 }
             })
         },
         methods: {
+            stop(){
+                this.startGitAction = false
+            },
             editCode(obj){
                 var me = this
+                if(me.selectedCodeList[obj.name]){
+                    me.selectedCodeList[obj.name] = obj.code
+                }
                 me.updateList.forEach(function (solution){
                     solution.codeChanges.forEach(function (changes){
                         if(changes.fileName == obj.name){
@@ -238,76 +283,103 @@
             },
             generate(){
                 var me = this
+                me.model = 'gpt-4'
+                me.openAiMessageList = []
+                me.openAiMessageList.push({
+                    role: 'user',
+                    content: 'Here is the code list: \n' + JSON.stringify(me.selectedCodeList)
+                })
                 me.startGitAction = true
                 me.generator = new SIGenerator(this);
                 me.generator.generate();
             },
             regenerate(){
-                for(var i = 0; i < this.updateList.length; i++){
-                    this.siTestResults.pop()
+                if(this.updateList){
+                    for(var i = 0; i < this.updateList.length; i++){
+                        this.siTestResults.pop()
+                    }
+                    this.lastIndex = this.siTestResults.lastIndex
+                    this.resultLength = this.siTestResults.length
+                }
+                if(this.savedGeneratedErrorLog){
+                    this.generatedErrorLog = this.savedGeneratedErrorLog
                 }
                 this.generate()
             },
             commitToGit(){
                 var me = this
                 me.startGitAction = true
+                me.isFirstCommit = false
                 me.$emit("startCommitWithSigpt", me.updateList)
             },
-            onModelCreated(model){
-                // console.log(model)
-                // gen 된 결과 화면에 업데이트 
-            },
-            onGenerationFinished(model){
-                var me = this
-                if(me.isErrGenMode){
-                    me.siTestResults[me.siTestResults.lastIndex].errorLog = model
-                    me.openAiMessageList = JSON.parse(JSON.stringify(me.savedOpenAiMessageList))
-                    me.isFixErrorMode = true
-                    me.isErrGenMode = false
-                } else {                    
-                    me.openAiMessageList.push({
-                        role: "assistant",
-                        content: model
-                    })
-                    
-                    try {
-                        var selectNewResult = false
-                        console.log(JSON.parse(model))
-                        me.updateList = JSON.parse(model)
+            setDialog(model, option){
+                try {
+                    var me = this
+                    if(me.fullErrorLog){
+                        me.siTestResults[me.lastIndex].errorLog = model
+                        me.generatedErrorLog = JSON.stringify(model)
+                        me.savedGeneratedErrorLog = me.generatedErrorLog
+                    } else {  
+                        if(!me.startGitAction){
+                            me.generator.stop();
+                        }  
+                        if(!me.isSolutionCreating){
+                            me.isSolutionCreating = true
+                        }   
                         let dumyFile = []
                         dumyFile.push(me.testFile)
-                        
-                        let parseModel = JSON.parse(model)
-                        parseModel.forEach((solution) => {
-                            solution.codeChanges.forEach(function (changes){
-                                changes.originFile = JSON.parse(JSON.stringify(dumyFile))
-                                changes.originFile[0].code = changes.fileCode
-                                changes.modifiedFile = JSON.parse(JSON.stringify(dumyFile))
-                                changes.modifiedFile[0].code = changes.modifiedFileCode
-                                changes.modifiedFile[0].name = changes.fileName
-                            })
-                            me.siTestResults.push(solution)
-                            if(!selectNewResult){
-                                me.onSelected(solution, me.siTestResults.lastIndex, 0)
-                                selectNewResult = true
+                        me.updateList = model
+                        me.updateList.forEach((solution, solutionIdx) => {
+                            if(solution && solution.codeChanges){
+                                solution.codeChanges.forEach(function (changes){
+                                    changes.originFile = JSON.parse(JSON.stringify(dumyFile))
+                                    changes.originFile[0].code = changes.fileCode
+                                    changes.modifiedFile = JSON.parse(JSON.stringify(dumyFile))
+                                    changes.modifiedFile[0].code = changes.modifiedFileCode
+                                    changes.modifiedFile[0].name = changes.fileName
+                                    changes.expansionValue = 0
+                                    if(changes && changes.fileName){
+                                        me.selectedCodeList[changes.fileName] = changes.modifiedFileCode
+                                    }
+                                })
+                                me.siTestResults[me.resultLength + solutionIdx] = solution
+                                // me.onSelected(me.lastIndex + 1, 0)
                             }
                         });
-        
-                        me.isFixErrorMode = false
-
-                    } catch(e) {
-                        me.generate()
-                        console.log(e)
-                        me.gitActionSnackBar.show = true
-                        me.gitActionSnackBar.timeout = 5000
-                        me.gitActionSnackBar.Text = "오류 검증 및 파일 업데이트 도중 문제가 발생하였습니다."
-                        me.gitActionSnackBar.Color = "error"
-                        me.gitActionSnackBar.icon="error"
-                        me.gitActionSnackBar.title="Error"
-                        // me.startGitAction = false
                     }
+                    
+                    if(option == 'onGenerationFinished'){
+                        me.startGitAction = false
+                        me.isSolutionCreating = false
+                        if(me.fullErrorLog){
+                            me.siTestResults[me.lastIndex].fullErrorLog = me.fullErrorLog
+                            me.fullErrorLog = null
+                            me.generate()
+                        } else {                    
+                            me.lastIndex = me.siTestResults.lastIndex
+                            me.resultLength = me.siTestResults.length
+                            me.generatedErrorLog = null
+                        }
+                    } else {
+                        me.dialogRenderKey++;
+                    }
+
+                } catch(e) {
+                    console.log(e)
+                    me.gitActionSnackBar.timeout = 5000
+                    me.gitActionSnackBar.Text = "오류 검증 및 파일 업데이트 도중 문제가 발생하였습니다. 잠시 후 다시 시도해주세요."
+                    me.gitActionSnackBar.Color = "error"
+                    me.gitActionSnackBar.icon="error"
+                    me.gitActionSnackBar.title="Error"
+                    me.gitActionSnackBar.show = true
+                    me.startGitAction = false
                 }
-                me.startGitAction = false
+            },
+            onModelCreated(model){
+                this.setDialog(model, 'onModelCreated')
+            },
+            onGenerationFinished(model){
+                this.setDialog(model, 'onGenerationFinished')
             },
             onSelected(solutionIdx, codeIdx){
                 var me = this

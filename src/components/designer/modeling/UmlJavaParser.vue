@@ -2,56 +2,6 @@
     <v-row>
         <v-dialog v-model="showDialog" @click:outside="closeJavaParseDialog()" width="auto">
             <v-card fluid style="background-color: white; width: 500px;">
-                <div>
-                    <v-menu
-                        v-model="openaiPopup"
-                        :close-on-click="false"
-                        :close-on-content-click="false"
-                        offset-y
-                    >
-                        <template v-slot:activator="{ on: menu, attrs }">
-                            <v-tooltip bottom>
-                                <template v-slot:activator="{ on: tooltip }">
-                                    <v-btn
-                                        class="code-preview-left-re-size-btn"
-                                        icon x-small
-                                        v-bind="attrs"
-                                        v-on="{ ...tooltip, ...menu }"
-                                        style="margin:10px 0px 0px 10px;"
-                                    >
-                                        <v-icon size="20" :color="openaiPopup ? 'primary':''">
-                                            mdi-auto-fix
-                                        </v-icon>
-                                    </v-btn>
-                                </template>
-                                <span>input openai token</span>
-                            </v-tooltip>
-                        </template>
-                        <div v-if="openaiPopup">
-                            <v-container fluid style="background-color: white;">
-                                <v-btn style="float: right; margin-top: -17px; margin-right: -17px;" icon @click="closeOpenaiPopup()">
-                                    <v-icon small>mdi-close</v-icon>
-                                </v-btn>
-                                <v-text-field
-                                        v-model="openaiToken"
-                                        style="width: 400px; font-size: small;"
-                                        :append-icon="showOpenaiToken ? 'mdi-eye' : 'mdi-eye-off'"
-                                        :type="showOpenaiToken ? 'text' : 'password'"
-                                        name="openaiToken"
-                                        label="openAI Token"
-                                        @click:append="showOpenaiToken = !showOpenaiToken"
-                                ></v-text-field>
-                                <div style="font-size: small;">
-                                    <v-icon small style="margin-right: 5px;">mdi-help-circle-outline</v-icon>
-                                    <a href="https://beta.openai.com/account/api-keys" target="_blank">how to get token</a>
-                                </div>
-                            </v-container>
-                        </div>
-                    </v-menu>
-                </div>
-                <!-- <v-btn style="float: right; margin-top: -17px; margin-right: -17px;" icon @click="close()">
-                    <v-icon small>mdi-close</v-icon>
-                </v-btn> -->
                 <div v-if="isListening"><b>listening ...</b></div>
                 <div>
                     <v-textarea
