@@ -172,7 +172,7 @@ const server = new AceBaseServer(dbname, {
         enabled: true,
         allowUserSignup: true,
         defaultAccessRule: "auth",
-        defaultAdminPassword: "password1", // Admin Password 
+        defaultAdminPassword: {{ password }}, // Admin Password 
     },
 });
 server.on("ready", () => {
