@@ -968,22 +968,24 @@
         methods: {
             messageProcessing(e) {
                 var me = this;
-                if (e.data.message === "gitlab-login") {
-                    var getUsers = e.data.data;
-                    // window.localStorage.setItem("gitAuthor", getUsers.data.email);
-                    // window.localStorage.setItem(
-                    //     "gitUserName",
-                    //     getUsers.data.username
-                    // );
-                    // window.localStorage.setItem("gitEmail", getUsers.data.email);
-                    // window.localStorage.setItem(
-                    //     "gitToken",
-                    //     getUsers.data.accessToken
-                    // );
-                    me.gitUserName = getUsers.data.username
-                    me.gitToken = getUsers.data.accessToken
-                    // me.gitUsers = getUsers;
-                    me.$emit("update:gitUsers", getUsers.data)
+                if(e){
+                    if (e.data.message === "gitlab-login") {
+                        var getUsers = e.data.data;
+                        // window.localStorage.setItem("gitAuthor", getUsers.data.email);
+                        // window.localStorage.setItem(
+                        //     "gitUserName",
+                        //     getUsers.data.username
+                        // );
+                        // window.localStorage.setItem("gitEmail", getUsers.data.email);
+                        // window.localStorage.setItem(
+                        //     "gitToken",
+                        //     getUsers.data.accessToken
+                        // );
+                        me.gitUserName = getUsers.data.username
+                        me.gitToken = getUsers.data.accessToken
+                        // me.gitUsers = getUsers;
+                        me.$emit("update:gitUsers", getUsers.data)
+                    }
                 }
             },
             async getActionLogs(){
