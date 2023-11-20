@@ -16,14 +16,9 @@ module.exports = {
         //     },
         // },
         devServer: {
-            host: 'labs.msaez.io',
+            port: '8080',
+            // historyApiFallback: true,
             https: true,
-            // https: {
-            //     key: fs.readFileSync('./_wildcard.msaez.io-key.pem'),
-            //     cert: fs.readFileSync('./_wildcard.msaez.io.pem'),
-            // },
-            port: '8081',
-            historyApiFallback: true,
             disableHostCheck: true,
         },
         // plugins: [new BundleAnalyzerPlugin({

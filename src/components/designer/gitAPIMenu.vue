@@ -840,7 +840,7 @@
             me.setGitInfo()
             me.checkRepoExist()
             if(me.isSIgpt){
-                me.startCommitWithGit()
+                me.startCommitWithGit("main")
             }
         },
         beforeDestroy() {
@@ -968,22 +968,24 @@
         methods: {
             messageProcessing(e) {
                 var me = this;
-                if (e.data.message === "gitlab-login") {
-                    var getUsers = e.data.data;
-                    // window.localStorage.setItem("gitAuthor", getUsers.data.email);
-                    // window.localStorage.setItem(
-                    //     "gitUserName",
-                    //     getUsers.data.username
-                    // );
-                    // window.localStorage.setItem("gitEmail", getUsers.data.email);
-                    // window.localStorage.setItem(
-                    //     "gitToken",
-                    //     getUsers.data.accessToken
-                    // );
-                    me.gitUserName = getUsers.data.username
-                    me.gitToken = getUsers.data.accessToken
-                    // me.gitUsers = getUsers;
-                    me.$emit("update:gitUsers", getUsers.data)
+                if(e){
+                    if (e.data.message === "gitlab-login") {
+                        var getUsers = e.data.data;
+                        // window.localStorage.setItem("gitAuthor", getUsers.data.email);
+                        // window.localStorage.setItem(
+                        //     "gitUserName",
+                        //     getUsers.data.username
+                        // );
+                        // window.localStorage.setItem("gitEmail", getUsers.data.email);
+                        // window.localStorage.setItem(
+                        //     "gitToken",
+                        //     getUsers.data.accessToken
+                        // );
+                        me.gitUserName = getUsers.data.username
+                        me.gitToken = getUsers.data.accessToken
+                        // me.gitUsers = getUsers;
+                        me.$emit("update:gitUsers", getUsers.data)
+                    }
                 }
             },
             async getActionLogs(){
@@ -2056,10 +2058,10 @@
                     // } else {
                     //     me.startCommitWithGitHub()
                     // }
-                    me.startCommitWithGit()
+                    me.startCommitWithGit("template")
                 }
             },
-            async startCommitWithGit() {
+            async startCommitWithGit(branch) {
                 var me = this
                 me.gitTreeList = []
                 let gitTreeList = []
@@ -2124,7 +2126,7 @@
                                         me.gitSnackBar.icon="warning"
                                         me.gitSnackBar.title="Warning"
                                     } else {
-                                        let commitResult = await me.git.commit(me.gitOrgName, me.gitRepoName, "template", list, me.isFirstCommit)
+                                        let commitResult = await me.git.commit(me.gitOrgName, me.gitRepoName, branch, list, me.isFirstCommit)
                                         .then(async (commit) => {
                                             me.commitStepText = 'Push to Git'
                                             let options = {
@@ -2132,7 +2134,7 @@
                                                 repo: me.gitRepoName, 
                                                 commitData: commit, 
                                                 list: list,
-                                                branch: "template"
+                                                branch: branch
                                             }
                                             let pushResult = await me.git.push(options)
                                             .then(function () {

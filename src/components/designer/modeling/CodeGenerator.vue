@@ -4,9 +4,9 @@
             <GitActionDialog
                 @closeGitActionDialog="closeGitActionDialog"
                 :testFile="testFile"
-                :messageList="openAiMessageList"
+                :selectedCodeList="selectedCodeList"
                 @startCommitWithSigpt="startCommit"
-            >
+                >
 
             </GitActionDialog>
         </v-dialog>
@@ -118,7 +118,7 @@
                         </v-menu>
                     </div>
 
-                    <div>
+                    <!-- <div>
                         <v-menu
                                 v-model="openaiPopup"
                                 :close-on-click="false"
@@ -141,40 +141,12 @@
                                                 mdi-auto-fix
                                             </v-icon>
                                         </v-btn>
-                                        <!-- <div v-else>
-                                            <v-progress-circular
-                                                size="15"
-                                                :width="3"
-                                                indeterminate
-                                                color="primary"
-                                            ></v-progress-circular>
-                                        </div> -->
                                     </template>
                                     <span>input openai token</span>
                                 </v-tooltip>
                             </template>
-                            <!-- <div v-if="openaiPopup">
-                                <v-container fluid style="background-color: white;">
-                                    <v-btn style="float: right; margin-top: -17px; margin-right: -17px;" icon @click="closeOpenaiPopup()">
-                                        <v-icon small>mdi-close</v-icon>
-                                    </v-btn>
-                                    <v-text-field
-                                            v-model="openaiToken"
-                                            style="width: 400px; font-size: small;"
-                                            :append-icon="showOpenaiToken ? 'mdi-eye' : 'mdi-eye-off'"
-                                            :type="showOpenaiToken ? 'text' : 'password'"
-                                            name="openaiToken"
-                                            label="openAI Token"
-                                            @click:append="showOpenaiToken = !showOpenaiToken"
-                                    ></v-text-field>
-                                    <div style="font-size: small;">
-                                        <v-icon small style="margin-right: 5px;">mdi-help-circle-outline</v-icon>
-                                        <a href="https://beta.openai.com/account/api-keys" target="_blank">how to get token</a>
-                                    </div>
-                                </v-container>
-                            </div> -->
                         </v-menu>
-                    </div>
+                    </div> -->
 
                     <v-tooltip bottom v-if="editableTemplate">
                         <template v-slot:activator="{ on, attrs }">
@@ -752,12 +724,6 @@
                                                     </template>
                                                     <template v-slot:append="{ item, open }">
                                                         <v-row style="align-items: center; justify-content: flex-end; margin-right: 0px;">
-                                                            <div v-if="isRootFolder(item)">
-                                                                <v-icon style="font-size: 16px; position: absolute;left: 230px;top: 8px;"
-                                                                        @click="openActionDialog(item)"
-                                                                >mdi-auto-fix
-                                                                </v-icon>
-                                                            </div>
                                                             <div v-if="showChangedPathLists && !item.file && item.name == 'Changed Files' ">
                                                                 <v-icon style="font-size: 16px; position: absolute;left: 270px;top: 15px;"
                                                                         @click="clearChangedPathListsBucket()"
@@ -779,6 +745,12 @@
                                                                         direction="top"
                                                                 >
                                                                     <template v-slot:activator="{ on, attrs}" >
+                                                                        <div v-if="isRootFolder(item)">
+                                                                            <v-icon style="font-size: 16px; position: absolute;left: 170px; top: 7px;"
+                                                                                    @click="openActionDialog(item)"
+                                                                            >mdi-auto-fix
+                                                                            </v-icon>
+                                                                        </div>
                                                                         <v-chip
                                                                                 @mouseenter="showFullNameforSelectedTemplateKey = item.key"
                                                                                 @mouseleave="showFullNameforSelectedTemplateKey = null"
@@ -1625,10 +1597,11 @@
         },
         data() {
             return {
+                selectedCodeList: {},
                 gitActionDialogRenderKey: 0,
                 isSIgpt: false,
                 testFile: null,
-                openAiMessageList: [],
+                // openAiMessageList: [],
                 openGitActionDialog: false,
                 isLoadingExpectedTemplate: true,
                 startCheckDiff: false,
@@ -1672,7 +1645,6 @@
                 selectedFileList: [],
                 codeContent: '',
                 showGpt: false,
-                messageList: [],
                 chatPrompt: '',
                 answerProject:'',
                 editCodeOption: {},
@@ -4122,21 +4094,14 @@ jobs:
                         // }
                         if (!set.has(item.code)) {
                             codeBag.push("# "+ item.name + ": \n" + item.code);
-                            // if(option.keyword == "si"){ // lineNumber 관련 
-                            //     if(item.code.includes('\n')){
-                            //         var codeSplit = item.code.split('\n')
-                            //         codeSplit.forEach(function (line, idx){
-                            //             codeSplit[idx] = `${line} // lineNumber ${idx + 1} `
-                            //         })
-                            //         item.code = codeSplit.join('\n')
-                            //     }
-                            //     set.add(item.code);
-                            // } else {
-                                if(option.keyword == "si" && item.name.includes("Test.java") && item.template === "https://github.com/msa-ez/topping-unit-test"){
-                                    me.testFile = item
-                                }
+                            if(option.keyword == "si" && item.name.includes("Test.java") && item.template === "https://github.com/msa-ez/topping-unit-test"){
+                                me.testFile = item
+                            }
+                            if(option.keyword == "si"){
+                                me.selectedCodeList[item.name] = item.code
+                            } else {
                                 set.add(item.code);
-                            // }
+                            }
                         }
                         //me.$refs.codeViewer.$refs.collectedCodes = me.gptCodes   /// Very BAD
                     }
@@ -6683,6 +6648,7 @@ jobs:
                                 'Content-Type': 'application/zip',
                             }
                             me.$EventBus.$emit("nextStep")
+
                             var configPath = `${userGroup}/${userName}/config`
                             var checkConfigFile;
                             try {
@@ -6940,22 +6906,10 @@ jobs:
                 var me = this
                 me.openCode[0] = item
                 if(me.openCode[0].children){
-                    me.openAiMessageList = []
                     if(me.rootModelAndElementMap.modelForElements.BoundedContext.find(x => x.name == me.openCode[0].name)){
-                        if(me.openAiMessageList.length == 0){
-                            let prompt
                             me.testFile = null
                             let collectedCodes = me.getSelectedFilesDeeply(me.openCode, {keyword: "si"})
                             
-                            if(Array.isArray(collectedCodes) && collectedCodes.length > 0){
-                                prompt = collectedCodes.join("\n\n");
-                            }
-
-                            me.openAiMessageList.push({
-                                role: 'user',
-                                content: 'Here is the code list: \n' + prompt
-                            })
-                        }
                         if(me.testFile){
                             me.openGitActionDialog = true
                             me.gitActionDialogRenderKey++;
@@ -7472,8 +7426,9 @@ jobs:
                         };
 
 
-                        Promise.all([me.generateBaseTemplate(templateContext), me.generateTemplate(templateContext), me.generateToppingTemplate(templateContext)])
-                            .then( function () {
+                        Promise.all([me.generateBaseTemplate(templateContext), me.generateTemplate(templateContext)])
+                            .then(async function () {
+                                await me.generateToppingTemplate(templateContext)
                                 resolve()
                             });
 
@@ -8503,7 +8458,12 @@ jobs:
                                 if( headerOptions['ifDuplicated'] && headerOptions['ifDuplicated'] === "merge") {
                                     //ifDuplicate
                                     // _codeMerger(compare, origin, type of compare)
-                                    var mergedCode = me._codeMerger(codeObj.code, dupObj.code, codeObj.fileName);
+                                    var mergedCode = null
+                                    if(codeObj.generatedType == 'TOPPING'){
+                                        mergedCode = me._codeMerger(codeObj.code, dupObj.code, codeObj.fileName);
+                                    } else {
+                                        mergedCode = me._codeMerger(dupObj.code, codeObj.code, codeObj.fileName);
+                                    }
 
                                     dupObj.code = mergedCode;
                                 } else {

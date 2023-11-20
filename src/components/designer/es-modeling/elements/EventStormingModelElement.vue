@@ -100,6 +100,7 @@
                 me.setInitElement()
 
                 me.validate(false)
+                me.onMoveAction()
             } catch (e) {
                 // alert('Error: modelCanvas 선언 필수.', e)
                 console.log('Error: modelCanvas 선언 필수.', e)

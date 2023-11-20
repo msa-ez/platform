@@ -42,8 +42,11 @@
     <!--  firebase  -->
     <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
     <script src="https://www.gstatic.com/firebasejs/6.2.0/firebase-app.js"></script>
-    <!--    firebase storage -->
+    <!-- firebase storage -->
     <script src="https://www.gstatic.com/firebasejs/6.2.0/firebase-storage.js"></script>
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/firebase/6.2.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/firebase/6.2.0/firebase-firestore.js"></script>
 
     <!-- jQuery -->
     <script
@@ -55,10 +58,6 @@
       type="text/javascript"
       src="https://cdn.iamport.kr/js/iamport.payment-1.1.5.js"
     ></script>
-
-    <!-- Add Firebase products that you want to use -->
-    <script src="https://www.gstatic.com/firebasejs/firebase/6.2.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/firebase/6.2.0/firebase-firestore.js"></script>
 
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script
@@ -248,9 +247,10 @@
   </head>
   <body>
     <script>
+      if(window.MODE == "onprem") {
         window.$acebase = new AceBaseClient({
-            host: "localhost",
-            port: 5757,
+            host: window.DB_HOST,
+            port: window.DB_PORT,
             dbname: "mydb",
             https: false,
         });
@@ -258,6 +258,7 @@
             console.log("Connected successfully");
         
         });
+      }
       // window.GitpleConfig = {appCode: '0XY0AvdJ820MDsNwIZuJIgQqdn1kc3'};
       // !function () {
       //     function e() {
