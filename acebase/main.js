@@ -3,19 +3,19 @@ const { AceBaseClient } = require("acebase-client");
 const express = require("express");
 const app = express();
 const _ = require("lodash");
-const host = process.env.DB_HOST;
-const dbname = "mydb";
+const host = process.env.DB_HOST ? process.env.DB_HOST : "localhost";
+const dbname = process.env.DB_NAME ? process.env.DB_NAME : "mydb"; // DB Name
 const server = new AceBaseServer(dbname, {
-    host: "0.0.0.0",
+    host: host,
     port: 5757,
-    // storage: {
-    //     path: "/acebase"
-    // },
+    storage: {
+        path: "/acebase"
+    },
     authentication: {
         enabled: true,
         allowUserSignup: true,
         defaultAccessRule: "auth",
-        defaultAdminPassword: "75sdDSFg37w5",
+        defaultAdminPassword: "password1", // Admin Password
     },
 });
 // const server = new AceBaseServer(dbname, settings);
@@ -24,20 +24,22 @@ server.on("ready", () => {
 });
 
 const db = new AceBaseClient({
-    host: "localhost",
+    host: host,
     port: '5757',
-    dbname: "mydb",
+    dbname: dbname,
     https: false,
 });
 // const db = new AceBaseClient({ host: 'acebase.kuberez.io', port: 443, dbname: 'mydb', https: true });
-db.auth.signIn("admin", "75sdDSFg37w5").then((result) => {
+db.auth.signIn("admin", "password1").then((result) => {
     console.log(
         `Signed in as ${result.user.username}, got access token ${result.accessToken}`
     );
 });
+
 db.ready(() => {
     console.log("Connected successfully");
 });
+
 const getCountDefinition = db.ref("userLists/everyone/share").once("value");
 const updateCountDefinition = db.ref("userLists/everyone/share/count");
 const inputInformation = db

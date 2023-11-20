@@ -49,7 +49,7 @@
                                 src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png"/>
                         <div>Google</div>
                     </v-btn>
-                    <v-btn @click="snsLogin('keycloak-oidc')"
+                    <!-- <v-btn @click="snsLogin('keycloak-oidc')"
                         style="background-color:white; width:400px; margin-left:50px; height:50px; "
                     >
                         <img id="git-hover"
@@ -57,7 +57,7 @@
                                 alt="Github sign-in"
                                 src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"/>
                         <div>aifrica</div>
-                    </v-btn>
+                    </v-btn> -->
                 </div>
 
                 <div style="width:500px; margin-left:5px; margin-bottom:20px; text-align:center; font-size: small; color:#BDBDBD; margin-top: 30px;">

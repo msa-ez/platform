@@ -1220,8 +1220,8 @@
                 //search
                 searchOpen: false,
                 searchObj:{
-                  name: '',
-                  type: 'all'
+                    name: '',
+                    type: 'all'
                 },
                 mouseOverOpenList: false,
                 listMode: [
