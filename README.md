@@ -246,3 +246,27 @@ powershell "[convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(\"Token!\")
 > 후 ![image](https://github.com/msa-ez/platform/assets/16382067/6b6ae0c8-2f7b-4a15-9893-56f49e1e097c)
 
 위 그림과 같이 tokens가 추가된다.
+
+***
+# GitLab Template Import
+
+## ※ 기본 Template은 root 계정 하위 프로젝트로 생성하여야 한다.
+
+1. **New project** 선택
+![image](https://github.com/msa-ez/platform/assets/16382067/3b22928d-9457-430d-9619-5cf3d66f6ff1)
+
+2. **import project** 선택
+![image](https://github.com/msa-ez/platform/assets/16382067/bc79990e-493c-41d1-a22b-1124639d0605)
+
+3. GitHub 선택
+![image](https://github.com/msa-ez/platform/assets/16382067/acc6ced6-a85c-49b1-9d9f-f112a0a1eac8)
+
+4. Personal Access Token 입력 후, **Authenticate**
+![image](https://github.com/msa-ez/platform/assets/16382067/b432aa46-d3c7-47e7-a1d4-69be70790c20)
+
+  - Personal Token이 없는 경우 하단의 GitHub **Personal Access Token** 를 클릭하면 Github 토큰 발급 화면으로 이동
+
+5. 검색창에 msa-ez 검색 후, 프로젝트 Import
+![image](https://github.com/msa-ez/platform/assets/16382067/b78ed33b-cc92-40be-a793-e3c18079217a)
+
+    - msa-ez 검색 후, 아무것도 검색되지 않는다면 Github msa-ez Organization 추가 필요
