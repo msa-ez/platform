@@ -724,6 +724,12 @@
                                                     </template>
                                                     <template v-slot:append="{ item, open }">
                                                         <v-row style="align-items: center; justify-content: flex-end; margin-right: 0px;">
+                                                            <div v-if="isRootFolder(item)">
+                                                                <v-icon style="font-size: 16px; position: absolute;left: 230px;top: 8px;"
+                                                                        @click="openActionDialog(item)"
+                                                                >mdi-auto-fix
+                                                                </v-icon>
+                                                            </div>
                                                             <div v-if="showChangedPathLists && !item.file && item.name == 'Changed Files' ">
                                                                 <v-icon style="font-size: 16px; position: absolute;left: 270px;top: 15px;"
                                                                         @click="clearChangedPathListsBucket()"
@@ -7426,11 +7432,15 @@ jobs:
                         };
 
 
-                        Promise.all([me.generateBaseTemplate(templateContext), me.generateTemplate(templateContext)])
-                            .then(async function () {
-                                await me.generateToppingTemplate(templateContext)
-                                resolve()
-                            });
+                        Promise.all([me.generateBaseTemplate(templateContext), me.generateTemplate(templateContext), me.generateToppingTemplate(templateContext)])
+                        .then(function () {
+                            resolve()
+                        });
+                        // Promise.all([me.generateBaseTemplate(templateContext), me.generateTemplate(templateContext)])
+                        // .then(async function () {
+                        //     await me.generateToppingTemplate(templateContext)
+                        //     resolve()
+                        // });
 
                     } catch (e) {
                         // me.isListSettingDone = true

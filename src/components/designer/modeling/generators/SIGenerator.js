@@ -32,11 +32,11 @@ Properly rethrow errors when handling try~catch: There should be no implementati
 ${prompt}
 Results must always be returned in the corresponding json format and follow the generation rules.
 Generation rules: 
-1. codeChanges can not be empty array it must have value
-2. If no code changes are made, the contents of the file in error should be returned.
-3. If the code for the file does not exist, "fileCode", "modifiedFileCode" should return "Code does not exist".
-4. The fileCode, modifiedFileCode values must return the full code of the file. You can not skip any code. never.
-5. codeChanges are only created if they are files.
+1. "codeChanges" cannot be an empty array and must have a value.
+2. In the case of files where an error occurred without any code changes, the contents of the original file must be returned as "codeChanges".
+3. If the file code does not exist in the provided code list, "fileCode" and "Modified File Code" should return "Code does not exist."
+4. The "fileCode", "modifiedFileCode" values must contain the entire code of the file. Code content should not be omitted or summarized. For example, you should not summarize sections of code with the expression "...".
+5. "codeChanges" are only created if it is a file.
 Json format:
 [ 
     {
