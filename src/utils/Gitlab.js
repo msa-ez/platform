@@ -53,6 +53,16 @@ class Gitlab extends Git {
             Accept: 'application/json'
         }
     }
+    getUserInfo() {
+        let me = this
+        return new Promise(async function (resolve, reject) {
+            let getUserInfo = await axios.get(`https://gitlab.${me.getOrigin()}/api/v4/user`, { headers: me.getHeader() })
+            .then(function (res) {
+                resolve(res.data)
+            })
+            .catch(e => reject(e))
+        })
+    }
     getUser(org) {
         let me = this
         return new Promise(async function (resolve, reject) {

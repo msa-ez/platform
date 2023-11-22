@@ -655,7 +655,7 @@
             window.io = io
             me.app = this.getComponent('App')
             let git;
-            if(window.MODE == "onprem") {
+            if(window.PROVIDER == "gitlab") {
                 git = new Gitlab();
             } else {
                 git = new Github();

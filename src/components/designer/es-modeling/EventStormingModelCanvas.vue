@@ -1543,7 +1543,20 @@
                             @createModel="onUiHintGenerated"
                         ></UIWizardDialoger>
                     </div>
+                    <v-dialog v-model="gitTokenDialog">
+                        <v-card>
+                            <v-card-title class="text-h5 grey lighten-2">
+                            Git Token
+                            </v-card-title>
 
+                            <v-card-text>
+                                <git-info
+                                    @input-token="saveTokens()"
+                                    @close="gitTokenDialog = false"
+                                ></git-info>
+                            </v-card-text>
+                        </v-card>
+                    </v-dialog>
                     <v-dialog
                         v-model="clusterDialog"
                         persistent
@@ -2138,6 +2151,7 @@
 <script>
 // import { Octokit, App } from "https://cdn.skypack.dev/octokit";
 // import CodeViewer from "./EventStormingCodeViewer";
+import GitInfo from "../../oauth/GitInfo"
 import EventStormingModeling from "./index";
 import SeparatePanelComponents from "../../SeparatePanelComponents";
 import AutoModelingDialog from "../modeling/AutoModelingDialog";
@@ -2205,6 +2219,7 @@ export default {
     name: "event-storming-model-canvas",
     mixins: [ModelCanvas],
     components: {
+        GitInfo,
         UIWizardDialoger,
         AutoModelingDialog,
         GeneratorUI,
@@ -2422,7 +2437,7 @@ export default {
 
             //setting
             settingExportDialog: false,
-
+            gitTokenDialog: false,
             //bpmn
             bpmnDialog: false,
             bpmnCommands: [],
@@ -2878,6 +2893,11 @@ export default {
         }, 0),
     },
     methods: {
+        saveTokens() {
+            let me = this
+            me.gitTokenDialog = false;
+            me.openCodeViewer()
+        },
         detectDeletedModel(beforeInfo){
             var me = this
             if(!me.projectInformation) return;
@@ -3055,7 +3075,8 @@ export default {
         },
         alertReLogin() {
             alert("You need to re-login because session is expired");
-            this.showLoginCard = true;
+            me.gitTokenDialog = true
+            // this.showLoginCard = true;
         },
         onChangedValue(oldVal, newVal){
             var me = this;
@@ -5304,8 +5325,12 @@ export default {
             var me = this;
 
             try {
-                me.gitAccessToken = localStorage.getItem("gitAccessToken");
-                // me.model = []
+                me.gitAccessToken = localStorage.getItem("gitToken");
+                // Dialog Open
+                if(!me.gitAccessToken) {
+                    me.gitTokenDialog = true;
+                    return;
+                }
 
                 var filtered = me.filteredProjectName(me.projectName);
                 if (filtered.replace(/\s/gi, "") == "") {

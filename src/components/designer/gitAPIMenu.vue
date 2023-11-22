@@ -323,11 +323,6 @@
                             <!--                            <div v-if="(!isFirstCommit || isDuplicate)">-->
                         </div>
                         <div v-if="item.tabKey == 'setAccount'" :disabled="!isListSettingDone">
-                            <!-- <v-card-title style="background-color: #0d1117; color: white; margin-left:-10px;">
-                                <v-icon color="white" @click="gitMenuMode = 'push'" style="margin-right: 5px;">mdi-arrow-left</v-icon>
-                                &nbsp;Settings
-                                <v-spacer />
-                            </v-card-title> -->
                             <div style="margin: 10px;">
                                 <div v-if="isGitLogin" style="width: 100%; text-align: right; margin-bottom: -30px;">
                                     <v-btn small text color="primary" @click="logoutToGit()">sign out</v-btn>
@@ -826,8 +821,8 @@
         created: async function () {
             this.core = new CodeGeneratorCore({});
             let git;
-
-            if(window.MODE == "onprem") {
+            // localStorage.getItem("provider")
+            if(window.PROVIDER == "gitlab") {
                 git = new Gitlab();
             } else {
                 git = new Github();

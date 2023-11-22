@@ -211,6 +211,11 @@
                 let value = line.split('=')[1];
                 window.OAUTH_URL = value;
             }
+            if (line && line.indexOf('VUE_APP_GIT=') == 0) {
+                let value = line.split('=')[1];
+                window.PROVIDER = value.replace(/(?:\\[rn]|[\r\n]+)+/g, "");;
+            }
+            
             // if (line && line.indexOf('VUE_APP_CLUSTER_ADDRESS=') == 0) {
             //     let value = line.split('=')[1];
             //     window.CLUSTER_ADDRESS = value;
@@ -249,8 +254,8 @@
     <script>
       if(window.MODE == "onprem") {
         window.$acebase = new AceBaseClient({
-            host: window.DB_HOST,
-            port: window.DB_PORT,
+            host: "localhost",
+            port: "5757",
             dbname: "mydb",
             https: false,
         });

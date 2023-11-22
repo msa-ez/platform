@@ -1446,7 +1446,20 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
+        <v-dialog v-model="gitTokenDialog" style="width: 50%">
+            <v-card>
+                <v-card-title class="text-h5 grey lighten-2">
+                Git Token
+                </v-card-title>
 
+                <v-card-text>
+                    <git-info
+                        @input-token="saveTokens()"
+                        @close="gitTokenDialog = false"
+                    ></git-info>
+                </v-card-text>
+            </v-card>
+        </v-dialog>
         <v-dialog
                 v-model="isCustomTemplateForLoad"
                 width="480"
@@ -1546,7 +1559,7 @@
     import MarketPlace from "../MarketPlace.vue"
     import getParent from "../../../utils/getParent";
     import ExpectedTemplateTestDialog from "./ExpectedTemplateTestDialog"
-
+    import GitInfo from "../../oauth/GitInfo";
     import GitAPI from "../../../utils/GitAPI"
     import Github from "../../../utils/Github"
     import Gitlab from "../../../utils/Gitlab"
@@ -1578,6 +1591,7 @@
             'separate-panel-components':SeparatePanelComponents,
             'code-viewer': CodeViewer,
             gitAPIMenu,
+            GitInfo,
             // vueObjectView,
             LoginByGitlab,
             MarketPlace,
@@ -1603,6 +1617,7 @@
         },
         data() {
             return {
+                gitTokenDialog: false,
                 selectedCodeList: {},
                 gitActionDialogRenderKey: 0,
                 isSIgpt: false,
@@ -2610,7 +2625,7 @@
         created:function () {
             let canvas = getParent(this.$parent, this.canvasName);
             let git;
-            if(window.MODE == "onprem") {
+            if(window.PROVIDER == "gitlab") {
                 git = new Gitlab();
             } else {
                 git = new Github();
@@ -2730,6 +2745,11 @@
             });
         },
         methods: {
+            saveTokens() {
+                let me = this
+                me.gitTokenDialog = false;
+                this.callGenerate();
+            },
             messageProcessing(e) {
                 // var me = this;
                 if (e.data.message === "gitlab-login") {
@@ -3101,8 +3121,11 @@ jobs:
                 }
             },
             alertReLogin(){
+                // let me = thi
                 alert("You need to re-login because session is expired")
-                this.showLoginCard = true
+                this.gitTokenDialog = true
+            // this.showLoginCard = true;
+                // this.showLoginCard = true
             },
             showTemplateListChip(obj){
 

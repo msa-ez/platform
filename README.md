@@ -41,7 +41,7 @@ docker push repository/image-name:image-tag
 version: '2'
 services:
   msaez:
-    image: # MSAez Docker Image
+    image: asia-northeast3-docker.pkg.dev/eventstorming-tool/eventstorming:v49 # MSAez Docker Image
     ports:
       - 8080:8080
     environment:
@@ -53,7 +53,7 @@ services:
       VUE_APP_OAUTH_ID: # Gitlab Application ID
       VUE_APP_OAUTH_SECRET: # Gitlab Application Secret
   acebase :
-    image: # Acebase Docker Image
+    image: asia-northeast3-docker.pkg.dev/eventstorming-tool/acebase:v33 # Acebase Docker Image
     container_name: acebase
     ports:
       - 5757:5757

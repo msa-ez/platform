@@ -18,7 +18,8 @@ class Github extends Git {
     getHeader() {
         return {
             Authorization: 'token ' + localStorage.getItem('gitToken'),
-            Accept: 'application/vnd.github+json'
+            Accept: 'application/vnd.github+json',
+            "X-GitHub-Api-Version": "2022-11-28"
         }
     }
     getBranch(org, repo, forkedTag) {
@@ -651,6 +652,18 @@ class Github extends Git {
             let patchMainResult = await axios.patch(`https://api.github.com/repos/${org}/${repo}/git/refs/heads/${branch}`, options, { headers: me.getHeader() })
             .then((res) => {
                 resolve(res)
+            })
+            .catch((e) => {
+                reject(e)
+            })
+        })
+    }
+    getUserInfo() {
+        let me = this
+        return new Promise(async function (resolve, reject) {
+            let patchMainResult = await axios.get(`https://api.github.com/user`, { headers: me.getHeader() })
+            .then((res) => {
+                resolve(res.data)
             })
             .catch((e) => {
                 reject(e)

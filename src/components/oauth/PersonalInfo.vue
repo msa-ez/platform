@@ -30,17 +30,23 @@
                         </v-icon>
                         Models
                     </v-tab>
-                    <v-tab style="justify-content: left;">
+                    <v-tab style="justify-content: left;" v-if="!isOnprem">
                         <v-icon left>
                             mdi-television-guide
                         </v-icon>
                         Courses
                     </v-tab>
-                    <v-tab style="justify-content: left;">
+                    <v-tab style="justify-content: left;" v-if="!isOnprem">
                         <v-icon left>
                             mdi-television-guide
                         </v-icon>
                         Certificates
+                    </v-tab>
+                    <v-tab style="justify-content: left;">
+                        <v-icon left>
+                            mdi-git
+                        </v-icon>
+                        Git Info
                     </v-tab>
 
                     <v-tab-item>
@@ -73,11 +79,11 @@
 
                             <v-row v-else-if="filterModelingItems.length > 0 ">
                                 <v-col v-for="(modeling) in filterModelingItems"
-                                       :key="modeling.projectId"
-                                       xl="4"
-                                       lg="4"
-                                       md="6"
-                                       sm="12">
+                                    :key="modeling.projectId"
+                                    xl="4"
+                                    lg="4"
+                                    md="6"
+                                    sm="12">
                                     <EventStormingListCard
                                             :information="modeling"
                                             read-only
@@ -94,7 +100,7 @@
                         </v-card-text>
                     </v-tab-item>
 
-                    <v-tab-item>
+                    <v-tab-item v-if="!isOnprem">
                         <v-card-text style="height: 90%;">
                             <v-tabs>
                                 <v-tab>
@@ -140,10 +146,10 @@
 
                                         <v-row v-else-if="filterEnrolledClassItems.length> 0">
                                             <v-col v-for="(clazz, index) in filterEnrolledClassItems" :key="index"
-                                                   xl="4"
-                                                   lg="4"
-                                                   md="6"
-                                                   sm="12">
+                                                xl="4"
+                                                lg="4"
+                                                md="6"
+                                                sm="12">
                                                 <class-card :clazz="clazz"></class-card>
                                             </v-col>
                                         </v-row>
@@ -180,10 +186,10 @@
 
                                         <v-row v-else-if="filterOwnClassItems.length > 0">
                                             <v-col v-for="(clazz, index) in filterOwnClassItems" :key="index"
-                                                   xl="4"
-                                                   lg="4"
-                                                   md="6"
-                                                   sm="12">
+                                                xl="4"
+                                                lg="4"
+                                                md="6"
+                                                sm="12">
                                                 <class-card :clazz="clazz"></class-card>
                                             </v-col>
                                         </v-row>
@@ -196,7 +202,7 @@
                         </v-card-text>
                     </v-tab-item>
 
-                    <v-tab-item>
+                    <v-tab-item v-if="!isOnprem">
 
                         <v-card-text style="height: 100%; overflow-x: scroll;">
                             <v-row v-if="filterCertificateItems == undefined  && typeof filterCertificateItems != 'object'">
@@ -241,51 +247,17 @@
                                 </v-col>
                             </v-row>
                         </v-card-text>
-
-                        <!--                        <v-card-text style="height: 100%; overflow-x: scroll;">-->
-                        <!--                            <v-row v-if="filterCerti == undefined  && typeof filterCerti != 'object'">-->
-                        <!--                                <v-col-->
-                        <!--                                        v-for="idx in 9"-->
-                        <!--                                        cols="6"-->
-                        <!--                                        md="4"-->
-                        <!--                                >-->
-                        <!--                                    <v-card-->
-                        <!--                                            outlined-->
-                        <!--                                            class="mx-auto"-->
-                        <!--                                            style="width: 500px; height: 400px; justify-content: center"-->
-                        <!--                                            align="center"-->
-                        <!--                                    >-->
-                        <!--                                        <v-skeleton-loader-->
-                        <!--                                                ref="skeleton"-->
-                        <!--                                                type="list-item-two-line"-->
-                        <!--                                                class="mx-auto"-->
-                        <!--                                        >-->
-                        <!--                                        </v-skeleton-loader>-->
-                        <!--                                    </v-card>-->
-                        <!--                                </v-col>-->
-                        <!--                            </v-row>-->
-
-                        <!--                            <v-row v-else-if="filterCerti == null">-->
-                        <!--                                발급된 증명서가 없습니다.-->
-                        <!--                            </v-row>-->
-
-                        <!--                            <v-row v-else-if="filterCerti.length > 0">-->
-                        <!--                                <v-col v-for="(certificate,index) in filterCerti" :key="index"-->
-                        <!--                                       md="6"-->
-                        <!--                                       sm="12">-->
-                        <!--                                    <v-card flat-->
-                        <!--                                            style="justify-content: center"-->
-                        <!--                                            align="center"-->
-                        <!--                                    >-->
-                        <!--                                        <v-card-text>-->
-                        <!--                                            <div style="width: 100%; height: 100%;">-->
-                        <!--                                                <FirstCertificate :information="certificate"></FirstCertificate>-->
-                        <!--                                            </div>-->
-                        <!--                                        </v-card-text>-->
-                        <!--                                    </v-card>-->
-                        <!--                                </v-col>-->
-                        <!--                            </v-row>-->
-                        <!--                        </v-card-text>-->
+                    </v-tab-item>
+                    <v-tab-item>
+                        <v-card-text style="height: 100%;">
+                            <!-- <v-radio-group row v-model="provider">
+                                <v-radio label="Github" value="github"></v-radio>
+                                <v-radio label="GitLab" value="gitlab"></v-radio>
+                            </v-radio-group> -->
+                            <git-info
+                                :provider="provider"
+                            ></git-info>
+                        </v-card-text>
                     </v-tab-item>
                 </v-tabs>
             </div>
@@ -294,6 +266,7 @@
 </template>
 
 <script>
+    import GitInfo from "./GitInfo.vue";
     import ListPages from "../ListPages";
     import ClassCard from "../labs/ClassCard";
     import FirstCertificate from "../certificates/FirstCertificate";
@@ -302,7 +275,7 @@
     export default {
         name: 'personal-info',
         mixins: [ListPages],
-        components: {ClassCard, FirstCertificate, EventStormingListCard},
+        components: {ClassCard, FirstCertificate, EventStormingListCard, GitInfo},
         props: {
             userInformation: {
                 type: Object,
@@ -317,14 +290,21 @@
                 }
             }
         },
+        
         data() {
             return {
                 // standardRow: 9,
+                provider: "github",
                 modelingItems: undefined,
                 enrolledClassItems: undefined,
                 ownClassItems: undefined,
                 certificateItems: undefined,
                 tmpCerti: undefined
+            }
+        },
+        watch: {
+            provider: function (newVal) {
+                localStorage.setItem("git-provider", newVal)
             }
         },
         created() {
@@ -338,6 +318,12 @@
         computed: {
             getPersonalInfo() {
                 return this.userInfo
+            },
+            isOnprem() {
+                if(window.MODE == "onprem")
+                    return true
+                else 
+                    return false
             },
             filterModelingItems() {
                 var me = this
