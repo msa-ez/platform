@@ -9,26 +9,25 @@ export default class SIGenerator extends JsonAIGenerator {
 
     createPrompt(){
         var prompt 
-        if(this.client.generatedErrorLog){
+        if(this.client.generatedErrorDetails){
             prompt = `The error occurred during testing.
-            Error log: ${this.client.generatedErrorLog}
-
-            You must check the error log and add a solution for the file causing the error to "codeChanges".`
+These are the contents of files where an error occurred during “mvn test” using the files in the code list. ${JSON.stringify(this.client.generatedErrorDetails)}
+Identify the code part that needs error correction and correct the error appropriately for the business logic.
+After checking the error log, you should add a solution for the file that caused the error to "codeChanges".
+If multiple errors occur in the same file, all solutions should be added to "codeChanges" as a single result.`
         } else {
             prompt = 'First, write the business logic to pass this test.'
         }
 
-        return `You are a developer. You need to modify the codes to finally pass ${this.client.testFile.name} as shown below:
-${this.client.testFile.name}: 
-${this.client.testFile.code}
-Various errors will occur during the process of modifying the code in the code list.
-Errors may occur due to 1. insufficient writing of business logic, or 2. logic errors.
-If the business logic has not been written, please present a solution that writes the logic in an aggregate file within the domain code.
-SELF CRITICISM:
-Understand business logic well: When implementing, write with as much understanding of the business purpose of the test as possible and understand the given/when/then of the test to see if you are writing business logic.
-Anti-corruption processing of input events: When implemented within the port method within the input value and aggregate, the type conversion and value conversion rules must be well written by looking at the example values within the test and converting them appropriately.
-Maintain the existing class interface (methods, parameters, fields) as much as possible.
-Properly rethrow errors when handling try~catch: There should be no implementation that eats any errors through try~catch. If you do not know exactly why an error occurred, it is impossible to correct it later.
+        return `Here is the code list:
+${JSON.stringify(this.client.selectedCodeList)}
+You are a developer. To finally pass ${this.client.testFile.name} in the code list, you must modify the code as follows.
+1. If the error occurred due to a logic error, please provide a solution related to resolving the error. If an error does not occur, determine whether the business logic is insufficient or not written, and if so, please suggest a way to write the logic in the aggregate file in the domain code.
+2. When implementing code, you must understand and write as much as possible the business purpose of the test file (${this.client.testFile.name}) and the "given"/"when"/"then" of the test. . Business logic.
+3. Anti-corruption handling of input events is required.
+When implementing within port methods within input values and aggregates, make sure to write type conversion and value conversion rules well by looking at example values within your tests and converting them appropriately.
+Preserve existing class interfaces (methods, parameters, fields) as much as possible.
+4. Re-raise the error appropriately when handling the try~catch. No implementation MUST handle errors through a new try~catch rather than an existing try~catch. If you don't know exactly why the error occurred, you won't be able to fix it later.
 ${prompt}
 Results must always be returned in the corresponding json format and follow the generation rules.
 Generation rules: 

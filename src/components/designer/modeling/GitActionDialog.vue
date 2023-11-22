@@ -209,22 +209,25 @@
         },
         data() {
             return {
-                copySelectedCodeList: null,
-                isFirstCommit: true,
-                savedGeneratedErrorLog: null,
                 dialogRenderKey: 0,
                 lastIndex: 0,
-                resultLength: 0,
-                fullErrorLog: null,
-                generatedErrorLog: null,
                 selectedIdx: null,
-                generator: null,
-                updateList: [],
-                siTestResults: [],
+                resultLength: 0,
+                isFirstCommit: true,
                 startGitAction: true,
                 isSolutionCreating: false,
-                model: 'gpt-4',
-                openAiMessageList: null,
+
+                copySelectedCodeList: null,
+                updateList: [],
+                siTestResults: [],
+
+                fullErrorLog: null,
+                savedGeneratedErrorDetails: null,
+                generatedErrorDetails: null,
+
+                generator: null,
+                // model: 'gpt-4',
+
                 gitActionSnackBar: {
                     Text: '',
                     show: false,
@@ -259,8 +262,7 @@
                     alert("All tests succeeded")
                 } else {
                     me.fullErrorLog = log
-                    me.openAiMessageList = null
-                    me.model = null
+                    // me.model = null
                     me.generator = new ErrorLogGenerator(me);
                     me.generator.generate();
                 }
@@ -285,12 +287,7 @@
             },
             generate(){
                 var me = this
-                me.model = 'gpt-4'
-                me.openAiMessageList = []
-                me.openAiMessageList.push({
-                    role: 'user',
-                    content: 'Here is the code list: \n' + JSON.stringify(me.selectedCodeList)
-                })
+                // me.model = 'gpt-4'
                 me.startGitAction = true
                 me.generator = new SIGenerator(this);
                 me.generator.generate();
@@ -303,8 +300,8 @@
                     this.lastIndex = this.siTestResults.lastIndex
                     this.resultLength = this.siTestResults.length
                 }
-                if(this.savedGeneratedErrorLog){
-                    this.generatedErrorLog = this.savedGeneratedErrorLog
+                if(this.savedGeneratedErrorDetails){
+                    this.generatedErrorDetails = this.savedGeneratedErrorDetails
                 }
                 this.generate()
             },
@@ -320,8 +317,6 @@
                     var me = this
                     if(me.fullErrorLog){
                         me.siTestResults[me.lastIndex].errorLog = model
-                        me.generatedErrorLog = JSON.stringify(model)
-                        me.savedGeneratedErrorLog = me.generatedErrorLog
                     } else {  
                         if(!me.startGitAction){
                             me.generator.stop();
@@ -355,13 +350,36 @@
                         me.startGitAction = false
                         me.isSolutionCreating = false
                         if(me.fullErrorLog){
+                            me.generatedErrorDetails = []
+                            model.some(function (error){
+                                if(error.fileName && error.errorDetails){
+                                    var errDetail = ''
+                                    var fileName = error.fileName
+                                    if(fileName.includes("/")){
+                                        var fileNameSplit = fileName.split("/")
+                                        fileName = fileNameSplit[fileNameSplit.lastIndex]
+                                    }
+                                    errDetail = `An error called ${error.errorDetails} occurred in file ${fileName}.`
+                                    if(error.lineNumber && me.selectedCodeList[fileName]){
+                                        var codeSplit = me.selectedCodeList[fileName].split('\n')
+                                        if(codeSplit[error.lineNumber - 1] && codeSplit[error.lineNumber - 1] != ""){
+                                            errDetail = `An error called ${error.errorDetails} occurred in the ${codeSplit[error.lineNumber - 1]} part of the code content of the ${fileName} file.`
+                                        } 
+                                    } 
+                                    me.generatedErrorDetails.push(errDetail)
+                                } else {
+                                    me.generatedErrorDetails = model
+                                    return true;
+                                }
+                            })
+                            me.savedGeneratedErrorDetails = me.generatedErrorDetails
                             me.siTestResults[me.lastIndex].fullErrorLog = me.fullErrorLog
                             me.fullErrorLog = null
                             me.generate()
                         } else {                    
                             me.lastIndex = me.siTestResults.lastIndex
                             me.resultLength = me.siTestResults.length
-                            me.generatedErrorLog = null
+                            me.generatedErrorDetails = null
                         }
                     } else {
                         me.dialogRenderKey++;

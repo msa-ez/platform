@@ -2780,6 +2780,9 @@
                         if(!idx || idx == -1){
                             idx = me.codeLists.findIndex(x => x.fileName == changed.fileName && x.bcId == me.openCode[0].bcId)
                         }
+                        if(!idx || idx == -1){
+                            idx = me.codeLists.findIndex(x => changed.fileName.includes(x.fileName) && x.bcId == me.openCode[0].bcId)
+                        }
                         if(me.codeLists[idx] && me.codeLists[idx].code){
                             me.codeLists[idx].code = changed.modifiedFileCode
                         }
