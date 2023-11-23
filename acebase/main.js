@@ -5,8 +5,9 @@ const app = express();
 const _ = require("lodash");
 const host = process.env.DB_HOST ? process.env.DB_HOST : "localhost";
 const dbname = process.env.DB_NAME ? process.env.DB_NAME : "mydb"; // DB Name
+const dbport = process.env.DB_PORT ? process.env.DB_PORT : 5757; // DB PORT
 const server = new AceBaseServer(dbname, {
-    host: "localhost",
+    host: "0.0.0.0",
     port: 5757,
     // storage: {
     //     path: "/acebase"
@@ -24,8 +25,8 @@ server.on("ready", () => {
 });
 
 const db = new AceBaseClient({
-    host: "localhost",
-    port: '5757',
+    host: host,
+    port: dbport,
     dbname: dbname,
     https: false,
 });
