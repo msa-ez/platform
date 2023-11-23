@@ -19,7 +19,7 @@ services:
     ports:
       - 5757:5757
     volumes:
-      - ~/mydb.acebase:/acebase
+      - ./acebase/mydb.acebase:/acebase
     environment:
       DB_HOST: 5757-msaez-platform-kp3ioeesr8g.ws-us106.gitpod.io
       DB_NAME: mydb
