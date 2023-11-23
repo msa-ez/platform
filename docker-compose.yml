@@ -12,6 +12,7 @@ services:
       VUE_APP_GITLAB: # Gitlab URL
       VUE_APP_OAUTH_ID: # Gitlab Application ID
       VUE_APP_OAUTH_SECRET: # Gitlab Application Secret
+      VUE_APP_DB_HTTPS: false
   acebase :
     image: ghcr.io/msa-ez/acebase:v1.0.0 # Acebase Docker Image
     container_name: acebase
