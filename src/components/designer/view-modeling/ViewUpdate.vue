@@ -34,8 +34,8 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr v-for="(item,key) in getFieldMapping">
-                            <td class="text-right" v-if="key == getFieldMapping.length-1 && !saveSetBtn">
+                        <tr v-for="(item,key) in fieldMappingLists">
+                            <td class="text-right" v-if="key == fieldMappingLists.length-1 && !saveSetBtn">
                                 <v-autocomplete
                                         v-model="item.viewField"
                                         :items="value.fieldDescriptors"
@@ -47,7 +47,7 @@
                             <td class="text-left" v-else> {{value.name}}.{{item.viewField ? item.viewField.name : ''  }}</td>
 
 
-                            <td class="text-center" v-if="key == getFieldMapping.length-1 && !saveSetBtn">
+                            <td class="text-center" v-if="key == fieldMappingLists.length-1 && !saveSetBtn">
                                 <div v-if="item.operator">
                                     <v-autocomplete
                                             v-model="item.operator"
@@ -60,7 +60,7 @@
                             <td class="text-center" v-else> {{item.operator}}</td>
 
 
-                            <td class="text-left" v-if="key == getFieldMapping.length-1 && !saveSetBtn">
+                            <td class="text-left" v-if="key == fieldMappingLists.length-1 && !saveSetBtn">
                                 <div v-if="item.eventField && item.eventField.className == true">
                                     <v-text-field
                                             v-model="item.eventField.value"
@@ -70,8 +70,9 @@
                                 </div>
                                 <div v-else>
                                     <v-autocomplete
-                                            v-model="item.eventField"
-                                            :items="syncEventField"
+                                            :value="item.eventField"
+                                            @change="onChangeEventField($event, item)"
+                                            :items="selectedEventFieldLists"
                                             item-text="name"
                                             return-object
                                             label="eventField"
@@ -174,7 +175,7 @@
             }
         },
         computed: {
-            getFieldMapping() {
+            fieldMappingLists() {
                 //init set
                 if (this.updateItem.fieldMapping) {
                     this.updateItem.fieldMapping.forEach(function (item) {
@@ -199,7 +200,7 @@
 
                 return copyArray
             },
-            syncEventField: function () {
+            selectedEventFieldLists: function () {
                 var me = this
 
                 var array = []
@@ -228,6 +229,13 @@
             },
         },
         methods: {
+            onChangeEventField(selectField, row){
+                if( selectField.name == "Direct-Val" && selectField.className){
+                    row.eventField = JSON.parse(JSON.stringify(selectField))
+                } else {
+                    row.eventField = selectField;
+                }
+            },
             changeOperator(item, operatorItem) {
                 if (item && item.operator) {
                     item.operator = operatorItem
