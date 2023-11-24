@@ -1,12 +1,17 @@
 # MSAez Platform Core
 
 ### Project setup
-```
+
+```sh
+# Set the version of npm(macOS)
+npm install -g npm@6.14.18
+
 nvm install 14
 nvm use 14
 npm install
 ```
 ### Compiles and hot-reloads for development
+
 ```
 npm run serve
 ```
@@ -16,31 +21,38 @@ npm run serve
 
 # Install MSAez on Docker Compose
 
-1. Npm Build
+### Q1. What is Docker Compose? A management tool that provides a work environment where multiple containers can be defined as one service on a single server and managed as a bundle. 
+### Q2. Why do we use Docker Compose? When multiple containers operate as one application, it operates by reading files that define their options and environment to create containers sequentially. It is good to use Docker Compose as the number of containers increases and the options to be defined increase.
+
+1. Build a project with Npm.
+
 ```sh
 npm run build
 ```
 
-2. MSAez Docker build & push
+2. Push an image of MSAez to Docker server. 
+
 ```sh
 # Project Root
-docker build -t repository/image-name:image-tag .
-docker push repository/image-name:image-tag
+docker build -t registry/image-name:image-tag . # 레지스트리명/이미지명:이미지태그 . 기존의 tag 넘버링과 같은 개념
+docker push registry/image-name:image-tag # 레지스트리명/이미지명:이미지태그 . 기존의 tags push와 같은 개념
 ```
 
-3. MSAez Docker build & push
+3. Push an image of Acebase to Docker server. 
+
 ```sh
 # Project Root
 cd acebase
-docker build -t repository/image-name:image-tag .
-docker push repository/image-name:image-tag
+docker build -t registry/image-name:image-tag . 
+docker push registry/image-name:image-tag 
 ```
 
-4. Docker Compose File Edit
+4. Edit Docker Compose File.
+
 ```yaml
 version: '2'
 services:
-  msaez:
+   msaez:
     image: ghcr.io/msa-ez/platform:v1.0.0 # MSAez Docker Image
     ports:
       - 8080:8080
@@ -66,7 +78,8 @@ services:
       DB_PORT: 80
 ```
 
-5. Docker Compose run
+5. Run Docker Compose
+
 ```sh
 docker compose up -d
 ```
@@ -74,21 +87,24 @@ docker compose up -d
 ***
 # Install MSAez on Kubernetes
 
-* 설치 전, 설치 된 GitLab에 Application 등록하여, OAuth ID와 Secrets 발급이 필요하다.
+## Q1. What is Kubernetes? Kubernetes is an open source container orchestration platform that automates many of the manual processes involved in deploying, managing, and scaling containerized applications.
+## Q2. Why do we use Kubernetes? Kubernetes helps deliver and manage containerized legacy and cloud apps, as well as apps refactored into microservices, and its orchestration management capabilities make development faster and existing applications easier to transform and optimize.
 
-### GitLab Application 등록
+* Before the installation, register GitLab Application to get OAuth ID and Secrets.
 
-1. 설치된 Gitlab의 Admin 계정으로 접속
-2.  Admin Area -> Applications
+### Register GitLab Application
+
+1. Login to GitLab with Admin account 
+2. Admin Area -> Applications
 ![Pasted image 20231110122240](https://github.com/msa-ez/platform/assets/16382067/dd07d9bd-f524-4de8-9d6b-b9ad5550d792)
 3. **Add New application Click**
-4.  Application 설정
+4. Set Application 
 ![Pasted image 20231110122407](https://github.com/msa-ez/platform/assets/16382067/d6657e15-fd76-4404-a71c-65673f8f3ebd)
-5. Application 등록 후, 발급된 ID, Secret은 MSAez Install에 사용되므로, 저장.
+5. ID & Secret issued after the registration of Application is necessary for MSAez Install, so save them. Application. 
 
-### MSAez 설치
+### Install MSAez
 
-1. MSAez 설치는 \[MSAez SourceCode]\([https://github.com/msa-ez/platform](https://github.com/msa-ez/platform)) 해당 소스코드 하위의 on-prem-helm 폴더에서 진행된다.
+1. Installation of MSAez is running in on-prem-helm folder within the source code of \[MSAez SourceCode]\([https://github.com/msa-ez/platform](https://github.com/msa-ez/platform)). 
 
 ```bash
 $ git clone https://github.com/msa-ez/platform.git
@@ -96,13 +112,13 @@ $ git clone https://github.com/msa-ez/platform.git
 
 ***
 
-2. Helm chart Value 수정.
+2. Edit the value of Helm chart 
 
 ```yaml
 # /on-prem-helm/values.yaml
 replicaCount: 1
 image:
-   repository: asia-northeast3-docker.pkg.dev/eventstorming-tool/eventstorming # Image Registry URL
+   repository: asia-northeast3-docker.pkg.dev/eventstorming-tool/eventstorming # Image repository URL
   eventstorming: evenstorming:v49 # Eventstorming-tool Image URL
   acebase: acebase:v33 # Acebase Image URL
 
@@ -114,18 +130,18 @@ gitlab:
 
 db:
   host: acebase.handymes.com # DB URL
-  port: 443 # 고정
-  name: mydb # 고정
+  port: 443 # fixed
+  name: mydb # fixed
 ```
 
-3. Helm install
 
+3. Install Helm.
 ```bash
 $ cd on-prem-helm
 $ helm install msaez .
 ```
 
-4. 서비스 확인
+4. Check the Service.
 
 ```bash
 # Pod, Service
@@ -148,15 +164,17 @@ acebase                  nginx   acebase.handymes.com   000.000.000.000   80, 44
 eventstorming-tool-ing   nginx   msa.handymes.com       000.000.000.000   80, 443   21d
 ```
 
-5. DNS 등록 또는 hosts 파일 수정하여 해당 Host로 접속. 
-***
-# Acebase Setting
+5. Register DNS or edit hosts file and login to the Host.
 
-#### 참고 
+***
+# Setting for Chat GPT-related functions
+
+#### FYI 
 > [Acebase](https://github.com/appy-one/acebase)
 
-1. acebase 폴더 내부의 main.js 에서 설정한다.
-   각 옵션은 주석과 같이 설정하면 된다.
+1. Set in main.js inside the acebase folder.
+   Set each options as a comment.
+   
 ```js
 // main.js
 ...
@@ -180,12 +198,12 @@ server.on("ready", () => {
 });
 const db = new AceBaseClient({
     host: host ? host : "localhost", // Acebase DB URL
-    port: '5757', // Ingress 에서 SSL 처리를 한다면 443
+    port: '5757', // If SSL is processed in Ingeress : 443
     dbname: dbname, 
-    https: false, // Ingress 에서 SSL 처리를 한다면 True
+    https: false, // If SSL is processed in Ingeress : True
 });
 
-// 위에서 설정한 password 설정 
+  // Set password from the setting above. 
 db.auth.signIn("admin", {{ password }} ).then((result) => {
     console.log(
         `Signed in as ${result.user.username}, got access token ${result.accessToken}`
@@ -195,23 +213,23 @@ db.auth.signIn("admin", {{ password }} ).then((result) => {
 ...
 ```
 ***
-#### Acebase 관리자 로그인 페이지
+#### Acebase Administrator Login Page
 ![image](https://github.com/msa-ez/platform/assets/16382067/477d0662-f07c-4db5-8a65-62ab13a1dde5)
 
-위 설정에서 설정한 정보 입력
+Enter the information from the setting above.
 > Database name : {{ dbname }}
-> Username : admin (고정)
+> Username : admin (fixed)
 > Password : {{ password }}
-#### Acebase 접속 화면
+#### Acebase Login Page
 ![[Pasted image 20231120162428.png]]
-로그인 후, 데이터들이 보이는 것을 확인 할 수 있다.
+After login, check the data inside.
 
-#### Acebase 데이터 변경 및 추가
-> ex) OpenAI를 위한 Token값을 넣는 방법
-1. 하단의 "**You can update this node or export the value of this node to json**" 메시지에서 **update** 클릭
-2. 클릭 후, 아래와 같은 textbox가 추가 되는 것을 확인 할 수 있다.
+#### Add & edit Acebase data
+> ex) How to put in Token for OpenAI
+1. Click **update** from the message "**You can update this node or export the value of this node to json**" at the bottom.
+2. Check is the textbox as below is added after click.
 ![[Pasted image 20231120162938.png]]
-3. 데이터는 Json 형태로만 입력 가능하며 OpenAI Token 발급 후, base64로 Encode 해준다.
+3. Data can only be entered in Json format and is encoded in base64 after issuing an OpenAI Token.
 ##### Linux or MacOS
 ```sh
 echo "token" | base64
@@ -227,7 +245,7 @@ powershell "[convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(\"Token!\")
 [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes("Token!"))
 ```
 
-4. 위에서 encode한 Token을 JSON 형태로 아래와 같이 넣어준다. 
+4. Enter the Token encoded above in JSON format as shown below.
 > Token Path : /tokens/openai
 
 > Result
@@ -239,34 +257,34 @@ powershell "[convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(\"Token!\")
 }
 ```
 
-5. 위에서 생성한 JSON을 TextBox에 입력 후, update를 클릭해주면,
+5. Enter the JSON created above into the TextBox and click update.
 
-> 전![[Pasted image 20231120170329.png]]
+> Before : ![[Pasted image 20231120170329.png]]
 
-> 후 ![image](https://github.com/msa-ez/platform/assets/16382067/6b6ae0c8-2f7b-4a15-9893-56f49e1e097c)
+> After : ![image](https://github.com/msa-ez/platform/assets/16382067/6b6ae0c8-2f7b-4a15-9893-56f49e1e097c)
 
-위 그림과 같이 tokens가 추가된다.
+Tokens are added as shown in the picture above.
 
 ***
 # GitLab Template Import
 
-## ※ 기본 Template은 root 계정 하위 프로젝트로 생성하여야 한다.
+## ※ The basic template must be created as a sub-project of a root account.
 
-1. **New project** 선택
+1. Select **New project**
 ![image](https://github.com/msa-ez/platform/assets/16382067/3b22928d-9457-430d-9619-5cf3d66f6ff1)
 
-2. **import project** 선택
+2. Select **import project**
 ![image](https://github.com/msa-ez/platform/assets/16382067/bc79990e-493c-41d1-a22b-1124639d0605)
 
-3. GitHub 선택
+3. Select GitHub
 ![image](https://github.com/msa-ez/platform/assets/16382067/acc6ced6-a85c-49b1-9d9f-f112a0a1eac8)
 
-4. Personal Access Token 입력 후, **Authenticate**
+4. Enter Personal Access Token, then **Authenticate**
 ![image](https://github.com/msa-ez/platform/assets/16382067/b432aa46-d3c7-47e7-a1d4-69be70790c20)
 
-  - Personal Token이 없는 경우 하단의 GitHub **Personal Access Token** 를 클릭하면 Github 토큰 발급 화면으로 이동
+  - If you do not have a personal token, click GitHub **Personal Access Token** at the bottom to go to the Github token issuance screen.
 
-5. 검색창에 msa-ez 검색 후, 프로젝트 Import
+5. Search for msa-ez in the search box and import the project.
 ![image](https://github.com/msa-ez/platform/assets/16382067/b78ed33b-cc92-40be-a793-e3c18079217a)
 
-    - msa-ez 검색 후, 아무것도 검색되지 않는다면 Github msa-ez Organization 추가 필요
+    - If nothing is found after searching msa-ez, you need to add msa-ez Organization from Github.
