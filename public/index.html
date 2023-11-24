@@ -227,8 +227,13 @@
 
             if (line && line.indexOf("VUE_APP_MODE=") == 0) {
               let value = line.split("=")[1];
-              console.log(value);
+              // console.log(value);
               window.MODE = value.replace(/(?:\\[rn]|[\r\n]+)+/g, "");
+            }
+            if (line && line.indexOf("VUE_APP_DB_HTTPS=") == 0) {
+              let value = line.split("=")[1];
+              // console.log(value);
+              window.DB_HTTPS = JSON.parse(value.replace(/(?:\\[rn]|[\r\n]+)+/g, ""));
             }
           });
         },
@@ -254,10 +259,10 @@
     <script>
       if(window.MODE == "onprem") {
         window.$acebase = new AceBaseClient({
-            host: "localhost",
-            port: "5757",
+            host: window.DB_HOST,
+            port: window.DB_PORT,
             dbname: "mydb",
-            https: false,
+            https: window.DB_HTTPS,
         });
         window.$acebase.ready(() => {
             console.log("Connected successfully");

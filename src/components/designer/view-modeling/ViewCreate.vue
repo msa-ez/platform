@@ -36,8 +36,8 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr v-for="(item,key) in getFieldMapping">
-                            <td class="text-right" v-if="key == getFieldMapping.length-1 && !saveBtn">
+                        <tr v-for="(item,key) in fieldMappingLists">
+                            <td class="text-right" v-if="key == fieldMappingLists.length-1 && !saveBtn">
                                 <v-autocomplete
                                         v-model="item.viewField"
                                         :items="value.fieldDescriptors"
@@ -49,7 +49,7 @@
                             <td class="text-left" v-else> {{value.name}}.{{ item.viewField ? item.viewField.name : '' }}</td>
 
 
-                            <td class="text-center" v-if="key == getFieldMapping.length-1 && !saveBtn">
+                            <td class="text-center" v-if="key == fieldMappingLists.length-1 && !saveBtn">
                                 <div v-if="item.operator">
                                     <v-autocomplete
                                             v-model="item.operator"
@@ -62,7 +62,7 @@
                             <td class="text-center" v-else> {{item.operator}}</td>
 
 
-                            <td class="text-left" v-if="key == getFieldMapping.length-1 && !saveBtn">
+                            <td class="text-left" v-if="key == fieldMappingLists.length-1 && !saveBtn">
 
                                 <div v-if="item.eventField && item.eventField.className == true">
                                     <v-text-field
@@ -73,8 +73,9 @@
                                 </div>
                                 <div v-else>
                                     <v-autocomplete
-                                            v-model="item.eventField"
-                                            :items="syncEventField"
+                                            :value="item.eventField"
+                                            @change="onChangeEventField($event, item)"
+                                            :items="selectedEventFieldLists"
                                             item-text="name"
                                             return-object
                                             label="eventField"
@@ -87,8 +88,7 @@
                                     {{item.eventField.value }}
                                 </div>
                                 <div v-else>
-                                    {{ createItem.when ? createItem.when.name : null }}.{{ item.eventField ?
-                                    item.eventField.name : '' }}
+                                    {{ createItem.when ? createItem.when.name : null }}.{{ item.eventField ? item.eventField.name : '' }}
                                 </div>
                             </td>
 
@@ -133,7 +133,7 @@
             }
         },
         computed: {
-            getFieldMapping() {
+            fieldMappingLists(){
                 //init set
                 if (this.createItem.fieldMapping) {
                     this.createItem.fieldMapping.forEach(function (item) {
@@ -144,7 +144,7 @@
                 }
                 return this.createItem.fieldMapping
             },
-            syncEventField: function () {
+            selectedEventFieldLists: function () {
                 var me = this
                 var array = []
                 var obj = {
@@ -162,7 +162,7 @@
                 if (copyArray.findIndex(x => x.name == 'Direct-Val') == -1)
                     copyArray.push(obj)
 
-                return copyArray
+                return  copyArray
             },
             eventLists: function () {
                 var me = this
@@ -173,6 +173,13 @@
         created() {
         },
         methods: {
+            onChangeEventField(selectField, row){
+                if( selectField.name == "Direct-Val" && selectField.className){
+                    row.eventField = JSON.parse(JSON.stringify(selectField))
+                } else {
+                    row.eventField = selectField;
+                }
+            },
             changeOperator(item, operatorItem) {
                 if (item && item.operator) {
                     item.operator = operatorItem
@@ -180,19 +187,6 @@
                     item.operator = '='
                 }
             },
-
-            // selectEventField(item, key) {
-            //     var me = this
-            //     item = JSON.parse(JSON.stringify(item))
-            //     if (item.eventField && item.eventField.type ) {
-            //         if (!item.viewField) item.viewField = {}
-            //         item.inputViewValue = true
-            //         item.viewField.viewFieldValue = ''
-            //         item.eventField = null
-            //         me.value.createRules[me.index].fieldMapping[key] = item
-            //         // me.createItem.fieldMapping[key] = item
-            //     }
-            // },
             isEmptyObject(obj) {
                 var boolean = false
                 if (obj == null) return true;
@@ -230,6 +224,7 @@
                     var fieldMapping = this.createItem.fieldMapping
                     var len = fieldMapping.length - 1
 
+                    // me.validateRow(this.createItem.fieldMapping);
 
                     if (
                         fieldMapping[len]
@@ -245,9 +240,8 @@
                             operator: '='
                         }
 
-                        fieldMapping.push(JSON.parse(JSON.stringify(obj)))
+                        fieldMapping.push(obj)
                     } else {
-
                         canvas.alertInfo.text = 'Please TextField input Text'
                         canvas.alertInfo.show = true
                     }
@@ -256,7 +250,19 @@
                     canvas.alertInfo.text = 'Error - Create'
                     canvas.alertInfo.show = true
                 }
+            },
+            validateRow(fieldMapping){
+                if(!fieldMapping) return false;
 
+                let len = fieldMapping.length;
+                // if(
+                // fieldMapping[len]
+                // && fieldMapping[len].viewField
+                // && fieldMapping[len].viewField.name != ''
+                // && fieldMapping[len].eventField
+                // && (fieldMapping[len].eventField.className ? fieldMapping[len].eventField.value != '' : (fieldMapping[len].eventField && fieldMapping[len].eventField.name != ''))
+
+                return false;
             },
             getComponent(componentName) {
                 let component = null

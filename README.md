@@ -40,30 +40,30 @@ docker push repository/image-name:image-tag
 ```yaml
 version: '2'
 services:
-  msaez:
-    image: asia-northeast3-docker.pkg.dev/eventstorming-tool/eventstorming:v49 # MSAez Docker Image
-    ports:
-      - 8080:8080
-    environment:
-      VUE_APP_DB_HOST: localhost # DB Host Name
-      VUE_APP_DB_PORT: 5757 # DB Port
-      VUE_APP_DB_NAME: mydb # DB NAME
-      VUE_APP_MODE: onprem # MODE onprem or dev
-      VUE_APP_GITLAB: # Gitlab URL
-      VUE_APP_OAUTH_ID: # Gitlab Application ID
-      VUE_APP_OAUTH_SECRET: # Gitlab Application Secret
-  acebase :
-    image: asia-northeast3-docker.pkg.dev/eventstorming-tool/acebase:v33 # Acebase Docker Image
-    container_name: acebase
-    ports:
-      - 5757:5757
-    volumes:
-      - ~/mydb.acebase:/acebase
-    environment:
-      - DB_HOST: localhost
-      - DB_NAME: mydb
-    networks:
-      - backend
+  msaez:
+    image: ghcr.io/msa-ez/platform:v1.0.0 # MSAez Docker Image
+    ports:
+      - 8080:8080
+    environment:
+      VUE_APP_DB_HOST: 5757-msaez-platform-kp3ioeesr8g.ws-us106.gitpod.io # DB Host Name
+      VUE_APP_DB_PORT: 5757 # DB Port
+      VUE_APP_DB_NAME: mydb # DB NAME
+      VUE_APP_MODE: onprem # MODE onprem or dev
+      VUE_APP_HTTPS: true # MODE onprem or dev
+      VUE_APP_GITLAB: # Gitlab URL
+      VUE_APP_OAUTH_ID: # Gitlab Application ID
+      VUE_APP_OAUTH_SECRET: # Gitlab Application Secret
+  acebase :
+    image: ghcr.io/msa-ez/acebase:v1.0.0 # Acebase Docker Image
+    container_name: acebase
+    ports:
+      - 5757:5757
+    volumes:
+      - ~/mydb.acebase:/acebase
+    environment:
+      DB_HOST: 5757-msaez-platform-kp3ioeesr8g.ws-us106.gitpod.io # DB Host Name
+      DB_NAME: mydb
+      DB_PORT: 80
 ```
 
 5. Docker Compose run
