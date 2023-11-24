@@ -158,18 +158,13 @@
                         </div>
                     </div>
                     <div v-else>
-                        <v-expansion-panels>
-                            <v-expansion-panel>
-                                <v-expansion-panel-header style="display: table-row;">
-                                    <div style="display: table-row; font-weight: bolder; font-size: .875rem; margin-bottom: 5px;">
-                                        <v-icon color="green" style="margin-right: 10px;">mdi-checkbox-marked-circle-outline</v-icon>Test succeeded !
-                                    </div>
-                                </v-expansion-panel-header>
-                                <v-expansion-panel-content>
-                                    {{ testLog }}
-                                </v-expansion-panel-content>
-                            </v-expansion-panel>
-                        </v-expansion-panels>
+                        <v-card>
+                            <v-card-text>
+                                <div style="font-weight: bolder; font-size: .875rem;">
+                                    <v-icon color="green" style="margin-right: 10px;">mdi-checkbox-marked-circle-outline</v-icon>Test succeeded !
+                                </div>
+                            </v-card-text>
+                        </v-card>
                     </div>
                 </v-card-text>
             </div>
@@ -230,7 +225,6 @@
                 isFirstCommit: true,
                 startGitAction: true,
                 allTestSucceeded: false,
-                testLog: null,
                 isSolutionCreating: false,
 
                 codeList: null,
@@ -280,7 +274,6 @@
                     me.startGitAction = false
                     me.isSolutionCreating = false
                     me.allTestSucceeded = true
-                    me.testLog = log
                     me.gitActionSnackBar.timeout = 5000
                     me.gitActionSnackBar.Text = "All tests succeeded"
                     me.gitActionSnackBar.Color = "success"
