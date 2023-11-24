@@ -1714,6 +1714,7 @@
             storageDialogCancel() {
                 this.storageCondition.loading = false
                 this.storageDialog = false
+                this.$EventBus.$emit('progressValue', false);
             },
             async validateStorageCondition(item, action){
                 var me = this
@@ -2027,6 +2028,7 @@
 
                     } else {
                         this.storageCondition.loading = false
+                        me.$EventBus.$emit('progressValue', false);
                     }
                 } catch (e) {
                     me.alertInfo.text = 'SAVE-ERROR' + e
