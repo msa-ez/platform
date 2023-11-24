@@ -724,12 +724,6 @@
                                                     </template>
                                                     <template v-slot:append="{ item, open }">
                                                         <v-row style="align-items: center; justify-content: flex-end; margin-right: 0px;">
-                                                            <div v-if="isRootFolder(item)">
-                                                                <v-icon style="font-size: 16px; position: absolute;left: 230px;top: 8px;"
-                                                                        @click="openActionDialog(item)"
-                                                                >mdi-auto-fix
-                                                                </v-icon>
-                                                            </div>
                                                             <div v-if="showChangedPathLists && !item.file && item.name == 'Changed Files' ">
                                                                 <v-icon style="font-size: 16px; position: absolute;left: 270px;top: 15px;"
                                                                         @click="clearChangedPathListsBucket()"
@@ -1446,20 +1440,7 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
-        <v-dialog v-model="gitTokenDialog" style="width: 50%">
-            <v-card>
-                <v-card-title class="text-h5 grey lighten-2">
-                Git Token
-                </v-card-title>
 
-                <v-card-text>
-                    <git-info
-                        @input-token="saveTokens()"
-                        @close="gitTokenDialog = false"
-                    ></git-info>
-                </v-card-text>
-            </v-card>
-        </v-dialog>
         <v-dialog
                 v-model="isCustomTemplateForLoad"
                 width="480"
@@ -1559,7 +1540,7 @@
     import MarketPlace from "../MarketPlace.vue"
     import getParent from "../../../utils/getParent";
     import ExpectedTemplateTestDialog from "./ExpectedTemplateTestDialog"
-    import GitInfo from "../../oauth/GitInfo";
+
     import GitAPI from "../../../utils/GitAPI"
     import Github from "../../../utils/Github"
     import Gitlab from "../../../utils/Gitlab"
@@ -1591,7 +1572,6 @@
             'separate-panel-components':SeparatePanelComponents,
             'code-viewer': CodeViewer,
             gitAPIMenu,
-            GitInfo,
             // vueObjectView,
             LoginByGitlab,
             MarketPlace,
@@ -1617,7 +1597,6 @@
         },
         data() {
             return {
-                gitTokenDialog: false,
                 selectedCodeList: {},
                 gitActionDialogRenderKey: 0,
                 isSIgpt: false,
@@ -2625,7 +2604,7 @@
         created:function () {
             let canvas = getParent(this.$parent, this.canvasName);
             let git;
-            if(window.PROVIDER == "gitlab") {
+            if(window.MODE == "onprem") {
                 git = new Gitlab();
             } else {
                 git = new Github();
@@ -2745,11 +2724,6 @@
             });
         },
         methods: {
-            saveTokens() {
-                let me = this
-                me.gitTokenDialog = false;
-                this.callGenerate();
-            },
             messageProcessing(e) {
                 // var me = this;
                 if (e.data.message === "gitlab-login") {
@@ -2785,6 +2759,8 @@
                         }
                         if(me.codeLists[idx] && me.codeLists[idx].code){
                             me.codeLists[idx].code = changed.modifiedFileCode
+                            me.filteredCodeLists[idx].code = changed.modifiedFileCode
+                            me.filteredPrettierCodeLists[idx].code = changed.modifiedFileCode
                         }
                     })
                 })
@@ -3124,11 +3100,8 @@ jobs:
                 }
             },
             alertReLogin(){
-                // let me = thi
                 alert("You need to re-login because session is expired")
-                this.gitTokenDialog = true
-            // this.showLoginCard = true;
-                // this.showLoginCard = true
+                this.showLoginCard = true
             },
             showTemplateListChip(obj){
 
@@ -5983,7 +5956,7 @@ jobs:
                     }
                 }
             },
-            createPathsFromObject(obj, prefix){
+            createPathsFromObject(obj, prefix, originPaths){
                 var me = this
                 let paths = {};
 
@@ -5992,18 +5965,18 @@ jobs:
 
                     if ( typeof obj[key] === 'object' && !Array.isArray(obj[key]) ) {
 
-                        if(  prefix &&  Object.values(obj).length  == 1 ) {
+                        if(  prefix &&  Object.values(obj).length  == 1 && (!originPaths || originPaths && originPaths[path])) {
                             // Only one Array or Object
                             paths[path] = obj[key];
                             break;
                         }
 
-                        let nestedPaths = me.createPathsFromObject(obj[key], path);
+                        let nestedPaths = me.createPathsFromObject(obj[key], path, originPaths);
                         paths = { ...paths, ...nestedPaths };
-                            } else {
+                    } else {
                         paths[path] = obj[key];
                     }
-                            }
+                }
 
                 return paths;
             },
@@ -6332,7 +6305,7 @@ jobs:
                 try {
                     // object -> path
                     let originPaths = me.createPathsFromObject(originObj, '');
-                    let mergePaths = me.createPathsFromObject(mergerObj, '');
+                    let mergePaths = me.createPathsFromObject(mergerObj, '', originPaths);
 
                     Object.keys(mergePaths).forEach(function(path){
                         if( typeof mergePaths[path] == 'string' ){
@@ -7457,16 +7430,11 @@ jobs:
                             rootModel: rootModel,
                         };
 
-
-                        Promise.all([me.generateBaseTemplate(templateContext), me.generateTemplate(templateContext), me.generateToppingTemplate(templateContext)])
-                        .then(function () {
+                        Promise.all([me.generateBaseTemplate(templateContext), me.generateTemplate(templateContext)])
+                        .then(async function () {
+                            await me.generateToppingTemplate(templateContext)
                             resolve()
                         });
-                        // Promise.all([me.generateBaseTemplate(templateContext), me.generateTemplate(templateContext)])
-                        // .then(async function () {
-                        //     await me.generateToppingTemplate(templateContext)
-                        //     resolve()
-                        // });
 
                     } catch (e) {
                         // me.isListSettingDone = true

@@ -128,7 +128,7 @@
 
                         <v-divider></v-divider>
                     </div>
-                    <div style="float: right; margin-top: 10px;">
+                    <div v-if="!allTestSucceeded" style="float: right; margin-top: 10px;">
                         <div v-if="!startGitAction">
                             <v-btn @click="regenerate()" 
                                 style="margin-right: 10px;">
@@ -156,6 +156,20 @@
                                 Stop generating
                             </v-btn>
                         </div>
+                    </div>
+                    <div v-else>
+                        <v-expansion-panels>
+                            <v-expansion-panel>
+                                <v-expansion-panel-header style="display: table-row;">
+                                    <div style="display: table-row; font-weight: bolder; font-size: .875rem; margin-bottom: 5px;">
+                                        <v-icon color="green" style="margin-right: 10px;">mdi-checkbox-marked-circle-outline</v-icon>Test succeeded !
+                                    </div>
+                                </v-expansion-panel-header>
+                                <v-expansion-panel-content>
+                                    {{ testLog }}
+                                </v-expansion-panel-content>
+                            </v-expansion-panel>
+                        </v-expansion-panels>
                     </div>
                 </v-card-text>
             </div>
@@ -215,8 +229,11 @@
                 resultLength: 0,
                 isFirstCommit: true,
                 startGitAction: true,
+                allTestSucceeded: false,
+                testLog: null,
                 isSolutionCreating: false,
 
+                codeList: null,
                 copySelectedCodeList: null,
                 updateList: [],
                 siTestResults: [],
@@ -226,7 +243,7 @@
                 generatedErrorDetails: null,
 
                 generator: null,
-                // model: 'gpt-4',
+                model: 'gpt-4',
 
                 gitActionSnackBar: {
                     Text: '',
@@ -254,15 +271,25 @@
         },
         mounted: function () { 
             var me = this
+            me.codeList = JSON.parse(JSON.stringify(me.selectedCodeList))
             me.copySelectedCodeList = JSON.parse(JSON.stringify(me.selectedCodeList))
             me.generate();
 
             me.$EventBus.$on('getActionLogs', function (log) {
                 if(log === "All tests succeeded"){
-                    alert("All tests succeeded")
+                    me.startGitAction = false
+                    me.isSolutionCreating = false
+                    me.allTestSucceeded = true
+                    me.testLog = log
+                    me.gitActionSnackBar.timeout = 5000
+                    me.gitActionSnackBar.Text = "All tests succeeded"
+                    me.gitActionSnackBar.Color = "success"
+                    me.gitActionSnackBar.icon="check_circle"
+                    me.gitActionSnackBar.title="Success"
+                    me.gitActionSnackBar.show = true
                 } else {
                     me.fullErrorLog = log
-                    // me.model = null
+                    me.model = null
                     me.generator = new ErrorLogGenerator(me);
                     me.generator.generate();
                 }
@@ -287,7 +314,7 @@
             },
             generate(){
                 var me = this
-                // me.model = 'gpt-4'
+                me.model = 'gpt-4'
                 me.startGitAction = true
                 me.generator = new SIGenerator(this);
                 me.generator.generate();
@@ -309,7 +336,7 @@
                 var me = this
                 me.startGitAction = true
                 me.isFirstCommit = false
-                me.selectedCodeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
+                me.codeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
                 me.$emit("startCommitWithSigpt", me.updateList)
             },
             setDialog(model, option){
@@ -360,8 +387,8 @@
                                         fileName = fileNameSplit[fileNameSplit.lastIndex]
                                     }
                                     errDetail = `An error called ${error.errorDetails} occurred in file ${fileName}.`
-                                    if(error.lineNumber && me.selectedCodeList[fileName]){
-                                        var codeSplit = me.selectedCodeList[fileName].split('\n')
+                                    if(error.lineNumber && me.codeList[fileName]){
+                                        var codeSplit = me.codeList[fileName].split('\n')
                                         if(codeSplit[error.lineNumber - 1] && codeSplit[error.lineNumber - 1] != ""){
                                             errDetail = `An error called ${error.errorDetails} occurred in the ${codeSplit[error.lineNumber - 1]} part of the code content of the ${fileName} file.`
                                         } 

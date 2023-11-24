@@ -18,12 +18,12 @@ you must follow this text format:
 [
     {
         fileName: File name where error occurred, // e.g. pom.xml
-        errorDetails: Summary of error details, // e.g. "Cause of error"
+        errorDetails: Summary of error details, // e.g. cannot find symbol: method getId()
         lineNumber: Line Number where error occurred // e.g. 52
     },
     {
         fileName: File name where error occurred, // e.g. pom.xml
-        errorDetails: Summary of error details // e.g. "Cause of error"
+        errorDetails: Summary of error details // e.g. cannot find symbol: method getId()
         lineNumber: Line Number where error occurred // e.g. 52
     }
 ]`

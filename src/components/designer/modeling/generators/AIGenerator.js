@@ -5,6 +5,7 @@ class AIGenerator {
         this.client = client;
         this.finish_reason = null;
         this.modelJson = null;
+        this.savedModelJson = null;
         this.stopSignaled = false;
         this.gptResponseId = null;
         this.openaiToken = null
@@ -110,17 +111,21 @@ class AIGenerator {
             if(newUpdatesJoined.includes(": null")){
                 newUpdatesJoined.replaceAll(": null", ": 'null'")
             }
-            me.modelJson = newUpdatesJoined
+            if(this.isContinued) {
+                me.modelJson = me.savedModelJson + newUpdatesJoined
+            } else {
+                me.modelJson = newUpdatesJoined
+            }
 
             if(me.client.onReceived){
                 if(me.gptResponseId == currentResId){
-                    me.client.onReceived(newUpdatesJoined);
+                    me.client.onReceived(me.modelJson);
                 }
             }
 
             if(me.client.onModelCreated){
                 if(responseCnt > 15){
-                    me.client.onModelCreated(me.createModel(newUpdatesJoined));
+                    me.client.onModelCreated(me.createModel(me.modelJson));
                     responseCnt = 0;
                 } else {
                     responseCnt++;
@@ -134,12 +139,15 @@ class AIGenerator {
             console.log("End to Success - onloadend", xhr);
             if(me.client){
                 if(me.finish_reason == 'length'){
-                    // me.continue();
                     console.log('max_token issue')
+                    me.savedModelJson = me.modelJson
+                    me.continue();
                 } 
                 // else {
 
                     me.state = 'end';
+                    me.isContinued = false
+                    me.savedModelJson = null
                     let model = null;
                     if(me.client.onModelCreated){
                         model = me.createModel(me.modelJson)
@@ -156,11 +164,21 @@ class AIGenerator {
                 // }
             }
         };
-
         
-        let messages = this.createMessages();
-
-        if(this.isContinued) messages[messages.length-1].content = "continue";
+        let messages
+        if(this.isContinued) {
+            messages = me.previousMessages
+            messages.push({
+                role: 'assistant',
+                content: me.savedModelJson
+            })
+            messages.push({
+                role: 'user',
+                content: "continue"
+            })
+        } else {
+            messages = this.createMessages();
+        }
 
         
         const data = JSON.stringify({
