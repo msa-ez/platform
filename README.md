@@ -34,8 +34,9 @@ npm run build
 
 ```sh
 # Project Root
-docker build -t registry/image-name:image-tag . # registry-name, image-name and image-tag must be customed personally. Same concept as 'tag numbering'.
-docker push registry/image-name:image-tag # registry-name, image-name and image-tag must be customed personally. Same concept as 'tags push'.
+# registry-name, image-name and image-tag must be customed personally.
+docker build -t registry/image-name:image-tag . # Same concept as 'tag numbering'.
+docker push registry/image-name:image-tag # Same concept as 'tags push'.
 ```
 
 3. Push an image of Acebase to Docker server. 
