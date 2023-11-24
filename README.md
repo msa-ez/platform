@@ -34,8 +34,8 @@ npm run build
 
 ```sh
 # Project Root
-docker build -t registry/image-name:image-tag . # 레지스트리명/이미지명:이미지태그 . 기존의 tag 넘버링과 같은 개념
-docker push registry/image-name:image-tag # 레지스트리명/이미지명:이미지태그 . 기존의 tags push와 같은 개념
+docker build -t registry/image-name:image-tag . # registry-name, image-name and image-tag must be customed personally. Same concept as 'tag numbering'.
+docker push registry/image-name:image-tag # registry-name, image-name and image-tag must be customed personally. Same concept as 'tags push'.
 ```
 
 3. Push an image of Acebase to Docker server. 
@@ -87,8 +87,8 @@ docker compose up -d
 ***
 # Install MSAez on Kubernetes
 
-## Q1. What is Kubernetes? Kubernetes is an open source container orchestration platform that automates many of the manual processes involved in deploying, managing, and scaling containerized applications.
-## Q2. Why do we use Kubernetes? Kubernetes helps deliver and manage containerized legacy and cloud apps, as well as apps refactored into microservices, and its orchestration management capabilities make development faster and existing applications easier to transform and optimize.
+### Q1. What is Kubernetes? Kubernetes is an open source container orchestration platform that automates many of the manual processes involved in deploying, managing, and scaling containerized applications.
+### Q2. Why do we use Kubernetes? Kubernetes helps deliver and manage containerized legacy and cloud apps, as well as apps refactored into microservices, and its orchestration management capabilities make development faster and existing applications easier to transform and optimize.
 
 * Before the installation, register GitLab Application to get OAuth ID and Secrets.
 
