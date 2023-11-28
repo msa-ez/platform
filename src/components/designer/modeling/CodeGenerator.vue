@@ -6,8 +6,8 @@
                 :testFile="testFile"
                 :selectedCodeList="selectedCodeList"
                 @startCommitWithSigpt="startCommit"
-                >
-
+                @jumpToActions="jumpToActions"
+            >
             </GitActionDialog>
         </v-dialog>
         <v-dialog v-model="marketplaceDialog" fullscreen>
@@ -2724,6 +2724,11 @@
             });
         },
         methods: {
+            jumpToActions(){
+                if(this.value.scm && this.value.scm.org && this.value.scm.repo){
+                    window.open(`https://github.com/${this.value.scm.org}/${this.value.scm.repo}/actions`, "_blank")
+                }
+            },
             messageProcessing(e) {
                 // var me = this;
                 if (e.data.message === "gitlab-login") {

@@ -144,12 +144,25 @@
                                 <b v-if="isFirstCommit">
                                     Generating the business logic to pass the test ... 
                                 </b>
-                                <b v-else-if="!isFirstCommit">
-                                    Mvn testing is in progress ... 
-                                </b>
                                 <b v-else-if="isSolutionCreating">
                                     Generating a code fix for the file in error ...
                                 </b>
+                                <b v-else>
+                                    Mvn testing is in progress ... 
+                                </b>
+                                <v-tooltip v-if="!isFirstCommit" bottom>
+                                    <template v-slot:activator="{ on }">
+                                        <v-btn
+                                            v-on="on"
+                                            @click="jumpToActions()" 
+                                            style="margin-left: -3px;" 
+                                            icon
+                                        >
+                                            <v-icon style="font-size: 22px;">mdi-open-in-new</v-icon>
+                                        </v-btn>
+                                    </template>
+                                    <span>Show github actions</span>
+                                </v-tooltip>
                             </div>
                             <v-btn :loading="!isSolutionCreating" :disabled="!isSolutionCreating" @click="stop()" style="margin-right: 10px; position: relative; float: right;">
                                 <v-icon style="margin-right: 10px;">mdi-spin mdi-loading</v-icon>
@@ -289,6 +302,9 @@
             })
         },
         methods: {
+            jumpToActions(){
+                this.$emit("jumpToActions")
+            },
             stop(){
                 this.startGitAction = false
             },
@@ -351,7 +367,7 @@
                             if(solution && solution.codeChanges){
                                 solution.codeChanges.forEach(function (changes){
                                     changes.originFile = JSON.parse(JSON.stringify(dumyFile))
-                                    changes.originFile[0].code = changes.fileCode
+                                    changes.originFile[0].code = me.codeList[changes.fileName]
                                     changes.modifiedFile = JSON.parse(JSON.stringify(dumyFile))
                                     changes.modifiedFile[0].code = changes.modifiedFileCode
                                     changes.modifiedFile[0].name = changes.fileName

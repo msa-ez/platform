@@ -33,9 +33,9 @@ Preserve existing class interfaces (methods, parameters, fields) as much as poss
 3. Re-raise the error appropriately when handling the try~catch. No implementation MUST handle errors through a new try~catch rather than an existing try~catch. If you don't know exactly why the error occurred, you won't be able to fix it later.
 4. "codeChanges" cannot be an empty array and must have a value.
 5. In the case of files where an error occurred without any code changes, the contents of the original file must be returned as "codeChanges".
-6. If the file code does not exist in the provided code list, "fileCode" and "Modified File Code" should return "Code does not exist."
-7. The "fileCode", "modifiedFileCode" values must include the entire code of the file in the code list. All code content is never omitted or abridged. For example, you should not summarize sections of code with the expression "...".
-8. "codeChanges" are only created if it is a file.
+6. The "modifiedFileCode" values must include the entire code of the file in the code list. All code content is never omitted or abridged. For example, you should not summarize sections of code with the expression "...".
+7. "codeChanges" are only created if it is a file.
+8. The test0, test1, and test2 functions in the ${this.client.testFile.name} file cannot be deleted. Only modifications are possible.
 Json format:
 [ 
     {
@@ -43,8 +43,7 @@ Json format:
         solutionType: "IMPLEMENT" | "MODIFICATIONS" | "CORRECT" | "ENSURE" | "RETRY",
         codeChanges: [
             { 
-                fileName: "source code file name", 
-                fileCode: "File code provided before modification, original file code", // It must be full code in the file.  It start with "package ..."
+                fileName: "source code file name",
                 modifiedFileCode: "The new file code that merged the modified content with the content in the file code.", // It must be full code in the file. It start with "package ..."
                 action: "CHANGE" | "ADD BELOW THE CODE" | "DELETE" 
             } 
