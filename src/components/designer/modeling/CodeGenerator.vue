@@ -1944,8 +1944,9 @@
                     }
                     
                     this.isLoadingExpectedTemplate = true
-                    if(this.openCode && this.openCode[0]){
-                        Object.keys(this.templateFrameWorkList[this.openCode[0].template]).some(function (key){
+                    if((this.openCode && this.openCode[0]) || this.value.basePlatform){
+                        var platform = this.openCode && this.openCode[0] ? this.openCode[0].template : this.value.basePlatform
+                        Object.keys(this.templateFrameWorkList[platform]).some(function (key){
                             if(key.includes(".template/test/expected/")){
                                 me.isLoadingExpectedTemplate = false
                                 return true;
@@ -2808,7 +2809,7 @@ jobs:
             testTemplateModel(){
                 var me = this
                 me.startCheckDiff = true
-                var template = me.openCode[0].template ? me.openCode[0].template : me.defaultTemplate
+                var template = me.openCode && me.openCode[0] ? me.openCode[0].template : me.value.basePlatform
 
                 if(me.templateFrameWorkList[template]['.template/metadata.yml']){
                     me.templateMetaData = YAML.parse(me.templateFrameWorkList[template]['.template/metadata.yml'].content)
@@ -2841,6 +2842,8 @@ jobs:
                         diffFile = me.templateFrameWorkList[template][`.template/test/expected/${file.fullPath.replace(`${me.modelingProjectId}/`, `${me.templateMetaData.testModel}/`)}`]
                         if(!diffFile){
                             me.existOnlyActual.push(file.fullPath)
+                            // '.template/test/expected/frontend/src/components/주문주문.vue'
+                            // '.template/test/expected/frontend/src/components/주문주문.vue'
                         } 
                     })
                     if(me.diffList.length > 0 || me.existOnlyExpected.length > 0 || me.existOnlyActual.length > 0){
