@@ -4,7 +4,7 @@ VOLUME /tmp
 #RUN npm install -g spa-http-server
 
 ADD dist /opt/www
-ADD .env /opt/www
+# ADD .env /opt/www
 ADD run.sh /opt/run.sh
 ARG VUE_APP_DB_HOST
 ENV VUE_APP_DB_HOST=$VUE_APP_DB_HOST

@@ -4,16 +4,16 @@ const express = require("express");
 const app = express();
 const _ = require("lodash");
 const host = process.env.DB_HOST ? process.env.DB_HOST : "localhost";
-const client_id = process.env.DB_HOST ? process.env.DB_HOST : "localhost";
-const client_secret = process.env.DB_HOST ? process.env.DB_HOST : "localhost";
+const client_id = process.env.CLIENT_ID ? process.env.CLIENT_ID : "localhost";
+const client_secret = process.env.CLIENT_SECRET ? process.env.CLIENT_SECRET : "localhost";
 const dbname = process.env.DB_NAME ? process.env.DB_NAME : "mydb"; // DB Name
-
+const dbport = process.env.DB_PORT ? process.env.DB_PORT : 5757; // DB PORT
 const server = new AceBaseServer(dbname, {
-    host: "localhost",
+    host: "0.0.0.0",
     port: 5757,
-    // storage: {
-    //     path: "/acebase"
-    // },
+    storage: {
+        path: "/acebase"
+    },
     authentication: {
         enabled: true,
         allowUserSignup: true,
@@ -36,7 +36,7 @@ server.on("ready", () => {
 
 const db = new AceBaseClient({
     host: host,
-    port: '5757',
+    port: dbport,
     dbname: dbname,
     https: false,
 });

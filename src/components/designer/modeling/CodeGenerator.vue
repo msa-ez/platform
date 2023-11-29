@@ -6,8 +6,8 @@
                 :testFile="testFile"
                 :selectedCodeList="selectedCodeList"
                 @startCommitWithSigpt="startCommit"
-                >
-
+                @jumpToActions="jumpToActions"
+            >
             </GitActionDialog>
         </v-dialog>
         <v-dialog v-model="marketplaceDialog" fullscreen>
@@ -724,12 +724,6 @@
                                                     </template>
                                                     <template v-slot:append="{ item, open }">
                                                         <v-row style="align-items: center; justify-content: flex-end; margin-right: 0px;">
-                                                            <div v-if="isRootFolder(item)">
-                                                                <v-icon style="font-size: 16px; position: absolute;left: 230px;top: 8px;"
-                                                                        @click="openActionDialog(item)"
-                                                                >mdi-auto-fix
-                                                                </v-icon>
-                                                            </div>
                                                             <div v-if="showChangedPathLists && !item.file && item.name == 'Changed Files' ">
                                                                 <v-icon style="font-size: 16px; position: absolute;left: 270px;top: 15px;"
                                                                         @click="clearChangedPathListsBucket()"
@@ -1446,20 +1440,15 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
         <v-dialog v-model="gitTokenDialog" style="width: 50%">
             <v-card>
                 <v-card-title class="text-h5 grey lighten-2">
                 {{ gitProvider }} Token
                 </v-card-title>
-
-                <v-card-text>
-                    <git-info
-                        @input-token="saveTokens()"
-                        @close="gitTokenDialog = false"
-                    ></git-info>
-                </v-card-text>
-            </v-card>
+            </v-card>        
         </v-dialog>
+
         <v-dialog
                 v-model="isCustomTemplateForLoad"
                 width="480"
@@ -1559,7 +1548,7 @@
     import MarketPlace from "../MarketPlace.vue"
     import getParent from "../../../utils/getParent";
     import ExpectedTemplateTestDialog from "./ExpectedTemplateTestDialog"
-    import GitInfo from "../../oauth/GitInfo";
+
     import GitAPI from "../../../utils/GitAPI"
     import Github from "../../../utils/Github"
     import Gitlab from "../../../utils/Gitlab"
@@ -1591,7 +1580,6 @@
             'separate-panel-components':SeparatePanelComponents,
             'code-viewer': CodeViewer,
             gitAPIMenu,
-            GitInfo,
             // vueObjectView,
             LoginByGitlab,
             MarketPlace,
@@ -1617,7 +1605,6 @@
         },
         data() {
             return {
-                gitTokenDialog: false,
                 selectedCodeList: {},
                 gitActionDialogRenderKey: 0,
                 isSIgpt: false,
@@ -1965,8 +1952,9 @@
                     }
                     
                     this.isLoadingExpectedTemplate = true
-                    if(this.openCode && this.openCode[0]){
-                        Object.keys(this.templateFrameWorkList[this.openCode[0].template]).some(function (key){
+                    if((this.openCode && this.openCode[0]) || this.value.basePlatform){
+                        var platform = this.openCode && this.openCode[0] ? this.openCode[0].template : this.value.basePlatform
+                        Object.keys(this.templateFrameWorkList[platform]).some(function (key){
                             if(key.includes(".template/test/expected/")){
                                 me.isLoadingExpectedTemplate = false
                                 return true;
@@ -2625,7 +2613,7 @@
         created:function () {
             let canvas = getParent(this.$parent, this.canvasName);
             let git;
-            if(window.PROVIDER == "gitlab") {
+            if(window.MODE == "onprem") {
                 git = new Gitlab();
             } else {
                 git = new Github();
@@ -2745,10 +2733,10 @@
             });
         },
         methods: {
-            saveTokens() {
-                let me = this
-                me.gitTokenDialog = false;
-                this.callGenerate();
+            jumpToActions(){
+                if(this.value.scm && this.value.scm.org && this.value.scm.repo){
+                    window.open(`https://github.com/${this.value.scm.org}/${this.value.scm.repo}/actions`, "_blank")
+                }
             },
             messageProcessing(e) {
                 // var me = this;
@@ -2780,8 +2768,13 @@
                         if(!idx || idx == -1){
                             idx = me.codeLists.findIndex(x => x.fileName == changed.fileName && x.bcId == me.openCode[0].bcId)
                         }
+                        if(!idx || idx == -1){
+                            idx = me.codeLists.findIndex(x => changed.fileName.includes(x.fileName) && x.bcId == me.openCode[0].bcId)
+                        }
                         if(me.codeLists[idx] && me.codeLists[idx].code){
                             me.codeLists[idx].code = changed.modifiedFileCode
+                            me.filteredCodeLists[idx].code = changed.modifiedFileCode
+                            me.filteredPrettierCodeLists[idx].code = changed.modifiedFileCode
                         }
                     })
                 })
@@ -2824,7 +2817,7 @@ jobs:
             testTemplateModel(){
                 var me = this
                 me.startCheckDiff = true
-                var template = me.openCode[0].template ? me.openCode[0].template : me.defaultTemplate
+                var template = me.openCode && me.openCode[0] ? me.openCode[0].template : me.value.basePlatform
 
                 if(me.templateFrameWorkList[template]['.template/metadata.yml']){
                     me.templateMetaData = YAML.parse(me.templateFrameWorkList[template]['.template/metadata.yml'].content)
@@ -2857,6 +2850,8 @@ jobs:
                         diffFile = me.templateFrameWorkList[template][`.template/test/expected/${file.fullPath.replace(`${me.modelingProjectId}/`, `${me.templateMetaData.testModel}/`)}`]
                         if(!diffFile){
                             me.existOnlyActual.push(file.fullPath)
+                            // '.template/test/expected/frontend/src/components/주문주문.vue'
+                            // '.template/test/expected/frontend/src/components/주문주문.vue'
                         } 
                     })
                     if(me.diffList.length > 0 || me.existOnlyExpected.length > 0 || me.existOnlyActual.length > 0){
@@ -3121,11 +3116,8 @@ jobs:
                 }
             },
             alertReLogin(){
-                // let me = thi
                 alert("You need to re-login because session is expired")
-                this.gitTokenDialog = true
-            // this.showLoginCard = true;
-                // this.showLoginCard = true
+                this.showLoginCard = true
             },
             showTemplateListChip(obj){
 
@@ -5980,7 +5972,7 @@ jobs:
                     }
                 }
             },
-            createPathsFromObject(obj, prefix){
+            createPathsFromObject(obj, prefix, originPaths){
                 var me = this
                 let paths = {};
 
@@ -5989,18 +5981,18 @@ jobs:
 
                     if ( typeof obj[key] === 'object' && !Array.isArray(obj[key]) ) {
 
-                        if(  prefix &&  Object.values(obj).length  == 1 ) {
+                        if(  prefix &&  Object.values(obj).length  == 1 && (!originPaths || originPaths && originPaths[path])) {
                             // Only one Array or Object
                             paths[path] = obj[key];
                             break;
                         }
 
-                        let nestedPaths = me.createPathsFromObject(obj[key], path);
+                        let nestedPaths = me.createPathsFromObject(obj[key], path, originPaths);
                         paths = { ...paths, ...nestedPaths };
-                            } else {
+                    } else {
                         paths[path] = obj[key];
                     }
-                            }
+                }
 
                 return paths;
             },
@@ -6329,7 +6321,7 @@ jobs:
                 try {
                     // object -> path
                     let originPaths = me.createPathsFromObject(originObj, '');
-                    let mergePaths = me.createPathsFromObject(mergerObj, '');
+                    let mergePaths = me.createPathsFromObject(mergerObj, '', originPaths);
 
                     Object.keys(mergePaths).forEach(function(path){
                         if( typeof mergePaths[path] == 'string' ){
@@ -7454,16 +7446,11 @@ jobs:
                             rootModel: rootModel,
                         };
 
-
-                        Promise.all([me.generateBaseTemplate(templateContext), me.generateTemplate(templateContext), me.generateToppingTemplate(templateContext)])
-                        .then(function () {
+                        Promise.all([me.generateBaseTemplate(templateContext), me.generateTemplate(templateContext)])
+                        .then(async function () {
+                            await me.generateToppingTemplate(templateContext)
                             resolve()
                         });
-                        // Promise.all([me.generateBaseTemplate(templateContext), me.generateTemplate(templateContext)])
-                        // .then(async function () {
-                        //     await me.generateToppingTemplate(templateContext)
-                        //     resolve()
-                        // });
 
                     } catch (e) {
                         // me.isListSettingDone = true

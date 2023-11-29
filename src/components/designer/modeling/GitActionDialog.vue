@@ -128,7 +128,7 @@
 
                         <v-divider></v-divider>
                     </div>
-                    <div style="float: right; margin-top: 10px;">
+                    <div v-if="!allTestSucceeded" style="float: right; margin-top: 10px;">
                         <div v-if="!startGitAction">
                             <v-btn @click="regenerate()" 
                                 style="margin-right: 10px;">
@@ -144,18 +144,40 @@
                                 <b v-if="isFirstCommit">
                                     Generating the business logic to pass the test ... 
                                 </b>
-                                <b v-else-if="!isFirstCommit">
-                                    Mvn testing is in progress ... 
-                                </b>
                                 <b v-else-if="isSolutionCreating">
                                     Generating a code fix for the file in error ...
                                 </b>
+                                <b v-else>
+                                    Mvn testing is in progress ... 
+                                </b>
+                                <v-tooltip v-if="!isFirstCommit" bottom>
+                                    <template v-slot:activator="{ on }">
+                                        <v-btn
+                                            v-on="on"
+                                            @click="jumpToActions()" 
+                                            style="margin-left: -3px;" 
+                                            icon
+                                        >
+                                            <v-icon style="font-size: 22px;">mdi-open-in-new</v-icon>
+                                        </v-btn>
+                                    </template>
+                                    <span>Show github actions</span>
+                                </v-tooltip>
                             </div>
                             <v-btn :loading="!isSolutionCreating" :disabled="!isSolutionCreating" @click="stop()" style="margin-right: 10px; position: relative; float: right;">
                                 <v-icon style="margin-right: 10px;">mdi-spin mdi-loading</v-icon>
                                 Stop generating
                             </v-btn>
                         </div>
+                    </div>
+                    <div v-else>
+                        <v-card>
+                            <v-card-text>
+                                <div style="font-weight: bolder; font-size: .875rem;">
+                                    <v-icon color="green" style="margin-right: 10px;">mdi-checkbox-marked-circle-outline</v-icon>Test succeeded !
+                                </div>
+                            </v-card-text>
+                        </v-card>
                     </div>
                 </v-card-text>
             </div>
@@ -209,22 +231,27 @@
         },
         data() {
             return {
-                copySelectedCodeList: null,
-                isFirstCommit: true,
-                savedGeneratedErrorLog: null,
                 dialogRenderKey: 0,
                 lastIndex: 0,
-                resultLength: 0,
-                fullErrorLog: null,
-                generatedErrorLog: null,
                 selectedIdx: null,
-                generator: null,
+                resultLength: 0,
+                isFirstCommit: true,
+                startGitAction: true,
+                allTestSucceeded: false,
+                isSolutionCreating: false,
+
+                codeList: null,
+                copySelectedCodeList: null,
                 updateList: [],
                 siTestResults: [],
-                startGitAction: true,
-                isSolutionCreating: false,
+
+                fullErrorLog: null,
+                savedGeneratedErrorDetails: null,
+                generatedErrorDetails: null,
+
+                generator: null,
                 model: 'gpt-4',
-                openAiMessageList: null,
+
                 gitActionSnackBar: {
                     Text: '',
                     show: false,
@@ -251,15 +278,23 @@
         },
         mounted: function () { 
             var me = this
+            me.codeList = JSON.parse(JSON.stringify(me.selectedCodeList))
             me.copySelectedCodeList = JSON.parse(JSON.stringify(me.selectedCodeList))
             me.generate();
 
             me.$EventBus.$on('getActionLogs', function (log) {
                 if(log === "All tests succeeded"){
-                    alert("All tests succeeded")
+                    me.startGitAction = false
+                    me.isSolutionCreating = false
+                    me.allTestSucceeded = true
+                    me.gitActionSnackBar.timeout = 5000
+                    me.gitActionSnackBar.Text = "All tests succeeded"
+                    me.gitActionSnackBar.Color = "success"
+                    me.gitActionSnackBar.icon="check_circle"
+                    me.gitActionSnackBar.title="Success"
+                    me.gitActionSnackBar.show = true
                 } else {
                     me.fullErrorLog = log
-                    me.openAiMessageList = null
                     me.model = null
                     me.generator = new ErrorLogGenerator(me);
                     me.generator.generate();
@@ -267,6 +302,9 @@
             })
         },
         methods: {
+            jumpToActions(){
+                this.$emit("jumpToActions")
+            },
             stop(){
                 this.startGitAction = false
             },
@@ -286,11 +324,6 @@
             generate(){
                 var me = this
                 me.model = 'gpt-4'
-                me.openAiMessageList = []
-                me.openAiMessageList.push({
-                    role: 'user',
-                    content: 'Here is the code list: \n' + JSON.stringify(me.selectedCodeList)
-                })
                 me.startGitAction = true
                 me.generator = new SIGenerator(this);
                 me.generator.generate();
@@ -303,8 +336,8 @@
                     this.lastIndex = this.siTestResults.lastIndex
                     this.resultLength = this.siTestResults.length
                 }
-                if(this.savedGeneratedErrorLog){
-                    this.generatedErrorLog = this.savedGeneratedErrorLog
+                if(this.savedGeneratedErrorDetails){
+                    this.generatedErrorDetails = this.savedGeneratedErrorDetails
                 }
                 this.generate()
             },
@@ -312,7 +345,7 @@
                 var me = this
                 me.startGitAction = true
                 me.isFirstCommit = false
-                me.selectedCodeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
+                me.codeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
                 me.$emit("startCommitWithSigpt", me.updateList)
             },
             setDialog(model, option){
@@ -320,8 +353,6 @@
                     var me = this
                     if(me.fullErrorLog){
                         me.siTestResults[me.lastIndex].errorLog = model
-                        me.generatedErrorLog = JSON.stringify(model)
-                        me.savedGeneratedErrorLog = me.generatedErrorLog
                     } else {  
                         if(!me.startGitAction){
                             me.generator.stop();
@@ -336,7 +367,7 @@
                             if(solution && solution.codeChanges){
                                 solution.codeChanges.forEach(function (changes){
                                     changes.originFile = JSON.parse(JSON.stringify(dumyFile))
-                                    changes.originFile[0].code = changes.fileCode
+                                    changes.originFile[0].code = me.codeList[changes.fileName]
                                     changes.modifiedFile = JSON.parse(JSON.stringify(dumyFile))
                                     changes.modifiedFile[0].code = changes.modifiedFileCode
                                     changes.modifiedFile[0].name = changes.fileName
@@ -355,13 +386,36 @@
                         me.startGitAction = false
                         me.isSolutionCreating = false
                         if(me.fullErrorLog){
+                            me.generatedErrorDetails = []
+                            model.some(function (error){
+                                if(error.fileName && error.errorDetails){
+                                    var errDetail = ''
+                                    var fileName = error.fileName
+                                    if(fileName.includes("/")){
+                                        var fileNameSplit = fileName.split("/")
+                                        fileName = fileNameSplit[fileNameSplit.lastIndex]
+                                    }
+                                    errDetail = `An error called ${error.errorDetails} occurred in file ${fileName}.`
+                                    if(error.lineNumber && me.codeList[fileName]){
+                                        var codeSplit = me.codeList[fileName].split('\n')
+                                        if(codeSplit[error.lineNumber - 1] && codeSplit[error.lineNumber - 1] != ""){
+                                            errDetail = `An error called ${error.errorDetails} occurred in the ${codeSplit[error.lineNumber - 1]} part of the code content of the ${fileName} file.`
+                                        } 
+                                    } 
+                                    me.generatedErrorDetails.push(errDetail)
+                                } else {
+                                    me.generatedErrorDetails = model
+                                    return true;
+                                }
+                            })
+                            me.savedGeneratedErrorDetails = me.generatedErrorDetails
                             me.siTestResults[me.lastIndex].fullErrorLog = me.fullErrorLog
                             me.fullErrorLog = null
                             me.generate()
                         } else {                    
                             me.lastIndex = me.siTestResults.lastIndex
                             me.resultLength = me.siTestResults.length
-                            me.generatedErrorLog = null
+                            me.generatedErrorDetails = null
                         }
                     } else {
                         me.dialogRenderKey++;

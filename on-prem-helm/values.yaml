@@ -1,8 +1,10 @@
 replicaCount: 1
 image:
-  repository: asia-northeast3-docker.pkg.dev/eventstorming-tool/eventstorming # Image Registry
-  eventstorming: evenstorming:v49 # Eventstorming-tool Image URL
-  acebase: acebase:v33 # Acebase Image URL
+  repository: ghcr.io/msa-ez # Image Registry
+  eventstorming: evenstorming:v0.0.2 # Eventstorming-tool Image URL
+  acebase: acebase:v1.0.1 # Acebase Image URL
+
+provider: github # github or gitlab
 
 provider:
   
@@ -10,10 +12,11 @@ provider:
 gitlab: 
 	url: gitlab.handymes.com # Gitlab URL
 	oauth: 
-		id: # Gitlab Application OAUTH ID
-		secret: # Gitlab Application OAUTH Secrets
+		id: "" # Gitlab Application OAUTH ID
+		secret: "" # Gitlab Application OAUTH Secrets
 
 db:
+  https: false
   host: acebase.handymes.com # DB URL
   port: 443
   name: mydb
