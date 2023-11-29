@@ -6,9 +6,6 @@ image:
 
 provider: github # github or gitlab
 
-provider:
-  
-
 gitlab: 
 	url: gitlab.handymes.com # Gitlab URL
 	oauth: 

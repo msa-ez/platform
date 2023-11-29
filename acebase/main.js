@@ -9,7 +9,7 @@ const client_secret = process.env.CLIENT_SECRET ? process.env.CLIENT_SECRET : nu
 const dbname = process.env.DB_NAME ? process.env.DB_NAME : "mydb"; // DB Name
 const dbport = process.env.DB_PORT ? process.env.DB_PORT : 5757; // DB PORT
 const server = new AceBaseServer(dbname, {
-    host: "local",
+    host: host,
     port: 5757,
     storage: {
         path: "/acebase"
