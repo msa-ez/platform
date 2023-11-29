@@ -10,7 +10,7 @@ const dbname = process.env.DB_NAME ? process.env.DB_NAME : "mydb"; // DB Name
 const dbport = process.env.DB_PORT ? process.env.DB_PORT : 5757; // DB PORT
 const https = process.env.DB_HTTPS ? process.env.DB_HTTPS : false; // DB PORT
 const server = new AceBaseServer(dbname, {
-    host: host,
+    host: '0.0.0.0',
     port: parseInt(dbport),
     storage: {
         path: "/acebase"
