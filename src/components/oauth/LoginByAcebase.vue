@@ -4,15 +4,25 @@
             style="background: #FFFFFF;
                     min-width:300px;
                     max-width:300px;
-                    height:350px;
+                    height:130px;
                     position:absolute;
                     display:block;
                     left:50%;
                     top:50%;
                     margin:-175px 0 0 -150px;"
     >
-
-        <div v-if="tab == 'main'">
+    <v-btn block small height="80px" @click="signInAcebase()">
+            <img id="git-hover"
+                width="30px"
+                
+                alt="Github sign-in"
+                src="/static/image/gitlab-logo-500.png"/>
+            <div style="">sign in with gitlab</div>
+        </v-btn>
+        <div style="width:290px; margin-left:5px; text-align:center; font-size: small; color:#BDBDBD; margin-top:5px;">
+            Please ensure 3rd party cookies are enabled if<br> login fails.
+        </div>
+        <!-- <div v-if="tab == 'main'">
             <div style="font-weight:700;
                 font-size:20px;
                 color:#424242;
@@ -92,8 +102,8 @@
                     margin-bottom: 10px;
                     margin-top: -12px;">{{loginText}}</div>
                 <v-btn @click="signUpAcebase()" small block>Sign Up</v-btn>
-            </v-col>
-        </div>
+            </v-col> -->
+        <!-- </div> -->
     </v-card>
 </template>
 
@@ -207,7 +217,7 @@
                 var me = this
                 try {
                     // var app = this.getComponent('App')
-                    if(me.userInfo.email && me.userInfo.password){
+                    // if(me.userInfo.email && me.userInfo.password){
                         var result = await me.signIn('db://login', me.userInfo);
                         if(result){
                             window.localStorage.setItem("author", result.user.email)
@@ -226,9 +236,10 @@
                             me.$emit('login')
                             me.$emit('close')
                         }
-                    }else{
-                        me.loginText = '로그인 실패: 로그인 정보를 확인해주세요.'
-                    }
+                    // }
+                    // else{
+                    //     me.loginText = '로그인 실패: 로그인 정보를 확인해주세요.'
+                    // }
                 } catch (e) {
                     if(e.code == 'not_found'){
                         me.loginText = `로그인 실패: 존재하지 않은 계정입니다. ${e}`

@@ -1441,6 +1441,14 @@
             </v-card>
         </v-dialog>
 
+        <v-dialog v-model="gitTokenDialog" style="width: 50%">
+            <v-card>
+                <v-card-title class="text-h5 grey lighten-2">
+                {{ gitProvider }} Token
+                </v-card-title>
+            </v-card>        
+        </v-dialog>
+
         <v-dialog
                 v-model="isCustomTemplateForLoad"
                 width="480"

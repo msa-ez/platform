@@ -113,6 +113,10 @@ const GitlabRedirectPage = () =>
   import(
     /* webpackChunkName: "Provision" */ "./components/oauth/GitlabRedirectPage"
   );
+  const AcebaseRedirectPage = () =>
+  import(
+    /* webpackChunkName: "Acebase" */ "./components/oauth/AcebaseRedirectPage"
+  );
 /////////////////////////
 
 var options = {
@@ -276,6 +280,11 @@ var options = {
         path: "/oauth/gitlab",
         name: "GitlabRedirectPage",
         component: GitlabRedirectPage,
+    },
+    {
+        path: "/oauth/acebase",
+        name: "AcebaseRedirectpage",
+        component: AcebaseRedirectPage,
     },
     {
         path: "/provision",

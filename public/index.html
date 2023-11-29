@@ -199,18 +199,18 @@
                 let value = line.split('=')[1];
                 window.GITLAB = value;
             }
-            if (line && line.indexOf('VUE_APP_OAUTH_ID=') == 0) {
-                let value = line.split('=')[1];
-                window.OAUTH_ID = value;
-            }
-            if (line && line.indexOf('VUE_APP_OAUTH_SECRET=') == 0) {
-                let value = line.split('=')[1];
-                window.OAUTH_SECRET = value;
-            }
-            if (line && line.indexOf('VUE_APP_OAUTH_URL=') == 0) {
-                let value = line.split('=')[1];
-                window.OAUTH_URL = value;
-            }
+            // if (line && line.indexOf('VUE_APP_OAUTH_ID=') == 0) {
+            //     let value = line.split('=')[1];
+            //     window.OAUTH_ID = value;
+            // }
+            // if (line && line.indexOf('VUE_APP_OAUTH_SECRET=') == 0) {
+            //     let value = line.split('=')[1];
+            //     window.OAUTH_SECRET = value;
+            // }
+            // if (line && line.indexOf('VUE_APP_OAUTH_URL=') == 0) {
+            //     let value = line.split('=')[1];
+            //     window.OAUTH_URL = value;
+            // }
             if (line && line.indexOf('VUE_APP_GIT=') == 0) {
                 let value = line.split('=')[1];
                 window.PROVIDER = value.replace(/(?:\\[rn]|[\r\n]+)+/g, "");;
@@ -268,6 +268,28 @@
             console.log("Connected successfully");
         
         });
+      } else {
+        var head = document.getElementsByTagName('head')[0];
+        var app = document.createElement('script');
+        app.type = 'text/javascript';
+        app.src = "https://www.gstatic.com/firebasejs/6.2.0/firebase-app.js";
+
+        var storage = document.createElement('script');
+        storage.type = 'text/javascript';
+        storage.src = "https://www.gstatic.com/firebasejs/6.2.0/firebase-storage.js";
+
+        var auth = document.createElement('script');
+        auth.type = 'text/javascript';
+        auth.src = "https://www.gstatic.com/firebasejs/firebase/6.2.0/firebase-auth.js";
+
+        var firestore = document.createElement('script');
+        firestore.type = 'text/javascript';
+        firestore.src = "https://www.gstatic.com/firebasejs/firebase/6.2.0/firebase-firestore.js";
+
+        head.appendChild(app);
+        head.appendChild(storage);
+        head.appendChild(auth);
+        head.appendChild(firestore);
       }
       // window.GitpleConfig = {appCode: '0XY0AvdJ820MDsNwIZuJIgQqdn1kc3'};
       // !function () {

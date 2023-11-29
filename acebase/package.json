@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "lodash": "latest",
-    "acebase-server": "latest",
+    "gitlab-acebase": "1.18.5",
     "acebase-client": "latest",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^4.3.0"
