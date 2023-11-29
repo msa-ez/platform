@@ -4,16 +4,17 @@
             style="background: #FFFFFF;
                     min-width:300px;
                     max-width:300px;
-                    height:350px;
+                    height:130px;
                     position:absolute;
                     display:block;
                     left:50%;
                     top:50%;
                     margin:-175px 0 0 -150px;"
     >
-    <v-btn block small @click="signInAcebase()">
+    <v-btn block small height="80px" @click="signInAcebase()">
             <img id="git-hover"
                 width="30px"
+                
                 alt="Github sign-in"
                 src="/static/image/gitlab-logo-500.png"/>
             <div style="">sign in with gitlab</div>
