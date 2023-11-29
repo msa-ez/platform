@@ -11,7 +11,7 @@ const dbport = process.env.DB_PORT ? process.env.DB_PORT : 5757; // DB PORT
 const https = process.env.DB_HTTPS ? process.env.DB_HTTPS : false; // DB PORT
 const server = new AceBaseServer(dbname, {
     host: host,
-    port: dbport,
+    port: parseInt(dbport),
     storage: {
         path: "/acebase"
     },
@@ -37,9 +37,9 @@ server.on("ready", () => {
 
 const db = new AceBaseClient({
     host: host,
-    port: dbport,
+    port: parseInt(dbport),
     dbname: dbname,
-    https: https,
+    https: JSON.parse(https),
 });
 // const db = new AceBaseClient({ host: 'acebase.kuberez.io', port: 443, dbname: 'mydb', https: true });
 db.auth.signIn("admin", "75sdDSFg37w5").then((result) => {
