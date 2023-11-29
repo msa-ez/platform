@@ -37,7 +37,8 @@
                     window.localStorage.setItem("authorized", 'student');
                 }
                 // me.writeUserData(result.user.uid, result.user.displayName, result.user.email, result.user.picture)
-                var getUsers = await git.getUserInfo(`https://gitlab.handymes.com/api/v4/user`)
+                let origin = window.GITLAB ? window.GITLAB : window.location.hostname.replace("www.", "");
+                var getUsers = await git.getUserInfo(`https://gitlab.${origin}/api/v4/user`)
                 .then(function (res) {
                     console.log(res)
                     me.$EventBus.$emit('login', result.accessToken)
