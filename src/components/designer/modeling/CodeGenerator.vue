@@ -1929,7 +1929,7 @@
             "oldTreeHashLists": function () {
                 this.isChangedPathLists = true
             },
-            "isGeneratorDone":_.debounce(function () {
+            "isGeneratorDone":_.debounce(async function () {
                 var me = this
                 if( this.isGeneratorDone ){
                     // this.isListSettingDone = true
@@ -1946,6 +1946,9 @@
                     this.isLoadingExpectedTemplate = true
                     if((this.openCode && this.openCode[0]) || this.value.basePlatform){
                         var platform = this.openCode && this.openCode[0] ? this.openCode[0].template : this.value.basePlatform
+                        if(!platform.includes("http")){
+                            platform = await me.gitAPI.getTemplateURL(platform)
+                        }
                         Object.keys(this.templateFrameWorkList[platform]).some(function (key){
                             if(key.includes(".template/test/expected/")){
                                 me.isLoadingExpectedTemplate = false
@@ -2922,7 +2925,7 @@ jobs:
                         file: "md",
                         name: "README.md",
                         path: "README.md",
-                        platform: "https://github.com/jhyg/template-spring-boot"
+                        platform: this.selectedTreeItem && this.selectedTreeItem[0] ? this.selectedTreeItem[0].platform : null
                     }
                     this.templateTreeList['New_Template'].push(readmeFile)
 

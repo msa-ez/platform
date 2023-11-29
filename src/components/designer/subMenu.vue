@@ -87,6 +87,10 @@
 <script>
     const axios = require('axios');
     import Login from "../oauth/Login";
+    import GitAPI from "../../utils/GitAPI"
+    import Github from "../../utils/Github"
+    import Gitlab from "../../utils/Gitlab"
+
     export default {
         name: 'subMenu',
         mixins: [],
@@ -109,10 +113,20 @@
                 githubHeaders: {},
                 copyTemplateInfo: [],
                 forkedRepoList: [],
+                gitAPI: null,
             }
         },
         computed: {},
-        created: async function () {},
+        created: async function () {
+            let git;
+            if(window.MODE == "onprem") {
+                git = new Gitlab();
+            } else {
+                git = new Github();
+            }
+            this.gitAccessToken = localStorage.getItem('gitAccessToken') ? localStorage.getItem('gitAccessToken') : localStorage.getItem('gitToken')
+            this.gitAPI = new GitAPI(git);
+        },
         mounted: function () {
             var me = this
             me.githubHeaders = {
@@ -155,6 +169,9 @@
             },
             async getForkedList(repoUrl){
                 var me = this
+                if(!repoUrl.includes("https")){
+                    repoUrl = await me.gitAPI.getTemplateURL(repoUrl)
+                }
                 if(!repoUrl.includes("Custom Template")){
                     var repoPath = repoUrl.split('/')
                     let forkedList = await axios.get(`https://api.github.com/repos/` + repoPath[3] + "/" + repoPath[4] + "/" + 'forks', { headers: me.githubHeaders })

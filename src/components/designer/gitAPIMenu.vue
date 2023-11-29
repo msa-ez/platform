@@ -323,6 +323,11 @@
                             <!--                            <div v-if="(!isFirstCommit || isDuplicate)">-->
                         </div>
                         <div v-if="item.tabKey == 'setAccount'" :disabled="!isListSettingDone">
+                            <!-- <v-card-title style="background-color: #0d1117; color: white; margin-left:-10px;">
+                                <v-icon color="white" @click="gitMenuMode = 'push'" style="margin-right: 5px;">mdi-arrow-left</v-icon>
+                                &nbsp;Settings
+                                <v-spacer />
+                            </v-card-title> -->
                             <div style="margin: 10px;">
                                 <div v-if="isGitLogin" style="width: 100%; text-align: right; margin-bottom: -30px;">
                                     <v-btn small text color="primary" @click="logoutToGit()">sign out</v-btn>
@@ -821,8 +826,8 @@
         created: async function () {
             this.core = new CodeGeneratorCore({});
             let git;
-            // localStorage.getItem("provider")
-            if(window.PROVIDER == "gitlab") {
+
+            if(window.MODE == "onprem") {
                 git = new Gitlab();
             } else {
                 git = new Github();
@@ -2218,7 +2223,7 @@
                         encoding: 'utf-8',
                     };
                     pushCnt++;
-                    let res = me.git.pushFile()
+                    let res = me.git.pushFile(me.gitOrgName, me.gitRepoName, data)
                     .then(async result => {
                         let pushData = {
                             path: tmpPath,
@@ -2229,7 +2234,7 @@
                         pushTemplatTree.push(pushData)
                         pushCnt--;
                         if(pushCnt == 0){
-                            me.pushTemplateListTo(pushTemplatTree)
+                            me.pushTemplateList(pushTemplatTree)
                         }
                     })
                     .catch((error) => {
@@ -2315,8 +2320,8 @@
                         org: me.gitOrgName, 
                         repo: me.gitRepoName, 
                         commitData: commit, 
-                        list: list,
-                        branch: "template"
+                        list: treeList,
+                        branch: "main"
                     }
                     let pushResult = await me.git.push(options)
                     .then(function(push) {
