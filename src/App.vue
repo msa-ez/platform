@@ -959,6 +959,8 @@
             // console.log(this.$route.params.oauth)
             if(window.location.search.includes("oauth=gitlab"))
                 me.$router.push("/oauth/gitlab")
+            if(window.location.search.includes("oauth=acebase"))
+                me.$router.push("/oauth/acebase")
             if(window.document.title == '라운지'){
                 me.inSideRounge = true
             }

@@ -25,11 +25,16 @@
                 var me = this;
                 return new Promise(function (resolve, reject) {
                     userInfo.displayName = userInfo.username;
-                    window.$acebase.auth.signInWithEmail(userInfo.email, userInfo.password).then(result => {
-                        resolve(result)
-                    }).catch(e => {
-                        reject(e)
-                    })
+                    let host = JSON.parse(JSON.stringify(window.location.host))
+                    window.$acebase.auth.startAuthProviderSignIn("gitlab", `http://${window.location.host}/?oauth=acebase`)
+                    .then(redirectUrl => {
+                        window.location = redirectUrl; // Send user to auth provider's login screen
+                    });
+                    // window.$acebase.auth.signInWithEmail(userInfo.email, userInfo.password).then(result => {
+                    //     resolve(result)
+                    // }).catch(e => {
+                    //     reject(e)
+                    // })
                 })
             },
             _signUp(userInfo) {

@@ -1,10 +1,13 @@
-const { AceBaseServer } = require("acebase-server");
+const { AceBaseServer } = require("gitlab-acebase");
 const { AceBaseClient } = require("acebase-client");
 const express = require("express");
 const app = express();
 const _ = require("lodash");
 const host = process.env.DB_HOST ? process.env.DB_HOST : "localhost";
+const client_id = process.env.DB_HOST ? process.env.DB_HOST : "localhost";
+const client_secret = process.env.DB_HOST ? process.env.DB_HOST : "localhost";
 const dbname = process.env.DB_NAME ? process.env.DB_NAME : "mydb"; // DB Name
+
 const server = new AceBaseServer(dbname, {
     host: "localhost",
     port: 5757,
@@ -19,12 +22,20 @@ const server = new AceBaseServer(dbname, {
     },
 });
 // const server = new AceBaseServer(dbname, settings);
+server.configAuthProvider('gitlab', {
+    client_id: client_id,
+    client_secret: client_secret,
+    scopes: ["read_user api read_api read_repository write_repository sudo openid profile email write_registry read_registry admin_mode"],
+    state: "devopssystem",
+    host: "gitlab.handymes.com"
+})
+
 server.on("ready", () => {
     console.log("SERVER ready");
 });
 
 const db = new AceBaseClient({
-    host: "localhost",
+    host: host,
     port: '5757',
     dbname: dbname,
     https: false,

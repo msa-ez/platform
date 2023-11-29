@@ -4,6 +4,9 @@ image:
   eventstorming: evenstorming:v49 # Eventstorming-tool Image URL
   acebase: acebase:v33 # Acebase Image URL
 
+provider:
+  
+
 gitlab: 
 	url: gitlab.handymes.com # Gitlab URL
 	oauth: 

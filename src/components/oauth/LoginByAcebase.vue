@@ -207,7 +207,7 @@
                 var me = this
                 try {
                     // var app = this.getComponent('App')
-                    if(me.userInfo.email && me.userInfo.password){
+                    // if(me.userInfo.email && me.userInfo.password){
                         var result = await me.signIn('db://login', me.userInfo);
                         if(result){
                             window.localStorage.setItem("author", result.user.email)
@@ -226,9 +226,10 @@
                             me.$emit('login')
                             me.$emit('close')
                         }
-                    }else{
-                        me.loginText = '로그인 실패: 로그인 정보를 확인해주세요.'
-                    }
+                    // }
+                    // else{
+                    //     me.loginText = '로그인 실패: 로그인 정보를 확인해주세요.'
+                    // }
                 } catch (e) {
                     if(e.code == 'not_found'){
                         me.loginText = `로그인 실패: 존재하지 않은 계정입니다. ${e}`

@@ -1546,7 +1546,7 @@
                     <v-dialog v-model="gitTokenDialog">
                         <v-card>
                             <v-card-title class="text-h5 grey lighten-2">
-                            Git Token
+                            {{  }} Token
                             </v-card-title>
 
                             <v-card-text>
@@ -2613,6 +2613,9 @@ export default {
                 return true;
             }
             return false;
+        },
+        gitProvider() {
+            return window.PROVIDER
         },
         filteredBCForMirror() {
             var me = this;
