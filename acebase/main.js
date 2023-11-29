@@ -8,6 +8,7 @@ const client_id = process.env.CLIENT_ID ? process.env.CLIENT_ID : null;
 const client_secret = process.env.CLIENT_SECRET ? process.env.CLIENT_SECRET : null;
 const dbname = process.env.DB_NAME ? process.env.DB_NAME : "mydb"; // DB Name
 const dbport = process.env.DB_PORT ? process.env.DB_PORT : 5757; // DB PORT
+const https = process.env.DB_HTTPS ? process.env.DB_HTTPS : false; // DB PORT
 const server = new AceBaseServer(dbname, {
     host: host,
     port: 5757,
@@ -38,7 +39,7 @@ const db = new AceBaseClient({
     host: host,
     port: dbport,
     dbname: dbname,
-    https: false,
+    https: true,
 });
 // const db = new AceBaseClient({ host: 'acebase.kuberez.io', port: 443, dbname: 'mydb', https: true });
 db.auth.signIn("admin", "75sdDSFg37w5").then((result) => {
