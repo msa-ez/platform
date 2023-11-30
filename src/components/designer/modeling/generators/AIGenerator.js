@@ -196,18 +196,25 @@ class AIGenerator {
 
     createMessages(){
         var me = this 
+        var content
         me.previousMessages = []
         this.preferredLanguage = me.setPreferredLanguage();
+        this.originalLanguage = this.preferredLanguage.toLowerCase();
+        if(this.client.generatorName == 'ESGenerator' || this.client.generatorName == 'EventOnlyESGenerator'){
+            content = me.createPrompt() + "\n please generate in English"
+        } else {
+            content = me.createPrompt() + (me.preferredLanguage ? "\n please generate in " + me.preferredLanguage : '')
+        }
         if(me.client.openAiMessageList){
             me.client.openAiMessageList.push({
                 role: 'user',
-                content: me.createPrompt()  + (me.preferredLanguage ? "\n please generate in " + me.preferredLanguage : '')
+                content: content
             })
             me.previousMessages = me.client.openAiMessageList;
         } else {
             me.previousMessages.push({
                 role: 'user',
-                content: me.createPrompt()  + (me.preferredLanguage ? "\n please generate in " + me.preferredLanguage : '')
+                content: content
             })
         }
         // console.log(me.previousMessages)

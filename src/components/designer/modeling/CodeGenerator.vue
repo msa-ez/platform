@@ -1427,6 +1427,30 @@
             </v-card>
         </v-dialog>
 
+        <v-dialog v-model="openSelectTestFileDialog" max-width="600" persistent>
+            <v-card>
+                <v-card-title class="headline">
+                    Select the file you want to test
+                </v-card-title>
+                <v-card-text>
+                    <v-autocomplete
+                        v-model="testFile"
+                        item-text="name"
+                        :items="testFileList"
+                        clearable
+                        return-object
+                        autofocus
+                        dense
+                    ></v-autocomplete>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn text @click="selectedTestFile(false)">cancel</v-btn>
+                    <v-btn :disable="testFile ? true:false" color="primary" text @click="selectedTestFile(true)">OK</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
         <v-dialog v-model="showApplyBaseTemplateDialog" max-width="370" ref="all-apply-dialog" persistent>
             <v-card>
                 <v-card-title class="headline">
@@ -1439,14 +1463,6 @@
                     <v-btn color="red darken-1"   text @click="applyBaseTemplateDialog(false)">NO</v-btn>
                 </v-card-actions>
             </v-card>
-        </v-dialog>
-
-        <v-dialog v-model="gitTokenDialog" style="width: 50%">
-            <v-card>
-                <v-card-title class="text-h5 grey lighten-2">
-                {{ gitProvider }} Token
-                </v-card-title>
-            </v-card>        
         </v-dialog>
 
         <v-dialog
@@ -1605,9 +1621,11 @@
         },
         data() {
             return {
+                openSelectTestFileDialog: false,
                 selectedCodeList: {},
                 gitActionDialogRenderKey: 0,
                 isSIgpt: false,
+                testFileList: [],
                 testFile: null,
                 // openAiMessageList: [],
                 openGitActionDialog: false,
@@ -4119,7 +4137,7 @@ jobs:
                         if (!set.has(item.code)) {
                             codeBag.push("# "+ item.name + ": \n" + item.code);
                             if(option.keyword == "si" && item.name.includes("Test.java") && item.template === "https://github.com/msa-ez/topping-unit-test"){
-                                me.testFile = item
+                                me.testFileList.push(item)
                             }
                             if(option.keyword == "si"){
                                 me.selectedCodeList[item.name] = item.code
@@ -6926,17 +6944,29 @@ jobs:
                     me.openCode = []
                 }
             },
+            selectedTestFile(option){
+                this.openSelectTestFileDialog = false
+                if(option){
+                    this.openGitActionDialog = true
+                    this.gitActionDialogRenderKey++;
+                }
+            },
             openActionDialog(item){
                 var me = this
                 me.openCode[0] = item
                 if(me.openCode[0].children){
                     if(me.rootModelAndElementMap.modelForElements.BoundedContext.find(x => x.name == me.openCode[0].name)){
-                            me.testFile = null
-                            let collectedCodes = me.getSelectedFilesDeeply(me.openCode, {keyword: "si"})
-                            
-                        if(me.testFile){
-                            me.openGitActionDialog = true
-                            me.gitActionDialogRenderKey++;
+                        me.testFile = null
+                        me.testFileList = []
+                        let collectedCodes = me.getSelectedFilesDeeply(me.openCode, {keyword: "si"})
+                        if(me.testFileList && me.testFileList.length > 0){
+                            if(me.testFileList.length == 1){
+                                me.testFile = me.testFileList[0]
+                                me.openGitActionDialog = true
+                                me.gitActionDialogRenderKey++;
+                            } else {
+                                me.openSelectTestFileDialog = true
+                            }
                         } else {
                             alert("Test file not found")
                         }

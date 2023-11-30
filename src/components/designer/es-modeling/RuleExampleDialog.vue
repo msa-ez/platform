@@ -377,11 +377,36 @@
                                 me.rule.givenItems.push(aggregate)
                             }
                         })
-                    }
+                    } 
 
                     var whenItems = [] 
                     var thenItems = []
+                    var attachedCommand
                     if(Object.values(me.canvas.value.relations).length > 0){
+                        if(me.rule.givenItems.length == 0){
+                            Object.values(me.canvas.value.relations).some(function(rel){
+                                if(rel != null){
+                                    if(me.value._type.includes("Policy")){
+                                        if(rel.sourceElement._type == 'org.uengine.modeling.model.Policy' && rel.targetElement._type == 'org.uengine.modeling.model.Command'){
+                                            if(rel.sourceElement.elementView.id == me.value.elementView.id){
+                                                attachedCommand = rel.targetElement
+                                            }
+                                        }
+                                        if(attachedCommand){
+                                            Object.values(me.canvas.attachedLists.aggregateLists).some(function (aggregate, idx) {
+                                                if (isAttached(aggregate, attachedCommand)) {
+                                                    me.rule.givenItems.push(aggregate)
+                                                    return true;
+                                                }
+                                            })
+                                        }
+                                    }
+                                    if(me.rule.givenItems.length > 0){
+                                        return true;
+                                    } 
+                                }
+                            })
+                        }
                         Object.values(me.canvas.value.relations).forEach(function(rel){
                             if(rel != null){
                                 if(me.value._type.includes("Policy")){
@@ -394,10 +419,20 @@
                                         }
                                     }
                                     // then
-                                    if(rel.sourceElement._type == 'org.uengine.modeling.model.Policy' && rel.targetElement._type == 'org.uengine.modeling.model.Event'){
-                                        if(rel.sourceElement.elementView.id == me.value.elementView.id){
-                                            if(!whenItems.find(x => x.elementView.id == rel.targetElement.elementView.id)){
-                                                thenItems.push(me.canvas.value.elements[rel.targetElement.elementView.id]);
+                                    if(attachedCommand){
+                                        if(rel.sourceElement._type == 'org.uengine.modeling.model.Command' && rel.targetElement._type == 'org.uengine.modeling.model.Event'){
+                                            if(rel.sourceElement.elementView.id == attachedCommand.elementView.id){
+                                                if(!thenItems.find(x => x.elementView.id == rel.targetElement.elementView.id)){
+                                                    thenItems.push(me.canvas.value.elements[rel.targetElement.elementView.id]);
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        if(rel.sourceElement._type == 'org.uengine.modeling.model.Policy' && rel.targetElement._type == 'org.uengine.modeling.model.Event'){
+                                            if(rel.sourceElement.elementView.id == me.value.elementView.id){
+                                                if(!whenItems.find(x => x.elementView.id == rel.targetElement.elementView.id)){
+                                                    thenItems.push(me.canvas.value.elements[rel.targetElement.elementView.id]);
+                                                }
                                             }
                                         }
                                     }
@@ -468,7 +503,7 @@
                 me.rule.givenItems[0].aggregateRoot.fieldDescriptors.forEach(function (field){
                     var givenArr = [];
                     let givenObject = {};
-                    if(me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId]) {
+                    if(me.rule.givenItems[0].aggregateRoot.entities.elements && me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId]) {
                         me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId].fieldDescriptors.forEach(function (givenField){
                             givenObject[givenField.name] = "N/A";
                         });
