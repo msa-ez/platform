@@ -4,6 +4,7 @@ class AIGenerator {
     constructor(client, options){
         this.client = client;
         this.finish_reason = null;
+        this.isContinued = false
         this.modelJson = null;
         this.savedModelJson = null;
         this.stopSignaled = false;
@@ -111,7 +112,7 @@ class AIGenerator {
             if(newUpdatesJoined.includes(": null")){
                 newUpdatesJoined.replaceAll(": null", ": 'null'")
             }
-            if(this.isContinued) {
+            if(me.isContinued) {
                 me.modelJson = me.savedModelJson + newUpdatesJoined
             } else {
                 me.modelJson = newUpdatesJoined
@@ -166,7 +167,7 @@ class AIGenerator {
         };
         
         let messages
-        if(this.isContinued) {
+        if(me.isContinued) {
             messages = me.previousMessages
             messages.push({
                 role: 'assistant',
