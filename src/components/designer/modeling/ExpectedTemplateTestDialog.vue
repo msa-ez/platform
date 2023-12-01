@@ -134,15 +134,16 @@
                         :readOnly="true"
                         class="gs-expected-code-viewer1"
                     ></code-viewer>
-                    <code-viewer
-                        v-else
-                        ref="codeViewer"
-                        :isExpectedTemplate="true"
-                        v-model="selectedTemplateFile"
-                        :editMode="true"
-                        :readOnly="true"
-                        class="gs-expected-code-viewer2"
-                    ></code-viewer>
+                    <div v-else :key="codeViewerRenderKey">
+                        <code-viewer
+                            ref="codeViewer"
+                            :isExpectedTemplate="true"
+                            v-model="selectedTemplateFile"
+                            :editMode="true"
+                            :readOnly="true"
+                            class="gs-expected-code-viewer1"
+                        ></code-viewer>
+                    </div>
                 </v-card-text>
             </div>
         </v-card>
@@ -174,6 +175,7 @@
                 selectedTemplateFramework: [],
                 diffPathList: {},
                 selectedFilePath: null,
+                codeViewerRenderKey: 0,
             }
         },
         watch: {
@@ -223,23 +225,32 @@
         },
         methods: {
             onSelected(type, filePath){
-                this.selectedFilePath = filePath
-                if(type == 'diff'){
-                    this.selectedTemplateFile[0] = this.actualCodeList.find(x => x.fullPath == filePath)
-                    this.selectedTemplateFramework = JSON.parse(JSON.stringify(this.selectedTemplateFile))
-
-                    var expectedFilePath = `.template/test/expected/${filePath.replace(this.modelingProjectId, this.templateMetaData.testModel)}`
-                    this.selectedTemplateFramework[0].code = this.templateFrameWorkList[this.selectedTemplateFramework[0].template][expectedFilePath].content
-                    
-                    this.isDiff = true
-
-                } else if(type == 'actual'){
-                    this.selectedTemplateFile[0] = this.actualCodeList.find(x => x.fullPath == filePath)
-                    this.isDiff = false
-                } else {
-                    this.selectedTemplateFile[0].code = this.templateFrameWorkList[this.selectedTemplateFile[0].template][`.template/test/expected/${filePath.replace(this.modelingProjectId, this.templateMetaData.testModel)}`].content
-                    this.isDiff = false
+                var me = this
+                me.selectedFilePath = filePath
+                if(type == 'actual' || type == 'diff'){
+                    me.selectedTemplateFile[0] = JSON.parse(JSON.stringify(me.actualCodeList.find(x => x.fullPath == filePath)))
                 }
+
+                if(type == 'expected' || type == 'diff'){
+                    var expectedFilePath = `.template/test/expected/${filePath.replace(me.modelingProjectId, me.templateMetaData.testModel)}`
+                }
+
+                if(type == 'diff'){
+                    me.selectedTemplateFramework = JSON.parse(JSON.stringify(me.selectedTemplateFile))
+                    me.selectedTemplateFramework[0].code = me.templateFrameWorkList[me.selectedTemplateFramework[0].template][expectedFilePath].content
+                    me.isDiff = true
+                } else {
+                    if(type == 'expected'){
+                        Object.keys(me.templateFrameWorkList).some(function (key){
+                            if(me.templateFrameWorkList[key][expectedFilePath] && me.templateFrameWorkList[key][expectedFilePath].content){
+                                me.selectedTemplateFile[0].code = me.templateFrameWorkList[key][expectedFilePath].content
+                                return true;
+                            }
+                        })
+                    }
+                    me.isDiff = false
+                    me.codeViewerRenderKey++;
+                } 
             },
             setOpenedFolderList(item){
                 this.selectedTemplateTreePathList = item.fullPath

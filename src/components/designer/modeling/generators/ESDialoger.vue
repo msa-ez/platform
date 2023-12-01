@@ -155,6 +155,11 @@
             },
 
             onReceived(content){
+                if(!this.value){
+                    this.value = {
+                        userStory: ''
+                    }
+                }
                 this.value.userStory = content;
             },
 

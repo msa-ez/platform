@@ -15,10 +15,10 @@ class ESGenerator extends JsonAIGenerator{
         this.bcPosition = {};
         this.VODefinitionsFieldDescriptors = VODefinitions
 
-        this.originalLanguage = this.preferredLanguage.toLowerCase();
-        this.preferredLanguage = "English";
+        // this.originalLanguage = this.preferredLanguage.toLowerCase();
+        // this.preferredLanguage = "English";
 
-        this.generationOptions = {policy: true, ui: false}
+        this.generationOptions = {policy: true, ui: false, properties: true}
     }
     
     createPrompt(){
@@ -60,7 +60,7 @@ class ESGenerator extends JsonAIGenerator{
                                     "name": "propertyName", // Property Name must be Camel-Case
                                     "${this.originalLanguage}Name: "Property name in ${this.originalLanguage}", 
                                     "type": "PropertyType", // Property Type can be known java class or the Value object classes listed here: must be one of Address, Portrait, Rating, Money, Email. use simple name reduce the package name if java class name.
-                                    "isKey": true or false,
+                                    "isKey": "Must be true or not generated", // For each "properties", only one "isKey" must be true.
                                     ${this.generationOptions.ui ? `
                                     "uiStyle":{
                                         "inputUI": "TEXT" | "SELECT" | "TEXTAREA" // proper user interface type for input this property value
@@ -76,8 +76,9 @@ class ESGenerator extends JsonAIGenerator{
                                     ${this.generationOptions.properties ? `
                                     "properties": [
                                         {
-                                            "name": "Property Name",
-                                            "type": "Property Type"
+                                            "name": "propertyName", // Property Name must be Camel-Case
+                                            "type": "PropertyType", // Property Type can be known java class or the Value object classes listed here: must be one of Address, Portrait, Rating, Money, Email. use simple name reduce the package name if java class name.
+                                            "isKey": "Must be true or not generated" // For each "properties", only one "isKey" must be true.
                                         }
                                     ],
                                     `:``}
@@ -100,8 +101,9 @@ class ESGenerator extends JsonAIGenerator{
                                     ${this.generationOptions.properties ? `
                                     "properties": [
                                         {
-                                            "name": "Property Name", // Camel Case
-                                            "type": "Property Type" //  Java Class Name Type
+                                            "name": "propertyName", // Property Name must be Camel-Case
+                                            "type": "PropertyType", // Property Type can be known java class or the Value object classes listed here: must be one of Address, Portrait, Rating, Money, Email. use simple name reduce the package name if java class name.
+                                            "isKey": "Must be true or not generated" // For each "properties", only one "isKey" must be true.
                                         }
                                     ]
                                     `:``}
@@ -205,7 +207,7 @@ class ESGenerator extends JsonAIGenerator{
 
     createBoundedContext(key, json, x, y, portNumber){
         let me = this
-        let bcUuid = 'bc-' + key
+        let bcUuid = 'bc-' + key.replaceAll("/", "-")
 
         return {
             _type: "org.uengine.modeling.model.BoundedContext",
@@ -329,7 +331,7 @@ class ESGenerator extends JsonAIGenerator{
                     // .uuid()
 
                     
-                    var bcUuid = 'bc-' + key
+                    var bcUuid = 'bc-' + key.replaceAll("/", "-")
                     if(me.generateCnt == bcIdx){
                         me.modelElements[bcUuid] = me.createBoundedContext(
                             key, 
@@ -362,7 +364,7 @@ class ESGenerator extends JsonAIGenerator{
                             var lastCommandView = null
 
                             if(agg["name"]){
-                                var aggUuid = bcUuid + '-agg-' + agg.name
+                                var aggUuid = bcUuid + '-agg-' + agg.name.replaceAll("/", "-")
                                 if(me.generateCnt == bcIdx){
                                     me.modelElements[aggUuid] = {
                                         aggregateRoot: {
@@ -525,7 +527,7 @@ class ESGenerator extends JsonAIGenerator{
                             var elementUuid
                             if(agg["events"]){
                                 agg["events"].forEach(function (ele, idx){
-                                    elementUuid = bcUuid + '-event-' + ele.name
+                                    elementUuid = bcUuid + '-event-' + ele.name.replaceAll("/", "-")
 
                                     if(firstEvent && commandHeight == 0){
                                         eventHeight = me.modelElements[aggUuid]["elementView"].y + (idx * 120) - 200
@@ -580,7 +582,7 @@ class ESGenerator extends JsonAIGenerator{
 
                             if(agg["commands"]){
                                 agg["commands"].forEach(function (ele, idx){
-                                    elementUuid = bcUuid + '-command-' + ele.name
+                                    elementUuid = bcUuid + '-command-' + ele.name.replaceAll("/", "-")
                                     if(firstCommand && eventHeight == 0){
                                         commandHeight = me.modelElements[aggUuid]["elementView"].y + (idx * 120) - 200
                                         firstCommand = false
@@ -645,7 +647,7 @@ class ESGenerator extends JsonAIGenerator{
                                     lastCommandView = me.modelElements[elementUuid]["elementView"]
                                     if(ele.actor){
                                         if(me.generateCnt == bcIdx){
-                                            var actorUuid = bcUuid + '-' + elementUuid + '-actor-' + ele.actor
+                                            var actorUuid = bcUuid + '-' + elementUuid + '-actor-' + ele.actor.replaceAll("/", "-")
                                             me.modelElements[actorUuid] = {
                                                 _type:"org.uengine.modeling.model.Actor",
                                                 author: me.userUid,

@@ -20,7 +20,7 @@
                 v-on:selectShape="selectedActivity"
                 v-on:deSelectShape="deSelectedActivity"
                 v-on:addedToGroup="onAddedToGroup"
-                :label="canvas.isHexagonal ? '' : namePanel"
+                :label="canvas.isHexagonal ? '' : getNamePanel"
                 :image.sync="refreshedImg"
                 :_style="{
                     'label-angle': canvas.isHexagonal ? 0 : value.elementView.angle,
@@ -46,7 +46,7 @@
                         :sub-top="'-20px'"
                         :sub-left="'100%'"
                         :sub-width="150"
-                        :text="namePanel"
+                        :text="getNamePanel"
                         :subStyle="{
                             'font-color': '#BB94BF',
                             'font-weight': 'bold',
