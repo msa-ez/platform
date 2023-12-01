@@ -43,7 +43,7 @@
         </template>
 
         <template slot="element">
-            <div v-if="Object.keys(value.modelValue).length > 0">
+            <div v-if="!value.modelValue.openAPI">
                 <v-card flat>
                     <v-card-title style="color: #757575;">
                         Selected Model Info

@@ -30,7 +30,7 @@
                             <v-text-field
                                     v-model="openAPICard.path"
                                     color="primary"
-                                    label="Url"
+                                    label="Path"
                                     :rules="rules"
                                     dense
                             ></v-text-field>
@@ -127,11 +127,11 @@
                     me.lists = basic.concat(JSON.parse(localList));
                 }
             },
-            async appendPBC(obj){
+            async appendPBC(openAPIObj){
                 try {
-                    if(!obj.path) return;
+                    if(!openAPIObj.path) return;
 
-                    let element = await this.convert(obj.path, this.pbc);
+                    let element = await this.convert(openAPIObj.path, this.pbc, openAPIObj);
                     this.$set(this.canvas.value.elements, element.elementView.id, element);
 
                     this.$emit('result', true)
@@ -171,13 +171,13 @@
                 }
                 this.editMode = false;
             },
-            async convert(path, pbc){
+            async convert(path, pbc, openAPIObj){
                 const openAPIClass = new OpenAPIToPBC();
                 let resultObj = await openAPIClass.call(path);
 
-                return this.convertPBC(resultObj, pbc);
+                return this.convertPBC(resultObj, pbc, openAPIObj);
             },
-            convertPBC(openAPIObj, pbcElement){
+            convertPBC(convertValue, pbcElement, openAPIObj){
                 var me = this
                 const readComponent = me.getComponentByName('view-definition');
                 const commandComponent = me.getComponentByName('command-definition');
@@ -187,6 +187,11 @@
                     const pbcComponent = me.getComponentByName('packaged-business-capabilities');
                     pbcElement = pbcComponent.computed.createNew(null, me.canvas.uuid(), 500, 500, 500, 500);
                 }
+
+                // set info
+                pbcElement.name = convertValue.info.title ? convertValue.info.title : pbcElement.name;
+                pbcElement.description = convertValue.info.description ? convertValue.info.description : pbcElement.name;
+                pbcElement.modelValue.openAPI = openAPIObj.path;
 
                 // Agg
                 // Object.keys(openAPIObj.schemas).forEach(function (name) {
@@ -199,7 +204,7 @@
                 //     pbcElement.aggregates.push(element);
                 // })
 
-                openAPIObj.read.forEach(function(obj){
+                convertValue.read.forEach(function(obj){
                     let element = readComponent.computed.createNew(null, me.canvas.uuid() ,100, 100, 100, 100);
 
                     element.visibility = 'private'
@@ -211,13 +216,13 @@
                     element.queryOption.apiPath = obj._path
                     element.queryOption.useDefaultUri = false
                     if(obj.responses){
-                        element.aggregate = me.convertAggregateByResponses(obj.responses, openAPIObj.schemas, pbcElement.aggregates)
+                        element.aggregate = me.convertAggregateByResponses(obj.responses, convertValue.schemas, pbcElement.aggregates)
                     }
 
                     pbcElement.views.push(element);
                 });
 
-                openAPIObj.command.forEach(function(obj){
+                convertValue.command.forEach(function(obj){
                     let element = commandComponent.computed.createNew(null, me.canvas.uuid(), 100, 100, 100, 100);
 
                     element.visibility = 'private'
@@ -238,7 +243,7 @@
                     }
 
                     if(obj.responses){
-                        element.aggregate = me.convertAggregateByResponses(obj.responses, openAPIObj.schemas, pbcElement.aggregates)
+                        element.aggregate = me.convertAggregateByResponses(obj.responses, convertValue.schemas, pbcElement.aggregates)
                     }
 
                     pbcElement.commands.push(element);
