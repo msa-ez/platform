@@ -113,6 +113,10 @@ const GitlabRedirectPage = () =>
   import(
     /* webpackChunkName: "Provision" */ "./components/oauth/GitlabRedirectPage"
   );
+const GithubRedirectPage = () =>
+  import(
+    /* webpackChunkName: "Provision" */ "./components/oauth/GithubRedirectPage"
+  );
   const AcebaseRedirectPage = () =>
   import(
     /* webpackChunkName: "Acebase" */ "./components/oauth/AcebaseRedirectPage"

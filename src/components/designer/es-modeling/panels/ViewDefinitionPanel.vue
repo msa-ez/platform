@@ -2,7 +2,7 @@
     <common-panel
             v-model="value"
             :image="image"
-            :is-read-only="canvas.isReadOnlyModel"
+            :is-read-only="isReadOnly"
             :width-style="widthStyle"
             :related-url="relatedUrl"
             :validation-lists="validationLists"
@@ -27,7 +27,7 @@
 
         <template slot="t-edit-user">
             <div
-                    v-if="newEditUserImg.length > 0 && canvas.isReadOnlyModel"
+                    v-if="newEditUserImg.length > 0 && isReadOnly"
                     style="text-align:center"
             >
                 <v-chip
@@ -61,7 +61,7 @@
 
             <v-card flat>
                 <v-card-text>
-                    <v-radio-group :disabled="canvas.isReadOnlyModel"
+                    <v-radio-group :disabled="isReadOnly"
                                    v-model="value.dataProjection" row>
                         <v-radio :disabled="isOnlyCQRS" label="CQRS" value="cqrs"></v-radio>
                         <v-radio label="Query For Aggregate" value="query-for-aggregate"></v-radio>
@@ -82,22 +82,22 @@
 
 
 
-                            <v-radio-group v-model="value.queryOption.useDefaultGetUri" :disabled="canvas.isReadOnlyModel" row>
+                            <v-radio-group v-model="value.queryOption.useDefaultUri" :disabled="isReadOnly" row>
                                 <v-radio label="Default GET URI" :value="true"></v-radio>
                                 <v-radio label="Extended GET URI" :value="false"></v-radio>
                             </v-radio-group>
 
-                            <v-row style="align-items: center" v-if="!value.queryOption.useDefaultGetUri">
+                            <v-row style="align-items: center" v-if="!value.queryOption.useDefaultUri">
                                 <v-text-field
-                                    v-model="value.queryOption.apiPath"
-                                    :disabled="canvas.isReadOnlyModel"
-                                    style="margin-left: 10px;"
-                                    label="Get Path"
+                                        v-model="value.queryOption.apiPath"
+                                        :disabled="isReadOnly"
+                                        style="margin-left: 10px;"
+                                        label="Get Path"
                                 ></v-text-field>
                             </v-row>
 
 
-                            <v-radio-group v-model="value.queryOption.multipleResult" :disabled="canvas.isReadOnlyModel" row>
+                            <v-radio-group v-model="value.queryOption.multipleResult" :disabled="isReadOnly" row>
                                 <v-radio label="Single Result" :value="false"></v-radio>
                                 <v-radio label="Multiple Result" :value="true"></v-radio>
                             </v-radio-group>
@@ -108,7 +108,7 @@
                                 <event-storming-attribute
                                         label="Query Parameters"
                                         v-model="value.queryParameters"
-                                        :isReadOnly="canvas.isReadOnlyModel"
+                                        :isReadOnly="isReadOnly"
                                         :type="value._type"
                                         :elementId="value.elementView.id"
                                         :entities="relatedAggregate.aggregateRoot.entities"
@@ -117,9 +117,9 @@
                             </v-card-text>
                         </v-card>
 
-    
 
-                    
+
+
                     </div>
 
                     <div v-if="value.dataProjection == 'cqrs'">
@@ -128,7 +128,7 @@
                                 <event-storming-attribute
                                         label="Read Model Attributes"
                                         v-model="value.fieldDescriptors"
-                                        :isReadOnly="canvas.isReadOnlyModel"
+                                        :isReadOnly="isReadOnly"
                                         :type="value._type"
                                         :elementId="value.elementView.id"
                                 ></event-storming-attribute>
@@ -140,13 +140,13 @@
                                     v-model="value"
                                     :createItem="item"
                                     :index="key"
-                                    :isRead="canvas.isReadOnlyModel"
+                                    :isRead="isReadOnly"
                             ></ViewCreate>
                         </v-col>
                         <v-row align="start" justify="end">
                             <v-tooltip left>
                                 <template v-slot:activator="{ on }">
-                                    <v-btn v-on="on" class="cqrs-add-btn" outlined :disabled="canvas.isReadOnlyModel"
+                                    <v-btn v-on="on" class="cqrs-add-btn" outlined :disabled="isReadOnly"
                                            @click="viewMainRowAdd('create')">
                                         <v-icon> mdi-plus</v-icon>
                                     </v-btn>
@@ -160,14 +160,14 @@
                                     v-model="value"
                                     :updateItem="item"
                                     :index="key"
-                                    :isRead="canvas.isReadOnlyModel"
+                                    :isRead="isReadOnly"
                             >
                             </ViewUpdate>
                         </v-col>
                         <v-row align="center" justify="end">
                             <v-tooltip left>
                                 <template v-slot:activator="{ on }">
-                                    <v-btn v-on="on" class="cqrs-add-btn" outlined :disabled="canvas.isReadOnlyModel"
+                                    <v-btn v-on="on" class="cqrs-add-btn" outlined :disabled="isReadOnly"
                                            @click="viewMainRowAdd('update')">
                                         <v-icon> mdi-plus</v-icon>
                                     </v-btn>
@@ -181,13 +181,13 @@
                                     v-model="value"
                                     :deleteItem="item"
                                     :index="key"
-                                    :isRead="canvas.isReadOnlyModel"
+                                    :isRead="isReadOnly"
                             ></ViewDelete>
                         </v-col>
                         <v-row align="start" justify="end">
                             <v-tooltip left>
                                 <template v-slot:activator="{ on }">
-                                    <v-btn v-on="on" class="cqrs-add-btn" outlined :disabled="canvas.isReadOnlyModel"
+                                    <v-btn v-on="on" class="cqrs-add-btn" outlined :disabled="isReadOnly"
                                            @click="viewMainRowAdd('delete')">
                                         <v-icon>mdi-plus</v-icon>
                                     </v-btn>
@@ -215,7 +215,12 @@
         mixins: [EventStormingModelPanel],
         name: 'view-panel',
         props: {
-            generator: Object
+            generator: Object,
+            generateDone: {
+                type: Boolean,
+                required: true
+            },
+            isPBCModel: Boolean,
         },
         components: {
             CommonPanel,
@@ -230,11 +235,8 @@
                     generator: "CQRSGenerator",
                     userStory: '',
                 },
-                generateDone: true,
-                generateDone: {
-                    type: Boolean,
-                    required: true
-                },
+                // generateDone: true,
+
             }
         },
         computed: {
@@ -266,7 +268,7 @@
 
             //     let model = Object.assign([], parent.value)
 
-            //     return{ 
+            //     return{
             //         description: this.value.description,
             //         value: this.value,
             //         model: model,
@@ -287,7 +289,8 @@
             panelInit(){
                 var me = this
                 // Element
-                me.relatedAggregate = me.canvas.getAttachedAggregate(me.value)
+                // me.relatedAggregate = me.canvas.getAttachedAggregate(me.value)
+                me.relatedAggregate = me.isPBCModel ? me.value.aggregate : me.canvas.getAttachedAggregate(me.value)
 
                 // Common
                 me.$super(EventStormingModelPanel).panelInit()// }
@@ -353,14 +356,14 @@
             async onGenerationFinished(model){
                 this.$emit('update:generateDone', true);
                 this.$EventBus.$emit('generationFinished');
-            },  
+            },
             generate(){
                 this.executeBeforeDestroy();
-                
+
                 this.generator.generate();
                 this.state.startTemplateGenerate = true;
                 this.$emit('update:generateDone', false);
-                this.generateDone = false;            
+                this.generateDone = false;
             },
             stop(){
                 this.generator.stop();

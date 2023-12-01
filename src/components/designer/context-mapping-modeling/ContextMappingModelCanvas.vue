@@ -1039,6 +1039,7 @@
               <v-card-text>
                 <PBCModelList
                         @selected-model="applyModelingListsDialog"
+                        @close="closeModelingListsDialog"
                 ></PBCModelList>
               </v-card-text>
             </v-card>
@@ -1149,37 +1150,37 @@
           }
 
           await me.putObject(`db://definitions/${settingProjectId}/information`, {
-              author: me.userInfo.uid,
-              authorEmail: me.userInfo.email,
-              lastVersionName: version,
-              comment: me.storageCondition.comment,
-              createdTimeStamp: Date.now(),
-              lastModifiedTimeStamp: Date.now(),
-              lastModifiedUser: null,
-              lastModifiedEmail: null,
-              projectName: me.storageCondition.projectName,
-              type: me.storageCondition.type ? me.storageCondition.type : me.canvasType,
-              projectId: settingProjectId,
-              firstCommit: null,
-              associatedProject: me.information.associatedProject
+            author: me.userInfo.uid,
+            authorEmail: me.userInfo.email,
+            lastVersionName: version,
+            comment: me.storageCondition.comment,
+            createdTimeStamp: Date.now(),
+            lastModifiedTimeStamp: Date.now(),
+            lastModifiedUser: null,
+            lastModifiedEmail: null,
+            projectName: me.storageCondition.projectName,
+            type: me.storageCondition.type ? me.storageCondition.type : me.canvasType,
+            projectId: settingProjectId,
+            firstCommit: null,
+            associatedProject: me.information.associatedProject
           })
 
           await me.pushObject(`db://definitions/${settingProjectId}/snapshotLists`,{
-              lastSnapshotKey: '',
-              snapshot: JSON.stringify(defaultValue),
-              snapshotImg: null,
-              timeStamp: Date.now()
+            lastSnapshotKey: '',
+            snapshot: JSON.stringify(defaultValue),
+            snapshotImg: null,
+            timeStamp: Date.now()
           })
           let valueUrl = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${version}/versionValue`, JSON.stringify(defaultValue));
           await me.putObject(`db://definitions/${settingProjectId}/versionLists/${version}`, {
-              saveUser: me.userInfo.uid,
-              saveUserEmail: me.userInfo.email,
-              saveUserName: me.userInfo.name,
-              projectName: me.storageCondition.projectName,
-              img: null,
-              timeStamp: Date.now(),
-              comment: me.storageCondition.comment,
-              valueUrl: valueUrl
+            saveUser: me.userInfo.uid,
+            saveUserEmail: me.userInfo.email,
+            saveUserName: me.userInfo.name,
+            projectName: me.storageCondition.projectName,
+            img: null,
+            timeStamp: Date.now(),
+            comment: me.storageCondition.comment,
+            valueUrl: valueUrl
           })
 
           if( me.storageCondition.type == 'es' ){
