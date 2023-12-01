@@ -2180,7 +2180,6 @@
     var changeCase = require("change-case");
     var pluralize = require("pluralize");
     var path = require("path");
-    var Minio = require("minio");
     var ConfigIniParser = require("config-ini-parser").ConfigIniParser;
     var delimiter = "\r\n"; //or "\n" for *nux
     var _ = require("lodash");
