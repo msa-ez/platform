@@ -2,8 +2,8 @@
     <div>
         <v-row v-if="!generateDone" style="position:absolute; top:75px; right:35px; z-index:999;">
             <v-progress-circular
-                indeterminate
-                color="primary"
+                    indeterminate
+                    color="primary"
             ></v-progress-circular>
             <div style="margin:5px 0px 0px 5px;">Creating Aggregate... <v-btn @click="stop" text>stop</v-btn></div>
         </v-row>
@@ -119,8 +119,8 @@
                         :sub-right="'5px'"
                         :sub-bottom="'5px'"
                 ></image-element>
-                
-                <storming-sub-controller 
+
+                <storming-sub-controller
                         :type="value._type"
                         :value="value"
                         :readOnly="isReadOnly"
@@ -139,6 +139,7 @@
                 @changedPanelValue="changedPanelValue"
                 :generateDone.sync="generateDone"
                 :generator="generator"
+                :isPBCModel="isPBCModel"
         ></view-definition-panel>
 
     </div>
@@ -311,7 +312,7 @@
 
                 let model = Object.assign([], parent.value)
 
-                return{ 
+                return{
                     description: this.value.description,
                     value: this.value,
                     model: model,
@@ -356,10 +357,10 @@
             async onGenerationFinished(model){
                 this.generateDone = true;
                 this.$emit('update:generateDone', true);
-            },  
+            },
             generate(){
                 this.generator.generate();
-                this.generateDone = false;           
+                this.generateDone = false;
             },
             stop(){
                 this.generator.stop()
@@ -420,7 +421,7 @@
                     var validationResultIndex = me.elementValidationResults.findIndex(x=> (x.code == me.ESE_NOT_PK) )
                     if( validationResultIndex == -1 ){
                         me.elementValidationResults.push(me.validationFromCode(me.ESE_NOT_PK))
-                        
+
                     }
                 }else{
                     var validationResultIndex = me.elementValidationResults.findIndex(x=> (x.code == me.ESE_NOT_PK))

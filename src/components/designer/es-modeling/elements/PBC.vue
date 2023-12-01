@@ -235,6 +235,13 @@
             this.deletePBCModeling(this.value.elementView.id);
         },
         watch: {
+            "value.commands": {
+                deep: true,
+                handler: function (newVal, oldVal) {
+                    var me = this
+                    me.drawPBCModeling()
+                }
+            },
             "panelValue":function(newVal, oldVal){
                 this.drawPBCModeling()
             },
@@ -242,7 +249,7 @@
                 deep: true,
                 handler: function (newVal, oldVal) {
                     var me = this
-                        me.drawPBCModeling()
+                    me.drawPBCModeling()
                 }
             },
         },
@@ -309,8 +316,8 @@
                             let rightSideElement = [];
 
 
-                            // leftSideElement = leftSideElement.concat(element.commands, element.policies)
-                            leftSideElement = leftSideElement.concat(element.commands)
+                            leftSideElement = leftSideElement.concat(element.commands, element.views)
+                            // leftSideElement = leftSideElement.concat(element.commands)
                             leftSideElement = leftSideElement.filter(ele => ele && (!ele.visibility || ele.visibility == 'public'))
                             if(leftSideElement.length > 0) {
                                 let leftElementLen = leftSideElement.length;
@@ -324,6 +331,19 @@
                                     item.elementView.y = pbcTopY + (leftElementH/2) + yDistance*(idx+1) + (leftElementH * idx)
                                     item.elementView.height = leftElementH;
                                     me.$set(pbcElements, item.elementView.id, item)
+
+                                    if(item.aggregate && Object.keys(item.aggregate).length > 0){
+                                        console.log(item.aggregate)
+                                        item.aggregate.pbcId = pbcId
+                                        item.aggregate.elementView.id = item.aggregate.elementView.id + idx
+                                        item.aggregate.elementView.x = item.elementView.x + item.elementView.width
+                                        item.aggregate.elementView.y = item.elementView.y
+                                        item.aggregate.elementView.height = item.elementView.height
+
+                                        me.$set(pbcElements, item.aggregate.elementView.id, item.aggregate)
+                                    }
+
+
                                 })
                             }
 

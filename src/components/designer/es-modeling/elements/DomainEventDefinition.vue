@@ -59,8 +59,8 @@
             </sub-elements>
 
             <geometry-rect
-                v-if="movingElement && !canvas.isHexagonal"
-                :_style="{
+                    v-if="movingElement && !canvas.isHexagonal"
+                    :_style="{
                     'fill-r': 1,
                     'fill-cx': .1,
                     'fill-cy': .1,
@@ -73,8 +73,8 @@
                 }"
             ></geometry-rect>
             <geometry-rect
-                v-if="!movingElement && !canvas.isHexagonal"
-                :_style="{
+                    v-if="!movingElement && !canvas.isHexagonal"
+                    :_style="{
                     'fill-r': 1,
                     'fill-cx': .1,
                     'fill-cy': .1,
@@ -137,7 +137,7 @@
                 </text-element>
 
                 <image-element
-                        v-if="showValidation && !value.mirrorElement"
+                        v-if="showValidation"
                         v-bind:image="showValidationImg"
                         :sub-width="'20px'"
                         :sub-height="'20px'"
@@ -154,10 +154,10 @@
                         :sub-top="'3px'"
                 >
                 </image-element>
-                
+
                 <storming-sub-controller
                         v-if="!isPBCModel"
-                        :type="value._type" 
+                        :type="value._type"
                         :value="value"
                         :readOnly="canvas.isReadOnlyModel"
                         :isHexagonalModeling="canvas.isHexagonal"
@@ -199,6 +199,7 @@
                 :validationLists="filteredElementValidationResults"
                 @close="closePanel"
                 @changedPanelValue="changedPanelValue"
+                :isPBCModel="isPBCModel"
         ></domain-event-definition-panel>
 
     </div>
@@ -281,7 +282,7 @@
                         })
                     }
                     return text
-                    
+
                 }
                 return null
             },
