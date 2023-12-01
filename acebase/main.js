@@ -9,9 +9,11 @@ const client_secret = process.env.CLIENT_SECRET ? process.env.CLIENT_SECRET : nu
 const dbname = process.env.DB_NAME ? process.env.DB_NAME : "mydb"; // DB Name
 const dbport = process.env.DB_PORT ? process.env.DB_PORT : 5757; // DB PORT
 const https = process.env.DB_HTTPS ? process.env.DB_HTTPS : false; // DB PORT
+const provider = process.env.PROVIDER ? process.env.PROVIDER : "github"; // DB PORT
+const gitlab = process.env.GITLAB ? process.env.GITLAB : null; // DB PORT
 const server = new AceBaseServer(dbname, {
-    host: '0.0.0.0',
-    port: parseInt(dbport),
+    host: "localhost",
+    port: 5757,
     storage: {
         path: "/acebase"
     },
@@ -22,22 +24,30 @@ const server = new AceBaseServer(dbname, {
         defaultAdminPassword: "75sdDSFg37w5", // Admin Password
     },
 });
-// const server = new AceBaseServer(dbname, settings);
-server.configAuthProvider('gitlab', {
+
+let scope;
+if(provider == "github") {
+    scope = ["repo admin:repo_hook admin:org admin:org_hook user project codespace workflow"]
+} else if (provider == "gitlab") {
+    scope = ["read_user api read_api read_repository write_repository sudo openid profile email write_registry read_registry admin_mode"]
+}
+
+server.configAuthProvider(provider, {
     client_id: client_id,
     client_secret: client_secret,
-    scopes: ["read_user api read_api read_repository write_repository sudo openid profile email write_registry read_registry admin_mode"],
+    scopes: scope,
     state: "devopssystem",
-    host: "gitlab.handymes.com"
+    host: gitlab
 })
+
 
 server.on("ready", () => {
     console.log("SERVER ready");
 });
 
 const db = new AceBaseClient({
-    host: host,
-    port: parseInt(dbport),
+    host: "localhost",
+    port: 5757,
     dbname: dbname,
     https: JSON.parse(https),
 });

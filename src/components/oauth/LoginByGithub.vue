@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
     <v-card class="elevation-12"
             v-if="standard"
             style="background: #FFFFFF;
@@ -14,104 +14,19 @@
     <v-btn block small height="80px" @click="signInAcebase()">
             <img id="git-hover"
                 width="30px"
-                margin-right="10px"
+                
                 alt="Github sign-in"
-                :src="'/static/image/' + provider + '.png'"/>
-            <div style="">sign in with {{ provider }}</div>
+                src="/static/image/gitlab-logo-500.png"/>
+            <div style="">sign in with github</div>
         </v-btn>
         <div style="width:290px; margin-left:5px; text-align:center; font-size: small; color:#BDBDBD; margin-top:5px;">
             Please ensure 3rd party cookies are enabled if<br> login fails.
         </div>
-        <!-- <div v-if="tab == 'main'">
-            <div style="font-weight:700;
-                font-size:20px;
-                color:#424242;
-                text-align:center;
-                margin:20px 0 20px 0;">
-                LOGIN </div>
-            <v-col>
-                <v-text-field
-                        v-model="userInfo.email"
-                        :rules="[rules.emailRequired, rules.emailMatch]"
-                        label="Email"
-                        dense
-                ></v-text-field>
-                <v-text-field
-                        v-model="userInfo.password"
-                        label="Password"
-                        dense
-                        style="margin-top: 10px;"
-                        :append-icon="passwordShow ? 'mdi-eye' : 'mdi-eye-off'"
-                        :rules="[rules.required]"
-                        :type="passwordShow ? 'text' : 'password'"
-                        @click:append="passwordShow = !passwordShow"
-                        @keydown.enter="signInAcebase()"
-                ></v-text-field>
-                <div style="font-size: 13px;
-                    color: grey;
-                    margin-bottom: 10px;
-                    margin-top: -12px;">{{loginText}}</div>
-                <v-btn block small @click="signInAcebase()"> Sign In </v-btn>
-            </v-col>
-            <v-divider></v-divider>
-            <v-col>
-                <v-btn block small  @click="signUpPage()" > Sign Up </v-btn>
-                <div style="width:290px; margin-left:5px; text-align:center; font-size: small; color:#BDBDBD; margin-top:5px;">
-                    Please ensure 3rd party cookies are enabled if<br> login fails.
-                </div>
-            </v-col>
-        </div>
-
-        <div v-else-if="tab == 'signUp'">
-            <div>
-                <v-btn style="position: absolute" text @click="back()">
-                    <v-icon>
-                        mdi-arrow-left-thick
-                    </v-icon>
-                </v-btn>
-            </div>
-
-            <div style="font-weight:700;
-                font-size:20px;
-                color:#424242;
-                text-align:center;
-                margin:20px 0 20px 0;">
-                Sign Up </div>
-
-            <v-col>
-                <v-text-field label="NAME" v-model="userInfo.username"></v-text-field>
-                <v-text-field
-                        v-model="userInfo.email"
-                        :rules="[rules.emailRequired, rules.emailMatch]"
-                        label="Email"
-                        dense
-                ></v-text-field>
-                <v-text-field
-                        v-model="userInfo.password"
-                        label="PASSWORD"
-                        dense
-                        style="margin-top: 10px;"
-                        :append-icon="passwordShow ? 'mdi-eye' : 'mdi-eye-off'"
-                        :rules="[rules.required]"
-                        :type="passwordShow ? 'text' : 'password'"
-                        @click:append="passwordShow = !passwordShow"
-                        @keydown.enter="signUpAcebase()"
-                ></v-text-field>
-                <div style="font-size: 13px;
-                    color: grey;
-                    margin-bottom: 10px;
-                    margin-top: -12px;">{{loginText}}</div>
-                <v-btn @click="signUpAcebase()" small block>Sign Up</v-btn>
-            </v-col> -->
-        <!-- </div> -->
     </v-card>
 </template>
 
 <script>
-    import LabBase from "../labs/LabBase";
-    import TenantAware from '../labs/TenantAware';
     import CommonStorageBase from "../CommonStorageBase";
-
     export default {
         components: {},
         props: {
@@ -122,7 +37,6 @@
                 }
             }
         },
-        // mixins: [LabBase, TenantAware],
         mixins: [CommonStorageBase],
         data: () => ({
             tab: 'main',
@@ -164,94 +78,40 @@
         },
         async created() {
             var me = this
-
-
-            if (window.location.href.includes("login-page")) {
-
-                var clazz = await this.getClassInfo();
-
-                if (clazz.connectionKey) {
-                    me.isConnectionkey = true
-                }
-
-                if (localStorage.getItem('authorized') == null) {
-                    if (clazz.connectionKey) {
-                        me.guest = true
-                        me.$emit('type', 'guest')
-                    } else {
-                        me.standard = true
-                        me.$emit('type', 'standard')
-                    }
-                } else {
-                    if (clazz.connectionKey) {
-                        me.onlyConnectionKey = true
-                        me.$emit('type', 'connectionKey')
-                    }
-                }
-
-            } else {
-                me.standard = true
-                me.$emit('type', 'standard')
-            }
-
             if (localStorage.getItem('authorized')) {
                 me.authorized = true
             } else {
                 me.authorized = false
             }
-
-
-        },
-        computed: {
-            provider() {
-                return window.PROVIDER
-            }
         },
         methods: {
-            signUpPage(){
-                var me = this
-                me.loginText = ''
-                me.tab = 'signUp'
-            },
-            back(){
-                var me = this
-                me.loginText = ''
-                me.tab = 'main'
-            },
-            async signInAcebase() {
+            async signIn() {
                 var me = this
                 try {
-                    // var app = this.getComponent('App')
-                    // if(me.userInfo.email && me.userInfo.password){
-                        var result = await me.signIn('db://login', me.userInfo);
-                        if(result){
-                            window.localStorage.setItem("author", result.user.email)
-                            window.localStorage.setItem("userName", result.user.username)
-                            window.localStorage.setItem("email", result.user.email)
-                            window.localStorage.setItem("picture", result.user.picture)
-                            window.localStorage.setItem("accessToken", result.accessToken)
-                            window.localStorage.setItem("uid", result.user.uid)
-                            if (result.user.email && result.user.email.includes('@uengine.org')) {
-                                window.localStorage.setItem("authorized", 'admin');
-                            } else {
-                                window.localStorage.setItem("authorized", 'student');
-                            }
-                            me.writeUserData(result.user.uid, result.user.username, result.user.email, result.user.picture)
-                            me.$EventBus.$emit('login', result.accessToken)
-                            me.$emit('login')
-                            me.$emit('close')
+                    var result = await me.signIn('db://login', me.userInfo);
+                    if(result){
+                        window.localStorage.setItem("author", result.user.email)
+                        window.localStorage.setItem("userName", result.user.username)
+                        window.localStorage.setItem("email", result.user.email)
+                        window.localStorage.setItem("picture", result.user.picture)
+                        window.localStorage.setItem("accessToken", result.accessToken)
+                        window.localStorage.setItem("uid", result.user.uid)
+                        if (result.user.email && result.user.email.includes('@uengine.org')) {
+                            window.localStorage.setItem("authorized", 'admin');
+                        } else {
+                            window.localStorage.setItem("authorized", 'student');
                         }
-                    // }
-                    // else{
-                    //     me.loginText = '로그인 실패: 로그인 정보를 확인해주세요.'
-                    // }
+                        me.writeUserData(result.user.uid, result.user.username, result.user.email, result.user.picture)
+                        me.$EventBus.$emit('login', result.accessToken)
+                        me.$emit('login')
+                        me.$emit('close')
+                    }
                 } catch (e) {
                     if(e.code == 'not_found'){
                         me.loginText = `로그인 실패: 존재하지 않은 계정입니다. ${e}`
                     }else{
                         me.loginText = `로그인 실패: 로그인 정보를 확인해주세요. ${e}`
                     }
-                    // alert(e)
                 }
             },
             getComponent(componentName) {
@@ -374,4 +234,4 @@
 </style>
 
 
-
+ -->
