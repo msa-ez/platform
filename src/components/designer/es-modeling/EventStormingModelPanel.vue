@@ -5,7 +5,7 @@
     import getParent from "../../../utils/getParent";
 
     import isAttached from '../../../utils/isAttached';
-    
+
     var jsondiffpatch = require('jsondiffpatch').create({
         objectHash: function (obj, index) {
             return '$$index:' + index;
@@ -45,9 +45,9 @@
                 openValidationLists:false,
                 validationLevelIcon:
                     {
-                      'error' : {icon: 'mdi-close-circle-outline', color:'#E53935'},
-                      'warning' : {icon: 'mdi-alert-outline', color:'#FFA726'},
-                      'info' : {icon: 'mdi-information-outline', color:'#29B6F6'},
+                        'error' : {icon: 'mdi-close-circle-outline', color:'#E53935'},
+                        'warning' : {icon: 'mdi-alert-outline', color:'#FFA726'},
+                        'info' : {icon: 'mdi-information-outline', color:'#29B6F6'},
                     },
 
                 // command, external
@@ -68,14 +68,30 @@
             // this.setElementCanvas();
         },
         computed: {
+            isOpenAPIPBC(){
+                if(!this.isPBCModel) return false
+                if(!this.value.pbcId) return false
+                if(!this.canvas.value.elements[this.value.pbcId]) return false;
+
+                if(Object.keys(this.canvas.value.elements[this.value.pbcId].modelValue).length == 0) return true
+
+                return false;
+            },
+            isReadOnly(){
+                if(this.canvas.isReadOnlyModel) return true
+                if(this.readOnly) return true
+                if(this.isPBCModel) return true
+
+                return false
+            },
             translateObj(){
                 return {'usedTranslate': this.usedTranslate , 'translateText': this.translateText}
             },
             getImage(){
-              if(this.image){
-                  return this.image
-              }
-              return null;
+                if(this.image){
+                    return this.image
+                }
+                return null;
             },
             titleName() {
                 if(this.value){
@@ -127,11 +143,11 @@
             },
             "value.name": _.debounce(async function (newVal) {
                 var me = this
-                    me.changedNamePanel(me.value.name)
+                me.changedNamePanel(me.value.name)
             }, 500),
             "value.description": _.debounce(async function (newVal) {
                 var me = this
-                    me.changedDescriptionPanel(me.value.description)
+                me.changedDescriptionPanel(me.value.description)
             }, 500),
             // value: {
             //     deep: true,

@@ -2,7 +2,7 @@
     <common-panel
             v-model="value"
             :image="image"
-            :is-read-only="canvas.isReadOnlyModel"
+            :is-read-only="isReadOnly"
             :width-style="widthStyle"
             :related-url="relatedUrl"
             :validation-lists="validationLists"
@@ -75,7 +75,7 @@
                     <v-card-text>
                         <event-storming-attribute
                                 v-model="value.aggregateRoot.fieldDescriptors"
-                                :isReadOnly="canvas.isReadOnlyModel"
+                                :isReadOnly="isReadOnly"
                                 :type="value._type"
                                 :elementId="value.elementView.id"
                                 :entities="value.aggregateRoot.entities"
@@ -240,7 +240,7 @@
             //             }
             //         })
             //     }
-                
+
             //     me.givenItems = []
             //     me.givenItems.push(this._value)
             //     me.attachedPolicies = attachedPolicies
@@ -361,16 +361,16 @@
             async onGenerationFinished(model){
                 this.$emit('update:generateDone', true);
                 this.$EventBus.$emit('generationFinished');
-            },  
+            },
 
             generate(){
                 this.executeBeforeDestroy();
                 this.closePanel();
-                
+
                 this.generator.generate();
                 this.state.startTemplateGenerate = true;
                 this.$emit('update:generateDone', false);
-                this.generateDone = false; 
+                this.generateDone = false;
             },
 
             stop(){

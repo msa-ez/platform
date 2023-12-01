@@ -139,9 +139,10 @@
                 return this.value.elementView
             },
             showValidation() {
-                if (this.elementValidationResults.length == 0) {
-                    return false
-                }
+                if (this.elementValidationResults.length == 0) return false
+                if (this.isPBCModel) return false;
+                if (!this.value.mirrorElement) return false;
+
                 return true
             },
             showValidationImg() {
@@ -212,14 +213,14 @@
 
                                 var editable = true
                                 me.newEditUserImg.some(function(user, index){
-                                   if(user.uid == me.getEditUid){
-                                       return true
-                                   }
-                                   // edit condition
-                                   if( user.action == 'userPanelOpen' ){
-                                       editable = false
-                                       return true
-                                   }
+                                    if(user.uid == me.getEditUid){
+                                        return true
+                                    }
+                                    // edit condition
+                                    if( user.action == 'userPanelOpen' ){
+                                        editable = false
+                                        return true
+                                    }
                                 })
 
                                 return editable
@@ -624,7 +625,6 @@
                     var afterViewObj = {x: offsetX, y: offsetY, width: offsetW, height: offsetH}
                     var beforeViewObj = {x: originX, y: originY, width: originW, height: originH}
 
-                    // me.delayedMoveAction(beforeViewObj, afterViewObj)
                     me.canvas.moveElementAction(me.value, beforeViewObj, afterViewObj)
                 }catch (e) {
                     alert(`[Error] ModelElement-delayedMove: ${e}`)
@@ -644,7 +644,6 @@
                     })
                     offsetVertices = JSON.stringify(newVertices)
 
-                    // me.delayedRelationMoveAction(originVertices, offsetVertices)
                     me.canvas.moveElementAction(me.value, originVertices, offsetVertices)
                 }catch (e) {
                     alert(`[Error] ModelElement - delayedRelationMove: ${e}`)
@@ -891,6 +890,10 @@
                 }
             },
             delayedRelationMoveAction(originVertices, offsetVertices) {
+                /*
+                !!!  REMOVE !!!!
+                changedMethod: canvas.moveElementAction
+                */
                 var me = this
 
                 if (me.isCustomMoveExist) {
@@ -927,7 +930,7 @@
 
                     me.movingElement = true;
                 }catch (e) {
-                    alert(`[Error] ModelElement-onMoveElement: ${e}`)
+                    alert(`[Error] ModelElement-onMove Element: ${e}`)
                 }
             },
             onMoveRelation(newObj,STATUS_COMPLETE){

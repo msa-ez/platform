@@ -43,7 +43,7 @@
         </template>
 
         <template slot="element">
-            <div>
+            <div v-if="Object.keys(value.modelValue).length > 0">
                 <v-card flat>
                     <v-card-title style="color: #757575;">
                         Selected Model Info
@@ -66,6 +66,37 @@
                                     :auto-select-first="true"
                                     :disabled="canvas.isReadOnlyModel"
                                     :loading="loading"
+                            ></v-autocomplete>
+                        </div>
+                    </v-card-text>
+                </v-card>
+            </div>
+            <div>
+                <v-card flat>
+                    <v-card-title style="color: #757575;">Select Visibility Element</v-card-title>
+                    <v-card-text>
+                        <div>
+                            Read Element
+                            <v-autocomplete
+                                    v-model="selectedRead"
+                                    :items="value.views"
+                                    :disabled="canvas.isReadOnlyModel"
+                                    item-text="name"
+                                    return-object
+                                    multiple
+                                    density="comfortable"
+                            ></v-autocomplete>
+                        </div>
+                        <div>
+                            Command Element
+                            <v-autocomplete
+                                    v-model="selectedCommand"
+                                    :items="value.commands"
+                                    :disabled="canvas.isReadOnlyModel"
+                                    item-text="name"
+                                    return-object
+                                    multiple
+                                    density="compact"
                             ></v-autocomplete>
                         </div>
                     </v-card-text>
@@ -96,6 +127,8 @@
                 selectVersion: null,
                 versions: null,
                 loading: false,
+                selectedRead: [],
+                selectedCommand: [],
             }
         },
         computed: {
@@ -123,14 +156,17 @@
         },
         mounted(){},
         methods: {
-           async panelInit(){
+            async panelInit(){
                 var me = this
                 // Element
                 me.selectVersion = me.value.modelValue.projectVersion
                 me.versions = await me.getString(`db://definitions/${me.selectedProjectId}/versionLists`)
-               await me.migrateVersions(me.selectedProjectId, me.versions);
+                await me.migrateVersions(me.selectedProjectId, me.versions);
 
-               // Common
+                me.selectedRead = me.value.views.filter(item => item && item.visibility == "public")
+                me.selectedCommand = me.value.commands.filter(item => item && item.visibility == "public")
+
+                // Common
                 me.$super(EventStormingModelPanel).panelInit()
             },
             async migrateVersions(projectId, versions){
@@ -160,6 +196,22 @@
             executeBeforeDestroy() {
                 var me = this
                 // Element
+                me.value.views.forEach(function (element, idx) {
+                    if(me.selectedRead.find(x=> x && x.elementView.id == element.elementView.id) ) {
+                        element.visibility = 'public'
+                    } else {
+                        element.visibility = 'private'
+                    }
+                })
+
+                me.value.commands.forEach(function (element, idx) {
+                    if(me.selectedCommand.find(x=> x && x.elementView.id == element.elementView.id) ) {
+                        element.visibility = 'public'
+                    } else {
+                        element.visibility = 'private'
+                    }
+                })
+
 
                 // Common
                 me.$super(EventStormingModelPanel).executeBeforeDestroy()
@@ -192,3 +244,12 @@
         }
     }
 </script>
+
+<style scoped>
+    .v-autocomplete-list {
+        max-height: 200px; /* Set your desired maximum height */
+        overflow-y: auto;  /* Add vertical scrollbar if needed */
+        border: 1px solid #ccc; /* Add other styling as needed */
+    }
+</style>
+

@@ -15,17 +15,16 @@
                                 :disabled="showLoading && index != selectedTabIndex"
                                 :href="`#${tabObj.id}`"
                                 :key="tabObj.key"
-                                style="height:45px;"
+                                style="height:45px; width: max-content;"
                         >
                             {{tabObj.display}}
-                            <v-avatar v-if="index > 0 && tabObj.totalCount!=null" color="green lighten-5" size="30"
+                            <v-avatar v-if="tabObj.id != 'openAPI' && index > 0 && tabObj.totalCount!=null" color="green lighten-5" size="30"
                                       style="margin-left: 5px;margin-bottom: 15px; font-size:10px;">
                                 {{tabObj.totalCount == null ? '...': (tabObj.totalCount == 0 ? '0' : tabObj.totalCount)}}
                             </v-avatar>
                         </v-tab>
                     </div>
                     <v-row style="width:100%; height:57px;" dense>
-
                         <v-icon @click="searchOpen = !searchOpen" style="width:26px; height:26px; margin-top:16px; margin-left:15px;">mdi-magnify</v-icon>
                     </v-row>
                 </v-tabs>
@@ -110,7 +109,11 @@
                         </v-row>
                     </v-tab-item>
 
-                    <v-tab-item v-if="selectedTabIndex < standardTabCount" :value="selectedTabIndex" :key="selectedTabIndex">
+                    <v-tab-item v-else-if="selectedTabIndex == 2" :value="selectedTabIndex" >
+                        <open-api-pbc v-model="openAPILists" :pbc="pbc" @result="applyOpenAPI"></open-api-pbc>
+                    </v-tab-item>
+
+                    <v-tab-item v-else-if="selectedTabIndex < standardTabCount" :value="selectedTabIndex" :key="selectedTabIndex">
                         <v-row style="margin-top:0px;">
                             <v-col v-if="(showLoading && filteredList && filteredList.length < 10) || filteredList == undefined && typeof filteredList == 'undefined'">
                                 <v-row>
@@ -155,7 +158,8 @@
                         </v-row>
                     </v-tab-item>
                 </v-tabs-items>
-                <div style="text-align-last: center;">
+
+                <div style="text-align-last: center;" v-if="filterTabLists[selectedTabIndex].id != 'openAPI' ">
                     <div block text style="padding:10px 0 10px 0;">마지막 페이지 [최대 27개 표시(최근 수정날짜 기준)]</div>
                 </div>
             </div>
@@ -166,6 +170,7 @@
 <script>
     import PBCModelCard from "./PBCModelCard";
     import AlgoliaModelLists from "../../listPages/AlgoliaModelLists";
+    import OpenAPIPBC from "../modeling/OpenAPIPBC";
 
     var _ = require('lodash');
 
@@ -174,18 +179,26 @@
         mixins: [AlgoliaModelLists],
         components: {
             PBCModelCard,
+            'open-api-pbc': OpenAPIPBC
+        },
+        props:{
+            pbc: Object
         },
         data() {
             return {
-                tabId: 'public',
+                tabId: 'openAPI',
                 searchOpen: true,
                 tabLists: [
                     { id: 'mine'  , display: 'Mine'  , show: false, count: 0, totalCount: null },
                     { id: 'public', display: 'Public', show: true , count: 0, totalCount: null },
+                    { id: 'openAPI', display: 'Open API', show: true , count: 0, totalCount: null },
                 ],
+                openAPILists: [],
             }
         },
-        async created() {},
+        async created() {
+            this.loadOpenAPILists();
+        },
         mounted() {
             var me = this
             $(window).scroll(function () {
@@ -206,7 +219,6 @@
             filteredList() {
                 var me = this
                 var lists = undefined
-                // var findIndex = me.filterTabLists.findIndex(tab)
                 if (me.filterTabLists[me.selectedTabIndex].id == 'public') {
                     lists = this.filteredPublic
                 } else if (me.filterTabLists[me.selectedTabIndex].id == 'mine') {
@@ -256,10 +268,12 @@
                         if(tabItem.id == 'mine'){
                             tabItem.show = true
                             tabItem.count = me.filteredMine ? me.filteredMine.length : 0
-                        }else if(tabItem.id == 'public'){
+                        } else if(tabItem.id == 'public'){
                             tabItem.show = true
                             tabItem.count = me.filteredPublic ? me.filteredPublic.length : 0
-                        }else {
+                        } else if(tabItem.id == 'openAPI'){
+                            tabItem.show = true
+                        } else {
                             tabItem.show = false
                         }
                     });
@@ -269,7 +283,9 @@
                         if( tabItem.id == 'public' ){
                             tabItem.show = true
                             tabItem.count = me.filteredPublic ? me.filteredPublic.length : 0
-                        }else{
+                        } else if(tabItem.id == 'openAPI'){
+                            tabItem.show = true
+                        } else{
                             tabItem.show = false
                         }
                     });
@@ -278,6 +294,17 @@
             },
         },
         methods: {
+            applyOpenAPI(result){
+                if(result){
+                    this.$emit('close')
+                }
+            },
+            loadOpenAPILists(){
+                let lists = [];
+                // logic
+
+                return {lists : lists, count: lists.length, totalCount: lists.length }
+            },
             selectedModel(obj){
                 this.$emit('selected-model',obj)
             },
@@ -407,6 +434,9 @@
                                     });
                                     let setLists = await me.settingLists(result.lists);
                                     me.public = setLists
+                                } else if(obj.id == 'openAPI' && obj.show) {
+                                    result = me.loadOpenAPILists()
+                                    me.openAPILists = result.lists
                                 }
                                 obj.count = result ? result.count : 0
                                 obj.totalCount = result ? result.totalCount : 0

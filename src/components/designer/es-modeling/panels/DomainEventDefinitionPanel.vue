@@ -135,6 +135,7 @@
         name: 'event-panel',
         props: {
             test:Object,
+            isPBCModel: Boolean,
         },
         components: {
             CommonPanel
@@ -171,7 +172,8 @@
             panelInit(){
                 var me = this
                 // Element
-                me.relatedAggregate = me.canvas.getAttachedAggregate(me.value)
+                // me.relatedAggregate = me.canvas.getAttachedAggregate(me.value)
+                me.relatedAggregate = me.isPBCModel ? me.value.aggregate : me.canvas.getAttachedAggregate(me.value)
                 me.findCommandLists()
                 me.findPolicyLists()
                 me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#%C2%B7-event-sticker'
@@ -195,7 +197,7 @@
                                         if (coVal) {
                                             if (coVal.isRestRepository) {
                                                 me.lifeCycleCommand = coVal.restRepositoryInfo.method
-                                                
+
                                                 // Lifecycle 초기 세팅
                                                 if(coVal.restRepositoryInfo.method == 'DELETE' && me.value.trigger!='@PostRemove'){
                                                     me.value.trigger = '@PreRemove'
@@ -237,7 +239,7 @@
 
                                         if (coVal) {
                                             me.policyLists.push(coVal)
-                                            
+
                                         }
                                     }
                                 }
