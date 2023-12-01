@@ -1,6 +1,7 @@
 name: 'platform-build'
 
-on: tag
+on: push
+
 jobs:
   test:
     name: install
