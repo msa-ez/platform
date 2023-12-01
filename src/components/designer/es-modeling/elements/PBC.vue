@@ -133,7 +133,12 @@
             <sub-controller
                     v-if="value.modelValue.projectId"
                     :image="'open-in-new.png'"
-                    @click="openProject"
+                    @click="openProject(false)"
+            ></sub-controller>
+            <sub-controller
+                    v-if="value.modelValue.openAPI"
+                    :image="'open-in-new.png'"
+                    @click="openProject(true)"
             ></sub-controller>
 
         </group-element>
@@ -389,11 +394,13 @@
                 }
 
             },
-            openProject() {
+            openProject(isOpenAPI) {
                 var me = this
-                var url = `#/storming/${me.value.modelValue.projectId}`
-                console.log(url)
-                window.open(url, '_blank')
+                if(isOpenAPI){
+                    window.open(me.value.modelValue.openAPI, '_blank')
+                } else {
+                    window.open(`#/storming/${me.value.modelValue.projectId}`, '_blank')
+                }
             }
         }
     }
