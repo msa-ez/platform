@@ -8,12 +8,13 @@ provider: github # github or gitlab
 
 gitlab: 
 	url: gitlab.handymes.com # Gitlab URL
-	oauth: 
-		id: "" # Gitlab Application OAUTH ID
-		secret: "" # Gitlab Application OAUTH Secrets
+
+oauth: 
+  id: "" # Gitlab Application OAUTH ID
+  secret: "" # Gitlab Application OAUTH Secrets
 
 db:
-  https: false
+  https: true
   host: acebase.handymes.com # DB URL
   port: 443
   name: mydb
