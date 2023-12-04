@@ -27,26 +27,28 @@ const server = new AceBaseServer(dbname, {
 
 let scope;
 if(provider == "github") {
-    scope = ["repo admin:repo_hook admin:org admin:org_hook user project codespace workflow"]
-    server.configAuthProvider("github", {
-        client_id: client_id,
-        client_secret: client_secret,
-        scopes: scope,
-        state: "devopssystem",
-        host: gitlab
-    })
+    
+    
 } else if (provider == "gitlab") {
-    scope = ["read_user api read_api read_repository write_repository sudo openid profile email write_registry read_registry admin_mode"]
-    server.configAuthProvider("gitlab", {
-        client_id: client_id,
-        client_secret: client_secret,
-        scopes: scope,
-        state: "devopssystem",
-        host: gitlab
-    })
+    
+    
 }
+let github_scope = ["repo admin:repo_hook admin:org admin:org_hook user project codespace workflow"]
+let gitlab_scope = ["read_user api read_api read_repository write_repository sudo openid profile email write_registry read_registry admin_mode"]
+server.configAuthProvider("github", {
+    client_id: client_id,
+    client_secret: client_secret,
+    scopes: github_scope,
+    state: "devopssystem",
+})
 
-
+server.configAuthProvider("gitlab", {
+    client_id: client_id,
+    client_secret: client_secret,
+    scopes: gitlab_scope,
+    state: "devopssystem",
+    host: gitlab
+})
 
 server.on("ready", () => {
     console.log("SERVER ready");
