@@ -12,8 +12,8 @@ const https = process.env.DB_HTTPS ? process.env.DB_HTTPS : false; // DB PORT
 const provider = process.env.PROVIDER ? process.env.PROVIDER : "github"; // DB PORT
 const gitlab = process.env.GITLAB ? process.env.GITLAB : null; // DB PORT
 const server = new AceBaseServer(dbname, {
-    host: host,
-    port: dbport,
+    host: "0.0.0.0",
+    port: 5757,
     storage: {
         path: "/acebase"
     },
