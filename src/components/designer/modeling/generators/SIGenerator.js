@@ -10,12 +10,13 @@ export default class SIGenerator extends JsonAIGenerator {
     createPrompt(){
         var prompt 
         if(this.client.generatedErrorDetails){
-            prompt = `The error occurred during testing.
-These are the contents of files where an error occurred during “mvn test” using the files in the code list. ${JSON.stringify(this.client.generatedErrorDetails)}
-Identify the code part that needs error correction and correct the error appropriately for the business logic.
-Please provide a solution related to resolving the error.
-After checking the error log, you should add a solution for the file that caused the error to "codeChanges".
-If multiple errors occur in the same file, you must create one solution for multiple errors rather than displaying a solution for each error.`
+            prompt = `An error occurred during testing.
+Error list: ${JSON.stringify(this.client.generatedErrorDetails)}
+The error list contains errors that occurred during mvn testing for the files in the code list and information about the file in which the error occurred.
+It must identify a list of errors and provide appropriate solutions to the errors encountered in the file in which the error occurred.
+Identify the code parts of the file that need error correction and correct the errors to suit your business logic.
+After checking the error log, you should add a workaround for the file causing the error in "codeChanges".
+If multiple errors occur in the same file, you should create one workaround for multiple errors instead of showing a workaround for each error.`
         } else {
             prompt = 'First, determine whether the business logic is lacking or not written, and if so, please suggest a way to write the logic in the aggregate file of the domain code. Write the business logic to pass this test.'
         }

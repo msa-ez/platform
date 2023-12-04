@@ -2,7 +2,7 @@
     <common-panel
             v-model="value"
             :image="image"
-            :is-read-only="canvas.isReadOnlyModel"
+            :isReadOnly="isReadOnly"
             :width-style="widthStyle"
             :related-url="relatedUrl"
             :validation-lists="validationLists"
@@ -21,7 +21,7 @@
 
         <template slot="t-edit-user">
             <div
-                    v-if="newEditUserImg.length > 0 && canvas.isReadOnlyModel && !value.mirrorElement"
+                    v-if="newEditUserImg.length > 0 && !value.mirrorElement && isReadOnly"
                     style="text-align:center"
             >
                 <v-chip
@@ -44,14 +44,14 @@
 
         <template slot="md-title-side">
             <v-btn
-            text
-            color="primary"
-            style="margin-left: 10px; margin-top: -12px;"
-            :disabled="canvas.isReadOnlyModel"
-            @click="openExampleDialog()"
+                    text
+                    color="primary"
+                    style="margin-left: 10px; margin-top: -12px;"
+                    :disabled="isReadOnly"
+                    @click="openExampleDialog()"
             >Examples</v-btn>
         </template>
-        
+
         <template slot="element">
             <div>
                 <RuleExampleDialog v-if="openExample" v-model="value" @closeExampleDialog="closeExampleDialog()" />
@@ -69,7 +69,7 @@
 
 
                             <span class="panel-title" style="margin-left:-10px;">Method</span>
-                            <v-radio-group v-model="value.isRestRepository" :disabled="canvas.isReadOnlyModel"
+                            <v-radio-group v-model="value.isRestRepository" :disabled="isReadOnly"
                                            style="margin-left:-13px;" row>
                                 <v-radio label="Default Verbs" :value="true"></v-radio>
                                 <v-radio label="Extend Verb URI" :value="false"></v-radio>
@@ -77,7 +77,7 @@
 
                             <v-col v-if="value.isRestRepository">
                                 <v-autocomplete
-                                        :disabled="canvas.isReadOnlyModel"
+                                        :disabled="isReadOnly"
                                         v-model="value.restRepositoryInfo.method"
                                         :items="getRestfulList"
                                         style="margin-left: -22px; min-width:111%;"
@@ -91,7 +91,7 @@
                                 <v-row style="align-items: center">
                                     <v-text-field
                                             v-model="value.controllerInfo.apiPath"
-                                            :disabled="canvas.isReadOnlyModel"
+                                            :disabled="isReadOnly"
                                             style="margin-left: -10px; min-width:105%;"
                                             label="API Path"
                                             :prefix="`${elementPrefix}`"
@@ -99,7 +99,7 @@
                                 </v-row>
                                 <v-autocomplete
                                         v-model="value.controllerInfo.method"
-                                        :disabled="canvas.isReadOnlyModel"
+                                        :disabled="isReadOnly"
                                         style="margin-left: -22px; min-width:111%;"
                                         label="Method"
                                         persistent-hint
@@ -109,7 +109,7 @@
                                         label="Request Body"
                                         v-model="value.fieldDescriptors"
                                         :entities="entities"
-                                        :isReadOnly="canvas.isReadOnlyModel"
+                                        :isReadOnly="isReadOnly"
                                         :type="value._type"
                                         :elementId="value.elementView.id"
                                         style="margin-left: -22px; margin-right: -22px;"
@@ -159,6 +159,7 @@
                     return {}
                 }
             },
+            isPBCModel: Boolean,
         },
         components: {
             CommonPanel,
@@ -174,10 +175,10 @@
         },
         computed: {
             relatedAggregateName(){
-              if(this.relatedAggregate){
-                  return this.relatedAggregate.name
-              }
-              return null;
+                if(this.relatedAggregate){
+                    return this.relatedAggregate.name
+                }
+                return null;
             },
             getRestfulList(){
                 return this.restfulList.slice(1)
@@ -187,6 +188,8 @@
             },
             elementPrefix(){
                 var me = this
+                if(me.isOpenAPIPBC) return '';
+
                 if(me.value){
                     if(me.value.isRestRepository){
                         return null
@@ -242,7 +245,8 @@
             panelInit(){
                 var me = this
                 // Element
-                me.relatedAggregate = me.canvas.getAttachedAggregate(me.value)
+                // me.relatedAggregate = me.canvas.getAttachedAggregate(me.value)
+                me.relatedAggregate = me.isPBCModel ? me.value.aggregate : me.canvas.getAttachedAggregate(me.value)
                 me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#%C2%B7-command-sticker'
 
                 // Common
@@ -258,14 +262,11 @@
                         me.value.controllerInfo.apiPath = lowerCase
                     }else if(me.value.controllerInfo.apiPath && me.value.controllerInfo.method == 'POST'){
                         me.value.controllerInfo.apiPath = null;
-                        // var lowerCase = JSON.parse(JSON.stringify(me.value.controllerInfo.apiPath)).toLowerCase()
-                        // lowerCase = lowerCase.replace(' ', '');
-                        // me.value.controllerInfo.apiPath = lowerCase
                     }
                 } catch {
                     console.log('methods : setApiPath() Error')
                 }
-                
+
             },
             async changedNamePanel(newVal) {
                 var me = this
@@ -303,7 +304,6 @@
                 var descriptor = me.value.fieldDescriptors.find(descriptor => descriptor.name);
                 var descriptorName = descriptor ? descriptor.name : undefined;
 
-
                 if(me.value.isRestRepository){
                     var fieldDescriptorsName = 'aggFieldName="value" '
                     if(me.value && me.relatedAggregateName){
@@ -321,17 +321,29 @@
                         }
                     }
 
-                    // RestRepository  -> Default Verbs
-                    if(me.value.restRepositoryInfo.method == 'POST'){
-                        me.commandExample = `http POST localhost:8080/${aggName} ${fieldDescriptorsName}`
-                    }else if(me.value.restRepositoryInfo.method == 'PATCH'){
-                        me.commandExample = `http PATCH localhost:8080/${aggName}/1 ${fieldDescriptorsName}`
-                    }else if(me.value.restRepositoryInfo.method == 'DELETE'){
-                        me.commandExample = `http DELETE localhost:8080/${aggName}/1`
-                    }else if(me.value.restRepositoryInfo.method == 'PUT'){
-                        me.commandExample = `http PUT localhost:8080/${aggName}/1 ${fieldDescriptorsName}`
+                    if(me.isOpenAPIPBC){
+                        // RestRepository  -> Default Verbs
+                        if(me.value.restRepositoryInfo.method == 'POST'){
+                            me.commandExample = `http POST localhost:8080/${me.value.restRepositoryInfo.apiPath} ${fieldDescriptorsName}`
+                        }else if(me.value.restRepositoryInfo.method == 'PATCH'){
+                            me.commandExample = `http PATCH localhost:8080/${me.value.restRepositoryInfo.apiPath}/1 ${fieldDescriptorsName}`
+                        }else if(me.value.restRepositoryInfo.method == 'DELETE'){
+                            me.commandExample = `http DELETE localhost:8080/${me.value.restRepositoryInfo.apiPath}/1`
+                        }else if(me.value.restRepositoryInfo.method == 'PUT'){
+                            me.commandExample = `http PUT localhost:8080/${me.value.restRepositoryInfo.apiPath}/1 ${fieldDescriptorsName}`
+                        }
+                    } else {
+                        // RestRepository  -> Default Verbs
+                        if(me.value.restRepositoryInfo.method == 'POST'){
+                            me.commandExample = `http POST localhost:8080/${aggName} ${fieldDescriptorsName}`
+                        }else if(me.value.restRepositoryInfo.method == 'PATCH'){
+                            me.commandExample = `http PATCH localhost:8080/${aggName}/1 ${fieldDescriptorsName}`
+                        }else if(me.value.restRepositoryInfo.method == 'DELETE'){
+                            me.commandExample = `http DELETE localhost:8080/${aggName}/1`
+                        }else if(me.value.restRepositoryInfo.method == 'PUT'){
+                            me.commandExample = `http PUT localhost:8080/${aggName}/1 ${fieldDescriptorsName}`
+                        }
                     }
-                    // var fieldDescriptorsName =  'FieldName'
                 }else{
                     var fieldDescriptorsName = 'fieldName="value" '
                     if(me.value && me.value.fieldDescriptors){
@@ -345,13 +357,21 @@
                         }
                     }
 
-                    // Controller -> Extend Verb
-                    if(me.value.controllerInfo.method == 'POST'){
-                        me.commandExample = `http POST localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))}`
-                    }else{
-                        me.commandExample = `http PUT localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))}/1/${me.value.controllerInfo.apiPath} ${descriptorName}= "${descriptorName}" ${me.value.controllerInfo.apiPath}=1`
+                    if(me.isOpenAPIPBC){
+                        if(me.value.controllerInfo.method == 'POST'){
+                            me.commandExample = `http POST localhost:8080${me.value.controllerInfo.apiPath} ${fieldDescriptorsName}`
+                        }else{
+                            me.commandExample = `http PUT localhost:8080${me.value.controllerInfo.apiPath} ${fieldDescriptorsName}`
+                        }
+                    } else {
+                        // Controller -> Extend Verb
+                        if(me.value.controllerInfo.method == 'POST'){
+                            me.commandExample = `http POST localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))} ${fieldDescriptorsName}`
+                        }else{
+                            me.commandExample = `http PUT localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))}/1/${me.value.controllerInfo.apiPath} ${descriptorName}="{value}"`
+                        }
+                        me.setApiPath()
                     }
-                    me.setApiPath()
                 }
 
             },

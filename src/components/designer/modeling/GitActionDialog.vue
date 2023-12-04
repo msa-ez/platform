@@ -399,7 +399,7 @@
                                     if(error.lineNumber && me.codeList[fileName]){
                                         var codeSplit = me.codeList[fileName].split('\n')
                                         if(codeSplit[error.lineNumber - 1] && codeSplit[error.lineNumber - 1] != ""){
-                                            errDetail = `An error called ${error.errorDetails} occurred in the ${codeSplit[error.lineNumber - 1]} part of the code content of the ${fileName} file.`
+                                            errDetail = `An error called "${error.errorDetails}" occurred in the ${codeSplit[error.lineNumber - 1]} part of the code content of the ${fileName} file.`
                                         } 
                                     } 
                                     me.generatedErrorDetails.push(errDetail)

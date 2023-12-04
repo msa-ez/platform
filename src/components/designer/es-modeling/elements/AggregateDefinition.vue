@@ -2,8 +2,8 @@
     <div>
         <v-row v-if="!generateDone" style="position:absolute; top:75px; right:35px; z-index:999;">
             <v-progress-circular
-                indeterminate
-                color="primary"
+                    indeterminate
+                    color="primary"
             ></v-progress-circular>
             <div style="margin:5px 0px 0px 5px;">Creating Aggregate... <v-btn @click="stop" text>stop</v-btn></div>
         </v-row>
@@ -133,7 +133,7 @@
                 </text-element>
 
                 <image-element
-                        v-if="showValidation && !value.mirrorElement"
+                        v-if="showValidation"
                         v-bind:image="showValidationImg"
                         :sub-width="'20px'"
                         :sub-height="'20px'"
@@ -151,8 +151,8 @@
                 >
                 </image-element>
 
-                <storming-sub-controller 
-                        :type="value._type" 
+                <storming-sub-controller
+                        :type="value._type"
                         :value="value"
                         :readOnly="canvas.isReadOnlyModel"
                         :isHexagonalModeling="canvas.isHexagonal"
@@ -186,6 +186,7 @@
                 @changedPanelValue="changedPanelValue"
                 :generateDone.sync="generateDone"
                 :generator="generator"
+                :isPBCModel="isPBCModel"
         ></aggregate-definition-panel>
 
     </div>
@@ -355,7 +356,7 @@
                     boundedContext = model.elements[this.value.boundedContext.id]
                 }
 
-                return{ 
+                return{
                     description: this.value.description,
                     aggregate: this.value,
                     boundedContext: boundedContext,
@@ -381,7 +382,7 @@
             var me = this
 
             me.init(); // generator
-            
+
             if(me.value.aggregateRoot.fieldDescriptors == undefined) {
                 me.value.aggregateRoot.fieldDescriptors = [
                     {
@@ -425,9 +426,9 @@
                 Object.values(me.canvas.value.elements).forEach(function(el) {
                     if(me.canvas.validateElementFormat(el)) {
                         if(el._type.endsWith("Aggregate")
-                                && el.boundedContext
-                                && el.boundedContext.id == me.value.boundedContext.id
-                                && Object.keys(me.value.aggregateRoot.entities.elements).length < 1) {
+                            && el.boundedContext
+                            && el.boundedContext.id == me.value.boundedContext.id
+                            && Object.keys(me.value.aggregateRoot.entities.elements).length < 1) {
                             me.value.aggregateRoot.entities = el.aggregateRoot.entities;
                         }
                     }
@@ -436,23 +437,23 @@
 
             me.$EventBus.$on(`${me.value.elementView.id}`, function (obj) {
                 // add relation
-                if(obj.action == 'addRelation' && 
-                        obj.element.relationView && 
-                        obj.element.sourceElement && 
-                        (obj.element.sourceElement.id == me.value.id ||
+                if(obj.action == 'addRelation' &&
+                    obj.element.relationView &&
+                    obj.element.sourceElement &&
+                    (obj.element.sourceElement.id == me.value.id ||
                         obj.element.sourceElement.elementView.id == me.value.elementView.id)
                 ) {
                     var fieldDescriptors = Object.values(me.value.aggregateRoot.fieldDescriptors)
-                    var isIncluded = fieldDescriptors.some((el) => 
-                        el && 
-                        el.isVO && 
+                    var isIncluded = fieldDescriptors.some((el) =>
+                        el &&
+                        el.isVO &&
                         el.namePascalCase == obj.element.targetElement.name + "Id"
                     )
                     if(!isIncluded) {
                         me.addAggRelation(obj.element)
                     } else {
                         var idx = fieldDescriptors.findIndex((attr) => attr.namePascalCase == obj.element.targetElement.name + "Id")
-                        
+
                         var keyField = fieldDescriptors.find((attr) => attr.isKey)
                         var compareKeyField = obj.element.targetElement.aggregateRoot.fieldDescriptors.find((attr) => attr.isKey)
 
@@ -464,11 +465,11 @@
                     }
 
                 }
-                
+
                 // delete relation
-                if(obj.action == 'deleteRelation' 
-                    && obj.element.relationView 
-                    && obj.element.sourceElement 
+                if(obj.action == 'deleteRelation'
+                    && obj.element.relationView
+                    && obj.element.sourceElement
                     && obj.element.sourceElement.elementView.id == me.value.elementView.id
                 ) {
                     me.deleteAggRelation(obj.element)
@@ -492,10 +493,10 @@
                 this.generateDone = true;
                 this.$emit('update:generateDone', true);
                 this.$EventBus.$emit('createAggregate', model, this.value, this.originModel);
-            },  
+            },
             generate(){
                 this.generator.generate();
-                this.generateDone = false;        
+                this.generateDone = false;
             },
             stop(){
                 this.generator.stop()
@@ -533,11 +534,11 @@
                     attr.isOverrideField = true
                 }
 
-                var isIncluded = me.value.aggregateRoot.fieldDescriptors.some((field) => 
+                var isIncluded = me.value.aggregateRoot.fieldDescriptors.some((field) =>
                     field.className.includes(attr.className)
                 );
                 if (Object.values(me.value.aggregateRoot.entities.elements).length > 0) {
-                    isIncluded = Object.values(me.value.aggregateRoot.entities.elements).some((el) => 
+                    isIncluded = Object.values(me.value.aggregateRoot.entities.elements).some((el) =>
                         el != null &&
                         el.referenceClass &&
                         el.referenceClass === changeCase.pascalCase(toName)
@@ -546,7 +547,7 @@
 
                 if(!isIncluded) {
                     me.value.aggregateRoot.fieldDescriptors.push(attr);
-                }                
+                }
             },
             deleteAggRelation(relation) {
                 var me = this
@@ -560,8 +561,8 @@
                         }
                     }
                 })
-                if(elementId 
-                    && me.value.aggregateRoot.entities.elements[elementId] 
+                if(elementId
+                    && me.value.aggregateRoot.entities.elements[elementId]
                     && !me.value.aggregateRoot.entities.elements[elementId].isAggregateRoot
                 ) {
                     me.value.aggregateRoot.entities.elements[elementId] = null;
@@ -570,8 +571,8 @@
                 var relationId;
                 Object.values(me.value.aggregateRoot.entities.relations).forEach(function(item) {
                     if(item) {
-                        if(item.sourceElement.name == relation.sourceElement.name 
-                            && (item.targetElement.name == aggField 
+                        if(item.sourceElement.name == relation.sourceElement.name
+                            && (item.targetElement.name == aggField
                                 || item.targetElement.name == relation.targetElement.name)
                         ) {
                             relationId = item.relationView.id
@@ -717,7 +718,7 @@
             autoLayout() {
                 var me = this;
                 var cmdList = [];
-                
+
                 Object.values(me.canvas.value.elements).forEach(function(element) {
                     if(me.canvas.validateElementFormat(element)) {
                         if(element._type.endsWith("Command")) {
@@ -759,7 +760,7 @@
                         me.canvas.value.elements[item.elId].elementView.y = aggEl.y - aggEl.height / 2 + (index * distance)
                         me.canvas.value.elements[item.elId].elementView.width = 120
                         me.canvas.value.elements[item.elId].elementView.height = 80
-                        
+
                         if(item.relationId) {
                             var eventId = me.canvas.value.relations[item.relationId].targetElement.elementView.id
                             me.canvas.value.elements[eventId].elementView.x = aggEl.x + (aggEl.width - aggEl.width/10)
@@ -775,13 +776,13 @@
                 if (me.value.aggregateRoot.entities == undefined) {
                     me.value.aggregateRoot['entities'] = {'elements': {}, 'relations': {}}
                 }
-                
+
                 var umlValue = {
                     type: 'Domain Class Modeling',
                     aggId: me.value.elementView.id,
                     aggList: [JSON.parse(JSON.stringify(me.value))]
                 };
-                
+
                 me.canvas.overlayText = 'Loading';
                 me.canvas.openEmbeddedCanvas(umlValue);
             },

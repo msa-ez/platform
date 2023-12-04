@@ -2,7 +2,7 @@
     <common-panel
             v-model="value"
             :image="image"
-            :is-read-only="canvas.isReadOnlyModel"
+            :is-read-only="isReadOnly"
             :width-style="widthStyle"
             :related-url="relatedUrl"
             :validation-lists="validationLists"
@@ -22,7 +22,7 @@
 
         <template slot="t-edit-user">
             <div
-                    v-if=" newEditUserImg.length > 0 && canvas.isReadOnlyModel && !value.mirrorElement"
+                    v-if=" newEditUserImg.length > 0 && isReadOnly && !value.mirrorElement"
                     style="text-align:center"
             >
                 <v-chip
@@ -50,7 +50,7 @@
                     <v-card-text>
                         <event-storming-attribute
                                 v-model="value.fieldDescriptors"
-                                :isReadOnly="canvas.isReadOnlyModel"
+                                :isReadOnly="isReadOnly"
                                 :type="value._type"
                                 :elementId="value.elementView.id"
                                 @sync-attribute="syncFromAggregate"
@@ -61,7 +61,7 @@
                 <v-card flat>
                     <v-card-text class="panel-title">Trigger By LifeCycle</v-card-text>
                     <v-card-text>
-                        <v-radio-group v-model="value.trigger" style="width: 290px;" :disabled="canvas.isReadOnlyModel">
+                        <v-radio-group v-model="value.trigger" style="width: 290px;" :disabled="isReadOnly">
                             <v-row dense>
                                 <v-col dense>
                                     <v-radio label="Pre Persist" value="@PrePersist" v-if="lifeCycleCommand.includes('POST')" style="width: 110px" ></v-radio>
@@ -135,6 +135,7 @@
         name: 'event-panel',
         props: {
             test:Object,
+            isPBCModel: Boolean,
         },
         components: {
             CommonPanel
@@ -171,7 +172,8 @@
             panelInit(){
                 var me = this
                 // Element
-                me.relatedAggregate = me.canvas.getAttachedAggregate(me.value)
+                // me.relatedAggregate = me.canvas.getAttachedAggregate(me.value)
+                me.relatedAggregate = me.isPBCModel ? me.value.aggregate : me.canvas.getAttachedAggregate(me.value)
                 me.findCommandLists()
                 me.findPolicyLists()
                 me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#%C2%B7-event-sticker'
@@ -195,7 +197,7 @@
                                         if (coVal) {
                                             if (coVal.isRestRepository) {
                                                 me.lifeCycleCommand = coVal.restRepositoryInfo.method
-                                                
+
                                                 // Lifecycle 초기 세팅
                                                 if(coVal.restRepositoryInfo.method == 'DELETE' && me.value.trigger!='@PostRemove'){
                                                     me.value.trigger = '@PreRemove'
@@ -237,7 +239,7 @@
 
                                         if (coVal) {
                                             me.policyLists.push(coVal)
-                                            
+
                                         }
                                     }
                                 }
