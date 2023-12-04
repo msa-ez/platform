@@ -32,6 +32,9 @@
         </div>
         <v-card v-if="!state.secondMessageIsTyping" class="auto-modeling-user-story-card">
             <v-card-subtitle>{{$t('autoModeling.explanation')}}</v-card-subtitle>
+            <v-card-actions v-if="!done" class="auto-modeling-btn-box">
+                <v-btn class="auto-modeling-btn" @click="stop()"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
+            </v-card-actions>
             <v-card-text class="auto-modling-textarea">
                 <v-textarea
                         v-model="value.userStory"
@@ -51,9 +54,6 @@
             <v-card-actions v-if="done" class="auto-modeling-btn-box">
                 <v-btn class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>Try again</v-btn>
                 <v-btn class="auto-modeling-btn" color="primary" @click="jump()">Create Model<v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon></v-btn>
-            </v-card-actions>
-            <v-card-actions v-else class="auto-modeling-btn-box">
-                <v-btn class="auto-modeling-btn" @click="stop()"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
             </v-card-actions>
         </v-card>
         <div

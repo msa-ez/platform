@@ -6,13 +6,13 @@
         <div v-if="value.modelList && value.modelList.length > 0"
              class="auto-modeling-message-card"
              style="margin-top:25px; height: 100%; width: 20%;">
-            <v-col v-if="value && value.modelList && value.modelList.length > 0"
+            <!-- <v-col v-if="value && value.modelList && value.modelList.length > 0"
                    style="height: 100%; align-items: center; margin: 2px; width: 100%;"
             >
                 <div v-for="id in value.modelList" :key="id">
                     <jump-to-model-lists-card :id="id" path="business-model-canvas" @deleteModel="deleteModel" ></jump-to-model-lists-card>
                 </div>
-            </v-col>
+            </v-col> -->
         </div>
     </div>
 </template>

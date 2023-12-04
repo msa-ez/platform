@@ -28,8 +28,8 @@
                                     <div>
                                         <div style="padding-bottom:20px;">
                                             <div>
-                                                <v-icon small v-if="selectedEditPersona != persona.scenario" style="margin: 5px; float:right;" @click="editPersona(persona)">mdi-pencil</v-icon>
-                                                <v-icon small v-if="selectedEditPersona === persona.scenario" style="margin: 5px; float:right;" @click="savePersona()">mdi-content-save</v-icon>
+                                                <v-icon small v-if="!personaEditMode && selectedEditPersona != persona.scenario || selectedEditPersona != persona.scenario " style="margin: 5px; float:right;" @click="editPersona(persona)">mdi-pencil</v-icon>
+                                                <v-icon small v-if="personaEditMode && selectedEditPersona === persona.scenario" style="margin: 5px; float:right;" @click="savePersona()">mdi-content-save</v-icon>
                                             </div>
                                             <v-card-title v-if="selectedEditPersona === persona.scenario">
                                                 <v-textarea no-resize rows="1" row-height="15" v-model="persona.persona" ></v-textarea>
@@ -86,7 +86,7 @@
                         <v-btn color="primary" style="float:right; margin-top:5px;" @click="jump()">Create Model<v-icon>mdi-arrow-right</v-icon></v-btn>
                     </v-card-text>
                 </v-card>
-                <div
+                <!-- <div
                     class="auto-modeling-message-card"
                     style="margin-top:25px; height: 200px; max-width: 300%; width: 100%; overflow-y: overlay;">
                     <v-col v-if="state && state.modelList && state.modelList.length > 0"
@@ -96,7 +96,7 @@
                             <jump-to-model-lists-card :id="id" path="cjm" @deleteModel="deleteModel" ></jump-to-model-lists-card>
                         </div>
                     </v-col>
-                </div>
+                </div> -->
             </v-col>
         </div>
     </div>
@@ -166,6 +166,7 @@
                     scenario: null,
                 },
                 generator: null,
+                personaEditMode: false,
             }
         },
         methods: {
@@ -276,9 +277,11 @@
             },
             editPersona(persona){
                 this.selectedEditPersona = persona.scenario
+                this.personaEditMode = true;
             },
             savePersona(){
                 this.selectedEditPersona = null;
+                this.personaEditMode = false;
             }
         }
     }
