@@ -2,7 +2,7 @@
     <common-panel
             v-model="value"
             :image="image"
-            :is-read-only="canvas.isReadOnlyModel"
+            :is-read-only="isReadOnly"
             :width-style="widthStyle"
             :related-url="relatedUrl"
             :validation-lists="validationLists"
@@ -22,7 +22,7 @@
 
         <template slot="t-edit-user">
             <div
-                    v-if=" newEditUserImg.length > 0 && canvas.isReadOnlyModel && !value.mirrorElement"
+                    v-if=" newEditUserImg.length > 0 && isReadOnly && !value.mirrorElement"
                     style="text-align:center"
             >
                 <v-chip
@@ -50,7 +50,7 @@
                     <v-card-text>
                         <event-storming-attribute
                                 v-model="value.fieldDescriptors"
-                                :isReadOnly="canvas.isReadOnlyModel"
+                                :isReadOnly="isReadOnly"
                                 :type="value._type"
                                 :elementId="value.elementView.id"
                                 @sync-attribute="syncFromAggregate"
@@ -61,7 +61,7 @@
                 <v-card flat>
                     <v-card-text class="panel-title">Trigger By LifeCycle</v-card-text>
                     <v-card-text>
-                        <v-radio-group v-model="value.trigger" style="width: 290px;" :disabled="canvas.isReadOnlyModel">
+                        <v-radio-group v-model="value.trigger" style="width: 290px;" :disabled="isReadOnly">
                             <v-row dense>
                                 <v-col dense>
                                     <v-radio label="Pre Persist" value="@PrePersist" v-if="lifeCycleCommand.includes('POST')" style="width: 110px" ></v-radio>

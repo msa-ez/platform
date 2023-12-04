@@ -181,6 +181,7 @@
                 var me = this
                 const readComponent = me.getComponentByName('view-definition');
                 const commandComponent = me.getComponentByName('command-definition');
+                const eventComponent = me.getComponentByName('domain-event-definition');
                 // const aggregateComponent = me.getComponentByName('aggregate-definition');
 
                 if(!pbcElement){
@@ -248,6 +249,15 @@
 
                     pbcElement.commands.push(element);
                 });
+
+                // convertValue.event.forEach(function(obj){
+                //     let element = eventComponent.computed.createNew(null, me.canvas.uuid(), 100, 100, 100, 100);
+                //
+                //     element.visibility = 'private'
+                //     element.name = obj.summary ? obj.summary : obj.description; // temp code get 'obj.description'
+                //
+                //     pbcElement.events.push(element);
+                // });
 
 
                 return pbcElement;

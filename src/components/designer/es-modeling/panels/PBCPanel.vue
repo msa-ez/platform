@@ -78,7 +78,7 @@
                         <div>
                             Read Element
                             <v-autocomplete
-                                    v-model="selectedRead"
+                                    v-model="selectedReads"
                                     :items="value.views"
                                     :disabled="canvas.isReadOnlyModel"
                                     item-text="name"
@@ -90,8 +90,20 @@
                         <div>
                             Command Element
                             <v-autocomplete
-                                    v-model="selectedCommand"
+                                    v-model="selectedCommands"
                                     :items="value.commands"
+                                    :disabled="canvas.isReadOnlyModel"
+                                    item-text="name"
+                                    return-object
+                                    multiple
+                                    density="compact"
+                            ></v-autocomplete>
+                        </div>
+                        <div>
+                            Event Element
+                            <v-autocomplete
+                                    v-model="selectedEvents"
+                                    :items="value.events"
                                     :disabled="canvas.isReadOnlyModel"
                                     item-text="name"
                                     return-object
@@ -127,8 +139,9 @@
                 selectVersion: null,
                 versions: null,
                 loading: false,
-                selectedRead: [],
-                selectedCommand: [],
+                selectedReads: [],
+                selectedCommands: [],
+                selectedEvents: [],
             }
         },
         computed: {
@@ -163,8 +176,9 @@
                 me.versions = await me.getString(`db://definitions/${me.selectedProjectId}/versionLists`)
                 await me.migrateVersions(me.selectedProjectId, me.versions);
 
-                me.selectedRead = me.value.views.filter(item => item && item.visibility == "public")
-                me.selectedCommand = me.value.commands.filter(item => item && item.visibility == "public")
+                me.selectedReads = me.value.views.filter(item => item && item.visibility == "public")
+                me.selectedCommands = me.value.commands.filter(item => item && item.visibility == "public")
+                me.selectedEvents = me.value.events.filter(item => item && item.visibility == "public")
 
                 // Common
                 me.$super(EventStormingModelPanel).panelInit()
@@ -196,16 +210,26 @@
             executeBeforeDestroy() {
                 var me = this
                 // Element
+
+                // IN
                 me.value.views.forEach(function (element, idx) {
-                    if(me.selectedRead.find(x=> x && x.elementView.id == element.elementView.id) ) {
+                    if(me.selectedReads.find(x=> x && x.elementView.id == element.elementView.id) ) {
+                        element.visibility = 'public'
+                    } else {
+                        element.visibility = 'private'
+                    }
+                })
+                me.value.commands.forEach(function (element, idx) {
+                    if(me.selectedCommands.find(x=> x && x.elementView.id == element.elementView.id) ) {
                         element.visibility = 'public'
                     } else {
                         element.visibility = 'private'
                     }
                 })
 
-                me.value.commands.forEach(function (element, idx) {
-                    if(me.selectedCommand.find(x=> x && x.elementView.id == element.elementView.id) ) {
+                // Out
+                me.value.events.forEach(function (element, idx) {
+                    if(me.selectedEvents.find(x=> x && x.elementView.id == element.elementView.id) ) {
                         element.visibility = 'public'
                     } else {
                         element.visibility = 'private'
