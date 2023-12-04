@@ -26,7 +26,7 @@
                 return new Promise(function (resolve, reject) {
                     userInfo.displayName = userInfo.username;
                     let host = JSON.parse(JSON.stringify(window.location.host))
-                    window.$acebase.auth.startAuthProviderSignIn(window.PROVIDER, `http://${window.location.host}/?oauth=acebase`)
+                    window.$acebase.auth.startAuthProviderSignIn(window.PROVIDER, `${window.location.protocol}//${window.location.host}/?oauth=acebase`)
                     .then(redirectUrl => {
                         window.location = redirectUrl; // Send user to auth provider's login screen
                     });
