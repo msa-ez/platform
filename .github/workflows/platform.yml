@@ -3,7 +3,6 @@ name: 'platform-build'
 on:
   push:
     branches:
-      - main
       - 'releases/**'
 
 env:

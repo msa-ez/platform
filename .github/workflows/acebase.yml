@@ -3,12 +3,11 @@ name: 'platform-build'
 on:
   push:
     branches:
-      - main
       - 'releases/**'
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: acebase
 
 jobs:
   test:
