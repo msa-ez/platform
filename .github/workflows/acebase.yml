@@ -15,9 +15,9 @@ jobs:
     name: install
     runs-on: ubuntu-latest
     steps:
-    - name: Delete all summary content
-      run: |
-        echo "$PATH/acebase" >> $GITHUB_PATH
+      - name: Delete all summary content
+        run: |
+          echo "$PATH/acebase" >> $GITHUB_PATH
       - uses: actions/checkout@v4
       - name: Use Node.js
         uses: actions/setup-node@v2
