@@ -2,8 +2,8 @@ name: 'platform-build'
 
 on:
   push:
-    branches:
-      - 'releases/**'
+    tags:
+      - v*
 
 env:
   REGISTRY: ghcr.io
