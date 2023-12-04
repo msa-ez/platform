@@ -4136,13 +4136,15 @@ jobs:
                         // }
                         if (!set.has(item.code)) {
                             codeBag.push("# "+ item.name + ": \n" + item.code);
-                            if(option.keyword == "si" && item.name.includes("Test.java") && item.template === "https://github.com/msa-ez/topping-unit-test"){
-                                me.testFileList.push(item)
-                            }
-                            if(option.keyword == "si"){
-                                me.selectedCodeList[item.name] = item.code
-                            } else {
-                                set.add(item.code);
+                            if(option){
+                                if(option.keyword == "si" && item.name.includes("Test.java") && item.template === "https://github.com/msa-ez/topping-unit-test"){
+                                    me.testFileList.push(item)
+                                }
+                                if(option.keyword == "si"){
+                                    me.selectedCodeList[item.name] = item.code
+                                } else {
+                                    set.add(item.code);
+                                }
                             }
                         }
                         //me.$refs.codeViewer.$refs.collectedCodes = me.gptCodes   /// Very BAD
