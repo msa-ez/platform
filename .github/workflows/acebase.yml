@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: acebase
+  IMAGE_NAME: msaez/acebase
 
 jobs:
   test:
