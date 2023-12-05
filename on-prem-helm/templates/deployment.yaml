@@ -20,7 +20,7 @@ spec:
             - name: VUE_APP_DB_HOST
               value: {{ .Values.db.host }}
             - name: VUE_APP_DB_PORT
-              value: {{ .Values.db.port }}
+              value: "{{ .Values.db.port }}"
             - name: VUE_APP_DB_NAME
               value: {{ .Values.db.name }}
             - name: VUE_APP_MODE
@@ -30,7 +30,7 @@ spec:
             - name: VUE_APP_GIT
               value: {{ .Values.provider }}
             - name: VUE_APP_DB_HTTPS
-              value: {{ .Values.db.https }}
+              value: "{{ .Values.db.https }}"
           image: {{ .Values.image.repository }}/{{ .Values.image.eventstorming }}
           ports:
             - name: http
@@ -68,11 +68,11 @@ spec:
             - name: DB_HOST
               value: {{ .Values.db.host }}
             - name: DB_PORT
-              value: {{ .Values.db.port }}
+              value: "{{ .Values.db.port }}"
             - name: DB_NAME
               value: {{ .Values.db.name }}
             - name: DB_HTTPS
-              value: {{ .Values.db.https }}
+              value: "{{ .Values.db.https }}"
             - name: CLIENT_ID
               value: {{ .Values.oauth.id }}
             - name: CLIENT_SECRET
