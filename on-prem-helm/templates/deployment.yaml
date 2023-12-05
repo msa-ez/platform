@@ -20,21 +20,17 @@ spec:
             - name: VUE_APP_DB_HOST
               value: {{ .Values.db.host }}
             - name: VUE_APP_DB_PORT
-              value: {{ .Values.db.port }}
+              value: "{{ .Values.db.port }}"
             - name: VUE_APP_DB_NAME
-              value: {{ Values.db.name }}
+              value: {{ .Values.db.name }}
             - name: VUE_APP_MODE
               value: "onprem"
             - name: VUE_APP_GITLAB
-              value: {{ .Values.image.gitlab.url }}
-            - name: VUE_APP_OAUTH_ID
-              value: {{ .Values.image.gitlab.oauth.id }}
-            - name: VUE_APP_OAUTH_SECRET
-              value: {{ .Values.image.gitlab.oauth.secret }}
+              value: {{ .Values.gitlab.url }}
             - name: VUE_APP_GIT
               value: {{ .Values.provider }}
             - name: VUE_APP_DB_HTTPS
-              value: {{ .Values.db.https }}
+              value: "{{ .Values.db.https }}"
           image: {{ .Values.image.repository }}/{{ .Values.image.eventstorming }}
           ports:
             - name: http
@@ -71,10 +67,22 @@ spec:
           env:
             - name: DB_HOST
               value: {{ .Values.db.host }}
+            - name: DB_PORT
+              value: "{{ .Values.db.port }}"
             - name: DB_NAME
               value: {{ .Values.db.name }}
-            - name: DB_PORT
-              value: {{ .Values.db.port }}
+            - name: DB_HTTPS
+              value: "{{ .Values.db.https }}"
+            - name: CLIENT_ID
+              value: {{ .Values.oauth.id }}
+            - name: CLIENT_SECRET
+              value: {{ .Values.oauth.secret }}
+            - name: PROVIDER
+              value: {{ .Values.provider }}
+            {{- if eq .Values.provider "gitlab" }}  
+            - name: GITLAB
+              value: {{ .Values.gitlab.url }}
+            {{- end }}
           volumeMounts:
           - mountPath: /acebase
             name: acebase

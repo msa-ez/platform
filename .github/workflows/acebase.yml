@@ -1,0 +1,51 @@
+name: 'acebase-build'
+
+on:
+  push:
+    tags:
+      - v*
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: msa-ez/acebase
+
+jobs:
+  test:
+    name: install
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./acebase
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+      - name: Cache node modules
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: node_modules
+          key: npm-packages-${{ hashFiles('**/package-lock.json') }}
+      - name: Install Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm install
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.ID }}
+          password: ${{ secrets.TOKEN }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: ./acebase
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

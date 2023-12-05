@@ -1,19 +1,20 @@
 replicaCount: 1
 image:
   repository: ghcr.io/msa-ez # Image Registry
-  eventstorming: evenstorming:v0.0.2 # Eventstorming-tool Image URL
-  acebase: acebase:v1.0.1 # Acebase Image URL
+  eventstorming: platform:v1.0.8 # Eventstorming-tool Image URL
+  acebase: acebase:v1.0.8 # Acebase Image URL
 
 provider: github # github or gitlab
 
 gitlab: 
 	url: gitlab.handymes.com # Gitlab URL
-	oauth: 
-		id: "" # Gitlab Application OAUTH ID
-		secret: "" # Gitlab Application OAUTH Secrets
+
+oauth: 
+  id: "" # Gitlab Application OAUTH ID
+  secret: "" # Gitlab Application OAUTH Secrets
 
 db:
-  https: false
+  https: true
   host: acebase.handymes.com # DB URL
   port: 443
   name: mydb

@@ -259,10 +259,10 @@
     <script>
       if(window.MODE == "onprem") {
         window.$acebase = new AceBaseClient({
-            host: "localhost",
-            port: 5757,
+            host: window.DB_HOST,
+            port: window.DB_PORT,
             dbname: "mydb",
-            https: false,
+            https: window.DB_HTTPS,
         });
         window.$acebase.ready(() => {
             console.log("Connected successfully");

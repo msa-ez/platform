@@ -12,8 +12,8 @@ const https = process.env.DB_HTTPS ? process.env.DB_HTTPS : false; // DB PORT
 const provider = process.env.PROVIDER ? process.env.PROVIDER : "github"; // DB PORT
 const gitlab = process.env.GITLAB ? process.env.GITLAB : null; // DB PORT
 const server = new AceBaseServer(dbname, {
-    host: host,
-    port: dbport,
+    host: "0.0.0.0",
+    port: 5757,
     storage: {
         path: "/acebase"
     },
@@ -27,15 +27,25 @@ const server = new AceBaseServer(dbname, {
 
 let scope;
 if(provider == "github") {
-    scope = ["repo admin:repo_hook admin:org admin:org_hook user project codespace workflow"]
+    
+    
 } else if (provider == "gitlab") {
-    scope = ["read_user api read_api read_repository write_repository sudo openid profile email write_registry read_registry admin_mode"]
+    
+    
 }
-
-server.configAuthProvider(provider, {
+let github_scope = ["repo admin:repo_hook admin:org admin:org_hook user project codespace workflow"]
+let gitlab_scope = ["read_user api read_api read_repository write_repository sudo openid profile email write_registry read_registry admin_mode"]
+server.configAuthProvider("github", {
     client_id: client_id,
     client_secret: client_secret,
-    scopes: scope,
+    scopes: github_scope,
+    state: "devopssystem",
+})
+
+server.configAuthProvider("gitlab", {
+    client_id: client_id,
+    client_secret: client_secret,
+    scopes: gitlab_scope,
     state: "devopssystem",
     host: gitlab
 })
