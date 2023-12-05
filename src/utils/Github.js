@@ -18,8 +18,7 @@ class Github extends Git {
     getHeader() {
         return {
             Authorization: 'token ' + localStorage.getItem('gitToken'),
-            Accept: 'application/vnd.github+json',
-            "X-GitHub-Api-Version": "2022-11-28"
+            Accept: 'application/vnd.github+json'
         }
     }
     getBranch(org, repo, forkedTag) {
@@ -658,22 +657,10 @@ class Github extends Git {
             })
         })
     }
-    getUserInfo() {
-        let me = this
-        return new Promise(async function (resolve, reject) {
-            let patchMainResult = await axios.get(`https://api.github.com/user`, { headers: me.getHeader() })
-            .then((res) => {
-                resolve(res.data)
-            })
-            .catch((e) => {
-                reject(e)
-            })
-        })
-    }
     // setPushTemplateList() {
 
     // }
-    getActionLogs(org, repo) {
+    getActionId(org, repo) {
         let me = this
         return new Promise(async function (resolve, reject) {
             let run_id
@@ -690,28 +677,36 @@ class Github extends Git {
                 } else {
                     run_id = res.data.workflow_runs[0].id
                 }
+                await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/runs/${run_id}/jobs`, { headers: me.getHeader() })
+                .then(async (res) => {
+                    let obj = {
+                        run_id: run_id,
+                        job_id: res.data.jobs[0].id
+                    }
+                    resolve(obj)
+                })
+                .catch(e => {
+                    reject(e)
+                })
             })
             .catch(e => {
                 reject(e)
             })
-
-            let logs = await me.getLogs(org, repo, run_id)
-            resolve(logs)
-
         })
     }
-    getLogs(org, repo, run_id) {
+    
+    getActionLogs(org, repo, id) {
         let me = this
         return new Promise(async function (resolve, reject) {
-            await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/runs/${run_id}`, { headers: me.getHeader() })
+            await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/runs/${id.run_id}`, { headers: me.getHeader() })
             .then(async (res) => {
                 if(res.data.status == "completed"){
                     if(res.data.conclusion == "success"){
                         resolve("All tests succeeded")
                     } else {
-                        await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/runs/${run_id}/jobs`, { headers: me.getHeader() })
-                        .then(async (res) => {
-                            await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/jobs/${res.data.jobs[0].id}/logs`, { headers: me.getHeader() })
+                        // await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/runs/${run_id}/jobs`, { headers: me.getHeader() })
+                        // .then(async (res) => {
+                            await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/jobs/${id.job_id}/logs`, { headers: me.getHeader() })
                             .then((res) => {
                                 if(!res.data.includes("COMPILATION ERROR :")){
                                     res.data = res.data.replace("[ERROR]", "COMPILATION ERROR :")
@@ -726,16 +721,16 @@ class Github extends Git {
                             .catch(e => {
                                 reject(e)
                             })
-                        })
-                        .catch(e => {
-                            reject(e)
-                        })
+                        // })
+                        // .catch(e => {
+                        //     reject(e)
+                        // })
                     }
                 } else {
                     setTimeout(async () => {
-                        let logs = await me.getLogs(org, repo, run_id)
+                        let logs = await me.getActionLogs(org, repo, id)
                         resolve(logs)
-                    }, 5000)
+                    }, 3000)
                 }
             })
             .catch(e => {

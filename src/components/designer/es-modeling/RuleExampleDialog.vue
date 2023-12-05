@@ -392,20 +392,23 @@
                                                 attachedCommand = rel.targetElement
                                             }
                                         }
-                                        if(attachedCommand){
-                                            Object.values(me.canvas.attachedLists.aggregateLists).some(function (aggregate, idx) {
-                                                if (isAttached(aggregate, attachedCommand)) {
-                                                    me.rule.givenItems.push(aggregate)
-                                                    return true;
-                                                }
-                                            })
-                                        }
                                     }
-                                    if(me.rule.givenItems.length > 0){
+                                    if(attachedCommand){
                                         return true;
                                     } 
                                 }
                             })
+                            if(attachedCommand){
+                                if(attachedCommand.aggregate && attachedCommand.aggregate.id && me.canvas.value.elements[attachedCommand.aggregate.id]){
+                                    me.rule.givenItems.push(me.canvas.value.elements[attachedCommand.aggregate.id])
+                                }
+                                // Object.values(me.canvas.attachedLists.aggregateLists).some(function (aggregate, idx) {
+                                //     if (isAttached(aggregate, attachedCommand)) {
+                                //         me.rule.givenItems.push(aggregate)
+                                //         return true;
+                                //     }
+                                // })
+                            }
                         }
                         Object.values(me.canvas.value.relations).forEach(function(rel){
                             if(rel != null){
@@ -459,7 +462,11 @@
             },
             setAttributes(){
                 var me = this
-                if(me.value && me.value.examples){
+                if(me.value && me.value.examples 
+                && me.value.examples[0].given
+                && me.value.examples[0].when
+                && me.value.examples[0].then)
+                {
                     me.rule.values = me.value.examples
                     me.rule.thenItems.forEach(function (item){
                         me.thenAttLength[item.name] = item.fieldDescriptors.length

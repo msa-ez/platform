@@ -990,9 +990,19 @@
             },
             async getActionLogs(){
                 var me = this
-                await me.git.getActionLogs(me.value.org, me.value.repo)
-                .then((result) => {
-                    me.$EventBus.$emit('getActionLogs', result)
+                await me.git.getActionId(me.value.org, me.value.repo)
+                .then(async (id) => {
+                    me.$EventBus.$emit('setActionId', `https://github.com/${me.value.org}/${me.value.repo}/actions/runs/${id.run_id}/job/${id.job_id}`)
+                    await me.git.getActionLogs(me.value.org, me.value.repo, id)
+                    .then((result) => {
+                        me.$EventBus.$emit('getActionLogs', result)
+                    })
+                    .catch((e) => {
+                        if(e.response.status === 401){
+                            me.alertReLogin()
+                        }
+                        console.log(e)
+                    })
                 })
                 .catch((e) => {
                     if(e.response.status === 401){

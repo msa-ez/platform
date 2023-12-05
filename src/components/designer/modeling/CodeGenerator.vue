@@ -2,20 +2,19 @@
     <v-card style="height: 100vh;">
         <v-dialog v-model="openGitActionDialog" :key="gitActionDialogRenderKey">
             <GitActionDialog
-                    @closeGitActionDialog="closeGitActionDialog"
-                    :testFile="testFile"
-                    :selectedCodeList="selectedCodeList"
-                    @startCommitWithSigpt="startCommit"
-                    @jumpToActions="jumpToActions"
+                @closeGitActionDialog="closeGitActionDialog"
+                :testFile="selectedTestFile"
+                :selectedCodeList="selectedCodeList"
+                @startCommitWithSigpt="startCommit"
             >
             </GitActionDialog>
         </v-dialog>
         <v-dialog v-model="marketplaceDialog" fullscreen>
             <MarketPlace :marketplaceDialog="marketplaceDialog"
-                         @applyTemplate="applyTemplateInMarket"
-                         @applyTopping="applyToppingInMarket"
-                         @closeMarketplaceDialog="marketplaceDialog = false"
-                         :selectedBaseTemplateName="selectedBaseTemplateName"
+                @applyTemplate="applyTemplateInMarket"
+                @applyTopping="applyToppingInMarket"
+                @closeMarketplaceDialog="marketplaceDialog = false"
+                :selectedBaseTemplateName="selectedBaseTemplateName"
             />
         </v-dialog>
         <v-card style="z-index:2; margin:0px; border-radius: 0px; height:100%;">
@@ -35,9 +34,9 @@
                             <v-tooltip bottom>
                                 <template v-slot:activator="{ on, attrs }">
                                     <v-icon icon @click="refreshCallGenerate()"
-                                            v-on="on"
-                                            style="z-index:1;"
-                                            size="22"
+                                        v-on="on"
+                                        style="z-index:1;"
+                                        size="22"
                                     >mdi-refresh
                                     </v-icon>
                                 </template>
@@ -48,14 +47,14 @@
                     <div v-if="isGeneratorDone && openCodeFileName" class="gs-code-title"> - {{ openCodeFileName }}</div>
                 </v-row>
                 <v-row v-if="isGeneratorDone"
-                       style="z-index: 1; margin:0px;"
+                        style="z-index: 1; margin:0px;"
                 >
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn class="code-preview-btn"
-                                   fab icon @click="codePreviewLeftReSize()"
-                                   v-bind="attrs"
-                                   v-on="on"
+                                    fab icon @click="codePreviewLeftReSize()"
+                                    v-bind="attrs"
+                                    v-on="on"
                             >
                                 <v-icon size="22">mdi-menu</v-icon>
                             </v-btn>
@@ -90,29 +89,30 @@
 
                             <div v-if="gitMenu" :key="gitMenuRenderKey">
                                 <gitAPIMenu
-                                        v-model="value.scm"
-                                        :editTemplateMode="false"
-                                        @closeMenu="gitMenu = false"
-                                        @openIDE="openProjectIDE($event)"
-                                        @settingDone="ShowCreateRepoTab = false"
-                                        @closeGitMenu="closeGitMenu"
-                                        @update:git-users="val => gitUsers = val"
-                                        :information="projectInformation"
-                                        :isOnPrem="isOnPrem"
-                                        :projectId="modelingProjectId"
-                                        :projectName="projectName"
-                                        :git-users="gitUsers"
-                                        :isListSettingDone="isGeneratorDone"
-                                        :isOwnModel="isOwnModel"
-                                        :changedPathListsForGit="changedPathListsForGit"
-                                        :generateCodeLists="filteredPrettierCodeLists"
-                                        :ShowCreateRepoTab="ShowCreateRepoTab"
-                                        :isServerModel="isServerModel"
-                                        :projectVersion="projectVersion"
-                                        :githubTokenError="githubTokenError"
-                                        :isOneBCModel="isOneBCModel"
-                                        :onlyOneBcId="onlyOneBcId"
-                                        :isSIgpt="isSIgpt"
+                                    v-model="value.scm"
+                                    :editTemplateMode="false"
+                                    @closeMenu="gitMenu = false"
+                                    @openIDE="openProjectIDE($event)"
+                                    @settingDone="ShowCreateRepoTab = false"
+                                    @closeGitMenu="closeGitMenu"
+                                    @update:git-users="val => gitUsers = val"
+                                    @setActionId="setActionId"
+                                    :information="projectInformation"
+                                    :isOnPrem="isOnPrem"
+                                    :projectId="modelingProjectId"
+                                    :projectName="projectName"
+                                    :git-users="gitUsers"
+                                    :isListSettingDone="isGeneratorDone"
+                                    :isOwnModel="isOwnModel"
+                                    :changedPathListsForGit="changedPathListsForGit"
+                                    :generateCodeLists="filteredPrettierCodeLists"
+                                    :ShowCreateRepoTab="ShowCreateRepoTab"
+                                    :isServerModel="isServerModel"
+                                    :projectVersion="projectVersion"
+                                    :githubTokenError="githubTokenError"
+                                    :isOneBCModel="isOneBCModel"
+                                    :onlyOneBcId="onlyOneBcId"
+                                    :isSIgpt="isSIgpt"
                                 />
                             </div>
                         </v-menu>
@@ -151,8 +151,8 @@
                     <v-tooltip bottom v-if="editableTemplate">
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn v-on="on" class="code-preview-btn"
-                                   icon fab @click="openTemplateEditor()"
-                                   :color="editTemplateMode ? 'primary':''"
+                                    icon fab @click="openTemplateEditor()"
+                                    :color="editTemplateMode ? 'primary':''"
                             >
                                 <v-icon size="22">mdi-code-braces</v-icon>
                             </v-btn>
@@ -163,9 +163,9 @@
                     <v-tooltip bottom v-if="editableTemplate">
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn v-on="on" class="code-preview-btn"
-                                   :disabled="isLoadingExpectedTemplate"
-                                   icon fab @click="testTemplateModel()"
-                                   :color="openExpectedTemplateTestDialog ? 'primary':''"
+                                    :disabled="isLoadingExpectedTemplate"
+                                    icon fab @click="testTemplateModel()"
+                                    :color="openExpectedTemplateTestDialog ? 'primary':''"
                             >
                                 <v-icon v-if="!startCheckDiff" size="22">mdi-code-tags-check</v-icon>
                                 <v-icon v-else size="22">mdi-spin mdi-loading</v-icon>
@@ -177,8 +177,8 @@
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn v-on="on" class="code-preview-btn"
-                                   :disabled="!existChangedFile || !isGeneratorDone"
-                                   icon fab @click="onOffChangedPathLists()"
+                                    :disabled="!existChangedFile || !isGeneratorDone"
+                                    icon fab @click="onOffChangedPathLists()"
                             >
                                 <div>
                                     <v-icon size="22" :color="showChangedPathLists ? 'primary':''"
@@ -192,12 +192,12 @@
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn v-on="on" class="code-preview-btn"
-                                   icon fab
-                                   @click="onOffDesignPatterns()"
+                                    icon fab
+                                    @click="onOffDesignPatterns()"
                             >
                                 <Icon :color="showDesignPatterns ? 'rgb(25,118,210)' : '' "
-                                      icon="mdi:file-document-check-outline"
-                                      size="22"
+                                        icon="mdi:file-document-check-outline"
+                                        size="22"
                                 />
                             </v-btn>
                         </template>
@@ -208,7 +208,7 @@
                         <template v-slot:activator="{ on, attrs }">
                             <div>
                                 <v-btn v-on="on" class="code-preview-btn"
-                                       icon fab @click="downloadArchive()"
+                                        icon fab @click="downloadArchive()"
                                 >
                                     <slot name="downloadArchive">
                                         <v-icon size="22">
@@ -224,7 +224,7 @@
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn v-on="on" class="code-preview-btn"
-                                   icon fab @click="searchForContent.onOff = !searchForContent.onOff"
+                                    icon fab @click="searchForContent.onOff = !searchForContent.onOff"
                             >
                                 <div>
                                     <v-icon size="22"
@@ -238,7 +238,7 @@
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn v-on="on" class="code-preview-btn"
-                                   icon fab @click="onDiffMode()"
+                                    icon fab @click="onDiffMode()"
                             >
                                 <Icon size="22" icon="codicon:diff" :color="diffMode ? 'rgb(25,118,210)' : '' "/>
                             </v-btn>
@@ -248,7 +248,7 @@
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn v-on="on" class="code-preview-btn"
-                                   icon fab @click="showGptDialog()"
+                                    icon fab @click="showGptDialog()"
                             >
                                 <div>
                                     <v-icon size="22"
@@ -262,8 +262,8 @@
                     <v-menu left :close-on-content-click="false" :close-on-click="false" @input="onClickToppingBox(true)">
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn text small
-                                   v-bind="attrs"
-                                   v-on="on"
+                                v-bind="attrs"
+                                v-on="on"
                             >
                                 Toppings
                                 <v-icon>{{ showTopping ? ' mdi-menu-up' : 'mdi-menu-down' }}</v-icon>
@@ -310,7 +310,7 @@
                                                 <v-tooltip left>
                                                     <template v-slot:activator="{ on, attrs }">
                                                         <v-row style="margin-top: 1px; margin-left: 1px;" v-bind="attrs"
-                                                               v-on="on">
+                                                                v-on="on">
                                                             <v-checkbox
                                                                     class="topping-checkbox"
                                                                     dense
@@ -435,7 +435,7 @@
                                                 <v-tooltip left>
                                                     <template v-slot:activator="{ on, attrs }">
                                                         <v-row style="margin-top: 1px; margin-left: 1px;" v-bind="attrs"
-                                                               v-on="on">
+                                                                v-on="on">
                                                             <v-checkbox
                                                                     class="topping-checkbox"
                                                                     dense
@@ -554,8 +554,8 @@
                                         </div>
                                     </div>
                                     <div
-                                            v-if="searchForFile.onOff"
-                                            style="position: absolute; top: 0; left: 50%; width: 40%; margin-top: 20px;"
+                                        v-if="searchForFile.onOff"
+                                        style="position: absolute; top: 0; left: 50%; width: 40%; margin-top: 20px;"
                                     >
                                         <v-autocomplete
                                                 v-model="searchForFile.search"
@@ -626,7 +626,7 @@
                                                         @close="closeCodeConfiguration"
                                                 ></CodeConfiguration>
                                             </v-tab-item>
-
+                                            
                                         </v-tabs>
                                     </v-menu>
 
@@ -733,7 +733,7 @@
 
                                                             <div v-else>
                                                                 <v-divider v-if="item.divisionLine && showBaseTemplate && !isOneBCModel"
-                                                                           style="margin-left: -100%;
+                                                                    style="margin-left: -100%;
                                                                         width: 100%;
                                                                         position: absolute;
                                                                         margin-top: -4px;"
@@ -745,12 +745,6 @@
                                                                         direction="top"
                                                                 >
                                                                     <template v-slot:activator="{ on, attrs}" >
-                                                                        <div v-if="isRootFolder(item)">
-                                                                            <v-icon style="font-size: 16px; position: absolute;left: 170px; top: 7px;"
-                                                                                    @click="openActionDialog(item)"
-                                                                            >mdi-auto-fix
-                                                                            </v-icon>
-                                                                        </div>
                                                                         <v-chip
                                                                                 @mouseenter="showFullNameforSelectedTemplateKey = item.key"
                                                                                 @mouseleave="showFullNameforSelectedTemplateKey = null"
@@ -775,13 +769,13 @@
                                                                         <v-tab-item>
                                                                             <v-list v-if="editableTemplate">
                                                                                 <v-list-item
-                                                                                        v-for="(tempItem, index) in templateList"
-                                                                                        :key="index"
+                                                                                    v-for="(tempItem, index) in templateList"
+                                                                                    :key="index"
                                                                                 >
-                                                                                    <subMenu
-                                                                                            :templateInfo="tempItem"
-                                                                                            :isBaseTemplate="true"
-                                                                                            @selectTemplate="openTemplateDialog('TEMPLATE', $event.tmp, item)"
+                                                                                    <subMenu 
+                                                                                        :templateInfo="tempItem"
+                                                                                        :isBaseTemplate="true" 
+                                                                                        @selectTemplate="openTemplateDialog('TEMPLATE', $event.tmp, item)"
                                                                                     />
                                                                                 </v-list-item>
                                                                             </v-list>
@@ -789,9 +783,9 @@
 
                                                                         <v-tab-item>
                                                                             <CodeConfiguration
-                                                                                    :instruction="configurationTemplate('TEMPLATE', item)"
-                                                                                    @apply="applyCodeConfiguration"
-                                                                                    @close="closeCodeConfiguration"
+                                                                                :instruction="configurationTemplate('TEMPLATE', item)"
+                                                                                @apply="applyCodeConfiguration"
+                                                                                @close="closeCodeConfiguration"
                                                                             ></CodeConfiguration>
                                                                         </v-tab-item>
                                                                     </v-tabs>
@@ -831,20 +825,20 @@
                                                         </v-card-title>
                                                         <div :key="modelDataTreeKey">
                                                             <v-treeview
-                                                                    :active.sync="active_tree"
-                                                                    :items="treeData"
-                                                                    :load-children="fetchChildren"
-                                                                    :open.sync="open_tree"
-                                                                    activatable
-                                                                    dense
-                                                                    style="text-overflow: clip
+                                                                :active.sync="active_tree"
+                                                                :items="treeData"
+                                                                :load-children="fetchChildren"
+                                                                :open.sync="open_tree"
+                                                                activatable
+                                                                dense
+                                                                style="text-overflow: clip
                                                                 !important;
                                                                 margin-right:-50px;
                                                                 max-height: 70%;
                                                                 font-size:12px;
                                                                 cursor: pointer;"
-                                                                    open-on-click
-                                                                    transition
+                                                                open-on-click
+                                                                transition
                                                             >
                                                                 <template slot="label" slot-scope="{ item }">
 
@@ -858,8 +852,8 @@
                                                                         val.style.color = '#0f7f12'
                                                                     } -->
                                                                     <span>{{ item.name }}</span>
-                                                                    <span  id="treeValue" v-if="item.value"
-                                                                           :style="item.value == 'true' || item.value == 'false' ?
+                                                                    <span  id="treeValue" v-if="item.value" 
+                                                                        :style="item.value == 'true' || item.value == 'false' ? 
                                                                         'color: #e28e9c' : 
                                                                         item.value == 'null' ? 'color: #70b1ca' : 
                                                                         /[0-9]/.test(item.value) ? 'color: #9682f8':'color: #0f7f12'"
@@ -880,12 +874,12 @@
                                                             <v-list-group :value="true">
                                                                 <template v-slot:activator>
                                                                     <v-list-item-title style="display: flex; align-items: center;">
-                                                                        <div>Template Explorer</div>
-                                                                        <v-btn @click="openTemplateTreeEditor(null, 'add New')"
-                                                                               icon
-                                                                        >
-                                                                            <v-icon small>mdi-folder-plus</v-icon>
-                                                                        </v-btn>
+                                                                            <div>Template Explorer</div>
+                                                                            <v-btn @click="openTemplateTreeEditor(null, 'add New')"
+                                                                                icon 
+                                                                            >
+                                                                                <v-icon small>mdi-folder-plus</v-icon>
+                                                                            </v-btn>
                                                                     </v-list-item-title>
                                                                 </template>
                                                                 <div v-for="(platform, index) in Object.keys(templateTreeList)" :key="index">
@@ -901,14 +895,14 @@
                                                                                 <v-list-item-title v-else>{{ platform }}</v-list-item-title>
                                                                             </v-list-item-content>
                                                                             <v-btn
-                                                                                    icon
-                                                                                    @click="openTemplateTreeEditor(platform, 'add file')"
+                                                                                icon 
+                                                                                @click="openTemplateTreeEditor(platform, 'add file')"
                                                                             >
                                                                                 <v-icon small>mdi-file-plus</v-icon>
                                                                             </v-btn>
                                                                             <v-btn
-                                                                                    icon
-                                                                                    @click="openTemplateTreeEditor(platform, 'add folder')"
+                                                                                icon 
+                                                                                @click="openTemplateTreeEditor(platform, 'add folder')"
                                                                             >
                                                                                 <v-icon small>mdi-folder-plus</v-icon>
                                                                             </v-btn>
@@ -917,19 +911,19 @@
                                                                         <v-list-item>
                                                                             <div :key="templateTreeRenderkey">
                                                                                 <v-treeview
-                                                                                        v-if="templateTreeList[platform]"
-                                                                                        ref="codeTrees"
-                                                                                        :items.sync='templateTreeList[platform]'
-                                                                                        :open="selectedTemplateTreePathList[platform]"
-                                                                                        :active.sync="selectedTemplateFileName[platform]"
-                                                                                        @update:active="setTemplateFramework"
-                                                                                        @update:open="setOpenedFolderList"
-                                                                                        activatable
-                                                                                        item-key="currentPath"
-                                                                                        return-object
-                                                                                        hoverable
-                                                                                        dense
-                                                                                        style="text-overflow: clip
+                                                                                    v-if="templateTreeList[platform]"
+                                                                                    ref="codeTrees"
+                                                                                    :items.sync='templateTreeList[platform]'
+                                                                                    :open="selectedTemplateTreePathList[platform]"
+                                                                                    :active.sync="selectedTemplateFileName[platform]"
+                                                                                    @update:active="setTemplateFramework"
+                                                                                    @update:open="setOpenedFolderList"
+                                                                                    activatable
+                                                                                    item-key="currentPath"
+                                                                                    return-object
+                                                                                    hoverable
+                                                                                    dense
+                                                                                    style="text-overflow: clip
                                                                                     !important;
                                                                                     margin-right:-50px;
                                                                                     max-height: 70%;
@@ -937,7 +931,7 @@
                                                                                     margin-left: -55px;
                                                                                     font-size:12px;
                                                                                     cursor: pointer;"
-                                                                                        open-on-click
+                                                                                    open-on-click
                                                                                 >
                                                                                     <template v-slot:prepend="{ item, open }">
                                                                                         <div v-if="isNotFolderIcon">
@@ -955,32 +949,32 @@
                                                                                         </div>
                                                                                     </template>
                                                                                     <template v-slot:label="{ item }">
-                                                                                        <div :key="treeItemRenderKey" @click="setSelectedTempTreePath(item)" :style="templatePathStyle(item)"> {{item.name}}
+                                                                                        <div :key="treeItemRenderKey" @click="setSelectedTempTreePath(item)" :style="templatePathStyle(item)"> {{item.name}} 
                                                                                             <span v-if="selectedTempTreePath[platform] && selectedTempTreePath[platform] == item.currentPath">
-                                                                                                <v-btn
-                                                                                                        v-if="!item.children"
-                                                                                                        icon
-                                                                                                        @click="openTemplateTreeEditor(item, 'edit')"
+                                                                                                <v-btn 
+                                                                                                    v-if="!item.children"
+                                                                                                    icon 
+                                                                                                    @click="openTemplateTreeEditor(item, 'edit')"
                                                                                                 >
                                                                                                     <v-icon small>mdi-pencil</v-icon>
                                                                                                 </v-btn>
                                                                                                 <span v-if="item.children">
                                                                                                     <v-btn
-                                                                                                            icon
-                                                                                                            @click="openTemplateTreeEditor(item, 'add file')"
+                                                                                                        icon 
+                                                                                                        @click="openTemplateTreeEditor(item, 'add file')"
                                                                                                     >
                                                                                                         <v-icon small>mdi-file-plus</v-icon>
                                                                                                     </v-btn>
                                                                                                     <v-btn
-                                                                                                            icon
-                                                                                                            @click="openTemplateTreeEditor(item, 'add folder')"
+                                                                                                        icon 
+                                                                                                        @click="openTemplateTreeEditor(item, 'add folder')"
                                                                                                     >
                                                                                                         <v-icon small>mdi-folder-plus</v-icon>
                                                                                                     </v-btn>
                                                                                                 </span>
                                                                                                 <v-btn
-                                                                                                        icon
-                                                                                                        @click="openTemplateTreeEditor(item, 'delete')"
+                                                                                                    icon 
+                                                                                                    @click="openTemplateTreeEditor(item, 'delete')"
                                                                                                 >
                                                                                                     <v-icon small>mdi-delete</v-icon>
                                                                                                 </v-btn>
@@ -1133,7 +1127,7 @@
                                                     <v-divider vertical />
                                                     <v-card-text style="padding:1px;">
                                                         <v-btn icon @click="editTemplateMode = false, defaultCodeViewerRenderKey++;"
-                                                               style="position:absolute; right:5px; z-index:1"
+                                                            style="position:absolute; right:5px; z-index:1"
                                                         >
                                                             <v-icon small>mdi-close</v-icon>
                                                         </v-btn>
@@ -1175,17 +1169,17 @@
                                                                                         <v-tooltip top color="error" style="z-index: 9999;">
                                                                                             <template v-slot:activator="{ on, attrs }">
                                                                                                 <v-chip
-                                                                                                        v-bind="attrs"
-                                                                                                        v-on="on"
-                                                                                                        class="ma-2"
-                                                                                                        small
-                                                                                                        color="red"
-                                                                                                        text-color="white"
+                                                                                                    v-bind="attrs"
+                                                                                                    v-on="on"
+                                                                                                    class="ma-2"
+                                                                                                    small
+                                                                                                    color="red"
+                                                                                                    text-color="white"
                                                                                                 >
                                                                                                     <v-icon left small>
                                                                                                         mdi-alert-circle-outline
                                                                                                     </v-icon>
-                                                                                                    {{ opennedTemplateFramework[0].templateErrMsg }}
+                                                                                                    {{ opennedTemplateFramework[0].templateErrMsg }} 
                                                                                                 </v-chip>
                                                                                             </template>
                                                                                             <span><v-icon color="white" style="margin-right: 10px;">mdi-alert-circle-outline</v-icon>{{ opennedTemplateFramework[0].templateErrMsg }}</span>
@@ -1208,12 +1202,12 @@
                                                                                      :style="opennedTemplateFramework && opennedTemplateFramework[0].refList && opennedTemplateFramework[0].refList.length > 0 ? 'margin-bottom: -30px;':''"
                                                                                 >
                                                                                     <v-select v-if="opennedTemplateFramework && opennedTemplateFramework[0].refList && opennedTemplateFramework[0].refList.length > 0"
-                                                                                              v-model="templateResultPath"
-                                                                                              @change="setTemplateResult"
-                                                                                              style="font-size: 13px;"
-                                                                                              variant="solo"
-                                                                                              label="Selected file"
-                                                                                              :items="opennedTemplateFramework[0].refList"
+                                                                                        v-model="templateResultPath"
+                                                                                        @change="setTemplateResult"
+                                                                                        style="font-size: 13px;"
+                                                                                        variant="solo"
+                                                                                        label="Selected file"
+                                                                                        :items="opennedTemplateFramework[0].refList"
                                                                                     ></v-select>
                                                                                 </div>
                                                                                 <v-chip
@@ -1304,14 +1298,14 @@
                                     </v-dialog>
                                     <v-dialog no-click-animation v-model="openExpectedTemplateTestDialog">
                                         <!-- :actualTreeList="treeLists"  -->
-                                        <ExpectedTemplateTestDialog
-                                                :actualCodeList="codeLists"
-                                                :templateFrameWorkList="templateFrameWorkList"
-                                                :existOnlyExpected="existOnlyExpected"
-                                                :existOnlyActual="existOnlyActual"
-                                                :diffList="diffList"
-                                                :templateMetaData="templateMetaData"
-                                                :modelingProjectId="modelingProjectId"
+                                        <ExpectedTemplateTestDialog 
+                                            :actualCodeList="codeLists" 
+                                            :templateFrameWorkList="templateFrameWorkList"
+                                            :existOnlyExpected="existOnlyExpected"
+                                            :existOnlyActual="existOnlyActual"
+                                            :diffList="diffList"
+                                            :templateMetaData="templateMetaData"
+                                            :modelingProjectId="modelingProjectId"
                                         />
                                     </v-dialog>
                                     <div v-if="changedModifying">
@@ -1348,6 +1342,9 @@
                                                 v-model="filteredOpenCode"
                                                 :readOnly="false"
                                                 :showGpt="showGpt"
+                                                :testFileList="testFileList"
+                                                :isRootFolder="isRootFolder"
+                                                @startImplWithAI="startImplWithAI"
                                                 @editCode="setCurrentCodeForAutoCodeGenerate"
                                                 @startAutoGenerate="startAutoGenerateCode"
                                                 @update="updatePathTmp"
@@ -1427,30 +1424,6 @@
             </v-card>
         </v-dialog>
 
-        <v-dialog v-model="openSelectTestFileDialog" max-width="600" persistent>
-            <v-card>
-                <v-card-title class="headline">
-                    Select the file you want to test
-                </v-card-title>
-                <v-card-text>
-                    <v-autocomplete
-                            v-model="testFile"
-                            item-text="name"
-                            :items="testFileList"
-                            clearable
-                            return-object
-                            autofocus
-                            dense
-                    ></v-autocomplete>
-                </v-card-text>
-                <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn text @click="selectedTestFile(false)">cancel</v-btn>
-                    <v-btn :disable="testFile ? true:false" color="primary" text @click="selectedTestFile(true)">OK</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
-
         <v-dialog v-model="showApplyBaseTemplateDialog" max-width="370" ref="all-apply-dialog" persistent>
             <v-card>
                 <v-card-title class="headline">
@@ -1507,11 +1480,11 @@
         <v-dialog v-if="selectedTreeItem && showTemplateTreeEditor" v-model="showTemplateTreeEditor" width="auto">
             <v-card style="width: 500px;">
                 <div v-if="selectedTreeItem.editMode == 'add New'" style="padding: 10px;">
-                    <v-chip small @click="newTemplateType = 'template'"
-                            style="margin-right: 5px;"
-                            :style="newTemplateType == 'template' ? '' : 'color: darkgray;'"
-                            :color="newTemplateType == 'template' ? 'black' : ''"
-                            :outlined="newTemplateType == 'template' ? true : false"
+                    <v-chip small @click="newTemplateType = 'template'" 
+                        style="margin-right: 5px;"
+                        :style="newTemplateType == 'template' ? '' : 'color: darkgray;'"
+                        :color="newTemplateType == 'template' ? 'black' : ''"
+                        :outlined="newTemplateType == 'template' ? true : false"
                     >
                         <v-icon color="green" left v-if="newTemplateType == 'template'">
                             mdi-check
@@ -1519,9 +1492,9 @@
                         Template
                     </v-chip>
                     <v-chip small @click="newTemplateType = 'topping'"
-                            :style="newTemplateType == 'topping' ? '' : 'color: darkgray;'"
-                            :color="newTemplateType == 'topping' ? 'black' : ''"
-                            :outlined="newTemplateType == 'topping' ? true : false"
+                        :style="newTemplateType == 'topping' ? '' : 'color: darkgray;'"
+                        :color="newTemplateType == 'topping' ? 'black' : ''"
+                        :outlined="newTemplateType == 'topping' ? true : false"
                     >
                         <v-icon color="green" left v-if="newTemplateType == 'topping'">
                             mdi-check
@@ -1621,12 +1594,13 @@
         },
         data() {
             return {
+                isRootFolder: false,
                 openSelectTestFileDialog: false,
                 selectedCodeList: {},
                 gitActionDialogRenderKey: 0,
                 isSIgpt: false,
                 testFileList: [],
-                testFile: null,
+                selectedTestFile: null,
                 // openAiMessageList: [],
                 openGitActionDialog: false,
                 isLoadingExpectedTemplate: true,
@@ -1968,7 +1942,7 @@
                     if(this.reGenerateOnlyModifiedTemplate){
                         this.setTemplateFramework(this.opennedTemplateFramework)
                     }
-
+                    
                     this.isLoadingExpectedTemplate = true
                     if((this.openCode && this.openCode[0]) || this.value.basePlatform){
                         var platform = this.openCode && this.openCode[0] ? this.openCode[0].template : this.value.basePlatform
@@ -2175,7 +2149,7 @@
                         var getCodePath = localStorage.getItem('openCodePath')
                         if (getCodePath) {
                             me.openCode[0] = me.codeLists.find(x => x.fullPath == getCodePath)
-                        }
+                        } 
                     }
                     //done
                     if (me.openCode.length > 0 && me.openCode[0]) {
@@ -2187,7 +2161,7 @@
                             setTimeout(()=>{   //TODO: temporal 
                                 me.openCode[0].code = me.codeAlign(me.openCode[0].code)
                             }, 0)
-
+                            
                         }
                         return me.openCode
                     }
@@ -2653,11 +2627,11 @@
                 this.tempToppingPlatforms.push('isVanillaK8s')
             }
             if(this.value){
-                if(this.value.toppingPlatforms && !this.value.toppingPlatforms.find(x => x === "isVanillaK8s")){
-                    this.value.toppingPlatforms.push('isVanillaK8s')
-                }
+            if(this.value.toppingPlatforms && !this.value.toppingPlatforms.find(x => x === "isVanillaK8s")){
+                this.value.toppingPlatforms.push('isVanillaK8s')
             }
-
+            }
+            
             this.openCodeGenerator()
             // this.settingGithub()
             // this.onLoadInitTemplate();
@@ -2670,7 +2644,7 @@
             window.removeEventListener("message", me.messageProcessing);
             this.closeCodeViewer()
         },
-        mounted: function () {
+        mounted: function () { 
 
             var me = this
             window.addEventListener("message", me.messageProcessing);
@@ -2754,11 +2728,6 @@
             });
         },
         methods: {
-            jumpToActions(){
-                if(this.value.scm && this.value.scm.org && this.value.scm.repo){
-                    window.open(`https://github.com/${this.value.scm.org}/${this.value.scm.repo}/actions`, "_blank")
-                }
-            },
             messageProcessing(e) {
                 // var me = this;
                 if (e.data.message === "gitlab-login") {
@@ -2771,15 +2740,6 @@
                 me.openGitActionDialog = false
                 me.gitMenu = false
                 me.isSIgpt = false
-            },
-            isRootFolder(item){
-                if(this.projectInformation
-                    && this.projectInformation.firstCommit == 'false'
-                    && this.rootModelAndElementMap.modelForElements.BoundedContext.find(x => x.name == item.name)){
-                    return true;
-                } else {
-                    return false;
-                }
             },
             startCommit(updateList){
                 var me = this
@@ -2844,11 +2804,11 @@ jobs:
                     me.templateMetaData = YAML.parse(me.templateFrameWorkList[template]['.template/metadata.yml'].content)
                     me.templateMetaData.testModel = me.templateMetaData.testModel.replace('storming/', '')
                     me.templateMetaData.testModel = me.templateMetaData.testModel.replaceAll('/', '')
-
+    
                     me.existOnlyExpected = []
                     me.existOnlyActual = []
                     me.diffList = []
-
+    
                     var diffFile
                     Object.keys(me.templateFrameWorkList[template]).forEach(function (key){
                         if(key.includes('.template/')){
@@ -2866,21 +2826,21 @@ jobs:
                             }
                         }
                     })
-
+    
                     me.codeLists.forEach(function (file){
                         diffFile = me.templateFrameWorkList[template][`.template/test/expected/${file.fullPath.replace(`${me.modelingProjectId}/`, `${me.templateMetaData.testModel}/`)}`]
                         if(!diffFile){
                             me.existOnlyActual.push(file.fullPath)
                             // '.template/test/expected/frontend/src/components/주문주문.vue'
                             // '.template/test/expected/frontend/src/components/주문주문.vue'
-                        }
+                        } 
                     })
                     if(me.diffList.length > 0 || me.existOnlyExpected.length > 0 || me.existOnlyActual.length > 0){
                         me.openExpectedTemplateTestDialog = true
                     } else {
                         alert("Every files are identical")
                     }
-
+    
                     me.startCheckDiff = false
                 }
 
@@ -2904,7 +2864,7 @@ jobs:
                     } else {
                         if(key == pathList[roofNumber]){
                             if(key == pathList[pathList.length - 1]){
-                                modelData[key] = me.currentModelData.value
+                                modelData[key] = me.currentModelData.value 
                             } else {
                                 // console.log(key)
                                 roofNumber++;
@@ -2913,7 +2873,7 @@ jobs:
                         }
                     }
                 })
-            },
+            },  
             setSelectedTempTreePath(item){
                 if(item && item.currentPath && item.platform){
                     this.selectedTempTreePath[item.platform] = item.currentPath
@@ -2963,9 +2923,9 @@ jobs:
                 } else if(mode == 'edit'){
                     this.selectedTreeItem.newName = this.selectedTreeItem.name
                 }
-            },
+            },  
             editTreeItem(){
-                var me = this
+                var me = this 
                 // console.log(me.selectedTreeItem)
                 if(me.selectedTreeItem.editMode.includes('add')){
                     if(me.selectedTreeItem.editMode == 'add New'){
@@ -2995,7 +2955,7 @@ jobs:
                             if(!me.templateFrameWorkList[obj.platform]){
                                 me.templateFrameWorkList[obj.platform] = {}
                             }
-
+                            
                             me.editTemplateFrameWorkList[obj.platform][obj.currentPath] = {
                                 code: "// new",
                                 element: [
@@ -3010,7 +2970,7 @@ jobs:
                             }
                         } else if(me.selectedTreeItem.editMode == 'add folder'){
                             obj.children = []
-                        }
+                        } 
                         if(me.selectedTreeItem.isNew){
                             me.templateTreeList[me.selectedTreeItem.platform].push(obj)
                         } else {
@@ -3046,10 +3006,10 @@ jobs:
                         }
                     }
 
-                    if(me.selectedTreeItem.editMode == 'edit' || me.selectedTreeItem.editMode == 'delete'){
+                    if(me.selectedTreeItem.editMode == 'edit' || me.selectedTreeItem.editMode == 'delete'){ 
                         me.selectedTreeItem.computedFileName = me.selectedTreeItem.name,
-                            me.selectedTreeItem.computedSubFileName = me.selectedTreeItem.currentPath.replace(me.selectedTreeItem.name, "")
-
+                        me.selectedTreeItem.computedSubFileName = me.selectedTreeItem.currentPath.replace(me.selectedTreeItem.name, "")
+                        
                         me.editTemplateFrameWorkList[me.selectedTreeItem.platform][me.selectedTreeItem.currentPath] = {
                             code: me.selectedTreeItem.code,
                             element: [
@@ -3090,7 +3050,7 @@ jobs:
                 if(this.treePathList[item.id]){
                     this.currentModelData.subPath = this.treePathList[item.id].replace(item.name.replace(": ", ""), "")
                 }
-            },
+            },  
             fetchChildren(obj){
                 var me = this
                 var data = me.modelData
@@ -3153,23 +3113,23 @@ jobs:
                 var content
                 var startGen = false
                 // if(prompt == "autoGen"){
-                Object.keys(modifiedValueList).forEach(function (key){
-                    if(modifiedValueList[key] != {}){
-                        Object.keys(modifiedValueList[key]).forEach(function (val){
-                            let path = modifiedValueList[key][val]
-                            let value = val
-                            me.convertStringToObj(path, value);
-                        })
-                    }
-                })
-                var CircularJSON = require('circular-json');
-                var str = CircularJSON.stringify(me.convertedObj);
+                    Object.keys(modifiedValueList).forEach(function (key){
+                        if(modifiedValueList[key] != {}){
+                            Object.keys(modifiedValueList[key]).forEach(function (val){
+                                let path = modifiedValueList[key][val]
+                                let value = val
+                                me.convertStringToObj(path, value);
+                            })
+                        }
+                    })
+                    var CircularJSON = require('circular-json');
+                    var str = CircularJSON.stringify(me.convertedObj);
 
-                content = `If I have this model in json: ${str}
-                    I want to make a mustache template that generating following source code:`
+                    content = `If I have this model in json: ${str}
+                    I want to make a mustache template that generating following source code:` 
                     + me.originMustacheTemplate[0].code
 
-                startGen = true
+                    startGen = true
                 // } else {
                 //     if(prompt != '' && prompt != null){
                 //         console.log(prompt)
@@ -3183,7 +3143,7 @@ jobs:
                         model: "text-davinci-003",
                         prompt: content,
                         temperature: 0.5,
-                        max_tokens: tokenLength ? tokenLength : 3000,
+                        max_tokens: tokenLength ? tokenLength : 3000, 
                     }
                     let header = {
                         Authorization: `Bearer ${me.openaiToken}`,
@@ -3191,22 +3151,22 @@ jobs:
                     }
 
                     let respones = await axios.post(`https://api.openai.com/v1/completions`, data, { headers: header })
-                        .catch(function (error) {
-                            me.startGenerateUseOpenAI = false
-                            if(error.response && error.response.data && error.response.data.message){
-                                var errText = error.response.data.message
-                                if(error.response.data.errors && error.response.data.errors[0] && error.response.data.errors[0].message){
-                                    errText = errText + ', ' + error.response.data.errors[0].message
-                                }
-                                alert(errText)
-                            } else {
-                                alert(error.message)
+                    .catch(function (error) {
+                        me.startGenerateUseOpenAI = false
+                        if(error.response && error.response.data && error.response.data.message){
+                            var errText = error.response.data.message
+                            if(error.response.data.errors && error.response.data.errors[0] && error.response.data.errors[0].message){
+                                errText = errText + ', ' + error.response.data.errors[0].message
                             }
-                        });
+                            alert(errText)
+                        } else {
+                            alert(error.message)
+                        }
+                    }); 
                     if(respones.data.choices[0].text){
                         // if(prompt == "autoGen"){
-                        me.modifiedMustacheTemplate[0].code = respones.data.choices[0].text
-                        me.startGenerateUseOpenAI = false
+                            me.modifiedMustacheTemplate[0].code = respones.data.choices[0].text
+                            me.startGenerateUseOpenAI = false
                         // } else {
                         //     // console.log(respones.data.choices[0].text)
                         //     me.openAiResult = me.codeAlign(respones.data.choices[0].text)
@@ -3286,7 +3246,7 @@ jobs:
             },
             closeGitMenu(){
                 var me = this
-                me.githubTokenError = false
+                me.githubTokenError = false 
             },
             reGenerateTemplateCode(){
                 var me = this
@@ -3337,13 +3297,13 @@ jobs:
                 let filePath
                 if(me.opennedTemplateFramework[0].fullPath){
                     filePath = me.opennedTemplateFramework[0].fullPath
-                }
+                } 
                 if(me.opennedTemplateFramework[0].refList && me.opennedTemplateFramework[0].refList.length > 0){
                     if(!filePath || !me.opennedTemplateFramework[0].refList.find(x => x == filePath)){
                         filePath = me.opennedTemplateFramework[0].refList[0]
                     }
-                }
-
+                } 
+               
                 return filePath
             },
             setTemplateResult(ref){
@@ -3374,7 +3334,7 @@ jobs:
                             // if(me.editTemplateFrameWorkList[platform][tempPath] && me.editTemplateFrameWorkList[platform][tempPath].elementResult && me.editTemplateFrameWorkList[platform][tempPath].elementResult.fullPath == ref){
                             //     opennedReferenceFile = me.editTemplateFrameWorkList[platform][tempPath].elementResult
                             // }  
-
+        
                             if(!opennedReferenceFile || opennedReferenceFile.code == ""){
                                 if(!opennedReferenceFile){
                                     opennedReferenceFile = me.filteredPrettierCodeLists.find(x => x.fullPath == ref)
@@ -3416,21 +3376,21 @@ jobs:
                                 }
                             }
                         }
-
-
+    
+    
                         if(opennedReferenceFile){
                             if(me.templateFrameWorkList[platform][tempPath] && me.templateFrameWorkList[platform][tempPath].refList){
                                 opennedReferenceFile.refList = me.templateFrameWorkList[platform][tempPath].refList
                             }
                             me.openCode[0] = opennedReferenceFile
-
+                            
                             if(opennedReferenceFile){
                                 var obj = null
                                 if(tempPath.includes('for-model/')){
                                     obj = me.rootModelAndElementMap.rootModel
                                 } else if(me.modelForElement[platform] && me.modelForElement[platform][tempPath] && me.modelForElement[platform][tempPath][filePath]){
                                     obj = me.modelForElement[platform][tempPath][filePath]
-                                }
+                                } 
 
                                 if(!obj){
                                     obj = me.rootModelAndElementMap.rootModel
@@ -3519,7 +3479,7 @@ jobs:
             },
             setTemplateTreeList(){
                 var me = this
-                me.templateTreeList = {}
+                me.templateTreeList = {} 
                 let editTemplateFrameWorkList = {}
 
                 Object.keys(me.templateFrameWorkList).forEach(function (platform){
@@ -3534,14 +3494,14 @@ jobs:
                         Object.keys(lists).forEach(function (key){
                             if(!lists[key].isDeleted){
                                 // var currentFolder = treeLists; 
-                                var currentFolder = me.templateTreeList[platform];
+                                var currentFolder = me.templateTreeList[platform]; 
                                 var currentPath = "";
-
+    
                                 key.split('/').forEach(fileName => {
                                     currentPath = currentPath + "/" + fileName;
-
+    
                                     var isFolder = !(("/" + key) === currentPath);
-
+    
                                     var fileObj = currentFolder.find(x => x.name === fileName.trim());
                                     if(!fileObj){
                                         var fileType = me.fileType(fileName)
@@ -3554,7 +3514,7 @@ jobs:
                                             path: key,
                                             currentPath: currentPath.replace('/', ''),
                                         };
-
+    
                                         currentFolder.push(fileObj);
                                     }
                                     currentFolder = fileObj.children;
@@ -4114,7 +4074,7 @@ jobs:
                 var set = new Set();
                 var option = option
 
-
+                
                 root.forEach((item) => {
                     if(Array.isArray(item.children)) {
                         me._collectSelectedFileContents(item.children, codeBag, option);
@@ -4163,7 +4123,7 @@ jobs:
                     return false
                 }else if(onOff == 'contents'){
                     this.searchForContent.onOff = true
-                    this.searchForContents()
+                     this.searchForContents()
                     return false
                 }
             },
@@ -4305,7 +4265,7 @@ jobs:
                 try {
                     var moreHintMode = false
                     if(id == '2'){
-                        moreHintMode = true
+                        moreHintMode = true 
                     }
                     if(moreHintMode){
                         var inputSwitch
@@ -4323,7 +4283,7 @@ jobs:
                                         }
                                     })
                                 }
-                            }
+                            } 
                         })
                     }
                     if(me.openaiToken){
@@ -4333,7 +4293,7 @@ jobs:
                         } else {
                             content = me.filteredOpenCode[0].code
                         }
-
+    
                         var splitContent = null
                         var promptValue = []
                         var suffixValue = []
@@ -4347,53 +4307,53 @@ jobs:
                         })
                         promptValue = promptValue.join("\n")
                         suffixValue = suffixValue.join("\n")
-
+                        
                         let tokenLength
                         if(moreHintMode){
                             tokenLength = 4092 - Math.round(`${content}\n${testA.join('\n')}`.length/3.5)
-                        }
+                        } 
 
                         let data = {
                             model: "text-davinci-003",
                             prompt: promptValue,
                             suffix: moreHintMode ? `${suffixValue}\n${testA.join('\n')}` : suffixValue,
                             temperature: 0.5,
-                            max_tokens: moreHintMode ? tokenLength : 3000,
+                            max_tokens: moreHintMode ? tokenLength : 3000, 
                         }
                         let header = {
                             Authorization: `Bearer ${me.openaiToken}`,
                             'Content-Type': 'application/json'
                         }
-
+    
                         let respones = await axios.post(`https://api.openai.com/v1/completions`, data, { headers: header })
-                            .catch(function (error) {
-                                me.startGenerate = false
-                                if(me.openaiContent){
-                                    me.filteredOpenCode[0].code = me.openaiContent
+                        .catch(function (error) {
+                            me.startGenerate = false
+                            if(me.openaiContent){
+                                me.filteredOpenCode[0].code = me.openaiContent
+                            }
+                            if(error.response && error.response.data && error.response.data.message){
+                                var errText = error.response.data.message
+                                if(error.response.data.errors && error.response.data.errors[0] && error.response.data.errors[0].message){
+                                    errText = errText + ', ' + error.response.data.errors[0].message
                                 }
-                                if(error.response && error.response.data && error.response.data.message){
-                                    var errText = error.response.data.message
-                                    if(error.response.data.errors && error.response.data.errors[0] && error.response.data.errors[0].message){
-                                        errText = errText + ', ' + error.response.data.errors[0].message
-                                    }
-                                    alert(errText)
-                                } else {
-                                    alert(error.message)
-                                }
-                            });
+                                alert(errText)
+                            } else {
+                                alert(error.message)
+                            }
+                        });
                         if(respones && !me.stopAutoGenerate){
                             if(respones.data.choices[0].text){
                                 var autoGenerateResult = promptValue + respones.data.choices[0].text + suffixValue
                                 me.autoGenerateResponse = autoGenerateResult
-
+        
                                 me.changedDiffCodeViewer = true
                                 me.changedDiffCode = JSON.parse(JSON.stringify(me.filteredOpenCode))
                                 me.changedDiffCode[0].code = content
                                 me.filteredOpenCode[0].code = me.autoGenerateResponse
-
+        
                                 localStorage.setItem('openaiToken', me.openaiToken)
                                 me.startGenerate = false
-
+        
                                 me.setAutoGenerateCodetoList = JSON.parse(JSON.stringify(me.codeLists))
                                 me.setAutoGenerateCodetoList.some(function (element, index){
                                     if(me.filteredOpenCode[0].path == element.fullPath){
@@ -4401,13 +4361,13 @@ jobs:
                                         return true;
                                     }
                                 })
-
+        
                                 me.refreshCallGenerate();
                             }
                         } else {
                             me.stopAutoGenerate = false
                         }
-
+    
                     } else {
                         me.stopAutoGenerate = false
                         alert("input Token")
@@ -4424,7 +4384,7 @@ jobs:
                 var me = this
                 var convertModelData = convertModelData ? convertModelData:{}
                 me.recursiveCount++;
-                for (let key in modelData) {
+                for (let key in modelData) { 
                     if (typeof modelData[key] === "string") {
                         var beforePath = path ? path + '.' : ''
                         convertModelData[beforePath + key] = modelData[key]
@@ -4440,7 +4400,7 @@ jobs:
                         convertModelData[beforePath + key] = null
                     }
                 }
-                me.recursiveCount--;
+                me.recursiveCount--; 
 
                 if(me.recursiveCount == 0) {
                     var modifiedValueList = {}
@@ -4448,13 +4408,13 @@ jobs:
                     var content = me.originMustacheTemplate[0].code.split('\n')
                     const reg = /[\{\}\[\]\/?.,;:|\)*~`!^\-+<>@\#$%&\\\=\(\'\"]/gi;
                     let isAnnotation = false
-                    let dataIncludeUnderBar
-                    let replacedData
+                    let dataIncludeUnderBar 
+                    let replacedData 
 
                     content.forEach(function (code, idx){
                         if(code.includes('/**')){
                             isAnnotation = true
-                        }
+                        } 
                         if(code.includes('*/')){
                             isAnnotation = false
                         }
@@ -4468,10 +4428,10 @@ jobs:
 
                             // const tokens1 = new Set(code1.match(regex));
                             // const tokens2 = new Set(code2.match(regex));
-
+                            
                             // const intersection = new Set([...tokens1].filter(x => tokens2.has(x)));
                             // const overlap = intersection.size / Math.min(tokens1.size, tokens2.size);
-
+                            
                             // isOverlap = overlap >= threshold;
 
                             modifiedValueList[idx] = {}
@@ -4489,7 +4449,7 @@ jobs:
                                                     if(data.includes("_")){
                                                         dataIncludeUnderBar = data.split("_")
                                                         replacedData = dataIncludeUnderBar[0]
-                                                    }
+                                                    } 
                                                     if(data.includes('()')){
                                                         replacedData = data.replace('on', '')
                                                     }
@@ -4499,13 +4459,13 @@ jobs:
                                                     if(data.replaceAll(reg, '') == convertModelData[key] || (replacedData && replacedData.replaceAll(reg, '') == convertModelData[key])){
                                                         var originValuePriority = splitSpace[index].replaceAll(/.[0-9]./g, ".*.").split(".*.")
                                                         var changeValuePriority = key.replaceAll(/.[0-9]./g, ".*.").split(".*.")
-
+                                                        
                                                         if(firstGenerate || originValuePriority.length >= changeValuePriority.length){
                                                             var isValueUpdate = true
                                                             if(!firstGenerate && originValuePriority.length == changeValuePriority.length){
                                                                 if(splitSpace[index].length < key.length){
                                                                     isValueUpdate = false
-                                                                }
+                                                                } 
                                                             }
 
                                                             if(isValueUpdate){
@@ -4518,7 +4478,7 @@ jobs:
                                                                 modifiedValueList[idx][convertModelData[key]] = key
                                                                 firstGenerate = false
                                                             }
-                                                        }
+                                                        } 
                                                     }
                                                 }
                                             })
@@ -4559,7 +4519,7 @@ jobs:
                         content.forEach(function (line, lineNumber){
                             if(line.includes('/**')){
                                 isAnnotation = true
-                            }
+                            } 
                             if(line.includes('*/')){
                                 isAnnotation = false
                             }
@@ -4577,28 +4537,28 @@ jobs:
                                 isModeLine = false
                                 var token = line.replaceAll("{{", "")
                                 token = token.replaceAll("}}", "")
-
+    
                                 if(token.includes("{") && !token.includes(" class ")){
                                     isMethod = true
                                     if(content[idx - 1].includes("@")){
                                         isModeLine = true
                                     }
-                                }
+                                } 
                                 if(token.includes("}")){
                                     isMethod = false
-                                }
-
+                                } 
+                                
                                 text = text ? text + '\n' + line : line
-
-                                if(isModeLine){
+                                
+                                if(isModeLine){ 
                                     var mode = content[idx - 1].split("@")
                                     testArr[testArr.length - 1] = content[idx - 1].replace(mode[1], "mode")
                                 }
-
+    
                                 if(!isMethod){
                                     testArr.push(text)
                                     text = null
-                                }
+                                } 
                             }
                         })
 
@@ -4648,9 +4608,9 @@ jobs:
                                         const uniqueArrText = [...setText];
                                         const setEndText = new Set(endText.split('\n'));
                                         const uniqueArrEndText = [...setEndText];
-
+                                        
                                         loopCount = 0
-                                        space = null
+                                        space = null 
                                         uniqueArrText.forEach(function (line, lineIdx){
                                             while(loopCount == lineIdx){
                                                 space = space ? space + "    " : "    "
@@ -4661,7 +4621,7 @@ jobs:
                                         })
                                         uniqueArr[idx] = uniqueArrText.join('\n') + valueName + uniqueArrEndText.join('\n')
                                     }
-                                })
+                                })  
                             }
                         })
                         me.modifiedMustacheTemplate[0].code = uniqueArr.join("\n")
@@ -4673,7 +4633,7 @@ jobs:
 
             },
             convertStringToObj(path, value) {
-                var me = this
+                var me = this    
                 var container =  me.convertedObj;
                 path.split('.').map((k, i, values) => {
                     container = (container[k] = (i == values.length - 1 ? value : (container[k] ? container[k]:{})))
@@ -4703,15 +4663,15 @@ jobs:
                 let me = this
                 return new Promise(async function (resolve, reject) {
                     let result = await me.gitAPI.getFile("topping-isVanillaK8s", "msa-ez", "for-model/kubernetes/docs/common/Pod.md")
-                        .then(function (obj) {
-                            resolve(obj.data)
-                        })
-                        .catch(e => {
-                            if(e.response.status === 401){
-                                me.alertReLogin()
-                            }
-                            alert(e)
-                        })
+                    .then(function (obj) {
+                        resolve(obj.data)
+                    })
+                    .catch(e => {
+                        if(e.response.status === 401){
+                            me.alertReLogin()
+                        }
+                        alert(e)                        
+                    })
                 })
             },
             async initHandleBars(handleBars){
@@ -4734,27 +4694,27 @@ jobs:
                         if(map.if && map.if.includes(value)){
                             return map.then;
                         }
-
+                        
                         if(map.default)
-                            return map.default
+                        return map.default
                     }
 
                     return '';
-
+                
                 })
 
                 window.$HandleBars.registerHelper('checkVO', function (className, options) {
-                    if(className.endsWith("Address") || className.endsWith("Photo") || className.endsWith("User") || className.endsWith("Email")
-                        || className.endsWith("Payment") || className.endsWith("Money") || className.endsWith("Weather") || className.endsWith("Rating")
-                        || className.endsWith("Likes")|| className.endsWith("Tags")|| className.endsWith("Comment") ){
+                    if(className.endsWith("Address") || className.endsWith("Photo") || className.endsWith("User") || className.endsWith("Email") 
+                            || className.endsWith("Payment") || className.endsWith("Money") || className.endsWith("Weather") || className.endsWith("Rating") 
+                            || className.endsWith("Likes")|| className.endsWith("Tags")|| className.endsWith("Comment") ){
                         return options.fn(this);
                     }
                 })
 
                 window.$HandleBars.registerHelper('checkEntityMember', function (className, options) {
-                    if(!(className.endsWith("Address") || className.endsWith("Photo") || className.endsWith("User") || className.endsWith("Email")
-                        || className.endsWith("Payment") || className.endsWith("Money") || className.endsWith("Weather") || className.endsWith("Rating"))
-                        || className.endsWith("Likes")|| className.endsWith("Tags")|| className.endsWith("Comment") && className.indexOf("java.") == -1 && className.indexOf("List") == -1){
+                    if(!(className.endsWith("Address") || className.endsWith("Photo") || className.endsWith("User") || className.endsWith("Email") 
+                            || className.endsWith("Payment") || className.endsWith("Money") || className.endsWith("Weather") || className.endsWith("Rating")) 
+                            || className.endsWith("Likes")|| className.endsWith("Tags")|| className.endsWith("Comment") && className.indexOf("java.") == -1 && className.indexOf("List") == -1){
                         return options.fn(this);
                     } else {
                         return options.inverse(this);
@@ -4855,10 +4815,10 @@ jobs:
                 });
 
                 window.$HandleBars.registerHelper('attached', function (type, value, options) {
-
+                    
 
                     let attachedElementsInTheType
-
+                    
                     if(value.attached)
                         attachedElementsInTheType = value.attached.filter(
                             element => (element._type.endsWith(type) || (type=='ReadModel' && element._type.endsWith('View')))
@@ -4877,7 +4837,7 @@ jobs:
 
                 });
 
-
+                
                 window.$HandleBars.registerHelper('attachedOrIncoming', function (type, value, options) {
                     var attachedElements = window.$HandleBars.helpers.attached(type, value, options)
                     var incomingElements = window.$HandleBars.helpers.incoming(type, value, options)
@@ -4900,9 +4860,9 @@ jobs:
 
                 window.$HandleBars.registerHelper('reaching', function (type, value, options) {
                     let result = "";
-
+                    
                     var attachedOrOutgoing = window.$HandleBars.helpers.attachedOrOutgoing(type, value, options)
-
+                    
                     if(attachedOrOutgoing==""){
                         var attachedElements
                         attachedElements = value.attached.filter(
@@ -5184,45 +5144,45 @@ jobs:
                 // if(isCustom){
                 //     me.showTopping = true
                 // }else{
-                // // init
-                // me.selectedVersion = 'java8'
-                // me.isVanillaK8s = false
-                // me.isJava15 = false
-                // me.selectedSecurity = null
-                // me.isSpringSecurity = false
-                // me.isKeycloakSecurity = false
-                // me.isServiceMesh = false
-                // me.isRollout = false
-                // me.isIngress = false
-                // me.isApolloGraphQL = false
-                // me.isJavaGraphQL = false
-                //
-                // if(me.tempToppingPlatforms.length > 0 ){
-                //     me.tempToppingPlatforms.forEach(function(toppingPlatform){
-                //         if(toppingPlatform =="apollo-graphql"){
-                //             me.isApolloGraphQL = true
-                //         } else if(toppingPlatform=="spring-security"){
-                //             me.selectedSecurity = "isSpringSecurity"
-                //             me.isKeycloakSecurity = false
-                //             me.isSpringSecurity = true
-                //         } else if(toppingPlatform=="keycloak-security"){
-                //             me.selectedSecurity = "isKeycloakSecurity"
-                //             me.isKeycloakSecurity = true
-                //             me.isSpringSecurity = false
-                //         } else if(toppingPlatform=="argo"){
-                //             me.isRollout = true
-                //         } else if(toppingPlatform=="istio"){
-                //             me.isServiceMesh = true
-                //         } else if(toppingPlatform=="ingress"){
-                //             me.isIngress = true
-                //         } else if(toppingPlatform=="java15"){
-                //             me.selectedVersion = "java15"
-                //         } else if(toppingPlatform=="isVanillaK8s"){
-                //             me.isVanillaK8s = true
-                //         }
-                //     })
-                // }
-                // me.showTopping = true
+                    // // init
+                    // me.selectedVersion = 'java8'
+                    // me.isVanillaK8s = false
+                    // me.isJava15 = false
+                    // me.selectedSecurity = null
+                    // me.isSpringSecurity = false
+                    // me.isKeycloakSecurity = false
+                    // me.isServiceMesh = false
+                    // me.isRollout = false
+                    // me.isIngress = false
+                    // me.isApolloGraphQL = false
+                    // me.isJavaGraphQL = false
+                    //
+                    // if(me.tempToppingPlatforms.length > 0 ){
+                    //     me.tempToppingPlatforms.forEach(function(toppingPlatform){
+                    //         if(toppingPlatform =="apollo-graphql"){
+                    //             me.isApolloGraphQL = true
+                    //         } else if(toppingPlatform=="spring-security"){
+                    //             me.selectedSecurity = "isSpringSecurity"
+                    //             me.isKeycloakSecurity = false
+                    //             me.isSpringSecurity = true
+                    //         } else if(toppingPlatform=="keycloak-security"){
+                    //             me.selectedSecurity = "isKeycloakSecurity"
+                    //             me.isKeycloakSecurity = true
+                    //             me.isSpringSecurity = false
+                    //         } else if(toppingPlatform=="argo"){
+                    //             me.isRollout = true
+                    //         } else if(toppingPlatform=="istio"){
+                    //             me.isServiceMesh = true
+                    //         } else if(toppingPlatform=="ingress"){
+                    //             me.isIngress = true
+                    //         } else if(toppingPlatform=="java15"){
+                    //             me.selectedVersion = "java15"
+                    //         } else if(toppingPlatform=="isVanillaK8s"){
+                    //             me.isVanillaK8s = true
+                    //         }
+                    //     })
+                    // }
+                    // me.showTopping = true
                 // }
             },
             // openForkedRepo(gitPath){
@@ -5322,7 +5282,7 @@ jobs:
                         me.openCode = item
                     }
                 }
-
+                
                 if(item && item.length > 0){
                     me.templateResultPath = null
                     if(item[0].eleKeys){
@@ -5333,14 +5293,14 @@ jobs:
                     let tempPath = me.getTempPath();
                     // let filePath = me.getFilePath();
 
-
+                    
                     if(me.editTemplateFrameWorkList[platform] && me.editTemplateFrameWorkList[platform][tempPath]){
                         me.opennedTemplateFramework[0].code = me.editTemplateFrameWorkList[platform][tempPath].code
                     } else {
                         if(me.templateFrameWorkList[platform] && me.templateFrameWorkList[platform][tempPath]){
                             me.opennedTemplateFramework[0].code = me.templateFrameWorkList[platform][tempPath].content
-                        }
-                    }
+                        } 
+                    } 
                     if(me.templateFrameWorkList[platform] && me.templateFrameWorkList[platform][tempPath] && me.templateFrameWorkList[platform][tempPath].refList){
                         me.opennedTemplateFramework[0].refList = me.templateFrameWorkList[platform][tempPath].refList
                         if(me.openCode && me.openCode[0] && me.openCode[0].fullPath && me.opennedTemplateFramework[0].refList.find(x => x == me.openCode[0].fullPath)){
@@ -5365,7 +5325,7 @@ jobs:
                         //     }
                         // }
                     }
-
+                    
                     me.setTemplateFileName(platform, tempPath)
                     if(!me.reGenerateOnlyModifiedTemplate){
                         me.setTemplateResult(me.templateResultPath)
@@ -5647,41 +5607,41 @@ jobs:
                         me.$manifestsPerTemplate[templateUrl] = [];
                         let org = templateUrl.split('/')[templateUrl.split('/').length - 2].trim()
                         let repo = templateUrl.split('/')[templateUrl.split('/').length - 1].trim()
-
+                        
                         // Template은 Main Branch에서 받아오도록 처리
                         let commitRes = await me.gitAPI.getCommit(org, repo, "main")
-                            .then(async function (res) {
-                                // Commit List 받아오는 것.
-                                let tree = await me.gitAPI.getTree(org, repo, res)
-                                    .then(async function (list) {
-                                        // console.log("try me.gitAPI.setGitList()")
-                                        let gitList = await me.gitAPI.setGitList(list, repo, templateUrl)
-                                            .then(function (resultLists) {
-                                                // console.log(resultLists)
-                                                Object.assign(me.$manifestsPerBaseTemplate, resultLists.manifestsPerBaseTemplate)
-                                                me.$manifestsPerTemplate[templateUrl] = resultLists.manifestsPerTemplate[templateUrl]
-                                                me.templateFrameWorkList = resultLists.templateFrameWorkList
-                                                resolve()
-                                            })
-                                            .catch(e => {
-                                                console.log(e)
-                                            })
-                                    })
-                                    .catch(e => {
-                                        console.log(e)
-                                        if(e.response.status === 401){
-                                            me.alertReLogin()
-                                        }
-                                        alert(e)
-                                    })
+                        .then(async function (res) {
+                            // Commit List 받아오는 것.
+                            let tree = await me.gitAPI.getTree(org, repo, res)
+                            .then(async function (list) {
+                                // console.log("try me.gitAPI.setGitList()")
+                                let gitList = await me.gitAPI.setGitList(list, repo, templateUrl)
+                                .then(function (resultLists) {
+                                    // console.log(resultLists)
+                                    Object.assign(me.$manifestsPerBaseTemplate, resultLists.manifestsPerBaseTemplate)
+                                    me.$manifestsPerTemplate[templateUrl] = resultLists.manifestsPerTemplate[templateUrl]
+                                    me.templateFrameWorkList = resultLists.templateFrameWorkList
+                                    resolve()
+                                })
+                                .catch(e => {
+                                    console.log(e)
+                                })
                             })
-                            .catch(error => {
-                                console.log(error)
-                                if(error.response.status === 401){
+                            .catch(e => {
+                                console.log(e)
+                                if(e.response.status === 401){
                                     me.alertReLogin()
                                 }
-                                alert(error)
+                                alert(e)
                             })
+                        })
+                        .catch(error => {
+                            console.log(error)
+                            if(error.response.status === 401){
+                                me.alertReLogin()
+                            }
+                            alert(error)              
+                        })
                     } catch (e) {
                         console.log(`Error] Load Git Template: ${e}`)
                         if(e.response.data.message.includes("Bad credentials")){
@@ -5711,7 +5671,7 @@ jobs:
             //     // me.$manifest... => pathList 정의
             //     // template Code List => { $path: $code}
             //     return new Promise(async (resolve, reject) => {
-
+                    
             //     });
             // },
             async setToppingList(template) {
@@ -5736,37 +5696,37 @@ jobs:
                         }
                         // console.log(repo,)
                         let commitRes = await me.gitAPI.getCommit(org, repo, "main")
-                            .then(async function (res) {
-                                // Commit List 받아오는 것.
-                                let tree = await me.gitAPI.getTree(org, repo, res)
-                                    .then(async function (list) {
-                                        // console.log("try me.gitAPI.setGitList() - " + fullUrl)
-                                        let gitList = await me.gitAPI.setGitList(list, toppingName, fullUrl)
-                                            .then(function (resultLists) {
-                                                me.$manifestsPerToppings[fullUrl] = resultLists.manifestsPerToppings[fullUrl]
-                                                Object.assign(me.gitToppingList, resultLists.gitToppingList)
-                                                // me.gitToppingList = resultLists.gitToppingList
-                                                resolve()
-                                            })
-                                            .catch(e => {
-                                                console.log(e)
-                                            })
-                                    })
-                                    .catch(e => {
-                                        console.log(e)
-                                        if(e.response.status === 401){
-                                            me.alertReLogin()
-                                        }
-                                        alert(e)
-                                    })
+                        .then(async function (res) {
+                            // Commit List 받아오는 것.
+                            let tree = await me.gitAPI.getTree(org, repo, res)
+                            .then(async function (list) {
+                                // console.log("try me.gitAPI.setGitList() - " + fullUrl)
+                                let gitList = await me.gitAPI.setGitList(list, toppingName, fullUrl)
+                                .then(function (resultLists) {
+                                    me.$manifestsPerToppings[fullUrl] = resultLists.manifestsPerToppings[fullUrl]
+                                    Object.assign(me.gitToppingList, resultLists.gitToppingList)
+                                    // me.gitToppingList = resultLists.gitToppingList
+                                    resolve()
+                                })
+                                .catch(e => {
+                                    console.log(e)
+                                })
                             })
-                            .catch(error => {
-                                console.log(error)
-                                if(error.response.status === 401){
+                            .catch(e => {
+                                console.log(e)
+                                if(e.response.status === 401){
                                     me.alertReLogin()
                                 }
-                                alert(error)
+                                alert(e)
                             })
+                        })
+                        .catch(error => {
+                            console.log(error)
+                            if(error.response.status === 401){
+                                me.alertReLogin()
+                            }
+                            alert(error)              
+                        })
                     } catch (e) {
                         console.log(`Error] Load Git Template: ${e}`)
                         if(e.response.data.message.includes("Bad credentials")){
@@ -6031,7 +5991,7 @@ jobs:
 
                         if (i === keys.length - 1) {
                             currentObj[key] = value;
-                        } else {
+                    } else {
                             if (!currentObj[key]) {
                                 currentObj[key] = {};
                             }
@@ -6836,7 +6796,7 @@ jobs:
             },
             isChangedCode(codeItem) {
                 var me = this
-
+                
                 if (!codeItem) {
                     return false
                 }
@@ -6875,7 +6835,7 @@ jobs:
                 try {
                     if (newVal && newVal.length > 0) {
 
-
+                       
 
                         if (me.changedPathLists && me.changedPathLists.length > 0) {
                             var findIdx = me.changedPathLists.indexOf(newVal[0].path)
@@ -6918,13 +6878,14 @@ jobs:
 
                         if (newValObj && newValObj.path.includes('.java')) {
 
-                            ////// TODO : performance problem
+                             ////// TODO : performance problem
                             setTimeout(()=>{newValObj.code = me.codeAlign(newValObj.code)}, 0)
-
+                            
                         }
 
                         me.openCode = newVal
                         if(me.openCode[0].children){
+                            me.getTestFileList();
                             me.showGpt = true;
                         }else{
                             me.showGpt = false;
@@ -6944,33 +6905,21 @@ jobs:
                     me.openCode = []
                 }
             },
-            selectedTestFile(option){
-                this.openSelectTestFileDialog = false
-                if(option){
-                    this.openGitActionDialog = true
-                    this.gitActionDialogRenderKey++;
-                }
+            startImplWithAI(selectedTestFile){
+                this.selectedTestFile = selectedTestFile
+                this.openGitActionDialog = true
+                this.gitActionDialogRenderKey++;
             },
-            openActionDialog(item){
+            getTestFileList(){
                 var me = this
-                me.openCode[0] = item
-                if(me.openCode[0].children){
-                    if(me.rootModelAndElementMap.modelForElements.BoundedContext.find(x => x.name == me.openCode[0].name)){
-                        me.testFile = null
+                me.isRootFolder = false;
+                if(me.rootModelAndElementMap.modelForElements.BoundedContext.find(x => x.name == me.openCode[0].name)){
+                    if(this.projectInformation && this.projectInformation.firstCommit == 'false'){
+                        me.isRootFolder = true;
+                        me.selectedTestFile = null
                         me.testFileList = []
                         let collectedCodes = me.getSelectedFilesDeeply(me.openCode, {keyword: "si"})
-                        if(me.testFileList && me.testFileList.length > 0){
-                            if(me.testFileList.length == 1){
-                                me.testFile = me.testFileList[0]
-                                me.openGitActionDialog = true
-                                me.gitActionDialogRenderKey++;
-                            } else {
-                                me.openSelectTestFileDialog = true
-                            }
-                        } else {
-                            alert("Test file not found")
-                        }
-                    }
+                    } 
                 }
             },
             editBreakPoint(debuggerPoint){
@@ -7345,7 +7294,7 @@ jobs:
                     }
                 })
             },
-
+            
             convertNameForElement(item){
                 item.namePascalCase = changeCase.pascalCase(item.name)
                 item.nameCamelCase = changeCase.camelCase(item.name)
@@ -7485,10 +7434,10 @@ jobs:
                         };
 
                         Promise.all([me.generateBaseTemplate(templateContext), me.generateTemplate(templateContext)])
-                            .then(async function () {
-                                await me.generateToppingTemplate(templateContext)
-                                resolve()
-                            });
+                        .then(async function () {
+                            await me.generateToppingTemplate(templateContext)
+                            resolve()
+                        });
 
                     } catch (e) {
                         // me.isListSettingDone = true
@@ -7577,7 +7526,7 @@ jobs:
                                 if((localStorage.getItem("loginType") && localStorage.getItem("loginType") == "github") || me.gitAccessToken) {
                                     // var loadTemplate = localStorage.getItem(me.selectedBaseTemplate)
                                     // var loadTemplate = me.templateFrameWorkList[basePlatform]
-
+                                    
                                     var platformFullName = basePlatform
                                     if(!platformFullName.includes("http")){
                                         platformFullName = await me.gitAPI.getTemplateURL(basePlatform)
@@ -7802,7 +7751,7 @@ jobs:
                                     // 아래 데이터는 npm 빌드때 파일시스템 tree 탐색을 통해 자동으로 생성하거나 일일이 작업해줘야 한다.
                                     manifestTemplate = me.$manifestsPerToppings[template] ? me.$manifestsPerToppings[template] : [];
                                 }
-
+                                
                                 var manifestTemplateLastIndex = manifestTemplate.length - 1
 
                                 if( manifestTemplateLastIndex == -1 ){
@@ -8012,9 +7961,9 @@ jobs:
                         // temp fix
                         if( splitDivision.length > 1 &&
                             ( optionsCheck.includes('ifDuplicated:')
-                                || optionsCheck.includes('representativeFor:')
-                                || optionsCheck.includes('priority:')
-                                || optionsCheck.includes('except:')
+                            || optionsCheck.includes('representativeFor:')
+                            || optionsCheck.includes('priority:')
+                            || optionsCheck.includes('except:')
                             )
                         ){  test = optionsCheck.concat(test) }
                         test = test.concat('\n---\n')
@@ -8108,10 +8057,10 @@ jobs:
                                         templateProcessContext.options = JSON.parse(JSON.stringify(me.isExistConfTemplate('BASE', basePlatform) ? basePlatformConf[basePlatform] : templateProcessContext.options))
                                     }
                                 } else if( modelElement.boundedContext
-                                    && modelElement.boundedContext.preferredPlatform
-                                    && modelElement.boundedContext.preferredPlatformConf
-                                    && modelElement.boundedContext.preferredPlatformConf[modelElement.boundedContext.preferredPlatform]
-                                    && me.isExistConfTemplate('TEMPLATE', modelElement.boundedContext.preferredPlatform) ){
+                                        && modelElement.boundedContext.preferredPlatform
+                                        && modelElement.boundedContext.preferredPlatformConf
+                                        && modelElement.boundedContext.preferredPlatformConf[modelElement.boundedContext.preferredPlatform]
+                                        && me.isExistConfTemplate('TEMPLATE', modelElement.boundedContext.preferredPlatform) ){
                                     // setting of Configuration
                                     templateProcessContext.options = JSON.parse(JSON.stringify(modelElement.boundedContext.preferredPlatformConf[modelElement.boundedContext.preferredPlatform]));
                                 } else { // setting of base
@@ -8150,9 +8099,9 @@ jobs:
 
                 var isEditTemplate = false
                 if( me.editTemplateFrameWorkList[template] && me.editTemplateFrameWorkList[template][frameWorkelement] ){
-                    isEditTemplate = true
+                    isEditTemplate = true 
                     frameWork = me.editTemplateFrameWorkList[template][frameWorkelement].code
-
+                    
                     if(me.editTemplateFrameWorkList[template][frameWorkelement].code.includes("---")){
                         content = me.editTemplateFrameWorkList[template][frameWorkelement].code
                     } else {
@@ -8234,11 +8183,11 @@ jobs:
 
                     }
                     // try{
-
+                    
                     var compileTemplate = window.$HandleBars.compile(content);
                     gen = compileTemplate(ele);
 
-
+                    
                     if(processContext.element.includes('for-model/kubernetes/docs')){
                         compileTemplate = window.$HandleBars.compile(gen);
                         gen = compileTemplate(ele);
@@ -8550,7 +8499,7 @@ jobs:
                         if(me.openCode && me.openCode[0]){
                             if(me.openCode[0].path == codeObj.fullPath || me.openCode[0].fullPath == codeObj.fullPath || (me.openCode[0].template == codeObj.template && me.openCode[0].templatePath == codeObj.templatePath)){
                                 me.openCode[0].code = codeObj.code
-                            }
+                            } 
                             // else {
                             //     if(!me.opennedTemplateFramework[0].templateErrMsg){
                             //         var platform = me.getPlatformPath()
@@ -8560,7 +8509,7 @@ jobs:
                             //         }
                             //     }
                             // }
-                        }
+                        } 
 
 
                         var fileNameCheckArray = content.split("---");
@@ -8645,13 +8594,13 @@ jobs:
                             if(me.editTemplateFrameWorkList[template][frameWorkelement].isEditted == true){
                                 me.editTemplateFrameWorkList[template][frameWorkelement].isFixed = true
                                 me.editTemplateFrameWorkList[template][frameWorkelement].isEditted = false
-                            }
+                            } 
                         }
                     }
 
                     if(!(me.openCode && me.openCode[0]) && me.opennedTemplateFramework && me.opennedTemplateFramework[0]){
                         if(me.opennedTemplateFramework[0].templatePath == codeObj.templatePath || me.opennedTemplateFramework[0].path == codeObj.templatePath){
-                            me.opennedTemplateFramework[0].templateErrMsg = null
+                            me.opennedTemplateFramework[0].templateErrMsg = null 
                             me.setTemplateResult(codeObj.templatePath)
                         }
                     }
@@ -8697,14 +8646,14 @@ jobs:
                     }
 
                     me.$set(me.editTemplateFrameWorkList[template], filePath, elementObj);
-
+                    
                     if(fullPath){
                         if(!me.errTempResultList[template]){
                             me.errTempResultList[template] = {}
-                        }
+                        } 
                         if(!me.errTempResultList[template][filePath]){
                             me.errTempResultList[template][filePath] = {}
-                        }
+                        } 
                         me.errTempResultList[template][filePath][fullPath] = e.message
                         console.log(fullPath, e.message)
                     }

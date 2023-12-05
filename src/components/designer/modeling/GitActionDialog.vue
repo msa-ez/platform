@@ -80,6 +80,14 @@
                         <div v-if="result.solution">
                             <!-- <v-card-title>Reason for modifying the code: </v-card-title> -->
                             <v-card-text>
+                                <v-avatar>
+                                    <img
+                                        size="56"
+                                        tile
+                                        src="https://github.com/msa-ez/platform/assets/65217813/82d84773-329e-4210-84c0-83d80a7d61ab"
+                                        alt="MSAEZ"
+                                    >
+                                </v-avatar>
                                 <b>Solution: {{ result.solution }}</b>
                             </v-card-text>
                         </div>
@@ -92,6 +100,15 @@
                                         </div>
                                     </v-expansion-panel-header>
                                     <v-expansion-panel-content>
+                                        <!-- <code-viewer
+                                            v-if="isSolutionCreating && lastIndex == resIdx"
+                                            class="gs-git-action-code-viewer"
+                                            v-model="changes.originFile"
+                                            :editMode="true"
+                                            :readOnly="true"
+                                            :isGitActionDialog="true"
+                                            style="padding: 0 !important;"
+                                        ></code-viewer> -->
                                         <code-viewer
                                             class="gs-git-action-code-viewer"
                                             :type="'diff'"
@@ -110,6 +127,14 @@
 
                         <div v-if="result.errorLog" style="margin-top: 10px; margin-bottom: 10px;">
                             <div style="font-weight: bolder; font-size: .875rem;">
+                                <v-avatar>
+                                    <img
+                                        size="56"
+                                        tile
+                                        src="https://github.com/msa-ez/platform/assets/65217813/a33fc1b6-6fc3-422a-8ae6-75d0248855d5"
+                                        alt="Compiler"
+                                    >
+                                </v-avatar>
                                 The following error occurred during testing
                             </div>
                             <v-expansion-panels>
@@ -153,6 +178,7 @@
                                 <v-tooltip v-if="!isFirstCommit" bottom>
                                     <template v-slot:activator="{ on }">
                                         <v-btn
+                                            :disabled="!gitActionPath"
                                             v-on="on"
                                             @click="jumpToActions()" 
                                             style="margin-left: -3px;" 
@@ -231,6 +257,7 @@
         },
         data() {
             return {
+                gitActionPath: null,
                 dialogRenderKey: 0,
                 lastIndex: 0,
                 selectedIdx: null,
@@ -282,6 +309,9 @@
             me.copySelectedCodeList = JSON.parse(JSON.stringify(me.selectedCodeList))
             me.generate();
 
+            me.$EventBus.$on('setActionId', function (path) {
+                me.gitActionPath = path
+            })
             me.$EventBus.$on('getActionLogs', function (log) {
                 if(log === "All tests succeeded"){
                     me.startGitAction = false
@@ -303,7 +333,7 @@
         },
         methods: {
             jumpToActions(){
-                this.$emit("jumpToActions")
+                if(this.gitActionPath) window.open(this.gitActionPath, "_blank")
             },
             stop(){
                 this.startGitAction = false
@@ -343,6 +373,7 @@
             },
             commitToGit(){
                 var me = this
+                me.gitActionPath = null
                 me.startGitAction = true
                 me.isFirstCommit = false
                 me.codeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
