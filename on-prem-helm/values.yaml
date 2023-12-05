@@ -1,8 +1,8 @@
 replicaCount: 1
 image:
   repository: ghcr.io/msa-ez # Image Registry
-  eventstorming: evenstorming:v0.0.2 # Eventstorming-tool Image URL
-  acebase: acebase:v1.0.1 # Acebase Image URL
+  eventstorming: platform:v1.0.8 # Eventstorming-tool Image URL
+  acebase: acebase:v1.0.8 # Acebase Image URL
 
 provider: github # github or gitlab
 

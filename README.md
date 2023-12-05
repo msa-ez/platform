@@ -106,6 +106,16 @@ docker compose up -d
 ![Pasted image 20231110122407](https://github.com/msa-ez/platform/assets/16382067/d6657e15-fd76-4404-a71c-65673f8f3ebd)
 5. ID & Secret issued after the registration of Application is necessary for MSAez Install, so save them. Application. 
 
+### Register Github OAuth Application
+1. Login to Github
+2. Settings -> Developer settings -> OAuth Apps -> New OAuth App
+![image](https://github.com/msa-ez/platform/assets/16382067/bfe19316-3b31-4573-b83f-e0e651b11ee0)
+3. Set Application Info
+    - Application Name: ${Application Name} * Required
+    - Homepage URL: Platform URL ex) https://platform.uengine.org * Required
+    - Application Description: Description
+    - Authorization callback URL: ${Acebase DB URL}/oauth2/mydb/signin ex) http://acebase.uengine.org/oauth2/mydb/signin
+
 ### Install MSAez
 
 1. Installation of MSAez is running in on-prem-helm folder within the source code of \[MSAez SourceCode]\([https://github.com/msa-ez/platform](https://github.com/msa-ez/platform)). 
