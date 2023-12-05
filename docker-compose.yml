@@ -1,7 +1,7 @@
 version: '2'
 services:
   msaez:
-    image: ghcr.io/msa-ez/platform:v1.0.7 # MSAez Docker Image
+    image: ghcr.io/msa-ez/platform:v1.0.8 # MSAez Docker Image
     ports:
       - 8080:8080
     environment:
@@ -11,8 +11,9 @@ services:
       VUE_APP_MODE: onprem # MODE onprem or dev
       VUE_APP_DB_HTTPS: true # MODE onprem or dev
       VUE_APP_GITLAB: # Gitlab URL
+      VUE_APP_GIT: github # Gitlab URL
   acebase :
-    image: ghcr.io/msa-ez/acebase:v1.0.7 # Acebase Docker Image
+    image: ghcr.io/msa-ez/acebase:v1.0.8 # Acebase Docker Image
     container_name: acebase
     ports:
       - 5757:5757
@@ -25,5 +26,5 @@ services:
       DB_HTTPS: true
       CLIENT_ID: # Application Key
       CLIENT_SECRET: # Application Secrets
-      PROVIDER: "github"
+      PROVIDER: github
       GITLAB: "" # Gitlab URL
