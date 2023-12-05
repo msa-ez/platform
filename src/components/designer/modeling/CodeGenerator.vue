@@ -2634,7 +2634,7 @@
         created:function () {
             let canvas = getParent(this.$parent, this.canvasName);
             let git;
-            if(window.MODE == "onprem") {
+            if(window.PROVIDER == "gitlab") {
                 git = new Gitlab();
             } else {
                 git = new Github();
