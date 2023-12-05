@@ -54,7 +54,7 @@ docker push registry/image-name:image-tag
 version: '2'
 services:
    msaez:
-    image: ghcr.io/msa-ez/platform:v1.0.0 # MSAez Docker Image
+    image: ghcr.io/msa-ez/platform:v1.0.7 # MSAez Docker Image
     ports:
       - 8080:8080
     environment:
@@ -64,10 +64,8 @@ services:
       VUE_APP_MODE: onprem # MODE onprem or dev
       VUE_APP_HTTPS: true # MODE onprem or dev
       VUE_APP_GITLAB: # Gitlab URL
-      VUE_APP_OAUTH_ID: # Gitlab Application ID
-      VUE_APP_OAUTH_SECRET: # Gitlab Application Secret
   acebase :
-    image: ghcr.io/msa-ez/acebase:v1.0.0 # Acebase Docker Image
+    image: ghcr.io/msa-ez/acebase:v1.0.7 # Acebase Docker Image
     container_name: acebase
     ports:
       - 5757:5757
@@ -77,6 +75,11 @@ services:
       DB_HOST: 5757-msaez-platform-kp3ioeesr8g.ws-us106.gitpod.io # DB Host Name
       DB_NAME: mydb
       DB_PORT: 80
+      DB_HTTPS: true
+      CLIENT_ID: # Application Key
+      CLIENT_SECRET: # Application Secrets
+      PROVIDER: "github"
+      GITLAB: "" # Gitlab URL
 ```
 
 5. Run Docker Compose
@@ -119,17 +122,21 @@ $ git clone https://github.com/msa-ez/platform.git
 # /on-prem-helm/values.yaml
 replicaCount: 1
 image:
-   repository: asia-northeast3-docker.pkg.dev/eventstorming-tool/eventstorming # Image repository URL
-  eventstorming: evenstorming:v49 # Eventstorming-tool Image URL
-  acebase: acebase:v33 # Acebase Image URL
+  repository: ghcr.io/msa-ez # Image Registry
+  eventstorming: evenstorming:v1.0.7 # Eventstorming-tool Image URL
+  acebase: acebase:v1.0.7 # Acebase Image URL
+
+provider: github # github or gitlab
 
 gitlab: 
 	url: gitlab.handymes.com # Gitlab URL
-	oauth: 
-		id: # Gitlab Application OAUTH ID
-		secret: # Gitlab Application OAUTH Secrets
+
+oauth: 
+  id: "" # Gitlab Application OAUTH ID
+  secret: "" # Gitlab Application OAUTH Secrets
 
 db:
+  https: true
   host: acebase.handymes.com # DB URL
   port: 443 # fixed
   name: mydb # fixed
