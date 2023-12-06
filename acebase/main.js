@@ -14,9 +14,9 @@ const gitlab = process.env.GITLAB ? process.env.GITLAB : null; // DB PORT
 const server = new AceBaseServer(dbname, {
     host: "0.0.0.0",
     port: 5757,
-    storage: {
-        path: "/acebase"
-    },
+    // storage: {
+    //     path: "/acebase"
+    // },
     authentication: {
         enabled: true,
         allowUserSignup: true,
