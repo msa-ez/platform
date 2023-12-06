@@ -15,7 +15,7 @@ class OpenAPIToPBC {
         let yaml = value;
         if(value.startsWith('https://') || value.startsWith('http://') ){
             this.git = null;
-            if(window.MODE == "onprem") {
+            if(window.PROVIDER == "gitlab") {
                 this.git = new Gitlab();
             } else {
                 this.git = new Github();

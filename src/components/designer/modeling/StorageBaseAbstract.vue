@@ -445,7 +445,7 @@
             },
             async getUserPurchaseLists() {
                 var me = this
-                if (me.isLogin) {
+                if (me.isLogin && (window.MODE != "bpm" || window.MODE != "onprem")) {
                     try {
                         var convertEmail = me.userInfo.email.replace(/\./gi, '_')
                         var version = 0

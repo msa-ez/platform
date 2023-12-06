@@ -237,18 +237,6 @@ class GitAPI {
             })
         })
     }
-    getUserInfo() {
-        let me = this;
-        return new Promise(async function(resolve,reject) {
-            const result = await me._git.getUserInfo()
-            .then((res) => {
-                resolve(res)
-            })
-            .catch((e) => {
-                reject(e)
-            })
-        })
-    }
     getUrl(org, repo) {
         return this._git.getUrl(org, repo)
     }
@@ -300,15 +288,39 @@ class GitAPI {
             })
         })
     }
+    pushFile(org, repo, data) {
+        let me = this;
+        return new Promise(async function (resolve, reject) {
+            await me._git.pushFile(org, repo, data)
+            .then((res) => {
+                resolve(res)
+            })
+            .catch((e) => {
+                reject(e)
+            })
+        })
+    }
 
     startCommitTemplate() {
         
     }
 
-    getActionLogs(org, repo) {
+    getActionId(org, repo) {
         let me = this;
         return new Promise(async function (resolve, reject) {
-            await me._git.getActionLogs(org, repo)
+            await me._git.getActionId(org, repo)
+            .then((res) => {
+                resolve(res)
+            })
+            .catch((e) => {
+                reject(e)
+            })
+        })
+    }
+    getActionLogs(org, repo, id) {
+        let me = this;
+        return new Promise(async function (resolve, reject) {
+            await me._git.getActionLogs(org, repo, id)
             .then((res) => {
                 resolve(res)
             })

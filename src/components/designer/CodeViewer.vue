@@ -130,6 +130,39 @@
                                         @keydown.enter="removeDuplicateChatPrompt"
                                     ></v-text-field>                                     
                                 </div>
+                                <div v-if="isRootFolder">
+                                    <v-row no-gutters style="margin-top: 15px; margin-bottom: 15px; text-align: center;">
+                                        <v-col cols="12">
+                                            <b style="font-size: large;">or</b>
+                                        </v-col>
+                                    </v-row>
+                                    <v-card class="mx-auto">
+                                        <v-card-title>Implement by AI</v-card-title>
+                                        <v-card-text>
+                                            <v-autocomplete
+                                                label="Choose the test to implement"
+                                                @click="checkTopping()"
+                                                @change="changedTestFile()"
+                                                v-model="selectedTestFile"
+                                                item-text="name"
+                                                :items="testFileList"
+                                                :error="!isExistRules"
+                                                :error-messages="errorMsg"
+                                                clearable
+                                                return-object
+                                                dense
+                                            ></v-autocomplete>
+                                        </v-card-text>
+                                        <v-card-actions>
+                                            <div style="font-size: small;">
+                                                <v-icon small style="margin-right: 5px;">mdi-help-circle-outline</v-icon>
+                                                <a href="https://beta.openai.com/account/api-keys" target="_blank">how to create test or example</a>
+                                            </div>
+                                            <v-spacer />
+                                            <v-btn :disabled="!selectedTestFile || !isExistRules" color="primary" @click="startImplWithAI()">implement</v-btn>
+                                        </v-card-actions>
+                                    </v-card>
+                                </div>
                             </v-card>
                         </v-row>
                     </v-col>
@@ -156,6 +189,8 @@
     export default {
         name: 'code-viewer',
         props: {
+            testFileList: Array,
+            isRootFolder: Boolean,
             isGitActionDialog: Boolean,
             codeSuggestionObj: Object,
             readOnly: Boolean,
@@ -179,6 +214,9 @@
         },
         data() {
             return {
+                isExistRules: false,
+                errormsg: null,
+                selectedTestFile: null,
                 currentRange: null,
                 oldPrompt: null,
                 generator: null,
@@ -428,6 +466,31 @@
             });
         },
         methods: {
+            changedTestFile(){
+                if(this.selectedTestFile.code.includes("test0")){
+                    this.isExistRules = true
+                    this.errorMsg = null
+                } else {
+                    this.isExistRules = false
+                    this.errorMsg = 'The test function does not exist in the selected test file. To add a test function, add example'
+                }
+
+            },
+            checkTopping(){
+                let codeGenerator = getParent(this.$parent, "code-generator")
+                if(!codeGenerator.toppingPlatforms.find(x => x == "https://github.com/msa-ez/topping-unit-test")){
+                    codeGenerator.toppingPlatforms.push("https://github.com/msa-ez/topping-unit-test")
+                    codeGenerator.settingPlatform('TOPPING', codeGenerator.toppingPlatforms);
+                    codeGenerator.refreshCallGenerate();
+                } else {
+                    if(this.testFileList.length == 0){
+                        codeGenerator.onSelected(this.value)
+                    }
+                }
+            },
+            startImplWithAI(){
+                this.$emit("startImplWithAI", this.selectedTestFile)
+            },
             scrollToBottom() {
                 const scrollText = document.getElementById('scroll-text');
                 if (scrollText) {
