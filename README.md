@@ -24,67 +24,12 @@ npm run serve
 ### Q1. What is Docker Compose? A management tool that provides a work environment where multiple containers can be defined as one service on a single server and managed as a bundle. 
 ### Q2. Why do we use Docker Compose? When multiple containers operate as one application, it operates by reading files that define their options and environment to create containers sequentially. It is good to use Docker Compose as the number of containers increases and the options to be defined increase.
 
-1. Build a project with Npm.
+### Start Docker Compose
 
 ```sh
-npm run build
-```
-
-2. Push an image of MSAez to Docker server. 
-
-```sh
-# Project Root
-# registry-name, image-name and image-tag must be customed personally.
-docker build -t registry/image-name:image-tag . # Same concept as 'tag numbering'.
-docker push registry/image-name:image-tag # Same concept as 'tags push'.
-```
-
-3. Push an image of Acebase to Docker server. 
-
-```sh
-# Project Root
-cd acebase
-docker build -t registry/image-name:image-tag . 
-docker push registry/image-name:image-tag 
-```
-
-4. Edit Docker Compose File.
-
-```yaml
-version: '2'
-services:
-   msaez:
-    image: ghcr.io/msa-ez/platform:v1.0.7 # MSAez Docker Image
-    ports:
-      - 8080:8080
-    environment:
-      VUE_APP_DB_HOST: 5757-msaez-platform-kp3ioeesr8g.ws-us106.gitpod.io # DB Host Name
-      VUE_APP_DB_PORT: 5757 # DB Port
-      VUE_APP_DB_NAME: mydb # DB NAME
-      VUE_APP_MODE: onprem # MODE onprem or dev
-      VUE_APP_HTTPS: true # MODE onprem or dev
-      VUE_APP_GITLAB: # Gitlab URL
-  acebase :
-    image: ghcr.io/msa-ez/acebase:v1.0.7 # Acebase Docker Image
-    container_name: acebase
-    ports:
-      - 5757:5757
-    volumes:
-      - ~/mydb.acebase:/acebase
-    environment:
-      DB_HOST: 5757-msaez-platform-kp3ioeesr8g.ws-us106.gitpod.io # DB Host Name
-      DB_NAME: mydb
-      DB_PORT: 80
-      DB_HTTPS: true
-      CLIENT_ID: # Application Key
-      CLIENT_SECRET: # Application Secrets
-      PROVIDER: "github"
-      GITLAB: "" # Gitlab URL
-```
-
-5. Run Docker Compose
-
-```sh
+DB_HOST={{ DB URL }} \
+CLIENT_ID= {{ OAuth Client ID }} \
+CLIENT_SECRET={{ OAuth Client Secret }} \
 docker compose up -d
 ```
 
@@ -115,8 +60,6 @@ docker compose up -d
     - Homepage URL: Platform URL ex) https://platform.uengine.org * Required
     - Application Description: Description
     - Authorization callback URL: ${Acebase DB URL}/oauth2/mydb/signin ex) http://acebase.uengine.org/oauth2/mydb/signin
-
-### Ingress Setting
 
 ### Install MSAez
 
