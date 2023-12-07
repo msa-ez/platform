@@ -6,7 +6,7 @@
             <div style="display: flex; max-height: 100%;">
                 <div style="width: 400px; height: 88vh; overflow-y: scroll;">
                     <v-card-title style="margin-top: -10px; margin-bottom: -15px;">
-                        Git Action Test Result
+                        Thought
                     </v-card-title>
 
                     <div style="height: 330px;" :key="dialogRenderKey">
@@ -79,19 +79,20 @@
                     <div v-for="(result, resIdx) in siTestResults" :key="resIdx">
                         <div v-if="result.solution">
                             <!-- <v-card-title>Reason for modifying the code: </v-card-title> -->
-                            <v-card-text>
-                                <v-avatar>
+                            <v-card-text style="margin-left: -15px;">
+                                <v-avatar
+                                    size="35"
+                                    rounded
+                                >
                                     <img
-                                        size="56"
-                                        tile
-                                        src="https://github.com/msa-ez/platform/assets/65217813/82d84773-329e-4210-84c0-83d80a7d61ab"
+                                        src="https://github.com/msa-ez/platform/assets/65217813/3d305118-565b-4ce7-a8b6-e6ca5d6eef49"
                                         alt="MSAEZ"
                                     >
                                 </v-avatar>
-                                <b>Solution: {{ result.solution }}</b>
+                                <b style="margin-left: 9px;">{{ result.solution }} <span>{{ systemMsg }}</span></b>
                             </v-card-text>
                         </div>
-                        <div v-for="(changes, changesIdx) in result.codeChanges" :key="changesIdx">
+                        <div v-for="(changes, changesIdx) in result.codeChanges" :key="changesIdx" style="margin-left: 40px; margin-right: 40px;">
                             <v-expansion-panels v-model="changes.expansionValue">
                                 <v-expansion-panel>
                                     <v-expansion-panel-header :id="resIdx + '_' + changesIdx">
@@ -100,16 +101,18 @@
                                         </div>
                                     </v-expansion-panel-header>
                                     <v-expansion-panel-content>
-                                        <!-- <code-viewer
-                                            v-if="isSolutionCreating && lastIndex == resIdx"
-                                            class="gs-git-action-code-viewer"
-                                            v-model="changes.originFile"
-                                            :editMode="true"
-                                            :readOnly="true"
-                                            :isGitActionDialog="true"
-                                            style="padding: 0 !important;"
-                                        ></code-viewer> -->
+                                        <div v-if="lastSolutionIdx && lastSolutionIdx == resIdx + '_' + changesIdx" :key="codeViewerRenderKey">
+                                            <code-viewer
+                                                class="gs-git-action-code-viewer"
+                                                v-model="changes.originFile"
+                                                :editMode="true"
+                                                :readOnly="false"
+                                                :isGitActionDialog="true"
+                                                style="padding: 0 !important;"
+                                            ></code-viewer>
+                                        </div>
                                         <code-viewer
+                                            v-else
                                             class="gs-git-action-code-viewer"
                                             :type="'diff'"
                                             :create-value="changes.originFile"
@@ -125,19 +128,37 @@
                             </v-expansion-panels>
                         </div>
 
-                        <div v-if="result.errorLog" style="margin-top: 10px; margin-bottom: 10px;">
-                            <div style="font-weight: bolder; font-size: .875rem;">
-                                <v-avatar>
+                        <div v-if="result.userMessage">
+                            <div style="font-weight: bolder; font-size: .875rem; margin-top: 30px; margin-bottom: 25px;">
+                                <v-avatar 
+                                    size="35"
+                                    rounded
+                                    style="margin-right: 5px;"
+                                >
                                     <img
-                                        size="56"
-                                        tile
+                                        :src="userImg"
+                                        alt="User"
+                                    >
+                                </v-avatar>
+                                {{ result.userMessage }}
+                            </div>
+                        </div>
+
+                        <div v-if="result.errorLog" style="margin-top: 25px; margin-bottom: 10px;">
+                            <div style="font-weight: bolder; font-size: .875rem;">
+                                <v-avatar 
+                                    size="35"
+                                    rounded 
+                                    style="margin-right: 5px;"
+                                >
+                                    <img
                                         src="https://github.com/msa-ez/platform/assets/65217813/a33fc1b6-6fc3-422a-8ae6-75d0248855d5"
                                         alt="Compiler"
                                     >
                                 </v-avatar>
                                 The following error occurred during testing
                             </div>
-                            <v-expansion-panels>
+                            <v-expansion-panels style="margin-left: 40px; width: 94.4%;">
                                 <v-expansion-panel>
                                     <v-expansion-panel-header style="color: red; display: table-row; background-color: #fee2e3;">
                                         <div v-for="(err, idx) in result.errorLog" :key="idx" style="display: table-row; font-weight: bolder; font-size: .875rem; margin-bottom: 5px;">
@@ -151,21 +172,38 @@
                             </v-expansion-panels>
                         </div>
 
-                        <v-divider></v-divider>
+                        <!-- <v-divider></v-divider> -->
                     </div>
-                    <div v-if="!allTestSucceeded" style="float: right; margin-top: 10px;">
-                        <div v-if="!startGitAction">
-                            <v-btn @click="regenerate()" 
-                                style="margin-right: 10px;">
-                                Regenerate
-                            </v-btn>
-                            <v-btn @click="commitToGit()" 
-                                style="margin-right: 10px;" color="primary">
-                                Push
-                            </v-btn>
+                    <div v-if="!allTestSucceeded">
+                        <div style="float: right; margin-top: 10px;">
+                            <div v-if="!startGitAction">
+                                <v-btn @click="regenerate()" 
+                                    style="margin-right: 10px;">
+                                    Think again
+                                </v-btn>
+                                <v-btn @click="commitToGit()" 
+                                    style="margin-right: 10px;" color="primary">
+                                    Go ahead
+                                </v-btn>
+                            </div>
+                            <div v-else>
+                                <v-btn :loading="!isSolutionCreating" :disabled="!isSolutionCreating" @click="stop()" style="margin-right: 10px; position: relative; float: right;">
+                                    <v-icon style="margin-right: 10px;">mdi-spin mdi-loading</v-icon>
+                                    Stop generating
+                                </v-btn>
+                            </div>
                         </div>
-                        <div v-else>
-                            <div style="margin-bottom: 5px;">
+                        <v-row v-if="startGitAction" style="margin-top: 10px;">
+                            <v-avatar
+                                size="35"
+                                rounded
+                            >
+                                <img
+                                    src="https://github.com/msa-ez/platform/assets/65217813/3d305118-565b-4ce7-a8b6-e6ca5d6eef49"
+                                    alt="MSAEZ"
+                                >
+                            </v-avatar>
+                            <div style="margin-left: 5px;">
                                 <b v-if="isFirstCommit">
                                     Generating the business logic to pass the test ... 
                                 </b>
@@ -173,7 +211,7 @@
                                     Generating a code fix for the file in error ...
                                 </b>
                                 <b v-else>
-                                    Mvn testing is in progress ... 
+                                    Code push and test in progress ... 
                                 </b>
                                 <v-tooltip v-if="!isFirstCommit" bottom>
                                     <template v-slot:activator="{ on }">
@@ -190,11 +228,7 @@
                                     <span>Show github actions</span>
                                 </v-tooltip>
                             </div>
-                            <v-btn :loading="!isSolutionCreating" :disabled="!isSolutionCreating" @click="stop()" style="margin-right: 10px; position: relative; float: right;">
-                                <v-icon style="margin-right: 10px;">mdi-spin mdi-loading</v-icon>
-                                Stop generating
-                            </v-btn>
-                        </div>
+                        </v-row>
                     </div>
                     <div v-else>
                         <v-card>
@@ -257,9 +291,15 @@
         },
         data() {
             return {
+                userImg: null,
+                systemMsg: null,
                 gitActionPath: null,
                 dialogRenderKey: 0,
                 lastIndex: 0,
+                codeViewerRenderKey: 0,
+                lastSolutionIdx: null,
+                solutionNumber: 0,
+                codeChangeNumber: 0,
                 selectedIdx: null,
                 resultLength: 0,
                 isFirstCommit: true,
@@ -330,6 +370,15 @@
                     me.generator.generate();
                 }
             })
+
+            if (window.countryCode == 'ko') {
+                me.systemMsg = '다음과 같이 코드를 수정해도 되겠습니까 ?'
+            } else {
+                me.systemMsg = 'Can I modify the code as follows ?'
+            }
+            if(localStorage.getItem("picture")){
+                me.userImg = localStorage.getItem("picture")
+            }
         },
         methods: {
             jumpToActions(){
@@ -376,6 +425,7 @@
                 me.gitActionPath = null
                 me.startGitAction = true
                 me.isFirstCommit = false
+                me.siTestResults[me.lastIndex].userMessage = "Go ahead"
                 me.codeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
                 me.$emit("startCommitWithSigpt", me.updateList)
             },
@@ -396,7 +446,7 @@
                         me.updateList = model
                         me.updateList.forEach((solution, solutionIdx) => {
                             if(solution && solution.codeChanges){
-                                solution.codeChanges.forEach(function (changes){
+                                solution.codeChanges.forEach(function (changes, changesIdx){
                                     changes.originFile = JSON.parse(JSON.stringify(dumyFile))
                                     changes.originFile[0].code = me.codeList[changes.fileName]
                                     changes.modifiedFile = JSON.parse(JSON.stringify(dumyFile))
@@ -411,6 +461,22 @@
                                 // me.onSelected(me.lastIndex + 1, 0)
                             }
                         });
+
+                        if(!me.lastSolutionIdx 
+                        || me.solutionNumber < me.updateList.lastIndex 
+                        || (me.updateList[me.solutionNumber] && me.updateList[me.solutionNumber].codeChanges && me.codeChangeNumber < me.updateList[me.solutionNumber].codeChanges.lastIndex))
+                        {
+                            if(me.solutionNumber < me.updateList.lastIndex){
+                                me.codeChangeNumber = 0
+                                me.solutionNumber = me.updateList.lastIndex
+                            } else {
+                                if(me.updateList[me.solutionNumber] && me.updateList[me.solutionNumber].codeChanges){
+                                    me.codeChangeNumber = me.updateList[me.solutionNumber].codeChanges.lastIndex
+                                }
+                            }
+                            me.lastSolutionIdx = me.resultLength + me.solutionNumber + '_' + me.codeChangeNumber 
+                            me.codeViewerRenderKey++;
+                        }
                     }
                     
                     if(option == 'onGenerationFinished'){
@@ -443,10 +509,14 @@
                             me.siTestResults[me.lastIndex].fullErrorLog = me.fullErrorLog
                             me.fullErrorLog = null
                             me.generate()
-                        } else {                    
+                        } else {    
+                            me.lastSolutionIdx = null
+                            me.codeChangeNumber = 0                
+                            me.solutionNumber = 0                
                             me.lastIndex = me.siTestResults.lastIndex
                             me.resultLength = me.siTestResults.length
                             me.generatedErrorDetails = null
+                            me.codeViewerRenderKey++;
                         }
                     } else {
                         me.dialogRenderKey++;

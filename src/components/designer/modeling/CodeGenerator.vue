@@ -1579,7 +1579,7 @@
             value: Object,
             isOwnModel: Boolean,
             projectName: String,
-            projectInformation :Object,
+            projectInformation: Object,
             selectedElements: Array,
             modelInitLoad: Boolean,
             modelingProjectId: String,
@@ -2608,7 +2608,7 @@
         created:function () {
             let canvas = getParent(this.$parent, this.canvasName);
             let git;
-            if(window.PROVIDER == "gitlab") {
+            if(window.MODE == "onprem") {
                 git = new Gitlab();
             } else {
                 git = new Github();
@@ -4096,15 +4096,13 @@ jobs:
                         // }
                         if (!set.has(item.code)) {
                             codeBag.push("# "+ item.name + ": \n" + item.code);
-                            if(option){
-                                if(option.keyword == "si" && item.name.includes("Test.java") && item.template === "https://github.com/msa-ez/topping-unit-test"){
-                                    me.testFileList.push(item)
-                                }
-                                if(option.keyword == "si"){
-                                    me.selectedCodeList[item.name] = item.code
-                                } else {
-                                    set.add(item.code);
-                                }
+                            if(option.keyword == "si" && item.name.includes("Test.java") && item.template === "https://github.com/msa-ez/topping-unit-test"){
+                                me.testFileList.push(item)
+                            }
+                            if(option.keyword == "si"){
+                                me.selectedCodeList[item.name] = item.code
+                            } else {
+                                set.add(item.code);
                             }
                         }
                         //me.$refs.codeViewer.$refs.collectedCodes = me.gptCodes   /// Very BAD
@@ -6916,12 +6914,12 @@ jobs:
                 var me = this
                 me.isRootFolder = false;
                 if(me.rootModelAndElementMap.modelForElements.BoundedContext.find(x => x.name == me.openCode[0].name)){
-                    if(this.projectInformation && this.projectInformation.firstCommit == 'false'){
+                    // if(this.projectInformation && this.projectInformation.firstCommit == 'false'){
                         me.isRootFolder = true;
                         me.selectedTestFile = null
                         me.testFileList = []
                         let collectedCodes = me.getSelectedFilesDeeply(me.openCode, {keyword: "si"})
-                    } 
+                    // } 
                 }
             },
             editBreakPoint(debuggerPoint){
