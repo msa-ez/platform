@@ -46,7 +46,7 @@
                     >
                         <img width="40px"
                                 alt="Google sign-in"
-                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png"/>
+                                src="https://github.com/msa-ez/platform/assets/123912988/d2fd58a7-a2b1-4c62-9a2b-da3ef839e7eb"/>
                         <div>Google</div>
                     </v-btn>
                     <!-- <v-btn @click="snsLogin('keycloak-oidc')"
