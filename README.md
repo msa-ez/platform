@@ -10,15 +10,12 @@ Chat-GPT Auto Software Modeling (Event Storming and UML)
 
 <img width="500" alt="image" src="https://intro.msaez.io/assets/static/gptgif3.bd6740a.d7a8ffd811b78d6ce4a35790e79c9ae8.gif">
 
-Collaborative Event Storming Modeling 
-
-<img width="500" alt="image" src="https://intro.msaez.io/assets/static/ggd-3.775f9c8.f8904849219360a1ef16f19cdd457dbd.gif">
-
 Code Generation & integrated with Cloud IDEs
 
 <img width="500" alt="image" src="https://intro.msaez.io/assets/static/ggd-6.775f9c8.ba2b625fcefc005fe38d439177ca5e57.gif">
 
 Kubernetes Modeling and Git Deploy (Integrated with Argo)
+
 <img width="500" alt="image" src="https://intro.msaez.io/assets/static/image10.91ad02c.6a3dd0b490829b22cf18e381d27e1aaf.png">
 
 
