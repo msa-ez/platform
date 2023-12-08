@@ -2,8 +2,14 @@
 
 MSA Easy (https://www.msaez.io/) is a tool that supports analysis, design, implementation, and operation of microservices. Business experts and developers can analyzes and designs software with domain-driven design through event-storming-based collaboration, and automatically generates Microservices source code.
 
-Collaborative Event Storming Modeling
+Chat-GPT creates User Stories
+<img width="500" alt="image" src="https://intro.msaez.io/assets/static/gptgif1.bd6740a.28dad45ee7b0e24b9f110f84bd82bc5e.gif">
 
+Chat-GPT-based Auto Modeling
+
+<img width="500" alt="image" src="https://intro.msaez.io/assets/static/gptgif3.bd6740a.d7a8ffd811b78d6ce4a35790e79c9ae8.gif">
+
+Collaborative Event Storming Modeling 
 <img width="500" alt="image" src="https://intro.msaez.io/assets/static/ggd-3.775f9c8.f8904849219360a1ef16f19cdd457dbd.gif">
 
 Event driven Microservices Design Patterns
@@ -14,9 +20,6 @@ Code Generation & integrated with Cloud IDEs
 
 <img width="500" alt="image" src="https://intro.msaez.io/assets/static/ggd-6.775f9c8.ba2b625fcefc005fe38d439177ca5e57.gif">
 
-New Feature: Chat-GPT-based Auto Modeling
-
-<img width="500" alt="image" src="https://github.com/msa-ez/msa-ez-kor.github.io/assets/113568664/071670fe-c49c-47ce-bf51-29315c6fd414">
 
 ### Project setup
 
