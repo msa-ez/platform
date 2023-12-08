@@ -1,6 +1,6 @@
 # MSAez (Microservices made easy) Platform
 
-MSA Easy is a tool that supports analysis, design, implementation and monitoring required from microservices construction to operation. It analyzes and designs domains through event-storming-based collaboration, and automatically generates MSA source codes based on the designed domain model.
+MSA Easy is a tool that supports analysis, design, implementation, and operation of microservices. Business experts and developers can analyzes and designs software with domain-driven design through event-storming-based collaboration, and automatically generates Microservices source code.
 
 Collaborative Event Storming Modeling
 
