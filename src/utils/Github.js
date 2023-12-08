@@ -21,6 +21,18 @@ class Github extends Git {
             Accept: 'application/vnd.github+json'
         }
     }
+    getUserInfo() {
+        let me = this
+        return new Promise(async function (resolve, reject) {
+            let patchMainResult = await axios.get(`https://api.github.com/user`, { headers: me.getHeader() })
+            .then((res) => {
+                resolve(res.data)
+            })
+            .catch((e) => {
+                reject(e)
+            })
+        })
+    }
     getBranch(org, repo, forkedTag) {
         let me = this
         return new Promise(async function (resolve, reject) {

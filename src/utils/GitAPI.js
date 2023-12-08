@@ -252,6 +252,18 @@ class GitAPI {
             })
         })
     }
+    getUserInfo() {
+        let me = this;
+        return new Promise(async function(resolve,reject) {
+            const result = await me._git.getUserInfo()
+            .then((res) => {
+                resolve(res)
+            })
+            .catch((e) => {
+                reject(e)
+            })
+        })
+    }
     push(org, repo, list, init) {
         let me = this;
         return new Promise(async function(resolve,reject) {
