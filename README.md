@@ -28,13 +28,12 @@ You need github client id and secret before you run since MSAez needs to communi
 
 1. Login to Github
 2. Settings -> Developer settings -> OAuth Apps -> New OAuth App
-![image](https://github.com/msa-ez/platform/assets/16382067/bfe19316-3b31-4573-b83f-e0e651b11ee0)
 3. Set Application Info
     - Application Name: MSAez * Required
     - Homepage URL: localhost:8080 ex) https://platform.uengine.org * Required
     - Application Description: Description
     - Authorization callback URL: localhost:5757/oauth2/mydb/signin ex) http://acebase.uengine.org/oauth2/mydb/signin
-<img width="651" alt="image" src="https://github.com/msa-ez/platform/assets/487999/c45972de-11b2-46ac-b999-635523dac0b4">
+
 <img width="961" alt="스크린샷 2023-12-08 오후 12 39 58" src="https://github.com/msa-ez/platform/assets/487999/e6f9b235-2a46-47cd-86a6-a13ee97147ee">
 
 Keep the note for client ID and Secret.
