@@ -23,7 +23,7 @@ Templates for major microservices platforms - Spring Boot, Axon, Go, Python
 
 <img width="1286" alt="templates" src="https://github.com/msa-ez/platform/assets/487999/7d296274-059c-47f0-900e-794b93ba6817">
 
-Toppings for Event driven Microservices Design Patterns including Saga, CQRS, Evensourcing, Circuit breaker, Microfrontends etc.
+Toppings for Event driven Microservices Design Patterns including Saga, CQRS, Event sourcing, GraphQL, Token-based Authz/Authn, Circuit breaker, Microfrontends etc.
 
 <img width="1288" alt="toppings" src="https://github.com/msa-ez/platform/assets/487999/44a821fe-5ab6-4f40-b106-78f3fb849c9d">
 
