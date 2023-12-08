@@ -217,3 +217,11 @@ eventstorming-tool-ing   nginx   msa.handymes.com       000.000.000.000   80, 44
     - If nothing is found after searching msa-ez, you need to add msa-ez Organization from Github.
 
 
+# Roadmaps
+
+1. Integration with the Backstage Platform:
+MSAez can be integrated as a plugin into the Backstage platform, enabling BizDevOps professionals to consolidate various tools used throughout the Biz-Dev-Ops lifecycle. This integration allows for a seamless incorporation into Backstage's developer experience, enhancing workflow efficiency and tool management.
+
+1. Automated Coding, System Testing, and Code Debugging:
+With the incorporation of ChatGPT, MSAez elevates its functionality by automating the implementation of business logic and test codes in the default generated code. Additionally, ChatGPT aids in automatically detecting and resolving bugs within the generated code, ensuring it successfully passes all necessary tests. This automation streamlines the coding and testing processes, significantly reducing the time and effort required for development and debugging.
+
