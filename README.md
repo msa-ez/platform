@@ -92,7 +92,7 @@ Set the Token encoded above in JSON format as shown below.
 echo "[OPEN-AI-TOKEN]" | base64
 ```
 
-And Try to auto-generate Event-storming model:
+And Try to auto-generate Event-storming model with this guide:  https://intro.msaez.io/tool/chat-gpt/#generating-business-model-utilizing-openai
 
 
 
