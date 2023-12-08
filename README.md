@@ -89,7 +89,7 @@ image:
 provider: github # github or gitlab
 
 gitlab: 
-	url: gitlab.handymes.com # Gitlab URL
+  url: gitlab.handymes.com # Gitlab URL
 
 oauth: 
   id: "" # Gitlab Application OAUTH ID
