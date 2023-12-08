@@ -1,6 +1,6 @@
 # MSAez (Microservices made easy) Platform
 
-MSA Easy is a tool that supports analysis, design, implementation, and operation of microservices. Business experts and developers can analyzes and designs software with domain-driven design through event-storming-based collaboration, and automatically generates Microservices source code.
+MSA Easy (https://www.msaez.io/) is a tool that supports analysis, design, implementation, and operation of microservices. Business experts and developers can analyzes and designs software with domain-driven design through event-storming-based collaboration, and automatically generates Microservices source code.
 
 Collaborative Event Storming Modeling
 
@@ -17,10 +17,6 @@ Code Generation & integrated with Cloud IDEs
 New Feature: Chat-GPT-based Auto Modeling
 
 <img width="500" alt="image" src="https://github.com/msa-ez/msa-ez-kor.github.io/assets/113568664/071670fe-c49c-47ce-bf51-29315c6fd414">
-
-### Hosted version
-
-https://labs.msaez.io/#/
 
 ### Project setup
 
