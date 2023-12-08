@@ -24,8 +24,6 @@ npm run serve
 
 ### Register MSAez as a Github OAuth Application
 
-You need github client id and secret before you run since MSAez needs to communicate with github.
-
 1. Login to Github
 2. Settings -> Developer settings -> OAuth Apps -> New OAuth App
 3. Set Application Info
@@ -37,7 +35,7 @@ You need github client id and secret before you run since MSAez needs to communi
 <img width="935" alt="image" src="https://github.com/msa-ez/platform/assets/487999/06f6af6e-6511-4a7f-a6d5-9021ca9b9d67">
 
 
-Keep the note for client ID and Secret.
+Set those client ID and Secret with following command and run:
 
 ```sh
 DB_HOST=localhost \
@@ -47,6 +45,8 @@ docker-compose up -d
 ```
 
 > If there's pull error please hit this: docker logout ghcr.io
+
+Now you can navigate to localhost:8080
 
 ***
 # Install MSAez on Kubernetes with GitLab
