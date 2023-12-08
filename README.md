@@ -228,7 +228,6 @@ echo "[OPEN-AI-TOKEN]" | base64
 ```cmd
 powershell "[convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(\"Token!\"))"
 ```
-
 > Powershell
 ```powershell
 [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes("Token!"))
