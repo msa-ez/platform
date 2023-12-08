@@ -27,6 +27,10 @@ Toppings for Event driven Microservices Design Patterns including Saga, CQRS, Ev
 
 <img width="1288" alt="toppings" src="https://github.com/msa-ez/platform/assets/487999/44a821fe-5ab6-4f40-b106-78f3fb849c9d">
 
+### Tutorials
+
+https://www.youtube.com/watch?v=MUN0iS3cJV8&list=PLEr96Fo5umW9w_5SmjXhOar1xRRWcZsbB&index=3
+
 ### Project setup
 
 ```sh
