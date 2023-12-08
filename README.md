@@ -29,7 +29,10 @@ Toppings for Event driven Microservices Design Patterns including Saga, CQRS, Ev
 
 ### Tutorial Videos
 
+- Google Docs Example
+  
 https://www.youtube.com/watch?v=MUN0iS3cJV8&list=PLEr96Fo5umW9w_5SmjXhOar1xRRWcZsbB&index=3
+https://www.youtube.com/watch?v=GLT92wnRkMg (korean)
 
 ### Project setup
 
