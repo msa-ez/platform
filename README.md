@@ -19,7 +19,7 @@ npm run serve
 Navigate to localhost:8080
 
 Try this user-guide: https://intro.msaez.io/tool/google-drive-examples/#instructions
-<img width="935" alt="image" src="[https://github.com/msa-ez/platform/assets/487999/06f6af6e-6511-4a7f-a6d5-9021ca9b9d67](https://intro.msaez.io/assets/static/ggd-8.775f9c8.53579861dbc14e809542ed67086d5d4a.gif)">
+<img width="935" alt="image" src="https://intro.msaez.io/assets/static/ggd-8.775f9c8.53579861dbc14e809542ed67086d5d4a.gif">
 
 ***
 
