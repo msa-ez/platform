@@ -2,11 +2,11 @@
 
 MSA Easy is a tool that supports analysis, design, implementation and monitoring required from microservices construction to operation. It analyzes and designs domains through event-storming-based collaboration, and automatically generates MSA source codes based on the designed domain model.
 
-Event Storming Modeling
+Collaborative Event Storming Modeling
 
 <img width="500" alt="image" src="https://intro.msaez.io/assets/static/ggd-3.775f9c8.f8904849219360a1ef16f19cdd457dbd.gif">
 
-CQRS Setting
+Event driven Microservices Design Patterns
 
 <img width="500" alt="image" src="https://intro.msaez.io/assets/static/ggd-8.775f9c8.53579861dbc14e809542ed67086d5d4a.gif">
 
