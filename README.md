@@ -40,17 +40,17 @@ Keep the note for client ID and Secret.
 
 
 ```sh
-CLIENT_ID= {{ Github OAuth Client ID }} \
+CLIENT_ID={{ Github OAuth Client ID }} \
 CLIENT_SECRET={{ Github OAuth Client Secret }} \
-docker compose up -d
+docker-compose up -d
 ```
 
 If you have domain name, give the domain name of DB_HOST:
 ```sh
 DB_HOST={{ DB URL }} \
-CLIENT_ID= {{ Github OAuth Client ID }} \
+CLIENT_ID={{ Github OAuth Client ID }} \
 CLIENT_SECRET={{ Github OAuth Client Secret }} \
-docker compose up -d
+docker-compose up -d
 ```
 
 
