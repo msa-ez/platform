@@ -33,26 +33,19 @@ You need github client id and secret before you run since MSAez needs to communi
     - Homepage URL: localhost:8080 ex) https://platform.uengine.org * Required
     - Application Description: Description
     - Authorization callback URL: localhost:5757/oauth2/mydb/signin ex) http://acebase.uengine.org/oauth2/mydb/signin
-
+4. Now you can find Github Application Client ID and Secret as follows:
 <img width="961" alt="스크린샷 2023-12-08 오후 12 39 58" src="https://github.com/msa-ez/platform/assets/487999/e6f9b235-2a46-47cd-86a6-a13ee97147ee">
 
 Keep the note for client ID and Secret.
 
-
 ```sh
+DB_HOST=localhost \
 CLIENT_ID={{ Github OAuth Client ID }} \
 CLIENT_SECRET={{ Github OAuth Client Secret }} \
 docker-compose up -d
 ```
 
-If you have domain name, give the domain name of DB_HOST:
-```sh
-DB_HOST={{ DB URL }} \
-CLIENT_ID={{ Github OAuth Client ID }} \
-CLIENT_SECRET={{ Github OAuth Client Secret }} \
-docker-compose up -d
-```
-
+> If there's pull error please hit this: docker logout ghcr.io
 
 ***
 # Install MSAez on Kubernetes with GitLab
