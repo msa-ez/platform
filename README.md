@@ -6,7 +6,7 @@ Chat-GPT creates User Stories
 
 <img width="500" alt="image" src="https://intro.msaez.io/assets/static/gptgif1.bd6740a.28dad45ee7b0e24b9f110f84bd82bc5e.gif">
 
-Chat-GPT Auto Software Modeling (Event Storming)
+Chat-GPT Auto Software Modeling (Event Storming and UML)
 
 <img width="500" alt="image" src="https://intro.msaez.io/assets/static/gptgif3.bd6740a.d7a8ffd811b78d6ce4a35790e79c9ae8.gif">
 
