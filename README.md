@@ -83,7 +83,9 @@ Login with following info:
 Set the Token encoded above in JSON format as shown below.
 
 ![image](https://github.com/msa-ez/platform/assets/16382067/6b6ae0c8-2f7b-4a15-9893-56f49e1e097c)
-
+```
+{ "tokens": {"openai": "BASE64-ENCODED-OPENAI-TOKEN"}}
+```
 
 ** Note: Your token must be encoded with base64: 
 ```sh
