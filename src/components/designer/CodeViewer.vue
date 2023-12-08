@@ -137,10 +137,10 @@
                                         </v-col>
                                     </v-row>
                                     <v-card class="mx-auto">
-                                        <v-card-title>Implement by AI</v-card-title>
+                                        <v-card-title>Choose the test to implement by AI</v-card-title>
                                         <v-card-text>
                                             <v-autocomplete
-                                                label="Choose the test to implement"
+                                                label="Choose the test"
                                                 @click="checkTopping()"
                                                 @change="changedTestFile()"
                                                 v-model="selectedTestFile"

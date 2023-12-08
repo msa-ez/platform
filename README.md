@@ -19,29 +19,44 @@ npm run serve
 
 ***
 
-# Install MSAez on Docker Compose
+# Running on Docker Compose (with Github)
 
-### Q1. What is Docker Compose? A management tool that provides a work environment where multiple containers can be defined as one service on a single server and managed as a bundle. 
-### Q2. Why do we use Docker Compose? When multiple containers operate as one application, it operates by reading files that define their options and environment to create containers sequentially. It is good to use Docker Compose as the number of containers increases and the options to be defined increase.
 
-### Start Docker Compose
+### Register MSAez as a Github OAuth Application
+
+1. Login to Github
+2. Settings -> Developer settings -> OAuth Apps -> New OAuth App
+3. Set Application Info
+    - Application Name: MSAez * Required
+    - Homepage URL: http://localhost:8080
+    - Application Description: Description
+    - Authorization callback URL: http://localhost:5757/oauth2/mydb/signin
+4. Now you can find Github Application Client ID and Secret as follows:
+<img width="935" alt="image" src="https://github.com/msa-ez/platform/assets/487999/06f6af6e-6511-4a7f-a6d5-9021ca9b9d67">
+
+
+Set those client ID and Secret with following command and run:
 
 ```sh
-DB_HOST={{ DB URL }} \
-CLIENT_ID= {{ OAuth Client ID }} \
-CLIENT_SECRET={{ OAuth Client Secret }} \
-docker compose up -d
+DB_HOST=localhost \
+CLIENT_ID={{ Github OAuth Client ID }} \
+CLIENT_SECRET={{ Github OAuth Client Secret }} \
+docker-compose up -d
 ```
 
-***
-# Install MSAez on Kubernetes
+> If there's pull error please hit this: docker logout ghcr.io
 
-### Q1. What is Kubernetes? Kubernetes is an open source container orchestration platform that automates many of the manual processes involved in deploying, managing, and scaling containerized applications.
-### Q2. Why do we use Kubernetes? Kubernetes helps deliver and manage containerized legacy and cloud apps, as well as apps refactored into microservices, and its orchestration management capabilities make development faster and existing applications easier to transform and optimize.
+Now you can navigate to localhost:8080
+
+***
+# Install MSAez on Kubernetes with GitLab
 
 * Before the installation, register GitLab Application to get OAuth ID and Secrets.
 
-### Register GitLab Application
+### Install GitLab firstly
+[Gitlab Install Guide](https://docs.gitlab.com/charts/installation/)
+
+### Register MSAez as a GitLab Application
 
 1. Login to GitLab with Admin account 
 2. Admin Area -> Applications
@@ -50,16 +65,6 @@ docker compose up -d
 4. Set Application 
 ![Pasted image 20231110122407](https://github.com/msa-ez/platform/assets/16382067/d6657e15-fd76-4404-a71c-65673f8f3ebd)
 5. ID & Secret issued after the registration of Application is necessary for MSAez Install, so save them. Application. 
-
-### Register Github OAuth Application
-1. Login to Github
-2. Settings -> Developer settings -> OAuth Apps -> New OAuth App
-![image](https://github.com/msa-ez/platform/assets/16382067/bfe19316-3b31-4573-b83f-e0e651b11ee0)
-3. Set Application Info
-    - Application Name: ${Application Name} * Required
-    - Homepage URL: Platform URL ex) https://platform.uengine.org * Required
-    - Application Description: Description
-    - Authorization callback URL: ${Acebase DB URL}/oauth2/mydb/signin ex) http://acebase.uengine.org/oauth2/mydb/signin
 
 ### Install MSAez
 
@@ -84,7 +89,7 @@ image:
 provider: github # github or gitlab
 
 gitlab: 
-	url: gitlab.handymes.com # Gitlab URL
+  url: gitlab.handymes.com # Gitlab URL
 
 oauth: 
   id: "" # Gitlab Application OAUTH ID
@@ -130,9 +135,34 @@ eventstorming-tool-ing   nginx   msa.handymes.com       000.000.000.000   80, 44
 5. Register DNS or edit hosts file and login to the Host.
 
 ***
-# Setting for Chat GPT-related functions
 
-#### FYI 
+# Importing Code Templates to GitLab
+
+## ※ The basic template must be created as a sub-project of a root account.
+
+1. Select **New project**
+![image](https://github.com/msa-ez/platform/assets/16382067/3b22928d-9457-430d-9619-5cf3d66f6ff1)
+
+2. Select **import project**
+![image](https://github.com/msa-ez/platform/assets/16382067/bc79990e-493c-41d1-a22b-1124639d0605)
+
+3. Select GitHub
+![image](https://github.com/msa-ez/platform/assets/16382067/acc6ced6-a85c-49b1-9d9f-f112a0a1eac8)
+
+4. Enter Personal Access Token, then **Authenticate**
+![image](https://github.com/msa-ez/platform/assets/16382067/b432aa46-d3c7-47e7-a1d4-69be70790c20)
+
+  - If you do not have a personal token, click GitHub **Personal Access Token** at the bottom to go to the Github token issuance screen.
+
+5. Search for msa-ez in the search box and import the project.
+![image](https://github.com/msa-ez/platform/assets/16382067/b78ed33b-cc92-40be-a793-e3c18079217a)
+
+    - If nothing is found after searching msa-ez, you need to add msa-ez Organization from Github.
+
+
+# Settings for AI-aided Model Generations by Chat GPT
+
+#### Set Open AI token to the Database 
 > [Acebase](https://github.com/appy-one/acebase)
 
 1. Set in main.js inside the acebase folder.
@@ -195,14 +225,13 @@ After login, check the data inside.
 3. Data can only be entered in Json format and is encoded in base64 after issuing an OpenAI Token.
 ##### Linux or MacOS
 ```sh
-echo "token" | base64
+echo "[OPEN-AI-TOKEN]" | base64
 ```
 ##### Windows (CMD and PowerShell)
 > CMD
 ```cmd
 powershell "[convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(\"Token!\"))"
 ```
-
 > Powershell
 ```powershell
 [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes("Token!"))
@@ -229,25 +258,4 @@ powershell "[convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(\"Token!\")
 Tokens are added as shown in the picture above.
 
 ***
-# GitLab Template Import
 
-## ※ The basic template must be created as a sub-project of a root account.
-
-1. Select **New project**
-![image](https://github.com/msa-ez/platform/assets/16382067/3b22928d-9457-430d-9619-5cf3d66f6ff1)
-
-2. Select **import project**
-![image](https://github.com/msa-ez/platform/assets/16382067/bc79990e-493c-41d1-a22b-1124639d0605)
-
-3. Select GitHub
-![image](https://github.com/msa-ez/platform/assets/16382067/acc6ced6-a85c-49b1-9d9f-f112a0a1eac8)
-
-4. Enter Personal Access Token, then **Authenticate**
-![image](https://github.com/msa-ez/platform/assets/16382067/b432aa46-d3c7-47e7-a1d4-69be70790c20)
-
-  - If you do not have a personal token, click GitHub **Personal Access Token** at the bottom to go to the Github token issuance screen.
-
-5. Search for msa-ez in the search box and import the project.
-![image](https://github.com/msa-ez/platform/assets/16382067/b78ed33b-cc92-40be-a793-e3c18079217a)
-
-    - If nothing is found after searching msa-ez, you need to add msa-ez Organization from Github.

@@ -315,6 +315,7 @@ class Github extends Git {
 
                 // var pushTreeCnt = 0
                 var allCnt = 0
+                var exceptCnt = 0
                 options.generateCodeLists.map(async function (elData) {
                     if(options.gitTree.length == 1 || !options.gitTree.find(element => element.path == elData.fullPath) || ((options.changedCodeLists && options.changedCodeLists.find(element => element.replace("for-model/","") == elData.fullPath)) || options.pushType != "Push")) {
                         var pushValid = false
@@ -322,6 +323,8 @@ class Github extends Git {
                             if(options.onlyOneBcId == elData.bcId && !elData.templatePath.includes('for-model/')){
                                 elData.fullPath = elData.fullPath.replace(elData.boundedContext + '/',"")
                                 pushValid = true
+                            } else {
+                                exceptCnt++;
                             }
                         } else {
                             pushValid = true
@@ -361,7 +364,7 @@ class Github extends Git {
                     if(!isChanged) {
                         resolve(false)
                     }
-                    if(options.generateCodeLists.length == allCnt) {
+                    if(options.generateCodeLists.length == allCnt + exceptCnt) {
                         let result = pushTree.concat(removeTree)
                         resolve(result)
                     }

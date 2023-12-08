@@ -322,12 +322,12 @@
                             </div>
                             <!--                            <div v-if="(!isFirstCommit || isDuplicate)">-->
                         </div>
-                        <!-- <div v-if="item.tabKey == 'setAccount'" :disabled="!isListSettingDone">
-                            <v-card-title style="background-color: #0d1117; color: white; margin-left:-10px;">
+                        <div v-if="item.tabKey == 'setAccount'" :disabled="!isListSettingDone">
+                            <!-- <v-card-title style="background-color: #0d1117; color: white; margin-left:-10px;">
                                 <v-icon color="white" @click="gitMenuMode = 'push'" style="margin-right: 5px;">mdi-arrow-left</v-icon>
                                 &nbsp;Settings
                                 <v-spacer />
-                            </v-card-title>
+                            </v-card-title> -->
                             <div style="margin: 10px;">
                                 <div v-if="isGitLogin" style="width: 100%; text-align: right; margin-bottom: -30px;">
                                     <v-btn small text color="primary" @click="logoutToGit()">sign out</v-btn>
@@ -373,7 +373,7 @@
                                         @change="changedUseGitPodStatus()"
                                 ></v-switch>
                             </div>
-                        </div> -->
+                        </div>
 
                         <span v-if="item.tabKey == 'push' || item.tabKey == 'openGithubEditor'" style = "font-weight:500; font-size:16px;">Target Repo</span>
                         <v-text-field
@@ -537,6 +537,7 @@
 
 <script>
     // import SIGenerator from './modeling/generators/SIGenerator'
+    // import getParent from '../../utils/getParent'
     import labBase from "../labs/LabStorageBase"
     import Login from "../oauth/Login";
     import LoginByGitlab from "../oauth/LoginByGitlab";
@@ -738,14 +739,14 @@
                 if(!me.isGitLogin){
                     if(me.isFirstCommit){
                         setTabItems = [
-                            // { tab: 'Account', index: 0, tabKey: 'setAccount' },
+                            { tab: 'Account', index: 0, tabKey: 'setAccount' },
                             { tab: 'Repository', index: 1, tabKey: 'setFirstRepo' },
                             { tab: 'Push', index: 2, tabKey: 'push' },
                             { tab: 'IDE', tabKey: 'info', index: 3 },
                         ]
                     } else {
                         setTabItems = [
-                            // { tab: 'Account', index: 0, tabKey: 'setAccount' },
+                            { tab: 'Account', index: 0, tabKey: 'setAccount' },
                             { tab: 'Repository', index: 1, tabKey: 'changeRepo' },
                             { tab: 'Push', index: 2, tabKey: 'push' },
                             { tab: 'IDE', tabKey: 'info', index: 3 }
@@ -827,7 +828,7 @@
             this.core = new CodeGeneratorCore({});
             let git;
 
-            if(window.PROVIDER == "gitlab") {
+            if(window.MODE == "onprem") {
                 git = new Gitlab();
             } else {
                 git = new Github();
@@ -2068,7 +2069,14 @@
                     // } else {
                     //     me.startCommitWithGitHub()
                     // }
-                    me.startCommitWithGit("template")
+                    
+                    // 초기 커밋시 모델 저장 기능 
+                    // if(!me.isServerModel){
+                    //     let canvas = getParent(this.$parent, "event-storming-model-canvas");
+                    //     canvas.saveComposition('save')
+                    // } else {
+                        me.startCommitWithGit("template")
+                    // }
                 }
             },
             async startCommitWithGit(branch) {
