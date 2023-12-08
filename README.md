@@ -34,7 +34,8 @@ You need github client id and secret before you run since MSAez needs to communi
     - Application Description: Description
     - Authorization callback URL: http://localhost:5757/oauth2/mydb/signin
 4. Now you can find Github Application Client ID and Secret as follows:
-<img width="961" alt="스크린샷 2023-12-08 오후 12 39 58" src="https://github.com/msa-ez/platform/assets/487999/e6f9b235-2a46-47cd-86a6-a13ee97147ee">
+<img width="935" alt="image" src="https://github.com/msa-ez/platform/assets/487999/06f6af6e-6511-4a7f-a6d5-9021ca9b9d67">
+
 
 Keep the note for client ID and Secret.
 
@@ -53,7 +54,7 @@ docker-compose up -d
 * Before the installation, register GitLab Application to get OAuth ID and Secrets.
 
 ### Install GitLab firstly
-[Describe how to install gitlab on kubernetes]
+[Gitlab Install Guide](https://docs.gitlab.com/charts/installation/)
 
 ### Register MSAez as a GitLab Application
 
