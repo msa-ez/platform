@@ -95,6 +95,9 @@ db.auth.signIn("admin", {{ password }} ).then((result) => {
 ...
 ```
 ***
+
+To visit Acebase Admin Page, navigate to http://localhost:5757/webmanager/
+
 #### Acebase Administrator Login Page
 ![image](https://github.com/msa-ez/platform/assets/16382067/477d0662-f07c-4db5-8a65-62ab13a1dde5)
 
