@@ -16,8 +16,13 @@ npm install
 npm run serve
 ```
 
+Navigate to localhost:8080
+
+Try this user-guide: https://intro.msaez.io/tool/google-drive-examples/#instructions
+<img width="935" alt="image" src="[https://github.com/msa-ez/platform/assets/487999/06f6af6e-6511-4a7f-a6d5-9021ca9b9d67](https://intro.msaez.io/assets/static/ggd-8.775f9c8.53579861dbc14e809542ed67086d5d4a.gif)">
 
 ***
+
 
 # Running on Docker Compose (with Github)
 
@@ -32,7 +37,7 @@ npm run serve
     - Application Description: Description
     - Authorization callback URL: http://localhost:5757/oauth2/mydb/signin
 4. Now you can find Github Application Client ID and Secret as follows:
-<img width="935" alt="image" src="https://github.com/msa-ez/platform/assets/487999/06f6af6e-6511-4a7f-a6d5-9021ca9b9d67">
+<img width="800" alt="image" src="https://github.com/msa-ez/platform/assets/487999/06f6af6e-6511-4a7f-a6d5-9021ca9b9d67">
 
 
 Set those client ID and Secret with following command and run:
@@ -51,36 +56,25 @@ Now you can navigate to localhost:8080
 
 # Settings for AI-aided Model Generations by Chat GPT
 
-#### Set Open AI token to the Database 
-> [Acebase](https://github.com/appy-one/acebase)
+To set Open AI token, we need to visit Acebase. Navigate to http://localhost:5757/webmanager/
 
-To visit Acebase Admin Page, navigate to http://localhost:5757/webmanager/
-
+Login with following info:
 - DB Name: mydb
 - User: admin
 - Password: 75sdDSFg37w5
 
 Set the Token encoded above in JSON format as shown below.
-> Token Path : /tokens/openai
 
-> Result
-```json
-{
-  "tokens": {
-    "openai": "encoded token!"
-  }
-}
-```
-
-> Before : ![[Pasted image 20231120170329.png]]
-
-> After : ![image](https://github.com/msa-ez/platform/assets/16382067/6b6ae0c8-2f7b-4a15-9893-56f49e1e097c)
+![image](https://github.com/msa-ez/platform/assets/16382067/6b6ae0c8-2f7b-4a15-9893-56f49e1e097c)
 
 
-** Your token must be encoded with base64: 
+** Note: Your token must be encoded with base64: 
 ```sh
 echo "[OPEN-AI-TOKEN]" | base64
 ```
+
+And Try to auto-generate Event-storming model:
+
 
 
 ***
