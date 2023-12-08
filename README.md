@@ -18,6 +18,10 @@ Code Generation & integrated with Cloud IDEs
 
 <img width="500" alt="image" src="https://intro.msaez.io/assets/static/ggd-6.775f9c8.ba2b625fcefc005fe38d439177ca5e57.gif">
 
+Kubernetes Modeling and Git Deploy (Integrated with Argo)
+<img width="500" alt="image" src="https://intro.msaez.io/assets/static/image10.91ad02c.6a3dd0b490829b22cf18e381d27e1aaf.png">
+
+
 Templates for major microservices platforms - Spring Boot, Axon, Go, Python
 
 <img width="1286" alt="templates" src="https://github.com/msa-ez/platform/assets/487999/7d296274-059c-47f0-900e-794b93ba6817">
