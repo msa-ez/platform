@@ -829,13 +829,14 @@
                     // 움직일때 BC 변화 파악.
                     if( newId != me.value.boundedContext.id ){
                         me.value.boundedContext = {id: newId};
-
-                        me.canvas.changedByMe = true;
-                        me.canvas.changedTemplateCode = true
+                        if(me.canvas.initLoad) {
+                            me.canvas.changedByMe = true;
+                            me.canvas.changedTemplateCode = true
+                        }
                     }
                 } else if(me.value.boundedContext.id){
                     me.value.boundedContext = {}
-                    me.canvas.changedByMe = true;
+                    if(me.canvas.initLoad) me.canvas.changedByMe = true;
                 }
 
             },

@@ -379,8 +379,10 @@
                 if(!attachedAggregate) {
                     if(me.value.aggregates.length > 0){
                         me.value.aggregates = []
-                        me.canvas.changedByMe = true;
-                        me.canvas.changedTemplateCode = true
+                        if(me.canvas.initLoad) {
+                            me.canvas.changedByMe = true;
+                            me.canvas.changedTemplateCode = true
+                        }
                     }
                     return;
                 }
@@ -388,8 +390,10 @@
                 let filteredAggregateId = attachedAggregate.map(element => element = {id: element.elementView.id});
                 if( JSON.stringify(filteredAggregateId) !== JSON.stringify( me.value.aggregates ) ) {
                     me.value.aggregates = filteredAggregateId
-                    me.canvas.changedByMe = true;
-                    me.canvas.changedTemplateCode = true
+                    if(me.canvas.initLoad) {
+                        me.canvas.changedByMe = true;
+                        me.canvas.changedTemplateCode = true
+                    }
                 }
             },
             validate(executeRelateToValidate, panelValue){
