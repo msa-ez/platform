@@ -31,7 +31,21 @@ Toppings for Event driven Microservices Design Patterns including Saga, CQRS, Ev
 
 #### Google Docs Example
 - (English) https://www.youtube.com/watch?v=MUN0iS3cJV8&list=PLEr96Fo5umW9w_5SmjXhOar1xRRWcZsbB&index=3
-- (Korean) https://www.youtube.com/watch?v=GLT92wnRkMg 
+- (Korean) https://www.youtube.com/watch?v=GLT92wnRkMg
+
+#### Axon Framework Example
+- (English) Event sourcing and Choreography - https://www.youtube.com/watch?v=XoWd0QMue7A
+- (English) Saga Orchestration- https://www.youtube.com/watch?v=0AEMNgtS5XU
+
+#### Mock Generation
+- (Korean) https://www.youtube.com/watch?v=BlqwuMqI3J8
+
+#### Unit Testing
+- (Korean) https://www.youtube.com/watch?v=WF1fWdkFun0
+
+#### ChatGPT based auto modeling 
+- (Korean) https://www.youtube.com/watch?v=liV2f5ZZlY0
+- (Korean) https://www.youtube.com/watch?v=rUKFP6n-d68&list=PLEr96Fo5umW8CYIuf52d06BHfpgS6Q0-X&t=160s
 
 ### Project setup
 
