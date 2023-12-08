@@ -25,53 +25,53 @@
                             <td v-for="key in Object.keys(attribute.value)">{{ key }}</td>
                         </template>
                     </tr>
-                    <template v-for="(value, idx) in rule.values">
+                    <template v-for="(value, ruleIdx) in rule.values">
                         <tr class="tr-divider tr-input"
                             style="border-bottom: 1px solid #E0E0E0;"
                         >
-                            <template v-for="(givenObject, givenKey) in value['given'][0].value">
-                                <template v-if="checkGivenType(givenObject)">
-                                    <td @click="selectTableData('given', givenKey, value['given'][0].name, idx)">
-                                        <component v-if="'given-' + value['given'][0].name + '-' + givenKey == selectedItemPath && selectedItemIndex == idx"
+                            <template v-for="(given, key) in value['given'][0].value">
+                                <template v-if="checkGivenType(given)">
+                                    <td @click="selectTableData(ruleIdx, 'given', key)">
+                                        <component v-if="'given-' + rule['givenItems'][0].name + '-' + key == selectedItemPath && selectedItemIndex == ruleIdx"
                                             class="td-component-size"
                                             :is="getComponentType(selectedAttType)"
-                                            v-model="value['given'][0].value[givenKey]" 
+                                            v-model="value['given'][0].value[key]" 
                                             :label="selectedAttType"
                                             @save="closeExampleEditor()"
                                             @selectChip="closeExampleEditor"
                                         ></component>
                                         <div v-else>
-                                            <v-chip class="rule-chip" v-if="chipLabels[value['given'][0].value[givenKey]]">{{ chipLabels[value['given'][0].value[givenKey]] }}</v-chip>
-                                            <template v-else>{{ value['given'][0].value[givenKey] }}</template>
+                                            <v-chip class="rule-chip" v-if="chipLabels[given]">{{ chipLabels[given] }}</v-chip>
+                                            <template v-else>{{ given }}</template>
                                         </div>
                                     </td>
                                 </template>
                                 <table v-else class="rules-table" style="width: 100%;">
                                     <tr>
-                                        <td v-for="(givenArrValue, givenArrKey) in value['given'][0].value[givenKey][0]" class="given-td-uml">{{ givenArrKey }}</td>
+                                        <td v-for="(givenArrValue, givenArrKey) in given[0]" class="given-td-uml">{{ givenArrKey }}</td>
                                     </tr>
-                                    <tr v-for="(givneValue, givenIdx) in value['given'][0].value[givenKey]">
-                                        <td v-for="(givenArrValue, givenArrKey) in givneValue" @click="selectTableData('given', givenArrKey, value['given'][0].name, idx, givenKey, givenIdx)">
-                                            <component v-if="'given-' + value['given'][0].name + '-' + givenKey + '-' + givenArrKey == selectedItemPath && selectedItemIndex == idx && selectedGivenIndex == givenIdx"
+                                    <tr v-for="(givenValue, givenIdx) in given">
+                                        <td v-for="(givenArrValue, givenArrKey) in givenValue" @click="selectTableData(ruleIdx, 'given', givenArrKey, null, null, key, givenIdx)">
+                                            <component v-if="'given-' + rule['givenItems'][0].name + '-' + key + '-' + givenArrKey == selectedItemPath && selectedItemIndex == ruleIdx && selectedGivenIndex == givenIdx"
                                                 class="td-component-size"
                                                 :is="getComponentType(selectedAttType)"
-                                                v-model="givneValue[givenArrKey]" 
+                                                v-model="givenValue[givenArrKey]" 
                                                 :label="selectedAttType"
                                                 @save="closeExampleEditor()"
                                                 @selectChip="closeExampleEditor"
                                             ></component>
                                             <div v-else>
-                                                <v-chip class="rule-chip" v-if="chipLabels[givneValue[givenArrKey]]">{{ chipLabels[givneValue[givenArrKey]] }}</v-chip>
-                                                <template v-else>{{ givneValue[givenArrKey] }}</template>
+                                                <v-chip class="rule-chip" v-if="chipLabels[givenValue[givenArrKey]]">{{ chipLabels[givenValue[givenArrKey]] }}</v-chip>
+                                                <template v-else>{{ givenValue[givenArrKey] }}</template>
                                             </div>
                                         </td>
-                                        <v-icon @click="removeGivenExample(givenKey, idx, givenIdx)">mdi-delete</v-icon>
+                                        <v-icon @click="removeGivenExample(key, ruleIdx, givenIdx)">mdi-delete</v-icon>
                                     </tr>
-                                    <v-icon @click="addGivenExample(givenKey, idx)">mdi-plus</v-icon>
+                                    <v-icon @click="addGivenExample(key, ruleIdx)">mdi-plus</v-icon>
                                 </table>
                             </template>
-                            <td v-for="key in Object.keys(value['when'][0].value)" @click="selectTableData('when', key, value['when'][0].name, idx)">
-                                <component v-if="'when-' + value['when'][0].name + '-' + key == selectedItemPath && selectedItemIndex == idx"
+                            <td v-for="key in Object.keys(value['when'][0].value)" @click="selectTableData(ruleIdx, 'when', key)">
+                                <component v-if="'when-' + rule['whenItems'][0].name + '-' + key == selectedItemPath && selectedItemIndex == ruleIdx"
                                     class="td-component-size"
                                     :is="getComponentType(selectedAttType)"
                                     v-model="value['when'][0].value[key]" 
@@ -85,9 +85,9 @@
                                 </div>
                             </td>
                             
-                            <template v-for="then in value['then']">
-                                <td v-for="key in Object.keys(then.value)" @click="selectTableData('then', key, then.name, idx)">
-                                    <component v-if="'then-' + then.name + '-' + key == selectedItemPath && selectedItemIndex == idx"
+                            <template v-for="(then, thenIdx) in value['then']">
+                                <td v-for="key in Object.keys(then.value)" @click="selectTableData(ruleIdx, 'then', key, thenIdx, then.name)">
+                                    <component v-if="'then-' + rule['thenItems'][thenIdx].name  + '-' + key == selectedItemPath && selectedItemIndex == ruleIdx"
                                         class="td-component-size"
                                         :is="getComponentType(selectedAttType)"
                                         v-model="then.value[key]" 
@@ -101,7 +101,7 @@
                                     </div>
                                 </td>
                             </template>
-                            <v-icon style="position: absolute; right: 10px; margin-top: 5px;" @click="removeExample(idx)">mdi-delete</v-icon>
+                            <v-icon style="position: absolute; right: 10px; margin-top: 5px;" @click="removeExample(ruleIdx)">mdi-delete</v-icon>
                         </tr>
                     </template>
                 </table>
@@ -211,8 +211,8 @@
                 var isObject = typeof given == 'object';
                 return !isArray || !isObject;
             },
-            removeGivenExample(givenKey, idx, givenIdx) {
-                const items = this.rule.values[idx]['given'][0].value[givenKey];
+            removeGivenExample(key, ruleIdx, givenIdx) {
+                const items = this.rule.values[ruleIdx]['given'][0].value[key];
                 if (!items) {
                     console.error('No items found');
                     return;
@@ -227,9 +227,9 @@
                 }
                 items.splice(givenIdx, 1);
             },
-            removeExample(idx) {
+            removeExample(ruleIdx) {
                 if (this.rule.values.length > 1) {
-                    this.rule.values.splice(idx, 1);
+                    this.rule.values.splice(ruleIdx, 1);
                 }
             },
             addExample(){
@@ -241,9 +241,9 @@
                     me.rule.values.push(JSON.parse(JSON.stringify(me.exampleFrameWork)))
                 }
             },
-            addGivenExample(givenKey, idx) {
+            addGivenExample(key, ruleIdx) {
                 var me = this;
-                var field = me.rule.givenItems[0].aggregateRoot.fieldDescriptors.find(x => x.name == givenKey);
+                var field = me.rule.givenItems[0].aggregateRoot.fieldDescriptors.find(x => x.name == key);
                 let givenObject = {};
 
                 if (me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId]) {
@@ -253,7 +253,7 @@
                     if (!me.rule.values[0]['given'][0].value[field.name]) {
                         me.$set(me.rule.values[0]['given'][0].value, field.name, []);
                     }
-                    me.rule.values[idx]['given'][0].value[field.name].push(givenObject);
+                    me.rule.values[ruleIdx]['given'][0].value[field.name].push(givenObject);
                 } else {
                     console.error('Field classId not found in entities.elements');
                 }
@@ -277,25 +277,36 @@
                 this.selectedAttType = null;
                 this.selectedItemIndex = null;
             },
-            selectTableData(type, key, name, idx, givenUmlKey, givenIdx) {
+            selectTableData(ruleIdx, type, key, thenIdx, thenName, givenUmlKey, givenIdx) {
                 event.stopPropagation();
                 var me = this;
                 var selectedItem;
-                if (type == 'given') {
-                    selectedItem = me.rule[type + 'Items'].find(x => x.name == name).aggregateRoot.fieldDescriptors.find(x => x.name == key);
+                var itemName;
+
+                if (type == 'then') {
+                    selectedItem = me.rule[type + 'Items'].find(x => x.name == thenName).fieldDescriptors.find(x => x.name == key);
+                    if(!selectedItem) {
+                        selectedItem = me.rule[type + 'Items'][thenIdx].fieldDescriptors.find(x => x.name == key);
+                    }
+                    itemName = me.rule[type + 'Items'][thenIdx].name
                 } else {
-                    selectedItem = me.rule[type + 'Items'].find(x => x.name == name).fieldDescriptors.find(x => x.name == key);
+                    itemName = me.rule[type + 'Items'][0].name
+                    if (type == 'given') {
+                        selectedItem = me.rule[type + 'Items'][0].aggregateRoot.fieldDescriptors.find(x => x.name == key);
+                    } else {
+                        selectedItem = me.rule[type + 'Items'][0].fieldDescriptors.find(x => x.name == key);
+                    }
                 }
                 if (!givenUmlKey) {
-                    me.selectedItemPath = `${type}-${name}-${key}`;
+                    me.selectedItemPath = `${type}-${itemName}-${key}`;
                 } else {
-                    var typeItem = me.rule[type + 'Items'].find(x => x.name == name);
-                    var givenItem = typeItem.aggregateRoot.fieldDescriptors.find(x => x.name == givenUmlKey);
-                    selectedItem = typeItem.aggregateRoot.entities.elements[givenItem.classId].fieldDescriptors.find(x => x.name == key);
-                    me.selectedItemPath = `${type}-${name}-${givenUmlKey}-${key}`;
+                    var typeItem = me.rule[type + 'Items'][0].aggregateRoot
+                    var givenItem = typeItem.fieldDescriptors.find(x => x.name == givenUmlKey);
+                    selectedItem = typeItem.entities.elements[givenItem.classId].fieldDescriptors.find(x => x.name == key);
+                    me.selectedItemPath = `${type}-${itemName}-${givenUmlKey}-${key}`;
                     me.selectedGivenIndex = givenIdx;
                 }
-                me.selectedItemIndex = idx;
+                me.selectedItemIndex = ruleIdx;
                 me.selectedAttType = selectedItem ? selectedItem.className : "";
             },
             resetExampleDialog(){

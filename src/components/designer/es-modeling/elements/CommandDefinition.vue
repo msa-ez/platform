@@ -455,13 +455,15 @@
                     if( newId != me.value.aggregate.id ){
                         // 서로 들다른 agg
                         me.value.aggregate = { id: newId }
-                        me.canvas.changedByMe = true;
-                        me.canvas.changedTemplateCode = true
+                        if(me.canvas.initLoad) {
+                            me.canvas.changedByMe = true;
+                            me.canvas.changedTemplateCode = true
+                        }
                     }
 
                 }else if(me.value.aggregate.id){
                     me.value.aggregate = {};
-                    me.canvas.changedByMe = true;
+                    if(me.canvas.initLoad) me.canvas.changedByMe = true;
                 }
 
             },

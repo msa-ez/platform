@@ -9,7 +9,7 @@ services:
       VUE_APP_DB_PORT: 5757 # DB Port
       VUE_APP_DB_NAME: mydb # DB NAME
       VUE_APP_MODE: onprem # MODE onprem or dev
-      VUE_APP_DB_HTTPS: false # MODE onprem or dev
+      VUE_APP_DB_HTTPS: 'false' # MODE onprem or dev
       VUE_APP_GITLAB: # Gitlab URL
       VUE_APP_GIT: github # Gitlab URL
   acebase :
@@ -23,7 +23,7 @@ services:
       DB_HOST: ${DB_HOST} # DB Host Name
       DB_NAME: mydb
       DB_PORT: 5757
-      DB_HTTPS: false
+      DB_HTTPS: 'false'
       CLIENT_ID: ${CLIENT_ID} # Application Key
       CLIENT_SECRET: ${CLIENT_SECRET} # Application Secrets
       PROVIDER: github

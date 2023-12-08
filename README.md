@@ -1,4 +1,22 @@
-# MSAez Platform Core
+# MSAez (Microservices made easy) Platform
+
+MSA Easy (https://www.msaez.io/) is a tool that supports analysis, design, implementation, and operation of microservices. Business experts and developers can analyzes and designs software with domain-driven design through event-storming-based collaboration, and automatically generates Microservices source code.
+
+Collaborative Event Storming Modeling
+
+<img width="500" alt="image" src="https://intro.msaez.io/assets/static/ggd-3.775f9c8.f8904849219360a1ef16f19cdd457dbd.gif">
+
+Event driven Microservices Design Patterns
+
+<img width="500" alt="image" src="https://intro.msaez.io/assets/static/ggd-8.775f9c8.53579861dbc14e809542ed67086d5d4a.gif">
+
+Code Generation & integrated with Cloud IDEs
+
+<img width="500" alt="image" src="https://intro.msaez.io/assets/static/ggd-6.775f9c8.ba2b625fcefc005fe38d439177ca5e57.gif">
+
+New Feature: Chat-GPT-based Auto Modeling
+
+<img width="500" alt="image" src="https://github.com/msa-ez/msa-ez-kor.github.io/assets/113568664/071670fe-c49c-47ce-bf51-29315c6fd414">
 
 ### Project setup
 
@@ -16,32 +34,77 @@ npm install
 npm run serve
 ```
 
+Navigate to localhost:8080
+
+Try this user-guide: https://intro.msaez.io/tool/google-drive-examples/#instructions
 
 ***
 
-# Install MSAez on Docker Compose
 
-### Q1. What is Docker Compose? A management tool that provides a work environment where multiple containers can be defined as one service on a single server and managed as a bundle. 
-### Q2. Why do we use Docker Compose? When multiple containers operate as one application, it operates by reading files that define their options and environment to create containers sequentially. It is good to use Docker Compose as the number of containers increases and the options to be defined increase.
+# Running on Docker Compose (with Github)
 
-### Start Docker Compose
+
+### Register MSAez as a Github OAuth Application
+
+1. Login to Github
+2. Settings -> Developer settings -> OAuth Apps -> New OAuth App
+3. Set Application Info
+    - Application Name: MSAez * Required
+    - Homepage URL: http://localhost:8080
+    - Application Description: Description
+    - Authorization callback URL: http://localhost:5757/oauth2/mydb/signin
+4. Now you can find Github Application Client ID and Secret as follows:
+<img width="800" alt="image" src="https://github.com/msa-ez/platform/assets/487999/06f6af6e-6511-4a7f-a6d5-9021ca9b9d67">
+
+
+Set those client ID and Secret with following command and run:
 
 ```sh
-DB_HOST={{ DB URL }} \
-CLIENT_ID= {{ OAuth Client ID }} \
-CLIENT_SECRET={{ OAuth Client Secret }} \
-docker compose up -d
+DB_HOST=localhost \
+CLIENT_ID={{ Github OAuth Client ID }} \
+CLIENT_SECRET={{ Github OAuth Client Secret }} \
+docker-compose up -d
 ```
 
-***
-# Install MSAez on Kubernetes
+> If there's pull error please hit this: docker logout ghcr.io
 
-### Q1. What is Kubernetes? Kubernetes is an open source container orchestration platform that automates many of the manual processes involved in deploying, managing, and scaling containerized applications.
-### Q2. Why do we use Kubernetes? Kubernetes helps deliver and manage containerized legacy and cloud apps, as well as apps refactored into microservices, and its orchestration management capabilities make development faster and existing applications easier to transform and optimize.
+Now you can navigate to localhost:8080
+
+
+# Settings for AI-aided Model Generations by Chat GPT
+
+To set Open AI token, we need to visit Acebase. Navigate to http://localhost:5757/webmanager/
+
+Login with following info:
+- DB Name: mydb
+- User: admin
+- Password: 75sdDSFg37w5
+
+Set the Token encoded above in JSON format as shown below.
+
+![image](https://github.com/msa-ez/platform/assets/16382067/6b6ae0c8-2f7b-4a15-9893-56f49e1e097c)
+```
+{ "tokens": {"openai": "BASE64-ENCODED-OPENAI-TOKEN"}}
+```
+
+** Note: Your token must be encoded with base64: 
+```sh
+echo "[OPEN-AI-TOKEN]" | base64
+```
+
+And Try to auto-generate Event-storming model with this guide:  https://intro.msaez.io/tool/chat-gpt/#generating-business-model-utilizing-openai
+
+
+
+***
+# Install MSAez on Kubernetes with GitLab
 
 * Before the installation, register GitLab Application to get OAuth ID and Secrets.
 
-### Register GitLab Application
+### Install GitLab firstly
+[Gitlab Install Guide](https://docs.gitlab.com/charts/installation/)
+
+### Register MSAez as a GitLab Application
 
 1. Login to GitLab with Admin account 
 2. Admin Area -> Applications
@@ -50,16 +113,6 @@ docker compose up -d
 4. Set Application 
 ![Pasted image 20231110122407](https://github.com/msa-ez/platform/assets/16382067/d6657e15-fd76-4404-a71c-65673f8f3ebd)
 5. ID & Secret issued after the registration of Application is necessary for MSAez Install, so save them. Application. 
-
-### Register Github OAuth Application
-1. Login to Github
-2. Settings -> Developer settings -> OAuth Apps -> New OAuth App
-![image](https://github.com/msa-ez/platform/assets/16382067/bfe19316-3b31-4573-b83f-e0e651b11ee0)
-3. Set Application Info
-    - Application Name: ${Application Name} * Required
-    - Homepage URL: Platform URL ex) https://platform.uengine.org * Required
-    - Application Description: Description
-    - Authorization callback URL: ${Acebase DB URL}/oauth2/mydb/signin ex) http://acebase.uengine.org/oauth2/mydb/signin
 
 ### Install MSAez
 
@@ -84,7 +137,7 @@ image:
 provider: github # github or gitlab
 
 gitlab: 
-	url: gitlab.handymes.com # Gitlab URL
+  url: gitlab.handymes.com # Gitlab URL
 
 oauth: 
   id: "" # Gitlab Application OAUTH ID
@@ -130,106 +183,8 @@ eventstorming-tool-ing   nginx   msa.handymes.com       000.000.000.000   80, 44
 5. Register DNS or edit hosts file and login to the Host.
 
 ***
-# Setting for Chat GPT-related functions
 
-#### FYI 
-> [Acebase](https://github.com/appy-one/acebase)
-
-1. Set in main.js inside the acebase folder.
-   Set each options as a comment.
-   
-```js
-// main.js
-...
-const host = process.env.DB_HOST;
-const dbname = process.env.DB_NAME ? process.env.DB_NAME : "mydb"; // DB Name
-const server = new AceBaseServer(dbname, {
-    host: host ? host : "localhost", // Acebase Use Domain (allow all 0.0.0.0)
-    port: 5757,
-    storage: {
-        path: "/acebase" // DB File Path
-    },
-    authentication: {
-        enabled: true,
-        allowUserSignup: true,
-        defaultAccessRule: "auth",
-        defaultAdminPassword: {{ password }}, // Admin Password 
-    },
-});
-server.on("ready", () => {
-    console.log("SERVER ready");
-});
-const db = new AceBaseClient({
-    host: host ? host : "localhost", // Acebase DB URL
-    port: '5757', // If SSL is processed in Ingeress : 443
-    dbname: dbname, 
-    https: false, // If SSL is processed in Ingeress : True
-});
-
-  // Set password from the setting above. 
-db.auth.signIn("admin", {{ password }} ).then((result) => {
-    console.log(
-        `Signed in as ${result.user.username}, got access token ${result.accessToken}`
-    );
-});
-
-...
-```
-***
-#### Acebase Administrator Login Page
-![image](https://github.com/msa-ez/platform/assets/16382067/477d0662-f07c-4db5-8a65-62ab13a1dde5)
-
-Enter the information from the setting above.
-> Database name : {{ dbname }}
-> Username : admin (fixed)
-> Password : {{ password }}
-#### Acebase Login Page
-![[Pasted image 20231120162428.png]]
-After login, check the data inside.
-
-#### Add & edit Acebase data
-> ex) How to put in Token for OpenAI
-1. Click **update** from the message "**You can update this node or export the value of this node to json**" at the bottom.
-2. Check is the textbox as below is added after click.
-![[Pasted image 20231120162938.png]]
-3. Data can only be entered in Json format and is encoded in base64 after issuing an OpenAI Token.
-##### Linux or MacOS
-```sh
-echo "token" | base64
-```
-##### Windows (CMD and PowerShell)
-> CMD
-```cmd
-powershell "[convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(\"Token!\"))"
-```
-
-> Powershell
-```powershell
-[Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes("Token!"))
-```
-
-4. Enter the Token encoded above in JSON format as shown below.
-> Token Path : /tokens/openai
-
-> Result
-```json
-{
-  "tokens": {
-    "openai": "encoded token!"
-  }
-}
-```
-
-5. Enter the JSON created above into the TextBox and click update.
-
-> Before : ![[Pasted image 20231120170329.png]]
-
-> After : ![image](https://github.com/msa-ez/platform/assets/16382067/6b6ae0c8-2f7b-4a15-9893-56f49e1e097c)
-
-Tokens are added as shown in the picture above.
-
-***
-# GitLab Template Import
+# Importing Code Templates to GitLab
 
 ## ※ The basic template must be created as a sub-project of a root account.
 
@@ -251,3 +206,5 @@ Tokens are added as shown in the picture above.
 ![image](https://github.com/msa-ez/platform/assets/16382067/b78ed33b-cc92-40be-a793-e3c18079217a)
 
     - If nothing is found after searching msa-ez, you need to add msa-ez Organization from Github.
+
+
