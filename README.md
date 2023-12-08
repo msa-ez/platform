@@ -36,6 +36,11 @@ Toppings for Event driven Microservices Design Patterns including Saga, CQRS, Ev
 #### Axon Framework Example
 - (English) Event sourcing and Choreography - https://www.youtube.com/watch?v=XoWd0QMue7A
 - (English) Saga Orchestration- https://www.youtube.com/watch?v=0AEMNgtS5XU
+- (Korean):
+- part1: https://youtu.be/rFdBueV-JBs?t=2379
+- part2: https://youtu.be/YGpUFRJwsuY
+- part3: https://youtu.be/-nPsa4r2ceQ
+- Background: https://youtu.be/rFdBueV-JBs
 
 #### Mock Generation
 - (Korean) https://www.youtube.com/watch?v=BlqwuMqI3J8
