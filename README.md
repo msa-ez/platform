@@ -18,7 +18,9 @@ New Feature: Chat-GPT-based Auto Modeling
 
 <img width="500" alt="image" src="https://github.com/msa-ez/msa-ez-kor.github.io/assets/113568664/071670fe-c49c-47ce-bf51-29315c6fd414">
 
+### Hosted version
 
+https://labs.msaez.io/#/
 
 ### Project setup
 
