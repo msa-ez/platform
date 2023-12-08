@@ -3,15 +3,19 @@
 MSA Easy is a tool that supports analysis, design, implementation and monitoring required from microservices construction to operation. It analyzes and designs domains through event-storming-based collaboration, and automatically generates MSA source codes based on the designed domain model.
 
 Event Storming Modeling
+
 <img width="500" alt="image" src="https://intro.msaez.io/assets/static/ggd-3.775f9c8.f8904849219360a1ef16f19cdd457dbd.gif">
 
 CQRS Setting
+
 <img width="500" alt="image" src="https://intro.msaez.io/assets/static/ggd-8.775f9c8.53579861dbc14e809542ed67086d5d4a.gif">
 
 Code Generation & integrated with Cloud IDEs
+
 <img width="500" alt="image" src="https://intro.msaez.io/assets/static/ggd-6.775f9c8.ba2b625fcefc005fe38d439177ca5e57.gif">
 
-New Feature: Chat-GPT-based Auto Modeling:
+New Feature: Chat-GPT-based Auto Modeling
+
 <img width="500" alt="image" src="https://github.com/msa-ez/msa-ez-kor.github.io/assets/113568664/071670fe-c49c-47ce-bf51-29315c6fd414">
 
 
