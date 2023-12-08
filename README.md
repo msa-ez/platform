@@ -22,7 +22,7 @@ npm run serve
 # Running on Docker Compose (with Github)
 
 
-### Register Github OAuth Application
+### Register MSAez as a Github OAuth Application
 
 You need github client id and secret before you run since MSAez needs to communicate with github.
 
