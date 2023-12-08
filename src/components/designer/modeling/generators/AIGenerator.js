@@ -11,6 +11,7 @@ class AIGenerator {
         this.gptResponseId = null;
         this.openaiToken = null
         this.model = this.client && this.client.model ? this.client.model:"gpt-3.5-turbo-16k"
+        this.responseLimit = this.model == 'gpt-4' ? 5:15
 
         if(options){
             this.preferredLanguage = options.preferredLanguage;
@@ -125,7 +126,7 @@ class AIGenerator {
             }
 
             if(me.client.onModelCreated){
-                if(responseCnt > 15){
+                if(responseCnt > me.responseLimit){
                     me.client.onModelCreated(me.createModel(me.modelJson));
                     responseCnt = 0;
                 } else {
