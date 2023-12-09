@@ -27,6 +27,10 @@ Toppings for Event driven Microservices Design Patterns including Saga, CQRS, Ev
 
 <img width="1288" alt="toppings" src="https://github.com/msa-ez/platform/assets/487999/44a821fe-5ab6-4f40-b106-78f3fb849c9d">
 
+### User Guide
+
+User-guide: https://intro.msaez.io/tool/google-drive-examples/#instructions
+
 ### Tutorial Videos
 
 #### Google Docs Example
@@ -51,28 +55,6 @@ Toppings for Event driven Microservices Design Patterns including Saga, CQRS, Ev
 #### ChatGPT based auto modeling 
 - (Korean) https://www.youtube.com/watch?v=liV2f5ZZlY0
 - (Korean) https://www.youtube.com/watch?v=rUKFP6n-d68&list=PLEr96Fo5umW8CYIuf52d06BHfpgS6Q0-X&t=160s
-
-### Project setup
-
-```sh
-# Set the version of npm(macOS)
-npm install -g npm@6.14.18
-
-nvm install 14
-nvm use 14
-npm install
-```
-### Compiles and hot-reloads for development
-
-```
-npm run serve
-```
-
-Navigate to localhost:8080
-
-Try this user-guide: https://intro.msaez.io/tool/google-drive-examples/#instructions
-
-***
 
 
 # Running on Docker Compose (with Github)
@@ -127,6 +109,38 @@ echo "[OPEN-AI-TOKEN]" | base64
 ```
 
 And Try to auto-generate Event-storming model with this guide:  https://intro.msaez.io/tool/chat-gpt/#generating-business-model-utilizing-openai
+
+# Setting Development Environment
+
+```sh
+# Set the version of npm(macOS)
+npm install -g npm@6.14.18
+
+nvm install 14
+nvm use 14
+npm install
+```
+### Compiles and hot-reloads for development
+
+```
+npm run serve
+```
+
+Navigate to localhost:8080
+
+### Run the Acebase DB
+
+```
+cd acebase
+node main.js
+```
+
+Navigate to the Acebase admin portal:  localhost:5757
+
+### Register Github App and Set the Open API tokens
+[Describe here]
+
+***
 
 
 
