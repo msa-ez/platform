@@ -46,6 +46,10 @@ User-guide: https://intro.msaez.io/tool/google-drive-examples/#instructions
 - part3: https://youtu.be/-nPsa4r2ceQ
 - Background: https://youtu.be/rFdBueV-JBs
 
+#### Multi-tenancy Support and Token-based Authn/Authz
+
+- (Korean) https://www.youtube.com/watch?v=-D6PZldri2w
+
 #### Mock Generation
 - (Korean) https://www.youtube.com/watch?v=BlqwuMqI3J8
 
