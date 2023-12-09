@@ -56,6 +56,7 @@ User-guide: https://intro.msaez.io/tool/google-drive-examples/#instructions
 - (Korean) https://www.youtube.com/watch?v=liV2f5ZZlY0
 - (Korean) https://www.youtube.com/watch?v=rUKFP6n-d68&list=PLEr96Fo5umW8CYIuf52d06BHfpgS6Q0-X&t=160s
 
+***
 
 # Running on Docker Compose (with Github)
 
@@ -110,6 +111,8 @@ echo "[OPEN-AI-TOKEN]" | base64
 
 And Try to auto-generate Event-storming model with this guide:  https://intro.msaez.io/tool/chat-gpt/#generating-business-model-utilizing-openai
 
+***
+
 # Setting Development Environment
 
 ```sh
@@ -139,8 +142,6 @@ Navigate to the Acebase admin portal:  localhost:5757
 
 ### Register Github App and Set the Open API tokens
 [Describe here]
-
-***
 
 
 
