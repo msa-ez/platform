@@ -89,7 +89,7 @@
                                         alt="MSAEZ"
                                     >
                                 </v-avatar>
-                                <b style="margin-left: 9px;">{{ result.solution }} <span>{{ systemMsg }}</span></b>
+                                <b style="margin-left: 9px;" :key="dialogRenderKey">{{ result.solution }} <span>{{ systemMsg }}</span></b>
                             </v-card-text>
                         </div>
                         <div v-for="(changes, changesIdx) in result.codeChanges" :key="changesIdx" style="margin-left: 40px; margin-right: 40px;">
@@ -346,6 +346,11 @@
         mounted: function () { 
             var me = this
             me.codeList = JSON.parse(JSON.stringify(me.selectedCodeList))
+            Object.keys(me.codeList).forEach(function (key){
+                if(key.includes("Test.java") && key != me.testFile.name){
+                    delete me.codeList[key]
+                }
+            })
             me.copySelectedCodeList = JSON.parse(JSON.stringify(me.selectedCodeList))
             me.generate();
 
@@ -445,6 +450,7 @@
                         dumyFile.push(me.testFile)
                         me.updateList = model
                         me.updateList.forEach((solution, solutionIdx) => {
+                            me.siTestResults[me.resultLength + solutionIdx] = solution
                             if(solution && solution.codeChanges){
                                 solution.codeChanges.forEach(function (changes, changesIdx){
                                     changes.originFile = JSON.parse(JSON.stringify(dumyFile))

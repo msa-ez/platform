@@ -1,21 +1,64 @@
-# MSAez Platform Core
+# MSAez (Microservices made easy) Platform
 
-### Project setup
+MSA Easy (https://www.msaez.io/) is a comprehensive tool designed to assist in the analysis, design, implementation, and operation of microservices. It enables business experts and developers to collaboratively analyze and design software using domain-driven design and event-storming techniques. Furthermore, it facilitates the automatic generation of the "Clean-code". Throughout this entire process, ChatGPT can provide automation support and guidance on how to effectively utilize this platform.
 
-```sh
-# Set the version of npm(macOS)
-npm install -g npm@6.14.18
+Chat-GPT creates User Stories
 
-nvm install 14
-nvm use 14
-npm install
-```
-### Compiles and hot-reloads for development
+<img width="500" alt="image" src="https://intro.msaez.io/assets/static/gptgif1.bd6740a.28dad45ee7b0e24b9f110f84bd82bc5e.gif">
 
-```
-npm run serve
-```
+Chat-GPT Auto Software Modeling (Event Storming and UML)
 
+<img width="500" alt="image" src="https://intro.msaez.io/assets/static/gptgif3.bd6740a.d7a8ffd811b78d6ce4a35790e79c9ae8.gif">
+
+Code Generation & integrated with Cloud IDEs
+
+<img width="500" alt="image" src="https://intro.msaez.io/assets/static/ggd-6.775f9c8.ba2b625fcefc005fe38d439177ca5e57.gif">
+
+Kubernetes Modeling and Git Deploy (Integrated with Argo)
+
+<img width="500" alt="image" src="https://intro.msaez.io/assets/static/image10.91ad02c.6a3dd0b490829b22cf18e381d27e1aaf.png">
+
+
+Templates for major microservices platforms - Spring Boot, Axon, Go, Python
+
+<img width="1286" alt="templates" src="https://github.com/msa-ez/platform/assets/487999/7d296274-059c-47f0-900e-794b93ba6817">
+
+Toppings for Event driven Microservices Design Patterns including Saga, CQRS, Event sourcing, GraphQL, Token-based Authz/Authn, Circuit breaker, Microfrontends etc.
+
+<img width="1288" alt="toppings" src="https://github.com/msa-ez/platform/assets/487999/44a821fe-5ab6-4f40-b106-78f3fb849c9d">
+
+### User Guide
+
+User-guide: https://intro.msaez.io/tool/google-drive-examples/#instructions
+
+### Tutorial Videos
+
+#### Google Docs Example
+- (English) https://www.youtube.com/watch?v=MUN0iS3cJV8&list=PLEr96Fo5umW9w_5SmjXhOar1xRRWcZsbB&index=3
+- (Korean) https://www.youtube.com/watch?v=GLT92wnRkMg
+
+#### Axon Framework Example
+- (English) Event sourcing and Choreography - https://www.youtube.com/watch?v=XoWd0QMue7A
+- (English) Saga Orchestration- https://www.youtube.com/watch?v=0AEMNgtS5XU
+- (Korean):
+- part1: https://youtu.be/rFdBueV-JBs?t=2379
+- part2: https://youtu.be/YGpUFRJwsuY
+- part3: https://youtu.be/-nPsa4r2ceQ
+- Background: https://youtu.be/rFdBueV-JBs
+
+#### Multi-tenancy Support and Token-based Authn/Authz
+
+- (Korean) https://www.youtube.com/watch?v=-D6PZldri2w
+
+#### Mock Generation
+- (Korean) https://www.youtube.com/watch?v=BlqwuMqI3J8
+
+#### Unit Testing
+- (Korean) https://www.youtube.com/watch?v=WF1fWdkFun0
+
+#### ChatGPT based auto modeling 
+- (Korean) https://www.youtube.com/watch?v=liV2f5ZZlY0
+- (Korean) https://www.youtube.com/watch?v=rUKFP6n-d68&list=PLEr96Fo5umW8CYIuf52d06BHfpgS6Q0-X&t=160s
 
 ***
 
@@ -32,7 +75,7 @@ npm run serve
     - Application Description: Description
     - Authorization callback URL: http://localhost:5757/oauth2/mydb/signin
 4. Now you can find Github Application Client ID and Secret as follows:
-<img width="935" alt="image" src="https://github.com/msa-ez/platform/assets/487999/06f6af6e-6511-4a7f-a6d5-9021ca9b9d67">
+<img width="800" alt="image" src="https://github.com/msa-ez/platform/assets/487999/06f6af6e-6511-4a7f-a6d5-9021ca9b9d67">
 
 
 Set those client ID and Secret with following command and run:
@@ -47,6 +90,64 @@ docker-compose up -d
 > If there's pull error please hit this: docker logout ghcr.io
 
 Now you can navigate to localhost:8080
+
+
+# Settings for AI-aided Model Generations by Chat GPT
+
+To set Open AI token, we need to visit Acebase. Navigate to http://localhost:5757/webmanager/
+
+Login with following info:
+- DB Name: mydb
+- User: admin
+- Password: 75sdDSFg37w5
+
+Set the Token encoded above in JSON format as shown below.
+
+![image](https://github.com/msa-ez/platform/assets/16382067/6b6ae0c8-2f7b-4a15-9893-56f49e1e097c)
+```
+{ "tokens": {"openai": "BASE64-ENCODED-OPENAI-TOKEN"}}
+```
+
+** Note: Your token must be encoded with base64: 
+```sh
+echo "[OPEN-AI-TOKEN]" | base64
+```
+
+And Try to auto-generate Event-storming model with this guide:  https://intro.msaez.io/tool/chat-gpt/#generating-business-model-utilizing-openai
+
+***
+
+# Setting Development Environment
+
+```sh
+# Set the version of npm(macOS)
+npm install -g npm@6.14.18
+
+nvm install 14
+nvm use 14
+npm install
+```
+### Compiles and hot-reloads for development
+
+```
+npm run serve
+```
+
+Navigate to localhost:8080
+
+### Run the Acebase DB
+
+```
+cd acebase
+node main.js
+```
+
+Navigate to the Acebase admin portal:  localhost:5757
+
+### Register Github App and Set the Open API tokens
+[Describe here]
+
+
 
 ***
 # Install MSAez on Kubernetes with GitLab
@@ -160,102 +261,13 @@ eventstorming-tool-ing   nginx   msa.handymes.com       000.000.000.000   80, 44
     - If nothing is found after searching msa-ez, you need to add msa-ez Organization from Github.
 
 
-# Settings for AI-aided Model Generations by Chat GPT
+# Roadmap
 
-#### Set Open AI token to the Database 
-> [Acebase](https://github.com/appy-one/acebase)
-
-1. Set in main.js inside the acebase folder.
-   Set each options as a comment.
+- Integration with the Backstage Platform:
    
-```js
-// main.js
-...
-const host = process.env.DB_HOST;
-const dbname = process.env.DB_NAME ? process.env.DB_NAME : "mydb"; // DB Name
-const server = new AceBaseServer(dbname, {
-    host: host ? host : "localhost", // Acebase Use Domain (allow all 0.0.0.0)
-    port: 5757,
-    storage: {
-        path: "/acebase" // DB File Path
-    },
-    authentication: {
-        enabled: true,
-        allowUserSignup: true,
-        defaultAccessRule: "auth",
-        defaultAdminPassword: {{ password }}, // Admin Password 
-    },
-});
-server.on("ready", () => {
-    console.log("SERVER ready");
-});
-const db = new AceBaseClient({
-    host: host ? host : "localhost", // Acebase DB URL
-    port: '5757', // If SSL is processed in Ingeress : 443
-    dbname: dbname, 
-    https: false, // If SSL is processed in Ingeress : True
-});
+MSAez can be integrated as a plugin into the Backstage platform (https://backstage.io/ - a de-facto standard in developer portal platform), enabling BizDevOps professionals to consolidate various tools used throughout the Biz-Dev-Ops lifecycle. This integration allows for a seamless incorporation into Backstage's developer experience, enhancing workflow efficiency and tool management.
 
-  // Set password from the setting above. 
-db.auth.signIn("admin", {{ password }} ).then((result) => {
-    console.log(
-        `Signed in as ${result.user.username}, got access token ${result.accessToken}`
-    );
-});
+- Automated Coding, System Testing, and Code Debugging:
 
-...
-```
-***
-#### Acebase Administrator Login Page
-![image](https://github.com/msa-ez/platform/assets/16382067/477d0662-f07c-4db5-8a65-62ab13a1dde5)
-
-Enter the information from the setting above.
-> Database name : {{ dbname }}
-> Username : admin (fixed)
-> Password : {{ password }}
-#### Acebase Login Page
-![[Pasted image 20231120162428.png]]
-After login, check the data inside.
-
-#### Add & edit Acebase data
-> ex) How to put in Token for OpenAI
-1. Click **update** from the message "**You can update this node or export the value of this node to json**" at the bottom.
-2. Check is the textbox as below is added after click.
-![[Pasted image 20231120162938.png]]
-3. Data can only be entered in Json format and is encoded in base64 after issuing an OpenAI Token.
-##### Linux or MacOS
-```sh
-echo "[OPEN-AI-TOKEN]" | base64
-```
-##### Windows (CMD and PowerShell)
-> CMD
-```cmd
-powershell "[convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(\"Token!\"))"
-```
-> Powershell
-```powershell
-[Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes("Token!"))
-```
-
-4. Enter the Token encoded above in JSON format as shown below.
-> Token Path : /tokens/openai
-
-> Result
-```json
-{
-  "tokens": {
-    "openai": "encoded token!"
-  }
-}
-```
-
-5. Enter the JSON created above into the TextBox and click update.
-
-> Before : ![[Pasted image 20231120170329.png]]
-
-> After : ![image](https://github.com/msa-ez/platform/assets/16382067/6b6ae0c8-2f7b-4a15-9893-56f49e1e097c)
-
-Tokens are added as shown in the picture above.
-
-***
+With the incorporation of ChatGPT, MSAez elevates its functionality by automating the implementation of business logic and test codes in the default generated code. Additionally, ChatGPT aids in automatically detecting and resolving bugs within the generated code, ensuring it successfully passes all necessary tests. This automation streamlines the coding and testing processes, significantly reducing the time and effort required for development and debugging.
 

@@ -69,7 +69,7 @@ please generate more than 3 example mappings as json format below:
         "given": [
             {
                 "type": "Aggregate",
-                "name": "Aggreagate name",
+                "name": "${rule.givenItems[0].name}",
                 "value": {
                     // example data here
                 }
@@ -78,7 +78,7 @@ please generate more than 3 example mappings as json format below:
         "when":[
             {
                 "type": "Event",
-                "name": "Event name",
+                "name": "${rule.whenItems[0].name}",
                 "value": {
                     // example data here
                 }
@@ -87,25 +87,11 @@ please generate more than 3 example mappings as json format below:
         "then":[
             {
                 "type": "Event",
-                "name": "Event name",
+                "name": "then event name", // Name each event in thenFields
                 "value": {
                     // example data here
                 }
             },
-            {
-                "type": "Event",
-                "name": "Event name",
-                "value": {
-                    // example data here
-                }
-            },
-            {
-                "type": "Event",
-                "name": "Event name",
-                "value": {
-                    // example data here
-                }
-            }
         ]
     }
 ]`
