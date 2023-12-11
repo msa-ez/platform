@@ -95,7 +95,7 @@
             return {
                 serviceIds: null,
                 roleDef: 'Human',
-                roleResolution: false
+                roleResolution: ""
             };
         },
         watch: {
@@ -114,17 +114,17 @@
                 });
             },
             'roleResolution': function(val) {
-              if(val) {
-                  if(!this.value.roleResolutionContext) {
-                      this.value.roleResolutionContext = {
-                          endpoint: null,
-                          scope: null
-                      };
-                  }
-                  this.value.roleResolutionContext._type = val;
-              } else {
-                  this.value.roleResolutionContext = null;
-              }
+                if(val) {
+                    if(!this.value.roleResolutionContext) {
+                        this.value.roleResolutionContext = {
+                            endpoint: null,
+                            scope: null
+                        };
+                    }
+                    this.value.roleResolutionContext._type = val;
+                } else {
+                    this.value.roleResolutionContext = null;
+                }
             }
         },
         created: function () {

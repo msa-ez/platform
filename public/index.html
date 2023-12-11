@@ -257,12 +257,12 @@
   </head>
   <body>
     <script>
-      if(window.MODE == "onprem") {
+      if(window.MODE == "onprem" || window.MODE == "bpm") {
         window.$acebase = new AceBaseClient({
-            host: window.DB_HOST,
-            port: window.DB_PORT,
+            host: "localhost",
+            port: 5757,
             dbname: "mydb",
-            https: window.DB_HTTPS,
+            https: false,
         });
         window.$acebase.ready(() => {
             console.log("Connected successfully");

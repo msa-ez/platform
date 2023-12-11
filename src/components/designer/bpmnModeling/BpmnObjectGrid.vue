@@ -204,7 +204,8 @@
             },
             enterForm() {
                 var me = this;
-                console.log(me.value)
+                if(!me.value)
+                    me.value = []
                 me.value.push(me.formData);
                 me.formData = {
                     name: '',
@@ -215,6 +216,7 @@
                     typeClassName: '',
                 },
                 me.addDialogEnabled = false;
+                me.$emit("input", me.value);
             },
             editForm(event, value) {
                 var me = this;

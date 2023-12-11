@@ -154,10 +154,11 @@
 
                 me._watch(reference, function (snapshot){
                     if (snapshot) {
+                        console.log(snapshot.ref.path)
                         if( Object.keys(snapshot.context()).length == 0){
                             var snapshotObj = snapshot.val()
                             callback(snapshotObj.value)
-                        }else{
+                        } else {
                             callback(snapshot.val())
                         }
                     }else{

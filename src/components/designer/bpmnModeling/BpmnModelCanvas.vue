@@ -255,7 +255,7 @@
                                         dark fab small
                                         v-on="on"
                                         @click="generatedefinition">
-                                    <v-icon v-if="id && id.indexOf('@') == -1">save</v-icon>
+                                    <v-icon v-if="id && id.indexOf('@') == -1">list</v-icon>
                                     <v-icon v-else>history</v-icon>
                                 </v-btn>
                             </template>
@@ -410,7 +410,7 @@
                                             dark fab small
                                             v-on="on"
                                             @click="generatedefinition">
-                                        <v-icon v-if="id && id.indexOf('@') == -1">save</v-icon>
+                                        <v-icon v-if="id && id.indexOf('@') == -1">list</v-icon>
                                         <v-icon v-else>history</v-icon>
                                     </v-btn>
                                 </template>
@@ -818,7 +818,7 @@
             try{
                 Vue.use(BpmnVue);
                 this.canvasType = 'bpmn'
-                me.isQueueModel = false
+                me.isQueueModel = true
                 me.track()
                 me.value = {
                     _type: 'org.uengine.kernel.ProcessDefinition',
@@ -1495,8 +1495,10 @@
             },
             async initiateProcess() {
                 var me = this;
-                me.saveComposition('save')
-                me.$http.post(`/api/instance?defPath=${me.projectName}simulation=true`)
+                // me.saveComposition('save')
+                let map = new Map()
+                map.set("role", "sanghoon01@uengine.org")
+                me.$http.post(`/api/instance?defPath=${me.projectName}&simulation=true`, {"roleMapping":map})
                 // this.save(
                 //     function () {
                 //         var def = {};

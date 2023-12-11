@@ -27,7 +27,7 @@
                             "gitToken",
                             result.provider.access_token
                         );
-                    let origin = window.GITLAB ? window.GITLAB : window.location.hostname.replace("www.", "");
+                    // let origin = window.GITLAB ? window.GITLAB : window.location.hostname.replace("www.", "");
                     var getUsers = await git.getUserInfo()
                     .then(function (res) {
                         console.log(result)
