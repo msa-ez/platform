@@ -162,7 +162,7 @@
                                 <v-expansion-panel>
                                     <v-expansion-panel-header style="color: red; display: table-row; background-color: #fee2e3;">
                                         <div v-for="(err, idx) in result.errorLog" :key="idx" style="display: table-row; font-weight: bolder; font-size: .875rem; margin-bottom: 5px;">
-                                            [ERROR] {{ err.fileName }}: {{ err.errorDetails }}
+                                            [ERROR] {{ err.fileName }}: {{ err.errorDetails }}[{{ err.lineNumber }}]
                                         </div>
                                     </v-expansion-panel-header>
                                     <v-expansion-panel-content>
@@ -278,6 +278,7 @@
     import CodeViewer from "../CodeViewer";
     import SIGenerator from './generators/SIGenerator';
     import ErrorLogGenerator from './generators/ErrorLogGenerator';
+    import { VectorStorage } from "vector-storage";
 
     export default {
         name: 'git-action-dialog',
@@ -308,6 +309,7 @@
                 isSolutionCreating: false,
 
                 codeList: null,
+                summarizedCodeList: {},
                 copySelectedCodeList: null,
                 updateList: [],
                 siTestResults: [],
@@ -369,10 +371,12 @@
                     me.gitActionSnackBar.title="Success"
                     me.gitActionSnackBar.show = true
                 } else {
-                    me.fullErrorLog = log
-                    me.model = null
-                    me.generator = new ErrorLogGenerator(me);
-                    me.generator.generate();
+                    if(!me.fullErrorLog){
+                        me.fullErrorLog = log
+                        me.model = null
+                        me.generator = new ErrorLogGenerator(me);
+                        me.generator.generate();
+                    }
                 }
             })
 
@@ -405,11 +409,54 @@
                     })
                 })
             },
-            generate(){
+            async summaryCodeList(){
+                var me = this
+                let query
+                let apiKey = await me.generator.getToken();
+
+                me.summarizedCodeList = {}
+
+                const vectorStore = new VectorStorage({ openAIApiKey: apiKey });
+                Object.keys(me.codeList).forEach(async function (key){
+                    await vectorStore.addText(me.codeList[key], {
+                        category: key,
+                    });
+                })
+                if(me.generatedErrorDetails){
+                    query = `Error list: ${JSON.stringify(me.generatedErrorDetails)}
+What files do I need to modify and what related files do I need to fix the errors in the error list?`
+                } else {
+                    query = `To pass the test, you must implement domain logic in the ${me.testFile.name} file.`
+                }
+
+                const results = await vectorStore.similaritySearch({
+                    query: query,
+                    k: 10,
+                });
+                
+                console.log(results);
+                if(results){
+                    results.similarItems.forEach(function (item){
+                        me.summarizedCodeList[item.metadata.category] = me.codeList[item.metadata.category]
+                    })
+                } 
+                me.summarizedCodeList[me.testFile.name] = me.codeList[me.testFile.name]
+                Object.keys(me.codeList).some(function (key){
+                    if(!me.summarizedCodeList[key]){
+                        if(JSON.stringify(me.summarizedCodeList).length < 21000){
+                            me.summarizedCodeList[key] = me.codeList[key]
+                        } else {
+                            return true;
+                        }
+                    }
+                })
+            },
+            async generate(){
                 var me = this
                 me.model = 'gpt-4'
                 me.startGitAction = true
                 me.generator = new SIGenerator(this);
+                await me.summaryCodeList()
                 me.generator.generate();
             },
             regenerate(){
@@ -438,7 +485,7 @@
                 try {
                     var me = this
                     if(me.fullErrorLog){
-                        me.siTestResults[me.lastIndex].errorLog = model
+                        me.siTestResults[me.lastIndex].errorLog = [...new Set(model.map(JSON.stringify))].map(JSON.parse)
                     } else {  
                         if(!me.startGitAction){
                             me.generator.stop();

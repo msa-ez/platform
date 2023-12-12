@@ -134,6 +134,7 @@
     "v-easy-chart": "0.0.20",
     "v-runtime-template": "^1.10.0",
     "vanilla-jsoneditor": "^0.17.8",
+    "vector-storage": "^1.0.55",
     "vee-validate": "^2.2.15",
     "vue": "^2.6.12",
     "vue-axios-interceptors": "^0.3.2",
@@ -224,13 +225,6 @@
     "presets": [
       "@babel/preset-env"
     ]
-  },
-  "jest": {
-    "transform": {
-      "^[^.]+.vue$": "vue-jest",
-      "^.+\\.js$": "babel-jest"
-    },
-    "preset": "@vue/cli-plugin-unit-jest/presets/no-babel"
   },
   "homepage": "http://theopencloudengine.github.io/event-storming-tool",
   "resolutions": {

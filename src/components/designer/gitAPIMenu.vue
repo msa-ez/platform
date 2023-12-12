@@ -999,17 +999,17 @@
                         me.$EventBus.$emit('getActionLogs', result)
                     })
                     .catch((e) => {
-                        if(e.response.status === 401){
+                        if(e.response && e.response.status === 401){
                             me.alertReLogin()
                         }
                         console.log(e)
                     })
                 })
                 .catch((e) => {
-                    if(e.response.status === 401){
+                    console.log(e)
+                    if(e.response && e.response.status === 401){
                         me.alertReLogin()
                     }
-                    console.log(e)
                 })
             },
             // sendFileToAi(){

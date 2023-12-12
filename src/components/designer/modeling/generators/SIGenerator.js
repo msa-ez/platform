@@ -1,6 +1,5 @@
 import JsonAIGenerator from "./JsonAIGenerator";
 
-
 export default class SIGenerator extends JsonAIGenerator {
 
     constructor(client){
@@ -17,12 +16,12 @@ It must identify a list of errors and provide appropriate solutions to the error
 Identify the code parts of the file that need error correction and correct the errors to suit your business logic.
 After checking the error log, you should add a workaround for the file causing the error in "codeChanges".
 If multiple errors occur in the same file, you should create one workaround for multiple errors instead of showing a workaround for each error.`
-        } else {
-            prompt = 'First, determine whether the business logic is lacking or not written, and if so, please suggest a way to write the logic in the aggregate file of the domain code. Write the business logic to pass this test.'
-        }
+    } else {
+        prompt = 'First, determine whether the business logic is lacking or not written, and if so, please suggest a way to write the logic in the aggregate file of the domain code. Write the business logic to pass this test.'
+    }
 
-        return `Here is the code list:
-${JSON.stringify(this.client.codeList)}
+    return `Here is the code list:
+${JSON.stringify(this.client.summarizedCodeList)}
 You are a developer. To finally pass ${this.client.testFile.name} in the code list, you must modify the code as follows.
 ${prompt}
 The solution must always be returned in the presented json format and must be generated according to all generation rules.
@@ -34,7 +33,7 @@ Preserve existing class interfaces (methods, parameters, fields) as much as poss
 3. Re-raise the error appropriately when handling the try~catch. No implementation MUST handle errors through a new try~catch rather than an existing try~catch. If you don't know exactly why the error occurred, you won't be able to fix it later.
 4. "codeChanges" cannot be an empty array and must have a value.
 5. In the case of files where an error occurred without any code changes, the contents of the original file must be returned as "codeChanges".
-6. The "modifiedFileCode" values must include the entire code of the file in the code list. All code content is never omitted or abridged. For example, you should not summarize sections of code with the expression "...".
+6. The "modifiedFileCode" values must include the entire code of the file in the code list. All code content is never omitted or abridged.
 7. "codeChanges" are only created if it is a file.
 8. The test0, test1, and test2 functions in the ${this.client.testFile.name} file cannot be deleted. Only modifications are possible.
 Json format:
@@ -45,7 +44,7 @@ Json format:
         codeChanges: [
             { 
                 fileName: "source code file name",
-                modifiedFileCode: "The new file code that merged the modified content with the content in the file code.", // It must be full code in the file. It start with "package ..."
+                modifiedFileCode: "The new file code that merged the modified content with the content in the file code.", // It must be full code in the file. It start with "package ..." and Modified code content must not include any indication that code has been omitted. Code may never be omitted. Never omit code.
                 action: "CHANGE" | "ADD BELOW THE CODE" | "DELETE" 
             } 
         ] 

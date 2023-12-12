@@ -2759,6 +2759,22 @@
                         }
                     })
                 })
+                // 선택된 테스트 파일이 아닌 다른 테스트 파일 임시 삭제 로직 
+                // me.testFileList.forEach(function (file){
+                //     if(me.selectedTestFile.name != file.name){
+                //         var testFileIdx = me.codeLists.findIndex(x => x.fileName == file.name)
+                //         if(me.codeLists[testFileIdx]){
+                //             me.codeLists[testFileIdx].code = ""
+                //             me.filteredCodeLists[testFileIdx].code = ""
+                //             me.filteredPrettierCodeLists[testFileIdx].code = ""
+                //             // console.log(me.codeLists[testFileIdx].fileName)
+                //             // me.codeLists.splice(testFileIdx, 1);
+                //             // me.filteredCodeLists.splice(testFileIdx, 1);
+                //             // me.filteredPrettierCodeLists.splice(testFileIdx, 1);
+                //         }
+                //     }
+                // })
+
                 var actionCode = `name: test
 run-name: testing 
 on: [push]
