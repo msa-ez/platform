@@ -78,7 +78,7 @@
         name: 'bpmn-user-task',
         props: {},
         component: {
-          'bpmn-task-panel': BpmnPropertyPanel
+            'bpmn-task-panel': BpmnPropertyPanel
         },
         computed: {
             defaultStyle(){
@@ -128,14 +128,7 @@
             value: {
                 handler: function(newVal) {
                     let me = this
-                    // if (!me.definition._changedByLocaleSelector) {
-                    //     if (!me.value.name.localedTexts) {
-                    //         me.value.name.localedTexts = {
-                    //             _type: 'java.util.HashMap'
-                    //         };
-                    //     }
-                    //     me.value.name.localedTexts[me.definition._selectedLocale] = me.value.name;
-                    // }
+                    
                     me.definition._changedByLocaleSelector = false;
                 },
                 deep: true

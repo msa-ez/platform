@@ -60,7 +60,7 @@
                 <bpmn-message-flow 
                         v-if="relation != null" 
                         :relation="relation"
-                       :definition="data.definition"
+                        :definition="data.definition"
                 ></bpmn-message-flow>
             </div>
         </opengraph>

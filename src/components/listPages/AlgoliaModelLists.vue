@@ -1266,8 +1266,6 @@
                         { id: 'home'  , display: 'Home'  , show: true },
                         { id: 'mine'  , display: 'Mine'  , show: true, count: 0, totalCount: null },
                         { id: 'public', display: 'Public', show: true , count: 0, totalCount: null },
-                        // { id: 'share' , display: 'Shared', show: false, count: 0, totalCount: null },
-                        // { id: 'local' , display: 'Local' , show: true , count: 0, totalCount: null },
                     ]
             }
                 
@@ -1347,7 +1345,7 @@
         },
         computed: {
             selectedMode(){
-              return this.listMode.find(x=>x.type == this.searchObj.type);
+                return this.listMode.find(x=>x.type == this.searchObj.type);
             },
             isOnPrem() {
                 if(window.MODE == 'onprem' || window.MODE == "bpm")

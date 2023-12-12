@@ -89,7 +89,7 @@
         props: {
             serviceIds: Array,
             roleDef: String,
-            roleResolution: Boolean,
+            roleResolution: String,
         },
         data() {
             return {

@@ -66,9 +66,6 @@
                     // }
                 }
             },
-            // "value.name": _.debounce(async function (newVal) {
-                // 이전 로직
-            // }, 500),
         },
         methods: {
             setElementCanvas(){
@@ -87,8 +84,8 @@
                         _value : 기존 값.
                         value  : Panel 사용되는 값,
                     */
-                   console.log(me._value)
-                   console.log(me.value)
+                    console.log(me._value)
+                    console.log(me.value)
                     var diff = jsondiffpatch.diff(me._value, me.value)
                     if (diff && Object.keys(diff).length > 0) {
                         console.log('Panel - executeBeforeDestroy')
@@ -120,16 +117,7 @@
                 }catch (e) {
                     alert('[Error] BpmnPanel Sync: ', e)
                 }
-            },
-            changedNamePanel(newVal) {
-                // 데이터 구조의 변화로 인하여 필요 없음.
-                // var me = this
-                // if (me.value.elementView) {
-                //     me.canvas.$refs[`${me.value.elementView.id}`][0].namePanel = newVal ? newVal : ''
-                // } else if (me.value.relationView) {
-                //     me.canvas.$refs[`${me.value.relationView.id}`][0].namePanel = newVal ? newVal : ''
-                // }
-            },
+            }
         }
     }
 </script>

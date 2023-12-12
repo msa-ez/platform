@@ -25,7 +25,6 @@
                 var me = this;
                 return new Promise(function (resolve, reject) {
                     userInfo.displayName = userInfo.username;
-                    let host = JSON.parse(JSON.stringify(window.location.host))
                     window.$acebase.auth.startAuthProviderSignIn(window.PROVIDER, `${window.location.protocol}//${window.location.host}/?oauth=acebase`)
                     .then(redirectUrl => {
                         window.location = redirectUrl; // Send user to auth provider's login screen
@@ -186,22 +185,13 @@
             },
             _watch(reference, callback) {
                 try{
-                    reference.on('value',snapshot => {
-                            if (snapshot) {
-                                callback(snapshot)
-                            } else {
-                                callback(null)
-                            }
-                        })
-                        // .on('value')
-                        // .subscribe(snapshot => {
-                        //     if (snapshot) {
-                        //         callback(snapshot)
-                        //     } else {
-                        //         callback(null)
-                        //     }
-                        //     // .subscribe only fires for new children from now on
-                        // })
+                    reference.on('value', snapshot => {
+                        if (snapshot) {
+                            callback(snapshot)
+                        } else {
+                            callback(null)
+                        }
+                    })
                 }catch (e) {
                     console.log('Error] AceBase _watch: ', e)
                     callback(undefined)

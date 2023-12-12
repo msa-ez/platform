@@ -1,45 +1,66 @@
 # MSAez (Microservices made easy) Platform
 
-MSA Easy (https://www.msaez.io/) is a tool that supports analysis, design, implementation, and operation of microservices. Business experts and developers can analyzes and designs software with domain-driven design through event-storming-based collaboration, and automatically generates Microservices source code.
+MSA Easy (https://www.msaez.io/) is a comprehensive tool designed to assist in the analysis, design, implementation, and operation of microservices. It enables business experts and developers to collaboratively analyze and design software using domain-driven design and event-storming techniques. Furthermore, it facilitates the automatic generation of the "Clean-code". Throughout this entire process, ChatGPT can provide automation support and guidance on how to effectively utilize this platform.
 
-Collaborative Event Storming Modeling
+Chat-GPT creates User Stories
 
-<img width="500" alt="image" src="https://intro.msaez.io/assets/static/ggd-3.775f9c8.f8904849219360a1ef16f19cdd457dbd.gif">
+<img width="500" alt="image" src="https://intro.msaez.io/assets/static/gptgif1.bd6740a.28dad45ee7b0e24b9f110f84bd82bc5e.gif">
 
-Event driven Microservices Design Patterns
+Chat-GPT Auto Software Modeling (Event Storming and UML)
 
-<img width="500" alt="image" src="https://intro.msaez.io/assets/static/ggd-8.775f9c8.53579861dbc14e809542ed67086d5d4a.gif">
+<img width="500" alt="image" src="https://intro.msaez.io/assets/static/gptgif3.bd6740a.d7a8ffd811b78d6ce4a35790e79c9ae8.gif">
 
 Code Generation & integrated with Cloud IDEs
 
 <img width="500" alt="image" src="https://intro.msaez.io/assets/static/ggd-6.775f9c8.ba2b625fcefc005fe38d439177ca5e57.gif">
 
-New Feature: Chat-GPT-based Auto Modeling
+Kubernetes Modeling and Git Deploy (Integrated with Argo)
 
-<img width="500" alt="image" src="https://github.com/msa-ez/msa-ez-kor.github.io/assets/113568664/071670fe-c49c-47ce-bf51-29315c6fd414">
+<img width="500" alt="image" src="https://intro.msaez.io/assets/static/image10.91ad02c.6a3dd0b490829b22cf18e381d27e1aaf.png">
 
-### Project setup
 
-```sh
-# Set the version of npm(macOS)
-npm install -g npm@6.14.18
+Templates for major microservices platforms - Spring Boot, Axon, Go, Python
 
-nvm install 14
-nvm use 14
-npm install
-```
-### Compiles and hot-reloads for development
+<img width="1286" alt="templates" src="https://github.com/msa-ez/platform/assets/487999/7d296274-059c-47f0-900e-794b93ba6817">
 
-```
-npm run serve
-```
+Toppings for Event driven Microservices Design Patterns including Saga, CQRS, Event sourcing, GraphQL, Token-based Authz/Authn, Circuit breaker, Microfrontends etc.
 
-Navigate to localhost:8080
+<img width="1288" alt="toppings" src="https://github.com/msa-ez/platform/assets/487999/44a821fe-5ab6-4f40-b106-78f3fb849c9d">
 
-Try this user-guide: https://intro.msaez.io/tool/google-drive-examples/#instructions
+### User Guide
+
+User-guide: https://intro.msaez.io/tool/google-drive-examples/#instructions
+
+### Tutorial Videos
+
+#### Google Docs Example
+- (English) https://www.youtube.com/watch?v=MUN0iS3cJV8&list=PLEr96Fo5umW9w_5SmjXhOar1xRRWcZsbB&index=3
+- (Korean) https://www.youtube.com/watch?v=GLT92wnRkMg
+
+#### Axon Framework Example
+- (English) Event sourcing and Choreography - https://www.youtube.com/watch?v=XoWd0QMue7A
+- (English) Saga Orchestration- https://www.youtube.com/watch?v=0AEMNgtS5XU
+- (Korean):
+- part1: https://youtu.be/rFdBueV-JBs?t=2379
+- part2: https://youtu.be/YGpUFRJwsuY
+- part3: https://youtu.be/-nPsa4r2ceQ
+- Background: https://youtu.be/rFdBueV-JBs
+
+#### Multi-tenancy Support and Token-based Authn/Authz
+
+- (Korean) https://www.youtube.com/watch?v=-D6PZldri2w
+
+#### Mock Generation
+- (Korean) https://www.youtube.com/watch?v=BlqwuMqI3J8
+
+#### Unit Testing
+- (Korean) https://www.youtube.com/watch?v=WF1fWdkFun0
+
+#### ChatGPT based auto modeling 
+- (Korean) https://www.youtube.com/watch?v=liV2f5ZZlY0
+- (Korean) https://www.youtube.com/watch?v=rUKFP6n-d68&list=PLEr96Fo5umW8CYIuf52d06BHfpgS6Q0-X&t=160s
 
 ***
-
 
 # Running on Docker Compose (with Github)
 
@@ -93,6 +114,38 @@ echo "[OPEN-AI-TOKEN]" | base64
 ```
 
 And Try to auto-generate Event-storming model with this guide:  https://intro.msaez.io/tool/chat-gpt/#generating-business-model-utilizing-openai
+
+***
+
+# Setting Development Environment
+
+```sh
+# Set the version of npm(macOS)
+npm install -g npm@6.14.18
+
+nvm install 14
+nvm use 14
+npm install
+```
+### Compiles and hot-reloads for development
+
+```
+npm run serve
+```
+
+Navigate to localhost:8080
+
+### Run the Acebase DB
+
+```
+cd acebase
+node main.js
+```
+
+Navigate to the Acebase admin portal:  localhost:5757
+
+### Register Github App and Set the Open API tokens
+[Describe here]
 
 
 
@@ -207,4 +260,14 @@ eventstorming-tool-ing   nginx   msa.handymes.com       000.000.000.000   80, 44
 
     - If nothing is found after searching msa-ez, you need to add msa-ez Organization from Github.
 
+
+# Roadmap
+
+- Integration with the Backstage Platform:
+   
+MSAez can be integrated as a plugin into the Backstage platform (https://backstage.io/ - a de-facto standard in developer portal platform), enabling BizDevOps professionals to consolidate various tools used throughout the Biz-Dev-Ops lifecycle. This integration allows for a seamless incorporation into Backstage's developer experience, enhancing workflow efficiency and tool management.
+
+- Automated Coding, System Testing, and Code Debugging:
+
+With the incorporation of ChatGPT, MSAez elevates its functionality by automating the implementation of business logic and test codes in the default generated code. Additionally, ChatGPT aids in automatically detecting and resolving bugs within the generated code, ensuring it successfully passes all necessary tests. This automation streamlines the coding and testing processes, significantly reducing the time and effort required for development and debugging.
 
