@@ -4,9 +4,8 @@ class AIGenerator {
     constructor(client, options){
         this.client = client;
         this.finish_reason = null;
-        this.isContinued = false
         this.modelJson = null;
-        this.savedModelJson = null;
+        this.savedModel = null;
         this.stopSignaled = false;
         this.gptResponseId = null;
         this.openaiToken = null
@@ -113,11 +112,7 @@ class AIGenerator {
             if(newUpdatesJoined.includes(": null")){
                 newUpdatesJoined.replaceAll(": null", ": 'null'")
             }
-            if(me.isContinued) {
-                me.modelJson = me.savedModelJson + newUpdatesJoined
-            } else {
-                me.modelJson = newUpdatesJoined
-            }
+            me.modelJson = newUpdatesJoined
 
             if(me.client.onReceived){
                 if(me.gptResponseId == currentResId){
@@ -127,8 +122,15 @@ class AIGenerator {
 
             if(me.client.onModelCreated){
                 if(responseCnt > me.responseLimit){
-                    me.client.onModelCreated(me.createModel(me.modelJson));
-                    responseCnt = 0;
+                    let createdModel = me.createModel(me.modelJson)
+                    if(createdModel){
+                        me.savedModel = createdModel
+                        me.client.onModelCreated(createdModel);
+                        responseCnt = 0;
+                    } else {
+                        me.stop();
+                        if(me.client.onGenerationFinished) me.client.onGenerationFinished(me.savedModel)
+                    }
                 } else {
                     responseCnt++;
                 }
@@ -142,14 +144,11 @@ class AIGenerator {
             if(me.client){
                 if(me.finish_reason == 'length'){
                     console.log('max_token issue')
-                    me.savedModelJson = me.modelJson
-                    me.continue();
+                    alert('max_token issue')
                 } 
                 // else {
 
                     me.state = 'end';
-                    me.isContinued = false
-                    me.savedModelJson = null
                     let model = null;
                     if(me.client.onModelCreated){
                         model = me.createModel(me.modelJson)
@@ -168,19 +167,7 @@ class AIGenerator {
         };
         
         let messages
-        if(me.isContinued) {
-            messages = me.previousMessages
-            messages.push({
-                role: 'assistant',
-                content: me.savedModelJson
-            })
-            messages.push({
-                role: 'user',
-                content: "continue"
-            })
-        } else {
-            messages = this.createMessages();
-        }
+        messages = this.createMessages();
 
         
         const data = JSON.stringify({
@@ -222,11 +209,6 @@ class AIGenerator {
         // console.log(me.previousMessages)
         
         return me.previousMessages;
-    }
-
-    continue(){
-        this.isContinued = true;
-        this.generate();
     }
 
     createModel(text){

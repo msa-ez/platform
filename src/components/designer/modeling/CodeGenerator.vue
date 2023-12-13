@@ -113,6 +113,7 @@
                                     :isOneBCModel="isOneBCModel"
                                     :onlyOneBcId="onlyOneBcId"
                                     :isSIgpt="isSIgpt"
+                                    :selectedTestFile="selectedTestFile"
                                 />
                             </div>
                         </v-menu>
@@ -1853,6 +1854,8 @@
                     open: 'mdi-book-open',
                     md: 'mdi-language-markdown',
                     txt: 'mdi-file-document-outline',
+                    yml: 'mdi-file-document-outline',
+                    yaml: 'mdi-file-document-outline',
                     java: 'mdi-language-java',
                     xml: 'mdi-xml',
                     shell: 'mdi-powershell',
@@ -1879,7 +1882,8 @@
                 ],
                 docsRenderKey: 0,
                 rootModelAndElementMap: null,
-                codeGeneratorCore: null
+                codeGeneratorCore: null,
+                canvas: null
             }
         },
         watch: {
@@ -2606,7 +2610,9 @@
             },
         },
         created:function () {
-            let canvas = getParent(this.$parent, this.canvasName);
+            var me = this
+            me.canvas = getParent(this.$parent, this.canvasName);
+
             let git;
             if(window.MODE == "onprem") {
                 git = new Gitlab();
@@ -2616,7 +2622,7 @@
             this.gitAccessToken = localStorage.getItem('gitAccessToken') ? localStorage.getItem('gitAccessToken') : localStorage.getItem('gitToken')
             this.gitAPI = new GitAPI(git);
             this.core = new CodeGeneratorCore({
-                canvas: canvas,
+                canvas: me.canvas,
                 projectName: this.projectName,
                 gitURLforModel: this.gitURLforModel,
                 defaultTemplate: 'template-spring-boot'
@@ -2728,6 +2734,89 @@
             });
         },
         methods: {
+            generateCodeObj(fileName, code, options){
+                var me = this
+                if(!fileName) return {}
+                if(!code) return {}
+
+                let elementId = options && options.element ? options.element : null
+                let bcName = options && options.boundedContext ? options.boundedContext : 'for-model'
+                let representativeFor = options && options.representativeFor ? options.representativeFor : null
+                let forEach = options && options.forEach ? options.forEach : 'for-model'
+                let bcId = options && options.boundedContext ? options.boundedContext : null
+                let fullPath = options && options.fullPath ? options.fullPath : `/${fileName}`
+                let generatedType = options && options.generatedType ? options.generatedType : 'BASE'
+
+                let key = options && options.key ? options.key : this.uuid();
+                let hash = Math.abs(me.hashCode(fileName.concat(code).concat(fullPath)))
+                let file = fileName.split('.').pop();
+
+                return  {
+                    'element': elementId,
+                    'boundedContext': bcName,
+                    'representativeFor': representativeFor,
+                    'forEach': forEach,
+                    'bcId': bcId,
+                    'fullPath': fullPath,
+                    'generatedType': generatedType,
+                    'fileName': fileName,
+                    'key': key,
+                    'code': code,
+                    'hash': hash,
+                    'file': file
+                }
+
+            },
+            async generateOpenAPI(value){
+                var me = this
+                if(!value) return;
+
+                let pbcLists =  Object.values(value.elements).filter(ele => ele && ele._type.endsWith("PBC") && ele.modelValue && ele.modelValue.openAPI);
+                if(pbcLists.length > 0){
+                    for(let pbc of pbcLists){
+                        const githubRegex = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/(.+)\/(.+)$/;
+                        const match = pbc.modelValue.openAPI.match(githubRegex);
+                        if (match) {
+                            // Extracted values
+                            const org = match[1];
+                            const repo = match[2];
+                            const branch = match[3].split('/').splice(0,1)[0]
+                            const path = match[3].split('/').splice(1).join('/')
+
+                            if( branch == 'main'){
+                                try {
+                                    let fileNames = ['readme.md', 'docker-compose.yml', 'openapi.yaml']
+                                    let trees =  await me.gitAPI.getFolder(repo, org, path)
+                                    for(const tree of trees.data){
+                                        let fileName = tree.name
+                                        if( fileNames.includes(fileName.toLowerCase()) ){
+                                            let folder = path ? `${path}/` : ''
+                                            let res = await me.gitAPI.getFile(repo, org, `${folder}${fileName}`)
+
+                                            let options = {
+                                                element: pbc.elementView.id,
+                                                fullPath: `${changeCase.pascalCase(pbc.name)}/${folder}${fileName}`,
+                                                generatedType: 'MAIN'
+                                            }
+                                            me.codeLists.push(me.generateCodeObj(fileName, res.data, options));
+                                        }
+                                    }
+                                } catch(e){
+                                    // error
+                                }
+                            } else {
+                                // branch...
+
+                            }
+                        }
+                    }
+                }
+            },
+            jumpToActions(){
+                if(this.value.scm && this.value.scm.org && this.value.scm.repo){
+                    window.open(`https://github.com/${this.value.scm.org}/${this.value.scm.repo}/actions`, "_blank")
+                }
+            },
             messageProcessing(e) {
                 // var me = this;
                 if (e.data.message === "gitlab-login") {
@@ -2759,22 +2848,7 @@
                         }
                     })
                 })
-                // 선택된 테스트 파일이 아닌 다른 테스트 파일 임시 삭제 로직 
-                // me.testFileList.forEach(function (file){
-                //     if(me.selectedTestFile.name != file.name){
-                //         var testFileIdx = me.codeLists.findIndex(x => x.fileName == file.name)
-                //         if(me.codeLists[testFileIdx]){
-                //             me.codeLists[testFileIdx].code = ""
-                //             me.filteredCodeLists[testFileIdx].code = ""
-                //             me.filteredPrettierCodeLists[testFileIdx].code = ""
-                //             // console.log(me.codeLists[testFileIdx].fileName)
-                //             // me.codeLists.splice(testFileIdx, 1);
-                //             // me.filteredCodeLists.splice(testFileIdx, 1);
-                //             // me.filteredPrettierCodeLists.splice(testFileIdx, 1);
-                //         }
-                //     }
-                // })
-
+                
                 var actionCode = `name: test
 run-name: testing 
 on: [push]
@@ -3700,7 +3774,7 @@ jobs:
 
                 if( !isEquals ){
                     if(configuration.package){
-                        configuration.package = configuration.package.replace(/ /gi, "/").replace("-", "");
+                        configuration.package = configuration.package.replace(/ /gi, "").replace("-", "");
                         configuration.packagePath = `src/main/java/${configuration.package}`
                     }
                     me.$emit('changedByMe', true);
@@ -7004,30 +7078,23 @@ jobs:
                         let pbcLists =  Object.values(value.elements).filter(x => x && x._type.endsWith("PBC"));
 
                         if(modelInfo){
-                            // only BC of PBC ( set BC Info )
                             bcLists = me.settingSCM(bcLists, modelInfo);
                             bcLists = bcLists.filter(x => x.scm);
                             extractBoundedContext = extractBoundedContext.concat(bcLists);
                         }
 
-
                         for(let pbc of pbcLists){
                             let config = pbc.modelValue;
-                            if( config.openAPI ){
-                                //open API
+                            if( config.projectId && config.projectVersion ){
+                                let modelVerInfo = await me.list(`db://definitions/${config.projectId}/versionLists/${config.projectVersion}`);
+                                let modelVerValue = {'elements': {}, 'relations': {}};
 
-                            } else {
-                                if( config.projectId && config.projectVersion ){
-                                    let modelVerInfo = await me.list(`db://definitions/${config.projectId}/versionLists/${config.projectVersion}`);
-                                    let modelVerValue = {'elements': {}, 'relations': {}};
-
-                                    if(modelVerInfo && modelVerInfo.valueUrl){
-                                        modelVerValue = await me.getObject(`storage://${modelVerInfo.valueUrl}`);
-                                    } else {
-                                        modelVerValue = modelVerInfo.versionValue ? JSON.parse(modelVerInfo.versionValue.value) : {'elements': {}, 'relations': {}};;
-                                    }
-                                    await callPBC(modelVerValue, modelVerInfo);
+                                if(modelVerInfo && modelVerInfo.valueUrl){
+                                    modelVerValue = await me.getObject(`storage://${modelVerInfo.valueUrl}`);
+                                } else {
+                                    modelVerValue = modelVerInfo.versionValue ? JSON.parse(modelVerInfo.versionValue.value) : {'elements': {}, 'relations': {}};;
                                 }
+                                await callPBC(modelVerValue, modelVerInfo);
                             }
                         }
                     }
@@ -7164,6 +7231,14 @@ jobs:
 
                 return new Promise( async(resolve, reject) => {
                     var value = values  ? values : me.value
+                    let originValue = JSON.parse(JSON.stringify(value));
+
+                    // add pbc Element.
+                    if( Object.values(value.elements).find(x => x && x._type.endsWith("PBC")) ) {
+                        value.elements = Object.assign(me.canvas.pbcValue.elements, value.elements);
+                        value.relations = Object.assign(me.canvas.pbcValue.relations, value.relations);
+                    }
+
                     var rootModelAndElement
                     if(me.reGenerateOnlyModifiedTemplate){
                         rootModelAndElement = me.rootModelAndElementMap
@@ -7172,13 +7247,26 @@ jobs:
                         rootModelAndElement = await me.convertK8sModelForCodeGen(value, rootModelAndElement);
                         me.rootModelAndElementMap = rootModelAndElement
                     }
-                    if(me.rootModelAndElementMap.modelForElements.BoundedContext.length === 1){
+
+                    var rootModel = rootModelAndElement.rootModel
+                    var modelForElements = rootModelAndElement.modelForElements
+
+                    // Generate BC Of PBC
+                    let bcOfPBC = await me.extractBoundedContextsOfPBC(JSON.parse(JSON.stringify(value)));
+                    rootModel.boundedContexts = [...rootModel.boundedContexts, ...bcOfPBC];
+                    modelForElements.BoundedContext = rootModel.boundedContexts
+
+
+                    // if(me.rootModelAndElementMap.modelForElements.BoundedContext.length === 1){
+                    if(
+                        modelForElements.BoundedContext.length === 1
+                        && Object.values(value.elements).filter(x => x && x._type.endsWith("PBC")).length == 0
+                    ){
+                        // 1 BC AND NO PBC.
                         me.isOneBCModel = true
                         me.onlyOneBcId = me.rootModelAndElementMap.modelForElements.BoundedContext[0].id
                     }
 
-                    var rootModel = rootModelAndElement.rootModel
-                    var modelForElements = rootModelAndElement.modelForElements
 
                     var basePlatforms =  value.basePlatform ? value.basePlatform : ( options && options.baseTemplate ? options.baseTemplate : me.defaultTemplate )
                     var basePlatformConf =  value.basePlatformConf ? value.basePlatformConf : {}
@@ -7206,10 +7294,6 @@ jobs:
                         rootModel.boundedContexts = me.settingSCM(rootModel.boundedContexts, scmInfo );
                         me.rootModelBoundedContexts = rootModel.boundedContexts
                     }
-
-                    let bcOfPBC = await me.extractBoundedContextsOfPBC(JSON.parse(JSON.stringify(value)));
-                    rootModel.boundedContexts = [...rootModel.boundedContexts, ...bcOfPBC];
-
 
                     //////////////////////////////////////////////// TEMPLATE START ////////////////////////////////////////////////
                     // setting Template
@@ -7280,6 +7364,7 @@ jobs:
                             await me.setToppingList(toppingPlatform);
                         }
                     }
+                    await me.generateOpenAPI(originValue)
                     //////////////////////////////////////////////// TEMPLATE END ////////////////////////////////////////////////
 
                     //Data Preprocessing
@@ -7465,7 +7550,7 @@ jobs:
                 var me = this;
                 return new Promise(async function (resolve, reject) {
                     try{
-                        if( me.canvasName == 'event-storming-model-canvas' && templateContext.modelForElements.BoundedContext.length == 1){
+                        if( me.canvasName == 'event-storming-model-canvas' && me.isOneBCModel){
                             resolve()
                             return;
                         }
@@ -7737,6 +7822,7 @@ jobs:
                         // if( me.canvasName == 'context-mapping-model-canvas' ) {
                         //     resolve()
                         //     return;
+
                         // }
                         // console.log("3333333")
                         var modelForElements = templateContext.modelForElements
@@ -8029,20 +8115,20 @@ jobs:
                         if( !(basePlatformConf && basePlatformConf[basePlatform]) ){
                             if( !basePlatformConf[basePlatform] ) basePlatformConf[basePlatform] = {};
                             if( !basePlatformConf[basePlatform].package ){
-                                basePlatformConf[basePlatform].package = `${filteredProjectName.trim().replace(/ /gi, "/").replace("-", "")}`;
-                                basePlatformConf[basePlatform].packagePath = `src/main/java/${filteredProjectName.trim().replace(/ /gi, "/").replace("-", "")}`;
+                                basePlatformConf[basePlatform].package = `${filteredProjectName.trim().replace(/ /gi, "").replace("-", "")}`;
+                                basePlatformConf[basePlatform].packagePath = `src/main/java/${filteredProjectName.trim().replace(/ /gi, "").replace("-", "")}`;
                             }
                         }
                         baseOptions = basePlatformConf[basePlatform];
                     } else {
                         baseOptions = {
-                            "package": `${filteredProjectName.trim().replace(/ /gi, "/").replace("-", "")}`,
-                            "packagePath": `src/main/java/${filteredProjectName.trim().replace(/ /gi, "/").replace("-", "")}`
+                            "package": `${filteredProjectName.trim().replace(/ /gi, "").replace("-", "")}`,
+                            "packagePath": `src/main/java/${filteredProjectName.trim().replace(/ /gi, "").replace("-", "")}`
                         }
                     }
 
                     //
-                    baseOptions["rootPackage"] = `${me.core.filterProjectName(me.projectName).trim().replace(/ /gi, "/").replace("-", "")}`;
+                    baseOptions["rootPackage"] = `${me.core.filterProjectName(me.projectName).trim().replace(/ /gi, "").replace("-", "")}`;
 
 
                     var templateProcessContext = {
@@ -8137,9 +8223,9 @@ jobs:
 
                     if(options && options.package){
                         // source code package name
-                        options.package = options.package.replace(/ /gi, ".").replace("-", "").replace(/\//gi, '.');
+                        options.package = options.package.replace(/ /gi, "").replace("-", "").replace(/\//gi, '.');
                         // options.packagePath = options.packagePath.replace(/ /gi, ".").replace("-", "").replace(/\//gi, '.');
-                        options.packagePath = options.packagePath.replace(/ /gi, ".").replace("-", "");
+                        options.packagePath = options.packagePath.replace(/ /gi, "").replace("-", "");
                     }
 
                     ele.options = options;

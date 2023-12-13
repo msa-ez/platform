@@ -557,6 +557,7 @@
         },
         props: {
             isSIgpt: Boolean,
+            selectedTestFile: Object,
             onlyOneBcId: String,
             isOneBCModel: Boolean,
             githubTokenError: Boolean,
@@ -2106,7 +2107,7 @@
                 me.removeTree = []
                 me.getRoofCnt = 0
                 me.commitStepText = 'Check Git Repo'
-                let gitRepoInfo = await me.git.getTemplateBranch(me.gitOrgName, me.gitRepoName)
+                let gitRepoInfo = await me.git.getTemplateBranch(me.gitOrgName, me.gitRepoName, branch)
                 .then(async (result) => {
                     if(!me.isFirstCommit && result) {
                         me.commitStepText = 'Get Git Repo'
@@ -2129,7 +2130,8 @@
                                     isOne: me.isOneBCModel,
                                     onlyOneBcId: me.onlyOneBcId,
                                     org: me.gitOrgName,
-                                    repo: me.gitRepoName
+                                    repo: me.gitRepoName,
+                                    testFile: me.isSIgpt ? me.selectedTestFile:null
                                 }
                                 let setTreeList = await me.git.setPushList(options)
                                 .then(async function (list) {

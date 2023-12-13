@@ -6,7 +6,7 @@
             <div style="display: flex; max-height: 100%;">
                 <div style="width: 400px; height: 88vh; overflow-y: scroll;">
                     <v-card-title style="margin-top: -10px; margin-bottom: -15px;">
-                        Thought
+                        Auto Implementation
                     </v-card-title>
 
                     <div style="height: 330px;" :key="dialogRenderKey">
@@ -166,7 +166,13 @@
                                         </div>
                                     </v-expansion-panel-header>
                                     <v-expansion-panel-content>
-                                        {{ result.fullErrorLog }}
+                                        <v-textarea
+                                            filled
+                                            auto-grow
+                                            v-model="result.fullErrorLog"
+                                            style="font-size: small; margin-top: 10px;"
+                                        ></v-textarea>
+                                        <!-- {{ result.fullErrorLog }} -->
                                     </v-expansion-panel-content>
                                 </v-expansion-panel>
                             </v-expansion-panels>
@@ -187,6 +193,10 @@
                                 </v-btn>
                             </div>
                             <div v-else>
+                                <!-- <v-switch
+                                    v-model="isAutoMode"
+                                    :label="'Auto mode'"
+                                ></v-switch> -->
                                 <v-btn :loading="!isSolutionCreating" :disabled="!isSolutionCreating" @click="stop()" style="margin-right: 10px; position: relative; float: right;">
                                     <v-icon style="margin-right: 10px;">mdi-spin mdi-loading</v-icon>
                                     Stop generating
@@ -303,6 +313,7 @@
                 codeChangeNumber: 0,
                 selectedIdx: null,
                 resultLength: 0,
+                isAutoMode: true,
                 isFirstCommit: true,
                 startGitAction: true,
                 allTestSucceeded: false,
@@ -372,7 +383,11 @@
                     me.gitActionSnackBar.show = true
                 } else {
                     if(!me.fullErrorLog){
-                        me.fullErrorLog = log
+                        // if(log.length > 55000){
+                        //     me.fullErrorLog = log.slice(0, 55000)
+                        // } else {
+                            me.fullErrorLog = log
+                        // }
                         me.model = null
                         me.generator = new ErrorLogGenerator(me);
                         me.generator.generate();
@@ -486,6 +501,9 @@ What files do I need to modify and what related files do I need to fix the error
                     var me = this
                     if(me.fullErrorLog){
                         me.siTestResults[me.lastIndex].errorLog = [...new Set(model.map(JSON.stringify))].map(JSON.parse)
+                        if(me.siTestResults[me.lastIndex].errorLog.length > 30){
+                            me.generator.stop();
+                        }
                     } else {  
                         if(!me.startGitAction){
                             me.generator.stop();
@@ -570,6 +588,9 @@ What files do I need to modify and what related files do I need to fix the error
                             me.resultLength = me.siTestResults.length
                             me.generatedErrorDetails = null
                             me.codeViewerRenderKey++;
+                            if(me.isAutoMode){
+                                me.commitToGit()
+                            }
                         }
                     } else {
                         me.dialogRenderKey++;

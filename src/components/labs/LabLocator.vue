@@ -2156,7 +2156,7 @@
                             me.AlllabsList[groupInfo.groupName] = {}
                         }
                         labs.groupName = groupInfo.groupName
-                        if (me.labInfo.labId == labs.labId) {
+                        if (me.labInfo && me.labInfo.labId == labs.labId) {
                             me.currentLabInfo = labs
                         }
                         me.AlllabsList[groupInfo.groupName][labs.labId] = labs

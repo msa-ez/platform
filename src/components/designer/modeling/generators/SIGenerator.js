@@ -40,7 +40,7 @@ Json format:
 [ 
     {
         solution: "Solution description", 
-        solutionType: "IMPLEMENT" | "MODIFICATIONS" | "CORRECT" | "ENSURE" | "RETRY",
+        solutionType: "Implement logic" | "Bug fix" | "Correct" | "Ensure",
         codeChanges: [
             { 
                 fileName: "source code file name",

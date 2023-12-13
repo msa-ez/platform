@@ -13,7 +13,7 @@ class Git {
     getHeader() {
         throw new Error('getHeader() must be implement')
     }
-    getUserInfo() {
+getUserInfo() {
         throw new Error('getUserInfo must be implement')
     }
     getBranch(org, repo, forkedTag) {
@@ -43,7 +43,7 @@ class Git {
     createRepo(org, repo, userName) {
         throw new Error('createRepo() must be implement')
     }
-    getTemplateBranch(org, repo) {
+    getTemplateBranch(org, repo, branch) {
         throw new Error('getTemplateBranch() must be implement')
     }
     getRepo(org, repo) {

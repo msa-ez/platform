@@ -148,10 +148,10 @@ class GitAPI {
             })
         })
     }
-    getTemplateBranch(org, repo) {
+    getTemplateBranch(org, repo, branch) {
         let me = this;
         return new Promise(async function(resolve, reject) {
-            const result = await me._git.getTemplateBranch(org, repo)
+            const result = await me._git.getTemplateBranch(org, repo, branch)
             .then((res) => {
                 resolve(res)
             })
@@ -220,6 +220,18 @@ class GitAPI {
             })
         })
     }
+    getFolder(repo, org, path) {
+        let me = this;
+        return new Promise(async function (resolve, reject) {
+            const result = await me._git.getFolder(repo, org, path)
+                .then((res) => {
+                    resolve(res)
+                })
+                .catch((e) => {
+                    reject(e)
+                })
+        })
+    }
     /**
      * 
      * @param { gitTree: Array<>, generateCodeLists: Array<>, copyChangedPathLists: Array<>, pushType: string, bcCnt: number, onlyOneBcId: string } options 
@@ -252,7 +264,7 @@ class GitAPI {
             })
         })
     }
-    getUserInfo() {
+getUserInfo() {
         let me = this;
         return new Promise(async function(resolve,reject) {
             const result = await me._git.getUserInfo()

@@ -21,7 +21,7 @@ class Github extends Git {
             Accept: 'application/vnd.github+json'
         }
     }
-    getUserInfo() {
+getUserInfo() {
         let me = this
         return new Promise(async function (resolve, reject) {
             let patchMainResult = await axios.get(`https://api.github.com/user`, { headers: me.getHeader() })
@@ -139,11 +139,11 @@ class Github extends Git {
             
         })
     }
-    getTemplateBranch(org, repo) {
+    getTemplateBranch(org, repo, branch) {
         let me = this;
 
         return new Promise(async function (resolve, reject) {
-            let result = await axios.get(`https://api.github.com/repos/${org}/${repo}/git/trees/template`, { headers: me.getHeader() })
+            let result = await axios.get(`https://api.github.com/repos/${org}/${repo}/git/trees/${branch}`, { headers: me.getHeader() })
             .then(function (res) {
                 resolve(res)
             })
@@ -165,6 +165,7 @@ class Github extends Git {
         })
     }
     getOrgList() {
+        var me = this;
         return new Promise(async function (resolve, reject) {
             const result = await axios.get(`https://api.github.com/user/orgs`, { headers: me.getHeader() })
             .then(async (res) => {
@@ -237,6 +238,22 @@ class Github extends Git {
             console.log(`Error] Load HandleBar Helper.js: ${e} `)
         }
     }
+    getFolder(repo, org, path) {
+        let me = this;
+        return new Promise(async function (resolve, reject) {
+            let results = []
+            try {
+                let url = `https://api.github.com/repos/${org}/${repo}/contents/${path}`
+                let file = await axios.get(url, { headers: me.getHeader() })
+                    .then(res => {
+                        resolve(res)
+                    })
+                    .catch(e => reject(e))
+            } catch(e) {
+                reject(e)
+            }
+        })
+    }
     getFile(repo, org, filePath) {
         let me = this;
         return new Promise(async function (resolve, reject) {
@@ -250,7 +267,6 @@ class Github extends Git {
                         url: url
                     }
                     resolve(result)
-                    
                 })
                 .catch(e => reject(e))
             } catch(e) {
@@ -340,10 +356,15 @@ class Github extends Git {
                                 code = 'undefined'
                             }
 
+                            if(elData.fullPath.includes("Test.java") && options.testFile && !elData.fullPath.includes(options.testFile.name)){
+                                code = ""
+                            } 
+                            
                             let data = {
                                 content: code,
                                 encoding: 'utf-8',
                             };
+                            
                             let blobs = await me.pushFile(options.org, options.repo, data)
                             .then(function (blob){ 
                                 allCnt++;
@@ -354,11 +375,11 @@ class Github extends Git {
                                     sha: blob.data.sha
                                 }
                                 pushTree.push(pushData)
-                                
                             })
                             .catch((error) => {
                                 reject(error)
                             })
+
                         }
                     }
                     if(!isChanged) {
@@ -723,10 +744,15 @@ class Github extends Git {
                         // .then(async (res) => {
                             await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/jobs/${id.job_id}/logs`, { headers: me.getHeader() })
                             .then((res) => {
-                                if(!res.data.includes("COMPILATION ERROR :")){
-                                    res.data = res.data.replace("[ERROR]", "COMPILATION ERROR :")
+                                let log
+                                
+                                if(res.data.includes("[INFO] Results:")){
+                                    log = res.data.split("[INFO] Results:")
+                                } else if(res.data.includes("[INFO] BUILD FAILURE")){
+                                    log = res.data.split("[INFO] BUILD FAILURE")
+                                } else if(res.data.includes("COMPILATION ERROR :")) {
+                                    log = res.data.split("COMPILATION ERROR :")
                                 }
-                                let log = res.data.split("COMPILATION ERROR :")
                                 if(log[1]){
                                     resolve(log[1])
                                 } else {
