@@ -1595,6 +1595,9 @@
         },
         data() {
             return {
+                // si-gpt
+                fileLoadCnt: 0,
+                javaFileList: [],
                 isRootFolder: false,
                 openSelectTestFileDialog: false,
                 selectedCodeList: {},
@@ -2786,12 +2789,12 @@
                             if( branch == 'main'){
                                 try {
                                     let fileNames = ['readme.md', 'docker-compose.yml', 'openapi.yaml']
-                                    let trees =  await me.gitAPI.getFolder(repo, org, path)
+                                    let trees =  await me.gitAPI.getFolder(org, repo, path)
                                     for(const tree of trees.data){
                                         let fileName = tree.name
                                         if( fileNames.includes(fileName.toLowerCase()) ){
                                             let folder = path ? `${path}/` : ''
-                                            let res = await me.gitAPI.getFile(repo, org, `${folder}${fileName}`)
+                                            let res = await me.gitAPI.getFile(org, repo, `${folder}${fileName}`)
 
                                             let options = {
                                                 element: pbc.elementView.id,
@@ -2848,7 +2851,7 @@
                         }
                     })
                 })
-                
+
                 var actionCode = `name: test
 run-name: testing 
 on: [push]
@@ -4752,7 +4755,7 @@ jobs:
                 let obj = {}
                 let me = this
                 return new Promise(async function (resolve, reject) {
-                    let result = await me.gitAPI.getFile("topping-isVanillaK8s", "msa-ez", "for-model/kubernetes/docs/common/Pod.md")
+                    let result = await me.gitAPI.getFile("msa-ez", "topping-isVanillaK8s", "for-model/kubernetes/docs/common/Pod.md")
                     .then(function (obj) {
                         resolve(obj.data)
                     })
@@ -6924,9 +6927,6 @@ jobs:
 
                 try {
                     if (newVal && newVal.length > 0) {
-
-                       
-
                         if (me.changedPathLists && me.changedPathLists.length > 0) {
                             var findIdx = me.changedPathLists.indexOf(newVal[0].path)
                             if (findIdx != -1) {
@@ -6995,10 +6995,57 @@ jobs:
                     me.openCode = []
                 }
             },
-            startImplWithAI(selectedTestFile){
-                this.selectedTestFile = selectedTestFile
-                this.openGitActionDialog = true
-                this.gitActionDialogRenderKey++;
+            getJavaFileList(list){
+                var me = this
+                let folderList = []
+                list.forEach(function (data){
+                    if(data.type == 'dir'){
+                        folderList.push(data)
+                    } else if(data.type == 'file' && data.name.includes(".java")){
+                        if(data.name.includes("Test.java")){
+                            if(me.selectedTestFile.name == data.name){
+                                me.javaFileList.push(data)
+                            }
+                        } else {
+                            me.javaFileList.push(data)
+                        }
+                    }
+                })
+                me.fileLoadCnt--;
+                me.fileLoadCnt = me.fileLoadCnt + folderList.length
+                folderList.forEach(async function (data){
+                    let src = await me.gitAPI.getFolder(me.value.scm.org, me.value.scm.repo, data.path);
+                    if(src){
+                        me.getJavaFileList(src.data)
+                    }
+                })
+                if(me.fileLoadCnt == 0){
+                    me.fileLoadCnt = me.javaFileList.length
+                    me.javaFileList.forEach(async function(data){
+                        let file = await me.gitAPI.getFile(me.value.scm.org, me.value.scm.repo, data.path) 
+                        if(file){
+                            console.log(file)
+                            me.selectedCodeList[data.name] = file.data
+                            me.fileLoadCnt--;
+                            if(me.fileLoadCnt == 0){
+                                me.openGitActionDialog = true
+                                me.gitActionDialogRenderKey++;
+                            }
+                        }
+                    })
+                }
+
+            },
+            async startImplWithAI(selectedTestFile){
+                var me = this
+                me.selectedTestFile = selectedTestFile
+
+                me.fileLoadCnt = 1
+                me.javaFileList = []
+                let src = await me.gitAPI.getFolder(me.value.scm.org, me.value.scm.repo, me.openCode[0].name + '/src');
+                if(src){
+                    me.getJavaFileList(src.data)
+                }
             },
             getTestFileList(){
                 var me = this

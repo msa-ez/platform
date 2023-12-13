@@ -3993,7 +3993,7 @@
                 let obj = {}
                 let me = this
                 return new Promise(async function (resolve, reject) {
-                    let result = await me.gitAPI.getFile("topping-isVanillaK8s", "msa-ez", "for-model/kubernetes/docs/common/Pod.md")
+                    let result = await me.gitAPI.getFile("msa-ez", "topping-isVanillaK8s", "for-model/kubernetes/docs/common/Pod.md")
                     .then(function (obj) {
                         resolve(obj.data)
                     })

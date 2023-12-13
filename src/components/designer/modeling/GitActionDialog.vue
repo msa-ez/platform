@@ -4,8 +4,15 @@
             <v-icon small @click="closeGitActionDialog()"
                 style="font-size: 18px; position: absolute; right: 5px; top: 5px; z-index: 1;">mdi-close</v-icon>
             <div style="display: flex; max-height: 100%;">
-                <div style="width: 400px; height: 88vh; overflow-y: scroll;">
-                    <v-card-title style="margin-top: -10px; margin-bottom: -15px;">
+                <div style="width: 400px; height: 88vh; overflow-y: scroll; background-color: #000000;">
+                    <v-card-title style="margin-top: -10px; margin-bottom: -15px; color: white;">
+                        <v-progress-circular
+                            v-if="startGitAction"
+                            indeterminate
+                            :size="20"
+                            color="primary"
+                            style="margin-right: 10px; margin-left: -5px;"
+                        ></v-progress-circular>
                         Auto Implementation
                     </v-card-title>
 
@@ -13,7 +20,7 @@
                         <v-list
                             nav 
                             dense
-                            style="width:105%; min-width: 390px; margin:-5px -30px 0px -10px;"
+                            style="width:105%; min-width: 390px; margin:-5px -30px 0px -10px; background-color: #000000;"
                         >
                             <v-list-group
                                 :value="true"
@@ -30,10 +37,10 @@
                                             /> -->
                                             <v-col style="margin-left:-15px; margin-right: 25px;">
                                                 <v-list-item-subtitle
-                                                        style="font-size: x-small;">
+                                                        style="font-size: x-small; color: lightgray;">
                                                     {{ testFile.subPath }}
                                                 </v-list-item-subtitle>
-                                                <v-list-item-title>
+                                                <v-list-item-title style="color: white">
                                                     {{ testFile.name }} 
                                                 </v-list-item-title>
                                             </v-col>
@@ -49,7 +56,7 @@
                                 >
                                     <template v-slot:activator>
                                         <v-list-item-content style="margin-left: -10px;">
-                                            <v-list-item-title>{{test.solutionType}}</v-list-item-title>
+                                            <v-list-item-title style="color: white">{{test.solutionType}}</v-list-item-title>
                                         </v-list-item-content>
                                     </template>
                                     <v-list-item dense v-for="(code, codeIdx) in test.codeChanges" :key="codeIdx" :style="`${testIdx}_${codeIdx}` == selectedIdx ? 'background-color: aliceblue;':''">
@@ -59,10 +66,10 @@
                                             <v-row>
                                                 <Icon
                                                     icon="mdi:file-document-alert-outline" width="20" height="20"
-                                                    style="color: red; position: relative; left: -30px; top: 20px;"
+                                                    style="color: white; position: relative; left: -30px; top: 20px;"
                                                 />
                                                 <v-col style="margin-left:-35px; margin-right: 25px;">
-                                                    <v-list-item-title style="margin-top:10px; margin-left:10px;">
+                                                    <v-list-item-title style="margin-top:10px; margin-left:10px; color: white">
                                                         {{ code.fileName }} 
                                                     </v-list-item-title>
                                                 </v-col>
@@ -92,15 +99,15 @@
                                 <b style="margin-left: 9px;" :key="dialogRenderKey">{{ result.solution }} <span>{{ systemMsg }}</span></b>
                             </v-card-text>
                         </div>
-                        <div v-for="(changes, changesIdx) in result.codeChanges" :key="changesIdx" style="margin-left: 40px; margin-right: 40px;">
+                        <div v-for="(changes, changesIdx) in result.codeChanges" :key="changesIdx" style="margin-left: 40px; margin-right: 40px; margin-bottom: 12px;">
                             <v-expansion-panels v-model="changes.expansionValue">
                                 <v-expansion-panel>
-                                    <v-expansion-panel-header :id="resIdx + '_' + changesIdx">
+                                    <v-expansion-panel-header :id="resIdx + '_' + changesIdx" style="background-color: #343541; color: white;">
                                         <div :key="dialogRenderKey">
                                             <b>{{ changes.fileName }}</b>
                                         </div>
                                     </v-expansion-panel-header>
-                                    <v-expansion-panel-content>
+                                    <v-expansion-panel-content style="background-color: #1e1e1e;">
                                         <div v-if="lastSolutionIdx && lastSolutionIdx == resIdx + '_' + changesIdx" :key="codeViewerRenderKey">
                                             <code-viewer
                                                 class="gs-git-action-code-viewer"
@@ -160,8 +167,8 @@
                             </div>
                             <v-expansion-panels style="margin-left: 40px; width: 94.4%;">
                                 <v-expansion-panel>
-                                    <v-expansion-panel-header style="color: red; display: table-row; background-color: #fee2e3;">
-                                        <div v-for="(err, idx) in result.errorLog" :key="idx" style="display: table-row; font-weight: bolder; font-size: .875rem; margin-bottom: 5px;">
+                                    <v-expansion-panel-header style="color: white; display: table-row; background-color: #343541;">
+                                        <div v-for="(err, idx) in result.errorLog" :key="idx" style="display: table-row; font-weight: 400; font-size: .875rem; margin-bottom: 5px;">
                                             [ERROR] {{ err.fileName }}: {{ err.errorDetails }}[{{ err.lineNumber }}]
                                         </div>
                                     </v-expansion-panel-header>
@@ -169,6 +176,7 @@
                                         <v-textarea
                                             filled
                                             auto-grow
+                                            readonly
                                             v-model="result.fullErrorLog"
                                             style="font-size: small; margin-top: 10px;"
                                         ></v-textarea>
@@ -193,12 +201,7 @@
                                 </v-btn>
                             </div>
                             <div v-else>
-                                <!-- <v-switch
-                                    v-model="isAutoMode"
-                                    :label="'Auto mode'"
-                                ></v-switch> -->
-                                <v-btn :loading="!isSolutionCreating" :disabled="!isSolutionCreating" @click="stop()" style="margin-right: 10px; position: relative; float: right;">
-                                    <v-icon style="margin-right: 10px;">mdi-spin mdi-loading</v-icon>
+                                <v-btn :disabled="!isSolutionCreating" @click="stop()" style="margin-right: 10px; position: relative; float: right;">
                                     Stop generating
                                 </v-btn>
                             </div>
@@ -237,6 +240,11 @@
                                     </template>
                                     <span>Show github actions</span>
                                 </v-tooltip>
+                                <v-switch
+                                    style="margin-left: -42px;"
+                                    v-model="isAutoMode"
+                                    :label="'Auto mode'"
+                                ></v-switch>
                             </div>
                         </v-row>
                     </div>

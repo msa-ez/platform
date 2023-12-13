@@ -238,7 +238,7 @@ getUserInfo() {
             console.log(`Error] Load HandleBar Helper.js: ${e} `)
         }
     }
-    getFolder(repo, org, path) {
+    getFolder(org, repo, path) {
         let me = this;
         return new Promise(async function (resolve, reject) {
             let results = []
@@ -254,7 +254,7 @@ getUserInfo() {
             }
         })
     }
-    getFile(repo, org, filePath) {
+    getFile(org, repo, filePath) {
         let me = this;
         return new Promise(async function (resolve, reject) {
             let results = []

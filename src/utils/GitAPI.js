@@ -196,10 +196,10 @@ class GitAPI {
             })
         })
     }
-    getFile(repo, org, filePath) {
+    getFile(org, repo, filePath) {
         let me = this;
         return new Promise(async function (resolve, reject) {
-            const result = await me._git.getFile(repo, org, filePath)
+            const result = await me._git.getFile(org, repo, filePath)
             .then((res) => {
                 resolve(res)
             })
@@ -220,10 +220,10 @@ class GitAPI {
             })
         })
     }
-    getFolder(repo, org, path) {
+    getFolder(org, repo, path) {
         let me = this;
         return new Promise(async function (resolve, reject) {
-            const result = await me._git.getFolder(repo, org, path)
+            const result = await me._git.getFolder(org, repo, path)
                 .then((res) => {
                     resolve(res)
                 })

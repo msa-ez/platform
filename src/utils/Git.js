@@ -64,7 +64,7 @@ getUserInfo() {
     recursiveTree(element) {
         throw new Error('recursiveTree() must be implement')
     }
-    getFile(repo, org, filePath) {
+    getFile(org, repo, filePath) {
         throw new Error('getFile() must be implement')
     }
     getFiles(options) {

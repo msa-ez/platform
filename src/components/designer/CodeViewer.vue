@@ -35,7 +35,7 @@
                                 :options="options"
                                 v-model="codeValue"
                                 :style="isExpectedTemplate ? '':''"
-                                theme="light"
+                                :theme="isGitActionDialog ? 'vs-dark':'light'"
                                 :diffEditor="isDiffEditor"
                                 :language="codeLanguage"
                                 :original="getOriginal"

@@ -29,7 +29,7 @@ class OpenAPIToPBC {
                 const owner = match[1];
                 const repository = match[2];
                 const filePath = match[3];
-                let response = await this.gitAPI.getFile(repository, owner, filePath)
+                let response = await this.gitAPI.getFile(owner, repository, filePath)
                 yaml = response.data
             } else {
                 alert('Invalid GitHub URL format.')

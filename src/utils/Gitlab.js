@@ -130,7 +130,7 @@ class Gitlab extends Git {
             })
         })
     }
-    getFile(repo, org, filePath, repoId) {
+    getFile(org, repo, filePath, repoId) {
         let me = this;
         return new Promise(async function (resolve, reject) {
             let header = me.getHeader();
@@ -239,7 +239,7 @@ class Gitlab extends Git {
             filteredElement.forEach(async function (ele) {
                 // let ele = filteredElement[idx]
                 
-                let result = await me.getFile(repo, org, ele.path, repoId)
+                let result = await me.getFile(org, repo, ele.path, repoId)
                 .then(async function(res) {
                     if(isToppingSetting){
                         try{
