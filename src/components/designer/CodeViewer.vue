@@ -159,7 +159,7 @@
                                                 <a href="https://beta.openai.com/account/api-keys" target="_blank">how to create test or example</a>
                                             </div>
                                             <v-spacer />
-                                            <v-btn :disabled="!selectedTestFile || !isExistRules" color="primary" @click="startImplWithAI()">implement</v-btn>
+                                            <v-btn :loading="startImpl" :disabled="!selectedTestFile || !isExistRules" color="primary" @click="startImplWithAI()">implement</v-btn>
                                         </v-card-actions>
                                     </v-card>
                                 </div>
@@ -214,6 +214,7 @@
         },
         data() {
             return {
+                startImpl: false,
                 isExistRules: false,
                 errormsg: null,
                 selectedTestFile: null,
@@ -489,6 +490,7 @@
                 }
             },
             startImplWithAI(){
+                this.startImpl = true
                 this.$emit("startImplWithAI", this.selectedTestFile)
             },
             scrollToBottom() {
@@ -904,10 +906,33 @@
             onCmFocus(cm) {
                 // // console.log('the editor is focus!', cm)
             },
+            updateEditorHeight(editor) {
+                let contentHeight
+                if(this.type == 'diff'){
+                    const originalLineCount = editor.getOriginalEditor().getModel().getLineCount();
+                    const modifiedLineCount = editor.getModifiedEditor().getModel().getLineCount();
+                    const totalLineCount = Math.max(originalLineCount, modifiedLineCount);
+                    // const lineHeight = editor.getConfiguration().lineHeight;
+                    contentHeight = totalLineCount * 20;
+                } else {
+                    contentHeight = 20 + editor.getContentHeight();
+                }
+                editor.layout({ height: contentHeight });
+            },
             editorDidMount(editor){
                 var me = this 
                 // var editor = this.$refs.monacoEditor.getEditor()
                 me.editorInfo = editor
+
+                if(me.isGitActionDialog){
+                    this.updateEditorHeight(editor);
+                    if(me.type != 'diff'){
+                        editor.onDidChangeModelContent(() => {
+                            this.updateEditorHeight(editor);
+                        });
+                    }
+                }
+
                 if(me.type == 'diff' && !me.isExpectedTemplate){
                     me.editorInfo.updateOptions({ renderSideBySide: false });
                     let elementOriginal = document.querySelectorAll(".editor.original");

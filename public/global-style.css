@@ -800,8 +800,9 @@ code[class*=language-]:nth-child(1) {
 
 /* GitActionDialog.vue code-viewer 관련 */
 .gs-git-action-code-viewer .gs-inside-monaco-editor {
-    height: 50vh;
-    overflow:hidden;
+    /* height: 50vh; */
+    overflow-y: hidden;
+    overflow-x: hidden;
 }
 
 

@@ -1,10 +1,12 @@
 <template>
     <div>
+        <!-- <canvas ref="canvas" class="confetti" id="canvas">
+        </canvas> -->
         <v-card flat style="height: 90vh; z-index:2;">
             <v-icon small @click="closeGitActionDialog()"
                 style="font-size: 18px; position: absolute; right: 5px; top: 5px; z-index: 1;">mdi-close</v-icon>
             <div style="display: flex; max-height: 100%;">
-                <div style="width: 400px; height: 88vh; overflow-y: scroll; background-color: #000000;">
+                <div style="width: 400px; height: 88vh; background-color: #1e1e1e;">
                     <v-card-title style="margin-top: -10px; margin-bottom: -15px; color: white;">
                         <v-progress-circular
                             v-if="startGitAction"
@@ -16,11 +18,11 @@
                         Auto Implementation
                     </v-card-title>
 
-                    <div style="height: 330px;" :key="dialogRenderKey">
+                    <div style="height: 86vh; overflow-y: scroll;" :key="dialogRenderKey">
                         <v-list
                             nav 
                             dense
-                            style="width:105%; min-width: 390px; margin:-5px -30px 0px -10px; background-color: #000000;"
+                            style="width:105%; min-width: 390px; margin:-5px -30px 0px -10px; background-color: #1e1e1e;"
                         >
                             <v-list-group
                                 :value="true"
@@ -59,7 +61,7 @@
                                             <v-list-item-title style="color: white">{{test.solutionType}}</v-list-item-title>
                                         </v-list-item-content>
                                     </template>
-                                    <v-list-item dense v-for="(code, codeIdx) in test.codeChanges" :key="codeIdx" :style="`${testIdx}_${codeIdx}` == selectedIdx ? 'background-color: aliceblue;':''">
+                                    <v-list-item dense v-for="(code, codeIdx) in test.codeChanges" :key="codeIdx" :style="`${testIdx}_${codeIdx}` == selectedIdx ? 'background-color: #000000;':''">
                                         <div style="cursor: pointer; margin-top: -10px;"
                                             @click="onSelected(testIdx, codeIdx)"
                                         >
@@ -82,8 +84,8 @@
                     </div>
                 </div>
                 <v-divider vertical />
-                <v-card-text style="max-height: 100%; overflow-y: scroll;">
-                    <div v-for="(result, resIdx) in siTestResults" :key="resIdx">
+                <v-card-text style="max-height: 100%; overflow-y: scroll;" id="si_gpt">
+                    <div v-for="(result, resIdx) in siTestResults" :key="resIdx" style="margin: 10px 150px;">
                         <div v-if="result.solution">
                             <!-- <v-card-title>Reason for modifying the code: </v-card-title> -->
                             <v-card-text style="margin-left: -15px;">
@@ -165,7 +167,7 @@
                                 </v-avatar>
                                 The following error occurred during testing
                             </div>
-                            <v-expansion-panels style="margin-left: 40px; width: 94.4%;">
+                            <v-expansion-panels style="margin-left: 40px; width: 92.9%;">
                                 <v-expansion-panel>
                                     <v-expansion-panel-header style="color: white; display: table-row; background-color: #343541;">
                                         <div v-for="(err, idx) in result.errorLog" :key="idx" style="display: table-row; font-weight: 400; font-size: .875rem; margin-bottom: 5px;">
@@ -188,9 +190,9 @@
 
                         <!-- <v-divider></v-divider> -->
                     </div>
-                    <div v-if="!allTestSucceeded">
-                        <div style="float: right; margin-top: 10px;">
-                            <div v-if="!startGitAction">
+                    <div v-if="!allTestSucceeded" style="margin-left: 150px">
+                        <div style="float: right;">
+                            <div v-if="!startGitAction" style="margin-bottom: 20px;">
                                 <v-btn @click="regenerate()" 
                                     style="margin-right: 10px;">
                                     Think again
@@ -201,9 +203,16 @@
                                 </v-btn>
                             </div>
                             <div v-else>
-                                <v-btn :disabled="!isSolutionCreating" @click="stop()" style="margin-right: 10px; position: relative; float: right;">
-                                    Stop generating
-                                </v-btn>
+                                <v-row style="margin-right: 20px; margin-top: 10px;">
+                                    <v-switch
+                                        style="margin-right: 10px; margin-top: 1px;"
+                                        v-model="isAutoMode"
+                                        :label="'Auto mode'"
+                                    ></v-switch>
+                                    <v-btn :disabled="!isSolutionCreating" @click="stop()" style="margin-right: 10px; position: relative; float: right;">
+                                        Stop generating
+                                    </v-btn>
+                                </v-row>
                             </div>
                         </div>
                         <v-row v-if="startGitAction" style="margin-top: 10px;">
@@ -240,11 +249,6 @@
                                     </template>
                                     <span>Show github actions</span>
                                 </v-tooltip>
-                                <v-switch
-                                    style="margin-left: -42px;"
-                                    v-model="isAutoMode"
-                                    :label="'Auto mode'"
-                                ></v-switch>
                             </div>
                         </v-row>
                     </div>
@@ -310,6 +314,25 @@
         },
         data() {
             return {
+                //test
+                canvas: null,
+                ctx: null,
+                confetti: [],
+                confettiCount: 300,
+                gravity: 0.5,
+                terminalVelocity: 5,
+                drag: 0.075,
+                colors: [
+                    { front: 'red', back: 'darkred' },
+                    { front: 'green', back: 'darkgreen' },
+                    { front: 'blue', back: 'darkblue' },
+                    { front: 'yellow', back: 'darkyellow' },
+                    { front: 'orange', back: 'darkorange' },
+                    { front: 'pink', back: 'darkpink' },
+                    { front: 'purple', back: 'darkpurple' },
+                    { front: 'turquoise', back: 'darkturquoise' }
+                ],
+
                 userImg: null,
                 systemMsg: null,
                 gitActionPath: null,
@@ -411,8 +434,70 @@
             if(localStorage.getItem("picture")){
                 me.userImg = localStorage.getItem("picture")
             }
+
+            // this.canvas = this.$refs.canvas;
+            // this.ctx = this.canvas.getContext('2d');
+            // this.resizeCanvas();
+            // this.initConfetti();
+            // this.render();
+            // window.addEventListener('resize', this.resizeCanvas);
+            // window.addEventListener('click', this.initConfetti);
         },
         methods: {
+            resizeCanvas() {
+                this.canvas.width = this.$refs.canvas.parentElement.clientWidth;
+                this.canvas.height = this.$refs.canvas.parentElement.clientHeight;
+                // this.canvas.width = window.innerWidth;
+                // this.canvas.height = window.innerHeight;
+            },
+            randomRange(min, max) {
+                return Math.random() * (max - min) + min;
+            },
+            initConfetti() {
+                for (let i = 0; i < this.confettiCount; i++) {
+                    this.confetti.push({
+                    color: this.colors[Math.floor(this.randomRange(0, this.colors.length))],
+                    dimensions: { x: this.randomRange(10, 20), y: this.randomRange(10, 30) },
+                    position: { x: this.randomRange(0, this.canvas.width), y: this.canvas.height - 1 },
+                    rotation: this.randomRange(0, 2 * Math.PI),
+                    scale: { x: 1, y: 1 },
+                    velocity: { x: this.randomRange(-25, 25), y: this.randomRange(0, -50) }
+                    });
+                }
+            },
+            render() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                this.confetti.forEach((confetto, index) => {
+                    let width = confetto.dimensions.x * confetto.scale.x;
+                    let height = confetto.dimensions.y * confetto.scale.y;
+
+                    this.ctx.translate(confetto.position.x, confetto.position.y);
+                    this.ctx.rotate(confetto.rotation);
+
+                    confetto.velocity.x -= confetto.velocity.x * this.drag;
+                    confetto.velocity.y = Math.min(confetto.velocity.y + this.gravity, this.terminalVelocity);
+                    confetto.velocity.x += Math.random() > 0.5 ? Math.random() : -Math.random();
+
+                    confetto.position.x += confetto.velocity.x;
+                    confetto.position.y += confetto.velocity.y;
+
+                    if (confetto.position.y >= this.canvas.height) this.confetti.splice(index, 1);
+                    if (confetto.position.x > this.canvas.width) confetto.position.x = 0;
+                    if (confetto.position.x < 0) confetto.position.x = this.canvas.width;
+
+                    confetto.scale.y = Math.cos(confetto.position.y * 0.1);
+                    this.ctx.fillStyle = confetto.scale.y > 0 ? confetto.color.front : confetto.color.back;
+
+                    this.ctx.fillRect(-width / 2, -height / 2, width, height);
+                    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+                });
+
+                if (this.confetti.length <= 10) this.initConfetti();
+
+                window.requestAnimationFrame(this.render);
+            },
+
             jumpToActions(){
                 if(this.gitActionPath) window.open(this.gitActionPath, "_blank")
             },
@@ -495,6 +580,17 @@ What files do I need to modify and what related files do I need to fix the error
                 }
                 this.generate()
             },
+            scrollToBottom() {
+                const element = document.getElementById('si_gpt');
+                if (element) {
+                    if(element.scrollTop + element.clientHeight + 150 >= element.scrollHeight){
+                        element.scrollTo({
+                            top: element.scrollHeight,
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            },
             commitToGit(){
                 var me = this
                 me.gitActionPath = null
@@ -503,6 +599,7 @@ What files do I need to modify and what related files do I need to fix the error
                 me.siTestResults[me.lastIndex].userMessage = "Go ahead"
                 me.codeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
                 me.$emit("startCommitWithSigpt", me.updateList)
+                me.scrollToBottom();
             },
             setDialog(model, option){
                 try {
@@ -537,7 +634,7 @@ What files do I need to modify and what related files do I need to fix the error
                                     }
                                 })
                                 me.siTestResults[me.resultLength + solutionIdx] = solution
-                                // me.onSelected(me.lastIndex + 1, 0)
+                                // me.onSelected(me.resultLength + solutionIdx, changesIdx)
                             }
                         });
 
@@ -604,6 +701,8 @@ What files do I need to modify and what related files do I need to fix the error
                         me.dialogRenderKey++;
                     }
 
+                    me.scrollToBottom();
+
                 } catch(e) {
                     console.log(e)
                     me.gitActionSnackBar.timeout = 5000
@@ -641,10 +740,18 @@ What files do I need to modify and what related files do I need to fix the error
                 return component
             },
             closeGitActionDialog(){
+                this.generator.stop();
                 this.$emit("closeGitActionDialog")
             }
         }
     }
 </script>
 <style>
+.confetti{
+    max-width: 640px; 
+    display: block;
+    margin: 0 auto;
+    border: 1px solid #ddd;
+    user-select: none;
+}
 </style>

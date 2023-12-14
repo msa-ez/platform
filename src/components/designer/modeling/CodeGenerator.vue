@@ -2832,6 +2832,7 @@
                 me.openGitActionDialog = false
                 me.gitMenu = false
                 me.isSIgpt = false
+                me.defaultCodeViewerRenderKey++;
             },
             startCommit(updateList){
                 var me = this
@@ -7024,7 +7025,6 @@ jobs:
                     me.javaFileList.forEach(async function(data){
                         let file = await me.gitAPI.getFile(me.value.scm.org, me.value.scm.repo, data.path) 
                         if(file){
-                            console.log(file)
                             me.selectedCodeList[data.name] = file.data
                             me.fileLoadCnt--;
                             if(me.fileLoadCnt == 0){
