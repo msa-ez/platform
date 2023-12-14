@@ -1,7 +1,5 @@
 <template>
     <div>
-        <!-- <canvas ref="canvas" class="confetti" id="canvas">
-        </canvas> -->
         <v-card flat style="height: 90vh; z-index:2;">
             <v-icon small @click="closeGitActionDialog()"
                 style="font-size: 18px; position: absolute; right: 5px; top: 5px; z-index: 1;">mdi-close</v-icon>
@@ -33,10 +31,6 @@
                                 <template v-slot:activator>
                                     <div style="cursor: pointer;">
                                         <v-row>
-                                            <!-- <Icon
-                                                icon="mdi:file-document-minus-outline" width="20" height="20"
-                                                style="color: red; position: relative; left: -30px; top: 20px;"
-                                            /> -->
                                             <v-col style="margin-left:-15px; margin-right: 25px;">
                                                 <v-list-item-subtitle
                                                         style="font-size: x-small; color: lightgray;">
@@ -85,6 +79,7 @@
                 </div>
                 <v-divider vertical />
                 <v-card-text style="max-height: 100%; overflow-y: scroll;" id="si_gpt">
+                    <canvas v-if="initConfettiCnt < 3" ref="canvas" style="position: absolute; z-index: 99;"></canvas>
                     <div v-for="(result, resIdx) in siTestResults" :key="resIdx" style="margin: 10px 150px;">
                         <div v-if="result.solution">
                             <!-- <v-card-title>Reason for modifying the code: </v-card-title> -->
@@ -314,7 +309,7 @@
         },
         data() {
             return {
-                //test
+                initConfettiCnt: 0,
                 canvas: null,
                 ctx: null,
                 confetti: [],
@@ -412,6 +407,8 @@
                     me.gitActionSnackBar.icon="check_circle"
                     me.gitActionSnackBar.title="Success"
                     me.gitActionSnackBar.show = true
+                    this.initConfetti();
+                    this.render();
                 } else {
                     if(!me.fullErrorLog){
                         // if(log.length > 55000){
@@ -435,25 +432,21 @@
                 me.userImg = localStorage.getItem("picture")
             }
 
-            // this.canvas = this.$refs.canvas;
-            // this.ctx = this.canvas.getContext('2d');
-            // this.resizeCanvas();
-            // this.initConfetti();
-            // this.render();
-            // window.addEventListener('resize', this.resizeCanvas);
-            // window.addEventListener('click', this.initConfetti);
+            const element = document.getElementById('si_gpt');
+            element.addEventListener('scroll', function() {
+                if(element.scrollTop + element.clientHeight >= element.scrollHeight){
+                    me.selectedIdx = null
+                } 
+            });
         },
         methods: {
-            resizeCanvas() {
-                this.canvas.width = this.$refs.canvas.parentElement.clientWidth;
-                this.canvas.height = this.$refs.canvas.parentElement.clientHeight;
-                // this.canvas.width = window.innerWidth;
-                // this.canvas.height = window.innerHeight;
-            },
             randomRange(min, max) {
                 return Math.random() * (max - min) + min;
             },
             initConfetti() {
+                this.canvas = this.$refs.canvas;
+                this.ctx = this.canvas.getContext('2d');
+
                 for (let i = 0; i < this.confettiCount; i++) {
                     this.confetti.push({
                     color: this.colors[Math.floor(this.randomRange(0, this.colors.length))],
@@ -464,8 +457,11 @@
                     velocity: { x: this.randomRange(-25, 25), y: this.randomRange(0, -50) }
                     });
                 }
+                this.initConfettiCnt++;
             },
             render() {
+                this.canvas.width = 1390;
+                this.canvas.height = 880;
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
                 this.confetti.forEach((confetto, index) => {
@@ -493,7 +489,7 @@
                     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
                 });
 
-                if (this.confetti.length <= 10) this.initConfetti();
+                if (this.confetti.length <= 10 && this.initConfettiCnt < 3) this.initConfetti();
 
                 window.requestAnimationFrame(this.render);
             },
@@ -582,24 +578,25 @@ What files do I need to modify and what related files do I need to fix the error
             },
             scrollToBottom() {
                 const element = document.getElementById('si_gpt');
-                if (element) {
-                    if(element.scrollTop + element.clientHeight + 150 >= element.scrollHeight){
+                if (element && (this.isAutoMode && !this.selectedIdx)) {
+                    setTimeout(() => {
                         element.scrollTo({
                             top: element.scrollHeight,
                             behavior: 'smooth'
                         });
-                    }
+                    }, 500)
                 }
             },
             commitToGit(){
                 var me = this
+                me.selectedIdx = null
                 me.gitActionPath = null
                 me.startGitAction = true
                 me.isFirstCommit = false
                 me.siTestResults[me.lastIndex].userMessage = "Go ahead"
+                me.scrollToBottom();
                 me.codeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
                 me.$emit("startCommitWithSigpt", me.updateList)
-                me.scrollToBottom();
             },
             setDialog(model, option){
                 try {
@@ -654,6 +651,7 @@ What files do I need to modify and what related files do I need to fix the error
                             me.codeViewerRenderKey++;
                         }
                     }
+                    me.scrollToBottom();
                     
                     if(option == 'onGenerationFinished'){
                         me.startGitAction = false
@@ -697,11 +695,10 @@ What files do I need to modify and what related files do I need to fix the error
                                 me.commitToGit()
                             }
                         }
+                        me.scrollToBottom();
                     } else {
                         me.dialogRenderKey++;
                     }
-
-                    me.scrollToBottom();
 
                 } catch(e) {
                     console.log(e)
@@ -747,11 +744,4 @@ What files do I need to modify and what related files do I need to fix the error
     }
 </script>
 <style>
-.confetti{
-    max-width: 640px; 
-    display: block;
-    margin: 0 auto;
-    border: 1px solid #ddd;
-    user-select: none;
-}
 </style>
