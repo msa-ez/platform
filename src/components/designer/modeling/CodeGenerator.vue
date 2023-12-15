@@ -6,6 +6,7 @@
                 :testFile="selectedTestFile"
                 :selectedCodeList="selectedCodeList"
                 @startCommitWithSigpt="startCommit"
+                @openIDE="openIDE"
             >
             </GitActionDialog>
         </v-dialog>
@@ -2737,6 +2738,13 @@
             });
         },
         methods: {
+            openIDE(type){
+                if(type == 'gitpod'){
+                    window.open(`https://gitpod.io/#https://github.com/${this.value.scm.org}/${this.value.scm.repo}`, '_blank');
+                } else {
+                    window.open(`https://github.com/codespaces/new?template_repository=${this.value.scm.org}/${this.value.scm.repo}`, '_blank');
+                }
+            },
             generateCodeObj(fileName, code, options){
                 var me = this
                 if(!fileName) return {}
@@ -7002,7 +7010,7 @@ jobs:
                 list.forEach(function (data){
                     if(data.type == 'dir'){
                         folderList.push(data)
-                    } else if(data.type == 'file' && data.name.includes(".java")){
+                    } else if(data.type == 'file' && (data.name.includes(".java") || data.name.includes("pom.xml"))){
                         if(data.name.includes("Test.java")){
                             if(me.selectedTestFile.name == data.name){
                                 me.javaFileList.push(data)

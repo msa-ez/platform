@@ -79,7 +79,7 @@
                 </div>
                 <v-divider vertical />
                 <v-card-text style="max-height: 100%; overflow-y: scroll;" id="si_gpt">
-                    <canvas v-if="initConfettiCnt < 3" ref="canvas" style="position: absolute; z-index: 99;"></canvas>
+                    <canvas v-if="initConfettiCnt < 2" ref="canvas" style="position: absolute; z-index: 99;"></canvas>
                     <div v-for="(result, resIdx) in siTestResults" :key="resIdx" style="margin: 10px 150px;">
                         <div v-if="result.solution">
                             <!-- <v-card-title>Reason for modifying the code: </v-card-title> -->
@@ -248,11 +248,36 @@
                         </v-row>
                     </div>
                     <div v-else>
-                        <v-card>
+                        <v-card style="z-index:999">
                             <v-card-text>
-                                <div style="font-weight: bolder; font-size: .875rem;">
-                                    <v-icon color="green" style="margin-right: 10px;">mdi-checkbox-marked-circle-outline</v-icon>Test succeeded !
-                                </div>
+                                <v-row>
+                                    <div style="width: 75%; margin-top: 19px; font-weight: bolder; font-size: .875rem;">
+                                        <v-icon color="green" style="margin-right: 10px;">mdi-checkbox-marked-circle-outline</v-icon>Test succeeded !
+                                    </div>
+                                    <div style="width: 25%;">
+                                        <v-btn
+                                            style="text-align: center;
+                                            text-align: center;
+                                            height: 40px;
+                                            line-height: 40px;
+                                            margin:10px 0px 10px 0px;
+                                            width:40%;
+                                            margin-right: 10px;"
+                                            color="primary"
+                                            v-on="on" @click="openIDE('gitpod')"
+                                        >Open Gitpod</v-btn>
+                                        <v-btn
+                                            style="text-align: center;
+                                            text-align: center;
+                                            height: 40px;
+                                            line-height: 40px;
+                                            margin:10px 0px 10px 0px;
+                                            width:55%;"
+                                            color="primary"
+                                            v-on="on" @click="openIDE('codespace')"
+                                        >Open Codespaces</v-btn>
+                                    </div>
+                                </v-row>
                             </v-card-text>
                         </v-card>
                     </div>
@@ -407,8 +432,8 @@
                     me.gitActionSnackBar.icon="check_circle"
                     me.gitActionSnackBar.title="Success"
                     me.gitActionSnackBar.show = true
-                    this.initConfetti();
-                    this.render();
+                    me.initConfetti();
+                    me.render();
                 } else {
                     if(!me.fullErrorLog){
                         // if(log.length > 55000){
@@ -440,6 +465,9 @@
             });
         },
         methods: {
+            openIDE(type) {
+                this.$emit('openIDE', type)
+            },
             randomRange(min, max) {
                 return Math.random() * (max - min) + min;
             },
@@ -489,7 +517,7 @@
                     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
                 });
 
-                if (this.confetti.length <= 10 && this.initConfettiCnt < 3) this.initConfetti();
+                if (this.confetti.length <= 10 && this.initConfettiCnt < 2) this.initConfetti();
 
                 window.requestAnimationFrame(this.render);
             },

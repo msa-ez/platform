@@ -35,7 +35,8 @@ Preserve existing class interfaces (methods, parameters, fields) as much as poss
 5. In the case of files where an error occurred without any code changes, the contents of the original file must be returned as "codeChanges".
 6. The "modifiedFileCode" values must include the entire code of the file in the code list. All code content is never omitted or abridged.
 7. Member variable types specified in the code listing must not be changed. You will need to modify other code to match the type. // public string ID; I need to keep a String . Even if you get a type conversion error such as “Cannot convert java.lang.String to java.lang.Long,” you should resolve the error by modifying the code that uses that variable, not by changing the variable type. If you inevitably need to change the type, you must add code to convert the variable type to the type you want to change to all codes that use the variable in the code list.
-8. "codeChanges" are only created if it is a file.
+8. If you determine that you have encountered a dependency version-related error, such as "NoSuchMethodError", you must modify the corresponding dependency version in pom.xml.
+9. "codeChanges" are only created if it is a file.
 Json format:
 [ 
     {
