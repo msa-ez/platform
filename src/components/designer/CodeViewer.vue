@@ -159,7 +159,7 @@
                                                 <a href="https://beta.openai.com/account/api-keys" target="_blank">how to create test or example</a>
                                             </div>
                                             <v-spacer />
-                                            <v-btn :loading="startImpl" :disabled="!selectedTestFile || !isExistRules" color="primary" @click="startImplWithAI()">implement</v-btn>
+                                            <v-btn :loading="startImpl" :disabled="!selectedTestFile || !isExistRules" color="primary" @click="startImplWithAI()">Auto implement</v-btn>
                                         </v-card-actions>
                                     </v-card>
                                 </div>

@@ -80,6 +80,21 @@
                 <v-divider vertical />
                 <v-card-text style="max-height: 100%; overflow-y: scroll;" id="si_gpt">
                     <canvas v-if="initConfettiCnt < 2" ref="canvas" style="position: absolute; z-index: 99;"></canvas>
+                    <div style="margin-left: 150px;">
+                        <div style="font-weight: bolder; font-size: .875rem; margin-top: 30px; margin-bottom: 25px;">
+                            <v-avatar 
+                                size="35"
+                                rounded
+                                style="margin-right: 5px;"
+                            >
+                                <img
+                                    src="https://github.com/msa-ez/platform/assets/65217813/3d305118-565b-4ce7-a8b6-e6ca5d6eef49"
+                                    alt="MSAEZ"
+                                >
+                            </v-avatar>
+                            Generating the business logic to pass the test ... 
+                        </div>
+                    </div>
                     <div v-for="(result, resIdx) in siTestResults" :key="resIdx" style="margin: 10px 150px;">
                         <div v-if="result.solution">
                             <!-- <v-card-title>Reason for modifying the code: </v-card-title> -->
@@ -148,6 +163,37 @@
                             </div>
                         </div>
 
+                        <div style="margin-left: 12.5px;" v-if="result.compilerMessageIdx === 0 || result.compilerMessageIdx">
+                            <v-row>
+                                <div style="font-weight: bolder; font-size: .875rem; margin-top: 30px; margin-bottom: 25px;">
+                                    <v-avatar 
+                                        size="35"
+                                        rounded
+                                        style="margin-right: 5px;"
+                                    >
+                                        <img
+                                            src="https://github.com/msa-ez/platform/assets/65217813/a33fc1b6-6fc3-422a-8ae6-75d0248855d5"
+                                            alt="Compiler"
+                                        >
+                                    </v-avatar>
+                                    Push code and testing in progress ... 
+                                </div>
+                                <v-tooltip v-if="actionPathList[result.compilerMessageIdx]" bottom>
+                                    <template v-slot:activator="{ on }">
+                                        <v-btn
+                                            v-on="on"
+                                            @click="jumpToActions(result.compilerMessageIdx)" 
+                                            style="margin-left: -3px; margin-top: 27px;"
+                                            icon
+                                        >
+                                            <v-icon style="font-size: 22px;">mdi-open-in-new</v-icon>
+                                        </v-btn>
+                                    </template>
+                                    <span>See detail</span>
+                                </v-tooltip>
+                            </v-row>
+                        </div>
+
                         <div v-if="result.errorLog" style="margin-top: 25px; margin-bottom: 10px;">
                             <div style="font-weight: bolder; font-size: .875rem;">
                                 <v-avatar 
@@ -183,6 +229,22 @@
                             </v-expansion-panels>
                         </div>
 
+                        <div v-if="result.systemMessage">
+                            <div style="font-weight: bolder; font-size: .875rem; margin-top: 30px; margin-bottom: 25px;">
+                                <v-avatar 
+                                    size="35"
+                                    rounded
+                                    style="margin-right: 5px;"
+                                >
+                                    <img
+                                        src="https://github.com/msa-ez/platform/assets/65217813/3d305118-565b-4ce7-a8b6-e6ca5d6eef49"
+                                        alt="MSAEZ"
+                                    >
+                                </v-avatar>
+                                Generating a code fix for the file in error ...
+                            </div>
+                        </div>
+
                         <!-- <v-divider></v-divider> -->
                     </div>
                     <div v-if="!allTestSucceeded" style="margin-left: 150px">
@@ -210,42 +272,6 @@
                                 </v-row>
                             </div>
                         </div>
-                        <v-row v-if="startGitAction" style="margin-top: 10px;">
-                            <v-avatar
-                                size="35"
-                                rounded
-                            >
-                                <img
-                                    src="https://github.com/msa-ez/platform/assets/65217813/3d305118-565b-4ce7-a8b6-e6ca5d6eef49"
-                                    alt="MSAEZ"
-                                >
-                            </v-avatar>
-                            <div style="margin-left: 5px;">
-                                <b v-if="isFirstCommit">
-                                    Generating the business logic to pass the test ... 
-                                </b>
-                                <b v-else-if="isSolutionCreating">
-                                    Generating a code fix for the file in error ...
-                                </b>
-                                <b v-else>
-                                    Code push and test in progress ... 
-                                </b>
-                                <v-tooltip v-if="!isFirstCommit" bottom>
-                                    <template v-slot:activator="{ on }">
-                                        <v-btn
-                                            :disabled="!gitActionPath"
-                                            v-on="on"
-                                            @click="jumpToActions()" 
-                                            style="margin-left: -3px;" 
-                                            icon
-                                        >
-                                            <v-icon style="font-size: 22px;">mdi-open-in-new</v-icon>
-                                        </v-btn>
-                                    </template>
-                                    <span>Show github actions</span>
-                                </v-tooltip>
-                            </div>
-                        </v-row>
                     </div>
                     <div v-else>
                         <v-card style="z-index:999">
@@ -334,6 +360,8 @@
         },
         data() {
             return {
+                commitCnt: 0,
+                actionPathList: [],
                 initConfettiCnt: 0,
                 canvas: null,
                 ctx: null,
@@ -355,7 +383,6 @@
 
                 userImg: null,
                 systemMsg: null,
-                gitActionPath: null,
                 dialogRenderKey: 0,
                 lastIndex: 0,
                 codeViewerRenderKey: 0,
@@ -419,7 +446,7 @@
             me.generate();
 
             me.$EventBus.$on('setActionId', function (path) {
-                me.gitActionPath = path
+                me.actionPathList.push(path)
             })
             me.$EventBus.$on('getActionLogs', function (log) {
                 if(log === "All tests succeeded"){
@@ -522,8 +549,8 @@
                 window.requestAnimationFrame(this.render);
             },
 
-            jumpToActions(){
-                if(this.gitActionPath) window.open(this.gitActionPath, "_blank")
+            jumpToActions(idx){
+                window.open(this.actionPathList[idx], "_blank")
             },
             stop(){
                 this.startGitAction = false
@@ -618,9 +645,10 @@ What files do I need to modify and what related files do I need to fix the error
             commitToGit(){
                 var me = this
                 me.selectedIdx = null
-                me.gitActionPath = null
                 me.startGitAction = true
                 me.isFirstCommit = false
+                me.siTestResults[me.lastIndex].compilerMessageIdx = me.commitCnt;
+                me.commitCnt++;
                 me.siTestResults[me.lastIndex].userMessage = "Go ahead"
                 me.scrollToBottom();
                 me.codeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
@@ -709,6 +737,7 @@ What files do I need to modify and what related files do I need to fix the error
                             })
                             me.savedGeneratedErrorDetails = me.generatedErrorDetails
                             me.siTestResults[me.lastIndex].fullErrorLog = me.fullErrorLog
+                            me.siTestResults[me.lastIndex].systemMessage = true 
                             me.fullErrorLog = null
                             me.generate()
                         } else {    
