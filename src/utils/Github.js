@@ -708,7 +708,11 @@ getUserInfo() {
                         run_id = res.data.workflow_runs[0].id
                     })
                     .catch(e => {
-                        reject(e)
+                        setTimeout(async () => {
+                            let obj = await me.getActionId(org, repo)
+                            resolve(obj)
+                        }, 1000)
+                        // reject(e)
                     })
                 } else {
                     run_id = res.data.workflow_runs[0].id
@@ -735,43 +739,48 @@ getUserInfo() {
         let me = this
         return new Promise(async function (resolve, reject) {
             await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/runs/${id.run_id}`, { headers: me.getHeader() })
-            .then(async (res) => {
-                if(res.data.status == "completed"){
-                    if(res.data.conclusion == "success"){
-                        resolve("All tests succeeded")
-                    } else {
-                        // await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/runs/${run_id}/jobs`, { headers: me.getHeader() })
-                        // .then(async (res) => {
-                            await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/jobs/${id.job_id}/logs`, { headers: me.getHeader() })
-                            .then((res) => {
-                                let log
-                                
-                                if(res.data.includes("[INFO] Results:")){
-                                    log = res.data.split("[INFO] Results:")
-                                } else if(res.data.includes("[INFO] BUILD FAILURE")){
-                                    log = res.data.split("[INFO] BUILD FAILURE")
-                                } else if(res.data.includes("COMPILATION ERROR :")) {
-                                    log = res.data.split("COMPILATION ERROR :")
+            .then(async (run) => {
+                if(run.data.status == "completed"){
+                    let logInfo
+                    await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/jobs/${id.job_id}/logs`, { headers: me.getHeader() })
+                    .then((logs) => {
+                        if(run.data.conclusion == "success"){
+                            logInfo = {
+                                state: 'success',
+                                log: logs.data
+                            }
+                            resolve(logInfo)
+                        } else {
+                            let log
+                            
+                            if(logs.data.includes("[INFO] Results:")){
+                                log = logs.data.split("[INFO] Results:")
+                            } else if(logs.data.includes("[INFO] BUILD FAILURE")){
+                                log = logs.data.split("[INFO] BUILD FAILURE")
+                            } else if(logs.data.includes("COMPILATION ERROR :")) {
+                                log = logs.data.split("COMPILATION ERROR :")
+                            }
+                            if(log[1]){
+                                logInfo = {
+                                    state: 'fail',
+                                    log: log[1]
                                 }
-                                if(log[1]){
-                                    resolve(log[1])
-                                } else {
-                                    resolve(log[0])
+                            } else {
+                                logInfo = {
+                                    state: 'fail',
+                                    log: log[0]
                                 }
-                            })
-                            .catch(e => {
-                                reject(e)
-                            })
-                        // })
-                        // .catch(e => {
-                        //     reject(e)
-                        // })
-                    }
+                            }
+                            resolve(logInfo)
+                        }
+                    }).catch(e => {
+                        reject(e)
+                    })
                 } else {
                     setTimeout(async () => {
                         let logs = await me.getActionLogs(org, repo, id)
                         resolve(logs)
-                    }, 3000)
+                    }, 1000)
                 }
             })
             .catch(e => {
