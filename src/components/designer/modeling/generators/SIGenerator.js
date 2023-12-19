@@ -54,7 +54,7 @@ Json format:
     }
 
     createModel(text){
-        return super.createModel(text);
+        return super.createModel(text + '"');
     }
 
 }

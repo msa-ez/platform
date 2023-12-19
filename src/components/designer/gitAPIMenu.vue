@@ -2170,9 +2170,11 @@
                                                 me.gitSnackBar.Color = "success"
                                                 me.gitSnackBar.icon="check_circle"
                                                 me.gitSnackBar.title="Success"
-                                                setTimeout(() => {
-                                                    me.getActionLogs()
-                                                }, 5000)
+                                                if(me.isSIgpt){
+                                                    setTimeout(() => {
+                                                        me.getActionLogs()
+                                                    }, 5000)
+                                                }
                                             })
                                         })
                                         .catch((error) =>{
@@ -2313,9 +2315,11 @@
                             me.gitSnackBar.Color = "success"
                             me.gitSnackBar.icon="check_circle"
                             me.gitSnackBar.title="Success"
-                            setTimeout(() => {
-                                me.getActionLogs()
-                            }, 5000)
+                            if(me.isSIgpt){
+                                setTimeout(() => {
+                                    me.getActionLogs()
+                                }, 5000)
+                            }
                         })
                         .catch((error) =>{
                             me.commonError(error)
