@@ -1,6 +1,6 @@
 <template>
     <div>
-        <v-card flat style="height: 90vh; z-index:2;">
+        <v-card flat style="height: 90vh; z-index:2; overflow: hidden;">
             <v-icon small @click="closeGitActionDialog()"
                 style="font-size: 18px; position: absolute; right: 5px; top: 5px; z-index: 1;">mdi-close</v-icon>
             <div style="display: flex; max-height: 100%;">
@@ -93,6 +93,13 @@
                                 >
                             </v-avatar>
                             Generating the business logic to pass the test ... 
+                            <v-progress-circular
+                                v-if="siTestResults.length == 0"
+                                indeterminate
+                                :size="15"
+                                color="primary"
+                                style="margin-left: 3px;"
+                            ></v-progress-circular>
                         </div>
                     </div>
                     <div v-for="(result, resIdx) in siTestResults" :key="resIdx" style="margin: 10px 150px;">
@@ -177,13 +184,20 @@
                                         >
                                     </v-avatar>
                                     Push code and testing in progress ... 
+                                    <v-progress-circular
+                                        v-if="startGitAction && !result.errorLog"
+                                        indeterminate
+                                        :size="15"
+                                        color="primary"
+                                        style="margin-left: 3px;"
+                                    ></v-progress-circular>
                                 </div>
                                 <v-tooltip v-if="actionPathList[result.compilerMessageIdx]" bottom>
                                     <template v-slot:activator="{ on }">
                                         <v-btn
                                             v-on="on"
                                             @click="jumpToActions(result.compilerMessageIdx)" 
-                                            style="margin-left: -3px; margin-top: 27px;"
+                                            style="margin-left: -3px; margin-top: 29px;"
                                             icon
                                         >
                                             <v-icon style="font-size: 22px;">mdi-open-in-new</v-icon>
@@ -213,7 +227,7 @@
                                     <v-expansion-panel-header style="color: white; background-color: #343541;">
                                         <v-row no-gutters>
                                             <v-col cols="10" v-for="(err, idx) in result.errorLog" :key="idx" style="font-weight: 400; font-size: .875rem; margin-bottom: 5px;">
-                                                [ERROR] {{ err.fileName }}: {{ err.errorDetails }}[{{ err.lineNumber }}]
+                                                [ERROR] {{ err.fileName }}: {{ err.errorDetails }}<span v-if="err.lineNumber">[{{ err.lineNumber }}]</span>
                                             </v-col>
                                         </v-row>
                                     </v-expansion-panel-header>
@@ -243,6 +257,13 @@
                                     >
                                 </v-avatar>
                                 Generating a code fix for the file in error ...
+                                <v-progress-circular
+                                    v-if="!result.stopLoading"
+                                    indeterminate
+                                    :size="15"
+                                    color="primary"
+                                    style="margin-left: 3px;"
+                                ></v-progress-circular>
                             </div>
                         </div>
 
@@ -274,7 +295,7 @@
                             </div>
                         </div>
                     </div>
-                    <div v-else style="margin-left: 150px; margin-right: 150px;">
+                    <div v-else style="margin-left: 150px; margin-right: 150px; z-index: 9999;">
                         <div style="margin-top: 25px; margin-bottom: 10px;">
                             <div style="font-weight: bolder; font-size: .875rem;">
                                 <v-avatar 
@@ -291,12 +312,12 @@
                             </div>
                             <v-expansion-panels v-model="successLogPanel" style="margin-left: 40px; width: 92.9%; margin-top: 10px;">
                                 <v-expansion-panel>
-                                    <v-expansion-panel-header style="color: white; background-color: #343541; z-index: 999">
+                                    <v-expansion-panel-header style="color: white; background-color: #343541;">
                                         <v-row>
-                                            <div style="width: 68%; margin-top: 19px; font-weight: bolder; font-size: .875rem;">
+                                            <div style="width: 55%; margin-top: 19px; font-weight: bolder; font-size: .875rem;">
                                                 <v-icon color="green" style="margin-right: 10px; margin-left: 5px;">mdi-checkbox-marked-circle-outline</v-icon>Test success !
                                             </div>
-                                            <div style="width: 30%;">
+                                            <div style="width: 43%;">
                                                 <v-btn
                                                     style="text-align: center;
                                                     text-align: center;
@@ -321,7 +342,7 @@
                                             </div>
                                         </v-row>
                                     </v-expansion-panel-header>
-                                    <v-expansion-panel-content>
+                                    <v-expansion-panel-content style="height: 450px; overflow-y: scroll;">
                                         <v-textarea
                                             filled
                                             auto-grow
@@ -489,7 +510,7 @@
                     me.gitActionSnackBar.title="Success"
                     me.gitActionSnackBar.show = true
                     me.successLog = logInfo.log
-                    me.successLogPanel = 1
+                    me.successLogPanel = 0
                     me.initConfetti();
                     me.render();
                     me.scrollToBottom()
@@ -715,6 +736,9 @@ What files do I need to modify and what related files do I need to fix the error
                                 if(solution && solution.codeChanges){
                                     solution.codeChanges.forEach(function (changes, changesIdx){
                                         if(changes){
+                                            if(!me.siTestResults[me.lastIndex].stopLoading){
+                                                me.siTestResults[me.lastIndex].stopLoading = true
+                                            }
                                             if(!me.siTestResults[me.resultLength + solutionIdx].codeChanges){
                                                 me.siTestResults[me.resultLength + solutionIdx].codeChanges = []
                                             }
@@ -791,6 +815,7 @@ What files do I need to modify and what related files do I need to fix the error
                                 me.savedGeneratedErrorDetails = me.generatedErrorDetails
                                 me.siTestResults[me.lastIndex].fullErrorLog = me.fullErrorLog
                                 me.siTestResults[me.lastIndex].systemMessage = true 
+                                me.siTestResults[me.lastIndex].stopLoading = false
                                 me.fullErrorLog = null
                                 me.generate()
                             } else {    

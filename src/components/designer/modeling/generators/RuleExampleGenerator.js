@@ -63,7 +63,7 @@ ${thenFields}
 No matter what happens, all events within each field must be generated. 
 Additionally, the value of each event must be generated as a generated value or as a default value (N/A).
 
-please generate more than 3 example mappings as json format below:
+please generate the example mappings as json format below:
 [
     {
         "given": [
@@ -71,7 +71,7 @@ please generate more than 3 example mappings as json format below:
                 "type": "Aggregate",
                 "name": "${rule.givenItems[0].name}",
                 "value": {
-                    // example data here
+                    // example data here. example should be simple e.g. name: projectId, value: 1
                 }
             }
         ],
@@ -80,7 +80,7 @@ please generate more than 3 example mappings as json format below:
                 "type": "Event",
                 "name": "${rule.whenItems[0].name}",
                 "value": {
-                    // example data here
+                    // example data here. example should be simple e.g. name: projectId, value: 1
                 }
             }
         ],
@@ -89,7 +89,7 @@ please generate more than 3 example mappings as json format below:
                 "type": "Event",
                 "name": "then event name", // Name each event in thenFields
                 "value": {
-                    // example data here
+                    // example data here. example should be simple e.g. name: projectId, value: 1
                 }
             },
         ]
