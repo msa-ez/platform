@@ -34,11 +34,13 @@
     "content1": "Frontend, Auth/Authz, GraphQL, etc. - All Patterns supported by modeling",
     "content2": "Event driven microservices with Kafka, Spring, Axon, Eventuate",
     "content3": "Container & Kubernetes Deploy Diagramming",
-    "title2": "Don’t worry about the implementation. Just focus on your ideas.",
+    "title2": "Let AI design the system.",
     "content4": "Now, leave your business analysis and system design to Chat GPT-based AI service.",
     "content5": "Create Business Model Canvas, Customer Journey Map, Eventstorming Model and User Story automatically.",
-    "content6": "Just add your unique ideas",
-    "content7": "and get straight into implementation with the source codes created by template and AI"
+    "title3": "Delegate coding and debugging to AI.",
+    "content6": "Utilize ChatGPT-4 and internet searches to write code,",
+    "content7": "iterate on implementation until issues in compilation and functionality are resolved",
+    "content8": "by finding solutions online and passing tests."
   },
   "tools": {
     "modeling": "MODELING TOOLS",
