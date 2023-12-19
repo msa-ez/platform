@@ -35,11 +35,13 @@
     "content1": "프론트엔드, 토큰 인증/인가, GraphQL 등 모든 패턴을 지원하는",
     "content2": "Kafka, Spring, Axon, Eventuate Container, Kubernetes Deploy Diagramming 기반",
     "content3": "이벤트 드리븐 마이크로서비스 모델링",
-    "title2": "구현 고민하지 마세요. 아이디어만 집중하세요.",
+    "title2": "AI가 시스템을 설계합니다",
     "content4": "이제, Chat GPT 기반의 AI에게 비즈니스 분석과 시스템 설계를 맡기세요",
     "content5": "비즈니스 모델 캔버스, 고객여정맵, 이벤트스토밍, 유저스토리를 자동으로 생성하세요",
-    "content6": "내 독특한 아이디어만 거기에 추가하고",
-    "content7": "템플릿과 AI 에 의하여 생성된 코드를 통하여 빠르게 구현하세요."
+    "title3": "코딩과 디버깅도 AI에게 맡기세요",
+    "content6": "Chat GPT4와 인터넷 검색을 통하여 코드를 작성하고",
+    "content7": "컴파일과 동작에 문제가 발생한 해결책을 인터넷에서 찾아서",
+    "content8": "테스트가 통과할 때까지 구현을 반복합니다."
   },
   "tools": {
     "modeling": "모델링 도구",

@@ -261,7 +261,7 @@
                         <div class="clearfix gs-main-page-top-box">
                             <div class="gs-main-page-title-box">
                                 <transition name="fade" mode="out-in">
-                                    <div v-if="showMainText" key="1">
+                                    <div v-if="showMainText1" key="1">
                                         <div class="gs-main-page-top-title">{{$t('main.title')}}</div>
                                         <div class="gs-main-page-sub-title">{{$t('main.content1')}}<br>
                                             {{$t('main.content2')}}<br>
@@ -269,43 +269,79 @@
                                         </div>
                                     </div>
 
-                                    <div v-else key="2">
+                                    <div v-else-if="showMainText2" key="2">
                                         <div class="gs-main-page-top-title">{{$t('main.title2')}}</div>
                                         <div class="gs-main-page-sub-title">{{$t('main.content4')}}<br>
                                             {{$t('main.content5')}}<br>
-                                            {{$t('main.content6')}}<br>
-                                            {{$t('main.content7')}}
+                                        </div>
+                                    </div>
+
+                                    <div v-else-if="showMainText3" key="3">
+                                        <div class="gs-main-page-top-title">{{$t('main.title3')}}</div>
+                                        <div class="gs-main-page-sub-title">{{$t('main.content6')}}<br>
+                                            {{$t('main.content7')}}<br>
+                                            {{$t('main.content8')}}
                                         </div>
                                     </div>
                                 </transition>
                             </div>
                             <div class="gs-main-page-top-image">
-                                <v-img src="https://user-images.githubusercontent.com/59447401/211722720-3e35a11a-e2ff-4232-9d99-c52f80f04692.png"></v-img>
+                                <!-- <v-img src="https://user-images.githubusercontent.com/59447401/211722720-3e35a11a-e2ff-4232-9d99-c52f80f04692.png"></v-img> -->
+                                <transition name="fade" mode="out-in">
+                                    <div v-if="showMainText1">
+                                        <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/5a0c54c8-cac3-44a5-ba25-879ab41196a2"></v-img>
+                                    </div>
+                                    <div v-else-if="showMainText2">
+                                        <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/0cc15a3c-98a6-4750-9419-60a97fcb85c9"></v-img>
+                                    </div>
+                                    <div v-else-if="showMainText3">
+                                        <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/d4a7ce9d-6350-4074-8795-a6c46631614e"></v-img>
+                                    </div>
+                                </transition>
                             </div>
                         </div>
                         <v-col class="gs-main-page-top-box-mobile" align="center">
                             <div class="gs-main-page-top-image-mobile">
                                 <v-img class="main-logo-image" src="https://github.com/kyusooK/spring-boot-acme-k/assets/123912988/79774ba2-2618-47d0-ab7e-8ef760c077e7"></v-img>
-                                <v-img class="main-chair-image" src="https://user-images.githubusercontent.com/59447401/211722720-3e35a11a-e2ff-4232-9d99-c52f80f04692.png"></v-img>
-                                
-                            </div>
-                            <transition name="fade" mode="out-in">
-                                <div v-if="showMainText" key="1">
-                                    <div class="gs-main-page-top-title-mobile">{{$t('main.title')}}</div>
-                                    <div class="gs-main-page-sub-title-mobile">{{$t('main.content1')}}<br>
-                                        {{$t('main.content2')}}<br>
-                                        {{$t('main.content3')}}
-                                    </div>
+                                <!-- <v-img class="main-chair-image" src="https://user-images.githubusercontent.com/59447401/211722720-3e35a11a-e2ff-4232-9d99-c52f80f04692.png"></v-img> -->
+                                <div class="main-chair-image">
+                                    <transition name="fade" mode="out-in">
+                                        <div v-if="showMainText1">
+                                            <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/5a0c54c8-cac3-44a5-ba25-879ab41196a2"></v-img>
+                                        </div>
+                                        <div v-else-if="showMainText2">
+                                            <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/0cc15a3c-98a6-4750-9419-60a97fcb85c9"></v-img>
+                                        </div>
+                                        <div v-else-if="showMainText3">
+                                            <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/d4a7ce9d-6350-4074-8795-a6c46631614e"></v-img>
+                                        </div>
+                                    </transition>
                                 </div>
-                                <div v-else key="2">
-                                    <div class="gs-main-page-top-title-mobile">{{$t('main.title2')}}</div>
-                                    <div class="gs-main-page-sub-title-mobile">{{$t('main.content4')}}<br>
+                                <transition name="fade" mode="out-in">
+                                    <div v-if="showMainText1" key="1" style="height:180px;">
+                                        <div class="gs-main-page-top-title-mobile">{{$t('main.title')}}</div>
+                                        <div class="gs-main-page-sub-title-mobile">{{$t('main.content1')}}<br>
+                                            {{$t('main.content2')}}<br>
+                                            {{$t('main.content3')}}
+                                        </div>
+                                    </div>
+
+                                    <div v-else-if="showMainText2" key="2" style="height:180px;">
+                                        <div class="gs-main-page-top-title-mobile">{{$t('main.title2')}}</div>
+                                        <div class="gs-main-page-sub-title-mobile">{{$t('main.content4')}}<br>
                                             {{$t('main.content5')}}<br>
-                                            {{$t('main.content6')}}<br>
-                                            {{$t('main.content7')}}
+                                        </div>
                                     </div>
-                                </div>
-                            </transition>
+
+                                    <div v-else-if="showMainText3" key="3" style="height:180px;">
+                                        <div class="gs-main-page-top-title-mobile">{{$t('main.title3')}}</div>
+                                        <div class="gs-main-page-sub-title-mobile">{{$t('main.content6')}}<br>
+                                            {{$t('main.content7')}}<br>
+                                            {{$t('main.content8')}}
+                                        </div>
+                                    </div>
+                                </transition>
+                            </div>
                         </v-col>
                         <AutoModelingDialog
                             mode="es"
@@ -1198,7 +1234,10 @@
             return {
                 projectUid: "",
                 showDialog: false,
-                showMainText: true,
+                showMainText1: true,
+                showMainText2: false,
+                showMainText3: false,
+                showMainIndex: 0,
                 fab: false,
                 labURLNumber: 4,
                 showLoadingForMorePage: false,
@@ -1281,6 +1320,7 @@
         mounted() {
             var me = this
 
+            me.showMainIndex = 1
             setInterval(me.toggleMainTexts, 5000);
             $(window).scroll(function () {
                 if (Math.ceil($(window).scrollTop()) >= (($(document).height() - $(window).height()))) {
@@ -1529,7 +1569,14 @@
                 this.projectUid = projectId
             },
             toggleMainTexts() {
-                this.showMainText = !this.showMainText;
+                this.showMainIndex++
+                this.showMainText1 = 1==this.showMainIndex;
+                this.showMainText2 = 2==this.showMainIndex;
+                this.showMainText3 = 3==this.showMainIndex;
+                if(this.showMainIndex==3) {
+                    this.showMainIndex=0
+                }
+                // this.showMainText = !this.showMainText;
             },
             selectMode(item){
                 this.searchObj.type = item.type
@@ -2278,16 +2325,16 @@
     }
 
     .title-page-card-box-row {
-        margin-bottom:60px;
+        margin-bottom: 60px;
     }
     .main-logo-image {
         display: none;
     }
     .mobile-tab {
-        display:none;
+        display: none;
     }
     .mobile-tab-list {
-        display:none;
+        display: none;
     }
     /* .main-search {
         position:fixed; 
@@ -2299,7 +2346,52 @@
         transform: translate(-50%, 0%);
     } */
 
+    .gs-main-page-title-box {
+        width: 650px;
+    }
+    .gs-main-page-top-title {
+        font-size: 36px;
+        margin-top: 100px;
+    }
+    .gs-main-page-sub-title {
+        margin: 10px 0;
+    }
+    .gs-main-page-sub-title-mobile {
+        font-size: 12px;
+        margin-top: 10px;
+    }
 
+    @media only screen and (max-width:1185px) and (min-width:1074px) {
+        .gs-main-page-top-title {
+            margin-top: 0;
+        }
+        .gs-main-page-title-box {
+            height: 190px;
+            border:1px solid red;
+        }
+    }
+    @media only screen and (max-width:1073px) and (min-width:962px) {
+        .gs-main-page-top-title {
+            margin-top: 0;
+        }
+        .gs-main-page-title-box {
+            height: 180px;
+            border:1px solid green;
+        }
+    }
+    @media only screen and (max-width:961px) and (min-width:898px) {
+        .gs-main-page-top-title {
+            margin-top: 0;
+        }
+        .gs-main-page-sub-title {
+            font-size: 12px;
+        }
+        .gs-main-page-title-box {
+            height: 180px;
+            border:1px solid blue;
+        }
+    }
+    
     @media only screen and (max-width: 1110px) {
         .main-tap-list {
             max-width:50% !important;

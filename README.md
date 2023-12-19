@@ -60,6 +60,10 @@ User-guide: https://intro.msaez.io/tool/google-drive-examples/#instructions
 - (Korean) https://www.youtube.com/watch?v=liV2f5ZZlY0
 - (Korean) https://www.youtube.com/watch?v=rUKFP6n-d68&list=PLEr96Fo5umW8CYIuf52d06BHfpgS6Q0-X&t=160s
 
+#### ChatGPT based auto implementation & debugging
+- (Korean) https://youtu.be/JuCN-bD7Jkk
+- (English) https://youtu.be/yZMueAKEqwI
+
 ***
 
 # Running on Docker Compose (with Github)
