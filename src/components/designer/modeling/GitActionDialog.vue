@@ -1,6 +1,6 @@
 <template>
     <div>
-        <v-card flat style="height: 90vh; z-index:2;">
+        <v-card flat style="height: 90vh; z-index:2; overflow: hidden;">
             <v-icon small @click="closeGitActionDialog()"
                 style="font-size: 18px; position: absolute; right: 5px; top: 5px; z-index: 1;">mdi-close</v-icon>
             <div style="display: flex; max-height: 100%;">
@@ -93,6 +93,13 @@
                                 >
                             </v-avatar>
                             Generating the business logic to pass the test ... 
+                            <v-progress-circular
+                                v-if="siTestResults.length == 0"
+                                indeterminate
+                                :size="15"
+                                color="primary"
+                                style="margin-left: 3px;"
+                            ></v-progress-circular>
                         </div>
                     </div>
                     <div v-for="(result, resIdx) in siTestResults" :key="resIdx" style="margin: 10px 150px;">
@@ -108,7 +115,7 @@
                                         alt="MSAEZ"
                                     >
                                 </v-avatar>
-                                <b style="margin-left: 9px;" :key="dialogRenderKey">{{ result.solution }} <span>{{ systemMsg }}</span></b>
+                                <b style="margin-left: 9px;" :key="dialogRenderKey">{{ result.solution }} <span v-if="result.codeChanges">{{ systemMsg }}</span></b>
                             </v-card-text>
                         </div>
                         <div v-for="(changes, changesIdx) in result.codeChanges" :key="changesIdx" style="margin-left: 40px; margin-right: 40px; margin-bottom: 12px;">
@@ -120,10 +127,10 @@
                                         </div>
                                     </v-expansion-panel-header>
                                     <v-expansion-panel-content style="background-color: #1e1e1e;">
-                                        <div v-if="lastSolutionIdx && lastSolutionIdx == resIdx + '_' + changesIdx" :key="codeViewerRenderKey">
+                                        <div v-if="lastSolutionIdx && lastSolutionIdx == resIdx + '_' + changesIdx">
                                             <code-viewer
                                                 class="gs-git-action-code-viewer"
-                                                v-model="changes.originFile"
+                                                v-model="changes.modifiedFile"
                                                 :editMode="true"
                                                 :readOnly="false"
                                                 :isGitActionDialog="true"
@@ -177,13 +184,20 @@
                                         >
                                     </v-avatar>
                                     Push code and testing in progress ... 
+                                    <v-progress-circular
+                                        v-if="startGitAction && !result.errorLog"
+                                        indeterminate
+                                        :size="15"
+                                        color="primary"
+                                        style="margin-left: 3px;"
+                                    ></v-progress-circular>
                                 </div>
                                 <v-tooltip v-if="actionPathList[result.compilerMessageIdx]" bottom>
                                     <template v-slot:activator="{ on }">
                                         <v-btn
                                             v-on="on"
                                             @click="jumpToActions(result.compilerMessageIdx)" 
-                                            style="margin-left: -3px; margin-top: 27px;"
+                                            style="margin-left: -3px; margin-top: 29px;"
                                             icon
                                         >
                                             <v-icon style="font-size: 22px;">mdi-open-in-new</v-icon>
@@ -208,12 +222,14 @@
                                 </v-avatar>
                                 The following error occurred during testing
                             </div>
-                            <v-expansion-panels style="margin-left: 40px; width: 92.9%;">
+                            <v-expansion-panels style="margin-left: 40px; width: 92.9%; margin-top: 10px;">
                                 <v-expansion-panel>
-                                    <v-expansion-panel-header style="color: white; display: table-row; background-color: #343541;">
-                                        <div v-for="(err, idx) in result.errorLog" :key="idx" style="display: table-row; font-weight: 400; font-size: .875rem; margin-bottom: 5px;">
-                                            [ERROR] {{ err.fileName }}: {{ err.errorDetails }}[{{ err.lineNumber }}]
-                                        </div>
+                                    <v-expansion-panel-header style="color: white; background-color: #343541;">
+                                        <v-row no-gutters>
+                                            <v-col cols="10" v-for="(err, idx) in result.errorLog" :key="idx" style="font-weight: 400; font-size: .875rem; margin-bottom: 5px;">
+                                                [ERROR] {{ err.fileName }}: {{ err.errorDetails }}<span v-if="err.lineNumber">[{{ err.lineNumber }}]</span>
+                                            </v-col>
+                                        </v-row>
                                     </v-expansion-panel-header>
                                     <v-expansion-panel-content>
                                         <v-textarea
@@ -223,7 +239,6 @@
                                             v-model="result.fullErrorLog"
                                             style="font-size: small; margin-top: 10px;"
                                         ></v-textarea>
-                                        <!-- {{ result.fullErrorLog }} -->
                                     </v-expansion-panel-content>
                                 </v-expansion-panel>
                             </v-expansion-panels>
@@ -242,6 +257,13 @@
                                     >
                                 </v-avatar>
                                 Generating a code fix for the file in error ...
+                                <v-progress-circular
+                                    v-if="!result.stopLoading"
+                                    indeterminate
+                                    :size="15"
+                                    color="primary"
+                                    style="margin-left: 3px;"
+                                ></v-progress-circular>
                             </div>
                         </div>
 
@@ -273,39 +295,65 @@
                             </div>
                         </div>
                     </div>
-                    <div v-else>
-                        <v-card style="z-index:999">
-                            <v-card-text>
-                                <v-row>
-                                    <div style="width: 75%; margin-top: 19px; font-weight: bolder; font-size: .875rem;">
-                                        <v-icon color="green" style="margin-right: 10px;">mdi-checkbox-marked-circle-outline</v-icon>Test succeeded !
-                                    </div>
-                                    <div style="width: 25%;">
-                                        <v-btn
-                                            style="text-align: center;
-                                            text-align: center;
-                                            height: 40px;
-                                            line-height: 40px;
-                                            margin:10px 0px 10px 0px;
-                                            width:40%;
-                                            margin-right: 10px;"
-                                            color="primary"
-                                            v-on="on" @click="openIDE('gitpod')"
-                                        >Open Gitpod</v-btn>
-                                        <v-btn
-                                            style="text-align: center;
-                                            text-align: center;
-                                            height: 40px;
-                                            line-height: 40px;
-                                            margin:10px 0px 10px 0px;
-                                            width:55%;"
-                                            color="primary"
-                                            v-on="on" @click="openIDE('codespace')"
-                                        >Open Codespaces</v-btn>
-                                    </div>
-                                </v-row>
-                            </v-card-text>
-                        </v-card>
+                    <div v-else style="margin-left: 150px; margin-right: 150px; z-index: 9999;">
+                        <div style="margin-top: 25px; margin-bottom: 10px;">
+                            <div style="font-weight: bolder; font-size: .875rem;">
+                                <v-avatar 
+                                    size="35"
+                                    rounded 
+                                    style="margin-right: 5px;"
+                                >
+                                    <img
+                                        src="https://github.com/msa-ez/platform/assets/65217813/a33fc1b6-6fc3-422a-8ae6-75d0248855d5"
+                                        alt="Compiler"
+                                    >
+                                </v-avatar>
+                                All tests passed
+                            </div>
+                            <v-expansion-panels v-model="successLogPanel" style="margin-left: 40px; width: 92.9%; margin-top: 10px;">
+                                <v-expansion-panel>
+                                    <v-expansion-panel-header style="color: white; background-color: #343541;">
+                                        <v-row>
+                                            <div style="width: 55%; margin-top: 19px; font-weight: bolder; font-size: .875rem;">
+                                                <v-icon color="green" style="margin-right: 10px; margin-left: 5px;">mdi-checkbox-marked-circle-outline</v-icon>Test success !
+                                            </div>
+                                            <div style="width: 43%;">
+                                                <v-btn
+                                                    style="text-align: center;
+                                                    text-align: center;
+                                                    height: 40px;
+                                                    line-height: 40px;
+                                                    margin:10px 0px 10px 0px;
+                                                    width:40%;
+                                                    margin-right: 10px;"
+                                                    color="primary"
+                                                    v-on="on" @click="openIDE('gitpod')"
+                                                >Open Gitpod</v-btn>
+                                                <v-btn
+                                                    style="text-align: center;
+                                                    text-align: center;
+                                                    height: 40px;
+                                                    line-height: 40px;
+                                                    margin:10px 0px 10px 0px;
+                                                    width:55%;"
+                                                    color="primary"
+                                                    v-on="on" @click="openIDE('codespace')"
+                                                >Open Codespaces</v-btn>
+                                            </div>
+                                        </v-row>
+                                    </v-expansion-panel-header>
+                                    <v-expansion-panel-content style="height: 450px; overflow-y: scroll;">
+                                        <v-textarea
+                                            filled
+                                            auto-grow
+                                            readonly
+                                            v-model="successLog"
+                                            style="font-size: small; margin-top: 10px;"
+                                        ></v-textarea>
+                                    </v-expansion-panel-content>
+                                </v-expansion-panel>
+                            </v-expansion-panels>
+                        </div>
                     </div>
                 </v-card-text>
             </div>
@@ -385,7 +433,6 @@
                 systemMsg: null,
                 dialogRenderKey: 0,
                 lastIndex: 0,
-                codeViewerRenderKey: 0,
                 lastSolutionIdx: null,
                 solutionNumber: 0,
                 codeChangeNumber: 0,
@@ -396,6 +443,7 @@
                 startGitAction: true,
                 allTestSucceeded: false,
                 isSolutionCreating: false,
+                successLogPanel: null,
 
                 codeList: null,
                 summarizedCodeList: {},
@@ -404,6 +452,7 @@
                 siTestResults: [],
 
                 fullErrorLog: null,
+                successLog: null,
                 savedGeneratedErrorDetails: null,
                 generatedErrorDetails: null,
 
@@ -429,6 +478,7 @@
         created:function () {
             if(this.testFile){
                 this.testFile.subPath = this.testFile.fullPath.replace(this.testFile.name, '')
+                this.testFile.code = ''
             }
         },
         beforeDestroy: function () {
@@ -448,8 +498,8 @@
             me.$EventBus.$on('setActionId', function (path) {
                 me.actionPathList.push(path)
             })
-            me.$EventBus.$on('getActionLogs', function (log) {
-                if(log === "All tests succeeded"){
+            me.$EventBus.$on('getActionLogs', function (logInfo) {
+                if(logInfo.state === "success"){
                     me.startGitAction = false
                     me.isSolutionCreating = false
                     me.allTestSucceeded = true
@@ -459,14 +509,17 @@
                     me.gitActionSnackBar.icon="check_circle"
                     me.gitActionSnackBar.title="Success"
                     me.gitActionSnackBar.show = true
+                    me.successLog = logInfo.log
+                    me.successLogPanel = 0
                     me.initConfetti();
                     me.render();
+                    me.scrollToBottom()
                 } else {
                     if(!me.fullErrorLog){
                         // if(log.length > 55000){
                         //     me.fullErrorLog = log.slice(0, 55000)
                         // } else {
-                            me.fullErrorLog = log
+                            me.fullErrorLog = logInfo.log
                         // }
                         me.model = null
                         me.generator = new ErrorLogGenerator(me);
@@ -593,7 +646,6 @@ What files do I need to modify and what related files do I need to fix the error
                     k: 10,
                 });
                 
-                console.log(results);
                 if(results){
                     results.similarItems.forEach(function (item){
                         me.summarizedCodeList[item.metadata.category] = me.codeList[item.metadata.category]
@@ -649,123 +701,149 @@ What files do I need to modify and what related files do I need to fix the error
                 me.isFirstCommit = false
                 me.siTestResults[me.lastIndex].compilerMessageIdx = me.commitCnt;
                 me.commitCnt++;
-                me.siTestResults[me.lastIndex].userMessage = "Go ahead"
+                if(!me.isAutoMode){
+                    me.siTestResults[me.lastIndex].userMessage = "Go ahead"
+                }
                 me.scrollToBottom();
                 me.codeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
                 me.$emit("startCommitWithSigpt", me.updateList)
             },
             setDialog(model, option){
-                try {
-                    var me = this
-                    if(me.fullErrorLog){
-                        me.siTestResults[me.lastIndex].errorLog = [...new Set(model.map(JSON.stringify))].map(JSON.parse)
-                        if(me.siTestResults[me.lastIndex].errorLog.length > 30){
-                            me.generator.stop();
-                        }
-                    } else {  
-                        if(!me.startGitAction){
-                            me.generator.stop();
-                        }  
-                        if(!me.isSolutionCreating){
-                            me.isSolutionCreating = true
-                        }   
-                        let dumyFile = []
-                        dumyFile.push(me.testFile)
-                        me.updateList = model
-                        me.updateList.forEach((solution, solutionIdx) => {
-                            me.siTestResults[me.resultLength + solutionIdx] = solution
-                            if(solution && solution.codeChanges){
-                                solution.codeChanges.forEach(function (changes, changesIdx){
-                                    changes.originFile = JSON.parse(JSON.stringify(dumyFile))
-                                    changes.originFile[0].code = me.codeList[changes.fileName]
-                                    changes.modifiedFile = JSON.parse(JSON.stringify(dumyFile))
-                                    changes.modifiedFile[0].code = changes.modifiedFileCode
-                                    changes.modifiedFile[0].name = changes.fileName
-                                    changes.expansionValue = 0
-                                    if(changes && changes.fileName){
-                                        me.copySelectedCodeList[changes.fileName] = changes.modifiedFileCode
-                                    }
-                                })
-                                me.siTestResults[me.resultLength + solutionIdx] = solution
-                                // me.onSelected(me.resultLength + solutionIdx, changesIdx)
-                            }
-                        });
-
-                        if(!me.lastSolutionIdx 
-                        || me.solutionNumber < me.updateList.lastIndex 
-                        || (me.updateList[me.solutionNumber] && me.updateList[me.solutionNumber].codeChanges && me.codeChangeNumber < me.updateList[me.solutionNumber].codeChanges.lastIndex))
-                        {
-                            if(me.solutionNumber < me.updateList.lastIndex){
-                                me.codeChangeNumber = 0
-                                me.solutionNumber = me.updateList.lastIndex
-                            } else {
-                                if(me.updateList[me.solutionNumber] && me.updateList[me.solutionNumber].codeChanges){
-                                    me.codeChangeNumber = me.updateList[me.solutionNumber].codeChanges.lastIndex
-                                }
-                            }
-                            me.lastSolutionIdx = me.resultLength + me.solutionNumber + '_' + me.codeChangeNumber 
-                            me.codeViewerRenderKey++;
-                        }
-                    }
-                    me.scrollToBottom();
-                    
-                    if(option == 'onGenerationFinished'){
-                        me.startGitAction = false
-                        me.isSolutionCreating = false
+                if(model){
+                    try {
+                        var me = this
                         if(me.fullErrorLog){
-                            me.generatedErrorDetails = []
-                            model.some(function (error){
-                                if(error.fileName && error.errorDetails){
-                                    var errDetail = ''
-                                    var fileName = error.fileName
-                                    if(fileName.includes("/")){
-                                        var fileNameSplit = fileName.split("/")
-                                        fileName = fileNameSplit[fileNameSplit.lastIndex]
-                                    }
-                                    errDetail = `An error called ${error.errorDetails} occurred in file ${fileName}.`
-                                    if(error.lineNumber && me.codeList[fileName]){
-                                        var codeSplit = me.codeList[fileName].split('\n')
-                                        if(codeSplit[error.lineNumber - 1] && codeSplit[error.lineNumber - 1] != ""){
-                                            errDetail = `An error called "${error.errorDetails}" occurred in the ${codeSplit[error.lineNumber - 1]} part of the code content of the ${fileName} file.`
-                                        } 
-                                    } 
-                                    me.generatedErrorDetails.push(errDetail)
-                                } else {
-                                    me.generatedErrorDetails = model
-                                    return true;
+                            me.siTestResults[me.lastIndex].errorLog = [...new Set(model.map(JSON.stringify))].map(JSON.parse)
+                            if(me.siTestResults[me.lastIndex].errorLog.length > 30){
+                                me.generator.stop();
+                            }
+                        } else {  
+                            if(!me.startGitAction){
+                                me.generator.stop();
+                            }  
+                            if(!me.isSolutionCreating){
+                                me.isSolutionCreating = true
+                            }   
+                            let dumyFile = []
+                            dumyFile.push(me.testFile)
+                            me.updateList = model
+                            me.updateList.forEach((solution, solutionIdx) => {
+                                if(!me.siTestResults[me.resultLength + solutionIdx]){
+                                    me.siTestResults[me.resultLength + solutionIdx] = {}
                                 }
-                            })
-                            me.savedGeneratedErrorDetails = me.generatedErrorDetails
-                            me.siTestResults[me.lastIndex].fullErrorLog = me.fullErrorLog
-                            me.siTestResults[me.lastIndex].systemMessage = true 
-                            me.fullErrorLog = null
-                            me.generate()
-                        } else {    
-                            me.lastSolutionIdx = null
-                            me.codeChangeNumber = 0                
-                            me.solutionNumber = 0                
-                            me.lastIndex = me.siTestResults.lastIndex
-                            me.resultLength = me.siTestResults.length
-                            me.generatedErrorDetails = null
-                            me.codeViewerRenderKey++;
-                            if(me.isAutoMode){
-                                me.commitToGit()
+                                    me.siTestResults[me.resultLength + solutionIdx].solution = solution.solution
+                                    me.siTestResults[me.resultLength + solutionIdx].solutionType = solution.solutionType
+                                if(solution && solution.codeChanges){
+                                    solution.codeChanges.forEach(function (changes, changesIdx){
+                                        if(changes){
+                                            if(!me.siTestResults[me.lastIndex].stopLoading){
+                                                me.siTestResults[me.lastIndex].stopLoading = true
+                                            }
+                                            if(!me.siTestResults[me.resultLength + solutionIdx].codeChanges){
+                                                me.siTestResults[me.resultLength + solutionIdx].codeChanges = []
+                                            }
+                                            if(!me.siTestResults[me.resultLength + solutionIdx].codeChanges[changesIdx]){
+                                                me.siTestResults[me.resultLength + solutionIdx].codeChanges[changesIdx] = {}
+                                            }
+
+                                            if(!me.siTestResults[me.resultLength + solutionIdx].codeChanges[changesIdx].originFile){
+                                                me.siTestResults[me.resultLength + solutionIdx].codeChanges[changesIdx].originFile = JSON.parse(JSON.stringify(dumyFile))
+                                                me.siTestResults[me.resultLength + solutionIdx].codeChanges[changesIdx].expansionValue = 0
+                                            }
+                                            
+                                            if(changes.fileName){
+                                                me.copySelectedCodeList[changes.fileName] = changes.modifiedFileCode
+                                                me.siTestResults[me.resultLength + solutionIdx].codeChanges[changesIdx].fileName = changes.fileName
+                                                me.siTestResults[me.resultLength + solutionIdx].codeChanges[changesIdx].originFile[0].code = me.codeList[changes.fileName]
+                                                
+                                                if(changes.modifiedFileCode){
+                                                    let copyDumyFile = JSON.parse(JSON.stringify(dumyFile))
+                                                    copyDumyFile[0].name = changes.fileName
+                                                    copyDumyFile[0].code = changes.modifiedFileCode
+                                                    me.siTestResults[me.resultLength + solutionIdx].codeChanges[changesIdx].modifiedFile = copyDumyFile
+                                                }
+                                            }
+
+                                        }
+                                    })
+                                }
+                            });
+        
+                            if(!me.lastSolutionIdx 
+                            || me.solutionNumber < me.updateList.lastIndex 
+                            || (me.updateList[me.solutionNumber] && me.updateList[me.solutionNumber].codeChanges && me.codeChangeNumber < me.updateList[me.solutionNumber].codeChanges.lastIndex))
+                            {
+                                if(me.solutionNumber < me.updateList.lastIndex){
+                                    me.codeChangeNumber = 0
+                                    me.solutionNumber = me.updateList.lastIndex
+                                } else {
+                                    if(me.updateList[me.solutionNumber] && me.updateList[me.solutionNumber].codeChanges){
+                                        me.codeChangeNumber = me.updateList[me.solutionNumber].codeChanges.lastIndex
+                                    }
+                                }
+                                me.lastSolutionIdx = me.resultLength + me.solutionNumber + '_' + me.codeChangeNumber 
                             }
                         }
                         me.scrollToBottom();
-                    } else {
-                        me.dialogRenderKey++;
+                        
+                        if(option == 'onGenerationFinished'){
+                            me.startGitAction = false
+                            me.isSolutionCreating = false
+                            if(me.fullErrorLog){
+                                me.generatedErrorDetails = []
+                                model.some(function (error){
+                                    if(error.fileName && error.errorDetails){
+                                        var errDetail = ''
+                                        var fileName = error.fileName
+                                        if(fileName.includes("/")){
+                                            var fileNameSplit = fileName.split("/")
+                                            fileName = fileNameSplit[fileNameSplit.lastIndex]
+                                        }
+                                        errDetail = `An error called ${error.errorDetails} occurred in file ${fileName}.`
+                                        if(error.lineNumber && me.codeList[fileName]){
+                                            var codeSplit = me.codeList[fileName].split('\n')
+                                            if(codeSplit[error.lineNumber - 1] && codeSplit[error.lineNumber - 1] != ""){
+                                                errDetail = `An error called "${error.errorDetails}" occurred in the ${codeSplit[error.lineNumber - 1]} part of the code content of the ${fileName} file.`
+                                            } 
+                                        } 
+                                        me.generatedErrorDetails.push(errDetail)
+                                    } else {
+                                        me.generatedErrorDetails = model
+                                        return true;
+                                    }
+                                })
+                                me.savedGeneratedErrorDetails = me.generatedErrorDetails
+                                me.siTestResults[me.lastIndex].fullErrorLog = me.fullErrorLog
+                                me.siTestResults[me.lastIndex].systemMessage = true 
+                                me.siTestResults[me.lastIndex].stopLoading = false
+                                me.fullErrorLog = null
+                                me.generate()
+                            } else {    
+                                me.lastSolutionIdx = null
+                                me.codeChangeNumber = 0                
+                                me.solutionNumber = 0                
+                                me.lastIndex = me.siTestResults.lastIndex
+                                me.resultLength = me.siTestResults.length
+                                me.generatedErrorDetails = null
+                                if(me.isAutoMode){
+                                    me.commitToGit()
+                                }
+                            }
+                            me.scrollToBottom();
+                        } else {
+                            me.dialogRenderKey++;
+                        } 
+    
+                    } catch(e) {
+                        console.log(e)
+                        me.gitActionSnackBar.timeout = 5000
+                        me.gitActionSnackBar.Text = "오류 검증 및 파일 업데이트 도중 문제가 발생하였습니다. 잠시 후 다시 시도해주세요."
+                        me.gitActionSnackBar.Color = "error"
+                        me.gitActionSnackBar.icon="error"
+                        me.gitActionSnackBar.title="Error"
+                        me.gitActionSnackBar.show = true
+                        me.startGitAction = false
                     }
-
-                } catch(e) {
-                    console.log(e)
-                    me.gitActionSnackBar.timeout = 5000
-                    me.gitActionSnackBar.Text = "오류 검증 및 파일 업데이트 도중 문제가 발생하였습니다. 잠시 후 다시 시도해주세요."
-                    me.gitActionSnackBar.Color = "error"
-                    me.gitActionSnackBar.icon="error"
-                    me.gitActionSnackBar.title="Error"
-                    me.gitActionSnackBar.show = true
-                    me.startGitAction = false
                 }
             },
             onModelCreated(model){

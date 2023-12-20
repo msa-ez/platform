@@ -912,10 +912,9 @@
                     const originalLineCount = editor.getOriginalEditor().getModel().getLineCount();
                     const modifiedLineCount = editor.getModifiedEditor().getModel().getLineCount();
                     const totalLineCount = Math.max(originalLineCount, modifiedLineCount);
-                    // const lineHeight = editor.getConfiguration().lineHeight;
                     contentHeight = totalLineCount * 20;
                 } else {
-                    contentHeight = 20 + editor.getContentHeight();
+                    contentHeight = 20 * editor.getModel().getLineCount();
                 }
                 editor.layout({ height: contentHeight });
             },

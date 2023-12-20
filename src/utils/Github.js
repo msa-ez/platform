@@ -705,27 +705,33 @@ getUserInfo() {
                 if(res.data.workflow_runs.length == 0){
                     await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/runs?status='in_progress'`, { headers: me.getHeader() })
                     .then((res) => {
-                        run_id = res.data.workflow_runs[0].id
-                    })
-                    .catch(e => {
+                        if(res.data.workflow_runs.length > 0){
+                            run_id = res.data.workflow_runs[0].id
+                        } else {
+                            setTimeout(async () => {
+                                let obj = await me.getActionId(org, repo)
+                                resolve(obj)
+                            }, 1000)
+                        }
+                    }).catch(e => {
                         reject(e)
                     })
                 } else {
                     run_id = res.data.workflow_runs[0].id
                 }
-                await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/runs/${run_id}/jobs`, { headers: me.getHeader() })
-                .then(async (res) => {
-                    let obj = {
-                        run_id: run_id,
-                        job_id: res.data.jobs[0].id
-                    }
-                    resolve(obj)
-                })
-                .catch(e => {
-                    reject(e)
-                })
-            })
-            .catch(e => {
+                if(run_id){
+                    await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/runs/${run_id}/jobs`, { headers: me.getHeader() })
+                    .then(async (res) => {
+                        let obj = {
+                            run_id: run_id,
+                            job_id: res.data.jobs[0].id
+                        }
+                        resolve(obj)
+                    }).catch(e => {
+                        reject(e)
+                    })
+                }
+            }).catch(e => {
                 reject(e)
             })
         })
@@ -735,43 +741,48 @@ getUserInfo() {
         let me = this
         return new Promise(async function (resolve, reject) {
             await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/runs/${id.run_id}`, { headers: me.getHeader() })
-            .then(async (res) => {
-                if(res.data.status == "completed"){
-                    if(res.data.conclusion == "success"){
-                        resolve("All tests succeeded")
-                    } else {
-                        // await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/runs/${run_id}/jobs`, { headers: me.getHeader() })
-                        // .then(async (res) => {
-                            await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/jobs/${id.job_id}/logs`, { headers: me.getHeader() })
-                            .then((res) => {
-                                let log
-                                
-                                if(res.data.includes("[INFO] Results:")){
-                                    log = res.data.split("[INFO] Results:")
-                                } else if(res.data.includes("[INFO] BUILD FAILURE")){
-                                    log = res.data.split("[INFO] BUILD FAILURE")
-                                } else if(res.data.includes("COMPILATION ERROR :")) {
-                                    log = res.data.split("COMPILATION ERROR :")
-                                }
-                                if(log[1]){
-                                    resolve(log[1])
-                                } else {
-                                    resolve(log[0])
-                                }
-                            })
-                            .catch(e => {
-                                reject(e)
-                            })
-                        // })
-                        // .catch(e => {
-                        //     reject(e)
-                        // })
-                    }
+            .then(async (run) => {
+                if(run.data.status == "completed"){
+                    let logInfo
+                    let log
+                    await axios.get(`https://api.github.com/repos/${org}/${repo}/actions/jobs/${id.job_id}/logs`, { headers: me.getHeader() })
+                    .then((logs) => {
+                        if(run.data.conclusion == "success"){
+                            logInfo = {
+                                state: 'success',
+                                log: null
+                            }
+                        } else {
+                            logInfo = {
+                                state: 'fail',
+                                log: null
+                            }
+                        }
+                        
+                        if(logs.data.includes("[INFO] Results:")){
+                            log = logs.data.split("[INFO] Results:")
+                        } else if(logs.data.includes("[INFO] BUILD FAILURE")){
+                            log = logs.data.split("[INFO] BUILD FAILURE")
+                        } else if(logs.data.includes("COMPILATION ERROR :")) {
+                            log = logs.data.split("COMPILATION ERROR :")
+                        }
+    
+                        if(log[1]){
+                            logInfo.log = log[1]
+                        } else {
+                            logInfo.log = log[0]
+                        }
+    
+                        resolve(logInfo)
+    
+                    }).catch(e => {
+                        reject(e)
+                    })
                 } else {
                     setTimeout(async () => {
                         let logs = await me.getActionLogs(org, repo, id)
                         resolve(logs)
-                    }, 3000)
+                    }, 1000)
                 }
             })
             .catch(e => {
