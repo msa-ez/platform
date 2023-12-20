@@ -187,22 +187,43 @@
             },
 
             jump(){
-                var me = this
-                let uuid = me.uuid();
-                if(!me.value.modelList){
-                    me.value.modelList = []
+                try{
+                    var me = this
+                    let uuid = me.uuid();
+                    if(!me.value.modelList){
+                        me.value.modelList = []
+                    }
+                    me.value.modelList.push(uuid);
+
+                    me.$emit("input", me.value);
+                    me.$emit("change", 'eventStorming');
+
+                    me.state.userStory = me.value.userStory;
+                    let stateJson = JSON.stringify(me.state);
+                    localStorage["gen-state"] = stateJson;
+
+                    window.open(`/#/storming/${uuid}`, "_blank")
+                    // this.$router.push({path: `storming/${uuid}`});
+                }catch(e){
+                    if(e.name=="QuotaExceededError"){
+                        var keys = Object.keys(localStorage);
+                        var values = keys.map(function(key) {
+                            return localStorage.getItem(key);
+                        });
+
+                        for (var i = 0; i < keys.length; i++) {
+                            var key = keys[i];
+                            var value = values[i];
+
+                            if(value.includes('elements') && value.includes('relations')){
+                                localStorage.removeItem(key);
+                            }
+                        }
+
+                    }
+
+                    this.jump();
                 }
-                me.value.modelList.push(uuid);
-
-                me.$emit("input", me.value);
-                me.$emit("change", 'eventStorming');
-
-                me.state.userStory = me.value.userStory;
-                let stateJson = JSON.stringify(me.state);
-                localStorage["gen-state"] = stateJson;
-
-                window.open(`/#/storming/${uuid}`, "_blank")
-                // this.$router.push({path: `storming/${uuid}`});
             },
 
             uuid: function () {
