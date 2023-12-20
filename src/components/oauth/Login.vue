@@ -49,15 +49,15 @@
                                 src="https://github.com/msa-ez/platform/assets/123912988/d2fd58a7-a2b1-4c62-9a2b-da3ef839e7eb"/>
                         <div>Google</div>
                     </v-btn>
-                    <!-- <v-btn @click="snsLogin('keycloak-oidc')"
+                    <v-btn @click="snsLogin('keycloak-oidc')"
                         style="background-color:white; width:400px; margin-left:50px; height:50px; "
                     >
-                        <img id="git-hover"
+                        <!-- <img id="git-hover"
                                 width="50px"
                                 alt="Github sign-in"
-                                src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"/>
-                        <div>aifrica</div>
-                    </v-btn> -->
+                                src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"/> -->
+                        <div>DPG Testbed</div>
+                    </v-btn>
                 </div>
 
                 <div style="width:500px; margin-left:5px; margin-bottom:20px; text-align:center; font-size: small; color:#BDBDBD; margin-top: 30px;">
