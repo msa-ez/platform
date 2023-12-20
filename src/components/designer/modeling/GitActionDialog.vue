@@ -79,7 +79,7 @@
                 </div>
                 <v-divider vertical />
                 <v-card-text style="max-height: 100%; overflow-y: scroll;" id="si_gpt">
-                    <canvas v-if="initConfettiCnt < 2" ref="canvas" style="position: absolute; z-index: 99;"></canvas>
+                    <canvas v-if="initConfettiCnt < 2" ref="canvas" style="position: absolute;"></canvas>
                     <div style="margin-left: 150px;">
                         <div style="font-weight: bolder; font-size: .875rem; margin-top: 30px; margin-bottom: 25px;">
                             <v-avatar 
@@ -102,7 +102,7 @@
                             ></v-progress-circular>
                         </div>
                     </div>
-                    <div v-for="(result, resIdx) in siTestResults" :key="resIdx" style="margin: 10px 150px;">
+                    <div v-for="(result, resIdx) in siTestResults" :key="resIdx" style="margin: 10px 150px; z-index: 9;">
                         <div v-if="result.solution">
                             <!-- <v-card-title>Reason for modifying the code: </v-card-title> -->
                             <v-card-text style="margin-left: -15px;">
@@ -283,7 +283,7 @@
                             </div>
                             <div v-else>
                                 <v-row style="margin-right: 20px; margin-top: 10px;">
-                                    <v-switch
+                                    <v-switch v-if="commitCnt < 15"
                                         style="margin-right: 10px; margin-top: 1px;"
                                         v-model="isAutoMode"
                                         :label="'Auto mode'"
@@ -295,7 +295,7 @@
                             </div>
                         </div>
                     </div>
-                    <div v-else style="margin-left: 150px; margin-right: 150px; z-index: 9999;">
+                    <div v-else style="margin-left: 150px; margin-right: 150px; z-index: 9;">
                         <div style="margin-top: 25px; margin-bottom: 10px;">
                             <div style="font-weight: bolder; font-size: .875rem;">
                                 <v-avatar 
@@ -707,6 +707,9 @@ What files do I need to modify and what related files do I need to fix the error
                 me.scrollToBottom();
                 me.codeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
                 me.$emit("startCommitWithSigpt", me.updateList)
+                if(me.commitCnt >= 15){
+                    me.isAutoMode = false
+                }
             },
             setDialog(model, option){
                 if(model){

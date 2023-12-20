@@ -912,10 +912,13 @@
                     const originalLineCount = editor.getOriginalEditor().getModel().getLineCount();
                     const modifiedLineCount = editor.getModifiedEditor().getModel().getLineCount();
                     const totalLineCount = Math.max(originalLineCount, modifiedLineCount);
-                    contentHeight = totalLineCount * 20;
+                    contentHeight = totalLineCount * 19.5;
                 } else {
-                    contentHeight = 20 * editor.getModel().getLineCount();
+                    contentHeight = 19.5 * editor.getModel().getLineCount();
                 }
+                // const editorContainer = document.querySelector('.monaco-editor.gs-inside-monaco-editor');
+                // editorContainer.style.maxHeight = contentHeight + 'px';
+                // editorContainer.style.overflow = 'hidden';
                 editor.layout({ height: contentHeight });
             },
             editorDidMount(editor){
