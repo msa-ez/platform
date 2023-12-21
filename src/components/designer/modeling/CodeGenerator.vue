@@ -2657,6 +2657,7 @@
         mounted: function () { 
 
             var me = this
+            
             window.addEventListener("message", me.messageProcessing);
             if(localStorage.getItem("editTemplateList") && me.firstSetEditTemplateList){
                 var CircularJSON = require('circular-json');
@@ -3486,79 +3487,77 @@ jobs:
                             }
                             me.openCode[0] = opennedReferenceFile
                             
-                            if(opennedReferenceFile){
-                                var obj = null
-                                if(tempPath.includes('for-model/')){
-                                    obj = me.rootModelAndElementMap.rootModel
-                                } else if(me.modelForElement[platform] && me.modelForElement[platform][tempPath] && me.modelForElement[platform][tempPath][filePath]){
-                                    obj = me.modelForElement[platform][tempPath][filePath]
-                                } 
+                            var obj = null
+                            if(tempPath.includes('for-model/')){
+                                obj = me.rootModelAndElementMap.rootModel
+                            } else if(me.modelForElement[platform] && me.modelForElement[platform][tempPath] && me.modelForElement[platform][tempPath][filePath]){
+                                obj = me.modelForElement[platform][tempPath][filePath]
+                            } 
 
-                                if(!obj){
-                                    obj = me.rootModelAndElementMap.rootModel
-                                }
-
-                                me.modelData = obj
-                                me.treePathList = {}
-                                me.treeData = []
-                                me.treeDataCnt = 1
-                                Object.keys(obj).forEach(function (key){
-                                    if(obj[key] == "" || obj[key] == null || typeof obj[key] == 'string' || typeof obj[key] == 'boolean' || typeof obj[key] == 'number'){
-                                        var data = {
-                                            id: me.treeDataCnt,
-                                            name: key + ': ',
-                                            value: null
-                                        }
-                                        if(obj[key] == null){
-                                            data.value = 'null'
-                                        } else if(obj[key] == ""){
-                                            data.value = '""'
-                                        } else {
-                                            data.value = typeof obj[key] == 'boolean' || typeof obj[key] == 'number' ? JSON.stringify(obj[key]) : obj[key]
-                                        }
-                                        me.treePathList[me.treeDataCnt] = key
-                                    } else {
-                                        var data = {
-                                            id: me.treeDataCnt,
-                                            name: key,
-                                            children: [],
-                                            value: null
-                                        }
-                                        me.treePathList[me.treeDataCnt] = key
-                                        Object.keys(obj[key]).forEach(function (childrenKey){
-                                            me.treeDataCnt++;
-                                            if(obj[key][childrenKey] == "" || obj[key][childrenKey] == null || typeof obj[key][childrenKey] == 'string' || typeof obj[key][childrenKey] == 'boolean' || typeof obj[key][childrenKey] == 'number'){
-                                                var childrenData = {
-                                                    id: me.treeDataCnt,
-                                                    name: childrenKey + ': ',
-                                                    value: null
-                                                }
-                                                if(obj[key][childrenKey] == null){
-                                                    childrenData.value = 'null'
-                                                } else if(obj[key] == ""){
-                                                    childrenData.value = '""'
-                                                } else {
-                                                    childrenData.value = typeof obj[key][childrenKey] == 'boolean' || typeof obj[key][childrenKey] == 'number' ? JSON.stringify(obj[key][childrenKey]) : obj[key][childrenKey]
-                                                }
-                                            } else {
-                                                var childrenData = {
-                                                    id: me.treeDataCnt,
-                                                    name: childrenKey,
-                                                    children: [],
-                                                    value: null
-                                                }
-                                            }
-                                            me.treePathList[me.treeDataCnt] = key + "/" + childrenKey
-                                            data.children.push(childrenData)
-                                        })
-                                    }
-                                    me.treeData.push(data)
-                                    me.treeDataCnt++;
-                                })
-
-                                me.opennedTemplateFramework[0].eleKeys = obj
-                                me.editTemplateTabNumber = 0
+                            if(!obj){
+                                obj = me.rootModelAndElementMap.rootModel
                             }
+
+                            me.modelData = obj
+                            me.treePathList = {}
+                            me.treeData = []
+                            me.treeDataCnt = 1
+                            Object.keys(obj).forEach(function (key){
+                                if(obj[key] == "" || obj[key] == null || typeof obj[key] == 'string' || typeof obj[key] == 'boolean' || typeof obj[key] == 'number'){
+                                    var data = {
+                                        id: me.treeDataCnt,
+                                        name: key + ': ',
+                                        value: null
+                                    }
+                                    if(obj[key] == null){
+                                        data.value = 'null'
+                                    } else if(obj[key] == ""){
+                                        data.value = '""'
+                                    } else {
+                                        data.value = typeof obj[key] == 'boolean' || typeof obj[key] == 'number' ? JSON.stringify(obj[key]) : obj[key]
+                                    }
+                                    me.treePathList[me.treeDataCnt] = key
+                                } else {
+                                    var data = {
+                                        id: me.treeDataCnt,
+                                        name: key,
+                                        children: [],
+                                        value: null
+                                    }
+                                    me.treePathList[me.treeDataCnt] = key
+                                    Object.keys(obj[key]).forEach(function (childrenKey){
+                                        me.treeDataCnt++;
+                                        if(obj[key][childrenKey] == "" || obj[key][childrenKey] == null || typeof obj[key][childrenKey] == 'string' || typeof obj[key][childrenKey] == 'boolean' || typeof obj[key][childrenKey] == 'number'){
+                                            var childrenData = {
+                                                id: me.treeDataCnt,
+                                                name: childrenKey + ': ',
+                                                value: null
+                                            }
+                                            if(obj[key][childrenKey] == null){
+                                                childrenData.value = 'null'
+                                            } else if(obj[key] == ""){
+                                                childrenData.value = '""'
+                                            } else {
+                                                childrenData.value = typeof obj[key][childrenKey] == 'boolean' || typeof obj[key][childrenKey] == 'number' ? JSON.stringify(obj[key][childrenKey]) : obj[key][childrenKey]
+                                            }
+                                        } else {
+                                            var childrenData = {
+                                                id: me.treeDataCnt,
+                                                name: childrenKey,
+                                                children: [],
+                                                value: null
+                                            }
+                                        }
+                                        me.treePathList[me.treeDataCnt] = key + "/" + childrenKey
+                                        data.children.push(childrenData)
+                                    })
+                                }
+                                me.treeData.push(data)
+                                me.treeDataCnt++;
+                            })
+
+                            me.opennedTemplateFramework[0].eleKeys = obj
+                            me.editTemplateTabNumber = 0
                         }
                     }
                     if(ref == null || !opennedReferenceFile){
@@ -8758,7 +8757,7 @@ jobs:
                     if(!(me.openCode && me.openCode[0]) && me.opennedTemplateFramework && me.opennedTemplateFramework[0]){
                         if(me.opennedTemplateFramework[0].templatePath == codeObj.templatePath || me.opennedTemplateFramework[0].path == codeObj.templatePath){
                             me.opennedTemplateFramework[0].templateErrMsg = null 
-                            me.setTemplateResult(codeObj.templatePath)
+                            me.setTemplateResult(codeObj.fullPath)
                         }
                     }
 

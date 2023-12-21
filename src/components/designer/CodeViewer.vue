@@ -647,6 +647,7 @@
                 });
             },
             pasteModelValue(data){
+                var me = this 
                 if(data && this.currentRange){
                     var code = this.codeValue.split("\n")
                     var splitData = data.split("/")
@@ -658,8 +659,28 @@
                             dataName = data
                         }
                     })
+
+                    let objPath = []
+                    code.some(function (line, idx){
+                        if(line.includes("{{#")){
+                            objPath.push(line)
+                        } 
+                        if(line.includes("{{/")){
+                            objPath.pop(line)
+                        } 
+                        if(idx + 1 == me.currentRange.startLineNumber){
+                            return true;
+                        }
+                    })
                     dataPath = dataPath.join("/").replaceAll("//", "/").replace(`/${dataName}`, "").replaceAll("/", ".")
-                    code[this.currentRange.startLineNumber - 1] = code[this.currentRange.startLineNumber - 1] + `{{#${dataPath}}} {{${dataName}}} {{/${dataPath}}}`
+                    let addText
+                    if(objPath.find(x => x.includes(dataPath))){
+                        addText = `{{${dataName}}}`
+                    } else {
+                        addText = `{{#@root/${dataPath}}} {{${dataName}}} {{/@root/${dataPath}}}`
+                    }
+
+                    code[this.currentRange.startLineNumber - 1] = code[this.currentRange.startLineNumber - 1] + addText
                     this.codeObj.code = code.join("\n")
                     this.$emit('editCode', this.codeObj.code)
                 }

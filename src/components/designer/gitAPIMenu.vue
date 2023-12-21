@@ -872,6 +872,9 @@
                 if(this.gitRepoName.at(-1) == "-"){
                     this.gitRepoName = this.gitRepoName.replace(/.$/, "");
                 }
+                if(this.value){
+                    this.value.repo = this.gitRepoName
+                }
                 this.RepoNameChanged()
             }, 1000),
             gitUserName: _.debounce(function () {
