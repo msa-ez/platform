@@ -375,8 +375,16 @@
                 if(me.value.mirrorElement) return;
 
                 let attachedAggregate = me.canvas.getAllAttachedAggregate(me.value);
-
-                if(!attachedAggregate) {
+                if(attachedAggregate) {
+                    let filteredAggregateId = attachedAggregate.map(element => element = {id: element.elementView.id});
+                    if( JSON.stringify(filteredAggregateId) !== JSON.stringify( me.value.aggregates ) ) {
+                        me.value.aggregates = filteredAggregateId
+                        if(me.canvas.initLoad) {
+                            me.canvas.changedByMe = true;
+                            me.canvas.changedTemplateCode = true
+                        }
+                    }
+                } else {
                     if(me.value.aggregates.length > 0){
                         me.value.aggregates = []
                         if(me.canvas.initLoad) {
@@ -384,17 +392,17 @@
                             me.canvas.changedTemplateCode = true
                         }
                     }
-                    return;
                 }
 
-                let filteredAggregateId = attachedAggregate.map(element => element = {id: element.elementView.id});
-                if( JSON.stringify(filteredAggregateId) !== JSON.stringify( me.value.aggregates ) ) {
-                    me.value.aggregates = filteredAggregateId
-                    if(me.canvas.initLoad) {
-                        me.canvas.changedByMe = true;
-                        me.canvas.changedTemplateCode = true
-                    }
+                let attachedElement = me.canvas.getAttachedElements(me.canvas.value.elements, me.value);
+                if(Object.keys(attachedElement).length > 0 ){
+                    Object.keys(attachedElement).forEach(function(id){
+                        var component = me.canvas.$refs[`${id}`] ? me.canvas.$refs[`${id}`][0] : null
+                        if (component) component.onMoveAction(false)
+                    })
                 }
+
+
             },
             validate(executeRelateToValidate, panelValue){
                 var me = this

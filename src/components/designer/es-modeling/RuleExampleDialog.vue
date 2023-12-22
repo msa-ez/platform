@@ -1,6 +1,6 @@
 <template>
     <div>
-        <v-dialog v-model="isOpenRules">
+        <v-dialog v-model="isOpenRules" :persistent="isGenerating ? true:false">
             <v-card style="padding: 15px; display: inline-table;">
                 <table class="rules-table" cellspacing="0">
                     <tr>

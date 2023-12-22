@@ -875,7 +875,7 @@
             "value.scm": {
                 deep: true,
                 handler: function (newVal, oldVal) {
-                    if(this.initLoad){
+                    if(this.initLoad == true){
                         this.changedByMe = true
                     }
                 }
