@@ -141,6 +141,7 @@ VUE_APP_DB_PORT=5757
 VUE_APP_DB_NAME=mydb
 VUE_APP_MODE=onprem
 VUE_APP_DB_HTTPS=false
+VUE_APP_GIT=github
 ```
 
 and run this script in the terminal:
