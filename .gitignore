@@ -13,7 +13,7 @@ authorized_keys
 pusher
 *.db
 *.idx
-public/static/env.txt
+# public/static/env.txt
 
 # Log files
 npm-debug.log*
