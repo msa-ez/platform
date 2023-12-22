@@ -133,7 +133,7 @@ npm install
 ```
 ### Run the frontend
 
-create a file 'env.txt' in the root folder and paste it:
+create a file '/public/static/env.txt' and paste it:
 
 ```
 VUE_APP_DB_HOST=localhost
