@@ -133,13 +133,18 @@ npm install
 ```
 ### Run the frontend
 
-```
-export VUE_APP_DB_HOST=localhost
-export VUE_APP_DB_PORT=5757
-export VUE_APP_DB_NAME=mydb
-export VUE_APP_MODE=onprem
-export VUE_APP_DB_HTTPS=false
+create a file 'env.txt' in the root folder and paste it:
 
+```
+VUE_APP_DB_HOST=localhost
+VUE_APP_DB_PORT=5757
+VUE_APP_DB_NAME=mydb
+VUE_APP_MODE=onprem
+VUE_APP_DB_HTTPS=false
+```
+
+and run this script in the terminal:
+```
 npm run serve
 ```
 
