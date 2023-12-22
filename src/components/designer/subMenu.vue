@@ -119,13 +119,9 @@
         computed: {},
         created: async function () {
             let git;
-            if(window.PROVIDER == "gitlab") {
-                git = new Gitlab();
-            } else {
-                git = new Github();
-            }
+
             this.gitAccessToken = localStorage.getItem('gitAccessToken') ? localStorage.getItem('gitAccessToken') : localStorage.getItem('gitToken')
-            this.gitAPI = new GitAPI(git);
+            this.gitAPI = new GitAPI();
         },
         mounted: function () {
             var me = this

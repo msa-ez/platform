@@ -829,12 +829,7 @@
             this.core = new CodeGeneratorCore({});
             let git;
 
-            if(window.MODE == "onprem") {
-                git = new Gitlab();
-            } else {
-                git = new Github();
-            }
-            this.git = new GitAPI(git);
+            this.git = new GitAPI();
         },
         mounted: function () {
             var me = this
