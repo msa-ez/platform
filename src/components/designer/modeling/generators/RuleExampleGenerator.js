@@ -95,6 +95,7 @@ please generate the example mappings as json format below:
         ]
     }
 ]`
+// please generate more than 3 example mappings as json format below:
 }
     createModel(text){
         return super.createModel(text)

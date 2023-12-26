@@ -131,8 +131,20 @@ nvm install 14
 nvm use 14
 npm install
 ```
-### Compiles and hot-reloads for development
+### Run the frontend
 
+create a file '/public/static/env.txt' and paste it:
+
+```
+VUE_APP_DB_HOST=localhost
+VUE_APP_DB_PORT=5757
+VUE_APP_DB_NAME=mydb
+VUE_APP_MODE=onprem
+VUE_APP_DB_HTTPS=false
+VUE_APP_GIT=github
+```
+
+and run this script in the terminal:
 ```
 npm run serve
 ```
@@ -143,6 +155,10 @@ Navigate to localhost:8080
 
 ```
 cd acebase
+
+export CLIENT_ID=<Github OAuth Client ID>
+export CLIENT_SECRET=<Github OAuth Secret>
+
 node main.js
 ```
 

@@ -1,6 +1,15 @@
+
+const Gitlab =  require("./Gitlab")
+const Github =  require("./Github")
 class GitAPI {
-    constructor(type) {
-        this._git = type;
+    constructor() {
+
+        if(window.PROVIDER == "gitlab") {
+            this._git = new Gitlab();
+        } else {
+            this._git = new Github();
+        }
+
     }
 
     getType() {

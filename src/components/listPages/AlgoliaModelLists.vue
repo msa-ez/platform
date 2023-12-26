@@ -2367,7 +2367,6 @@
         }
         .gs-main-page-title-box {
             height: 190px;
-            border:1px solid red;
         }
     }
     @media only screen and (max-width:1073px) and (min-width:962px) {
@@ -2376,7 +2375,6 @@
         }
         .gs-main-page-title-box {
             height: 180px;
-            border:1px solid green;
         }
     }
     @media only screen and (max-width:961px) and (min-width:898px) {
@@ -2388,7 +2386,6 @@
         }
         .gs-main-page-title-box {
             height: 180px;
-            border:1px solid blue;
         }
     }
     

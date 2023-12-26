@@ -1490,6 +1490,7 @@
                             ref="generatorUI"
                             @createModel="createModel"
                             @clearModelValue="clearModelValue"
+                            :generatorStep="generatorStep"
                     >
                         <v-tooltip slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
@@ -1500,10 +1501,9 @@
                                         v-bind="attrs"
                                         v-on="on"
                                         style="margin-right: 10px; z-index: 2"
+                                        color="primary"
                                 >
-                                    <v-icon style="margin-right: 5px"
-                                    >mdi-database-plus</v-icon
-                                    >
+                                    <Icon icon="ph:tag-simple-light" width="40" height="40" />
                                 </v-btn>
                             </template>
                             <span>Generate Aggregate</span>
@@ -1518,6 +1518,7 @@
                             @createModel="createModel"
                             @onGenerationFinished="onGenerationFinished"
                             @clearModelValue="clearModelValue"
+                            :generatorStep="generatorStep"
                     >
                         <v-tooltip slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
@@ -1529,9 +1530,7 @@
                                         v-on="on"
                                         style="margin-right: 10px; z-index: 2"
                                 >
-                                    <v-icon style="margin-right: 5px"
-                                    >mdi-database-plus</v-icon
-                                    >
+                                    <Icon icon="ph:tag-simple-light" width="30" height="30" />
                                 </v-btn>
                             </template>
                             <span>Generate Code</span>

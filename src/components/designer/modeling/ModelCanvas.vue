@@ -655,12 +655,8 @@
             window.io = io
             me.app = this.getComponent('App')
             let git;
-            if(window.PROVIDER == "gitlab") {
-                git = new Gitlab();
-            } else {
-                git = new Github();
-            }
-            this.git = new GitAPI(git);
+
+            this.git = new GitAPI();
             if (me.isMobile) {
                 me.sliderLocationScale = 0.7
             }
@@ -875,7 +871,7 @@
             "value.scm": {
                 deep: true,
                 handler: function (newVal, oldVal) {
-                    if(this.initLoad){
+                    if(this.initLoad == true){
                         this.changedByMe = true
                     }
                 }

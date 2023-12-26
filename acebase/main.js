@@ -36,8 +36,8 @@ if(provider == "github") {
 let github_scope = ["repo admin:repo_hook admin:org admin:org_hook user project codespace workflow"]
 let gitlab_scope = ["read_user api read_api read_repository write_repository sudo openid profile email write_registry read_registry admin_mode"]
 server.configAuthProvider("github", {
-    client_id: "e36c5cf67f6f1e5d2ebe",
-    client_secret: "e1faf001360ac5ac196c7538f0fb693033e6b876",
+    client_id: client_id,
+    client_secret: client_secret,
     scopes: github_scope,
     state: "devopssystem",
 })
@@ -482,7 +482,7 @@ db.ref("/definitions/{projectId}/information").on(
 // }
 
 // 사용 하지 않음
-function bpmParser(projectName, model) {
+function bpmParser(projectId, model) {
     return new Promise(async function (resolve) {
         let elements = _.pickBy(model.elements);
         let relations = _.pickBy(model.relations);
@@ -491,10 +491,8 @@ function bpmParser(projectName, model) {
         let roles = [];
         const elementsTmp = Object.keys(elements).forEach(function (key) {
             let element = elements[key];
-            element.name = {
-                _type: "org.uengine.contexts.TextContext",
-                text: elements[key].name,
-            };
+            let type = elements[key]._type.split(".")[elements[key]._type.split(".").length - 1]
+            element.name = elements[key].name.length > 0 ? elements[key].name : type
             if (element._type.includes("Role")) {
                 roles.push(element);
                 delete elements[key].elementView;
@@ -517,16 +515,15 @@ function bpmParser(projectName, model) {
         });
 
         Promise.all([elementsTmp, relationsTmp]).then(function (values) {
-            // console.log(values[0])
-            // console.log(values[1])
-            // model["childActivities"] = {"_type":"java.util.ArrayList", childActivities}
-            // model["sequenceFlows"] = {"_type:": "java.util.ArrayList", sequenceFlows}
             model["childActivities"] = childActivities;
             model["sequenceFlows"] = sequenceFlows;
             model["roles"] = roles;
+            model["name"] = projectId
             // model.sequenceFlows = ["java.util.ArrayList",relations]
             delete model["relations"];
             delete model["elements"];
+            model["_type"] = "org.uengine.kernel.ProcessDefinition"
+            model["id"] = projectId
             resolve(model);
         });
     });
@@ -598,7 +595,7 @@ app.get("/api/definitions/:definition", async function (req, res, next) {
         console.log(lastVersion);
         const result = await bpmParser(req.params.definition, lastValue);
         res.status(200).json(result);
-        console.log(result);
+        console.log(JSON.stringify(result));
     } else {
         res.status(500);
     }
@@ -641,10 +638,3 @@ function shutDown() {
     // connections.forEach(curr => curr.end());
     // setTimeout(() => connections.forEach(curr => curr.destroy()), 5000);
 }
-
-
-// helm install gitlab gitlab/gitlab \
-//   --set global.HTMLProgressElement.domain=msaez.io \
-//   --set certmanager.install=false \
-//   --set global.ingress.configureCertmanager=false \
-//   --set global.ingress.tls.secretName=quickstart-example-tls
