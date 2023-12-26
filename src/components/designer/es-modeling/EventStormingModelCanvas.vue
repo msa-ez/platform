@@ -1495,15 +1495,17 @@
                         <v-tooltip slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn
-                                        @click="generateAggregate()"
-                                        icon
-                                        small
-                                        v-bind="attrs"
-                                        v-on="on"
-                                        style="margin-right: 10px; z-index: 2"
-                                        color="primary"
+                                    @click="generateAggregate()"
+                                    text
+                                    small
+                                    v-bind="attrs"
+                                    v-on="on"
+                                    class="gs-es-auto-modling-btn"
+                                    style="padding:0px;"
+                                    color="primary"
                                 >
-                                    <Icon icon="ph:tag-simple-light" width="40" height="40" />
+                                    <span style="float:right;">Generate</span>
+                                    <v-icon>mdi-arrow-right</v-icon>
                                 </v-btn>
                             </template>
                             <span>Generate Aggregate</span>
@@ -1520,7 +1522,7 @@
                             @clearModelValue="clearModelValue"
                             :generatorStep="generatorStep"
                     >
-                        <v-tooltip slot="buttons" bottom>
+                        <!-- <v-tooltip slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn
                                         @click="generateAggregate()"
@@ -1529,12 +1531,13 @@
                                         v-bind="attrs"
                                         v-on="on"
                                         style="margin-right: 10px; z-index: 2"
+                                        disabled
                                 >
                                     <Icon icon="ph:tag-simple-light" width="30" height="30" />
                                 </v-btn>
                             </template>
-                            <span>Generate Code</span>
-                        </v-tooltip>
+                            <span>Generate Code2</span>
+                        </v-tooltip> -->
                     </GeneratorUI>
 
                     <div v-if="showUiWizard">
@@ -2068,6 +2071,7 @@
                         :oldTreeHashLists.sync="oldTreeHashLists"
                         :newTreeHashLists.sync="newTreeHashLists"
                         :projectVersion="projectVersion"
+                        :generatorStep="generatorStep"
                         @changedByMe="settingChangedByMe"
                         @editModelData="editModelData"
                         canvas-name="event-storming-model-canvas"
