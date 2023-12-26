@@ -655,12 +655,8 @@
             window.io = io
             me.app = this.getComponent('App')
             let git;
-            if(window.PROVIDER == "gitlab") {
-                git = new Gitlab();
-            } else {
-                git = new Github();
-            }
-            this.git = new GitAPI(git);
+
+            this.git = new GitAPI();
             if (me.isMobile) {
                 me.sliderLocationScale = 0.7
             }

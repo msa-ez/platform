@@ -829,12 +829,7 @@
             this.core = new CodeGeneratorCore({});
             let git;
 
-            if(window.MODE == "onprem") {
-                git = new Gitlab();
-            } else {
-                git = new Github();
-            }
-            this.git = new GitAPI(git);
+            this.git = new GitAPI();
         },
         mounted: function () {
             var me = this
@@ -1089,8 +1084,8 @@
                                 }
                                 let createBranchResult = await me.git.createBranch(me.value.org, me.value.repo, templateBranchData)
                                 me.isFirstCommit = false
-                                me.gitTabKey++;
                                 me.gitTab = 2
+                                me.gitTabKey++;
                                 me.gitCommitMessage = null
                                 me.isPushing = false
                                 me.isVersionBranch = true 
@@ -1414,8 +1409,8 @@
                     me.isPushing = false
                     me.isNewProject = false
                     me.isFirstCommit = false
-                    me.gitTabKey++;
                     me.gitTab = 2
+                    me.gitTabKey++;
                     me.commitStepText = null
                     me.gitCommitMessage = null
                     me.gitlabFileList = []
@@ -1516,8 +1511,8 @@
                         }
                         if(me.isExistRepo){
                             me.isFirstCommit = false
-                            me.gitTabKey++;
                             me.gitTab = 2
+                            me.gitTabKey++;
                             me.gitCommitMessage = null
                             me.isPushing = false
 
@@ -1546,8 +1541,8 @@
                                 }, 5000)
                             } else {
                                 me.isFirstCommit = false
-                                me.gitTabKey++;
                                 me.gitTab = 2
+                                me.gitTabKey++;
                                 me.gitCommitMessage = null
                                 me.isPushing = false
 
@@ -1600,8 +1595,8 @@
                             }
                         }
                         me.isFirstCommit = false
-                        me.gitTabKey++;
                         me.gitTab = 2
+                        me.gitTabKey++;
                         me.gitCommitMessage = null
                         me.isPushing = false
                         me.gitSnackBar.show = true
@@ -1761,16 +1756,16 @@
                     me.value.repo = me.gitRepoName
                 }
 
-                me.gitTabKey++;
                 if(((me.isOwnModel || me.isPrivilegedUser) && !me.isFirstCommit) || me.editTemplateMode){
                     me.gitTab = 1
                 } else {
                     me.gitTab = 0
                 }
-
+                
                 if(me.githubTokenError){
                     me.gitTab = 0
                 }
+                me.gitTabKey++;
 
                 if(me.gitUserName && me.gitOrgName && me.gitToken){
                     me.checkRepoExist()
@@ -2164,7 +2159,7 @@
                                                 me.commitStepText = null
                                                 me.isPushing = false
                                                 me.isFirstCommit = false
-                                                me.gitTab = 1
+                                                me.gitTab = 2
                                                 me.gitCommitMessage = null
                                                 me.copyChangedPathLists = []
                                                 me.gitSnackBar.show = true
@@ -2309,7 +2304,7 @@
                             let pushResult = await me.git.push(options)
                             me.isPushing = false
                             me.isFirstCommit = false
-                            me.gitTab = 1
+                            me.gitTab = 2
                             me.gitCommitMessage = null
                             me.copyChangedPathLists = []
                             me.gitSnackBar.show = true
@@ -2356,7 +2351,7 @@
 
                         me.commitStepText = null
                         me.isPushing = false
-                        me.gitTab = 1
+                        me.gitTab = 2
                         me.gitCommitMessage = null
                         me.copyChangedPathLists = []
                         me.gitSnackBar.show = true

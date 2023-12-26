@@ -36,8 +36,8 @@ if(provider == "github") {
 let github_scope = ["repo admin:repo_hook admin:org admin:org_hook user project codespace workflow"]
 let gitlab_scope = ["read_user api read_api read_repository write_repository sudo openid profile email write_registry read_registry admin_mode"]
 server.configAuthProvider("github", {
-    client_id: "e36c5cf67f6f1e5d2ebe",
-    client_secret: "a4250d3b2afe453e6d3037e6247615366bd87d48",
+    client_id: client_id,
+    client_secret: client_secret,
     scopes: github_scope,
     state: "devopssystem",
 })

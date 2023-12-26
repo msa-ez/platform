@@ -2618,13 +2618,9 @@
             me.canvas = getParent(this.$parent, this.canvasName);
 
             let git;
-            if(window.MODE == "onprem") {
-                git = new Gitlab();
-            } else {
-                git = new Github();
-            }
+
             this.gitAccessToken = localStorage.getItem('gitAccessToken') ? localStorage.getItem('gitAccessToken') : localStorage.getItem('gitToken')
-            this.gitAPI = new GitAPI(git);
+            this.gitAPI = new GitAPI();
             this.core = new CodeGeneratorCore({
                 canvas: me.canvas,
                 projectName: this.projectName,

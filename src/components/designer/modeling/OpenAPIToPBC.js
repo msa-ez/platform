@@ -15,12 +15,8 @@ class OpenAPIToPBC {
         let yaml = value;
         if(value.startsWith('https://') || value.startsWith('http://') ){
             this.git = null;
-            if(window.PROVIDER == "gitlab") {
-                this.git = new Gitlab();
-            } else {
-                this.git = new Github();
-            }
-            this.gitAPI = new GitAPI(this.git);
+
+            this.gitAPI = new GitAPI();
 
             const githubRegex = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/main\/(.+)$/;
             const match = value.match(githubRegex);
