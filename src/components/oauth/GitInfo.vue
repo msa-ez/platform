@@ -71,12 +71,8 @@ export default {
         me.gitToken = localStorage.getItem("gitToken")
         let git;
         // localStorage.getItem("provider")
-        if(window.PROVIDER == "gitlab") {
-            git = new Gitlab();
-        } else {
-            git = new Github();
-        }
-        this.git = new GitAPI(git);
+
+        this.git = new GitAPI();
         if(me.gitToken != null) {
             me.getUserInfo();
         }

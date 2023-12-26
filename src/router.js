@@ -296,7 +296,7 @@ var options = {
         component: Provision,
     },
     {
-        path: '/test/redirect',
+        path: '/dpg/redirect',
         name: "OpenId",
         component: OpenIdRedirect
     }

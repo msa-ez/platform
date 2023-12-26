@@ -1,6 +1,6 @@
 <template>
     <div>
-        <v-dialog v-model="isOpenRules">
+        <v-dialog v-model="isOpenRules" :persistent="isGenerating ? true:false">
             <v-card style="padding: 15px; display: inline-table;">
                 <table class="rules-table" cellspacing="0">
                     <tr>
@@ -474,9 +474,9 @@
             setAttributes(){
                 var me = this
                 if(me.value && me.value.examples 
-                && me.value.examples[0].given
-                && me.value.examples[0].when
-                && me.value.examples[0].then)
+                && me.value.examples[0].given && me.value.examples[0].given[0].value
+                && me.value.examples[0].when && me.value.examples[0].when[0].value
+                && me.value.examples[0].then && me.value.examples[0].then[me.value.examples[0].then.lastIndex].value)
                 {
                     me.rule.values = me.value.examples
                     me.rule.thenItems.forEach(function (item){
