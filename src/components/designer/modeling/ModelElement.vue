@@ -538,6 +538,11 @@
                 try{
                     var id = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
                     var location = me.value.elementView ? me.canvas.value.elements : me.canvas.value.relations
+                    
+                    var k8sElementTypes = me.getK8sElementTypes()
+                    if(k8sElementTypes.includes(me.value._type)){
+                        location = me.value.elementView ? me.canvas.value.k8sValue.elements : me.canvas.value.k8sValue.relations
+                    }
 
                     if (location && id)
                         // location[id] = null
@@ -569,6 +574,23 @@
                     alert(`[Error] ModelElement-removeShapeQueue: ${e}`)
                 }
             },
+            getK8sElementTypes(){
+                var me = this
+
+                var canvas =  me.getComponent('kubernetes-model-canvas')
+                var k8sElementTypes = canvas.elementTypes
+                var typesList = []
+                for(var i=0; i<k8sElementTypes.length; i++){
+                    k8sElementTypes[i].forEach(function (ele) {
+                        if(ele){
+                            var type = ele.component
+                            typesList.push(type.charAt(0).toUpperCase() + type.slice(1))
+                        }
+                    })
+                }
+
+                return typesList
+            }
 
         }
     }
