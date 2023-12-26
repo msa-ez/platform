@@ -6,7 +6,6 @@
             auto-height 
             :color="gitSnackBar.Color"
             multi-line
-            :timeout="-1"
             top
             style="height:0px;"
         >
