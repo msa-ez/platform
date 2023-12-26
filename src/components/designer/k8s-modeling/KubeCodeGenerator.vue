@@ -4052,8 +4052,8 @@
                     }
                 })
 
-                window.$HandleBars.registerHelper("include", function(str){
-                    return commonTemplate['include'];
+                window.$HandleBars.registerHelper("include", function(){
+                    return commonTemplate;
                 });
 
                 window.$HandleBars.registerHelper("url", function(str){

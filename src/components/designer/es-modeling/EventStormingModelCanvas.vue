@@ -6611,9 +6611,8 @@
 
                 } else if (typeof val == "string") {
                     me.embeddedCanvasValue = { elements: {}, relations: {} };
-                    me.embeddedCanvasInitValue = JSON.parse(
-                        JSON.stringify(me.value)
-                    );
+                    me.embeddedCanvasInitValue = JSON.parse(JSON.stringify(me.value));
+                    // me.embeddedCanvasInitValue = _.cloneDeep(me.value);
                     if (me.value.k8sValue != null) {
                         me.embeddedCanvasValue = me.value.k8sValue;
                     }
@@ -6623,7 +6622,7 @@
 
                     Object.values(me.value.elements).forEach(function (el) {
                         if (el) {
-                            if (el._type.endsWith("BoundedContext")) {
+                            if (el._type && el._type.endsWith("BoundedContext")) {
                                 me.boundedContextList.push(el);
                             }
                         }
