@@ -105,7 +105,7 @@
             
             var designer = me.getComponent('kubernetes-model-canvas')
             // designer.setSelected(me.value)
-            // designer.openCommandDialog(me.value)
+            designer.openCommandDialog(me.value)
 
             me.validate(false)
 
@@ -627,7 +627,7 @@
                 // }
                 // me.$refs.vueSimpleContextMenu.showMenu(obj)
                 // var designer = me.getComponent('kubernetes-model-canvas')
-                // designer.openCommandDialog(me.menuList)
+                // designer.openCommandDialog(me.value)
             },
             async optionClicked(event) {
                 var me = this

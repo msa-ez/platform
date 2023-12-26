@@ -2,7 +2,7 @@
     <div v-if="input && modelCreationCompleted" >
      <v-row style="position:absolute; right:30px; top:75px;">
         <v-card style="text-align: center; z-index: 2;" width="auto">
-            <v-card-text :style="(isExpanded && generationStopped) ? { width: '70px' } : isExpanded ? { width: '160px' } : { width: '400px' }" 
+            <v-card-text :style="(isExpanded && generationStopped) ? { width: '75px' } : isExpanded ? { width: '170px' } : { width: '400px' }" 
                 style="padding: 0px; ">
                 <v-progress-linear  :indeterminate="generationStopped" v-if="generationStopped"
                     style="margin-top: 10px; pointer-events: none;"
@@ -43,9 +43,10 @@
                                 icon small
                                 v-bind="attrs"
                                 v-on="on"
-                                style="margin-right: 10px; z-index:2"
+                                style="margin-right: 5px; z-index:2"
+                                class="gs-es-auto-modling-btn"
                             >
-                                <v-icon style="margin-right: 5px;">mdi-refresh</v-icon>
+                                <v-icon>mdi-refresh</v-icon>
                             </v-btn>
                         </template>
                         <span>Try again</span>
@@ -65,14 +66,18 @@
                     </v-tooltip> -->
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
-                            <v-btn @click="finishModelCreation()"
-                                icon small
+                            <v-btn v-if="generatorStep === 'aggregate'"
+                                @click="finishModelCreation()"
+                                text
+                                small
                                 v-bind="attrs"
                                 v-on="on"
+                                class="gs-es-auto-modling-btn"
+                                style="padding:0px;"
                                 color="primary"
-                                style="z-index:2; margin-right:10px;"
                             >
-                            <v-icon style="margin-right: 5px;">mdi-check-circle-outline</v-icon>
+                                <span style="float:right;">completed</span>
+                                <v-icon>mdi-arrow-right</v-icon>
                             </v-btn>
                         </template>
                         <span>Auto modeling completed</span>
@@ -167,7 +172,8 @@
         props: {
             generator: String,
             generatorParameter: Object,
-            modelerValue: Object
+            modelerValue: Object,
+            generatorStep: String
         },
 
         created(){
@@ -260,7 +266,7 @@
             
             },
             finishModelCreation() {
-                this.$EventBus.$emit('modelCreationFinished');
+                this.$EventBus.$emit('modelCreationFinished', this.generatorStep);
 
                 this.generationStopped = false;
                 this.modelCreationCompleted = false;

@@ -1,19 +1,22 @@
 <template>
-    <div :style="isSIgpt ? 'display: none;':'' ">
-        <v-snackbar class="snackbar-style"
+    <div :style="isSIgpt ? 'display: none;':'' "
+    >
+        <v-snackbar
             v-model="gitSnackBar.show"
             auto-height 
             :color="gitSnackBar.Color"
             multi-line
+            top
+            style="height:0px;"
         >
-            <v-layout style="top: -170px;" align-center pr-4>
+            <v-layout align-center pr-4>
                 <v-icon v-if="gitSnackBar.icon" class="pr-3" dark large>{{ gitSnackBar.icon }}</v-icon>
                 <v-layout column>
-                <div v-if="gitSnackBar.title"> 
-                    <strong>{{ gitSnackBar.title }}</strong>
-                </div>
-                <div>{{ gitSnackBar.Text }}</div>
-                <div v-if="gitSnackBar.multiLineText">{{ gitSnackBar.multiLineText }}</div>
+                    <div v-if="gitSnackBar.title"> 
+                        <strong>{{ gitSnackBar.title }}</strong>
+                    </div>
+                    <div>{{ gitSnackBar.Text }}</div>
+                    <div v-if="gitSnackBar.multiLineText">{{ gitSnackBar.multiLineText }}</div>
                 </v-layout>
             </v-layout>
             <template v-slot:action="{ attrs }">
@@ -163,7 +166,7 @@
                                 style="width: 100%; font-weight: 500; font-size: 15px; color: darkgray;"
                                 :style="editTemplateMode ? 'margin-top: -10px; margin-bottom: 20px':'margin-top: -45px;'"
                                 >Existing Repo</span> -->
-                                <v-col cols="5" :style="gitRadios == 'createNewRepo' ? 'margin-top: -10px;':'margin-top: -10px;'">  
+                                <v-col cols="5">  
                                     <v-autocomplete
                                             v-if="item.tabKey == 'setFirstRepo' || item.tabKey == 'changeRepo'"
                                             @click="getGitOrganizations()"
@@ -176,7 +179,7 @@
                                             auto-select-first
                                     ></v-autocomplete>
                                 </v-col>
-                                <v-col cols="7" :style="gitRadios == 'createNewRepo' ? 'margin-top: -10px;':'margin-top: -10px;'" :key="repoFieldRenderKey">
+                                <v-col cols="7"  :key="repoFieldRenderKey">
                                     <v-text-field
                                         v-if="item.tabKey == 'setFirstRepo' || item.tabKey == 'changeRepo'"
                                         style="margin-left:10px; margin-top:-5px;"
@@ -829,12 +832,7 @@
             this.core = new CodeGeneratorCore({});
             let git;
 
-            if(window.MODE == "onprem") {
-                git = new Gitlab();
-            } else {
-                git = new Github();
-            }
-            this.git = new GitAPI(git);
+            this.git = new GitAPI();
         },
         mounted: function () {
             var me = this
@@ -2389,7 +2387,4 @@
 
 
 <style>
-.snackbar-style .v-sheet{
-    top: -10%;
-}
 </style>
