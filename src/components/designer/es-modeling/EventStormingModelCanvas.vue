@@ -1536,7 +1536,7 @@
                                     <Icon icon="ph:tag-simple-light" width="30" height="30" />
                                 </v-btn>
                             </template>
-                            <span>Generate Code2</span>
+                            <span>Generate Code</span>
                         </v-tooltip> -->
                     </GeneratorUI>
 
