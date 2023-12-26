@@ -69,10 +69,12 @@
                                 icon small
                                 v-bind="attrs"
                                 v-on="on"
-                                color="primary"
                                 style="z-index:2; margin-right:10px;"
+                                :color="generatorStep === 'aggregate' ? 'primary' : ''"
                             >
-                            <v-icon style="margin-right: 5px;">mdi-check-circle-outline</v-icon>
+                            <v-icon style="margin-right: 5px;"
+                                :size="generatorStep === 'aggregate' ? '30' : ''"
+                            >mdi-check-circle-outline</v-icon>
                             </v-btn>
                         </template>
                         <span>Auto modeling completed</span>
@@ -167,7 +169,8 @@
         props: {
             generator: String,
             generatorParameter: Object,
-            modelerValue: Object
+            modelerValue: Object,
+            generatorStep: String
         },
 
         created(){
