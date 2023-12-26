@@ -1600,7 +1600,6 @@
                 fileLoadCnt: 0,
                 javaFileList: [],
                 isRootFolder: false,
-                openSelectTestFileDialog: false,
                 selectedCodeList: {},
                 gitActionDialogRenderKey: 0,
                 isSIgpt: false,
@@ -2657,6 +2656,34 @@
         mounted: function () { 
 
             var me = this
+
+//             const apiUrl = 'https://api.tavily.com/search';
+//             const query = `test.java 파일을 mvn test 진행중에 
+// Resulted event must be published, 
+// Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:2.22.2:test (default-test) on project menu-management: There are test failures.
+// Please refer to /home/runner/work/food-delivery-service/food-delivery-service/menu-management/target/surefire-reports for the individual test results.
+// 라는 빌드 오류가 발생했어, 어떻게 해결해야할까 ?
+// `
+
+//             const payload = {
+//                 api_key: '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',
+//                 include_answer: true,
+//                 include_domains: [],
+//                 include_images: false,
+//                 include_raw_content: false,
+//                 max_results: 5,
+//                 query: query,
+//                 search_depth: 'advanced',
+//                 topic: 'general'
+//             };
+
+//             axios.post(apiUrl, payload)
+//             .then(response => {
+//                 console.log('Response:', response.data);
+//             })
+//             .catch(error => {
+//                 console.error('Error:', error.message);
+//             });
             
             window.addEventListener("message", me.messageProcessing);
             if(localStorage.getItem("editTemplateList") && me.firstSetEditTemplateList){
@@ -4168,8 +4195,7 @@ jobs:
 
                 this._collectSelectedFileContents(files, codeBag, option)
                 return codeBag
-            }
-            ,
+            },
             _collectSelectedFileContents(root, codeBag, option){
                 var me = this;
                 var set = new Set();
@@ -7046,24 +7072,32 @@ jobs:
             async startImplWithAI(selectedTestFile){
                 var me = this
                 me.selectedTestFile = selectedTestFile
-
-                me.fileLoadCnt = 1
-                me.javaFileList = []
-                let src = await me.gitAPI.getFolder(me.value.scm.org, me.value.scm.repo, me.openCode[0].name + '/src');
-                if(src){
-                    me.getJavaFileList(src.data)
+                
+                if(me.selectedTestFile.isUseMain){
+                    me.fileLoadCnt = 1
+                    me.javaFileList = []
+                    
+                    try {
+                        let src = await me.gitAPI.getFolder(me.value.scm.org, me.value.scm.repo, me.openCode[0].name + '/src');
+                        if(src){
+                            me.getJavaFileList(src.data)
+                        }
+                    } catch(e){
+                        alert('Main branchThe file cannot be found in main branch. Main branch needs an update. (' + e + ')')
+                    }
+                } else {
+                    me.openGitActionDialog = true
+                    me.gitActionDialogRenderKey++;
                 }
             },
             getTestFileList(){
                 var me = this
                 me.isRootFolder = false;
                 if(me.rootModelAndElementMap.modelForElements.BoundedContext.find(x => x.name == me.openCode[0].name)){
-                    // if(this.projectInformation && this.projectInformation.firstCommit == 'false'){
-                        me.isRootFolder = true;
-                        me.selectedTestFile = null
-                        me.testFileList = []
-                        let collectedCodes = me.getSelectedFilesDeeply(me.openCode, {keyword: "si"})
-                    // } 
+                    me.isRootFolder = true;
+                    me.selectedTestFile = null
+                    me.testFileList = []
+                    me.getSelectedFilesDeeply(me.openCode, {keyword: "si"})
                 }
             },
             editBreakPoint(debuggerPoint){

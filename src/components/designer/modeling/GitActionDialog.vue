@@ -270,25 +270,25 @@
                         <!-- <v-divider></v-divider> -->
                     </div>
                     <div v-if="!allTestSucceeded" style="margin-left: 150px">
-                        <div style="float: right;">
-                            <div v-if="!startGitAction" style="margin-bottom: 20px;">
-                                <v-btn @click="regenerate()" 
-                                    style="margin-right: 10px;">
+                        <div style="position: absolute; bottom: 10px; right: 15px; z-index: 99;">
+                            <div v-if="!startGitAction">
+                                <v-btn @click="regenerate()">
                                     Think again
                                 </v-btn>
                                 <v-btn @click="commitToGit()" 
-                                    style="margin-right: 10px;" color="primary">
+                                    style="margin-left: 10px;"
+                                    color="primary">
                                     Go ahead
                                 </v-btn>
                             </div>
                             <div v-else>
-                                <v-row style="margin-right: 20px; margin-top: 10px;">
+                                <v-row>
                                     <v-switch v-if="commitCnt < 15"
-                                        style="margin-right: 10px; margin-top: 1px;"
+                                        style="margin-top: 1px;"
                                         v-model="isAutoMode"
                                         :label="'Auto mode'"
                                     ></v-switch>
-                                    <v-btn :disabled="!isSolutionCreating" @click="stop()" style="margin-right: 10px; position: relative; float: right;">
+                                    <v-btn :disabled="!isSolutionCreating" @click="stop()" style="margin-left: 10px; margin-right: 10px;">
                                         Stop generating
                                     </v-btn>
                                 </v-row>
