@@ -68,15 +68,14 @@
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn v-if="generatorStep === 'aggregate'"
                                 @click="finishModelCreation()"
-                                text
                                 small
                                 v-bind="attrs"
                                 v-on="on"
                                 class="gs-es-auto-modling-btn"
-                                style="padding:0px;"
+                                style="padding:0px 5px; margin-right:10px;"
                                 color="primary"
                             >
-                                <span style="float:right;">completed</span>
+                                <span style="float:right;">CONTINUE</span>
                                 <v-icon>mdi-arrow-right</v-icon>
                             </v-btn>
                         </template>
