@@ -15,9 +15,10 @@ class AIImageGenerator extends AIGenerator{
 
     }
     
-    generate(){
+    async generate(){
         let me = this;
         let responseCnt = 0;
+        me.openaiToken = await me.getToken();
         
         me.imgList = null;
         me.gptResponseId = null;
