@@ -136,7 +136,7 @@
                                         <v-icon>{{icon.share}}</v-icon>
                                         SHARE
                                     </v-btn>
-                                    <v-btn class="mobile-action-btn" small color=primary text
+                                    <v-btn class="mobile-action-btn" small color=primary
                                             @click="generateImplementationModel()">implementation model
                                     </v-btn>
                                 </v-col>
@@ -159,13 +159,15 @@
                                         </v-col>
                                     </slot>
                                 </v-row>
-                                
                                 <div class="action-btn-box">
                                     <v-row>
                                         <v-col align="right">
-                                            <v-btn class="action-btn" color=primary @click="generateImplementationModel()"
-                                                    text>
-                                                implementation model
+                                            <v-btn class="action-btn" color=primary @click="generateImplementationModel()">
+                                                <Icon icon="mdi:head-cog-outline"
+                                                    height="24"
+                                                    style="margin-right:5px;"
+                                                />
+                                                <div>implementation model</div>
                                             </v-btn>
                                             <v-btn class="action-btn" color=primary @click="storageDialogReady('save')"
                                                     text>

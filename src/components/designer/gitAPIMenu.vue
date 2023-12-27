@@ -423,12 +423,12 @@
                     </div>
                         <div style="float: right;">
                             <div v-if="!isPushing && item.tabKey == 'setFirstRepo' && gitRadios == 'createNewRepo' || item.tabKey == 'changeRepo' && isExistRepoMessage == null">
-                                <v-btn :disabled="!gitOrgName || !gitRepoName || isExistRepo" text color="primary" @click="startCommit()">Create</v-btn>
+                                <v-btn :disabled="!gitOrgName || !gitRepoName || isExistRepo" color="primary" @click="startCommit()">Create</v-btn>
                             </div>
                             <div>
                                 <v-btn v-if="item.tabKey == 'changeRepo' && isExistRepoMessage || (item.tabKey == 'setFirstRepo' && isExistRepo)" 
                                     :disabled="!(gitOrgName && gitRepoName)"
-                                    text color="primary" @click="gitTab = 1">next
+                                    color="primary" @click="gitTab = 1">next
                                 </v-btn>
                                 <v-btn v-if="!isPushing && item.tabKey == 'setFirstRepo' && gitRadios == 'fork'" 
                                     :disabled="!isListSettingDone || !(gitOrgName && gitRepoName) || isExistRepo || (isPrivilegedUser && !information.gitOrgName)"
@@ -445,7 +445,7 @@
                                     ></v-checkbox>
                                     <v-btn
                                         :disabled="!isListSettingDone || !(gitOrgName && gitRepoName)"
-                                        text color="primary" @click="startCommit()">{{ pushBtnName }}
+                                        color="primary" @click="startCommit()">{{ pushBtnName }}
                                     </v-btn>
                                     <v-menu offset-y v-if="!editTemplateMode">
                                         <template v-slot:activator="{ on, attrs }">

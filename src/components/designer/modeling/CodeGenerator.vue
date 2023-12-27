@@ -72,31 +72,17 @@
                             <template v-slot:activator="{ on: menu, attrs }">
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on: tooltip }">
-                                        <v-btn v-if="generatorStep === 'aggregate' ? 'primary':''"
-                                            :disabled="!isGeneratorDone"
-                                            style="font-size:16px !important;
-                                                height:30px !important;
-                                                width:30px !important;
-                                                margin-right:5px;"
+                                        <v-btn :disabled="!isGeneratorDone"
+                                            style="font-size:16px;
+                                                margin-right:5px;
+                                                padding:0px 5px;"
                                             small
-                                            text
                                             v-bind="attrs"
                                             v-on="{ ...tooltip, ...menu }"
-                                            color="primary"
+                                            :color="gitMenu ? '':'primary'"
                                         >
-                                            <span style="float:right;">Git</span>
-                                            <v-icon size="22">mdi-arrow-right</v-icon>
-                                        </v-btn>
-                                        <v-btn v-else
-                                            :disabled="!isGeneratorDone"
-                                            class="code-preview-btn"
-                                            icon x-small
-                                            v-bind="attrs"
-                                            v-on="{ ...tooltip, ...menu }"
-                                        >
-                                            <v-icon size="22" :color="gitMenu ? 'primary':''">
-                                                mdi-git
-                                            </v-icon>
+                                            <v-icon size="22" style="float:right;" :style="gitMenu ? 'color:gray':''">mdi-git</v-icon>
+                                            <span :style="gitMenu ? 'color:gray':''">Git</span>
                                         </v-btn>
                                     </template>
                                     <span>Push to Git</span>

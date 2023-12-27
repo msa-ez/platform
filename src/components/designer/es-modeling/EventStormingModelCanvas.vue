@@ -821,12 +821,11 @@
                                                             <div>
                                                                 <v-btn
                                                                         class="gs-model-z-index-1 es-hide-code-btn"
-                                                                        text
                                                                         style="
                                                                         margin-right: 5px;
                                                                         color: white;
                                                                     "
-                                                                        color="orange"
+                                                                        color="primary"
                                                                         @click="openCodeViewer()"
                                                                         :disabled="
                                                                         !initLoad
@@ -1042,8 +1041,7 @@
                                                 >
                                                     <div>
                                                         <v-btn
-                                                                text
-                                                                color="orange"
+                                                                color="primary"
                                                                 dark
                                                                 class="mobile-btn"
                                                                 @click="openCodeViewer()"
@@ -1496,15 +1494,14 @@
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn
                                     @click="generateAggregate()"
-                                    text
                                     small
                                     v-bind="attrs"
                                     v-on="on"
                                     class="gs-es-auto-modling-btn"
-                                    style="padding:0px;"
+                                    style="padding:0px 5px; margin-right:10px;"
                                     color="primary"
                                 >
-                                    <span style="float:right;">Generate</span>
+                                    <span style="float:right;">CONTINUE</span>
                                     <v-icon>mdi-arrow-right</v-icon>
                                 </v-btn>
                             </template>

@@ -480,13 +480,6 @@
         bottom: 0;
     }
 
-    .title-page-title {
-        margin: 10px 0 20px 0;
-        font-size: 20px;
-        font-weight: 500;
-        text-align: center;
-        color: #1E88E5;
-    }
 
     .home-card-title {
         text-align: left;
