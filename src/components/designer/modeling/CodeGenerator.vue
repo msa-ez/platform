@@ -64,35 +64,20 @@
                     </v-tooltip>
                     <div>
                         <v-menu
-                            v-model="gitMenu"
-                            :close-on-click="false"
-                            :close-on-content-click="false"
-                            offset-y
+                                v-model="gitMenu"
+                                :close-on-click="false"
+                                :close-on-content-click="false"
+                                offset-y
                         >
                             <template v-slot:activator="{ on: menu, attrs }">
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on: tooltip }">
-                                        <v-btn v-if="generatorStep === 'aggregate' ? 'primary':''"
-                                            :disabled="!isGeneratorDone"
-                                            style="font-size:16px !important;
-                                                height:30px !important;
-                                                width:30px !important;
-                                                margin-right:5px;"
-                                            small
-                                            text
-                                            v-bind="attrs"
-                                            v-on="{ ...tooltip, ...menu }"
-                                            color="primary"
-                                        >
-                                            <span style="float:right;">Git</span>
-                                            <v-icon size="22">mdi-arrow-right</v-icon>
-                                        </v-btn>
-                                        <v-btn v-else
-                                            :disabled="!isGeneratorDone"
-                                            class="code-preview-btn"
-                                            icon x-small
-                                            v-bind="attrs"
-                                            v-on="{ ...tooltip, ...menu }"
+                                        <v-btn
+                                                :disabled="!isGeneratorDone"
+                                                class="code-preview-btn"
+                                                icon x-small
+                                                v-bind="attrs"
+                                                v-on="{ ...tooltip, ...menu }"
                                         >
                                             <v-icon size="22" :color="gitMenu ? 'primary':''">
                                                 mdi-git
@@ -129,6 +114,7 @@
                                     :isOneBCModel="isOneBCModel"
                                     :onlyOneBcId="onlyOneBcId"
                                     :isSIgpt="isSIgpt"
+                                    :commitMsg="commitMsg"
                                     :selectedTestFile="selectedTestFile"
                                 />
                             </div>
@@ -1608,11 +1594,11 @@
             projectVersion: Boolean,
             canvasName: String,
             embeddedK8s: Boolean,
-            generatorStep: String,
         },
         data() {
             return {
                 // si-gpt
+                commitMsg: null,
                 fileLoadCnt: 0,
                 javaFileList: [],
                 isRootFolder: false,
@@ -2633,9 +2619,13 @@
             me.canvas = getParent(this.$parent, this.canvasName);
 
             let git;
-
+            if(window.MODE == "onprem") {
+                git = new Gitlab();
+            } else {
+                git = new Github();
+            }
             this.gitAccessToken = localStorage.getItem('gitAccessToken') ? localStorage.getItem('gitAccessToken') : localStorage.getItem('gitToken')
-            this.gitAPI = new GitAPI();
+            this.gitAPI = new GitAPI(git);
             this.core = new CodeGeneratorCore({
                 canvas: me.canvas,
                 projectName: this.projectName,
@@ -2882,9 +2872,9 @@
                 me.isSIgpt = false
                 me.defaultCodeViewerRenderKey++;
             },
-            startCommit(updateList){
-                var me = this
-                updateList.forEach(function (file){
+            startCommit(commitData){
+                var me = this 
+                commitData.updateList.forEach(function (file){
                     file['codeChanges'].forEach(function (changed){
                         var idx = me.codeLists.findIndex(x => x.fullPath == changed.fileName)
                         if(!idx || idx == -1){
@@ -2935,6 +2925,7 @@ jobs:
 
                 me.gitMenu = true
                 me.isSIgpt = true
+                me.commitMsg = commitData.message
                 me.gitMenuRenderKey++;
             },
             testTemplateModel(){
@@ -4860,8 +4851,8 @@ jobs:
                     }
                 })
 
-                window.$HandleBars.registerHelper("include", function(){
-                    return commonTemplate
+                window.$HandleBars.registerHelper("include", function(str){
+                    return commonTemplate['include'];
                 });
 
                 window.$HandleBars.registerHelper("url", function(str){

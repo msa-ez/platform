@@ -88,7 +88,7 @@ getUserInfo() {
     postCommit(org, repo, options) {
         throw new Error('postCommit() must be implement')
     }
-    commit(org, repo, branch, treeList, init) {
+    commit(org, repo, branch, treeList, init, commitMessage) {
         throw new Error('commit() must be implement')
     }
     getUrl(org, repo) {
