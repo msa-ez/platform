@@ -66,7 +66,7 @@
                     </v-tooltip> -->
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
-                            <v-btn v-if="generatorStep === 'aggregate'"
+                            <v-btn v-if="generatorStep === 'aggregate' || generatorName === 'CJMGenerator' || generatorName === 'BMGenerator'"
                                 @click="finishModelCreation()"
                                 small
                                 v-bind="attrs"
@@ -75,8 +75,12 @@
                                 style="padding:0px 5px; margin-right:10px;"
                                 color="primary"
                             >
-                                <span style="float:right;">CONTINUE</span>
-                                <v-icon>mdi-arrow-right</v-icon>
+                                <div v-if="generatorName === 'CJMGenerator' || generatorName === 'BMGenerator'">
+                                    <span><Icon style="float:left; margin-right:3px;" icon="ri:check-fill" width="16" height="16"/>complete</span>
+                                </div>
+                                <div v-else>
+                                    <span>CONTINUE<v-icon>mdi-arrow-right</v-icon></span>
+                                </div>
                             </v-btn>
                         </template>
                         <span>Auto modeling completed</span>
