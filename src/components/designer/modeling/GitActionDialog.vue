@@ -6,13 +6,6 @@
             <div style="display: flex; max-height: 100%;">
                 <div style="width: 400px; height: 88vh; background-color: #1e1e1e;">
                     <v-card-title style="margin-top: -10px; margin-bottom: -15px; color: white;">
-                        <v-progress-circular
-                            v-if="startGitAction"
-                            indeterminate
-                            :size="20"
-                            color="primary"
-                            style="margin-right: 10px; margin-left: -5px;"
-                        ></v-progress-circular>
                         Auto Implementation
                     </v-card-title>
 
@@ -52,7 +45,16 @@
                                 >
                                     <template v-slot:activator>
                                         <v-list-item-content style="margin-left: -10px;">
-                                            <v-list-item-title style="color: white">{{test.solutionType}}</v-list-item-title>
+                                            <v-list-item-title style="color: white">
+                                                {{test.solutionType}}
+                                                <v-progress-circular
+                                                    v-if="isSolutionCreating && siTestResults.lastIndex == testIdx"
+                                                    indeterminate
+                                                    :size="15"
+                                                    color="primary"
+                                                    style="margin-left: 5px;"
+                                                ></v-progress-circular>
+                                            </v-list-item-title>
                                         </v-list-item-content>
                                     </template>
                                     <v-list-item dense v-for="(code, codeIdx) in test.codeChanges" :key="codeIdx" :style="`${testIdx}_${codeIdx}` == selectedIdx ? 'background-color: #000000;':''">
@@ -270,25 +272,25 @@
                         <!-- <v-divider></v-divider> -->
                     </div>
                     <div v-if="!allTestSucceeded" style="margin-left: 150px">
-                        <div style="float: right;">
-                            <div v-if="!startGitAction" style="margin-bottom: 20px;">
-                                <v-btn @click="regenerate()" 
-                                    style="margin-right: 10px;">
+                        <div style="position: absolute; bottom: 10px; right: 15px; z-index: 99;">
+                            <div v-if="!startGitAction">
+                                <v-btn @click="regenerate()">
                                     Think again
                                 </v-btn>
                                 <v-btn @click="commitToGit()" 
-                                    style="margin-right: 10px;" color="primary">
+                                    style="margin-left: 10px;"
+                                    color="primary">
                                     Go ahead
                                 </v-btn>
                             </div>
                             <div v-else>
-                                <v-row style="margin-right: 20px; margin-top: 10px;">
+                                <v-row>
                                     <v-switch v-if="commitCnt < 15"
-                                        style="margin-right: 10px; margin-top: 1px;"
+                                        style="margin-top: 1px;"
                                         v-model="isAutoMode"
                                         :label="'Auto mode'"
                                     ></v-switch>
-                                    <v-btn :disabled="!isSolutionCreating" @click="stop()" style="margin-right: 10px; position: relative; float: right;">
+                                    <v-btn :disabled="!isSolutionCreating" @click="stop()" style="margin-left: 10px; margin-right: 10px;">
                                         Stop generating
                                     </v-btn>
                                 </v-row>
@@ -408,6 +410,8 @@
         },
         data() {
             return {
+                // isFirstGenerate: true,
+                commitMsg: null,
                 commitCnt: 0,
                 actionPathList: [],
                 initConfettiCnt: 0,
@@ -664,6 +668,7 @@ What files do I need to modify and what related files do I need to fix the error
             },
             async generate(){
                 var me = this
+                me.commitMsg = null
                 me.model = 'gpt-4'
                 me.startGitAction = true
                 me.generator = new SIGenerator(this);
@@ -706,7 +711,11 @@ What files do I need to modify and what related files do I need to fix the error
                 }
                 me.scrollToBottom();
                 me.codeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
-                me.$emit("startCommitWithSigpt", me.updateList)
+                let commitData = {
+                    updateList: me.updateList,
+                    message: me.commitMsg
+                }
+                me.$emit("startCommitWithSigpt", commitData)
                 if(me.commitCnt >= 15){
                     me.isAutoMode = false
                 }
@@ -736,6 +745,7 @@ What files do I need to modify and what related files do I need to fix the error
                                 }
                                     me.siTestResults[me.resultLength + solutionIdx].solution = solution.solution
                                     me.siTestResults[me.resultLength + solutionIdx].solutionType = solution.solutionType
+                                    me.commitMsg = solution.solutionType + ': ' + solution.solution
                                 if(solution && solution.codeChanges){
                                     solution.codeChanges.forEach(function (changes, changesIdx){
                                         if(changes){
@@ -828,9 +838,16 @@ What files do I need to modify and what related files do I need to fix the error
                                 me.lastIndex = me.siTestResults.lastIndex
                                 me.resultLength = me.siTestResults.length
                                 me.generatedErrorDetails = null
-                                if(me.isAutoMode){
-                                    me.commitToGit()
-                                }
+                                // if(me.isFirstGenerate){
+                                //     me.startGitAction = true
+                                //     me.codeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
+                                //     me.generate()
+                                //     me.isFirstGenerate = false
+                                // } else {
+                                    if(me.isAutoMode){
+                                        me.commitToGit()
+                                    }
+                                // }
                             }
                             me.scrollToBottom();
                         } else {

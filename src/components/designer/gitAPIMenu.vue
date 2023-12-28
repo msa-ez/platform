@@ -420,12 +420,12 @@
                     </div>
                         <div style="float: right;">
                             <div v-if="!isPushing && item.tabKey == 'setFirstRepo' && gitRadios == 'createNewRepo' || item.tabKey == 'changeRepo' && isExistRepoMessage == null">
-                                <v-btn :disabled="!gitOrgName || !gitRepoName || isExistRepo" text color="primary" @click="startCommit()">Create</v-btn>
+                                <v-btn :disabled="!gitOrgName || !gitRepoName || isExistRepo" color="primary" @click="startCommit()">Create</v-btn>
                             </div>
                             <div>
                                 <v-btn v-if="item.tabKey == 'changeRepo' && isExistRepoMessage || (item.tabKey == 'setFirstRepo' && isExistRepo)" 
                                     :disabled="!(gitOrgName && gitRepoName)"
-                                    text color="primary" @click="gitTab = 1">next
+                                    color="primary" @click="gitTab = 1">next
                                 </v-btn>
                                 <v-btn v-if="!isPushing && item.tabKey == 'setFirstRepo' && gitRadios == 'fork'" 
                                     :disabled="!isListSettingDone || !(gitOrgName && gitRepoName) || isExistRepo || (isPrivilegedUser && !information.gitOrgName)"
@@ -442,7 +442,7 @@
                                     ></v-checkbox>
                                     <v-btn
                                         :disabled="!isListSettingDone || !(gitOrgName && gitRepoName)"
-                                        text color="primary" @click="startCommit()">{{ pushBtnName }}
+                                        color="primary" @click="startCommit()">{{ pushBtnName }}
                                     </v-btn>
                                     <v-menu offset-y v-if="!editTemplateMode">
                                         <template v-slot:activator="{ on, attrs }">
@@ -556,6 +556,7 @@
             Login,
         },
         props: {
+            commitMsg: String,
             isSIgpt: Boolean,
             selectedTestFile: Object,
             onlyOneBcId: String,
@@ -829,7 +830,12 @@
             this.core = new CodeGeneratorCore({});
             let git;
 
-            this.git = new GitAPI();
+            if(window.MODE == "onprem") {
+                git = new Gitlab();
+            } else {
+                git = new Github();
+            }
+            this.git = new GitAPI(git);
         },
         mounted: function () {
             var me = this
@@ -837,6 +843,7 @@
             me.setGitInfo()
             me.checkRepoExist()
             if(me.isSIgpt){
+                me.gitCommitMessage = me.commitMsg
                 me.startCommitWithGit("main")
             }
         },
@@ -2144,7 +2151,7 @@
                                         me.gitSnackBar.icon="warning"
                                         me.gitSnackBar.title="Warning"
                                     } else {
-                                        let commitResult = await me.git.commit(me.gitOrgName, me.gitRepoName, branch, list, me.isFirstCommit)
+                                        let commitResult = await me.git.commit(me.gitOrgName, me.gitRepoName, branch, list, me.isFirstCommit, me.gitCommitMessage)
                                         .then(async (commit) => {
                                             me.commitStepText = 'Push to Git'
                                             let options = {
@@ -2291,7 +2298,7 @@
                         me.gitSnackBar.icon="warning"
                         me.gitSnackBar.title="Warning"
                     } else {
-                        let commitResult = await me.git.commit(me.gitOrgName, me.gitRepoName, "main", list, me.isFirstCommit)
+                        let commitResult = await me.git.commit(me.gitOrgName, me.gitRepoName, "main", list, me.isFirstCommit, "commit")
                         .then(async (commit) => {
                             me.commitStepText = 'Push to Git'
                             let options = {
@@ -2335,7 +2342,7 @@
             async pushTemplateList(treeList) {
                 var me = this
                 me.commitStepText = 'Commit to Git'
-                let commitResult = await me.git.commit(me.gitOrgName, me.gitRepoName, "main", treeList, me.isFirstCommit)
+                let commitResult = await me.git.commit(me.gitOrgName, me.gitRepoName, "main", treeList, me.isFirstCommit, "commit")
                 .then(async commit => {
                     me.commitStepText = 'Push to Git'
                     let options = {

@@ -80,7 +80,7 @@
 
                     <div v-if="embedded" 
                             class="d-flex justify-end"
-                            style="position: absolute; top: 45px; right: 70px;"
+                            style="position: absolute; top: 22px; right: 70px;"
                     >
                         <!-- <v-btn
                             style="position: absolute; top:26px; right: 130px;"
@@ -94,21 +94,16 @@
                         </v-btn> -->
                         <v-btn
                                 v-if="!getReadOnly"
-                                color="grey"
+                                color="primary"
                                 text
                                 @click="openAutoModelingDialog()"
+                                style="margin-right:5px;"
                         >
-                            <v-img
-                                    max-height="16"
-                                    max-width="16"
-                                    :src="imageBase+'chatgpt.png'"
-                                    class="mr-1"
-                            ></v-img>
+                            <Icon icon="arcticons:openai-chatgpt" style="margin-right:5px; stroke-width: 3px;" width="24" height="24"/>
                             <div>Chat</div>
                         </v-btn>
                         <v-btn
-                                color="orange"
-                                text
+                                color="primary"
                                 @click="openCommandViewer()"
                         >
                             <v-icon>mdi-code-greater-than</v-icon>

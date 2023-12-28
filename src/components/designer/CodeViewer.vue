@@ -130,38 +130,45 @@
                                         @keydown.enter="removeDuplicateChatPrompt"
                                     ></v-text-field>                                     
                                 </div>
-                                <div v-if="isRootFolder">
-                                    <v-row no-gutters style="margin-top: 15px; margin-bottom: 15px; text-align: center;">
+                                <div v-if="isRootFolder" style="text-align: center;">
+                                    <v-row no-gutters style="margin-top: 15px; margin-bottom: 15px;">
                                         <v-col cols="12">
                                             <b style="font-size: large;">or</b>
                                         </v-col>
                                     </v-row>
-                                    <v-card class="mx-auto">
-                                        <v-card-title>Choose the test to implement by AI</v-card-title>
-                                        <v-card-text>
-                                            <v-autocomplete
-                                                label="Choose the test"
-                                                @click="checkTopping()"
-                                                @change="changedTestFile()"
-                                                v-model="selectedTestFile"
-                                                item-text="name"
-                                                :items="testFileList"
-                                                :error="!isExistRules"
-                                                :error-messages="errorMsg"
-                                                clearable
-                                                return-object
-                                                dense
-                                            ></v-autocomplete>
-                                        </v-card-text>
-                                        <v-card-actions>
-                                            <div style="font-size: small;">
-                                                <v-icon small style="margin-right: 5px;">mdi-help-circle-outline</v-icon>
-                                                <a href="https://beta.openai.com/account/api-keys" target="_blank">how to create test or example</a>
-                                            </div>
-                                            <v-spacer />
-                                            <v-btn :loading="startImpl" :disabled="!selectedTestFile || !isExistRules" color="primary" @click="startImplWithAI()">Auto implement</v-btn>
-                                        </v-card-actions>
-                                    </v-card>
+                                    <v-btn style="margin-bottom: 10px;" color="primary" @click="openImplDialog()">Auto implement</v-btn>
+                                    <v-dialog v-model="isOpenImplDialog" width="800">
+                                        <v-card class="mx-auto">
+                                            <v-card-title>Choose the test to implement by AI</v-card-title>
+                                            <v-card-text>
+                                                <v-autocomplete
+                                                    label="Choose the test"
+                                                    @change="changedTestFile()"
+                                                    v-model="selectedTestFile"
+                                                    item-text="name"
+                                                    :items="testFileList"
+                                                    :error="!isExistRules"
+                                                    :error-messages="errorMsg"
+                                                    clearable
+                                                    return-object
+                                                    dense
+                                                ></v-autocomplete>
+                                                <v-checkbox
+                                                    v-model="isUseMain"
+                                                    label="Continuing from the last commit"
+                                                    class="shrink mr-2 mt-0"
+                                                ></v-checkbox>
+                                            </v-card-text>
+                                            <v-card-actions>
+                                                <div style="font-size: small;">
+                                                    <v-icon small style="margin-right: 5px;">mdi-help-circle-outline</v-icon>
+                                                    <a href="https://beta.openai.com/account/api-keys" target="_blank">how to create test or example</a>
+                                                </div>
+                                                <v-spacer />
+                                                <v-btn :loading="startImpl" :disabled="!selectedTestFile || !isExistRules" color="primary" @click="startImplWithAI()">Start</v-btn>
+                                            </v-card-actions>
+                                        </v-card>
+                                    </v-dialog>
                                 </div>
                             </v-card>
                         </v-row>
@@ -214,6 +221,8 @@
         },
         data() {
             return {
+                isUseMain: true,
+                isOpenImplDialog: false,
                 startImpl: false,
                 isExistRules: false,
                 errormsg: null,
@@ -467,6 +476,14 @@
             });
         },
         methods: {
+            openImplDialog(){
+                this.checkTopping()
+                if(this.testFileList && this.testFileList.length > 0){
+                    this.selectedTestFile = this.testFileList[0]
+                    this.changedTestFile()
+                }
+                this.isOpenImplDialog = true
+            },
             changedTestFile(){
                 if(this.selectedTestFile.code.includes("test0")){
                     this.isExistRules = true
@@ -484,13 +501,14 @@
                     codeGenerator.settingPlatform('TOPPING', codeGenerator.toppingPlatforms);
                     codeGenerator.refreshCallGenerate();
                 } else {
-                    if(this.testFileList.length == 0){
+                    if(this.testFileList && this.testFileList.length == 0){
                         codeGenerator.onSelected(this.value)
                     }
                 }
             },
             startImplWithAI(){
                 this.startImpl = true
+                this.selectedTestFile.isUseMain = this.isUseMain
                 this.$emit("startImplWithAI", this.selectedTestFile)
             },
             scrollToBottom() {

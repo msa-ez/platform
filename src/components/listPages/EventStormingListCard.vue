@@ -31,7 +31,7 @@
                 >
 
                     <slot name="chips">
-                        <v-row justify="end" style="margin-right: 1px; margin-top:0px;">
+                        <v-row justify="end" style="margin:0px;">
                             <v-chip
                                     v-if="copyInformation.isDeleteProject"
                                     class="ma-2"
@@ -117,21 +117,20 @@
             <slot name="action" :project="copyInformation">
                 <div style="position: absolute; bottom:5px; right:5px;">
                     <v-btn
-                            v-if="deletedAble"
-                            :disabled="isDelete"
-                            color="red"
-                            text
-                            @click.native="deleteProject()"
+                        v-if="deletedAble"
+                        :disabled="isDelete"
+                        color="red"
+                        text
+                        @click.native="deleteProject()"
                     >
                         Delete
                     </v-btn>
 
-                    <v-btn
-                            text
-                            :disabled="isDelete"
-                            @click.native="openProject()"
-                            style="color:#1E88E5; font-weight:700;"
-                            >
+                    <v-btn  text
+                        color="primary"
+                        :disabled="isDelete"
+                        @click.native="openProject()"
+                    >
                         {{enterText}}
                     </v-btn>
                 </div>
