@@ -47,6 +47,7 @@
                                         <v-list-item-content style="margin-left: -10px;">
                                             <v-list-item-title style="color: white">
                                                 {{test.solutionType}}
+                                                <v-chip style="margin-left: 5px;" small v-if="test.sha" @click="rollBack(test.sha, testIdx)">rollback</v-chip>
                                                 <v-progress-circular
                                                     v-if="isSolutionCreating && siTestResults.lastIndex == testIdx"
                                                     indeterminate
@@ -437,6 +438,7 @@
                 systemMsg: null,
                 dialogRenderKey: 0,
                 lastIndex: 0,
+                solutionCnt: 0,
                 lastSolutionIdx: null,
                 solutionNumber: 0,
                 codeChangeNumber: 0,
@@ -452,7 +454,6 @@
                 codeList: null,
                 summarizedCodeList: {},
                 copySelectedCodeList: null,
-                updateList: [],
                 siTestResults: [],
 
                 fullErrorLog: null,
@@ -502,6 +503,12 @@
             me.$EventBus.$on('setActionId', function (path) {
                 me.actionPathList.push(path)
             })
+            me.$EventBus.$on('getCommitId', function (sha) {
+                me.siTestResults[me.lastIndex].sha = sha
+            })
+            me.$EventBus.$on('rollBackCodeList', function (codeList) {
+                me.copySelectedCodeList = codeList
+            })
             me.$EventBus.$on('getActionLogs', function (logInfo) {
                 if(logInfo.state === "success"){
                     me.startGitAction = false
@@ -549,6 +556,23 @@
             });
         },
         methods: {
+            async rollBack(sha, idx){
+                var me = this
+                me.siTestResults.splice(idx + 1);
+                me.lastIndex = me.siTestResults.lastIndex
+                me.resultLength = me.siTestResults.length
+                
+                me.siTestResults[me.lastIndex].userMessage = null
+                me.siTestResults[me.lastIndex].errorLog = null
+                me.siTestResults[me.lastIndex].fullErrorLog = null
+                me.siTestResults[me.lastIndex].compilerMessageIdx = null
+                me.siTestResults[me.lastIndex].systemMessage = false 
+                me.siTestResults[me.lastIndex].stopLoading = false
+
+                me.commitMsg = me.siTestResults[me.lastIndex].solutionType + ': ' + me.siTestResults[me.lastIndex].solution
+                
+                me.$emit("rollBack", sha)
+            },
             openIDE(type) {
                 this.$emit('openIDE', type)
             },
@@ -617,13 +641,6 @@
                 if(me.copySelectedCodeList[obj.name]){
                     me.copySelectedCodeList[obj.name] = obj.code
                 }
-                me.updateList.forEach(function (solution){
-                    solution.codeChanges.forEach(function (changes){
-                        if(changes.fileName == obj.name){
-                            changes.modifiedFileCode = obj.code
-                        }
-                    })
-                })
             },
             async summaryCodeList(){
                 var me = this
@@ -676,8 +693,8 @@ What files do I need to modify and what related files do I need to fix the error
                 me.generator.generate();
             },
             regenerate(){
-                if(this.updateList){
-                    for(var i = 0; i < this.updateList.length; i++){
+                if(this.solutionCnt){
+                    for(var i = 0; i < this.solutionCnt; i++){
                         this.siTestResults.pop()
                     }
                     this.lastIndex = this.siTestResults.lastIndex
@@ -712,7 +729,7 @@ What files do I need to modify and what related files do I need to fix the error
                 me.scrollToBottom();
                 me.codeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
                 let commitData = {
-                    updateList: me.updateList,
+                    codeList: me.codeList,
                     message: me.commitMsg
                 }
                 me.$emit("startCommitWithSigpt", commitData)
@@ -738,8 +755,7 @@ What files do I need to modify and what related files do I need to fix the error
                             }   
                             let dumyFile = []
                             dumyFile.push(me.testFile)
-                            me.updateList = model
-                            me.updateList.forEach((solution, solutionIdx) => {
+                            model.forEach((solution, solutionIdx) => {
                                 if(!me.siTestResults[me.resultLength + solutionIdx]){
                                     me.siTestResults[me.resultLength + solutionIdx] = {}
                                 }
@@ -783,15 +799,15 @@ What files do I need to modify and what related files do I need to fix the error
                             });
         
                             if(!me.lastSolutionIdx 
-                            || me.solutionNumber < me.updateList.lastIndex 
-                            || (me.updateList[me.solutionNumber] && me.updateList[me.solutionNumber].codeChanges && me.codeChangeNumber < me.updateList[me.solutionNumber].codeChanges.lastIndex))
+                            || me.solutionNumber < model.lastIndex 
+                            || (model[me.solutionNumber] && model[me.solutionNumber].codeChanges && me.codeChangeNumber < model[me.solutionNumber].codeChanges.lastIndex))
                             {
-                                if(me.solutionNumber < me.updateList.lastIndex){
+                                if(me.solutionNumber < model.lastIndex){
                                     me.codeChangeNumber = 0
-                                    me.solutionNumber = me.updateList.lastIndex
+                                    me.solutionNumber = model.lastIndex
                                 } else {
-                                    if(me.updateList[me.solutionNumber] && me.updateList[me.solutionNumber].codeChanges){
-                                        me.codeChangeNumber = me.updateList[me.solutionNumber].codeChanges.lastIndex
+                                    if(model[me.solutionNumber] && model[me.solutionNumber].codeChanges){
+                                        me.codeChangeNumber = model[me.solutionNumber].codeChanges.lastIndex
                                     }
                                 }
                                 me.lastSolutionIdx = me.resultLength + me.solutionNumber + '_' + me.codeChangeNumber 
@@ -838,6 +854,7 @@ What files do I need to modify and what related files do I need to fix the error
                                 me.lastIndex = me.siTestResults.lastIndex
                                 me.resultLength = me.siTestResults.length
                                 me.generatedErrorDetails = null
+                                me.solutionCnt = model.length
                                 // if(me.isFirstGenerate){
                                 //     me.startGitAction = true
                                 //     me.codeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
