@@ -292,10 +292,10 @@
                                         <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/5a0c54c8-cac3-44a5-ba25-879ab41196a2"></v-img>
                                     </div>
                                     <div v-else-if="showMainText2">
-                                        <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/0cc15a3c-98a6-4750-9419-60a97fcb85c9"></v-img>
+                                        <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/10f93f13-8d49-4f9e-a06c-b4a1d8fa9b2c"></v-img>
                                     </div>
                                     <div v-else-if="showMainText3">
-                                        <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/d4a7ce9d-6350-4074-8795-a6c46631614e"></v-img>
+                                        <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/e9b45c45-776a-4c06-8dc9-c7ab858882bb"></v-img>
                                     </div>
                                 </transition>
                             </div>
@@ -310,10 +310,10 @@
                                             <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/5a0c54c8-cac3-44a5-ba25-879ab41196a2"></v-img>
                                         </div>
                                         <div v-else-if="showMainText2">
-                                            <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/0cc15a3c-98a6-4750-9419-60a97fcb85c9"></v-img>
+                                            <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/10f93f13-8d49-4f9e-a06c-b4a1d8fa9b2c"></v-img>
                                         </div>
                                         <div v-else-if="showMainText3">
-                                            <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/d4a7ce9d-6350-4074-8795-a6c46631614e"></v-img>
+                                            <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/e9b45c45-776a-4c06-8dc9-c7ab858882bb"></v-img>
                                         </div>
                                     </transition>
                                 </div>
