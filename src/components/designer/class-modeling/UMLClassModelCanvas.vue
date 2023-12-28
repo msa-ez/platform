@@ -901,7 +901,10 @@
                 this.chatList[this.chatListIndex] = message
                 var response = {
                     content: content,
-                    role: "assistant"
+                    role: {
+                        _type: "org.uengine.kernel.Role",
+                        name: "assistant"
+                    }
                 }
                 this.openAiMessageList[this.messageListIndex] = response
                 if(this.autoScroll){
