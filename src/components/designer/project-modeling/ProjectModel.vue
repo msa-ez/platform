@@ -108,7 +108,7 @@
                                         indeterminate
                                         color="primary"
                                 ></v-progress-circular>
-                                <v-btn  v-else color="primary" text @click="saveProject()">Save</v-btn>
+                                <v-btn  v-else color="primary" @click="saveProject()">Save</v-btn>
                             </v-card-actions>
                         </v-card>
                     </v-card-text>

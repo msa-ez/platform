@@ -94,7 +94,7 @@
                                 <v-row justify="end" align="start">
                                     <v-btn
                                         style="position: absolute; top:26px; right: 60px;"
-                                        color="orange"
+                                        color="primary"
                                         @click="openCommandViewer()"
                                         v-on="on"
                                         small
@@ -261,7 +261,7 @@
                                                 <v-btn class="k8s-hide-gitops-btn"
                                                         text
                                                         style="margin-right: 5px;margin-top: 15px;"
-                                                        color="orange" dark
+                                                        color="primary" dark
                                                         @click="openCodeViewer()"
                                                         v-on="on">
                                                     <Icon class="gs-icon-style" icon="icomoon-free:git"
@@ -350,9 +350,8 @@
                                         >
                                             <template v-slot:activator="{ on }">
                                                 <v-btn class="k8s-hide-code-btn"
-                                                        text
                                                         style="margin-right: 5px;margin-top: 15px;"
-                                                        color="orange" dark
+                                                        color="primary" dark
                                                         @click="openCodeViewer()"
                                                         v-on="on">
                                                     <v-icon> {{ icon.code }}</v-icon>
@@ -475,11 +474,11 @@
                                                 <template v-slot:activator="{ on }">
                                                     <v-btn
                                                             style="margin-right: 5px;margin-top: 15px;"
-                                                            color="orange"
+                                                            color="primary"
                                                             @click="openCodeViewer()"
                                                             v-on="on"
                                                             small
-                                                            text>
+                                                    >
                                                         <v-icon> {{ icon.code }}</v-icon>
                                                         CODE
                                                     </v-btn>
@@ -498,11 +497,11 @@
                                                 <template v-slot:activator="{ on }">
                                                     <v-btn
                                                             style="margin-right: 5px;margin-top: 15px;"
-                                                            color="orange"
+                                                            color="primary"
                                                             @click="openCodeViewer()"
                                                             v-on="on"
                                                             small
-                                                            text>
+                                                    >
                                                         <div v-if="gitOpsLoading">
                                                             <v-progress-circular
                                                                     indeterminate
@@ -2043,7 +2042,7 @@
 
             var apiServer = null;
             if (this.$route.params.labId) {
-                if (me.$parent.classInfo.serverUrl) {
+                if (me.$parent.classInfo && me.$parent.classInfo.serverUrl) {
                     apiServer = me.$parent.classInfo.serverUrl;
                 } else {
                     apiServer = "https://218.236.22.12:6443"
@@ -2089,6 +2088,7 @@
                         console.log(e)
                     }
                 }
+
             }
             $(document).keydown((evt) => {
                 // if (evt.metaKey && evt.shiftKey && evt.keyCode == 80) {
@@ -5516,9 +5516,9 @@
                                         let bcName = value.elements[key].object.metadata.name
                                         let bc = bcList.find(x=>x.name.toLowerCase() == bcName.toLowerCase());
 
-                                        value.elements[key].object.spec.template.spec.containers.forEach(function(container){
-                                            container.image = `ghcr.io/${bc.image}`
-                                        })
+                                        // value.elements[key].object.spec.template.spec.containers.forEach(function(container){
+                                        //     container.image = `ghcr.io/${bc.image}`
+                                        // })
                                     }
 
                                     yamlText += json2yaml.stringify(value.elements[key].object);

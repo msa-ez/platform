@@ -568,7 +568,7 @@ getUserInfo() {
             })
         })
     }
-    commit(org, repo, branch, treeList, init) {
+    commit(org, repo, branch, treeList, init, commitMessage) {
         let me = this;
         return new Promise(async function (resolve, reject) { 
             let treesha = null;
@@ -583,7 +583,7 @@ getUserInfo() {
                     .then(async function (commit) {
                         parentsCommitSha = commit
                         let postCommitData = {}
-                        let commitMsg = "commit"
+                        let commitMsg = commitMessage ? commitMessage : "commit"
                         if(init) {
                             postCommitData = {
                                 tree: result.data.sha,

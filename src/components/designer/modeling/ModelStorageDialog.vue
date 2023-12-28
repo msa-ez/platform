@@ -88,7 +88,7 @@
                             indeterminate
                             color="primary"
                     ></v-progress-circular>
-                    <v-btn  v-else color="primary" text @click="submit()">{{submitText}}</v-btn>
+                    <v-btn  v-else color="primary" @click="submit()">{{submitText}}</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>

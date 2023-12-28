@@ -351,7 +351,6 @@
                                                 </div>
                                                 <div v-else>
                                                     <v-btn
-                                                        text
                                                         v-if="isOwnModel"
                                                         style="margin-right: 5px; margin-top: 15px;"
                                                         color="primary"

@@ -261,10 +261,10 @@ class GitAPI {
     getUrl(org, repo) {
         return this._git.getUrl(org, repo)
     }
-    commit(org, repo, branch, list, init) {
+    commit(org, repo, branch, list, init, commitMessage) {
         let me = this;
         return new Promise(async function(resolve,reject) {
-            const result = await me._git.commit(org, repo, branch, list, init)
+            const result = await me._git.commit(org, repo, branch, list, init, commitMessage)
             .then((res) => {
                 resolve(res)
             })

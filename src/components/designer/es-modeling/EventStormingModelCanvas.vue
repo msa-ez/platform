@@ -821,12 +821,11 @@
                                                             <div>
                                                                 <v-btn
                                                                         class="gs-model-z-index-1 es-hide-code-btn"
-                                                                        text
                                                                         style="
                                                                         margin-right: 5px;
                                                                         color: white;
                                                                     "
-                                                                        color="orange"
+                                                                        color="primary"
                                                                         @click="openCodeViewer()"
                                                                         :disabled="
                                                                         !initLoad
@@ -1042,8 +1041,7 @@
                                                 >
                                                     <div>
                                                         <v-btn
-                                                                text
-                                                                color="orange"
+                                                                color="primary"
                                                                 dark
                                                                 class="mobile-btn"
                                                                 @click="openCodeViewer()"
@@ -1495,15 +1493,16 @@
                         <v-tooltip slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn
-                                        @click="generateAggregate()"
-                                        icon
-                                        small
-                                        v-bind="attrs"
-                                        v-on="on"
-                                        style="margin-right: 10px; z-index: 2"
-                                        color="primary"
+                                    @click="generateAggregate()"
+                                    small
+                                    v-bind="attrs"
+                                    v-on="on"
+                                    class="gs-es-auto-modling-btn"
+                                    style="padding:0px 5px; margin-right:10px;"
+                                    color="primary"
                                 >
-                                    <Icon icon="ph:tag-simple-light" width="40" height="40" />
+                                    <span style="float:right;">CONTINUE</span>
+                                    <v-icon>mdi-arrow-right</v-icon>
                                 </v-btn>
                             </template>
                             <span>Generate Aggregate</span>
@@ -1520,7 +1519,7 @@
                             @clearModelValue="clearModelValue"
                             :generatorStep="generatorStep"
                     >
-                        <v-tooltip slot="buttons" bottom>
+                        <!-- <v-tooltip slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn
                                         @click="generateAggregate()"
@@ -1529,12 +1528,13 @@
                                         v-bind="attrs"
                                         v-on="on"
                                         style="margin-right: 10px; z-index: 2"
+                                        disabled
                                 >
                                     <Icon icon="ph:tag-simple-light" width="30" height="30" />
                                 </v-btn>
                             </template>
                             <span>Generate Code</span>
-                        </v-tooltip>
+                        </v-tooltip> -->
                     </GeneratorUI>
 
                     <div v-if="showUiWizard">
@@ -2068,6 +2068,7 @@
                         :oldTreeHashLists.sync="oldTreeHashLists"
                         :newTreeHashLists.sync="newTreeHashLists"
                         :projectVersion="projectVersion"
+                        :generatorStep="generatorStep"
                         @changedByMe="settingChangedByMe"
                         @editModelData="editModelData"
                         canvas-name="event-storming-model-canvas"
@@ -6610,9 +6611,8 @@
 
                 } else if (typeof val == "string") {
                     me.embeddedCanvasValue = { elements: {}, relations: {} };
-                    me.embeddedCanvasInitValue = JSON.parse(
-                        JSON.stringify(me.value)
-                    );
+                    me.embeddedCanvasInitValue = JSON.parse(JSON.stringify(me.value));
+                    // me.embeddedCanvasInitValue = _.cloneDeep(me.value);
                     if (me.value.k8sValue != null) {
                         me.embeddedCanvasValue = me.value.k8sValue;
                     }
@@ -6622,7 +6622,7 @@
 
                     Object.values(me.value.elements).forEach(function (el) {
                         if (el) {
-                            if (el._type.endsWith("BoundedContext")) {
+                            if (el._type && el._type.endsWith("BoundedContext")) {
                                 me.boundedContextList.push(el);
                             }
                         }

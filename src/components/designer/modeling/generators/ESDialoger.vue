@@ -32,12 +32,12 @@
         </div>
         <v-card v-if="!state.secondMessageIsTyping" class="auto-modeling-user-story-card">
             <v-card-subtitle>{{$t('autoModeling.explanation')}}</v-card-subtitle>
-            <v-card-actions v-if="!done" class="auto-modeling-btn-box">
-                <v-btn class="auto-modeling-btn" @click="stop()"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
-            </v-card-actions>
+            <v-btn v-if="!done" class="auto-modeling-btn" style="margin-left: 15px;" @click="stop()"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
             <v-card-text class="auto-modling-textarea">
-                <v-textarea
+                <v-textarea 
                         v-model="value.userStory"
+                        flat
+                        class="elevation-0"
                         dense
                         auto-grow
                         rows="2"
