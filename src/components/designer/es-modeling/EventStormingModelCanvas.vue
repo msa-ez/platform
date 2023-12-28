@@ -1501,8 +1501,7 @@
                                     style="padding:0px 5px; margin-right:10px;"
                                     color="primary"
                                 >
-                                    <span style="float:right;">CONTINUE</span>
-                                    <v-icon>mdi-arrow-right</v-icon>
+                                    <span>CONTINUE<v-icon>mdi-arrow-right</v-icon></span>
                                 </v-btn>
                             </template>
                             <span>Generate Aggregate</span>

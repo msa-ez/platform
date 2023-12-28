@@ -76,12 +76,10 @@
                                 color="primary"
                             >
                                 <div v-if="generatorName === 'CJMGenerator' || generatorName === 'BMGenerator'">
-                                    <Icon style="float:left; margin-right:3px;" icon="fluent-mdl2:completed" width="16" height="16"/>
-                                    <span>complete</span>
+                                    <span><Icon style="float:left; margin-right:3px;" icon="ri:check-fill" width="16" height="16"/>complete</span>
                                 </div>
                                 <div v-else>
-                                    <span style="float:right;">CONTINUE</span>
-                                    <v-icon>mdi-arrow-right</v-icon>
+                                    <span>CONTINUE<v-icon>mdi-arrow-right</v-icon></span>
                                 </div>
                             </v-btn>
                         </template>

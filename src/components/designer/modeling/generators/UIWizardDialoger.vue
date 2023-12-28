@@ -46,7 +46,7 @@
                             </v-card-text>
                             <v-row style="margin-bottom: 10px;">
                                 <v-spacer></v-spacer>
-                                <v-btn @click="regenerateImages()" style="margin-right: 15px;"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>Try again</v-btn>
+                                <!-- <v-btn @click="regenerateImages()" style="margin-right: 15px;"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>Try again</v-btn> -->
                                 <v-btn @click="generateImageDescription" style=" margin-right: 15px;">(RE)GENERATE IMAGE DESCRIPTION</v-btn>
                                 <v-btn @click="generateImage" color="primary" style=" margin-right: 25px;">GENERATE IMAGE</v-btn>
                             </v-row>
