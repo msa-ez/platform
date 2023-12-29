@@ -98,7 +98,6 @@
                                         @click="openCommandViewer()"
                                         v-on="on"
                                         small
-                                        text
                                     >
                                         <v-icon>mdi-code-greater-than</v-icon>
                                         <div>KUBECTL</div>

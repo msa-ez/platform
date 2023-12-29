@@ -247,7 +247,13 @@
                     },
             }
         },
-        created() {},
+        created() {
+            var me = this;
+            me.$EventBus.$on('policyDescriptionUpdated', function (newDescription) {
+                me.value.description = newDescription;
+                console.log("Description 변경됨:", newDescription);
+            })
+        },
         computed: {
             panelWidthStyle(){
                 return this.widthStyle;
@@ -280,7 +286,12 @@
                 return null;
             },
         },
-        watch:{},
+        watch:{
+            'value.description': function (newVal, oldVal) {
+                // 여기에 변화가 감지될 때 실행할 코드를 작성하세요.
+                console.log("Description 변경됨:", newVal);
+            }
+        },
         methods: {
             // closeExampleDialog(){
             //     this.openExample = false
