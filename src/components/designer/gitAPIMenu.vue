@@ -2161,6 +2161,7 @@
                                                 list: list,
                                                 branch: branch
                                             }
+                                            me.$EventBus.$emit("getCommitId", commit.data.sha)
                                             let pushResult = await me.git.push(options)
                                             .then(function () {
                                                 me.commitStepText = null

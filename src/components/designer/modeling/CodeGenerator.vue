@@ -7,6 +7,7 @@
                 :selectedCodeList="selectedCodeList"
                 @startCommitWithSigpt="startCommit"
                 @openIDE="openIDE"
+                @rollBack="rollBack"
             >
             </GitActionDialog>
         </v-dialog>
@@ -72,17 +73,16 @@
                             <template v-slot:activator="{ on: menu, attrs }">
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on: tooltip }">
-                                        <v-btn :disabled="!isGeneratorDone"
-                                            style="font-size:16px;
-                                                margin-right:5px;
-                                                padding:0px 5px;"
-                                            small
-                                            v-bind="attrs"
-                                            v-on="{ ...tooltip, ...menu }"
-                                            :color="gitMenu ? '':'primary'"
+                                        <v-btn
+                                                :disabled="!isGeneratorDone"
+                                                class="code-preview-btn"
+                                                icon x-small
+                                                v-bind="attrs"
+                                                v-on="{ ...tooltip, ...menu }"
                                         >
-                                            <v-icon size="22" style="float:right;" :style="gitMenu ? 'color:gray':''">mdi-git</v-icon>
-                                            <span :style="gitMenu ? 'color:gray':''">Git</span>
+                                            <v-icon size="22" :color="gitMenu ? 'primary':''">
+                                                mdi-git
+                                            </v-icon>
                                         </v-btn>
                                     </template>
                                     <span>Push to Git</span>
@@ -2769,6 +2769,25 @@
             });
         },
         methods: {
+            async rollBack(sha){
+                var me = this
+                let data = {
+                    sha: sha,
+                    force: true
+                }
+                let header = {
+                    Authorization: 'token ' + localStorage.getItem('gitToken'),
+                    Accept: 'application/vnd.github+json'
+                }
+                
+                await axios.post(`https://api.github.com/repos/${me.value.scm.org}/${me.value.scm.repo}/git/refs/heads/main`, data, { headers: header })
+
+                let src = await me.gitAPI.getFolder(me.value.scm.org, me.value.scm.repo, me.openCode[0].name + '/src');
+                if(src){
+                    me.getJavaFileList(src.data)
+                }
+
+            },
             openIDE(type){
                 if(type == 'gitpod'){
                     window.open(`https://gitpod.io/#https://github.com/${this.value.scm.org}/${this.value.scm.repo}`, '_blank');
@@ -2875,21 +2894,19 @@
             },
             startCommit(commitData){
                 var me = this 
-                commitData.updateList.forEach(function (file){
-                    file['codeChanges'].forEach(function (changed){
-                        var idx = me.codeLists.findIndex(x => x.fullPath == changed.fileName)
-                        if(!idx || idx == -1){
-                            idx = me.codeLists.findIndex(x => x.fileName == changed.fileName && x.bcId == me.openCode[0].bcId)
-                        }
-                        if(!idx || idx == -1){
-                            idx = me.codeLists.findIndex(x => changed.fileName.includes(x.fileName) && x.bcId == me.openCode[0].bcId)
-                        }
-                        if(me.codeLists[idx] && me.codeLists[idx].code){
-                            me.codeLists[idx].code = changed.modifiedFileCode
-                            me.filteredCodeLists[idx].code = changed.modifiedFileCode
-                            me.filteredPrettierCodeLists[idx].code = changed.modifiedFileCode
-                        }
-                    })
+                Object.keys(commitData.codeList).forEach(function (key){
+                    var idx = me.codeLists.findIndex(x => x.fullPath == key)
+                    if(!idx || idx == -1){
+                        idx = me.codeLists.findIndex(x => x.fileName == key && x.bcId == me.openCode[0].bcId)
+                    }
+                    if(!idx || idx == -1){
+                        idx = me.codeLists.findIndex(x => key.includes(x.fileName) && x.bcId == me.openCode[0].bcId)
+                    }
+                    if(me.codeLists[idx] && me.codeLists[idx].code){
+                        me.codeLists[idx].code = commitData.codeList[key]
+                        me.filteredCodeLists[idx].code = commitData.codeList[key]
+                        me.filteredPrettierCodeLists[idx].code = commitData.codeList[key]
+                    }
                 })
 
                 var actionCode = `name: test
@@ -7065,8 +7082,12 @@ jobs:
                             me.selectedCodeList[data.name] = file.data
                             me.fileLoadCnt--;
                             if(me.fileLoadCnt == 0){
-                                me.openGitActionDialog = true
-                                me.gitActionDialogRenderKey++;
+                                if(!me.openGitActionDialog){
+                                    me.openGitActionDialog = true
+                                    me.gitActionDialogRenderKey++;
+                                } else {
+                                    me.$EventBus.$emit("rollBackCodeList", me.selectedCodeList);
+                                }
                             }
                         }
                     })
