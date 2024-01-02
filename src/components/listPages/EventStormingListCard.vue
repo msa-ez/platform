@@ -39,6 +39,7 @@
                                     text-color="white"
                                     style="margin-right: 10px;"
                                     small
+                                    outlined
                             >
                                 Deleted
                             </v-chip>
@@ -46,9 +47,9 @@
                                     v-if="copyInformation.isNewProject"
                                     class="ma-2"
                                     color="red"
-                                    text-color="white"
                                     style="margin-right: 10px; width: auto; height: 20px; font-size: 10px; font-weight:bold; "
                                     small
+                                    outlined
                             >
                                 NEW
                             </v-chip>
@@ -56,8 +57,8 @@
                                     v-if="copyInformation.chip"
                                     class="ma-2"
                                     :color="copyInformation.chip.color"
-                                    text-color="white"
                                     small
+                                    outlined
                                     style="width: auto; height: 20px; font-size: 10px; font-weight:bold;"
                             >
                                 {{copyInformation.chip.display}}
@@ -66,8 +67,8 @@
                                     v-if="copyInformation.isShared"
                                     class="ma-2"
                                     color="orange"
-                                    text-color="white"
                                     small
+                                    outlined
                             >
                                 shared
                             </v-chip>
