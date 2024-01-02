@@ -2,9 +2,7 @@
     <v-dialog v-model="showDialog" max-width="600" @click:outside="participantClose()" style="overflow-y:hidden;">
         <v-card>
             <v-tabs
-                    v-model="tab"
-                    background-color="primary"
-                    dark
+                v-model="tab"
             >
                 <v-tab
                         v-for="item in items"
