@@ -3465,7 +3465,7 @@
                 var me = this
                 await me.watch(`db://definitions/${me.projectId}/value`, function (callback) {
                     // me.changedByMe = false
-                    me.value = JSON.parse(callback)
+                    if(callback) me.value = JSON.parse(callback)
                 })
             },
             releaseQueue(projectId){
