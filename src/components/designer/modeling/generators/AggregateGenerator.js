@@ -154,7 +154,7 @@ class AggregateGenerator extends JsonAIGenerator {
         for generated aggregate objects, i want to set Value Object for each properties if possible.
         Class name of Value Objects must be one of Address, Money, Email, Password, File, Photo, Rating, Likes, Tags, Payment, Location, Weather, Comment.
 
-        
+        Commands and events within aggregates of bounded context must exist at least once.
         Each bounded context interacts with each other, and domain events must flow into a service in a way that invokes the policies of other bounded context.
 
         ${descriptionOfCommunicationStyle}
