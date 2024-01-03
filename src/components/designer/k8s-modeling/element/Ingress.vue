@@ -206,6 +206,17 @@
                     me.value.outboundServices.splice(me.value.outboundServices.indexOf(obj.element.targetElement), 1);
                 }
             });
+
+            var canvas = me.getComponent('kubernetes-model-canvas')
+            if(canvas.localYamlText!="" && canvas.value.toppingPlatforms.includes("ingress") && me.value.object.metadata.name == "gateway"){
+                Object.keys(canvas.value.k8sValue.elements).forEach(function(key) {
+                    if(canvas.value.k8sValue.elements[key]){
+                        if(canvas.value.k8sValue.elements[key]._type=="Service"){
+                            me.value.outboundServices.push(canvas.value.k8sValue.elements[key])
+                        }
+                    }
+                })
+            }
         },
         watch: {
             'outboundServiceNames': {

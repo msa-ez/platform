@@ -73,16 +73,17 @@
                             <template v-slot:activator="{ on: menu, attrs }">
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on: tooltip }">
-                                        <v-btn
-                                                :disabled="!isGeneratorDone"
-                                                class="code-preview-btn"
-                                                icon x-small
-                                                v-bind="attrs"
-                                                v-on="{ ...tooltip, ...menu }"
+                                        <v-btn :disabled="!isGeneratorDone"
+                                            style="font-size:16px;
+                                                margin-right:5px;
+                                                padding:0px 5px;"
+                                            small
+                                            v-bind="attrs"
+                                            v-on="{ ...tooltip, ...menu }"
+                                            :color="gitMenu ? '':'primary'"
                                         >
-                                            <v-icon size="22" :color="gitMenu ? 'primary':''">
-                                                mdi-git
-                                            </v-icon>
+                                            <v-icon size="22" style="float:right;" :style="gitMenu ? 'color:gray':''">mdi-git</v-icon>
+                                            <span :style="gitMenu ? 'color:gray':''">Git</span>
                                         </v-btn>
                                     </template>
                                     <span>Push to Git</span>
@@ -1548,6 +1549,7 @@
 
     import GitActionDialog from './GitActionDialog'
 
+    import json2yaml from 'json2yaml'
 
     const axios = require('axios');
     const prettier = require("prettier");
@@ -2635,14 +2637,14 @@
             });
 
             // K8s Topping은 기본세팅
-            if(this.tempToppingPlatforms && !this.tempToppingPlatforms.find(x => x === "isVanillaK8s")){
-                this.tempToppingPlatforms.push('isVanillaK8s')
-            }
-            if(this.value){
-            if(this.value.toppingPlatforms && !this.value.toppingPlatforms.find(x => x === "isVanillaK8s")){
-                this.value.toppingPlatforms.push('isVanillaK8s')
-            }
-            }
+            // if(this.tempToppingPlatforms && !this.tempToppingPlatforms.find(x => x === "isVanillaK8s")){
+            //     this.tempToppingPlatforms.push('isVanillaK8s')
+            // }
+            // if(this.value){
+            // if(this.value.toppingPlatforms && !this.value.toppingPlatforms.find(x => x === "isVanillaK8s")){
+            //     this.value.toppingPlatforms.push('isVanillaK8s')
+            // }
+            // }
             
             this.openCodeGenerator()
             // this.settingGithub()
@@ -7575,8 +7577,10 @@ jobs:
                             if(item){
                                 item.isPassedElement = true
 
-                                var yamlPath = await me.getURL(`storage://yamlStorage/${me.modelingProjectId}/${userEmail}/${item._type}/${ item.object.metadata.name + ".yaml"}`);
-                                item.yamlPath = yamlPath;
+                                // var yamlPath = await me.getURL(`storage://yamlStorage/${me.modelingProjectId}/${userEmail}/${item._type}/${ item.object.metadata.name + ".yaml"}`);
+                                var yaml = '- <<EOF \n' + me.yamlFilter(json2yaml.stringify(item.object)) + 'EOF'
+                                // yaml += '- <<EOF \n' + yaml + 'EOF';
+                                item.yamlPath = yaml;
 
 
                                 if (item._type == 'Service') {
@@ -8918,6 +8922,17 @@ jobs:
                         });
                     }
                 }
+            },
+            yamlFilter(yaml_text) {
+                let lines = yaml_text.split('\n')
+                lines.splice(0, 1)
+                for (let i in lines) {
+                    lines[i] = lines[i].substring(2, lines[i].length)
+                }
+                yaml_text = lines.join('\n')
+                yaml_text = yaml_text.replace(/ null/g, ' ')
+                // yaml_text = yaml_text.replace(/\"/g, '')
+                return yaml_text
             }
 
         }
