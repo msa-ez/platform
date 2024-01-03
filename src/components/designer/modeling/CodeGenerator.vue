@@ -7050,19 +7050,29 @@ jobs:
                     me.openCode = []
                 }
             },
-            getJavaFileList(list){
+            getJavaFileList(list, option){
                 var me = this
                 let folderList = []
                 list.forEach(function (data){
                     if(data.type == 'dir'){
                         folderList.push(data)
                     } else if(data.type == 'file' && (data.name.includes(".java") || data.name.includes("pom.xml"))){
-                        if(data.name.includes("Test.java")){
-                            if(me.selectedTestFile.name == data.name){
-                                me.javaFileList.push(data)
+                        if(data.name.includes("Test.java") && option == 'test'){
+                            if(!me.testFileList.find(x => x.name == data.name)){
+                                let obj = {
+                                    name: data.name,
+                                    fullPath: data.path.replace(data.name, '')
+                                }
+                                me.testFileList.push(obj)
                             }
                         } else {
-                            me.javaFileList.push(data)
+                            if(data.name.includes("Test.java")){
+                                if(me.selectedTestFile && me.selectedTestFile.name == data.name){
+                                    me.javaFileList.push(data)
+                                } 
+                            } else {
+                                me.javaFileList.push(data)
+                            }
                         }
                     }
                 })
@@ -7071,26 +7081,28 @@ jobs:
                 folderList.forEach(async function (data){
                     let src = await me.gitAPI.getFolder(me.value.scm.org, me.value.scm.repo, data.path);
                     if(src){
-                        me.getJavaFileList(src.data)
+                        me.getJavaFileList(src.data, option)
                     }
                 })
-                if(me.fileLoadCnt == 0){
-                    me.fileLoadCnt = me.javaFileList.length
-                    me.javaFileList.forEach(async function(data){
-                        let file = await me.gitAPI.getFile(me.value.scm.org, me.value.scm.repo, data.path) 
-                        if(file){
-                            me.selectedCodeList[data.name] = file.data
-                            me.fileLoadCnt--;
-                            if(me.fileLoadCnt == 0){
-                                if(!me.openGitActionDialog){
-                                    me.openGitActionDialog = true
-                                    me.gitActionDialogRenderKey++;
-                                } else {
-                                    me.$EventBus.$emit("rollBackCodeList", me.selectedCodeList);
+                if(option != 'test'){
+                    if(me.fileLoadCnt == 0){
+                        me.fileLoadCnt = me.javaFileList.length
+                        me.javaFileList.forEach(async function(data){
+                            let file = await me.gitAPI.getFile(me.value.scm.org, me.value.scm.repo, data.path) 
+                            if(file){
+                                me.selectedCodeList[data.name] = file.data
+                                me.fileLoadCnt--;
+                                if(me.fileLoadCnt == 0){
+                                    if(!me.openGitActionDialog){
+                                        me.openGitActionDialog = true
+                                        me.gitActionDialogRenderKey++;
+                                    } else {
+                                        me.$EventBus.$emit("rollBackCodeList", me.selectedCodeList);
+                                    }
                                 }
                             }
-                        }
-                    })
+                        })
+                    }
                 }
 
             },
@@ -7115,7 +7127,7 @@ jobs:
                     me.gitActionDialogRenderKey++;
                 }
             },
-            getTestFileList(){
+            async getTestFileList(){
                 var me = this
                 me.isRootFolder = false;
                 if(me.rootModelAndElementMap.modelForElements.BoundedContext.find(x => x.name == me.openCode[0].name)){
@@ -7123,6 +7135,13 @@ jobs:
                     me.selectedTestFile = null
                     me.testFileList = []
                     me.getSelectedFilesDeeply(me.openCode, {keyword: "si"})
+                    
+                    if(me.value && me.value.basePlatform.includes("template-gpt-engineer")){
+                        let src = await me.gitAPI.getFolder(me.value.scm.org, me.value.scm.repo, me.openCode[0].name + '/src');
+                        if(src){
+                            me.getJavaFileList(src.data, 'test')
+                        }
+                    }
                 }
             },
             editBreakPoint(debuggerPoint){
