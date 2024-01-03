@@ -3485,7 +3485,7 @@
                 if (!value.basePlatform) value.basePlatform = null;
                 if (!value.basePlatformConf) value.basePlatformConf = {};
                 if (!value.toppingPlatforms)
-                    value.toppingPlatforms = ["isVanillaK8s"];
+                    value.toppingPlatforms = [];
                 if (!value.toppingPlatformsConf) value.toppingPlatformsConf = {};
 
                 // // K8s Topping은 기본세팅
