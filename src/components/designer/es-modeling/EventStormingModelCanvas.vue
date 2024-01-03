@@ -810,7 +810,7 @@
                                                         >
                                                             <div>
                                                                 <v-btn
-                                                                        class="gs-model-z-index-1 es-hide-code-btn"
+                                                                        class="gs-model-z-index-1"
                                                                         style="
                                                                         margin-right: 5px;
                                                                         color: white;
@@ -825,9 +825,7 @@
                                                                     <v-icon>{{
                                                                         icon.code
                                                                         }}</v-icon>
-                                                                    <div
-                                                                            class="es-hide-code"
-                                                                    >
+                                                                    <div>
                                                                         CODE
                                                                     </div>
                                                                     <v-progress-circular
