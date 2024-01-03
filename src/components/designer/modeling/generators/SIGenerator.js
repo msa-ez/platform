@@ -8,7 +8,11 @@ export default class SIGenerator extends JsonAIGenerator {
 
     createPrompt(){
         var prompt 
-        if(this.client.generatedErrorDetails){
+        var generationRule
+
+        if(this.client.prompt){
+            return this.client.prompt
+        } else if(this.client.generatedErrorDetails){
             prompt = `An error occurred during testing.
 Error list: ${JSON.stringify(this.client.generatedErrorDetails)}
 The error list contains errors that occurred during mvn testing for the files in the code list and information about the file in which the error occurred.
@@ -17,14 +21,24 @@ Identify the code parts of the file that need error correction and correct the e
 After checking the error log, you should add a workaround for the file causing the error in "codeChanges".
 If multiple errors occur in the same file, you should create one workaround for multiple errors instead of showing a workaround for each error.`
     } else {
-        prompt = 'First, determine whether the business logic is lacking or not written, and if so, please suggest a way to write the logic in the aggregate file of the domain code. Write the business logic to pass this test.'
+//         if(this.client.isFirstGenerate){
+//             prompt = `You are a junit test engineer.
+// You need to modify your code like this:
+// The current code listing contains a test file ${this.client.testFile.name} that may have errors or missing business logic.
+// First, understand this basic test and your overall business intent.
+// You need to rewrite your tests based on the business intent you identified.
+// If it is necessary to delete 'given', 'when', 'then', etc. during editing, delete them.
+// Add any business logic that needs to be added during editing.`
+//         } else {
+            prompt = 'First, determine whether the business logic is lacking or not written, and if so, please suggest a way to write the logic in the aggregate file of the domain code. Write the business logic to pass this test.'
+        // }
     }
 
-    return `Here is the code list:
-${JSON.stringify(this.client.summarizedCodeList)}
-You are a developer. To finally pass ${this.client.testFile.name} in the code list, you must modify the code as follows.
+    // if(this.client.isFirstGenerate){
+    //     generationRule = prompt
+    // } else {
+        generationRule = `You are a developer. To finally pass ${this.client.testFile.name} in the code list, you must modify the code as follows.
 ${prompt}
-The solution must always be returned in the presented json format and must be generated according to all generation rules.
 Generation rules: 
 1. When implementing code, you must understand and write as much as possible the business purpose of the test file (${this.client.testFile.name}) and the "given"/"when"/"then" of the test. . Business logic.
 2. Anti-corruption handling of input events is required.
@@ -36,7 +50,15 @@ Preserve existing class interfaces (methods, parameters, fields) as much as poss
 6. The "modifiedFileCode" values must include the entire code of the file in the code list. All code content is never omitted or abridged.
 7. Member variable types specified in the code listing must not be changed. You will need to modify other code to match the type. // public string ID; I need to keep a String . Even if you get a type conversion error such as “Cannot convert java.lang.String to java.lang.Long,” you should resolve the error by modifying the code that uses that variable, not by changing the variable type. If you inevitably need to change the type, you must add code to convert the variable type to the type you want to change to all codes that use the variable in the code list.
 8. If you determine that you have encountered a dependency version-related error, such as "NoSuchMethodError", you must modify the corresponding dependency version in pom.xml.
-9. "codeChanges" are only created if it is a file.
+9. If the code you are trying to modify includes "//readonly", you should never modify that code. Example: If "\nexample code //readonly\n", "example code" should never be modified and must remain as is.
+10. "codeChanges" are only created if it is a file.`
+    // }
+
+
+    return `Here is the code list:
+${JSON.stringify(this.client.summarizedCodeList)}
+${generationRule}
+The solution must always be returned in the presented json format and must be generated according to all generation rules.
 Json format:
 [ 
     {

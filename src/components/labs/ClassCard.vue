@@ -156,11 +156,10 @@
                         ></v-checkbox>
                         <div style = "position:absolute; right:5px; bottom:10px;">
                             <v-btn
-                                color="#F44336"
+                                color="red"
                                 style="float: right; "
                                 :disabled="!deleteCheck"
                                 @click="deleteClass(clazz)"
-                                text
                             >삭제
                             </v-btn>
                             <v-btn
@@ -175,22 +174,24 @@
                 <v-dialog
                     v-model="openEditDialog"
                     persistent
-                    width="480"
+                    width="455"
                     style="overflow: scroll;"
                 >
                     <v-card 
                         outlined
-                        style="width: 480px; height: 820px; ">
-                            <v-card-title style="background-color: #81C784; color: white; width: 478px; position: fixed; z-index: 100; margin-top:-1px;">Edit Class</v-card-title>
+                        style="height: 680px;"
+                    >
+                        <v-card-title style="margin-top:-1px;">Edit Class</v-card-title>
                         <!-- <input ref="imageInput" type="file" hidden @change="onChangeImages"> -->
                         <!-- @click="onClickImageUpload()" -->
                         <!-- !!!! -->
-                        <div style="margin-bottom: -15px; margin-top: 60px; margin-left: 10px; display:flex;">
+                        <div style="display:flex; padding:0px 15px; margin-bottom:-20px;">
                             <v-switch
                                 v-model="newClassData.active"
                                 label="Active"
                             ></v-switch>
-                            <div style="margin-top:13px; position:absolute; right:0">
+                            <v-spacer></v-spacer>
+                            <div style="margin-top:13px;">
                                 <v-btn
                                     @click="cancelEdit()"
                                     text
@@ -199,12 +200,10 @@
                                 </v-btn>
 
                                 <v-btn @click="addClass(clazz, newClassData)"
-                                    color="#4CAF50"
-                                    text
+                                    color="primary"
                                     type="submit"
                                     :disabled="invalid"
-                                    style = "width:85px;
-                                            margin-left:10px;"
+                                    style = "margin:0px 10px 0px 10px;"
                                 >Save
                                 </v-btn>
                             </div>
@@ -310,7 +309,7 @@
                                                     </div>
                                                 </v-row>
                                             </div>
-                                            <div style = "margin-top:50px;">
+                                            <!-- <div style = "margin-top:50px;">
                                                 <validation-provider
                                                 v-slot="{ errors }"
                                                 name="Name"
@@ -344,7 +343,7 @@
                                                         v-model="newClassData.newToken"
                                                     ></v-text-field>
                                                 </validation-provider>
-                                            </div>
+                                            </div> -->
                                         </v-col>    
                                         <v-col
                                             style ="width:162px; margin-left:0; margin-top:3px;"
@@ -434,34 +433,33 @@
                 <v-dialog
                     v-model="openCopyDialog"
                     persistent
-                    width="480"
+                    width="455"
                 >
                     <v-card 
                         outlined
-                        style="width: 480px; height: 850px; ">
-                        <v-card-title style="background-color: #7986CB; color: white; width: 478px; position: fixed; z-index: 100; margin-top:-1px;">Copy Class</v-card-title>
+                        style="height: 680px;"
+                    >
+                        <v-card-title style="margin-top:-1px;">Copy Class</v-card-title>
                         <!-- <input ref="imageInput" type="file" hidden @change="onChangeImages"> -->
                         <!-- @click="onClickImageUpload()" -->
-                        <div style="margin-bottom: -10px; margin-top: 60px; margin-left: 10px; display:flex;">
+                        <div style="display:flex; padding:0px 15px;">
                             <v-switch
                                 v-model="newClassData.active"
                                 label="Active"
                             ></v-switch>
-                            <div style="margin-top:13px; position:absolute; right:0">
+                            <v-spacer></v-spacer>
+                            <div style="margin-top:13px;">
                                 <v-btn
                                     @click="cancelCopy()"
                                     text
-                                    style = "width:85px;"
                                 >cancel
                                 </v-btn>
 
                                 <v-btn @click="addClass(clazz, newClassData)"
-                                    color="#3F51B5"
-                                    text
+                                    color="primary"
                                     type="submit"
                                     :disabled="invalid"
-                                    style = "width:85px;
-                                            margin-left:10px;"
+                                    style = "margin:0px 10px 0px 10px;"
                                 >copy
                                 </v-btn>
                             </div>
@@ -565,7 +563,7 @@
                                                     </div>
                                                 </v-row>
                                             </div>
-                                            <div style = "margin-top:50px;">
+                                            <!-- <div style = "margin-top:50px;">
                                                 <validation-provider
                                                 v-slot="{ errors }"
                                                 name="Name"
@@ -599,8 +597,8 @@
                                                         v-model="newClassData.newToken"
                                                     ></v-text-field>
                                                 </validation-provider>
-                                            </div>
-                                        </v-col>    
+                                            </div> -->
+                                        </v-col>
                                         <v-col
                                             style ="width:162px; margin-left:0; margin-top:3px;"
                                             class = "calendar-float"

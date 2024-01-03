@@ -15,6 +15,10 @@
             <v-col style="padding: 0;">
                 <v-card style="margin-top: 10px; display: inline-flex; background-color: #DAF5FF; padding:10px; min-width:200px; min-height:200px;">
                     <v-col>
+                        <div style="width:100%; margin:0px 0px 15px 0px;">
+                            <v-btn v-if="done"  @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>Try again</v-btn>
+                            <v-btn v-else  @click="stop()"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop Generating</v-btn>
+                        </div>
                         <v-row 
                             lg="3"
                             md="4"
@@ -66,17 +70,15 @@
                                 </v-card>                                       
                             </v-col>
                         </v-row>
-                        <div style="width:100%; margin:15px 0px 0px 0px;">
-                            <v-btn v-if="done" style="float: right;" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>Try again</v-btn>
-                            <v-btn v-else style="float: right;" @click="stop()"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop Generating</v-btn>
-                        </div>
                     </v-col>
                 </v-card>
                 <v-card v-if="step>1" style="white-space: pre; margin-top:10px; width:90%; float:right;">
                     <v-card-subtitle>{{$t('autoModeling.scenario')}}</v-card-subtitle>
                     <v-card-text style="max-height: 1385px; overflow-y: auto; padding: 0px 10px 10px 10px;">
-                        <v-textarea class="gs-auto-modeling-text-box"
+                        <v-textarea 
                             v-model="state.scenario"
+                            flat
+                            class="gs-auto-modeling-text-box elevation-0"
                             dense
                             auto-grow
                             rows="2"

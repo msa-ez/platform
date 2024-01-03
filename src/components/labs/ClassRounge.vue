@@ -96,20 +96,20 @@
                                                             </v-icon>
                                                             <v-chip v-if="AlllabsList[group.groupName][labId].labStatus && AlllabsList[group.groupName][labId].labStatus.status=='completed'"
                                                                     color="green"
-                                                                    text-color="white"
                                                                     style="margin-left: 5px;"
+                                                                    outlined
                                                                     x-small>완료
                                                             </v-chip>
                                                             <v-chip v-if="AlllabsList[group.groupName][labId].labStatus && AlllabsList[group.groupName][labId].labStatus.status=='started'"
                                                                     color="red"
-                                                                    text-color="white"
                                                                     style="margin-left: 5px;"
+                                                                    outlined
                                                                     x-small>진행중
                                                             </v-chip>
                                                             <v-chip
                                                                     v-if="AlllabsList[group.groupName][labId].passMessage"
                                                                     :color="AlllabsList[group.groupName][labId].passMessage == '접속'? 'blue darken-1' :'green' "
-                                                                    text-color='white'
+                                                                    outlined
                                                                     x-small
                                                                     style="margin-left: 5px;"
                                                             >
@@ -157,20 +157,20 @@
                                                             </v-icon>
                                                             <v-chip v-if="AlllabsList[lab.groupName][groupedLab].labStatus && AlllabsList[lab.groupName][groupedLab].labStatus.status=='completed'"
                                                                     color="green"
-                                                                    text-color="white"
                                                                     style="margin-left: 5px;"
+                                                                    outlined
                                                                     x-small>완료
                                                             </v-chip>
                                                             <v-chip v-if="AlllabsList[lab.groupName][groupedLab].labStatus && AlllabsList[lab.groupName][groupedLab].labStatus.status=='started'"
                                                                     color="red"
-                                                                    text-color="white"
                                                                     style="margin-left: 5px;"
+                                                                    outlined
                                                                     x-small>진행중
                                                             </v-chip>
                                                             <v-chip
                                                                     v-if="AlllabsList[lab.groupName][groupedLab].passMessage"
                                                                     :color="AlllabsList[lab.groupName][groupedLab].passMessage == '접속'? 'blue darken-1' :'green' "
-                                                                    text-color='white'
+                                                                    outlined
                                                                     x-small
                                                                     style="margin-left: 5px;"
                                                             >
@@ -215,22 +215,21 @@
                                 <v-chip color="#9E9E9E" small style="margin-top:-30px; margin-left: 5px; color:white; font-weight:300;"><b>{{selectedLabInfo.tool}}</b>
                                 </v-chip>
                                 <v-chip v-if="selectedLabInfo.labStatus && selectedLabInfo.labStatus.status=='completed'"
-                                
                                         color="green"
-                                        text-color="white"
+                                        outlined
                                         style="margin-top: -30px; margin-left: 5px;"
                                         small>완료
                                 </v-chip>
                                 <v-chip v-if="selectedLabInfo.labStatus && selectedLabInfo.labStatus.status=='started'"
                                         color="red"
-                                        text-color="white"
+                                        outlined
                                         style="margin-top: -30px; margin-left: 5px;"
                                         small>진행중
                                 </v-chip>
                                 <v-chip
                                         v-if="selectedLabInfo.passMessage"
                                         :color="selectedLabInfo.passMessage == '접속'? 'blue darken-1' :'green' "
-                                        text-color='white'
+                                        outlined
                                         small
                                         style="margin-top: -30px; margin-left: 5px;"
                                 >
@@ -242,9 +241,9 @@
                                     <v-icon v-if="selectedLabInfo.groupName == 'Ops'" @click="openGitpodIde()" size="20" style="margin-right:10px;">mdi-git</v-icon>
                                     <v-icon v-if="isAdmin" style="margin-right:10px;" size="20" @click="openDeleteLabDialog()">mdi-archive</v-icon>
                                     <v-icon v-if="isAdmin" @click="openEditLabInfo(selectedLabInfo)" size="20" style="margin-right:5px;">mdi-pencil</v-icon>
-                                    <v-btn text
+                                    <v-btn color="primary"
                                         @click="loginToUseLab()"
-                                        style="color:#1E88E5; font-weight:700; padding:10px;">
+                                        style="font-weight:700; padding:10px;">
                                         <v-icon left style="margin-right: 3px;">
                                             mdi-login
                                         </v-icon>

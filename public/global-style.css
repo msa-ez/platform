@@ -2,6 +2,11 @@
     font-family: 'Apple SD Gothic Neo','Malgun Gothic',arial,sans-serif !important;
 } */
 
+.gs-es-auto-modling-btn {
+    z-index:2;
+    margin-right:5px;
+}
+
 .gs-rule-example-chip {
     margin-right:5px;
     background:#BDBDBD !important;

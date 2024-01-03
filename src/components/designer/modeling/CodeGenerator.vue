@@ -7,6 +7,7 @@
                 :selectedCodeList="selectedCodeList"
                 @startCommitWithSigpt="startCommit"
                 @openIDE="openIDE"
+                @rollBack="rollBack"
             >
             </GitActionDialog>
         </v-dialog>
@@ -114,6 +115,7 @@
                                     :isOneBCModel="isOneBCModel"
                                     :onlyOneBcId="onlyOneBcId"
                                     :isSIgpt="isSIgpt"
+                                    :commitMsg="commitMsg"
                                     :selectedTestFile="selectedTestFile"
                                 />
                             </div>
@@ -1598,10 +1600,10 @@
         data() {
             return {
                 // si-gpt
+                commitMsg: null,
                 fileLoadCnt: 0,
                 javaFileList: [],
                 isRootFolder: false,
-                openSelectTestFileDialog: false,
                 selectedCodeList: {},
                 gitActionDialogRenderKey: 0,
                 isSIgpt: false,
@@ -2619,9 +2621,13 @@
             me.canvas = getParent(this.$parent, this.canvasName);
 
             let git;
-
+            if(window.MODE == "onprem") {
+                git = new Gitlab();
+            } else {
+                git = new Github();
+            }
             this.gitAccessToken = localStorage.getItem('gitAccessToken') ? localStorage.getItem('gitAccessToken') : localStorage.getItem('gitToken')
-            this.gitAPI = new GitAPI();
+            this.gitAPI = new GitAPI(git);
             this.core = new CodeGeneratorCore({
                 canvas: me.canvas,
                 projectName: this.projectName,
@@ -2654,6 +2660,34 @@
         mounted: function () { 
 
             var me = this
+
+//             const apiUrl = 'https://api.tavily.com/search';
+//             const query = `test.java 파일을 mvn test 진행중에 
+// Resulted event must be published, 
+// Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:2.22.2:test (default-test) on project menu-management: There are test failures.
+// Please refer to /home/runner/work/food-delivery-service/food-delivery-service/menu-management/target/surefire-reports for the individual test results.
+// 라는 빌드 오류가 발생했어, 어떻게 해결해야할까 ?
+// `
+
+//             const payload = {
+//                 api_key: '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',
+//                 include_answer: true,
+//                 include_domains: [],
+//                 include_images: false,
+//                 include_raw_content: false,
+//                 max_results: 5,
+//                 query: query,
+//                 search_depth: 'advanced',
+//                 topic: 'general'
+//             };
+
+//             axios.post(apiUrl, payload)
+//             .then(response => {
+//                 console.log('Response:', response.data);
+//             })
+//             .catch(error => {
+//                 console.error('Error:', error.message);
+//             });
             
             window.addEventListener("message", me.messageProcessing);
             if(localStorage.getItem("editTemplateList") && me.firstSetEditTemplateList){
@@ -2736,6 +2770,25 @@
             });
         },
         methods: {
+            async rollBack(sha){
+                var me = this
+                let data = {
+                    sha: sha,
+                    force: true
+                }
+                let header = {
+                    Authorization: 'token ' + localStorage.getItem('gitToken'),
+                    Accept: 'application/vnd.github+json'
+                }
+                
+                await axios.post(`https://api.github.com/repos/${me.value.scm.org}/${me.value.scm.repo}/git/refs/heads/main`, data, { headers: header })
+
+                let src = await me.gitAPI.getFolder(me.value.scm.org, me.value.scm.repo, me.openCode[0].name + '/src');
+                if(src){
+                    me.getJavaFileList(src.data)
+                }
+
+            },
             openIDE(type){
                 if(type == 'gitpod'){
                     window.open(`https://gitpod.io/#https://github.com/${this.value.scm.org}/${this.value.scm.repo}`, '_blank');
@@ -2840,23 +2893,21 @@
                 me.isSIgpt = false
                 me.defaultCodeViewerRenderKey++;
             },
-            startCommit(updateList){
-                var me = this
-                updateList.forEach(function (file){
-                    file['codeChanges'].forEach(function (changed){
-                        var idx = me.codeLists.findIndex(x => x.fullPath == changed.fileName)
-                        if(!idx || idx == -1){
-                            idx = me.codeLists.findIndex(x => x.fileName == changed.fileName && x.bcId == me.openCode[0].bcId)
-                        }
-                        if(!idx || idx == -1){
-                            idx = me.codeLists.findIndex(x => changed.fileName.includes(x.fileName) && x.bcId == me.openCode[0].bcId)
-                        }
-                        if(me.codeLists[idx] && me.codeLists[idx].code){
-                            me.codeLists[idx].code = changed.modifiedFileCode
-                            me.filteredCodeLists[idx].code = changed.modifiedFileCode
-                            me.filteredPrettierCodeLists[idx].code = changed.modifiedFileCode
-                        }
-                    })
+            startCommit(commitData){
+                var me = this 
+                Object.keys(commitData.codeList).forEach(function (key){
+                    var idx = me.codeLists.findIndex(x => x.fullPath == key)
+                    if(!idx || idx == -1){
+                        idx = me.codeLists.findIndex(x => x.fileName == key && x.bcId == me.openCode[0].bcId)
+                    }
+                    if(!idx || idx == -1){
+                        idx = me.codeLists.findIndex(x => key.includes(x.fileName) && x.bcId == me.openCode[0].bcId)
+                    }
+                    if(me.codeLists[idx] && me.codeLists[idx].code){
+                        me.codeLists[idx].code = commitData.codeList[key]
+                        me.filteredCodeLists[idx].code = commitData.codeList[key]
+                        me.filteredPrettierCodeLists[idx].code = commitData.codeList[key]
+                    }
                 })
 
                 var actionCode = `name: test
@@ -2893,6 +2944,7 @@ jobs:
 
                 me.gitMenu = true
                 me.isSIgpt = true
+                me.commitMsg = commitData.message
                 me.gitMenuRenderKey++;
             },
             testTemplateModel(){
@@ -4165,8 +4217,7 @@ jobs:
 
                 this._collectSelectedFileContents(files, codeBag, option)
                 return codeBag
-            }
-            ,
+            },
             _collectSelectedFileContents(root, codeBag, option){
                 var me = this;
                 var set = new Set();
@@ -4819,8 +4870,8 @@ jobs:
                     }
                 })
 
-                window.$HandleBars.registerHelper("include", function(){
-                    return commonTemplate
+                window.$HandleBars.registerHelper("include", function(str){
+                    return commonTemplate['include'];
                 });
 
                 window.$HandleBars.registerHelper("url", function(str){
@@ -7032,8 +7083,12 @@ jobs:
                             me.selectedCodeList[data.name] = file.data
                             me.fileLoadCnt--;
                             if(me.fileLoadCnt == 0){
-                                me.openGitActionDialog = true
-                                me.gitActionDialogRenderKey++;
+                                if(!me.openGitActionDialog){
+                                    me.openGitActionDialog = true
+                                    me.gitActionDialogRenderKey++;
+                                } else {
+                                    me.$EventBus.$emit("rollBackCodeList", me.selectedCodeList);
+                                }
                             }
                         }
                     })
@@ -7043,24 +7098,32 @@ jobs:
             async startImplWithAI(selectedTestFile){
                 var me = this
                 me.selectedTestFile = selectedTestFile
-
-                me.fileLoadCnt = 1
-                me.javaFileList = []
-                let src = await me.gitAPI.getFolder(me.value.scm.org, me.value.scm.repo, me.openCode[0].name + '/src');
-                if(src){
-                    me.getJavaFileList(src.data)
+                
+                if(me.selectedTestFile.isUseMain){
+                    me.fileLoadCnt = 1
+                    me.javaFileList = []
+                    
+                    try {
+                        let src = await me.gitAPI.getFolder(me.value.scm.org, me.value.scm.repo, me.openCode[0].name + '/src');
+                        if(src){
+                            me.getJavaFileList(src.data)
+                        }
+                    } catch(e){
+                        alert('Main branchThe file cannot be found in main branch. Main branch needs an update. (' + e + ')')
+                    }
+                } else {
+                    me.openGitActionDialog = true
+                    me.gitActionDialogRenderKey++;
                 }
             },
             getTestFileList(){
                 var me = this
                 me.isRootFolder = false;
                 if(me.rootModelAndElementMap.modelForElements.BoundedContext.find(x => x.name == me.openCode[0].name)){
-                    // if(this.projectInformation && this.projectInformation.firstCommit == 'false'){
-                        me.isRootFolder = true;
-                        me.selectedTestFile = null
-                        me.testFileList = []
-                        let collectedCodes = me.getSelectedFilesDeeply(me.openCode, {keyword: "si"})
-                    // } 
+                    me.isRootFolder = true;
+                    me.selectedTestFile = null
+                    me.testFileList = []
+                    me.getSelectedFilesDeeply(me.openCode, {keyword: "si"})
                 }
             },
             editBreakPoint(debuggerPoint){

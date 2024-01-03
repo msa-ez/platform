@@ -2,7 +2,7 @@
     <div v-if="input && modelCreationCompleted" >
      <v-row style="position:absolute; right:30px; top:75px;">
         <v-card style="text-align: center; z-index: 2;" width="auto">
-            <v-card-text :style="(isExpanded && generationStopped) ? { width: '70px' } : isExpanded ? { width: '160px' } : { width: '400px' }" 
+            <v-card-text :style="(isExpanded && generationStopped) ? { width: '75px' } : isExpanded ? { width: '170px' } : { width: '400px' }" 
                 style="padding: 0px; ">
                 <v-progress-linear  :indeterminate="generationStopped" v-if="generationStopped"
                     style="margin-top: 10px; pointer-events: none;"
@@ -43,9 +43,10 @@
                                 icon small
                                 v-bind="attrs"
                                 v-on="on"
-                                style="margin-right: 10px; z-index:2"
+                                style="margin-right: 5px; z-index:2"
+                                class="gs-es-auto-modling-btn"
                             >
-                                <v-icon style="margin-right: 5px;">mdi-refresh</v-icon>
+                                <v-icon>mdi-refresh</v-icon>
                             </v-btn>
                         </template>
                         <span>Try again</span>
@@ -65,16 +66,21 @@
                     </v-tooltip> -->
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
-                            <v-btn @click="finishModelCreation()"
-                                icon small
+                            <v-btn v-if="generatorStep === 'aggregate' || generatorName === 'CJMGenerator' || generatorName === 'BMGenerator'"
+                                @click="finishModelCreation()"
+                                small
                                 v-bind="attrs"
                                 v-on="on"
-                                style="z-index:2; margin-right:10px;"
-                                :color="generatorStep === 'aggregate' ? 'primary' : ''"
+                                class="gs-es-auto-modling-btn"
+                                style="padding:0px 5px; margin-right:10px;"
+                                color="primary"
                             >
-                            <v-icon style="margin-right: 5px;"
-                                :size="generatorStep === 'aggregate' ? '30' : ''"
-                            >mdi-check-circle-outline</v-icon>
+                                <div v-if="generatorName === 'CJMGenerator' || generatorName === 'BMGenerator'">
+                                    <span><Icon style="float:left; margin-right:3px;" icon="ri:check-fill" width="16" height="16"/>complete</span>
+                                </div>
+                                <div v-else>
+                                    <span>CONTINUE<v-icon>mdi-arrow-right</v-icon></span>
+                                </div>
                             </v-btn>
                         </template>
                         <span>Auto modeling completed</span>
@@ -263,7 +269,7 @@
             
             },
             finishModelCreation() {
-                this.$EventBus.$emit('modelCreationFinished');
+                this.$EventBus.$emit('modelCreationFinished', this.generatorStep);
 
                 this.generationStopped = false;
                 this.modelCreationCompleted = false;

@@ -105,7 +105,7 @@
                         </tr>
                     </template>
                 </table>
-                <v-text-field readonly v-model="rule.description"></v-text-field>
+                <v-text-field v-model="rule.description"></v-text-field>
                 <v-layout>
                     <v-spacer/>
                     <v-icon @click="addExample()">mdi-plus</v-icon>
@@ -350,6 +350,7 @@
             },
             startExampleGenerate(){
                 var me = this
+                me.$EventBus.$emit('policyDescriptionUpdated', me.rule.description)
                 me.isGenerating = true
                 me.generatorComponent.generate()
             },  

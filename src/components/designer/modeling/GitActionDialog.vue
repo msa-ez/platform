@@ -6,13 +6,6 @@
             <div style="display: flex; max-height: 100%;">
                 <div style="width: 400px; height: 88vh; background-color: #1e1e1e;">
                     <v-card-title style="margin-top: -10px; margin-bottom: -15px; color: white;">
-                        <v-progress-circular
-                            v-if="startGitAction"
-                            indeterminate
-                            :size="20"
-                            color="primary"
-                            style="margin-right: 10px; margin-left: -5px;"
-                        ></v-progress-circular>
                         Auto Implementation
                     </v-card-title>
 
@@ -52,7 +45,17 @@
                                 >
                                     <template v-slot:activator>
                                         <v-list-item-content style="margin-left: -10px;">
-                                            <v-list-item-title style="color: white">{{test.solutionType}}</v-list-item-title>
+                                            <v-list-item-title style="color: white">
+                                                {{test.solutionType}}
+                                                <v-chip style="margin-left: 5px;" small v-if="test.sha" @click="rollBack(test.sha, testIdx)">rollback</v-chip>
+                                                <v-progress-circular
+                                                    v-if="isSolutionCreating && siTestResults.lastIndex == testIdx"
+                                                    indeterminate
+                                                    :size="15"
+                                                    color="primary"
+                                                    style="margin-left: 5px;"
+                                                ></v-progress-circular>
+                                            </v-list-item-title>
                                         </v-list-item-content>
                                     </template>
                                     <v-list-item dense v-for="(code, codeIdx) in test.codeChanges" :key="codeIdx" :style="`${testIdx}_${codeIdx}` == selectedIdx ? 'background-color: #000000;':''">
@@ -269,30 +272,52 @@
 
                         <!-- <v-divider></v-divider> -->
                     </div>
-                    <div v-if="!allTestSucceeded" style="margin-left: 150px">
-                        <div style="float: right;">
-                            <div v-if="!startGitAction" style="margin-bottom: 20px;">
-                                <v-btn @click="regenerate()" 
-                                    style="margin-right: 10px;">
+                    <div v-if="!allTestSucceeded" style="margin-left: 161px; z-index: 99; margin-right: 202px; margin-top: 30px;">
+                        <div v-if="!startGitAction">
+                            <v-row>
+                                <v-avatar 
+                                    size="35"
+                                    rounded
+                                    style="margin-right: 6px; margin-top: 6px;"
+                                >
+                                    <img
+                                        :src="userImg"
+                                        alt="User"
+                                    >
+                                </v-avatar>
+                                <v-text-field
+                                    v-if="!isAutoMode"
+                                    v-model="prompt"
+                                    solo
+                                    label="Enter your request"
+                                    append-icon="mdi-send"
+                                    @click:append="regenerate(prompt)"
+                                    @keydown.enter="regenerate(prompt)"
+                                    clearable
+                                ></v-text-field>
+                            </v-row>
+                            <div style="float: right; margin-top: -10px; margin-right: -12px;">
+                                <v-btn @click="regenerate()">
                                     Think again
                                 </v-btn>
                                 <v-btn @click="commitToGit()" 
-                                    style="margin-right: 10px;" color="primary">
+                                    style="margin-left: 10px;"
+                                    color="primary">
                                     Go ahead
                                 </v-btn>
                             </div>
-                            <div v-else>
-                                <v-row style="margin-right: 20px; margin-top: 10px;">
-                                    <v-switch v-if="commitCnt < 15"
-                                        style="margin-right: 10px; margin-top: 1px;"
-                                        v-model="isAutoMode"
-                                        :label="'Auto mode'"
-                                    ></v-switch>
-                                    <v-btn :disabled="!isSolutionCreating" @click="stop()" style="margin-right: 10px; position: relative; float: right;">
-                                        Stop generating
-                                    </v-btn>
-                                </v-row>
-                            </div>
+                        </div>
+                        <div v-else style="position: absolute; bottom: 10px; right: 15px;">
+                            <v-row>
+                                <v-switch v-if="commitCnt < 15"
+                                    style="margin-top: 1px;"
+                                    v-model="isAutoMode"
+                                    :label="'Auto mode'"
+                                ></v-switch>
+                                <v-btn :disabled="!isSolutionCreating" @click="stop()" style="margin-left: 10px; margin-right: 10px;">
+                                    Stop generating
+                                </v-btn>
+                            </v-row>
                         </div>
                     </div>
                     <div v-else style="margin-left: 150px; margin-right: 150px; z-index: 9;">
@@ -408,6 +433,10 @@
         },
         data() {
             return {
+                openAiMessageList: [],
+                prompt: null,
+                // isFirstGenerate: true,
+                commitMsg: null,
                 commitCnt: 0,
                 actionPathList: [],
                 initConfettiCnt: 0,
@@ -433,6 +462,7 @@
                 systemMsg: null,
                 dialogRenderKey: 0,
                 lastIndex: 0,
+                solutionCnt: 0,
                 lastSolutionIdx: null,
                 solutionNumber: 0,
                 codeChangeNumber: 0,
@@ -448,7 +478,6 @@
                 codeList: null,
                 summarizedCodeList: {},
                 copySelectedCodeList: null,
-                updateList: [],
                 siTestResults: [],
 
                 fullErrorLog: null,
@@ -498,6 +527,12 @@
             me.$EventBus.$on('setActionId', function (path) {
                 me.actionPathList.push(path)
             })
+            me.$EventBus.$on('getCommitId', function (sha) {
+                me.siTestResults[me.lastIndex].sha = sha
+            })
+            me.$EventBus.$on('rollBackCodeList', function (codeList) {
+                me.copySelectedCodeList = codeList
+            })
             me.$EventBus.$on('getActionLogs', function (logInfo) {
                 if(logInfo.state === "success"){
                     me.startGitAction = false
@@ -545,6 +580,23 @@
             });
         },
         methods: {
+            async rollBack(sha, idx){
+                var me = this
+                me.siTestResults.splice(idx + 1);
+                me.lastIndex = me.siTestResults.lastIndex
+                me.resultLength = me.siTestResults.length
+                
+                me.siTestResults[me.lastIndex].userMessage = null
+                me.siTestResults[me.lastIndex].errorLog = null
+                me.siTestResults[me.lastIndex].fullErrorLog = null
+                me.siTestResults[me.lastIndex].compilerMessageIdx = null
+                me.siTestResults[me.lastIndex].systemMessage = false 
+                me.siTestResults[me.lastIndex].stopLoading = false
+
+                me.commitMsg = me.siTestResults[me.lastIndex].solutionType + ': ' + me.siTestResults[me.lastIndex].solution
+                
+                me.$emit("rollBack", sha)
+            },
             openIDE(type) {
                 this.$emit('openIDE', type)
             },
@@ -613,13 +665,6 @@
                 if(me.copySelectedCodeList[obj.name]){
                     me.copySelectedCodeList[obj.name] = obj.code
                 }
-                me.updateList.forEach(function (solution){
-                    solution.codeChanges.forEach(function (changes){
-                        if(changes.fileName == obj.name){
-                            changes.modifiedFileCode = obj.code
-                        }
-                    })
-                })
             },
             async summaryCodeList(){
                 var me = this
@@ -664,22 +709,29 @@ What files do I need to modify and what related files do I need to fix the error
             },
             async generate(){
                 var me = this
+                me.commitMsg = null
                 me.model = 'gpt-4'
                 me.startGitAction = true
                 me.generator = new SIGenerator(this);
-                await me.summaryCodeList()
+                if(!me.prompt){
+                    await me.summaryCodeList()
+                }
                 me.generator.generate();
             },
-            regenerate(){
-                if(this.updateList){
-                    for(var i = 0; i < this.updateList.length; i++){
-                        this.siTestResults.pop()
+            regenerate(prompt){
+                if(prompt){
+                    this.siTestResults[this.lastIndex].userMessage = prompt
+                } else {
+                    if(this.solutionCnt){
+                        for(var i = 0; i < this.solutionCnt; i++){
+                            this.siTestResults.pop()
+                        }
+                        this.lastIndex = this.siTestResults.lastIndex
+                        this.resultLength = this.siTestResults.length
                     }
-                    this.lastIndex = this.siTestResults.lastIndex
-                    this.resultLength = this.siTestResults.length
-                }
-                if(this.savedGeneratedErrorDetails){
-                    this.generatedErrorDetails = this.savedGeneratedErrorDetails
+                    if(this.savedGeneratedErrorDetails){
+                        this.generatedErrorDetails = this.savedGeneratedErrorDetails
+                    }
                 }
                 this.generate()
             },
@@ -696,6 +748,8 @@ What files do I need to modify and what related files do I need to fix the error
             },
             commitToGit(){
                 var me = this
+                me.prompt = null
+                me.openAiMessageList = []
                 me.selectedIdx = null
                 me.startGitAction = true
                 me.isFirstCommit = false
@@ -706,7 +760,11 @@ What files do I need to modify and what related files do I need to fix the error
                 }
                 me.scrollToBottom();
                 me.codeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
-                me.$emit("startCommitWithSigpt", me.updateList)
+                let commitData = {
+                    codeList: me.codeList,
+                    message: me.commitMsg
+                }
+                me.$emit("startCommitWithSigpt", commitData)
                 if(me.commitCnt >= 15){
                     me.isAutoMode = false
                 }
@@ -729,13 +787,13 @@ What files do I need to modify and what related files do I need to fix the error
                             }   
                             let dumyFile = []
                             dumyFile.push(me.testFile)
-                            me.updateList = model
-                            me.updateList.forEach((solution, solutionIdx) => {
+                            model.forEach((solution, solutionIdx) => {
                                 if(!me.siTestResults[me.resultLength + solutionIdx]){
                                     me.siTestResults[me.resultLength + solutionIdx] = {}
                                 }
                                     me.siTestResults[me.resultLength + solutionIdx].solution = solution.solution
                                     me.siTestResults[me.resultLength + solutionIdx].solutionType = solution.solutionType
+                                    me.commitMsg = solution.solutionType + ': ' + solution.solution
                                 if(solution && solution.codeChanges){
                                     solution.codeChanges.forEach(function (changes, changesIdx){
                                         if(changes){
@@ -773,15 +831,15 @@ What files do I need to modify and what related files do I need to fix the error
                             });
         
                             if(!me.lastSolutionIdx 
-                            || me.solutionNumber < me.updateList.lastIndex 
-                            || (me.updateList[me.solutionNumber] && me.updateList[me.solutionNumber].codeChanges && me.codeChangeNumber < me.updateList[me.solutionNumber].codeChanges.lastIndex))
+                            || me.solutionNumber < model.lastIndex 
+                            || (model[me.solutionNumber] && model[me.solutionNumber].codeChanges && me.codeChangeNumber < model[me.solutionNumber].codeChanges.lastIndex))
                             {
-                                if(me.solutionNumber < me.updateList.lastIndex){
+                                if(me.solutionNumber < model.lastIndex){
                                     me.codeChangeNumber = 0
-                                    me.solutionNumber = me.updateList.lastIndex
+                                    me.solutionNumber = model.lastIndex
                                 } else {
-                                    if(me.updateList[me.solutionNumber] && me.updateList[me.solutionNumber].codeChanges){
-                                        me.codeChangeNumber = me.updateList[me.solutionNumber].codeChanges.lastIndex
+                                    if(model[me.solutionNumber] && model[me.solutionNumber].codeChanges){
+                                        me.codeChangeNumber = model[me.solutionNumber].codeChanges.lastIndex
                                     }
                                 }
                                 me.lastSolutionIdx = me.resultLength + me.solutionNumber + '_' + me.codeChangeNumber 
@@ -828,9 +886,23 @@ What files do I need to modify and what related files do I need to fix the error
                                 me.lastIndex = me.siTestResults.lastIndex
                                 me.resultLength = me.siTestResults.length
                                 me.generatedErrorDetails = null
-                                if(me.isAutoMode){
-                                    me.commitToGit()
-                                }
+                                me.solutionCnt = model.length
+                                // if(me.isFirstGenerate){
+                                //     me.startGitAction = true
+                                //     me.codeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
+                                //     me.generate()
+                                //     me.isFirstGenerate = false
+                                // } else {
+                                    if(me.isAutoMode){
+                                        me.commitToGit()
+                                    } else {
+                                        me.prompt = null
+                                        me.openAiMessageList.push({
+                                            content: JSON.stringify(model),
+                                            role: "assistant"
+                                        })
+                                    }
+                                // }
                             }
                             me.scrollToBottom();
                         } else {

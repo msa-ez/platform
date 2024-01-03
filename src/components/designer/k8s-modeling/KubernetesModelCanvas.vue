@@ -94,11 +94,10 @@
                                 <v-row justify="end" align="start">
                                     <v-btn
                                         style="position: absolute; top:26px; right: 60px;"
-                                        color="orange"
+                                        color="primary"
                                         @click="openCommandViewer()"
                                         v-on="on"
                                         small
-                                        text
                                     >
                                         <v-icon>mdi-code-greater-than</v-icon>
                                         <div>KUBECTL</div>
@@ -261,7 +260,7 @@
                                                 <v-btn class="k8s-hide-gitops-btn"
                                                         text
                                                         style="margin-right: 5px;margin-top: 15px;"
-                                                        color="orange" dark
+                                                        color="primary" dark
                                                         @click="openCodeViewer()"
                                                         v-on="on">
                                                     <Icon class="gs-icon-style" icon="icomoon-free:git"
@@ -350,9 +349,8 @@
                                         >
                                             <template v-slot:activator="{ on }">
                                                 <v-btn class="k8s-hide-code-btn"
-                                                        text
                                                         style="margin-right: 5px;margin-top: 15px;"
-                                                        color="orange" dark
+                                                        color="primary" dark
                                                         @click="openCodeViewer()"
                                                         v-on="on">
                                                     <v-icon> {{ icon.code }}</v-icon>
@@ -475,11 +473,11 @@
                                                 <template v-slot:activator="{ on }">
                                                     <v-btn
                                                             style="margin-right: 5px;margin-top: 15px;"
-                                                            color="orange"
+                                                            color="primary"
                                                             @click="openCodeViewer()"
                                                             v-on="on"
                                                             small
-                                                            text>
+                                                    >
                                                         <v-icon> {{ icon.code }}</v-icon>
                                                         CODE
                                                     </v-btn>
@@ -498,11 +496,11 @@
                                                 <template v-slot:activator="{ on }">
                                                     <v-btn
                                                             style="margin-right: 5px;margin-top: 15px;"
-                                                            color="orange"
+                                                            color="primary"
                                                             @click="openCodeViewer()"
                                                             v-on="on"
                                                             small
-                                                            text>
+                                                    >
                                                         <div v-if="gitOpsLoading">
                                                             <v-progress-circular
                                                                     indeterminate

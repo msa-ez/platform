@@ -689,7 +689,7 @@
                         me.receiveQueue()
                     }
                 } else {
-                    me.receiveValueSpecOne()
+                    me.receiveValue()
                     me.initLoad = true
                     me.$EventBus.$emit('progressValue', false)
                 }
@@ -2013,7 +2013,7 @@
                         if (me.isQueueModel) {
                             me.receiveQueue()
                         } else {
-                            me.receiveValueSpecOne()
+                            me.receiveValue()
                             me.initLoad = true
                             me.$EventBus.$emit('progressValue', false)
                         }
@@ -3461,11 +3461,11 @@
                     })
                 });
             },
-            async receiveValueSpecOne() {
+            async receiveValue() {
                 var me = this
-                await me.watch(`db://definitions/${me.projectId}/versionLists/${me.information.lastVersionName}/versionValue`, function (callback) {
+                await me.watch(`db://definitions/${me.projectId}/value`, function (callback) {
                     // me.changedByMe = false
-                    me.value = JSON.parse(callback.value)
+                    me.value = JSON.parse(callback)
                 })
             },
             releaseQueue(projectId){
@@ -3839,16 +3839,14 @@
                         //     value: JSON.stringify(me.value)
                         // }
                         // me.putObject(`db://definitions/${me.projectId}/versionLists/${versionName}/versionValue`, putValue)
-                        var versionName = me.information.lastVersionName
-                        await me.putString(`storage://definitions/${me.projectId}/versionLists/${versionName}/versionValue`, JSON.stringify(me.value));
+                        await me.putString(`storage://definitions/${me.projectId}/value`, JSON.stringify(me.value));
                         me.localUndoRedoStorage(diff)
                     } else if (me.$isElectron) {
                         // var putValue = {
                         //     value: JSON.stringify(me.value)
                         // }
                         // me.putObject(`db://definitions/${me.projectId}/versionLists/${versionName}/versionValue`, putValue)
-                        var versionName = me.information.lastVersionName
-                        await me.putString(`storage://definitions/${me.projectId}/versionLists/${versionName}/versionValue`, JSON.stringify(me.value));
+                        await me.putString(`storage://definitions/${me.projectId}/value`, JSON.stringify(me.value));
                         me.localUndoRedoStorage(diff)
                     }
 
@@ -4473,12 +4471,10 @@
                         me.modelChanged = true
                     } else if ( !me.isQueueModel && !me.isReadOnlyModel ) {
                         // 서버o, 랩 x, 큐 x
-                        var versionName = me.information.lastVersionName
-                        await me.putString(`storage://definitions/${me.projectId}/versionLists/${versionName}/versionValue`, JSON.stringify(me.value));
+                        await me.putString(`db://definitions/${me.projectId}/value`, JSON.stringify(me.value));
                         me.localUndoRedoStorage(diff)
                     } else if (me.$isElectron) {
-                        var versionName = me.information.lastVersionName
-                        await me.putString(`storage://definitions/${me.projectId}/versionLists/${versionName}/versionValue`, JSON.stringify(me.value));
+                        await me.putString(`db://definitions/${me.projectId}/value`, JSON.stringify(me.value));
                         me.localUndoRedoStorage(diff)
                     }
 

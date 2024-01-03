@@ -7,8 +7,8 @@
             <v-tab value="mainImage">Main Image</v-tab>
             <v-tab value="colorPalettes">Color Palettes</v-tab>
             <v-tab value="fonts">Fonts</v-tab>
-            <v-tab value="menuImages">Images for menus</v-tab>
-            <v-tab value="menuUiStyles">UI for menus</v-tab>
+            <!-- <v-tab value="menuImages">Images for menus</v-tab> -->
+            <!-- <v-tab value="menuUiStyles">UI for menus</v-tab> -->
             
         </v-tabs>
         <v-tabs-items v-model="tab">
@@ -34,6 +34,8 @@
                         <v-card class="auto-modeling-user-story-card" v-if="!firstMessageIsTyping" style="bottom: 10px; top: -5px;">
                             <v-card-text class="auto-modling-textarea" style="margin-bottom: -30px;">
                                 <v-textarea
+                                flat
+                                class="elevation-0"
                                 v-model="imageDescription"
                                 dense
                                 auto-grow
@@ -42,9 +44,12 @@
                                 >
                                 </v-textarea>
                             </v-card-text>
-
-                            <v-btn @click="generateImageDescription"  style="float: right; margin-bottom: 10px; margin-right: 15px;">REGENERATE IMAGE DESCRIPTION</v-btn>
-                            <v-btn @click="generateImage" style="float: right; margin-bottom: 10px; margin-right: 15px;">GENERATE IMAGE</v-btn>
+                            <v-row style="margin-bottom: 10px;">
+                                <v-spacer></v-spacer>
+                                <!-- <v-btn @click="regenerateImages()" style="margin-right: 15px;"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>Try again</v-btn> -->
+                                <v-btn @click="generateImageDescription" style=" margin-right: 15px;">(RE)GENERATE IMAGE DESCRIPTION</v-btn>
+                                <v-btn @click="generateImage" color="primary" style=" margin-right: 25px;">GENERATE IMAGE</v-btn>
+                            </v-row>
                         </v-card>
                     </v-row>
                     <v-row v-if="!isLoading">
@@ -75,7 +80,6 @@
                         </v-col>
                     </v-row>
                 </div>
-                <v-btn style="float: right; margin: 15px 5px 10px 0px;" @click="regenerateImages()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>Try again</v-btn>
             </v-tab-item>
             <v-tab-item key="colorPalettes">
                 <v-tabs
@@ -1018,10 +1022,12 @@
                 }
             },
             regenerateFont() {
+                this.isLoading = true;
                 this.value.fonts = [],
                 this.fontGenerator.generate();
             },
             regenerateImages(){
+                this.isLoading = true;
                 this.value.images = [];
                 this.imageGenerator.generate();
             },

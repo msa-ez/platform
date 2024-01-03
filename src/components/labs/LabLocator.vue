@@ -1386,7 +1386,6 @@
             },
             "setInstructionText":
                 _.debounce(function (newVal, oldVal) {
-                    // this.test1234()
                     var me = this
                     // console.log(me.oldValue)
                     // console.log(newVal)

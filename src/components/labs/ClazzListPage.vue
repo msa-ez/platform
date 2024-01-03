@@ -401,9 +401,8 @@
                                     ></v-switch>
                                     <div style="position:absolute; right:20px; margin-top:-37px;">
                                         <v-btn
-                                                text
                                                 color="primary"
-                                                style="width:85px; font-weight:900;"
+                                                style="width:85px; font-weight:900; margin:-5px 12px 0px 0px;"
                                                 :disabled="invalid || isLoading"
                                                 type="submit"
                                                 @click="createNewClazz(newClass)"
