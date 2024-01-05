@@ -7540,6 +7540,20 @@ jobs:
                     'k8s.RoleBinding': [],
                     'k8s.ClusterRole': [],
                     'k8s.ClusterRoleBinding': [],
+                    'k8s.Job': [],
+                    'k8s.CronJob': [],
+                    'k8s.Gateway': [],
+                    'k8s.Sidecar': [],
+                    'k8s.DestinationRule': [],
+                    'k8s.VirtualService': [],
+                    'k8s.Rule': [],
+                    'k8s.QuotaSpec': [],
+                    'k8s.ServiceEntry': [],
+                    'k8s.QuotaSpecBinding': [],
+                    'k8s.Quota': [],
+                    'k8s.MemQuota': [],
+                    'k8s.knativeService': [],
+                    'k8s.CustomResourceDefinition': [],
                 }
 
                 try {
@@ -7561,7 +7575,6 @@ jobs:
                                 var yaml = '- <<EOF \n' + me.yamlFilter(json2yaml.stringify(item.object)) + 'EOF'
                                 // yaml += '- <<EOF \n' + yaml + 'EOF';
                                 item.yamlPath = yaml;
-
 
                                 if (item._type == 'Service') {
                                     k8sModelForElements['k8s.Service'].push(item);
@@ -7595,7 +7608,35 @@ jobs:
                                     k8sModelForElements['k8s.ClusterRole'].push(item);
                                 } else if (item._type == 'ClusterRoleBinding') {
                                     k8sModelForElements['k8s.ClusterRoleBinding'].push(item);
-                                }
+                                } else if (item._type == 'Job') {
+                                    k8sModelForElements['k8s.Job'].push(item);
+                                } else if (item._type == 'CronJob') {
+                                    k8sModelForElements['k8s.CronJob'].push(item);
+                                } else if (item._type == 'Gateway') {
+                                    k8sModelForElements['k8s.Gateway'].push(item);
+                                } else if (item._type == 'Sidecar') {
+                                    k8sModelForElements['k8s.Sidecar'].push(item);
+                                } else if (item._type == 'DestinationRule') {
+                                    k8sModelForElements['k8s.DestinationRule'].push(item);
+                                } else if (item._type == 'Rule') {
+                                    k8sModelForElements['k8s.Rule'].push(item);
+                                } else if (item._type == 'VirtualService') {
+                                    k8sModelForElements['k8s.VirtualService'].push(item);
+                                } else if (item._type == 'QuotaSpec') {
+                                    k8sModelForElements['k8s.QuotaSpec'].push(item);
+                                } else if (item._type == 'ServiceEntry') {
+                                    k8sModelForElements['k8s.ServiceEntry'].push(item);
+                                } else if (item._type == 'QuotaSpecBinding') {
+                                    k8sModelForElements['k8s.QuotaSpecBinding'].push(item);
+                                } else if (item._type == 'Quota') {
+                                    k8sModelForElements['k8s.Quota'].push(item);
+                                } else if (item._type == 'MemQuota') {
+                                    k8sModelForElements['k8s.MemQuota'].push(item);
+                                } else if (item._type == 'knativeService') {
+                                    k8sModelForElements['k8s.knativeService'].push(item);
+                                } else if (item._type == 'CustomerResourceDefinition') {
+                                    k8sModelForElements['k8s.CustomerResourceDefinition'].push(item);
+                                } 
                             }
                         }
                     }
