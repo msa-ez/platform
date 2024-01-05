@@ -47,7 +47,6 @@
                                         <v-list-item-content style="margin-left: -10px;">
                                             <v-list-item-title style="color: white">
                                                 {{test.solutionType}}
-                                                <v-chip style="margin-left: 5px;" small v-if="test.sha" @click="rollBack(test.sha, testIdx)">rollback</v-chip>
                                                 <v-progress-circular
                                                     v-if="isSolutionCreating && siTestResults.lastIndex == testIdx"
                                                     indeterminate
@@ -75,6 +74,18 @@
                                             </v-row>
                                         </div>
                                     </v-list-item>
+                                    <div class="rollBack" v-if="test.sha">
+                                        <div class="line"></div>
+                                        <v-tooltip bottom>
+                                            <template v-slot:activator="{ on }">
+                                                <v-chip v-on="on" style="margin-left: -25px;" small v-if="test.sha" @click="rollBack(test.sha, testIdx)">
+                                                    <v-icon small>mdi-undo-variant</v-icon>
+                                                </v-chip>
+                                            </template>
+                                            <span>Roll back and start over from here</span>
+                                        </v-tooltip>
+                                        <div class="line"></div>
+                                    </div>
                                 </v-list-group>
                             </v-list-group>
                         </v-list>
@@ -506,7 +517,11 @@
         },
         created:function () {
             if(this.testFile){
-                this.testFile.subPath = this.testFile.fullPath.replace(this.testFile.name, '')
+                if(this.testFile.fullPath){
+                    this.testFile.subPath = this.testFile.fullPath.replace(this.testFile.name, '')
+                } else {
+                    this.testFile.subPath = ''
+                }
                 this.testFile.code = ''
             }
         },
@@ -658,6 +673,7 @@
                 window.open(this.actionPathList[idx], "_blank")
             },
             stop(){
+                this.isAutoMode = false
                 this.startGitAction = false
             },
             editCode(obj){
@@ -954,4 +970,14 @@ What files do I need to modify and what related files do I need to fix the error
     }
 </script>
 <style>
+.line {
+  flex-grow: 1;
+  height: 0.1px;
+  background-color: #e0e0e0;
+}
+
+.rollBack {
+  display: flex;
+  align-items: center;
+}
 </style>

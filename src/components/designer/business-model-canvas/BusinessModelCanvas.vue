@@ -119,28 +119,29 @@
                                     </v-icon>
                                 </v-btn>
                             </template>
-                            <v-row class="mobile-action-btn-box">
-                                <v-col align="right">
-                                    <v-btn class="mobile-action-btn" small color=primary text
-                                            @click="saveComposition('save')">save
-                                    </v-btn>
-                                    <v-btn
-                                            text
-                                            class="mobile-action-btn"
-                                            v-if="isOwnModel && !getReadOnly"
-                                            color="primary"
-                                            dark
-                                            @click="openInviteUsers()"
-                                            small
-                                    >
-                                        <v-icon>{{icon.share}}</v-icon>
-                                        SHARE
-                                    </v-btn>
-                                    <v-btn class="mobile-action-btn" small color=primary
-                                            @click="generateImplementationModel()">implementation model
-                                    </v-btn>
-                                </v-col>
-                            </v-row>
+                            <v-col style="margin-right:390px;">
+                                <v-btn small color=primary text
+                                        @click="saveComposition('save')">save
+                                </v-btn>
+                                <v-btn
+                                        text
+                                        v-if="isOwnModel && !getReadOnly"
+                                        color="primary"
+                                        dark
+                                        @click="openInviteUsers()"
+                                        small
+                                >
+                                    <v-icon>{{icon.share}}</v-icon>
+                                    SHARE
+                                </v-btn>
+                                <v-btn class="action-btn" color=primary @click="generateImplementationModel()">
+                                    <Icon icon="mdi:head-cog-outline"
+                                        height="24"
+                                        style="margin-right:5px;"
+                                    />
+                                    <div>implementation model</div>
+                                </v-btn>
+                            </v-col>
                         </v-speed-dial>
                     </div>
 

@@ -485,13 +485,13 @@
                 this.isOpenImplDialog = true
             },
             changedTestFile(){
-                if(this.selectedTestFile.code.includes("test0")){
+                // if(this.selectedTestFile.code.includes("test0")){
                     this.isExistRules = true
                     this.errorMsg = null
-                } else {
-                    this.isExistRules = false
-                    this.errorMsg = 'The test function does not exist in the selected test file. To add a test function, add example'
-                }
+                // } else {
+                    // this.isExistRules = false
+                    // this.errorMsg = 'The test function does not exist in the selected test file. To add a test function, add example'
+                // }
 
             },
             checkTopping(){

@@ -49,7 +49,7 @@
                                 @click:append="startGen(genType)"
                                 @keydown.enter="startGen(genType)"
                             ></v-text-field>
-                            <div v-if="openChatUI" style="margin-left: 10px; margin-top: 70px;">
+                            <div v-if="openChatUI" style="margin-left: 10px; margin-top: 100px;">
                                 <v-col style="padding:0px;">
                                     <v-card style="display:inline-block; background-color: #DAF5FF;">
                                         <v-card-text class="auto-modeling-message">
