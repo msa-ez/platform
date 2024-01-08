@@ -7052,19 +7052,29 @@ jobs:
                     me.openCode = []
                 }
             },
-            getJavaFileList(list){
+            getJavaFileList(list, option){
                 var me = this
                 let folderList = []
                 list.forEach(function (data){
                     if(data.type == 'dir'){
                         folderList.push(data)
                     } else if(data.type == 'file' && (data.name.includes(".java") || data.name.includes("pom.xml"))){
-                        if(data.name.includes("Test.java")){
-                            if(me.selectedTestFile.name == data.name){
-                                me.javaFileList.push(data)
+                        if(data.name.includes("Test.java") && option == 'test'){
+                            if(!me.testFileList.find(x => x.name == data.name)){
+                                let obj = {
+                                    name: data.name,
+                                    fullPath: data.path.replace(data.name, '')
+                                }
+                                me.testFileList.push(obj)
                             }
                         } else {
-                            me.javaFileList.push(data)
+                            if(data.name.includes("Test.java")){
+                                if(me.selectedTestFile && me.selectedTestFile.name == data.name){
+                                    me.javaFileList.push(data)
+                                } 
+                            } else {
+                                me.javaFileList.push(data)
+                            }
                         }
                     }
                 })
@@ -7073,26 +7083,28 @@ jobs:
                 folderList.forEach(async function (data){
                     let src = await me.gitAPI.getFolder(me.value.scm.org, me.value.scm.repo, data.path);
                     if(src){
-                        me.getJavaFileList(src.data)
+                        me.getJavaFileList(src.data, option)
                     }
                 })
-                if(me.fileLoadCnt == 0){
-                    me.fileLoadCnt = me.javaFileList.length
-                    me.javaFileList.forEach(async function(data){
-                        let file = await me.gitAPI.getFile(me.value.scm.org, me.value.scm.repo, data.path) 
-                        if(file){
-                            me.selectedCodeList[data.name] = file.data
-                            me.fileLoadCnt--;
-                            if(me.fileLoadCnt == 0){
-                                if(!me.openGitActionDialog){
-                                    me.openGitActionDialog = true
-                                    me.gitActionDialogRenderKey++;
-                                } else {
-                                    me.$EventBus.$emit("rollBackCodeList", me.selectedCodeList);
+                if(option != 'test'){
+                    if(me.fileLoadCnt == 0){
+                        me.fileLoadCnt = me.javaFileList.length
+                        me.javaFileList.forEach(async function(data){
+                            let file = await me.gitAPI.getFile(me.value.scm.org, me.value.scm.repo, data.path) 
+                            if(file){
+                                me.selectedCodeList[data.name] = file.data
+                                me.fileLoadCnt--;
+                                if(me.fileLoadCnt == 0){
+                                    if(!me.openGitActionDialog){
+                                        me.openGitActionDialog = true
+                                        me.gitActionDialogRenderKey++;
+                                    } else {
+                                        me.$EventBus.$emit("rollBackCodeList", me.selectedCodeList);
+                                    }
                                 }
                             }
-                        }
-                    })
+                        })
+                    }
                 }
 
             },
@@ -7117,7 +7129,7 @@ jobs:
                     me.gitActionDialogRenderKey++;
                 }
             },
-            getTestFileList(){
+            async getTestFileList(){
                 var me = this
                 me.isRootFolder = false;
                 if(me.rootModelAndElementMap.modelForElements.BoundedContext.find(x => x.name == me.openCode[0].name)){
@@ -7125,6 +7137,13 @@ jobs:
                     me.selectedTestFile = null
                     me.testFileList = []
                     me.getSelectedFilesDeeply(me.openCode, {keyword: "si"})
+                    
+                    if(me.value && me.value.basePlatform.includes("template-gpt-engineer")){
+                        let src = await me.gitAPI.getFolder(me.value.scm.org, me.value.scm.repo, me.openCode[0].name + '/src');
+                        if(src){
+                            me.getJavaFileList(src.data, 'test')
+                        }
+                    }
                 }
             },
             editBreakPoint(debuggerPoint){
@@ -7541,6 +7560,20 @@ jobs:
                     'k8s.RoleBinding': [],
                     'k8s.ClusterRole': [],
                     'k8s.ClusterRoleBinding': [],
+                    'k8s.Job': [],
+                    'k8s.CronJob': [],
+                    'k8s.Gateway': [],
+                    'k8s.Sidecar': [],
+                    'k8s.DestinationRule': [],
+                    'k8s.VirtualService': [],
+                    'k8s.Rule': [],
+                    'k8s.QuotaSpec': [],
+                    'k8s.ServiceEntry': [],
+                    'k8s.QuotaSpecBinding': [],
+                    'k8s.Quota': [],
+                    'k8s.MemQuota': [],
+                    'k8s.knativeService': [],
+                    'k8s.CustomResourceDefinition': [],
                 }
 
                 try {
@@ -7562,7 +7595,6 @@ jobs:
                                 var yaml = '- <<EOF \n' + me.yamlFilter(json2yaml.stringify(item.object)) + 'EOF'
                                 // yaml += '- <<EOF \n' + yaml + 'EOF';
                                 item.yamlPath = yaml;
-
 
                                 if (item._type == 'Service') {
                                     k8sModelForElements['k8s.Service'].push(item);
@@ -7596,7 +7628,35 @@ jobs:
                                     k8sModelForElements['k8s.ClusterRole'].push(item);
                                 } else if (item._type == 'ClusterRoleBinding') {
                                     k8sModelForElements['k8s.ClusterRoleBinding'].push(item);
-                                }
+                                } else if (item._type == 'Job') {
+                                    k8sModelForElements['k8s.Job'].push(item);
+                                } else if (item._type == 'CronJob') {
+                                    k8sModelForElements['k8s.CronJob'].push(item);
+                                } else if (item._type == 'Gateway') {
+                                    k8sModelForElements['k8s.Gateway'].push(item);
+                                } else if (item._type == 'Sidecar') {
+                                    k8sModelForElements['k8s.Sidecar'].push(item);
+                                } else if (item._type == 'DestinationRule') {
+                                    k8sModelForElements['k8s.DestinationRule'].push(item);
+                                } else if (item._type == 'Rule') {
+                                    k8sModelForElements['k8s.Rule'].push(item);
+                                } else if (item._type == 'VirtualService') {
+                                    k8sModelForElements['k8s.VirtualService'].push(item);
+                                } else if (item._type == 'QuotaSpec') {
+                                    k8sModelForElements['k8s.QuotaSpec'].push(item);
+                                } else if (item._type == 'ServiceEntry') {
+                                    k8sModelForElements['k8s.ServiceEntry'].push(item);
+                                } else if (item._type == 'QuotaSpecBinding') {
+                                    k8sModelForElements['k8s.QuotaSpecBinding'].push(item);
+                                } else if (item._type == 'Quota') {
+                                    k8sModelForElements['k8s.Quota'].push(item);
+                                } else if (item._type == 'MemQuota') {
+                                    k8sModelForElements['k8s.MemQuota'].push(item);
+                                } else if (item._type == 'knativeService') {
+                                    k8sModelForElements['k8s.knativeService'].push(item);
+                                } else if (item._type == 'CustomerResourceDefinition') {
+                                    k8sModelForElements['k8s.CustomerResourceDefinition'].push(item);
+                                } 
                             }
                         }
                     }
