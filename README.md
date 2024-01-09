@@ -283,11 +283,18 @@ eventstorming-tool-ing   nginx   msa.handymes.com       000.000.000.000   80, 44
 
 # Roadmap
 
-- Integration with the Backstage Platform:
-   
-MSAez can be integrated as a plugin into the Backstage platform (https://backstage.io/ - a de-facto standard in developer portal platform), enabling BizDevOps professionals to consolidate various tools used throughout the Biz-Dev-Ops lifecycle. This integration allows for a seamless incorporation into Backstage's developer experience, enhancing workflow efficiency and tool management.
+
+- Legacy Modernization:
+
+Begins with the input of existing legacy assets, like current codebases or database schemas. From these, the tool identifies and extracts key Business Objects, such as Aggregates or Entities, and delineates APIs with their respective Commands. 
+
+After that, MSAez, takes the lead in creating a new, optimized model. This model is not only tailored to align with the modernized architectural design but is also primed for generating code that is compatible with cloud-native applications. 
 
 - Automated Coding, System Testing, and Code Debugging:
 
 With the incorporation of ChatGPT, MSAez elevates its functionality by automating the implementation of business logic and test codes in the default generated code. Additionally, ChatGPT aids in automatically detecting and resolving bugs within the generated code, ensuring it successfully passes all necessary tests. This automation streamlines the coding and testing processes, significantly reducing the time and effort required for development and debugging.
+
+- Integration with the Backstage Platform:
+   
+MSAez can be integrated as a plugin into the Backstage platform (https://backstage.io/ - a de-facto standard in developer portal platform), enabling BizDevOps professionals to consolidate various tools used throughout the Biz-Dev-Ops lifecycle. This integration allows for a seamless incorporation into Backstage's developer experience, enhancing workflow efficiency and tool management.
 
