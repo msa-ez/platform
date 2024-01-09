@@ -286,7 +286,7 @@ eventstorming-tool-ing   nginx   msa.handymes.com       000.000.000.000   80, 44
 
 - Legacy Modernization:
 
-Begins with the input of existing legacy assets, like current codebases or database schemas. From these, the tool identifies and extracts key Business Objects, such as Aggregates or Entities, and delineates APIs with their respective Commands. 
+Beginning with the input of existing legacy assets, like current codebases or database schemas, the tool identifies and extracts key Business Objects, such as Aggregates or Entities, and delineates APIs with their respective Commands. 
 
 After that, MSAez, takes the lead in creating a new, optimized model. This model is not only tailored to align with the modernized architectural design but is also primed for generating code that is compatible with cloud-native applications. 
 
