@@ -258,91 +258,54 @@
 
                     <v-tab-item v-else-if="selectedTabIndex == 0" :value="selectedTabIndex">
                         <!-- HOME -->
-                        <div class="clearfix gs-main-page-top-box">
-                            <div class="gs-main-page-title-box">
-                                <transition name="fade" mode="out-in">
-                                    <div v-if="showMainText1" key="1">
-                                        <div class="gs-main-page-top-title">{{$t('main.title')}}</div>
-                                        <div class="gs-main-page-sub-title">{{$t('main.content1')}}<br>
-                                            {{$t('main.content2')}}<br>
-                                            {{$t('main.content3')}}
-                                        </div>
-                                    </div>
-
-                                    <div v-else-if="showMainText2" key="2">
-                                        <div class="gs-main-page-top-title">{{$t('main.title2')}}</div>
-                                        <div class="gs-main-page-sub-title">{{$t('main.content4')}}<br>
-                                            {{$t('main.content5')}}<br>
-                                        </div>
-                                    </div>
-
-                                    <div v-else-if="showMainText3" key="3">
-                                        <div class="gs-main-page-top-title">{{$t('main.title3')}}</div>
-                                        <div class="gs-main-page-sub-title">{{$t('main.content6')}}<br>
-                                            {{$t('main.content7')}}<br>
-                                            {{$t('main.content8')}}
-                                        </div>
-                                    </div>
-                                </transition>
-                            </div>
-                            <div class="gs-main-page-top-image">
-                                <!-- <v-img src="https://user-images.githubusercontent.com/59447401/211722720-3e35a11a-e2ff-4232-9d99-c52f80f04692.png"></v-img> -->
-                                <transition name="fade" mode="out-in">
-                                    <div v-if="showMainText1">
-                                        <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/5a0c54c8-cac3-44a5-ba25-879ab41196a2"></v-img>
-                                    </div>
-                                    <div v-else-if="showMainText2">
-                                        <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/10f93f13-8d49-4f9e-a06c-b4a1d8fa9b2c"></v-img>
-                                    </div>
-                                    <div v-else-if="showMainText3">
-                                        <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/e9b45c45-776a-4c06-8dc9-c7ab858882bb"></v-img>
-                                    </div>
-                                </transition>
-                            </div>
-                        </div>
-                        <v-col class="gs-main-page-top-box-mobile" align="center">
-                            <div class="gs-main-page-top-image-mobile">
-                                <v-img class="main-logo-image" src="https://github.com/kyusooK/spring-boot-acme-k/assets/123912988/79774ba2-2618-47d0-ab7e-8ef760c077e7"></v-img>
-                                <!-- <v-img class="main-chair-image" src="https://user-images.githubusercontent.com/59447401/211722720-3e35a11a-e2ff-4232-9d99-c52f80f04692.png"></v-img> -->
-                                <div class="main-chair-image">
-                                    <transition name="fade" mode="out-in">
-                                        <div v-if="showMainText1">
-                                            <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/5a0c54c8-cac3-44a5-ba25-879ab41196a2"></v-img>
-                                        </div>
-                                        <div v-else-if="showMainText2">
-                                            <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/10f93f13-8d49-4f9e-a06c-b4a1d8fa9b2c"></v-img>
-                                        </div>
-                                        <div v-else-if="showMainText3">
-                                            <v-img src="https://github.com/msa-ez/msa-ez.github.io/assets/149130268/e9b45c45-776a-4c06-8dc9-c7ab858882bb"></v-img>
-                                        </div>
-                                    </transition>
+                        <div class="gs-main-page-top-box">
+                            <transition name="fade" mode="out-in">
+                                <div v-for="item in mainTexts" :key="item.id" v-if="currentTextId === item.id">
+                                    <v-row justify="start" align="center">
+                                        <v-col cols="2"></v-col>
+                                        <v-col cols="5">
+                                            <div style="display: flex; justify-content: flex-end;">
+                                                <div style="text-align: left;">
+                                                    <div class="gs-main-page-top-title" style="white-space: pre-wrap;">{{$t(item.title)}}</div>
+                                                    <div class="gs-main-page-sub-title">
+                                                        <div v-for="content in item.content" :key="content">{{$t(content)}}<br></div>
+                                                    </div>
+                                                    <a :href="item.goToUrl" target="_blank" style="text-decoration: none; color: inherit;">
+                                                        <v-btn color="primary" style="margin-top:5px;">자세히 보기</v-btn>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </v-col>
+                                        <v-col cols="3">
+                                            <v-img :src="item.imageUrl"/>
+                                        </v-col>
+                                        <v-col cols="2"></v-col>
+                                    </v-row>
                                 </div>
-                                <transition name="fade" mode="out-in">
-                                    <div v-if="showMainText1" key="1" style="height:180px;">
-                                        <div class="gs-main-page-top-title-mobile">{{$t('main.title')}}</div>
-                                        <div class="gs-main-page-sub-title-mobile">{{$t('main.content1')}}<br>
-                                            {{$t('main.content2')}}<br>
-                                            {{$t('main.content3')}}
+                            </transition>
+                        </div>
+                        <div class="gs-main-page-top-box-mobile">
+                            <transition name="fade" mode="out-in">
+                                <div v-for="item in mainTexts" :key="item.id" v-if="currentTextId === item.id">
+                                    <v-row>
+                                        <v-col cols="3.5"></v-col>
+                                        <v-col cols="5">
+                                            <v-img :src="item.imageUrl"/>
+                                        </v-col>
+                                        <v-col cols="3.5"></v-col>
+                                    </v-row>
+                                    <div style="text-align: center;">
+                                        <div class="gs-main-page-top-title-mobile" style="white-space: pre-wrap;">{{$t(item.title)}}</div>
+                                        <div class="gs-main-page-sub-title-mobile">
+                                            <div v-for="content in item.content" :key="content">{{$t(content)}}<br></div>
                                         </div>
+                                        <a :href="item.goToUrl" target="_blank" style="text-decoration: none; color: inherit;">
+                                            <v-btn color="primary" style="margin-top:10px;">자세히 보기</v-btn>
+                                        </a>
                                     </div>
-
-                                    <div v-else-if="showMainText2" key="2" style="height:180px;">
-                                        <div class="gs-main-page-top-title-mobile">{{$t('main.title2')}}</div>
-                                        <div class="gs-main-page-sub-title-mobile">{{$t('main.content4')}}<br>
-                                            {{$t('main.content5')}}<br>
-                                        </div>
-                                    </div>
-
-                                    <div v-else-if="showMainText3" key="3" style="height:180px;">
-                                        <div class="gs-main-page-top-title-mobile">{{$t('main.title3')}}</div>
-                                        <div class="gs-main-page-sub-title-mobile">{{$t('main.content6')}}<br>
-                                            {{$t('main.content7')}}<br>
-                                            {{$t('main.content8')}}
-                                        </div>
-                                    </div>
-                                </transition>
-                            </div>
-                        </v-col>
+                                </div>
+                            </transition>
+                        </div>
                         <AutoModelingDialog
                             mode="es"
                             :showDialog="false"
@@ -1251,6 +1214,30 @@
                     { id: 'share' , display: 'Shared', show: false, count: 0, totalCount: null, },
                     { id: 'local' , display: 'Local' , show: true , count: 0, totalCount: null, },
                 ],
+                mainTexts: [
+                    {
+                        id: 1,
+                        title: 'main.title',
+                        content: ['main.content1', 'main.content2', 'main.content3'],
+                        imageUrl: '/static/image/main/main1.png',
+                        goToUrl:'https://intro-kor.msaez.io/tool/google-drive-examples/'
+                    },
+                    {
+                        id: 2,
+                        title: 'main.title2',
+                        content: ['main.content4', 'main.content5'],
+                        imageUrl: '/static/image/main/main2.png',
+                        goToUrl:'https://intro-kor.msaez.io/tool/chat-gpt/'
+                    },
+                    {
+                        id: 3,
+                        title: 'main.title3',
+                        content: ['main.content6', 'main.content7', 'main.content8'],
+                        imageUrl: '/static/image/main/main3.png',
+                        goToUrl:'https://intro-kor.msaez.io/tool/si-gpt/'
+                    }
+                ],
+                currentTextId: 1,
                 //list
                 public: undefined,
                 mine: undefined,
@@ -1321,7 +1308,7 @@
             var me = this
 
             me.showMainIndex = 1
-            setInterval(me.toggleMainTexts, 5000);
+            setInterval(me.toggleMainTexts, 8500);
             $(window).scroll(function () {
                 if (Math.ceil($(window).scrollTop()) >= (($(document).height() - $(window).height()))) {
                     if (!me.showLoading && me.showMoreButton && !me.searchObj.name) {
@@ -1569,14 +1556,10 @@
                 this.projectUid = projectId
             },
             toggleMainTexts() {
-                this.showMainIndex++
-                this.showMainText1 = 1==this.showMainIndex;
-                this.showMainText2 = 2==this.showMainIndex;
-                this.showMainText3 = 3==this.showMainIndex;
-                if(this.showMainIndex==3) {
-                    this.showMainIndex=0
+                this.currentTextId++;
+                if (this.currentTextId > this.mainTexts.length) {
+                    this.currentTextId = 1;
                 }
-                // this.showMainText = !this.showMainText;
             },
             selectMode(item){
                 this.searchObj.type = item.type
@@ -2198,11 +2181,11 @@
 <style scoped>
 
     .fade-enter-active, .fade-leave-active {
-    transition: opacity .5s;
+        transition: opacity 1s;
     }
     .fade-enter, .fade-leave-to {
-    opacity: 0;
-    }   
+        opacity: 0;
+    }
 
     .ytp-chrome-top-buttons {
         display: none;
@@ -2349,44 +2332,12 @@
     .gs-main-page-title-box {
         width: 650px;
     }
-    .gs-main-page-top-title {
-        font-size: 36px;
-        margin-top: 100px;
-    }
     .gs-main-page-sub-title {
         margin: 10px 0;
     }
     .gs-main-page-sub-title-mobile {
         font-size: 12px;
         margin-top: 10px;
-    }
-
-    @media only screen and (max-width:1185px) and (min-width:1074px) {
-        .gs-main-page-top-title {
-            margin-top: 0;
-        }
-        .gs-main-page-title-box {
-            height: 190px;
-        }
-    }
-    @media only screen and (max-width:1073px) and (min-width:962px) {
-        .gs-main-page-top-title {
-            margin-top: 0;
-        }
-        .gs-main-page-title-box {
-            height: 180px;
-        }
-    }
-    @media only screen and (max-width:961px) and (min-width:898px) {
-        .gs-main-page-top-title {
-            margin-top: 0;
-        }
-        .gs-main-page-sub-title {
-            font-size: 12px;
-        }
-        .gs-main-page-title-box {
-            height: 180px;
-        }
     }
     
     @media only screen and (max-width: 1110px) {

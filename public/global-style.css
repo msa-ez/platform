@@ -502,9 +502,8 @@ code[class*=language-]:nth-child(1) {
 
 
 .gs-main-page-top-title {
-    font-size:38px;
+    font-size:40px;
     font-weight: 500;
-    margin-top:100px;
 }
 
 .gs-main-page-sub-title {
@@ -514,11 +513,7 @@ code[class*=language-]:nth-child(1) {
 .gs-main-page-top-image {
     float: left;
     width:380px;
-}
-
-.gs-main-page-top-box {
-    margin:40px 0px 100px 0px;
-    padding-left: 15%;
+    height:380px;
 }
 
 .gs-code-title {
@@ -538,6 +533,7 @@ code[class*=language-]:nth-child(1) {
 
 .gs-main-page-top-image-mobile {
     width:300px;
+    height:300px;
 }
 
 .gs-main-page-top-title-mobile {
@@ -572,19 +568,27 @@ code[class*=language-]:nth-child(1) {
     opacity: 1;
 }
 
+.gs-main-page-top-box {
+    min-height:400px;
+}
+
 @media only screen and (max-width:1409px) and (min-width:1298px){
     .gs-main-page-top-title {
-        margin-top:50px;
-        font-size:34px;
+        font-size:36px;
         font-weight: 500;
+    }
+
+    .gs-main-page-top-box {
+        min-height:340px;
     }
     
     .gs-main-page-sub-title {
-        font-size:15px;
+        font-size:20px;
     }
     .gs-main-page-top-image {
         float: left;
         width:360px;
+        height:360px;
     }
 
     .gs-main-page-title-box {
@@ -594,18 +598,22 @@ code[class*=language-]:nth-child(1) {
 
 @media only screen and (max-width:1297px) and (min-width:1186px) {
     .gs-main-page-top-title {
-        margin-top:50px;
-        font-size:30px;
+        font-size:32px;
         font-weight: 500;
+    }
+
+    .gs-main-page-top-box {
+        min-height:320px;
     }
     
     .gs-main-page-sub-title {
-        font-size:14px;
+        font-size:18px;
     }
 
     .gs-main-page-top-image {
         float: left;
         width:340px;
+        height:340px;
     }
     .gs-main-page-title-box {
         width:550px;
@@ -614,17 +622,21 @@ code[class*=language-]:nth-child(1) {
 
 @media only screen and (max-width:1185px) and (min-width:1074px) {
     .gs-main-page-top-title {
-        margin-top:70px;
-        font-size:26px;
+        font-size:30px;
         font-weight: 500;
     }
     
     .gs-main-page-sub-title {
-        font-size:13px;
+        font-size:16px;
+    }
+
+    .gs-main-page-top-box {
+        min-height:300px;
     }
 
     .gs-main-page-top-image {
         width:320px;
+        height:320px;
     }
 
     .gs-main-page-title-box {
@@ -634,17 +646,21 @@ code[class*=language-]:nth-child(1) {
 
 @media only screen and (max-width:1073px) and (min-width:962px) {
     .gs-main-page-top-title {
-        margin-top:60px;
-        font-size:22px;
+        font-size:28px;
         font-weight: 500;
     }
     
     .gs-main-page-sub-title {
-        font-size:12px;
+        font-size:15px;
+    }
+
+    .gs-main-page-top-box {
+        min-height:300px;
     }
 
     .gs-main-page-top-image {
         width:300px;
+        height:300px;
     }
 
     .gs-main-page-title-box {
@@ -661,17 +677,21 @@ code[class*=language-]:nth-child(1) {
 
 @media only screen and (max-width:961px) and (min-width:898px) {
     .gs-main-page-top-title {
-        margin-top: 50px;
-        font-size: 18px;
+        font-size:26px;
         font-weight: 500;
     }
     
     .gs-main-page-sub-title {
-        font-size:10px;
+        font-size:14px;
+    }
+
+    .gs-main-page-top-box {
+        min-height:300px;
     }
 
     .gs-main-page-top-image {
         width:280px;
+        height:280px;
     }
 
     .gs-main-page-title-box {
@@ -682,6 +702,7 @@ code[class*=language-]:nth-child(1) {
 @media only screen and (max-width:897px){
     .gs-main-page-top-box-mobile {
         display: block;
+        min-height:560px;
     }
 
     .gs-main-page-top-box {
@@ -689,7 +710,27 @@ code[class*=language-]:nth-child(1) {
     }
 }
 
+
+@media only screen and (max-width:797px){
+    .gs-main-page-top-box-mobile {
+        min-height:500px;
+    }
+}
+
+
+
+@media only screen and (max-width:707px){
+    .gs-main-page-top-box-mobile {
+        min-height:480px;
+    }
+}
+
+
 @media only screen and (max-width:600px){
+    .gs-main-page-top-box-mobile {
+        display: block;
+        min-height:440px;
+    }
     .gs-window-width-610-under-zoom {
         position:fixed !important;
         left: 180px !important;
