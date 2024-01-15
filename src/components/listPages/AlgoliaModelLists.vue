@@ -300,7 +300,7 @@
                                             <div v-for="content in item.content" :key="content">{{$t(content)}}<br></div>
                                         </div>
                                         <a :href="item.goToUrl" target="_blank" style="text-decoration: none; color: inherit;">
-                                            <v-btn color="primary" style="margin-top:10px;">자세히 보기</v-btn>
+                                            <v-btn color="primary" style="margin-top:10px;">{{$t('main.goToUrlText')}}</v-btn>
                                         </a>
                                     </div>
                                 </div>
