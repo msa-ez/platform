@@ -31,8 +31,10 @@
     "dev": "Dev"
   },
   "mainNav": {
-    "product": "",
-    "product": ""
+    "introduction": "제품 소개",
+    "partnership": "파트너십",
+    "learn": "학습하기",
+    "project": "프로젝트"
   },
   "main": {
     "title": "가장 쉽게 시작하는\n마이크로서비스 아키텍처",

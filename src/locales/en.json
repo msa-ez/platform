@@ -30,8 +30,10 @@
     "dev": "Dev"
   },
   "mainNav": {
-    "product": "",
-    "product": ""
+    "introduction": "Introduction",
+    "partnership": "Partnership",
+    "learn": "Learn",
+    "project": "Project"
   },
   "main": {
     "title": "Microservices Architecture made easy!",

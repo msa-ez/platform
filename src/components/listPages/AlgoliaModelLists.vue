@@ -19,7 +19,7 @@
                                         style="background-color:white;"
                                     >
                                         <template v-slot:activator>
-                                            <v-list-item-title style="margin-right:-20px;">프로젝트</v-list-item-title>
+                                            <v-list-item-title style="margin-right:-20px;">{{$t('mainNav.project')}}</v-list-item-title>
                                         </template>
 
                                         <v-list-item
@@ -42,7 +42,7 @@
                                     text
                                     style="height:48px; font-size:16px;"
                                     @click="toggleDialog(item)"
-                                >{{ item.title }}
+                                >{{$t(item.title)}}
                                 </v-btn>
                             </v-row>
                         </v-list>
@@ -1493,38 +1493,19 @@
                 ],
                 mainNav: [
                     {   
-                        title: '제품 소개',
+                        title: 'mainNav.introduction',
                         icon: 'mdi-information',
                         dialog: false,
                         dialogType: 'introduction',
-                        items: [
-                            { 
-                                name: '기업사례',
-                                icon: 'mdi-briefcase',
-                                path: ''
-                            },
-                            {
-                                name: '소개문서',
-                                icon: 'mdi-file-document',
-                                path: ''
-                            }
-                        ]
                     },
                     {
-                        title: '파트너십',
+                        title: 'mainNav.partnership',
                         icon: 'mdi-handshake',
                         dialogType: 'partnership',
                         dialog: false,
-                        items: [
-                            { 
-                                name: '파트너십',
-                                icon: 'mdi-account-multiple',
-                                path: ''
-                            }
-                        ]
                     },
                     {
-                        title: '학습하기',
+                        title: 'mainNav.learn',
                         icon: 'mdi-school',
                         dialogType: 'learn',
                         dialog: false,
