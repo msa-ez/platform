@@ -1,5 +1,5 @@
 <template>
-    <div class="is-mobile" :style = "tenantLogoStyle" text style="width: 100px; height: 60px; margin-top: 9px; cursor: pointer;" @click="test()">
+    <div class="is-mobile" :style = "tenantLogoStyle" text style="width: 100px; height: 60px; margin-top: 9px; cursor: pointer;" @click="goHmoe()">
         <v-img v-if="tenantLogo" contain max-height=90% max-width=90% :src="tenantLogo"></v-img>
     </div>
 </template>
@@ -35,7 +35,7 @@ export default {
         }
     },
     methods: {
-        test(){
+        goHmoe(){
             this.$EventBus.$emit("setLabInfo", null)
             if(window.ipcRenderer && window.location.host.includes('teachez')){
                 this.$router.push('/start-Electron');
@@ -45,6 +45,7 @@ export default {
                     //     window.location = "/"
                 }
             }
+            console.log(this.tabId)
         },
     },
 }
