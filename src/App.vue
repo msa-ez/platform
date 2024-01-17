@@ -795,6 +795,8 @@
         created: async function () {
             var me = this
 
+            Vue.prototype.$app = me
+
             if (this.$isElectron) {
                 // Electron-specific code
                 localStorage.setItem('accessToken', "electron_token")
@@ -1322,6 +1324,35 @@
                 var me = this
                 me.snackbar = on;
                 me.snackbarText = text
+            },
+            async try(options){
+
+                if(!options) alert("options must have following: {context, action, onFail(optional), successMsg, failMsg}")
+                if(!options.context) alert("options must have following: {context, action, onFail(optional), successMsg, failMsg}")
+                if(!options.action) alert("options must have following: {context, action, onFail(optional), successMsg, failMsg}")
+                
+                let context = options.context
+
+                try{
+                    this.$EventBus.$emit('progressValue', true)
+                    await options.action(context)
+                    if(options.successMsg){
+                        this.sendSnackbar(true, successMsg)
+                    }
+                }catch(e){
+                    if(options.failMsg)
+                        this.sendSnackbar(true, failMsg)
+                    else
+                        this.sendSnackbar(true, e.message)
+
+                    if(options.onFail){
+                        options.onFail(e)
+                    }
+                    
+                    console.log(e)
+                }finally{
+                    this.$EventBus.$emit('progressValue', false)
+                }
             },
             setLocale() {
                 try {

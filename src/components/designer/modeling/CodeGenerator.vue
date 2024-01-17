@@ -5750,57 +5750,62 @@ jobs:
                 var me = this
                 // division : Base, Template, Topping
                 return new Promise(async function (resolve, reject) {
-                    try{
-                        // if( me.templateFrameWorkList[gitRepoUrl] && Object.keys(me.templateFrameWorkList[gitRepoUrl]).length > 0 ){
-                        // }
-                        let templateUrl = gitRepoUrl ? gitRepoUrl : me.basePlatform
-                        me.$manifestsPerTemplate[templateUrl] = [];
-                        let org = templateUrl.split('/')[templateUrl.split('/').length - 2].trim()
-                        let repo = templateUrl.split('/')[templateUrl.split('/').length - 1].trim()
-                        
-                        // Template은 Main Branch에서 받아오도록 처리
-                        let commitRes = await me.gitAPI.getCommit(org, repo, "main")
-                        .then(async function (res) {
-                            // Commit List 받아오는 것.
-                            let tree = await me.gitAPI.getTree(org, repo, res)
-                            .then(async function (list) {
-                                // console.log("try me.gitAPI.setGitList()")
-                                let gitList = await me.gitAPI.setGitList(list, repo, templateUrl)
-                                .then(function (resultLists) {
-                                    // console.log(resultLists)
-                                    Object.assign(me.$manifestsPerBaseTemplate, resultLists.manifestsPerBaseTemplate)
-                                    me.$manifestsPerTemplate[templateUrl] = resultLists.manifestsPerTemplate[templateUrl]
-                                    me.templateFrameWorkList = resultLists.templateFrameWorkList
-                                    resolve()
+                    me.$app.try( 
+                    {
+                        context: me,
+                        async action(me){
+                            // if( me.templateFrameWorkList[gitRepoUrl] && Object.keys(me.templateFrameWorkList[gitRepoUrl]).length > 0 ){
+                            // }
+                            let templateUrl = gitRepoUrl ? gitRepoUrl : me.basePlatform
+                            me.$manifestsPerTemplate[templateUrl] = [];
+                            let org = templateUrl.split('/')[templateUrl.split('/').length - 2].trim()
+                            let repo = templateUrl.split('/')[templateUrl.split('/').length - 1].trim()
+                            
+                            // Template은 Main Branch에서 받아오도록 처리
+                            let commitRes = await me.gitAPI.getCommit(org, repo, "main")
+                            .then(async function (res) {
+                                // Commit List 받아오는 것.
+                                let tree = await me.gitAPI.getTree(org, repo, res)
+                                .then(async function (list) {
+                                    // console.log("try me.gitAPI.setGitList()")
+                                    let gitList = await me.gitAPI.setGitList(list, repo, templateUrl)
+                                    .then(function (resultLists) {
+                                        // console.log(resultLists)
+                                        Object.assign(me.$manifestsPerBaseTemplate, resultLists.manifestsPerBaseTemplate)
+                                        me.$manifestsPerTemplate[templateUrl] = resultLists.manifestsPerTemplate[templateUrl]
+                                        me.templateFrameWorkList = resultLists.templateFrameWorkList
+                                        resolve()
+                                    })
+                                    .catch(e => {
+                                        console.log(e)
+                                    })
                                 })
                                 .catch(e => {
                                     console.log(e)
+                                    if(e.response.status === 401){
+                                        me.alertReLogin()
+                                    }
+                                    alert(e)
                                 })
                             })
-                            .catch(e => {
-                                console.log(e)
-                                if(e.response.status === 401){
+                            .catch(error => {
+                                console.log(error)
+                                if(error.response.status === 401){
                                     me.alertReLogin()
                                 }
-                                alert(e)
+                                alert(error)              
                             })
-                        })
-                        .catch(error => {
-                            console.log(error)
-                            if(error.response.status === 401){
-                                me.alertReLogin()
+                        },
+                    
+                        onFail(e){
+                            if(e.response.data.message.includes("Bad credentials")){
+                                me.githubTokenError = true
+                                me.gitMenu = true
+                                reject()
                             }
-                            alert(error)              
-                        })
-                    } catch (e) {
-                        console.log(`Error] Load Git Template: ${e}`)
-                        if(e.response.data.message.includes("Bad credentials")){
-                            me.githubTokenError = true
-                            me.gitMenu = true
-                            reject()
-                            return false
                         }
-                    }
+                    
+                    })
                 })
 
             },
@@ -7244,39 +7249,42 @@ jobs:
             async callGenerate(options){
                 var me = this
 
-                try {
-                    console.log('>>> Generate Code] Start Main<<<', Date.now() )
-                    me.isGeneratorDone = false;
+                me.$app.try({
+                    
+                    context: me,
+                    async action(me){
 
-                    var isRecursion = options && options.recursion ? true: false
+                        console.log('>>> Generate Code] Start Main<<<', Date.now() )
+                        me.isGeneratorDone = false;
 
-                    // if(options && !options.editCode){
-                    //     me.isListSettingDone = false
-                    // }
-                    if( !isRecursion && !me.reGenerateOnlyModifiedTemplate){
-                        me.codeLists = []
-                    } else {
-                        if(me.reGenerateOnlyModifiedTemplate){
-                            Object.keys(me.editTemplateFrameWorkList).forEach(function (platform){
-                                Object.keys(me.editTemplateFrameWorkList[platform]).forEach(function (template){
-                                    var idx
-                                    while(idx != -1){
-                                        idx = me.codeLists.findIndex(x => x.templatePath == template)
-                                        if(idx != -1){
-                                            me.codeLists.splice(idx, 1)
+                        var isRecursion = options && options.recursion ? true: false
+
+                        // if(options && !options.editCode){
+                        //     me.isListSettingDone = false
+                        // }
+                        if( !isRecursion && !me.reGenerateOnlyModifiedTemplate){
+                            me.codeLists = []
+                        } else {
+                            if(me.reGenerateOnlyModifiedTemplate){
+                                Object.keys(me.editTemplateFrameWorkList).forEach(function (platform){
+                                    Object.keys(me.editTemplateFrameWorkList[platform]).forEach(function (template){
+                                        var idx
+                                        while(idx != -1){
+                                            idx = me.codeLists.findIndex(x => x.templatePath == template)
+                                            if(idx != -1){
+                                                me.codeLists.splice(idx, 1)
+                                            }
                                         }
-                                    }
+                                    })
                                 })
-                            })
+                            }
                         }
+
+                        let values = JSON.parse(JSON.stringify(me.value));
+                        me.callGenerateCode(values, options);
+
                     }
-
-                    let values = JSON.parse(JSON.stringify(me.value));
-                    me.callGenerateCode(values, options);
-
-                } catch (e){
-                    console.log(`ERROR] Generate ${e}`);
-                }
+                })
             },
             // async callGenerate(options){
             //     var me = this

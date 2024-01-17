@@ -247,7 +247,7 @@ window.vueFilePath = process.env.VUE_APP_FILE_PATH
 // var toppingRootPath = new Set(toppingRootPathList)
 // var toppingRootPathLists = Array.from(toppingRootPath)
 
-// Vue.prototype.$manifestsPerToppings = {};
+//Vue.prototype.$manifestsPerToppings = {};
 
 // toppingRootPathLists.forEach(function (item) {
 //     eval('Vue.prototype.$manifestsPerToppings[\"' + item + '\"] = []')
