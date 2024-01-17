@@ -429,7 +429,7 @@
                 color="error"
                 :timeout=10000
         >
-            Click Setting & Insert Infomation
+            {{ snackbarText }}
             <v-btn
                     dark
                     text
