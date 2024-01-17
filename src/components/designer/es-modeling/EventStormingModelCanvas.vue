@@ -519,14 +519,8 @@
                                                                     "
                                                                         v-on="on"
                                                                 >
-                                                                    <v-icon
-                                                                    >mdi-restart</v-icon
-                                                                    >
-                                                                    <div
-                                                                            class="es-hide-replay"
-                                                                    >
-                                                                        Versions
-                                                                    </div>
+                                                                    <v-icon>mdi-restart</v-icon>
+                                                                    <div class="es-hide-replay">Versions</div>
                                                                 </v-btn>
                                                             </div>
                                                         </template>
@@ -597,13 +591,9 @@
                                                                     text-align: start;
                                                                 "
                                                             >
-                                                                <v-list-item-title
-                                                                ><v-icon
-                                                                        small
-                                                                >mdi-restart</v-icon
-                                                                >
-                                                                    REPLAY</v-list-item-title
-                                                                >
+                                                                <v-list-item-title>
+                                                                    <v-icon small>mdi-restart</v-icon>REPLAY
+                                                                </v-list-item-title>
                                                             </v-list-item>
                                                         </v-list>
                                                     </v-menu>
@@ -820,7 +810,7 @@
                                                         >
                                                             <div>
                                                                 <v-btn
-                                                                        class="gs-model-z-index-1 es-hide-code-btn"
+                                                                        class="gs-model-z-index-1"
                                                                         style="
                                                                         margin-right: 5px;
                                                                         color: white;
@@ -835,9 +825,7 @@
                                                                     <v-icon>{{
                                                                         icon.code
                                                                         }}</v-icon>
-                                                                    <div
-                                                                            class="es-hide-code"
-                                                                    >
+                                                                    <div>
                                                                         CODE
                                                                     </div>
                                                                     <v-progress-circular
@@ -895,28 +883,75 @@
                                     </v-row>
                                     <div class="es-is-mobile">
                                         <v-row
-                                                class="mobile-action-btn"
-                                                justify="center"
-                                                align="start"
-                                                style="
-                                                display: flex;
-                                                margin-right: 50px;
-                                            "
+                                            class="mobile-action-btn"
+                                            justify="center"
+                                            align="start"
+                                            style="
+                                            display: flex;
+                                            margin-right: 50px;"
                                         >
-                                            <v-menu open-on-hover offset-y>
+                                            <v-menu
+                                                class="pa-2"
+                                                open-on-hover
+                                                offset-y
+                                                left
+                                            >
+                                                <template
+                                                    v-slot:activator="{ on }"
+                                                >
+                                                    <div>
+                                                        <v-btn class="mobile-btn"
+                                                            color="primary"
+                                                            text
+                                                            :disabled="disableBtn"
+                                                            @click="openEmbeddedCanvas('Kubernetes')"
+                                                            style="margin-top: 2px;"
+                                                        >
+                                                            <v-icon>mdi-kubernetes</v-icon>
+                                                        </v-btn>
+                                                    </div>
+                                                </template>
+                                            </v-menu>
+
+                                            <v-menu
+                                                    text
+                                                    v-if="isServerModel && !isClazzModeling"
+                                                    class="pa-2"
+                                                    open-on-hover
+                                                    offset-y
+                                            >
                                                 <template
                                                         v-slot:activator="{ on }"
                                                 >
+                                                    <div>
+                                                        <v-btn
+                                                                color="primary"
+                                                                dark
+                                                                @click="showReplay()"
+                                                                small
+                                                                class="mobile-btn"
+                                                                :disabled="disableBtn"
+                                                                text
+                                                        >
+                                                            <v-icon>mdi-restart</v-icon>
+                                                        </v-btn>
+                                                    </div>
+                                                </template>
+                                            </v-menu>
+                                            <v-menu open-on-hover offset-y>
+                                                <template
+                                                    v-slot:activator="{ on }"
+                                                >
                                                     <v-btn
-                                                            text
-                                                            v-if="isReadOnlyModel &&!projectVersion"
-                                                            :color="joinRequestedText.show? 'primary': 'success'"
-                                                            dark
-                                                            @click="requestInviteUser()"
-                                                            small
+                                                        text
+                                                        v-if="isReadOnlyModel &&!projectVersion"
+                                                        :color="joinRequestedText.show? 'primary': 'success'"
+                                                        dark
+                                                        @click="requestInviteUser()"
+                                                        small
                                                     >
                                                         <div
-                                                                v-if="joinRequestedText.show"
+                                                            v-if="joinRequestedText.show"
                                                         >
                                                             <v-icon>{{icon.join}}</v-icon>
                                                         </div>
@@ -1011,66 +1046,6 @@
                                                 </v-list>
                                             </v-menu>
                                             <v-menu
-                                                    text
-                                                    v-if="isServerModel && !isClazzModeling"
-                                                    class="pa-2"
-                                                    open-on-hover
-                                                    offset-y
-                                            >
-                                                <template
-                                                        v-slot:activator="{ on }"
-                                                >
-                                                    <div>
-                                                        <v-btn
-                                                                color="primary"
-                                                                dark
-                                                                @click="showReplay()"
-                                                                small
-                                                                class="mobile-btn"
-                                                                :disabled="disableBtn"
-                                                                text
-                                                        >
-                                                            <v-icon>mdi-restart</v-icon>
-                                                        </v-btn>
-                                                    </div>
-                                                </template>
-                                            </v-menu>
-                                            <v-menu open-on-hover offset-y>
-                                                <template
-                                                        v-slot:activator="{ on }"
-                                                >
-                                                    <div>
-                                                        <v-btn
-                                                                color="primary"
-                                                                dark
-                                                                class="mobile-btn"
-                                                                @click="openCodeViewer()"
-                                                                v-on="on"
-                                                                small
-                                                        >
-                                                            <v-icon>
-                                                                {{
-                                                                icon.code
-                                                                }}</v-icon
-                                                            >
-                                                        </v-btn>
-                                                    </div>
-                                                </template>
-                                                <v-list>
-                                                    <v-list-item
-                                                            v-for="(
-                                                            item, index
-                                                        ) in codeItems"
-                                                            :key="index"
-                                                            @click="functionSelect(item.title,index)"
-                                                    >
-                                                        <v-list-item-title
-                                                        >{{ item.title }}
-                                                        </v-list-item-title>
-                                                    </v-list-item>
-                                                </v-list>
-                                            </v-menu>
-                                            <v-menu
                                                     class="pa-2"
                                                     open-on-hover
                                                     offset-y
@@ -1081,69 +1056,28 @@
                                                 >
                                                     <div>
                                                         <v-btn
-                                                                color="primary"
-                                                                text
-                                                                :disabled="
-                                                                disableBtn
-                                                            "
-                                                                style="
-                                                                margin-left: -8px;
-                                                                margin-top: 1px;
-                                                            "
-                                                                @click="openEmbeddedCanvas('Kubernetes')"
+                                                            class="gs-model-z-index-1 mobile-btn"
+                                                            v-if="isHexagonalModeling"
+                                                            text
+                                                            color="primary"
+                                                            style="margin-top:2px;"
+                                                            @click="generateModel()"
+                                                            :disabled="disableBtn"
+                                                            v-on="on"
                                                         >
-                                                            <v-icon
-                                                            >mdi-kubernetes</v-icon
-                                                            >
-                                                        </v-btn>
-                                                    </div>
-                                                </template>
-                                            </v-menu>
-                                            <v-menu
-                                                    class="pa-2"
-                                                    open-on-hover
-                                                    offset-y
-                                                    left
-                                            >
-                                                <template
-                                                        v-slot:activator="{ on }"
-                                                >
-                                                    <div>
-                                                        <v-btn
-                                                                class="gs-model-z-index-1"
-                                                                v-if="
-                                                                isHexagonalModeling
-                                                            "
-                                                                text
-                                                                color="primary"
-                                                                style="
-                                                                margin-left: -20px;
-                                                                margin-top: 1px;
-                                                            "
-                                                                @click="generateModel()"
-                                                                :disabled="disableBtn"
-                                                                v-on="on"
-                                                        >
-                                                            <v-icon
-                                                            >mdi-hexagon-outline</v-icon
-                                                            >
+                                                            <v-icon>mdi-hexagon-outline</v-icon>
                                                         </v-btn>
                                                         <v-btn
-                                                                class="gs-model-z-index-1"
-                                                                v-else
-                                                                text
-                                                                color="primary"
-                                                                style="
-                                                                margin-left: -20px;
-                                                                margin-top: 1px;
-                                                            "
-                                                                @click="generateHexagonal()"
-                                                                :disabled="disableBtn"
-                                                                v-on="on"
+                                                            class="gs-model-z-index-1 mobile-btn"
+                                                            v-else
+                                                            text
+                                                            color="primary"
+                                                            style="margin-top:2px;"
+                                                            @click="generateHexagonal()"
+                                                            :disabled="disableBtn"
+                                                            v-on="on"
                                                         >
-                                                            <v-icon
-                                                            >mdi-view-dashboard</v-icon
-                                                            >
+                                                            <v-icon>mdi-view-dashboard</v-icon>
                                                         </v-btn>
                                                     </div>
                                                 </template>
@@ -1161,7 +1095,7 @@
                                                     </v-list-item>
                                                 </v-list>
                                             </v-menu>
-                                            <v-menu
+                                            <!-- <v-menu
                                                     class="pa-2"
                                                     open-on-hover
                                                     offset-y
@@ -1205,6 +1139,35 @@
                                                         </v-btn>
                                                     </div>
                                                 </template>
+                                            </v-menu> -->
+
+                                            <v-menu open-on-hover offset-y>
+                                                <template
+                                                    v-slot:activator="{ on }"
+                                                >
+                                                    <div>
+                                                        <v-btn
+                                                            color="primary"
+                                                            dark
+                                                            class="mobile-btn"
+                                                            @click="openCodeViewer()"
+                                                            v-on="on"
+                                                            small
+                                                            style="margin-left:10px;"
+                                                        >
+                                                            <v-icon>{{icon.code}}</v-icon>CODE
+                                                        </v-btn>
+                                                    </div>
+                                                </template>
+                                                <v-list>
+                                                    <v-list-item
+                                                        v-for="(item, index) in codeItems"
+                                                        :key="index"
+                                                        @click="functionSelect(item.title,index)"
+                                                    >
+                                                        <v-list-item-title>{{ item.title }}</v-list-item-title>
+                                                    </v-list-item>
+                                                </v-list>
                                             </v-menu>
                                         </v-row>
                                     </div>
@@ -3485,7 +3448,7 @@
                 if (!value.basePlatform) value.basePlatform = null;
                 if (!value.basePlatformConf) value.basePlatformConf = {};
                 if (!value.toppingPlatforms)
-                    value.toppingPlatforms = ["isVanillaK8s"];
+                    value.toppingPlatforms = [];
                 if (!value.toppingPlatformsConf) value.toppingPlatformsConf = {};
 
                 // // K8s Topping은 기본세팅

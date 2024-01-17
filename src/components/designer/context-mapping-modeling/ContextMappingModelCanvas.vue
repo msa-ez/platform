@@ -448,7 +448,7 @@
                                         v-on="on"
                                 >
                                   <v-icon>{{ icon.code }}</v-icon>
-                                  <div class="es-hide-code">CODE</div>
+                                  <div>CODE</div>
                                   <v-progress-circular
                                           indeterminate
                                           v-if="ideWindow"

@@ -767,7 +767,9 @@ getUserInfo() {
                             log = logs.data.split("COMPILATION ERROR :")
                         }
     
-                        if(log[1]){
+                        if(!log){
+                            logInfo.log = logs.data
+                        } else if(log.length > 1 && log[1]){
                             logInfo.log = log[1]
                         } else {
                             logInfo.log = log[0]

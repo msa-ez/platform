@@ -11,6 +11,14 @@ export default class UserStoryGenerator extends AIGenerator{
     createPrompt(){
 
         let businessModelDescription = ""
+
+
+        if(this.client.input.painpointAnalysis){
+            businessModelDescription = "Painpoint analysis and Possible solutions: \n"
+           
+            //TODO
+        }
+
         if(this.client.input.businessModel){
             businessModelDescription = "Detailed Business Model of the service is: \n"
             let elementsByTypes = {};

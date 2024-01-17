@@ -10,7 +10,9 @@ export default class SIGenerator extends JsonAIGenerator {
         var prompt 
         var generationRule
 
-        if(this.client.generatedErrorDetails){
+        if(this.client.prompt){
+            return this.client.prompt
+        } else if(this.client.generatedErrorDetails){
             prompt = `An error occurred during testing.
 Error list: ${JSON.stringify(this.client.generatedErrorDetails)}
 The error list contains errors that occurred during mvn testing for the files in the code list and information about the file in which the error occurred.

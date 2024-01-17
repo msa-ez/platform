@@ -5368,14 +5368,15 @@
 
                 var arr = JSON.parse(localStorage.getItem('selectedElements'))
                 var yaml = '';
-                if(arr){
-                    arr.forEach(el => {
-                        if(value.object.kind == el.object.kind && value.object.metadata.name == el.object.metadata.name){
-                            yaml += '--- \n' + me.yamlFilter(json2yaml.stringify(el))
-                        }
-                    })
-                }
-                
+                // if(arr){
+                //     arr.forEach(el => {
+                //         if(value.object.kind == el.object.kind && value.object.metadata.name == el.object.metadata.name){
+                //             yaml += '--- \n' + me.yamlFilter(json2yaml.stringify(el))
+                //         }
+                //     })
+                // }
+                yaml += '--- \n' + me.yamlFilter(json2yaml.stringify(value))
+
                 var projectId = me.$route.params.projectId;
                 var userEmail = localStorage.getItem("email")
 
@@ -5544,6 +5545,46 @@
                     me.localYamlText = "";
                     var deployArr = [];
                     var svcArr = [];
+                    var ingressArr = [];
+
+                    // Ingress Topping 주입 시, Gateway 추가
+                    var ingressFlag = false;
+                    Object.keys(me.value.k8sValue.elements).forEach(function(key) {
+                        if(me.value.k8sValue.elements[key]){
+                            if(me.value.k8sValue.elements[key].object.metadata.name=="gateway"){
+                                ingressFlag = true;
+                            }
+                        }
+                    })
+
+                    if(me.value.toppingPlatforms.includes("ingress") && !ingressFlag){
+                        var ingressSpec = {
+                            apiVersion: "networking.k8s.io/v1",
+                            kind: "Ingress",
+                            metadata: {
+                                name: "gateway",
+                                annotations: {
+                                    "kubernetes.io/ingress.class": "nginx",
+                                    "msaez.io/x": "454",
+                                    "msaez.io/y": "56",
+                                    "msaez.io/width": "100",
+                                    "msaez.io/height": "100"
+                                },
+                            },
+                            spec: {
+                                rules: [
+                                    {
+                                        http: {
+                                            paths: []
+                                        }
+                                    }
+                                ]
+                            },
+                        }
+
+                        yamlText += json2yaml.stringify(ingressSpec);
+                        ingressArr.push(ingressSpec)
+                    }
 
                     bcList.forEach(function(item) {
                         var name = item.name.replace(" ", "-").toLowerCase();
@@ -5642,6 +5683,10 @@
                     svcArr.forEach(function(item) {
                         me.localYamlText += json2yaml.stringify(item);
                     });
+
+                    if(me.value.toppingPlatforms.includes("ingress") && !ingressFlag){
+                        me.localYamlText += json2yaml.stringify(ingressArr[0]);
+                    }
                 }
             },
             closeSeparate() {

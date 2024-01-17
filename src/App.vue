@@ -102,7 +102,7 @@
                         @click="moveToModel()"
                     >
                         <v-icon>mdi-file-plus</v-icon>
-                        <div class="app-new-text" style=" font-weight:700;">NEW</div>
+                        <div class="app-new-text" style=" font-weight:700;">{{$t('main.goToLearn')}}</div>
                     </v-btn>
                 </template>
 
@@ -129,7 +129,7 @@
                 </v-list>
             </v-menu>
 
-            <v-tooltip bottom>
+            <!-- <v-tooltip bottom>
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn class="app-docs-btn"
                             v-on="on"
@@ -143,7 +143,7 @@
                     </v-btn>
                 </template>
                 <span>{{$t('word.introduceText')}}</span>
-            </v-tooltip>
+            </v-tooltip> -->
             
             <v-btn
                     v-if="!(isLogin || isGuestLogin)"

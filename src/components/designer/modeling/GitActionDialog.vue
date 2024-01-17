@@ -47,7 +47,6 @@
                                         <v-list-item-content style="margin-left: -10px;">
                                             <v-list-item-title style="color: white">
                                                 {{test.solutionType}}
-                                                <v-chip style="margin-left: 5px;" small v-if="test.sha" @click="rollBack(test.sha, testIdx)">rollback</v-chip>
                                                 <v-progress-circular
                                                     v-if="isSolutionCreating && siTestResults.lastIndex == testIdx"
                                                     indeterminate
@@ -75,6 +74,18 @@
                                             </v-row>
                                         </div>
                                     </v-list-item>
+                                    <div class="rollBack" v-if="test.sha">
+                                        <div class="line"></div>
+                                        <v-tooltip bottom>
+                                            <template v-slot:activator="{ on }">
+                                                <v-chip v-on="on" style="margin-left: -25px;" small v-if="test.sha" @click="rollBack(test.sha, testIdx)">
+                                                    <v-icon small>mdi-undo-variant</v-icon>
+                                                </v-chip>
+                                            </template>
+                                            <span>Roll back and start over from here</span>
+                                        </v-tooltip>
+                                        <div class="line"></div>
+                                    </div>
                                 </v-list-group>
                             </v-list-group>
                         </v-list>
@@ -272,9 +283,31 @@
 
                         <!-- <v-divider></v-divider> -->
                     </div>
-                    <div v-if="!allTestSucceeded" style="margin-left: 150px">
-                        <div style="position: absolute; bottom: 10px; right: 15px; z-index: 99;">
-                            <div v-if="!startGitAction">
+                    <div v-if="!allTestSucceeded" style="margin-left: 161px; z-index: 99; margin-right: 202px; margin-top: 30px;">
+                        <div v-if="!startGitAction">
+                            <v-row>
+                                <v-avatar 
+                                    size="35"
+                                    rounded
+                                    style="margin-right: 6px; margin-top: 6px;"
+                                >
+                                    <img
+                                        :src="userImg"
+                                        alt="User"
+                                    >
+                                </v-avatar>
+                                <v-text-field
+                                    v-if="!isAutoMode"
+                                    v-model="prompt"
+                                    solo
+                                    label="Enter your request"
+                                    append-icon="mdi-send"
+                                    @click:append="regenerate(prompt)"
+                                    @keydown.enter="regenerate(prompt)"
+                                    clearable
+                                ></v-text-field>
+                            </v-row>
+                            <div style="float: right; margin-top: -10px; margin-right: -12px;">
                                 <v-btn @click="regenerate()">
                                     Think again
                                 </v-btn>
@@ -284,18 +317,18 @@
                                     Go ahead
                                 </v-btn>
                             </div>
-                            <div v-else>
-                                <v-row>
-                                    <v-switch v-if="commitCnt < 15"
-                                        style="margin-top: 1px;"
-                                        v-model="isAutoMode"
-                                        :label="'Auto mode'"
-                                    ></v-switch>
-                                    <v-btn :disabled="!isSolutionCreating" @click="stop()" style="margin-left: 10px; margin-right: 10px;">
-                                        Stop generating
-                                    </v-btn>
-                                </v-row>
-                            </div>
+                        </div>
+                        <div v-else style="position: absolute; bottom: 10px; right: 15px;">
+                            <v-row>
+                                <v-switch v-if="commitCnt < 15"
+                                    style="margin-top: 1px;"
+                                    v-model="isAutoMode"
+                                    :label="'Auto mode'"
+                                ></v-switch>
+                                <v-btn :disabled="!isSolutionCreating" @click="stop()" style="margin-left: 10px; margin-right: 10px;">
+                                    Stop generating
+                                </v-btn>
+                            </v-row>
                         </div>
                     </div>
                     <div v-else style="margin-left: 150px; margin-right: 150px; z-index: 9;">
@@ -411,6 +444,8 @@
         },
         data() {
             return {
+                openAiMessageList: [],
+                prompt: null,
                 // isFirstGenerate: true,
                 commitMsg: null,
                 commitCnt: 0,
@@ -482,7 +517,11 @@
         },
         created:function () {
             if(this.testFile){
-                this.testFile.subPath = this.testFile.fullPath.replace(this.testFile.name, '')
+                if(this.testFile.fullPath){
+                    this.testFile.subPath = this.testFile.fullPath.replace(this.testFile.name, '')
+                } else {
+                    this.testFile.subPath = ''
+                }
                 this.testFile.code = ''
             }
         },
@@ -634,6 +673,7 @@
                 window.open(this.actionPathList[idx], "_blank")
             },
             stop(){
+                this.isAutoMode = false
                 this.startGitAction = false
             },
             editCode(obj){
@@ -689,19 +729,25 @@ What files do I need to modify and what related files do I need to fix the error
                 me.model = 'gpt-4'
                 me.startGitAction = true
                 me.generator = new SIGenerator(this);
-                await me.summaryCodeList()
+                if(!me.prompt){
+                    await me.summaryCodeList()
+                }
                 me.generator.generate();
             },
-            regenerate(){
-                if(this.solutionCnt){
-                    for(var i = 0; i < this.solutionCnt; i++){
-                        this.siTestResults.pop()
+            regenerate(prompt){
+                if(prompt){
+                    this.siTestResults[this.lastIndex].userMessage = prompt
+                } else {
+                    if(this.solutionCnt){
+                        for(var i = 0; i < this.solutionCnt; i++){
+                            this.siTestResults.pop()
+                        }
+                        this.lastIndex = this.siTestResults.lastIndex
+                        this.resultLength = this.siTestResults.length
                     }
-                    this.lastIndex = this.siTestResults.lastIndex
-                    this.resultLength = this.siTestResults.length
-                }
-                if(this.savedGeneratedErrorDetails){
-                    this.generatedErrorDetails = this.savedGeneratedErrorDetails
+                    if(this.savedGeneratedErrorDetails){
+                        this.generatedErrorDetails = this.savedGeneratedErrorDetails
+                    }
                 }
                 this.generate()
             },
@@ -718,6 +764,8 @@ What files do I need to modify and what related files do I need to fix the error
             },
             commitToGit(){
                 var me = this
+                me.prompt = null
+                me.openAiMessageList = []
                 me.selectedIdx = null
                 me.startGitAction = true
                 me.isFirstCommit = false
@@ -863,6 +911,12 @@ What files do I need to modify and what related files do I need to fix the error
                                 // } else {
                                     if(me.isAutoMode){
                                         me.commitToGit()
+                                    } else {
+                                        me.prompt = null
+                                        me.openAiMessageList.push({
+                                            content: JSON.stringify(model),
+                                            role: "assistant"
+                                        })
                                     }
                                 // }
                             }
@@ -916,4 +970,14 @@ What files do I need to modify and what related files do I need to fix the error
     }
 </script>
 <style>
+.line {
+  flex-grow: 1;
+  height: 0.1px;
+  background-color: #e0e0e0;
+}
+
+.rollBack {
+  display: flex;
+  align-items: center;
+}
 </style>
