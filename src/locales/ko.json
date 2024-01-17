@@ -31,7 +31,7 @@
     "dev": "Dev"
   },
   "mainNav": {
-    "introduction": "제품 소개",
+    "introduction": "제품소개",
     "partnership": "파트너십",
     "learn": "학습하기",
     "project": "프로젝트"
@@ -49,8 +49,9 @@
     "content7": "컴파일과 동작에 문제가 발생한 해결책을 인터넷에서 찾아서",
     "content8": "테스트가 통과할 때까지 구현을 반복합니다.",
     "goToUrlText": "자세히 보기",
-    "goToLearn" : "강의목록",
-    "goToLectures" : "교육신청"
+    "goToLectures" : "강의목록",
+    "training" : "교육신청",
+    "newModeling" : "새 모델링"
   },
   "tools": {
     "modeling": "모델링 도구",
@@ -64,7 +65,13 @@
     "bpmn-inst": "BPMN(Business Process Model and Notation)은 비즈니스 프로세스 모델에서 비즈니스 프로세스를 지정하기 위한 그래픽 표현입니다.",
     "tutorial-btn": "튜토리얼",
     "video-btn": "관련영상",
-    "create-btn": "생성"
+    "create-btn": "생성",
+    "sticky": "스티키 노트 협업",
+    "sticky-inst": "스티키 노트를 통하여 자유로운 협업을 통한 아이디어 회의를 할 수 있습니다.",
+    "uml": "클래스다이어그램",
+    "uml-inst": "클래스다이어그램은 소프트웨어 객체구조를 설계할 수 있는 도구를 제공합니다.",
+    "project": "프로젝트",
+    "project-inst": "프로젝트는 하나 이상의 모델들을 그룹으로 묶어 새로운 프로젝트로 구성할때 사용합니다. 프로젝트에 연합된 다른 모델 내부의 요소들을 참조하여 불러올 수 있습니다."
   },
   "tutorials": {
     "tutorial": "튜토리얼",

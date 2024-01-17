@@ -32,7 +32,7 @@
   "mainNav": {
     "introduction": "Introduction",
     "partnership": "Partnership",
-    "learn": "Learn",
+    "learn": "learn",
     "project": "Project"
   },
   "main": {
@@ -48,8 +48,9 @@
     "content7": "iterate on implementation until issues in compilation and functionality are resolved",
     "content8": "by finding solutions online and passing tests.",
     "goToUrlText": "Learn more",
-    "goToLearn" : "Learn",
-    "goToLectures" : "Lectures"
+    "goToLectures" : "Lectures",
+    "training" : "Training",
+    "newModeling" : "new modeling"
   },
   "tools": {
     "modeling": "MODELING TOOLS",
@@ -63,7 +64,13 @@
     "bpmn-inst": "Business Process Model and Notation (BPMN) is a graphical representation for specifying business processes in a business process model.",
     "tutorial-btn": "TUTORIAL",
     "video-btn": "VIDEOS",
-    "create-btn": "CREATE"
+    "create-btn": "CREATE",
+    "sticky": "Sticky Note Collaboration",
+    "sticky-inst": "Sticky note helps you to conduct collaborative idea meetings through free collaboration.",
+    "uml": "UML Class Diagram",
+    "uml-inst": "Class diagram provides a tool for designing the structure of software object.",
+    "project": "Project",
+    "project-inst": "Projects are used when grouping one or more models into a new project. You can reference and import elements from other models associated with the project."
   },
   "tutorials": {
     "tutorial": "TUTORIALS",
