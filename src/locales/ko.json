@@ -30,6 +30,12 @@
     "biz": "Biz",
     "dev": "Dev"
   },
+  "mainNav": {
+    "introduction": "제품 소개",
+    "partnership": "파트너십",
+    "learn": "학습하기",
+    "project": "프로젝트"
+  },
   "main": {
     "title": "가장 쉽게 시작하는\n마이크로서비스 아키텍처",
     "content1": "프론트엔드, 토큰 인증/인가, GraphQL 등 모든 패턴을 지원하는",
@@ -42,7 +48,9 @@
     "content6": "Chat GPT4와 인터넷 검색을 통하여 코드를 작성하고",
     "content7": "컴파일과 동작에 문제가 발생한 해결책을 인터넷에서 찾아서",
     "content8": "테스트가 통과할 때까지 구현을 반복합니다.",
-    "goToUrlText": "자세히 보기"
+    "goToUrlText": "자세히 보기",
+    "goToLearn" : "강의목록",
+    "goToLectures" : "교육신청"
   },
   "tools": {
     "modeling": "모델링 도구",

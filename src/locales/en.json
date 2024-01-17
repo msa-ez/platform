@@ -29,6 +29,12 @@
     "biz": "Biz",
     "dev": "Dev"
   },
+  "mainNav": {
+    "introduction": "Introduction",
+    "partnership": "Partnership",
+    "learn": "Learn",
+    "project": "Project"
+  },
   "main": {
     "title": "Microservices Architecture made easy!",
     "content1": "Frontend, Auth/Authz, GraphQL, etc. - All Patterns supported by modeling",
@@ -41,7 +47,9 @@
     "content6": "Utilize ChatGPT-4 and internet searches to write code,",
     "content7": "iterate on implementation until issues in compilation and functionality are resolved",
     "content8": "by finding solutions online and passing tests.",
-    "goToUrlText": "Learn more"
+    "goToUrlText": "Learn more",
+    "goToLearn" : "Learn",
+    "goToLectures" : "Lectures"
   },
   "tools": {
     "modeling": "MODELING TOOLS",
