@@ -280,7 +280,7 @@
                                                     v-model="showOriginMode"
                                                     label="Show Origin"
                                             ></v-switch>
-                                            <span style="font-weight:700; font-size:14px;">Clone git Repo firstly</span>
+                                            <span style="font-weight:700; font-size:14px;">1. Clone Repo</span>
                                             <v-text-field
                                                     id="copy-gitClone-command"
                                                     label="Local IDE"
@@ -298,7 +298,7 @@
                                                     </v-icon>
                                                 </template>
                                             </v-text-field>
-                                            <span style="font-weight:700; font-size:14px;">Update from model code</span>
+                                            <span style="font-weight:700; font-size:14px;">2. Update</span>
                                             <v-text-field
                                                     id="copy-gitMerge-command"
                                                     label="Update from model code"
