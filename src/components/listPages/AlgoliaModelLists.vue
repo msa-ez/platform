@@ -13,49 +13,47 @@
                 
                         <v-list nav>
                             <v-row class="main-tap-list" style="margin-top:-80px; margin-bottom:10px; position:absolute; max-width:60%; min-width:10%; z-index:1; left: 50%; transform: translate(-50%, 0%);">
-                                <v-hover v-slot="{ hover }">
-                                    <v-list-group
-                                        :value="hover"
-                                        style="background-color:white;"
-                                    >
-                                        <template v-slot:activator>
-                                            <v-list-item-title style="margin-right:-20px;">{{$t('mainNav.project')}}</v-list-item-title>
-                                        </template>
-
-                                        <v-list-item
-                                            v-for="(tabObj, tabIndex) in filterTabLists"
-                                            v-if="tabObj.id !== 'home'"
-                                            :key="tabObj.id"
-                                            link
-                                            @click="tabId = tabObj.id"
-                                        >
-                                            <v-list-item-title style="margin-top:-4px;">{{ tabObj.display }}</v-list-item-title>
-                                            <v-avatar v-if="tabIndex > 0 && tabObj.totalCount != null" color="green lighten-5" size="30"
-                                                    style="font-size:10px;">
-                                                {{ tabObj.totalCount == null ? '...' : (tabObj.totalCount == 0 ? '0' : tabObj.totalCount) }}
-                                            </v-avatar>
-                                        </v-list-item>
-                                    </v-list-group>
-                                </v-hover>
+                                <v-btn 
+                                    text
+                                    style="font-size:16px; margin:0px 10px;"
+                                    @click="wikiOpen()"
+                                >{{$t('mainNav.introduction')}}
+                                </v-btn>
                                 <v-btn v-for="(item, index) in mainNav"
                                     :key="index"
                                     text
-                                    style="height:48px; font-size:16px;"
+                                    style="font-size:16px; margin:0px 10px;"
                                     @click="toggleDialog(item)"
                                 >{{$t(item.title)}}
                                 </v-btn>
                             </v-row>
                         </v-list>
-
-                        <v-dialog v-for="(item, index) in mainNav"
-                                v-if="item.dialogType === 'introduction'"
-                                :key="`dialog-${index}`"
-                                v-model="item.dialog"
-                        >
-                            <v-card>
-                                <v-card-title class="text-h5" >{{ item.title }}</v-card-title>
-                            </v-card>
-                        </v-dialog>
+                        <v-hover v-slot="{ hover }">
+                            <v-list-group class="nav-project-list"
+                                :value="hover"
+                                style="background-color:white; position:absolute; top:-56px; z-index:1"
+                                :style="isLogin ? 'right:85px;' : 'right:60px;'"
+                            >
+                                <template v-slot:activator>
+                                    <v-list-item-title style="margin-right:-20px;">{{$t('mainNav.project')}}</v-list-item-title>
+                                </template>
+                            
+                                <v-list-item
+                                    v-for="(tabObj, tabIndex) in filterTabLists"
+                                    v-if="tabObj.id !== 'home' && tabObj.show"
+                                    :key="tabObj.id"
+                                    link
+                                    @click="tabId = tabObj.id"
+                                >
+                                    <v-list-item-title style="margin-top:-4px;">{{ tabObj.display }}</v-list-item-title>
+                                    <v-avatar v-if="tabIndex > 0 && tabObj.totalCount != null" color="green lighten-5" size="30"
+                                            style="font-size:10px;">
+                                        {{ tabObj.totalCount == null ? '...' : (tabObj.totalCount == 0 ? '0' : tabObj.totalCount) }}
+                                    </v-avatar>
+                                </v-list-item>
+                            </v-list-group>
+                        </v-hover>
+                        
                         <v-dialog v-for="(item, index) in mainNav"
                                 v-if="item.dialogType === 'partnership'"
                                 :key="`dialog-${index}`"
@@ -71,149 +69,111 @@
                             </v-card>
                         </v-dialog>
                         <v-dialog v-for="(item, index) in mainNav"
-                                v-if="item.dialogType === 'learn'"
-                                :key="`dialog-${index}`"
-                                v-model="item.dialog"
+                            v-if="item.dialogType === 'learn'"
+                            :key="`dialog-${index}`"
+                            v-model="item.dialog"
+                            max-width="90%"
                         >
-                            <v-card style="padding:10px;">
+                            <v-card style="padding:10px; height:85vh; overflow:auto;">
                                 <v-row style="margin:0px;">
-                                    <v-card-title class="text-h5 pa-0">{{ item.title }}</v-card-title>
+                                    <v-card-title class="text-h5 pa-0">{{$t(item.title)}}</v-card-title>
                                     <v-spacer></v-spacer>
                                     <v-btn
                                         @click="navigateTo('https://www.msaschool.io/operation/education/curriculum/')"
                                         text
-                                        color="primary"
                                         style="font-size:16px;"
-                                    >{{$t('main.goToLectures')}}
+                                    >{{$t('main.training')}}
+                                    </v-btn>
+                                    <v-btn
+                                        text
+                                        @click="navigateTo('/courses')"
+                                        style="margin-right:10px;"
+                                    >
+                                        <div class="app-new-text" style=" font-weight:700;">{{$t('main.goToLectures')}}</div>
                                     </v-btn>
                                 </v-row>
-                                <v-tabs v-model="navLearnTab"
-                                    grow
-                                >
-                                    <v-tab>{{$t('tools.modeling')}}</v-tab>
-                                    <v-tab>{{$t('tutorials.tutorial')}}</v-tab>
-                                    <v-tab>{{$t('examples.modeling')}}</v-tab>
-                                </v-tabs>
-                                <v-tabs-items v-model="navLearnTab">
-                                    <v-tab-item>
-                                        <v-row class="title-page-card-box-row" style="padding-bottom:20px">
-                                            <v-col v-for="(card, index) in navLearnModelingCards"
-                                                :key="index"
-                                                lg="3"
-                                                md="4"
-                                                sm="6"
-                                                xs="12"
-                                            >
-                                                <v-card
-                                                    outlined
-                                                    class="title-page-card-box"
-                                                >
-                                                    <v-card-title style="text-align: center;" class="home-card-title">{{ $t(card.title) }}</v-card-title>
-                                                    <v-img @click="moveToPages(card.page)"
-                                                        class="introduction-img"
-                                                        :src="card.image"
+                                <v-row class="title-page-card-box-row">
+                                    <v-col
+                                        v-for="(card, index) in navLearnTutorialCards"
+                                        :key="index"
+                                        lg="3"
+                                        md="4"
+                                        sm="6"
+                                        xs="12"
+                                    >
+                                        <v-card
+                                            class="mx-auto"
+                                            width="356"
+                                            min-height="150"
+                                            outlined
+                                        >
+                                            <v-row style="margin-left: 3px; margin-top:0px; margin-bottom:-25px;">
+                                                <v-chip
+                                                    class="ma-2"
+                                                    :color="card.color"
+                                                    text-color="white"
+                                                    style="width: auto; height: 20px; font-size: 12px; font-weight:bold; z-index: 200;"
+                                                    small
+                                                >{{$t('word.dev')}}
+                                                </v-chip>
+                                            </v-row>
+                                            <v-list-item three-line>
+                                                <a @click="moveToPages(card.page)">
+                                                    <v-img class="mt-4 mr-3"
+                                                        style="height:115px; width:165px;"
+                                                        :src="card.imageUrl"
                                                     >
                                                     </v-img>
-                                                    <v-card-subtitle>{{ $t(card.subtitle) }}</v-card-subtitle>
-                                                    <v-card-actions class="title-card-actions-btn">
-                                                    <v-btn small depressed text @click="goTutorials(card.page)">{{ $t('tools.tutorial-btn') }}</v-btn>
-                                                    <v-btn small depressed text @click="goVideo(card.page)">{{ $t('tools.video-btn') }}</v-btn>
-                                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                                            @click="moveToPages(card.page)">{{ $t('tools.create-btn') }}
-                                                    </v-btn>
-                                                    </v-card-actions>
-                                                </v-card>
-                                            </v-col>
-                                        </v-row>
-                                    </v-tab-item>
-
-                                    <v-tab-item>
-                                        <v-row class="title-page-card-box-row">
-                                            <v-col
-                                                v-for="(card, index) in navLearnTutorialCards"
-                                                :key="index"
-                                                lg="3"
-                                                md="4"
-                                                sm="6"
-                                                xs="12"
-                                            >
-                                                <v-card
-                                                    class="mx-auto"
-                                                    width="356"
-                                                    min-height="150"
-                                                    outlined
-                                                >
-                                                    <v-row style="margin-left: 3px; margin-top:0px; margin-bottom:-25px;">
-                                                        <v-chip
-                                                            class="ma-2"
-                                                            :color="card.color"
-                                                            text-color="white"
-                                                            style="width: auto; height: 20px; font-size: 12px; font-weight:bold; z-index: 200;"
-                                                            small
-                                                        >{{$t('word.dev')}}
-                                                        </v-chip>
-                                                    </v-row>
-                                                    <v-list-item three-line>
-                                                        <a @click="moveToPages(card.page)">
-                                                            <v-img class="mt-4 mr-3"
-                                                                style="height:115px; width:165px;"
-                                                                :src="card.imageUrl"
-                                                            >
-                                                            </v-img>
-                                                        </a>
-                                                        <v-list-item-content>
-                                                            <v-list-item-subtitle class="mb-1" style="font-weight: 500; font-size:14px; color:black;">
-                                                                {{$t(card.title)}}
-                                                            </v-list-item-subtitle>
-                                                            <div style="font-size:12px; color:#757575;">{{$t(card.subtitle)}}</div>
-                                                        </v-list-item-content>
-                                                    </v-list-item>
-                                                </v-card>
-                                            </v-col>
-                                        </v-row>
-                                    </v-tab-item>
-
-                                    <v-tab-item>
-                                        <v-row class="title-page-card-box-row">
-                                            <v-col
-                                                v-for="(card, index) in navLearnExamplesCards"
-                                                :key="index"
-                                                lg="3"
-                                                md="4"
-                                                sm="6"
-                                                xs="12"
-                                            >
-                                                <v-card
-                                                class="mx-auto"
-                                                width="356"
-                                                min-height="150"
-                                                outlined
-                                                >
-                                                <v-list-item three-line>
-                                                    <a @click="moveToPages(card.page)">
-                                                        <v-img class="mt-4 mr-3"
-                                                            style="height:115px; width:165px;"
-                                                            :src="card.imageUrl"
-                                                        >
-                                                        </v-img>
-                                                    </a>
-                                                    <v-list-item-content>
-                                                    <div style="margin-top:10px; font-weight: 500; font-size:16px; color:black;">
+                                                </a>
+                                                <v-list-item-content>
+                                                    <v-list-item-subtitle class="mb-1" style="font-weight: 500; font-size:14px; color:black;">
                                                         {{$t(card.title)}}
-                                                    </div>
-                                                    <v-card-actions class="title-card-actions-btn" style="margin-bottom:-15px;">
-                                                        <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                                            :to="card.page">
-                                                        {{$t('examples.enter-btn')}}
-                                                        </v-btn>
-                                                    </v-card-actions>
-                                                    </v-list-item-content>
-                                                </v-list-item>
-                                                </v-card>
-                                            </v-col>
-                                        </v-row>
-                                    </v-tab-item>
-                                </v-tabs-items>
+                                                    </v-list-item-subtitle>
+                                                    <div style="font-size:12px; color:#757575;">{{$t(card.subtitle)}}</div>
+                                                </v-list-item-content>
+                                            </v-list-item>
+                                        </v-card>
+                                    </v-col>
+                                </v-row>
+
+                                <v-row class="title-page-card-box-row">
+                                    <v-col
+                                        v-for="(card, index) in navLearnExamplesCards"
+                                        :key="index"
+                                        lg="3"
+                                        md="4"
+                                        sm="6"
+                                        xs="12"
+                                    >
+                                        <v-card
+                                        class="mx-auto"
+                                        width="356"
+                                        min-height="150"
+                                        outlined
+                                        >
+                                        <v-list-item three-line>
+                                            <a @click="moveToPages(card.page)">
+                                                <v-img class="mt-4 mr-3"
+                                                    style="height:115px; width:165px;"
+                                                    :src="card.imageUrl"
+                                                >
+                                                </v-img>
+                                            </a>
+                                            <v-list-item-content>
+                                            <div style="margin-top:10px; font-weight: 500; font-size:16px; color:black;">
+                                                {{$t(card.title)}}
+                                            </div>
+                                            <v-card-actions class="title-card-actions-btn" style="margin-bottom:-15px;">
+                                                <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                                    :to="card.page">
+                                                {{$t('examples.enter-btn')}}
+                                                </v-btn>
+                                            </v-card-actions>
+                                            </v-list-item-content>
+                                        </v-list-item>
+                                        </v-card>
+                                    </v-col>
+                                </v-row>
                             </v-card>
                         </v-dialog>
                     <!-- <v-tabs
@@ -1360,7 +1320,7 @@
         },
         data() {
             return {
-                navLearnTab: null,
+                navLectureTab: null,
                 navLearnModelingCards: [
                     {
                         title: 'tools.eventstorming',
@@ -1492,21 +1452,13 @@
                     }
                 ],
                 mainNav: [
-                    {   
-                        title: 'mainNav.introduction',
-                        icon: 'mdi-information',
-                        dialog: false,
-                        dialogType: 'introduction',
-                    },
                     {
                         title: 'mainNav.partnership',
-                        icon: 'mdi-handshake',
                         dialogType: 'partnership',
                         dialog: false,
                     },
                     {
                         title: 'mainNav.learn',
-                        icon: 'mdi-school',
                         dialogType: 'learn',
                         dialog: false,
                     }
@@ -1600,6 +1552,7 @@
             console.log('Ev beforeDestroy')
         },
         async created() {
+            this.$EventBus.$on('goToLectures', this.navigateTo);
             this.labURL = window.location.href.split('/');
             this.showLoading = true;
             this.$EventBus.$emit('showNewButton', true);
@@ -1742,7 +1695,7 @@
                     });
                 } else {
                     me.projects.filter(function(tabItem){
-                        if(tabItem.id == 'mine' || tabItem.id == 'share'  || tabItem.id == 'public' ){
+                        if(tabItem.id == 'mine' || tabItem.id == 'share'){
                             tabItem.show = false
                         }else {
                             tabItem.show = true
@@ -1872,6 +1825,13 @@
             },
         },
         methods: {
+            wikiOpen() {
+                if (this.isForeign) {
+                    window.open("https://intro.msaez.io/started/", "_blank")
+                } else {
+                    window.open("https://intro-kor.msaez.io/started/", "_blank")
+                }
+            },
             toggleDialog(item) {
                 item.dialog = !item.dialog;
             },
@@ -2515,6 +2475,12 @@
 
     }
 </script>
+
+<style>
+    .nav-project-list .v-list-item {
+        padding:0px 5px;
+    }
+</style>
 
 <style scoped>
     .nav-dialog {

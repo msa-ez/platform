@@ -63,26 +63,14 @@
             },
             isEditElement() {
                 if (this.canvas) {
-                    if (this.canvas.readOnly) {
-                        return false
-                    } else {
-                        if (this.canvas.information && this.canvas.information.author) {
-                            if (localStorage.getItem('uid') == this.canvas.information.author) {
-                                //project author
-                                return true
-                            } else {
-                                if (this.elementAuthor) {
-                                    return this.elementAuthor == localStorage.getItem('uid')
-                                } else {
-                                    if (this.canvas.information.author == this.userInfo.uid) {
-                                        return true
-                                    } else {
-                                        return false
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    if(this.canvas.readOnly) return false; // Don't edit
+
+                    if(!this.canvas.isServerModel) return true // local
+                    if(this.canvas.isOwnModel) return true; // own model
+                    
+                    if(!this.canvas.information) return false // Server Model But No info.
+                    if(!this.canvas.information.permissions) return false; // No Permission.
+                    if(this.canvas.information.permissions[this.canvas.userInfo.uid]) return true;
                 }
                 return true
             },
@@ -110,14 +98,14 @@
                         this.refreshImg()
                 }, 200)
             },
-            'staySelected': function (newVal, oldVal) {
-                if (newVal) {
-                    this.selectedStayActivity()
-                } else {
-                    this.deSelectedStayActivity()
-                }
-
-            },
+            // 'staySelected': function (newVal, oldVal) {
+            //     if (newVal) {
+            //         this.selectedStayActivity()
+            //     } else {
+            //         this.deSelectedStayActivity()
+            //     }
+            //
+            // },
             'selected': _.debounce(function (newVal, oldVal) {
                 if (newVal) {
                     if (this.propertyPanel) {
@@ -138,11 +126,11 @@
                     //only Element
                     if (me.value.elementView.id == id) {
                         me.isMovedElement = true
-                        me.movedNewActivity()
+                        // me.movedNewActivity()
                     } else {
                         if (me.isMovedElement == true) {
                             me.isMovedElement = false
-                            me.movedOldActivity()
+                            // me.movedOldActivity()
                         }
                     }
                 }
@@ -156,7 +144,7 @@
                 me.canvas = me.getComponent('customer-journey-map');
             },
             onMoveShape: function () {
-                this.$EventBus.$emit('isMovedElement', this.value.elementView.id)
+            //     this.$EventBus.$emit('isMovedElement', this.value.elementView.id)
             },
             selectedActivity: function () {
                 if (this.value) {
@@ -173,173 +161,6 @@
                         this.selected = false
                         this.staySelected = false
                     }
-                }
-            },
-            movedNewActivity() {
-                var me = this
-                if (me.isLogin && me.canvas.isServerModel && !me.canvas.isReadOnlyModel) {
-                    var obj = {
-                        action: 'userMovedOn',
-                        editUid: me.userInfo.uid,
-                        name: me.userInfo.name,
-                        picture: me.userInfo.profile,
-                        timeStamp: Date.now(),
-                        editElement: me.value.elementView.id
-                    }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
-                }
-            },
-            movedOldActivity() {
-                var me = this
-                if (me.isLogin && me.canvas.isServerModel && !me.canvas.isReadOnlyModel) {
-                    var obj = {
-                        action: 'userMovedOff',
-                        editUid: me.userInfo.uid,
-                        name: me.userInfo.name,
-                        picture: me.userInfo.profile,
-                        timeStamp: Date.now(),
-                        editElement: me.value.elementView.id
-                    }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
-                }
-            },
-            selectedStayActivity() {
-                var me = this
-                if (me.isLogin && me.canvas.isServerModel && !me.canvas.isReadOnlyModel) {
-                    var obj = {
-                        action: 'userSelectedOn',
-                        editUid: me.userInfo.uid,
-                        name: me.userInfo.name,
-                        picture: me.userInfo.profile,
-                        timeStamp: Date.now(),
-                        editElement: me.value.elementView.id
-                    }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
-                }
-            },
-            deSelectedStayActivity() {
-                var me = this
-                if (me.isLogin && me.canvas.isServerModel && !me.canvas.isReadOnlyModel) {
-                    var obj = {
-                        action: 'userSelectedOff',
-                        editUid: me.userInfo.uid,
-                        name: me.userInfo.name,
-                        picture: me.userInfo.profile,
-                        timeStamp: Date.now(),
-                        editElement: me.value.elementView.id
-                    }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
-                }
-
-            },
-
-            delayedMove(dx, dy, dw, dh, du, dlw, dl, dr) {
-                var me = this
-
-                var offsetX, offsetY, offsetW, offsetH
-
-                var originX = me.value.elementView.x
-                var originY = me.value.elementView.y
-                var originW = me.value.elementView.width
-                var originH = me.value.elementView.height
-
-                if (me.canvas.isCustomMoveExist && me.params.projectId) {
-                    me.movingElement = false
-                    me.canvas.modelChanged = true
-                    var types = me.value._type.split('.')
-
-                    if (dx == null && dy == null) {
-                        // resize
-
-                        if (Math.abs(dl) <= Math.abs(dr)) {
-                            // 오른쪽으로 움직임
-                            if (dr >= 0) {
-                                offsetX = originX + (Math.abs(dl + dr) / 2.0)
-                            } else {
-                                offsetX = originX - (Math.abs(dl + dr) / 2.0)
-                            }
-
-
-                        } else if (Math.abs(dl) > Math.abs(dr)) {
-                            // 왼쪽 으로 움직임
-                            if (dl >= 0) {
-                                offsetX = originX - (Math.abs(dl + dr) / 2.0)
-                            } else {
-                                offsetX = originX + (Math.abs(dl + dr) / 2.0)
-                            }
-
-                        }
-
-                        if (Math.abs(dlw) <= Math.abs(du)) {
-                            //위로 움직임
-                            if (du >= 0) {
-                                offsetY = originY - (Math.abs(du + dlw) / 2.0)
-                            } else {
-                                offsetY = originY + (Math.abs(du + dlw) / 2.0)
-                            }
-
-                        } else if (Math.abs(dlw) > Math.abs(du)) {
-                            //아래로 움직임
-                            if (dlw >= 0) {
-                                offsetY = originY + (Math.abs(du + dlw) / 2.0)
-                            } else {
-                                offsetY = originY - (Math.abs(du + dlw) / 2.0)
-                            }
-
-                        }
-
-                        offsetW = dw
-                        offsetH = dh
-
-                    } else if (dw == null && dh == null) {
-                        //move
-                        offsetX = originX + dx
-                        offsetY = originY + dy
-                        offsetW = originW
-                        offsetH = originH
-                    } else {
-                        console.log('error Move & Resize')
-                    }
-
-                    var pushObj =
-                        {
-                            action: 'elementMove',
-                            elementType: types[types.length - 1],
-                            elementName: me.value.name,
-                            editUid: localStorage.getItem('uid'),
-                            elementId: me.value.elementView.id,
-                            before: JSON.stringify({x: originX, y: originY, width: originW, height: originH}),
-                            after: JSON.stringify({x: offsetX, y: offsetY, width: offsetW, height: offsetH}),
-                            timeStamp: Date.now(),
-                        }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, pushObj)
-                }
-            },
-            delayedRelationMove(vertices) {
-                var me = this
-                var orgineVertices = JSON.parse(JSON.stringify(me.value.relationView.value))
-                var newVertices = []
-                var offsetVertices
-
-                if (me.canvas.isCustomMoveExist && me.params.projectId) {
-                    me.movingElement = false
-                    me.canvas.modelChanged = true
-
-                    vertices.forEach(function (ver, index) {
-                        newVertices.push([ver.x, ver.y])
-                    })
-                    offsetVertices = JSON.stringify(newVertices)
-
-                    var pushObj =
-                        {
-                            action: 'relationMove',
-                            editUid: localStorage.getItem('uid'),
-                            relationId: me.value.relationView.id,
-                            before: orgineVertices,
-                            after: offsetVertices,
-                            timeStamp: Date.now(),
-                        }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, pushObj)
                 }
             },
             getComponentByClassName: function (className) {

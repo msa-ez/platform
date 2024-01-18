@@ -721,7 +721,7 @@
             movedNewActivity() {
                 var me = this
                 try {
-                    if (me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.canvas.isHexagonal ) {
+                    if (me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.canvas.isHexagonal && !me.canvas.isReadOnlyModel ) {
                         var obj = {
                             action: 'userMovedOn',
                             editUid: me.userInfo.uid,
@@ -740,7 +740,7 @@
                 var me = this
 
                 try {
-                    if (me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.canvas.isHexagonal ) {
+                    if (me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.canvas.isHexagonal && !me.canvas.isReadOnlyModel) {
                         var obj = {
                             action: 'userMovedOff',
                             editUid: me.userInfo.uid,

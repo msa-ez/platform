@@ -5,7 +5,7 @@
                 :movable="!canvas.isReadOnlyModel && !movingElement"
                 :resizable="!canvas.isReadOnlyModel && !movingElement && isEditElement"
                 :deletable="!canvas.isReadOnlyModel && isEditElement"
-                connectable
+                :connectable="!canvas.isReadOnlyModel"
                 :id.sync="value.elementView.id"
                 :x.sync="value.elementView.x"
                 :y.sync="value.elementView.y"
@@ -55,7 +55,7 @@
         <cjm-model-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!(!canvas.isReadOnlyModel && isEditElement)"
+                :readOnly="!isEditElement"
                 :showError="showError"
                 :widthStyle="panelStyle"
                 @close="closePanel"
@@ -137,7 +137,7 @@
                         width: newVal,
                         height: me.value.elementView.height
                     }
-                    me.$store.dispatch('resize', obj)
+                    if(me.$store) me.$store.dispatch('resize', obj)
                 }
             },
             "value.elementView.height": {
@@ -148,7 +148,7 @@
                         width: me.value.elementView.width,
                         height: newVal
                     }
-                    me.$store.dispatch('resize', obj)
+                    if(me.$store) me.$store.dispatch('resize', obj)
                 }
             },
         },

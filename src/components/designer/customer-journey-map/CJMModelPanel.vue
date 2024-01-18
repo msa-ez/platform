@@ -140,6 +140,7 @@
 
 <script>
     import ModelPanel from "../modeling/ModelPanel";
+    import getParent from "../../../utils/getParent";
 
     var _ = require('lodash')
     import draggable from 'vuedraggable'
@@ -202,7 +203,7 @@
         },
         data: function () {
             return {
-                modelCanvasComponent: null,
+                // modelCanvasComponent: null,
                 colorList: [ '#F1A746', '#5099F7', '#BB94BF', '#F8D454', '#ED73B6', '#5FC08B', '#8E24AA' ],
             }
         },
@@ -211,14 +212,7 @@
         methods: {
             setElementCanvas(){
                 var me = this;
-                me.modelCanvasComponent = me.$parent.getComponent('customer-journey-map')
-                me.canvas = me.$parent.getComponent('customer-journey-map')
-            },
-            changeName: function () {
-                this.editingTransformer.name = this.editingTransformer._type;
-            },
-            showProperty: function (transformer) {
-                this.editingTransformer = transformer;
+                me.canvas = getParent(me.$parent, "customer-journey-map");
             },
             changeColor(color) {
                 var me = this;
