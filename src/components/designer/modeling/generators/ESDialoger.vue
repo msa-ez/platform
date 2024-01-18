@@ -124,7 +124,8 @@
                 input:{
                     title: this.prompt,
                     separationPrinciple:  "Conway's Principle.", // "Business Capability" // "Infra Diversity" // "Per Persona",
-                    businessModel: this.cachedModels["BMGenerator"]
+                    businessModel: this.cachedModels["BMGenerator"],
+                    painpointAnalysis: this.cachedModels["CJMGenerator"]
                 },
                 done: false,
                 generator: null,
@@ -174,6 +175,7 @@
             generate(){
                 this.value.userStory = '';
                 this.input.businessModel = this.cachedModels["BMGenerator"]
+                this.input.painpointAnalysis = this.cachedModels["CJMGenerator"]
                 this.generator = new Generator(this);
                 this.generator.generate();
                 this.state.startTemplateGenerate = true
