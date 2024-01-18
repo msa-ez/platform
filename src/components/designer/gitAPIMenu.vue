@@ -1426,7 +1426,7 @@
                     me.copyChangedPathLists = []
                     me.gitSnackBar.show = true
                     me.gitSnackBar.timeout = 3000
-                    me.gitSnackBar.Text = "Commit/Push 완료되었습니다."
+                    me.gitSnackBar.Text = "Commit/Push Success."
                     me.gitSnackBar.Color = "success"
                     me.gitSnackBar.icon="check_circle"
                     me.gitSnackBar.title="Success"
@@ -2172,7 +2172,7 @@
                                                 me.copyChangedPathLists = []
                                                 me.gitSnackBar.show = true
                                                 me.gitSnackBar.timeout = 3000
-                                                me.gitSnackBar.Text = "Commit/Push 완료되었습니다."
+                                                me.gitSnackBar.Text = "Commit/Push Success."
                                                 me.gitSnackBar.Color = "success"
                                                 me.gitSnackBar.icon="check_circle"
                                                 me.gitSnackBar.title="Success"
@@ -2317,7 +2317,7 @@
                             me.copyChangedPathLists = []
                             me.gitSnackBar.show = true
                             me.gitSnackBar.timeout = 3000
-                            me.gitSnackBar.Text = "Commit/Push 완료되었습니다."
+                            me.gitSnackBar.Text = "Commit/Push Success."
                             me.gitSnackBar.Color = "success"
                             me.gitSnackBar.icon="check_circle"
                             me.gitSnackBar.title="Success"
@@ -2364,7 +2364,7 @@
                         me.copyChangedPathLists = []
                         me.gitSnackBar.show = true
                         me.gitSnackBar.timeout = 3000
-                        me.gitSnackBar.Text = "Commit/Push 완료되었습니다."
+                        me.gitSnackBar.Text = "Commit/Push Success."
                         me.gitSnackBar.Color = "success"
                         me.gitSnackBar.icon="check_circle"
                         me.gitSnackBar.title="Success"

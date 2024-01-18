@@ -81,13 +81,10 @@
                                     <v-btn
                                         @click="navigateTo('https://www.msaschool.io/operation/education/curriculum/')"
                                         text
-                                        color="primary"
                                         style="font-size:16px;"
                                     >{{$t('main.training')}}
                                     </v-btn>
-                                    <v-btn class="app-new-btn"
-                                        v-if="showNewButton"
-                                        v-on="on"
+                                    <v-btn
                                         text
                                         @click="navigateTo('/courses')"
                                         style="margin-right:10px;"

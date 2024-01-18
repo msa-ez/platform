@@ -102,8 +102,8 @@
                     >{{$t('main.newModeling')}}
                     </v-btn>
                 </template>
-                <v-card style="padding:10px; height:85vh; overflow:auto;">
-                    <div style="font-size:24px; font-weight: 700; text-align: center;">{{$t('main.newModeling')}}</div>
+                <v-card style="padding:20px; height:85vh; overflow:auto;">
+                    <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('main.newModeling')}}</div>
                     <v-row
                         style="margin:0px;"
                     >
@@ -120,7 +120,7 @@
                                 <v-card-title class="justify-center">{{ $t(item.title) }}</v-card-title>
                                 <v-img @click.native="moveToModel(item.type)"
                                     :src="item.image"
-                                    style="cursor: pointer;"
+                                    style="cursor: pointer; height:200px;"
                                 >
                                 </v-img>
                                 <v-card-subtitle style="margin-bottom:20px;">{{ $t(item.subtitle) }}</v-card-subtitle>
@@ -743,28 +743,28 @@
             newProjectBtns: [
                 {   type: 'es',
                     title: 'tools.eventstorming',
-                    image: 'https://user-images.githubusercontent.com/113568664/208291359-e7ce6d88-776b-4447-a236-d7a1cddadcf4.png',
+                    image: '/static/image/main/mainModeling.png',
                     subtitle: 'tools.eventstorming-inst',
                     disabled: false,
                 },
                 {
                     type: 'k8s', 
                     title: 'tools.kubernetes',
-                    image: 'https://user-images.githubusercontent.com/113568664/208291286-15b57907-3126-48f6-bf71-490df5ce027d.png',
+                    image: '/static/image/main/maink8s.png',
                     subtitle: 'tools.kubernetes-inst',
                     disabled: false,
                 },
                 {
-                    type: 'bm', 
+                    type: 'bmc', 
                     title: 'tools.bmc',
-                    image: 'https://user-images.githubusercontent.com/92732781/233012222-d0662c4b-5546-4e7b-af28-c07617a57ef0.png',
+                    image: '/static/image/main/mainBMC.png',
                     subtitle: 'tools.kubernetes-inst',
                     disabled: true,
                 },
                 {
                     type: 'bpmn', 
                     title: 'tools.bpmn',
-                    image: 'https://user-images.githubusercontent.com/92732781/233012303-64841fa2-2952-43eb-a768-f75be9a73679.png',
+                    image: '/static/image/main/mainBPMN.png',
                     subtitle: 'tools.bpmn-inst',
                     disabled: false,
                 },
@@ -772,17 +772,20 @@
                     type: 'sticky', 
                     title: 'tools.sticky',
                     subtitle: 'tools.sticky-inst',
+                    image: '/static/image/main/mainSticky.png',
                     disabled: true,
                 },
                 {
                     type: 'uml', 
                     title: 'tools.uml',
+                    image: '/static/image/main/mainUml.png',
                     subtitle: 'tools.uml-inst',
                     disabled: true,
                 },
                 {
                     type: 'project', 
                     title: 'tools.project',
+                    image: '/static/image/main/mainProject.png',
                     subtitle: 'tools.project-inst',
                     disabled: true,
                 },
@@ -1601,7 +1604,7 @@
                         me.$router.push({path: `storming/${me.dbuid()}`});
                     } else if (type == 'k8s') {
                         me.$router.push({path: `kubernetes/${me.dbuid()}`});
-                    } else if (type == 'bm') {
+                    } else if (type == 'bmc') {
                         me.$router.push({path: `business-model-canvas/${me.dbuid()}`});
                     } else if (type == 'sticky') {
                         me.$router.push({path: `sticky/${me.dbuid()}`});
