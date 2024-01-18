@@ -57,445 +57,125 @@
                             </v-card>
                         </v-dialog>
                         <v-dialog v-for="(item, index) in mainNav"
-                                v-if="item.dialogType === 'partnership'"
-                                :key="`dialog-${index}`"
-                                v-model="item.dialog"
-                                max-width="90%"
-                        >
-                            <v-card style="padding:10px; height:85vh;">
-                                <v-card-title class="text-h5">{{ item.title }}</v-card-title>
-                                <v-card-title style="font-weight:700; margin-bottom:10px;">MSAEZ 파트너십이란?</v-card-title>
-                                <v-card-text style="font-size:16px;">
-                                    당사는 오픈소스 기술을 통해 업계를 선도하고 있으며, 파트너십을 통해 이러한 혁신을 더욱 확장하고자 합니다.<br><br>
-                                    기술적 협력을 통해 상호 발전을 도모하며 고객에게 더 나은 서비스를 제공하기 위해 파트너십을 추진합니다.<br><br>
-                                    함께 성장하고 혁신하는 과정에서 서로의 지식과 경험을 공유하여 시너지를 창출하고자 합니다.
-                                </v-card-text>
-                                <v-card-title style="font-weight:700;">파트너 Benefits</v-card-title>
-                                <v-row align="center" justify="center" align-xl="">
-                                    <v-col>
-                                        <v-card
-                                        class="mx-auto"
-                                        max-width="375"
-                                        outlined
-                                        style="padding:15px;"
-                                        >
-                                        <v-img
-                                        src="/static/image/revenue.png"
-                                        height="200px"
-                                        cover
-                                        style="margin-bottom:15px;"
-                                        ></v-img>
-                                            <v-card-item>
-                                                <div style="text-align: center;">
-                                                    <div class="text-h6 mb-1" style="font-weight: 700;">
-                                                        수익 분배
-                                                    </div>
-                                                    <div>파트너십을 통해 발생하는 수익은 5:5로 균등 분배</div>
-                                                </div>
-                                            </v-card-item>
-                                        </v-card>
-                                    </v-col>
-                                    <v-col>
-                                        <v-card
-                                        class="mx-auto"
-                                        max-width="375"
-                                        outlined
-                                        style="padding:15px;"
-                                        >
-                                        <v-img
-                                        src="/static/image/open.png"
-                                        height="200px"
-                                        cover
-                                        style="margin-bottom:15px;"
-                                        ></v-img>
-                                            <v-card-item>
-                                                <div style="text-align: center;">
-                                                    <div class="text-h6 mb-1" style="font-weight: 700;">
-                                                        코드 공개
-                                                    </div>
-                                                    <div>코드를 공개하여 서비스의 안정성과 품질을 직접 확인</div>
-                                                </div>
-                                            </v-card-item>
-                                        </v-card>
-                                    </v-col>
-                                    <v-col>
-                                        <v-card
-                                        class="mx-auto"
-                                        max-width="375"
-                                        outlined
-                                        style="padding:15px;"
-                                        >
-                                        <v-img
-                                        src="/static/image/network.png"
-                                        height="200px"
-                                        cover
-                                        style="margin-bottom:15px;"
-                                        ></v-img>
-                                            <v-card-item>
-                                                <div style="text-align: center;">
-                                                    <div class="text-h6 mb-1" style="font-weight: 700;">
-                                                        네트워크
-                                                    </div>
-                                                    <div>파트너사와의 네트워킹 및 공동 마케팅 + 세미나 개최</div>
-                                                </div>
-                                            </v-card-item>
-                                        </v-card>
-                                    </v-col>
-                                    <v-col>
-                                        <v-card
-                                        class="mx-auto"
-                                        max-width="375"
-                                        outlined
-                                        style="padding:15px;"
-                                        >
-                                        <v-img
-                                        src="/static/image/edu.png"
-                                        height="200px"
-                                        cover
-                                        style="margin-bottom:15px;"
-                                        ></v-img>
-                                            <v-card-item>
-                                                <div style="text-align: center;">
-                                                    <div class="text-h6 mb-1" style="font-weight: 700;">
-                                                        교육 지원
-                                                    </div>
-                                                    <div>영업 지원 및 도구 사용에 대한 교육 할인 제공</div>
-                                                </div>
-                                            </v-card-item>
-                                        </v-card>
-                                    </v-col>
-                                </v-row><br>
-                                <v-card-title style="font-weight: 700; margin-bottom:10px;">파트너십 기업에 대한 요구사항</v-card-title>
-                                <v-card-text style="font-size:16px;">
-                                    ✓ &nbsp; MSAEZ 정규 과정을 이수하여 테스트를 통과한 기업<br><br>
-                                    ✓ &nbsp; 공동 마케팅 활동에 참여 가능한 기업<br><br>
-                                    ✓ &nbsp; 지속 가능한 비즈니스 모델과 투입 가능한 인력을 보유한 기업
-                                </v-card-text>
-                                <v-card-actions>
-                                    <v-btn 
-                                        width="10%" 
-                                        height="48" 
-                                        color="primary" 
-                                        style="font-weight: 900; font-size:16px;"
-                                        target='_blank'
-                                        :href="`https://forms.gle/oUXBixieGCUv466y5`"
-                                    >
-                                        파트너 되기
-                                    </v-btn>
-                                </v-card-actions>
-                            </v-card>
-                        </v-dialog>
-                        <v-dialog v-for="(item, index) in mainNav"
                                 v-if="item.dialogType === 'pricing'"
                                 :key="`dialog-${index}`"
                                 v-model="item.dialog"
-                                max-width="90%"
                         >
-                            <v-card style="padding:10px; height:85vh; overflow: auto;">
-                                <v-card-title class="text-h5" >{{ item.title }}</v-card-title>
-                                <v-card-title style="font-weight:700; margin-bottom:10px;">MSAEZ 가격</v-card-title>
-                                <v-card-text style="font-size:16px;">
-                                    완전 오픈소스화된 AI 기반 마이크로서비스 개발 도구로 더 신속하고 스마트하게 사용해보세요.
-                                </v-card-text>
-                                <v-row align="center" justify="center" align-xl="">
-                                    <v-col>
-                                        <v-card
-                                        class="mx-auto"
-                                        max-width="375"
-                                        outlined
-                                        style="padding:15px;"
-                                        >
-                                        <v-img
-                                        src="/static/image/license.png"
-                                        height="300px"
-                                        cover
-                                        style="margin-bottom:15px;"
-                                        ></v-img>
-                                            <v-card-item>
-                                                <div>
-                                                    <div class="text-h6 mt-2 mb-1" style="font-weight: 700; text-align: center;">
-                                                        오픈소스 라이센스
-                                                    </div>
-                                                    <v-card-text style="font-size:16px;">이 옵션을 통해 커뮤니티 지원을 받으며 무료로 소프트웨어를 사용할 수 있습니다. 문제 해결은 사용자가 직접 해야 합니다.</v-card-text>
-                                                    <!-- <div class="text-h6 mt-2 mb-1" style="font-weight: 700; text-align: center;">
-                                                        주요 특징
-                                                    </div> -->
-                                                    <v-card-text style="font-size:16px;">
-                                                        ✓ &nbsp; 무료 사용<br><br>
-                                                        ✓ &nbsp; 커뮤니티 기반 지원<br><br>
-                                                        ✓ &nbsp; 자체 문제 해결 필요
-                                                    </v-card-text>
-                                                    <v-card-actions>
-                                                        <v-btn 
-                                                            outlined
-                                                            width="100%" 
-                                                            height="48" 
-                                                            color="primary" 
-                                                            style="font-weight: 900; font-size:16px;"
-                                                            target='_blank'
-                                                            :href="`https://forms.gle/oUXBixieGCUv466y5`"
-                                                        >
-                                                            시작하기
-                                                        </v-btn>
-                                                    </v-card-actions>
-                                                </div>
-                                            </v-card-item>
-                                        </v-card>
-                                    </v-col>
-                                    <v-col>
-                                        <v-card
-                                        class="mx-auto"
-                                        max-width="375"
-                                        outlined
-                                        style="padding:15px;"
-                                        >
-                                        <v-img
-                                        src="/static/image/saas.png"
-                                        height="300px"
-                                        cover
-                                        style="margin-bottom:15px;"
-                                        ></v-img>
-                                            <v-card-item>
-                                                <div>
-                                                    <div class="text-h6 mt-2 mb-1" style="font-weight: 700; text-align:center;">
-                                                        SaaS 기반 서비스
-                                                    </div>
-                                                    <v-card-text style="font-size:16px;">당사의 SaaS 서비스를 이용하면 사용한 만큼만 비용을 지불하게 됩니다. 이는 유연하고 확장 가능한 솔루션입니다.</v-card-text>
-                                                    <!-- <div class="text-h6 mt-2 mb-1" style="font-weight: 700; text-align: center;">
-                                                        주요 특징
-                                                    </div> -->
-                                                    <v-card-text style="font-size:16px;">
-                                                        ✓ &nbsp; 코드 자동 생성 : 건당 1만 원<br><br>
-                                                        ✓ &nbsp; 애자일 모델링 : 건당 1만 원<br><br>
-                                                        ✓ &nbsp; 월별 사용량에 따른 과금
-                                                    </v-card-text>
-                                                    <v-card-actions>
-                                                        <v-btn 
-                                                            outlined
-                                                            width="100%" 
-                                                            height="48" 
-                                                            color="primary" 
-                                                            style="font-weight: 900; font-size:16px;"
-                                                            target='_blank'
-                                                            :href="`https://forms.gle/oUXBixieGCUv466y5`"
-                                                        >
-                                                            구매하기
-                                                        </v-btn>
-                                                    </v-card-actions>
-                                                </div>
-                                            </v-card-item>
-                                        </v-card>
-                                    </v-col>
-                                    <v-col>
-                                        <v-card
-                                        class="mx-auto"
-                                        max-width="375"
-                                        outlined
-                                        style="padding:15px;"
-                                        >
-                                        <v-img
-                                        src="/static/image/warranty.png"
-                                        height="300px"
-                                        cover
-                                        style="margin-bottom:15px;"
-                                        ></v-img>
-                                            <v-card-item>
-                                                <div>
-                                                    <div class="text-h6 mt-2 mb-1" style="font-weight: 700; text-align: center;">
-                                                        워런티 구매
-                                                    </div>
-                                                    <v-card-text style="font-size:16px;">워런티를 구매함으로써 제조사로부터 직접적인 지원을 받을 수 있습니다. 이는 문제 해결 속도를 높이고 신뢰성을 증가시킵니다.</v-card-text>
-                                                    <!-- <div class="text-h6 mt-2 mb-1" style="font-weight: 700; text-align: center;">
-                                                        주요 특징
-                                                    </div> -->
-                                                    <v-card-text style="font-size:16px;">
-                                                        ✓ &nbsp; 제조사 지속 지원<br><br>
-                                                        ✓ &nbsp; 신속한 문제 해결<br><br>
-                                                        ✓ &nbsp; 안정성 및 보안성 향상
-                                                    </v-card-text>
-                                                    <v-card-actions>
-                                                        <v-btn 
-                                                            outlined
-                                                            width="100%" 
-                                                            height="48" 
-                                                            color="primary" 
-                                                            style="font-weight: 900; font-size:16px;"
-                                                            target='_blank'
-                                                            :href="`https://forms.gle/oUXBixieGCUv466y5`"
-                                                        >
-                                                            문의하기
-                                                        </v-btn>
-                                                    </v-card-actions>
-                                                </div>
-                                            </v-card-item>
-                                        </v-card>
-                                    </v-col>
-                                </v-row><br>
-                                <v-card-title style="font-weight:700; margin-bottom:10px;">추가적인 문의사항이 있다면 MSAEZ 담당자에게 언제든 연락주세요. 즉시 도움을 드리겠습니다.</v-card-title>
-                                <v-card-text style="font-size:16px;">
-                                    MSAEZ 제품, 가격, 구현 또는 기타 사항에 관한 질문이 있으시면 언제든지 문의해 주십시오. 풍부한 지식을 갖춘 지원 담당자가 도움을 드리기 위해 대기하고 있습니다.
-                                </v-card-text>
-                                <v-card-text style="font-size:16px; color: red;">
-                                    문의하기
-                                </v-card-text>
-                                <v-card-text style="font-size:16px;">
-                                    전화번호 : 02) 567-8301
-                                </v-card-text>
-                                <v-card-text style="font-size:16px; margin-bottom:30px;">
-                                    이메일 : help@uengine.org
-                                </v-card-text>
-                                <v-card-text style="font-size:16px;">
-                                    문제점
-                                </v-card-text>
-                                <v-card-text style="font-size:16px;">
-                                    개인 정보 처리, 취소 및 환불 약관 문제
-                                </v-card-text>
+                            <v-card>
+                                <v-card-title class="text-h5">{{ item.title }}</v-card-title>
+                                <div>
+                                    <v-card-text>Your Content Here</v-card-text>
+                                    <v-card-actions>
+                                    </v-card-actions>
+                                </div>
                             </v-card>
                         </v-dialog>
                         <v-dialog v-for="(item, index) in mainNav"
-                                v-if="item.dialogType === 'learn'"
-                                :key="`dialog-${index}`"
-                                v-model="item.dialog"
+                            v-if="item.dialogType === 'learn'"
+                            :key="`dialog-${index}`"
+                            v-model="item.dialog"
+                            max-width="90%"
                         >
-                            <v-card style="padding:10px;">
+                            <v-card style="padding:10px; height:85vh; overflow:auto;">
                                 <v-row style="margin:0px;">
-                                    <v-card-title class="text-h5 pa-0">{{ item.title }}</v-card-title>
+                                    <v-card-title class="text-h5 pa-0">{{$t(item.title)}}</v-card-title>
                                     <v-spacer></v-spacer>
                                     <v-btn
                                         @click="navigateTo('https://www.msaschool.io/operation/education/curriculum/')"
                                         text
-                                        color="primary"
                                         style="font-size:16px;"
-                                    >{{$t('main.goToLectures')}}
+                                    >{{$t('main.training')}}
+                                    </v-btn>
+                                    <v-btn
+                                        text
+                                        @click="navigateTo('/courses')"
+                                        style="margin-right:10px;"
+                                    >
+                                        <div class="app-new-text" style=" font-weight:700;">{{$t('main.goToLectures')}}</div>
                                     </v-btn>
                                 </v-row>
-                                <v-tabs v-model="navLearnTab"
-                                    grow
-                                >
-                                    <v-tab>{{$t('tools.modeling')}}</v-tab>
-                                    <v-tab>{{$t('tutorials.tutorial')}}</v-tab>
-                                    <v-tab>{{$t('examples.modeling')}}</v-tab>
-                                </v-tabs>
-                                <v-tabs-items v-model="navLearnTab">
-                                    <v-tab-item>
-                                        <v-row class="title-page-card-box-row" style="padding-bottom:20px">
-                                            <v-col v-for="(card, index) in navLearnModelingCards"
-                                                :key="index"
-                                                lg="3"
-                                                md="4"
-                                                sm="6"
-                                                xs="12"
-                                            >
-                                                <v-card
-                                                    outlined
-                                                    class="title-page-card-box"
-                                                >
-                                                    <v-card-title style="text-align: center;" class="home-card-title">{{ $t(card.title) }}</v-card-title>
-                                                    <v-img @click="moveToPages(card.page)"
-                                                        class="introduction-img"
-                                                        :src="card.image"
+                                <v-row class="title-page-card-box-row">
+                                    <v-col
+                                        v-for="(card, index) in navLearnTutorialCards"
+                                        :key="index"
+                                        lg="3"
+                                        md="4"
+                                        sm="6"
+                                        xs="12"
+                                    >
+                                        <v-card
+                                            class="mx-auto"
+                                            width="356"
+                                            min-height="150"
+                                            outlined
+                                        >
+                                            <v-row style="margin-left: 3px; margin-top:0px; margin-bottom:-25px;">
+                                                <v-chip
+                                                    class="ma-2"
+                                                    :color="card.color"
+                                                    text-color="white"
+                                                    style="width: auto; height: 20px; font-size: 12px; font-weight:bold; z-index: 200;"
+                                                    small
+                                                >{{$t('word.dev')}}
+                                                </v-chip>
+                                            </v-row>
+                                            <v-list-item three-line>
+                                                <a @click="moveToPages(card.page)">
+                                                    <v-img class="mt-4 mr-3"
+                                                        style="height:115px; width:165px;"
+                                                        :src="card.imageUrl"
                                                     >
                                                     </v-img>
-                                                    <v-card-subtitle>{{ $t(card.subtitle) }}</v-card-subtitle>
-                                                    <v-card-actions class="title-card-actions-btn">
-                                                    <v-btn small depressed text @click="goTutorials(card.page)">{{ $t('tools.tutorial-btn') }}</v-btn>
-                                                    <v-btn small depressed text @click="goVideo(card.page)">{{ $t('tools.video-btn') }}</v-btn>
-                                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                                            @click="moveToPages(card.page)">{{ $t('tools.create-btn') }}
-                                                    </v-btn>
-                                                    </v-card-actions>
-                                                </v-card>
-                                            </v-col>
-                                        </v-row>
-                                    </v-tab-item>
-
-                                    <v-tab-item>
-                                        <v-row class="title-page-card-box-row">
-                                            <v-col
-                                                v-for="(card, index) in navLearnTutorialCards"
-                                                :key="index"
-                                                lg="3"
-                                                md="4"
-                                                sm="6"
-                                                xs="12"
-                                            >
-                                                <v-card
-                                                    class="mx-auto"
-                                                    width="356"
-                                                    min-height="150"
-                                                    outlined
-                                                >
-                                                    <v-row style="margin-left: 3px; margin-top:0px; margin-bottom:-25px;">
-                                                        <v-chip
-                                                            class="ma-2"
-                                                            :color="card.color"
-                                                            text-color="white"
-                                                            style="width: auto; height: 20px; font-size: 12px; font-weight:bold; z-index: 200;"
-                                                            small
-                                                        >{{$t('word.dev')}}
-                                                        </v-chip>
-                                                    </v-row>
-                                                    <v-list-item three-line>
-                                                        <a @click="moveToPages(card.page)">
-                                                            <v-img class="mt-4 mr-3"
-                                                                style="height:115px; width:165px;"
-                                                                :src="card.imageUrl"
-                                                            >
-                                                            </v-img>
-                                                        </a>
-                                                        <v-list-item-content>
-                                                            <v-list-item-subtitle class="mb-1" style="font-weight: 500; font-size:14px; color:black;">
-                                                                {{$t(card.title)}}
-                                                            </v-list-item-subtitle>
-                                                            <div style="font-size:12px; color:#757575;">{{$t(card.subtitle)}}</div>
-                                                        </v-list-item-content>
-                                                    </v-list-item>
-                                                </v-card>
-                                            </v-col>
-                                        </v-row>
-                                    </v-tab-item>
-
-                                    <v-tab-item>
-                                        <v-row class="title-page-card-box-row">
-                                            <v-col
-                                                v-for="(card, index) in navLearnExamplesCards"
-                                                :key="index"
-                                                lg="3"
-                                                md="4"
-                                                sm="6"
-                                                xs="12"
-                                            >
-                                                <v-card
-                                                class="mx-auto"
-                                                width="356"
-                                                min-height="150"
-                                                outlined
-                                                >
-                                                <v-list-item three-line>
-                                                    <a @click="moveToPages(card.page)">
-                                                        <v-img class="mt-4 mr-3"
-                                                            style="height:115px; width:165px;"
-                                                            :src="card.imageUrl"
-                                                        >
-                                                        </v-img>
-                                                    </a>
-                                                    <v-list-item-content>
-                                                    <div style="margin-top:10px; font-weight: 500; font-size:16px; color:black;">
+                                                </a>
+                                                <v-list-item-content>
+                                                    <v-list-item-subtitle class="mb-1" style="font-weight: 500; font-size:14px; color:black;">
                                                         {{$t(card.title)}}
-                                                    </div>
-                                                    <v-card-actions class="title-card-actions-btn" style="margin-bottom:-15px;">
-                                                        <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                                            :to="card.page">
-                                                        {{$t('examples.enter-btn')}}
-                                                        </v-btn>
-                                                    </v-card-actions>
-                                                    </v-list-item-content>
-                                                </v-list-item>
-                                                </v-card>
-                                            </v-col>
-                                        </v-row>
-                                    </v-tab-item>
-                                </v-tabs-items>
+                                                    </v-list-item-subtitle>
+                                                    <div style="font-size:12px; color:#757575;">{{$t(card.subtitle)}}</div>
+                                                </v-list-item-content>
+                                            </v-list-item>
+                                        </v-card>
+                                    </v-col>
+                                </v-row>
+
+                                <v-row class="title-page-card-box-row">
+                                    <v-col
+                                        v-for="(card, index) in navLearnExamplesCards"
+                                        :key="index"
+                                        lg="3"
+                                        md="4"
+                                        sm="6"
+                                        xs="12"
+                                    >
+                                        <v-card
+                                        class="mx-auto"
+                                        width="356"
+                                        min-height="150"
+                                        outlined
+                                        >
+                                        <v-list-item three-line>
+                                            <a @click="moveToPages(card.page)">
+                                                <v-img class="mt-4 mr-3"
+                                                    style="height:115px; width:165px;"
+                                                    :src="card.imageUrl"
+                                                >
+                                                </v-img>
+                                            </a>
+                                            <v-list-item-content>
+                                            <div style="margin-top:10px; font-weight: 500; font-size:16px; color:black;">
+                                                {{$t(card.title)}}
+                                            </div>
+                                            <v-card-actions class="title-card-actions-btn" style="margin-bottom:-15px;">
+                                                <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                                    :to="card.page">
+                                                {{$t('examples.enter-btn')}}
+                                                </v-btn>
+                                            </v-card-actions>
+                                            </v-list-item-content>
+                                        </v-list-item>
+                                        </v-card>
+                                    </v-col>
+                                </v-row>
                             </v-card>
                         </v-dialog>
                     <!-- <v-tabs
@@ -1651,21 +1331,6 @@
         },
         data() {
             return {
-                logos: [
-                    { url: 'static/image/logo/logo-28.png', alt: 'Logo 1' },
-                    { url: 'static/image/logo/logo-21.png', alt: 'Logo 2' },
-                    { url: 'static/image/logo/logo-22.png', alt: 'Logo 3' },
-                    { url: 'static/image/logo/logo-23.png', alt: 'Logo 4' },
-                    { url: 'static/image/logo/logo-20.png', alt: 'Logo 5' },
-                    { url: 'static/image/logo/logo-19.png', alt: 'Logo 6' },
-                    { url: 'static/image/logo/logo-26.png', alt: 'Logo 7' },
-                    { url: 'static/image/logo/logo-27.png', alt: 'Logo 8' },
-                    { url: 'static/image/logo/logo-24.png', alt: 'Logo 9' },
-                    { url: 'static/image/logo/logo-17.png', alt: 'Logo 10' },
-                    { url: 'static/image/logo/logo-25.png', alt: 'Logo 11' },
-                    // Add more logos as needed
-                ],
-                navLearnTab: null,
                 navLearnModelingCards: [
                     {
                         title: 'tools.eventstorming',
@@ -1804,19 +1469,13 @@
                         dialogType: 'introduction',
                     },
                     {
-                        title: '파트너십',
+                        title: 'mainNav.partnership',
                         icon: 'mdi-handshake',
                         dialogType: 'partnership',
                         dialog: false,
                     },
                     {
-                        title: '가격 정책',
-                        icon: 'mdi-handshake',
-                        dialogType: 'pricing',
-                        dialog: false,
-                    },
-                    {
-                        title: '학습하기',
+                        title: 'mainNav.learn',
                         icon: 'mdi-school',
                         dialogType: 'learn',
                         dialog: false,
@@ -1911,6 +1570,7 @@
             console.log('Ev beforeDestroy')
         },
         async created() {
+            this.$EventBus.$on('goToLectures', this.navigateTo);
             this.labURL = window.location.href.split('/');
             this.showLoading = true;
             this.$EventBus.$emit('showNewButton', true);
@@ -2053,7 +1713,7 @@
                     });
                 } else {
                     me.projects.filter(function(tabItem){
-                        if(tabItem.id == 'mine' || tabItem.id == 'share'  || tabItem.id == 'public' ){
+                        if(tabItem.id == 'mine' || tabItem.id == 'share'){
                             tabItem.show = false
                         }else {
                             tabItem.show = true
@@ -2183,6 +1843,13 @@
             },
         },
         methods: {
+            wikiOpen() {
+                if (this.isForeign) {
+                    window.open("https://intro.msaez.io/started/", "_blank")
+                } else {
+                    window.open("https://intro-kor.msaez.io/started/", "_blank")
+                }
+            },
             toggleDialog(item) {
                 item.dialog = !item.dialog;
             },
@@ -2826,6 +2493,12 @@
 
     }
 </script>
+
+<style>
+    .nav-project-list .v-list-item {
+        padding:0px 5px;
+    }
+</style>
 
 <style scoped>
     .nav-dialog {
