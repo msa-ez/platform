@@ -60,14 +60,296 @@
                                 v-if="item.dialogType === 'partnership'"
                                 :key="`dialog-${index}`"
                                 v-model="item.dialog"
+                                max-width="90%"
                         >
-                            <v-card>
+                            <v-card style="padding:10px; height:85vh;">
                                 <v-card-title class="text-h5">{{ item.title }}</v-card-title>
-                                <div>
-                                    <v-card-text>Your Content Here</v-card-text>
-                                    <v-card-actions>
-                                    </v-card-actions>
-                                </div>
+                                <v-card-title style="font-weight:700; margin-bottom:10px;">MSAEZ 파트너십이란?</v-card-title>
+                                <v-card-text style="font-size:16px;">
+                                    당사는 오픈소스 기술을 통해 업계를 선도하고 있으며, 파트너십을 통해 이러한 혁신을 더욱 확장하고자 합니다.<br><br>
+                                    기술적 협력을 통해 상호 발전을 도모하며 고객에게 더 나은 서비스를 제공하기 위해 파트너십을 추진합니다.<br><br>
+                                    함께 성장하고 혁신하는 과정에서 서로의 지식과 경험을 공유하여 시너지를 창출하고자 합니다.
+                                </v-card-text>
+                                <v-card-title style="font-weight:700;">파트너 Benefits</v-card-title>
+                                <v-row align="center" justify="center" align-xl="">
+                                    <v-col>
+                                        <v-card
+                                        class="mx-auto"
+                                        max-width="375"
+                                        outlined
+                                        style="padding:15px;"
+                                        >
+                                        <v-img
+                                        src="/static/image/revenue.png"
+                                        height="200px"
+                                        cover
+                                        style="margin-bottom:15px;"
+                                        ></v-img>
+                                            <v-card-item>
+                                                <div style="text-align: center;">
+                                                    <div class="text-h6 mb-1" style="font-weight: 700;">
+                                                        수익 분배
+                                                    </div>
+                                                    <div>파트너십을 통해 발생하는 수익은 5:5로 균등 분배</div>
+                                                </div>
+                                            </v-card-item>
+                                        </v-card>
+                                    </v-col>
+                                    <v-col>
+                                        <v-card
+                                        class="mx-auto"
+                                        max-width="375"
+                                        outlined
+                                        style="padding:15px;"
+                                        >
+                                        <v-img
+                                        src="/static/image/open.png"
+                                        height="200px"
+                                        cover
+                                        style="margin-bottom:15px;"
+                                        ></v-img>
+                                            <v-card-item>
+                                                <div style="text-align: center;">
+                                                    <div class="text-h6 mb-1" style="font-weight: 700;">
+                                                        코드 공개
+                                                    </div>
+                                                    <div>코드를 공개하여 서비스의 안정성과 품질을 직접 확인</div>
+                                                </div>
+                                            </v-card-item>
+                                        </v-card>
+                                    </v-col>
+                                    <v-col>
+                                        <v-card
+                                        class="mx-auto"
+                                        max-width="375"
+                                        outlined
+                                        style="padding:15px;"
+                                        >
+                                        <v-img
+                                        src="/static/image/network.png"
+                                        height="200px"
+                                        cover
+                                        style="margin-bottom:15px;"
+                                        ></v-img>
+                                            <v-card-item>
+                                                <div style="text-align: center;">
+                                                    <div class="text-h6 mb-1" style="font-weight: 700;">
+                                                        네트워크
+                                                    </div>
+                                                    <div>파트너사와의 네트워킹 및 공동 마케팅 + 세미나 개최</div>
+                                                </div>
+                                            </v-card-item>
+                                        </v-card>
+                                    </v-col>
+                                    <v-col>
+                                        <v-card
+                                        class="mx-auto"
+                                        max-width="375"
+                                        outlined
+                                        style="padding:15px;"
+                                        >
+                                        <v-img
+                                        src="/static/image/edu.png"
+                                        height="200px"
+                                        cover
+                                        style="margin-bottom:15px;"
+                                        ></v-img>
+                                            <v-card-item>
+                                                <div style="text-align: center;">
+                                                    <div class="text-h6 mb-1" style="font-weight: 700;">
+                                                        교육 지원
+                                                    </div>
+                                                    <div>영업 지원 및 도구 사용에 대한 교육 할인 제공</div>
+                                                </div>
+                                            </v-card-item>
+                                        </v-card>
+                                    </v-col>
+                                </v-row><br>
+                                <v-card-title style="font-weight: 700; margin-bottom:10px;">파트너십 기업에 대한 요구사항</v-card-title>
+                                <v-card-text style="font-size:16px;">
+                                    ✓ &nbsp; MSAEZ 정규 과정을 이수하여 테스트를 통과한 기업<br><br>
+                                    ✓ &nbsp; 공동 마케팅 활동에 참여 가능한 기업<br><br>
+                                    ✓ &nbsp; 지속 가능한 비즈니스 모델과 투입 가능한 인력을 보유한 기업
+                                </v-card-text>
+                                <v-card-actions>
+                                    <v-btn 
+                                        width="10%" 
+                                        height="48" 
+                                        color="primary" 
+                                        style="font-weight: 900; font-size:16px;"
+                                        target='_blank'
+                                        :href="`https://forms.gle/oUXBixieGCUv466y5`"
+                                    >
+                                        파트너 되기
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-dialog>
+                        <v-dialog v-for="(item, index) in mainNav"
+                                v-if="item.dialogType === 'pricing'"
+                                :key="`dialog-${index}`"
+                                v-model="item.dialog"
+                                max-width="90%"
+                        >
+                            <v-card style="padding:10px; height:85vh; overflow: auto;">
+                                <v-card-title class="text-h5" >{{ item.title }}</v-card-title>
+                                <v-card-title style="font-weight:700; margin-bottom:10px;">MSAEZ 가격</v-card-title>
+                                <v-card-text style="font-size:16px;">
+                                    완전 오픈소스화된 AI 기반 마이크로서비스 개발 도구로 더 신속하고 스마트하게 사용해보세요.
+                                </v-card-text>
+                                <v-row align="center" justify="center" align-xl="">
+                                    <v-col>
+                                        <v-card
+                                        class="mx-auto"
+                                        max-width="375"
+                                        outlined
+                                        style="padding:15px;"
+                                        >
+                                        <v-img
+                                        src="/static/image/license.png"
+                                        height="300px"
+                                        cover
+                                        style="margin-bottom:15px;"
+                                        ></v-img>
+                                            <v-card-item>
+                                                <div>
+                                                    <div class="text-h6 mt-2 mb-1" style="font-weight: 700; text-align: center;">
+                                                        오픈소스 라이센스
+                                                    </div>
+                                                    <v-card-text style="font-size:16px;">이 옵션을 통해 커뮤니티 지원을 받으며 무료로 소프트웨어를 사용할 수 있습니다. 문제 해결은 사용자가 직접 해야 합니다.</v-card-text>
+                                                    <!-- <div class="text-h6 mt-2 mb-1" style="font-weight: 700; text-align: center;">
+                                                        주요 특징
+                                                    </div> -->
+                                                    <v-card-text style="font-size:16px;">
+                                                        ✓ &nbsp; 무료 사용<br><br>
+                                                        ✓ &nbsp; 커뮤니티 기반 지원<br><br>
+                                                        ✓ &nbsp; 자체 문제 해결 필요
+                                                    </v-card-text>
+                                                    <v-card-actions>
+                                                        <v-btn 
+                                                            outlined
+                                                            width="100%" 
+                                                            height="48" 
+                                                            color="primary" 
+                                                            style="font-weight: 900; font-size:16px;"
+                                                            target='_blank'
+                                                            :href="`https://forms.gle/oUXBixieGCUv466y5`"
+                                                        >
+                                                            시작하기
+                                                        </v-btn>
+                                                    </v-card-actions>
+                                                </div>
+                                            </v-card-item>
+                                        </v-card>
+                                    </v-col>
+                                    <v-col>
+                                        <v-card
+                                        class="mx-auto"
+                                        max-width="375"
+                                        outlined
+                                        style="padding:15px;"
+                                        >
+                                        <v-img
+                                        src="/static/image/saas.png"
+                                        height="300px"
+                                        cover
+                                        style="margin-bottom:15px;"
+                                        ></v-img>
+                                            <v-card-item>
+                                                <div>
+                                                    <div class="text-h6 mt-2 mb-1" style="font-weight: 700; text-align:center;">
+                                                        SaaS 기반 서비스
+                                                    </div>
+                                                    <v-card-text style="font-size:16px;">당사의 SaaS 서비스를 이용하면 사용한 만큼만 비용을 지불하게 됩니다. 이는 유연하고 확장 가능한 솔루션입니다.</v-card-text>
+                                                    <!-- <div class="text-h6 mt-2 mb-1" style="font-weight: 700; text-align: center;">
+                                                        주요 특징
+                                                    </div> -->
+                                                    <v-card-text style="font-size:16px;">
+                                                        ✓ &nbsp; 코드 자동 생성 : 건당 1만 원<br><br>
+                                                        ✓ &nbsp; 애자일 모델링 : 건당 1만 원<br><br>
+                                                        ✓ &nbsp; 월별 사용량에 따른 과금
+                                                    </v-card-text>
+                                                    <v-card-actions>
+                                                        <v-btn 
+                                                            outlined
+                                                            width="100%" 
+                                                            height="48" 
+                                                            color="primary" 
+                                                            style="font-weight: 900; font-size:16px;"
+                                                            target='_blank'
+                                                            :href="`https://forms.gle/oUXBixieGCUv466y5`"
+                                                        >
+                                                            구매하기
+                                                        </v-btn>
+                                                    </v-card-actions>
+                                                </div>
+                                            </v-card-item>
+                                        </v-card>
+                                    </v-col>
+                                    <v-col>
+                                        <v-card
+                                        class="mx-auto"
+                                        max-width="375"
+                                        outlined
+                                        style="padding:15px;"
+                                        >
+                                        <v-img
+                                        src="/static/image/warranty.png"
+                                        height="300px"
+                                        cover
+                                        style="margin-bottom:15px;"
+                                        ></v-img>
+                                            <v-card-item>
+                                                <div>
+                                                    <div class="text-h6 mt-2 mb-1" style="font-weight: 700; text-align: center;">
+                                                        워런티 구매
+                                                    </div>
+                                                    <v-card-text style="font-size:16px;">워런티를 구매함으로써 제조사로부터 직접적인 지원을 받을 수 있습니다. 이는 문제 해결 속도를 높이고 신뢰성을 증가시킵니다.</v-card-text>
+                                                    <!-- <div class="text-h6 mt-2 mb-1" style="font-weight: 700; text-align: center;">
+                                                        주요 특징
+                                                    </div> -->
+                                                    <v-card-text style="font-size:16px;">
+                                                        ✓ &nbsp; 제조사 지속 지원<br><br>
+                                                        ✓ &nbsp; 신속한 문제 해결<br><br>
+                                                        ✓ &nbsp; 안정성 및 보안성 향상
+                                                    </v-card-text>
+                                                    <v-card-actions>
+                                                        <v-btn 
+                                                            outlined
+                                                            width="100%" 
+                                                            height="48" 
+                                                            color="primary" 
+                                                            style="font-weight: 900; font-size:16px;"
+                                                            target='_blank'
+                                                            :href="`https://forms.gle/oUXBixieGCUv466y5`"
+                                                        >
+                                                            문의하기
+                                                        </v-btn>
+                                                    </v-card-actions>
+                                                </div>
+                                            </v-card-item>
+                                        </v-card>
+                                    </v-col>
+                                </v-row><br>
+                                <v-card-title style="font-weight:700; margin-bottom:10px;">추가적인 문의사항이 있다면 MSAEZ 담당자에게 언제든 연락주세요. 즉시 도움을 드리겠습니다.</v-card-title>
+                                <v-card-text style="font-size:16px;">
+                                    MSAEZ 제품, 가격, 구현 또는 기타 사항에 관한 질문이 있으시면 언제든지 문의해 주십시오. 풍부한 지식을 갖춘 지원 담당자가 도움을 드리기 위해 대기하고 있습니다.
+                                </v-card-text>
+                                <v-card-text style="font-size:16px; color: red;">
+                                    문의하기
+                                </v-card-text>
+                                <v-card-text style="font-size:16px;">
+                                    전화번호 : 02) 567-8301
+                                </v-card-text>
+                                <v-card-text style="font-size:16px; margin-bottom:30px;">
+                                    이메일 : help@uengine.org
+                                </v-card-text>
+                                <v-card-text style="font-size:16px;">
+                                    문제점
+                                </v-card-text>
+                                <v-card-text style="font-size:16px;">
+                                    개인 정보 처리, 취소 및 환불 약관 문제
+                                </v-card-text>
                             </v-card>
                         </v-dialog>
                         <v-dialog v-for="(item, index) in mainNav"
@@ -1165,6 +1447,13 @@
                                 </v-card>
                             </v-col>
                         </v-row> -->
+                    <div style="margin-top:30px;">
+                        <carousel :perPageCustom="[[0, 1], [576, 2], [768, 3], [992, 4], [1200, 5]]">
+                            <slide v-for="(logo, index) in logos" :key="index">
+                                <img :src="logo.url" :alt="logo.alt">
+                            </slide>
+                        </carousel>
+                    </div>
                     </v-tab-item>
                     <v-tab-item v-else-if="0 < selectedTabIndex && selectedTabIndex < 4" :value="selectedTabIndex" :key="selectedTabIndex">
                         <!-- MINE, SHARE,PUBLIC -->
@@ -1309,8 +1598,7 @@
                     </v-row>
                 </div>
             </div>
-        </slot>
-
+        </slot>    
         <slot name="footer">
             <div style="min-height: 190px;">
                 <v-footer padless>
@@ -1346,6 +1634,7 @@
     import {YoutubeIcon} from 'vue-feather-icons'
     import 'instantsearch.css/themes/satellite-min.css';
     import AutoModelingDialog from '../designer/modeling/AutoModelingDialog.vue';
+    import { Carousel, Slide } from 'vue-carousel';
     // import VueCookies from "vue-cookies";
     var _ = require('lodash');
 
@@ -1357,9 +1646,25 @@
             'ProvisionIndication': () => import('../payment/ProvisionIndication'),
             YoutubeIcon,
             AutoModelingDialog,
+            Carousel,
+            Slide,
         },
         data() {
             return {
+                logos: [
+                    { url: 'static/image/logo/logo-28.png', alt: 'Logo 1' },
+                    { url: 'static/image/logo/logo-21.png', alt: 'Logo 2' },
+                    { url: 'static/image/logo/logo-22.png', alt: 'Logo 3' },
+                    { url: 'static/image/logo/logo-23.png', alt: 'Logo 4' },
+                    { url: 'static/image/logo/logo-20.png', alt: 'Logo 5' },
+                    { url: 'static/image/logo/logo-19.png', alt: 'Logo 6' },
+                    { url: 'static/image/logo/logo-26.png', alt: 'Logo 7' },
+                    { url: 'static/image/logo/logo-27.png', alt: 'Logo 8' },
+                    { url: 'static/image/logo/logo-24.png', alt: 'Logo 9' },
+                    { url: 'static/image/logo/logo-17.png', alt: 'Logo 10' },
+                    { url: 'static/image/logo/logo-25.png', alt: 'Logo 11' },
+                    // Add more logos as needed
+                ],
                 navLearnTab: null,
                 navLearnModelingCards: [
                     {
@@ -1493,19 +1798,25 @@
                 ],
                 mainNav: [
                     {   
-                        title: 'mainNav.introduction',
+                        title: '제품 소개',
                         icon: 'mdi-information',
                         dialog: false,
                         dialogType: 'introduction',
                     },
                     {
-                        title: 'mainNav.partnership',
+                        title: '파트너십',
                         icon: 'mdi-handshake',
                         dialogType: 'partnership',
                         dialog: false,
                     },
                     {
-                        title: 'mainNav.learn',
+                        title: '가격 정책',
+                        icon: 'mdi-handshake',
+                        dialogType: 'pricing',
+                        dialog: false,
+                    },
+                    {
+                        title: '학습하기',
                         icon: 'mdi-school',
                         dialogType: 'learn',
                         dialog: false,
