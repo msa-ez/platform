@@ -112,37 +112,85 @@
                         Make sure your github token is correct
                     </v-tooltip>
                 </v-tab>
-                <v-tab-item
-                    v-for="item in gitTabItems"
-                    :key="item.tab"
-                    style="border-left:1px solid rgba(0,0,0,0.54); padding:10px;"
-                >
-                    <v-card flat style="padding:10px;">
-                        <div>
-                            <!-- <v-divider v-if="!isGitLogin && (!gitOrgName || !gitToken)" /> -->
-                            <v-radio-group
-                                v-if="item.tabKey == 'setFirstRepo'"
-                                v-model="gitRadios"
-                                mandatory
-                            >
-                                <v-row no-gutters v-if="gitRefRepoUrl">
-                                    <v-col cols="3">
-                                        <v-radio
-                                            :disabled="isPrivilegedUser && !information.gitOrgName"
-                                            label="Fork from"
-                                            value="fork"
-                                        ></v-radio>
+                <v-tabs-items v-model="gitTab">
+                    <v-tab-item
+                        v-for="item in gitTabItems"
+                        :key="item.tab"
+                        style="border-left:1px solid rgba(0,0,0,0.54); padding:10px;"
+                    >
+                        <v-card flat style="padding:10px;">
+                            <div>
+                                <!-- <v-divider v-if="!isGitLogin && (!gitOrgName || !gitToken)" /> -->
+                                <v-radio-group
+                                    v-if="item.tabKey == 'setFirstRepo'"
+                                    v-model="gitRadios"
+                                    mandatory
+                                >
+                                    <v-row no-gutters v-if="gitRefRepoUrl">
+                                        <v-col cols="3">
+                                            <v-radio
+                                                :disabled="isPrivilegedUser && !information.gitOrgName"
+                                                label="Fork from"
+                                                value="fork"
+                                            ></v-radio>
+                                        </v-col>
+                                        <v-col cols="9">
+                                            <v-text-field
+                                                readonly
+                                                dense
+                                                v-model="gitRefRepoUrl"
+                                            >
+                                                <template v-if="(!isFirstCommit || isExistRepo)" v-slot:append-outer>
+                                                    <v-tooltip left>
+                                                        <template v-slot:activator="{ on }">
+                                                            <v-icon v-on="on" @click="openRefGitRepo()">
+                                                                mdi-open-in-new
+                                                            </v-icon>
+                                                        </template>
+                                                        open Git Repository
+                                                    </v-tooltip>
+                                                </template>
+                                            </v-text-field>
+                                        </v-col>
+                                    </v-row>
+                                    <v-radio v-if="!isExistRepo"
+                                        :style="gitRadios == 'fork' ? 'position:absolute; top:115px;':''"
+                                        label="Create New Repository"
+                                        value="createNewRepo"
+                                    ></v-radio>
+                                </v-radio-group>
+                                <v-row no-gutters>
+                                    <!-- <span v-if="(item.tabKey == 'setFirstRepo' || item.tabKey == 'changeRepo') && isExistRepo" 
+                                    style="width: 100%; font-weight: 500; font-size: 15px; color: darkgray;"
+                                    :style="editTemplateMode ? 'margin-top: -10px; margin-bottom: 20px':'margin-top: -45px;'"
+                                    >Existing Repo</span> -->
+                                    <v-col cols="5" :style="gitRadios == 'createNewRepo' ? 'margin-top: -10px;':'margin-top: -10px;'">  
+                                        <v-autocomplete
+                                                v-if="item.tabKey == 'setFirstRepo' || item.tabKey == 'changeRepo'"
+                                                @click="getGitOrganizations()"
+                                                @change="OrgNameChanged()"
+                                                v-model="gitOrgName"
+                                                :items="gitOrganizations"
+                                                label="Organization Name"
+                                                outlined
+                                                dense
+                                                auto-select-first
+                                        ></v-autocomplete>
                                     </v-col>
-                                    <v-col cols="9">
+                                    <v-col cols="7" :style="gitRadios == 'createNewRepo' ? 'margin-top: -10px;':'margin-top: -10px;'" :key="repoFieldRenderKey">
                                         <v-text-field
-                                            readonly
-                                            dense
-                                            v-model="gitRefRepoUrl"
-                                        >
+                                            v-if="item.tabKey == 'setFirstRepo' || item.tabKey == 'changeRepo'"
+                                            style="margin-left:10px; margin-top:-5px;"
+                                            v-model="gitRepoName"
+                                            :rules="[gitInfoRules.required]"
+                                            label="Repository Name"
+                                            :error="isExistRepo"
+                                            :error-messages="isExistRepoMessage"
+                                            >
                                             <template v-if="(!isFirstCommit || isExistRepo)" v-slot:append-outer>
                                                 <v-tooltip left>
                                                     <template v-slot:activator="{ on }">
-                                                        <v-icon v-on="on" @click="openRefGitRepo()">
+                                                        <v-icon v-on="on" @click="openGitRepo()">
                                                             mdi-open-in-new
                                                         </v-icon>
                                                     </template>
@@ -152,331 +200,285 @@
                                         </v-text-field>
                                     </v-col>
                                 </v-row>
-                                <v-radio v-if="!isExistRepo"
-                                    :style="gitRadios == 'fork' ? 'position:absolute; top:115px;':''"
-                                    label="Create New Repository"
-                                    value="createNewRepo"
-                                ></v-radio>
-                            </v-radio-group>
-                            <v-row no-gutters>
-                                <!-- <span v-if="(item.tabKey == 'setFirstRepo' || item.tabKey == 'changeRepo') && isExistRepo" 
-                                style="width: 100%; font-weight: 500; font-size: 15px; color: darkgray;"
-                                :style="editTemplateMode ? 'margin-top: -10px; margin-bottom: 20px':'margin-top: -45px;'"
-                                >Existing Repo</span> -->
-                                <v-col cols="5" :style="gitRadios == 'createNewRepo' ? 'margin-top: -10px;':'margin-top: -10px;'">  
-                                    <v-autocomplete
-                                            v-if="item.tabKey == 'setFirstRepo' || item.tabKey == 'changeRepo'"
-                                            @click="getGitOrganizations()"
-                                            @change="OrgNameChanged()"
-                                            v-model="gitOrgName"
-                                            :items="gitOrganizations"
-                                            label="Organization Name"
-                                            outlined
-                                            dense
-                                            auto-select-first
-                                    ></v-autocomplete>
-                                </v-col>
-                                <v-col cols="7" :style="gitRadios == 'createNewRepo' ? 'margin-top: -10px;':'margin-top: -10px;'" :key="repoFieldRenderKey">
-                                    <v-text-field
-                                        v-if="item.tabKey == 'setFirstRepo' || item.tabKey == 'changeRepo'"
-                                        style="margin-left:10px; margin-top:-5px;"
-                                        v-model="gitRepoName"
-                                        :rules="[gitInfoRules.required]"
-                                        label="Repository Name"
-                                        :error="isExistRepo"
-                                        :error-messages="isExistRepoMessage"
-                                        >
-                                        <template v-if="(!isFirstCommit || isExistRepo)" v-slot:append-outer>
-                                            <v-tooltip left>
-                                                <template v-slot:activator="{ on }">
-                                                    <v-icon v-on="on" @click="openGitRepo()">
-                                                        mdi-open-in-new
-                                                    </v-icon>
+                            <div :key="copyInfoKey" v-if="item.tabKey == 'info'" style="margin:-10px;">
+                                <div>
+                                    <template>
+                                        <v-tabs grow v-model="githubIdeTabs">
+                                            <v-tab>
+                                                Cloud IDE
+                                            </v-tab>
+                                            <v-tab>
+                                                Local IDE
+                                            </v-tab>
+                                        </v-tabs>
+                                    </template>
+                                    <v-tabs-items style="padding:10px;" v-model="githubIdeTabs">
+                                        <v-tab-item>
+                                            <v-card flat :key="gitPodError">
+                                                <template>
+                                                    <v-tooltip bottom>
+                                                        <template v-slot:activator="{ on }">
+                                                            <v-btn
+                                                                :disabled="!isReleasedTag && projectVersion"
+                                                                style="text-align: center;
+                                                                text-align: center;
+                                                                height: 40px;
+                                                                line-height: 40px;
+                                                                margin:10px 0px 10px 0px;
+                                                                width:48%;
+                                                                margin-right: 10px;"
+                                                                color="primary"
+                                                                v-on="on" @click="openIDE('gitpod')"
+                                                            >
+                                                                Open Gitpod
+                                                            </v-btn>
+                                                            <div v-if="gitPodError" style="margin-top: -10px;margin-bottom: 20px;font-size: 12px;color: #E5393B;">This tag(version) has not been released.</div>
+                                                        </template>
+                                                        Go to the {{ IdeType }} Link
+                                                    </v-tooltip>
+                                                    <v-tooltip bottom>
+                                                        <template v-slot:activator="{ on }">
+                                                            <v-btn
+                                                                style="text-align: center;
+                                                                text-align: center;
+                                                                height: 40px;
+                                                                line-height: 40px;
+                                                                margin:10px 0px 10px 0px;
+                                                                width:49%;"
+                                                                color="primary"
+                                                                v-on="on" @click="openIDE('codespace')"
+                                                            >
+                                                                Open Codespaces
+                                                            </v-btn>
+                                                        </template>
+                                                        Go to the CodeSpace Link
+                                                    </v-tooltip>
                                                 </template>
-                                                open Git Repository
-                                            </v-tooltip>
+                                                <span style="font-weight:700; font-size:14px;">Update from model code</span>
+                                                <v-text-field
+                                                        id="copy-gitMerge-command"
+                                                        label="Update from model code"
+                                                        :value="gitMergeCommand"
+                                                        prepend-inner-icon="mdi-chevron-right"
+                                                        solo
+                                                        readonly
+                                                >
+                                                    <template v-slot:append>
+                                                        <v-icon color="success" v-if="isCopied == 'gitMerge_Command'">
+                                                            mdi-check
+                                                        </v-icon>
+                                                        <v-icon v-else @click="copytoClipBoard('gitMerge_Command')">
+                                                            mdi-content-copy
+                                                        </v-icon>
+                                                    </template>
+                                                </v-text-field>
+                                            </v-card>
+                                        </v-tab-item>
+                                        <v-tab-item>
+                                            <v-card flat>
+                                                <v-switch
+                                                        v-if="isPrivilegedUser"
+                                                        v-model="showOriginMode"
+                                                        label="Show Origin"
+                                                ></v-switch>
+                                                <span style="font-weight:700; font-size:14px;">1. Clone Repo</span>
+                                                <v-text-field
+                                                        id="copy-gitClone-command"
+                                                        label="Local IDE"
+                                                        :value="showOriginMode ? gitCloneCommandOrigin:gitCloneCommand"
+                                                        prepend-inner-icon="mdi-chevron-right"
+                                                        solo
+                                                        readonly
+                                                >
+                                                    <template v-slot:append>
+                                                        <v-icon color="success" v-if="isCopied == 'gitClone_Command'">
+                                                            mdi-check
+                                                        </v-icon>
+                                                        <v-icon v-else @click="copytoClipBoard('gitClone_Command')">
+                                                            mdi-content-copy
+                                                        </v-icon>
+                                                    </template>
+                                                </v-text-field>
+                                                <span style="font-weight:700; font-size:14px;">2. Update</span>
+                                                <v-text-field
+                                                        id="copy-gitMerge-command"
+                                                        label="Update from model code"
+                                                        :value="gitMergeCommand"
+                                                        prepend-inner-icon="mdi-chevron-right"
+                                                        solo
+                                                        readonly
+                                                >
+                                                    <template v-slot:append>
+                                                        <v-icon color="success" v-if="isCopied == 'gitMerge_Command'">
+                                                            mdi-check
+                                                        </v-icon>
+                                                        <v-icon v-else @click="copytoClipBoard('gitMerge_Command')">
+                                                            mdi-content-copy
+                                                        </v-icon>
+                                                    </template>
+                                                </v-text-field>
+                                            </v-card>
+                                        </v-tab-item>
+                                    </v-tabs-items>
+                                </div>
+                                <!--                            <div v-if="(!isFirstCommit || isDuplicate)">-->
+                            </div>
+                            <div v-if="item.tabKey == 'setAccount'" :disabled="!isListSettingDone">
+                                <!-- <v-card-title style="background-color: #0d1117; color: white; margin-left:-10px;">
+                                    <v-icon color="white" @click="gitMenuMode = 'push'" style="margin-right: 5px;">mdi-arrow-left</v-icon>
+                                    &nbsp;Settings
+                                    <v-spacer />
+                                </v-card-title> -->
+                                <div style="margin: 10px;">
+                                    <div v-if="isGitLogin" style="width: 100%; text-align: right; margin-bottom: -30px;">
+                                        <v-btn small text color="primary" @click="logoutToGit()">sign out</v-btn>
+                                    </div>
+                                    <div v-if="!isGitLogin" style="width: 100%; text-align: center; font-size: 20px;">
+                                        <login-by-gitlab v-if="isOnPrem"></login-by-gitlab>
+                                        <Login v-else :isGitMenu="true" @isGitLogin="isGitLoginComplete()"></Login>
+                                    </div>
+                                    <div v-else style="width: 100%; text-align: center; margin-bottom: 10px;">
+                                        <v-avatar class="ma-0">
+                                            <img
+                                                    :src=gitPicture
+                                            >
+                                        </v-avatar>
+                                    </div>
+                                    <div v-if="!isGitLogin" style="width: 100%; text-align: center; margin-top: 10px; margin-bottom: -15px;"><b style="color: grey;">or</b></div>
+                                    <v-text-field
+                                            v-model="gitUserName"
+                                            :readonly="isGitLogin"
+                                            :rules="[gitInfoRules.required]"
+                                            label="userName"
+                                    ></v-text-field>
+                                    <v-text-field
+                                            :append-icon="showToken ? 'mdi-eye' : 'mdi-eye-off'"
+                                            :type="showToken ? 'text' : 'password'"
+                                            @click:append="showToken = !showToken"
+                                            v-model="gitToken"
+                                            :readonly="isGitLogin"
+                                            :error="githubTokenError"
+                                            :rules="[gitInfoRules.required, !githubTokenError || 'Make sure your github token is correct']"
+                                            label="token"
+                                    >
+                                        <template v-slot:label>
+                                            Access Token
+                                            <v-icon @click="openGuide()" style="vertical-align: middle; margin-top: -3px;">
+                                                mdi-help-circle-outline
+                                            </v-icon>
                                         </template>
                                     </v-text-field>
-                                </v-col>
-                            </v-row>
-                        <div :key="copyInfoKey" v-if="item.tabKey == 'info'" style="margin:-10px;">
-                            <div>
-                                <template>
-                                    <v-tabs grow v-model="githubIdeTabs">
-                                        <v-tab>
-                                            Cloud IDE
-                                        </v-tab>
-                                        <v-tab>
-                                            Local IDE
-                                        </v-tab>
-                                    </v-tabs>
-                                </template>
-                                <v-tabs-items style="padding:10px;" v-model="githubIdeTabs">
-                                    <v-tab-item>
-                                        <v-card flat :key="gitPodError">
-                                            <template>
-                                                <v-tooltip bottom>
-                                                    <template v-slot:activator="{ on }">
-                                                        <v-btn
-                                                            :disabled="!isReleasedTag && projectVersion"
-                                                            style="text-align: center;
-                                                            text-align: center;
-                                                            height: 40px;
-                                                            line-height: 40px;
-                                                            margin:10px 0px 10px 0px;
-                                                            width:48%;
-                                                            margin-right: 10px;"
-                                                            color="primary"
-                                                            v-on="on" @click="openIDE('gitpod')"
-                                                        >
-                                                            Open Gitpod
-                                                        </v-btn>
-                                                        <div v-if="gitPodError" style="margin-top: -10px;margin-bottom: 20px;font-size: 12px;color: #E5393B;">This tag(version) has not been released.</div>
-                                                    </template>
-                                                    Go to the {{ IdeType }} Link
-                                                </v-tooltip>
-                                                <v-tooltip bottom>
-                                                    <template v-slot:activator="{ on }">
-                                                        <v-btn
-                                                            style="text-align: center;
-                                                            text-align: center;
-                                                            height: 40px;
-                                                            line-height: 40px;
-                                                            margin:10px 0px 10px 0px;
-                                                            width:49%;"
-                                                            color="primary"
-                                                            v-on="on" @click="openIDE('codespace')"
-                                                        >
-                                                            Open Codespaces
-                                                        </v-btn>
-                                                    </template>
-                                                    Go to the CodeSpace Link
-                                                </v-tooltip>
-                                            </template>
-                                            <span style="font-weight:700; font-size:14px;">Update from model code</span>
-                                            <v-text-field
-                                                    id="copy-gitMerge-command"
-                                                    label="Update from model code"
-                                                    :value="gitMergeCommand"
-                                                    prepend-inner-icon="mdi-chevron-right"
-                                                    solo
-                                                    readonly
-                                            >
-                                                <template v-slot:append>
-                                                    <v-icon color="success" v-if="isCopied == 'gitMerge_Command'">
-                                                        mdi-check
-                                                    </v-icon>
-                                                    <v-icon v-else @click="copytoClipBoard('gitMerge_Command')">
-                                                        mdi-content-copy
-                                                    </v-icon>
-                                                </template>
-                                            </v-text-field>
-                                        </v-card>
-                                    </v-tab-item>
-                                    <v-tab-item>
-                                        <v-card flat>
-                                            <v-switch
-                                                    v-if="isPrivilegedUser"
-                                                    v-model="showOriginMode"
-                                                    label="Show Origin"
-                                            ></v-switch>
-                                            <span style="font-weight:700; font-size:14px;">1. Clone Repo</span>
-                                            <v-text-field
-                                                    id="copy-gitClone-command"
-                                                    label="Local IDE"
-                                                    :value="showOriginMode ? gitCloneCommandOrigin:gitCloneCommand"
-                                                    prepend-inner-icon="mdi-chevron-right"
-                                                    solo
-                                                    readonly
-                                            >
-                                                <template v-slot:append>
-                                                    <v-icon color="success" v-if="isCopied == 'gitClone_Command'">
-                                                        mdi-check
-                                                    </v-icon>
-                                                    <v-icon v-else @click="copytoClipBoard('gitClone_Command')">
-                                                        mdi-content-copy
-                                                    </v-icon>
-                                                </template>
-                                            </v-text-field>
-                                            <span style="font-weight:700; font-size:14px;">2. Update</span>
-                                            <v-text-field
-                                                    id="copy-gitMerge-command"
-                                                    label="Update from model code"
-                                                    :value="gitMergeCommand"
-                                                    prepend-inner-icon="mdi-chevron-right"
-                                                    solo
-                                                    readonly
-                                            >
-                                                <template v-slot:append>
-                                                    <v-icon color="success" v-if="isCopied == 'gitMerge_Command'">
-                                                        mdi-check
-                                                    </v-icon>
-                                                    <v-icon v-else @click="copytoClipBoard('gitMerge_Command')">
-                                                        mdi-content-copy
-                                                    </v-icon>
-                                                </template>
-                                            </v-text-field>
-                                        </v-card>
-                                    </v-tab-item>
-                                </v-tabs-items>
-                            </div>
-                            <!--                            <div v-if="(!isFirstCommit || isDuplicate)">-->
-                        </div>
-                        <div v-if="item.tabKey == 'setAccount'" :disabled="!isListSettingDone">
-                            <!-- <v-card-title style="background-color: #0d1117; color: white; margin-left:-10px;">
-                                <v-icon color="white" @click="gitMenuMode = 'push'" style="margin-right: 5px;">mdi-arrow-left</v-icon>
-                                &nbsp;Settings
-                                <v-spacer />
-                            </v-card-title> -->
-                            <div style="margin: 10px;">
-                                <div v-if="isGitLogin" style="width: 100%; text-align: right; margin-bottom: -30px;">
-                                    <v-btn small text color="primary" @click="logoutToGit()">sign out</v-btn>
+                                    <v-switch
+                                            v-model="usegitPod"
+                                            label="Using gitpod to open Project IDE"
+                                            @change="changedUseGitPodStatus()"
+                                    ></v-switch>
                                 </div>
-                                <div v-if="!isGitLogin" style="width: 100%; text-align: center; font-size: 20px;">
-                                    <login-by-gitlab v-if="isOnPrem"></login-by-gitlab>
-                                    <Login v-else :isGitMenu="true" @isGitLogin="isGitLoginComplete()"></Login>
-                                </div>
-                                <div v-else style="width: 100%; text-align: center; margin-bottom: 10px;">
-                                    <v-avatar class="ma-0">
-                                        <img
-                                                :src=gitPicture
-                                        >
-                                    </v-avatar>
-                                </div>
-                                <div v-if="!isGitLogin" style="width: 100%; text-align: center; margin-top: 10px; margin-bottom: -15px;"><b style="color: grey;">or</b></div>
-                                <v-text-field
-                                        v-model="gitUserName"
-                                        :readonly="isGitLogin"
-                                        :rules="[gitInfoRules.required]"
-                                        label="userName"
-                                ></v-text-field>
-                                <v-text-field
-                                        :append-icon="showToken ? 'mdi-eye' : 'mdi-eye-off'"
-                                        :type="showToken ? 'text' : 'password'"
-                                        @click:append="showToken = !showToken"
-                                        v-model="gitToken"
-                                        :readonly="isGitLogin"
-                                        :error="githubTokenError"
-                                        :rules="[gitInfoRules.required, !githubTokenError || 'Make sure your github token is correct']"
-                                        label="token"
-                                >
-                                    <template v-slot:label>
-                                        Access Token
-                                        <v-icon @click="openGuide()" style="vertical-align: middle; margin-top: -3px;">
-                                            mdi-help-circle-outline
-                                        </v-icon>
-                                    </template>
-                                </v-text-field>
-                                <v-switch
-                                        v-model="usegitPod"
-                                        label="Using gitpod to open Project IDE"
-                                        @change="changedUseGitPodStatus()"
-                                ></v-switch>
                             </div>
-                        </div>
 
-                        <span v-if="item.tabKey == 'push' || item.tabKey == 'openGithubEditor'" style = "font-weight:500; font-size:16px;">Target Repo</span>
-                        <v-text-field
-                            v-if="item.tabKey == 'push'"
-                            :key="copyPushKey"
-                            readonly
-                            id="copy-gitRepo-link"
-                            solo
-                            v-model="gitRepoUrl"
-                            label="gitRepo Link"
-                        >
-                            <template v-if="(!isFirstCommit || isExistRepo)" v-slot:append-outer>
-                                <v-tooltip left>
-                                    <template v-slot:activator="{ on }">
-                                        <v-icon v-on="on" @click="openGitRepo()">
-                                            mdi-open-in-new
-                                        </v-icon>
-                                    </template>
-                                    open Git Repository
-                                </v-tooltip>
-                            </template>
-                        </v-text-field>
-
-                        <v-text-field
-                            v-if="item.tabKey == 'openGithubEditor'"
-                            :key="copyPushKey"
-                            readonly
-                            prepend-inner-icon="mdi-link-variant"
-                            solo
-                            v-model="openGithubEditorUrl"
-                            label="Editor"
-                        >
-                            <template v-slot:append>
-                                <v-tooltip bottom>
-                                    <template v-slot:activator="{ on }">
-                                        <v-icon v-on="on" @click="openGithubEditorRepo()">
-                                            mdi-open-in-new
-                                        </v-icon>
-                                    </template>
-                                    Open Git Editor
-                                </v-tooltip>
-                            </template>
-                        </v-text-field>
-                    </div>
-                        <div style="float: right;">
-                            <div v-if="!isPushing && item.tabKey == 'setFirstRepo' && gitRadios == 'createNewRepo' || item.tabKey == 'changeRepo' && isExistRepoMessage == null">
-                                <v-btn :disabled="!gitOrgName || !gitRepoName || isExistRepo" color="primary" @click="startCommit()">Create</v-btn>
-                            </div>
-                            <div>
-                                <v-btn v-if="item.tabKey == 'changeRepo' && isExistRepoMessage || (item.tabKey == 'setFirstRepo' && isExistRepo)" 
-                                    :disabled="!(gitOrgName && gitRepoName)"
-                                    color="primary" @click="gitTab = 1">next
-                                </v-btn>
-                                <v-btn v-if="!isPushing && item.tabKey == 'setFirstRepo' && gitRadios == 'fork'" 
-                                    :disabled="!isListSettingDone || !(gitOrgName && gitRepoName) || isExistRepo || (isPrivilegedUser && !information.gitOrgName)"
-                                    text color="primary" @click="startFork()">fork
-                                </v-btn>
-
-                                <v-btn-toggle v-if="!isPushing && item.tabKey == 'push'">
-                                    <v-checkbox
-                                        v-if="editTemplateMode && isTemplate"
-                                        v-model="autoApplyTemplate"
-                                        label="Apply this template after push"
-                                        hide-details
-                                        class="shrink mr-2 mt-0"
-                                    ></v-checkbox>
-                                    <v-btn
-                                        :disabled="!isListSettingDone || !(gitOrgName && gitRepoName)"
-                                        color="primary" @click="startCommit()">{{ pushBtnName }}
-                                    </v-btn>
-                                    <v-menu offset-y v-if="!editTemplateMode">
-                                        <template v-slot:activator="{ on, attrs }">
-                                            <v-btn icon 
-                                                v-bind="attrs"
-                                                v-on="on"
-                                            >
-                                                <v-icon>mdi-chevron-down</v-icon>
-                                            </v-btn>
+                            <span v-if="item.tabKey == 'push' || item.tabKey == 'openGithubEditor'" style = "font-weight:500; font-size:16px;">Target Repo</span>
+                            <v-text-field
+                                v-if="item.tabKey == 'push'"
+                                :key="copyPushKey"
+                                readonly
+                                id="copy-gitRepo-link"
+                                solo
+                                v-model="gitRepoUrl"
+                                label="gitRepo Link"
+                            >
+                                <template v-if="(!isFirstCommit || isExistRepo)" v-slot:append-outer>
+                                    <v-tooltip left>
+                                        <template v-slot:activator="{ on }">
+                                            <v-icon v-on="on" @click="openGitRepo()">
+                                                mdi-open-in-new
+                                            </v-icon>
                                         </template>
-                                        <v-list>
-                                            <v-list-item
-                                                v-for="(item, index) in pushBtnitems"
-                                                :key="index"
-                                                @click="pushType = item.title"
-                                                :disabled="pushType == item.title"
-                                            >
-                                                <v-list-item-title>{{ item.title }}</v-list-item-title>
-                                            </v-list-item>
-                                        </v-list>
-                                    </v-menu>
-                                </v-btn-toggle>
-            
-                                <span v-if="isPushing && (item.tabKey == 'push' || item.tabKey == 'setFirstRepo')">
-                                    <b :key="commitStep" v-if="commitStepText != null">{{ commitStepText }}({{commitStep}}%) ... </b>
-                                    <v-progress-circular
-                                        indeterminate
-                                        color="primary"
-                                    ></v-progress-circular>
-                                </span>
-                            </div>
+                                        open Git Repository
+                                    </v-tooltip>
+                                </template>
+                            </v-text-field>
+
+                            <v-text-field
+                                v-if="item.tabKey == 'openGithubEditor'"
+                                :key="copyPushKey"
+                                readonly
+                                prepend-inner-icon="mdi-link-variant"
+                                solo
+                                v-model="openGithubEditorUrl"
+                                label="Editor"
+                            >
+                                <template v-slot:append>
+                                    <v-tooltip bottom>
+                                        <template v-slot:activator="{ on }">
+                                            <v-icon v-on="on" @click="openGithubEditorRepo()">
+                                                mdi-open-in-new
+                                            </v-icon>
+                                        </template>
+                                        Open Git Editor
+                                    </v-tooltip>
+                                </template>
+                            </v-text-field>
                         </div>
-                    </v-card>
-                </v-tab-item>
+                            <div style="float: right;">
+                                <div v-if="!isPushing && item.tabKey == 'setFirstRepo' && gitRadios == 'createNewRepo' || item.tabKey == 'changeRepo' && isExistRepoMessage == null">
+                                    <v-btn :disabled="!gitOrgName || !gitRepoName || isExistRepo" color="primary" @click="startCommit()">Create</v-btn>
+                                </div>
+                                <div>
+                                    <v-btn v-if="item.tabKey == 'changeRepo' && isExistRepoMessage || (item.tabKey == 'setFirstRepo' && isExistRepo)" 
+                                        :disabled="!(gitOrgName && gitRepoName)"
+                                        color="primary" @click="gitTab = 1">next
+                                    </v-btn>
+                                    <v-btn v-if="!isPushing && item.tabKey == 'setFirstRepo' && gitRadios == 'fork'" 
+                                        :disabled="!isListSettingDone || !(gitOrgName && gitRepoName) || isExistRepo || (isPrivilegedUser && !information.gitOrgName)"
+                                        text color="primary" @click="startFork()">fork
+                                    </v-btn>
+
+                                    <v-btn-toggle v-if="!isPushing && item.tabKey == 'push'">
+                                        <v-checkbox
+                                            v-if="editTemplateMode && isTemplate"
+                                            v-model="autoApplyTemplate"
+                                            label="Apply this template after push"
+                                            hide-details
+                                            class="shrink mr-2 mt-0"
+                                        ></v-checkbox>
+                                        <v-btn
+                                            :disabled="!isListSettingDone || !(gitOrgName && gitRepoName)"
+                                            color="primary" @click="startCommit()">{{ pushBtnName }}
+                                        </v-btn>
+                                        <v-menu offset-y v-if="!editTemplateMode">
+                                            <template v-slot:activator="{ on, attrs }">
+                                                <v-btn icon 
+                                                    v-bind="attrs"
+                                                    v-on="on"
+                                                >
+                                                    <v-icon>mdi-chevron-down</v-icon>
+                                                </v-btn>
+                                            </template>
+                                            <v-list>
+                                                <v-list-item
+                                                    v-for="(item, index) in pushBtnitems"
+                                                    :key="index"
+                                                    @click="pushType = item.title"
+                                                    :disabled="pushType == item.title"
+                                                >
+                                                    <v-list-item-title>{{ item.title }}</v-list-item-title>
+                                                </v-list-item>
+                                            </v-list>
+                                        </v-menu>
+                                    </v-btn-toggle>
+                
+                                    <span v-if="isPushing && (item.tabKey == 'push' || item.tabKey == 'setFirstRepo')">
+                                        <b :key="commitStep" v-if="commitStepText != null">{{ commitStepText }}({{commitStep}}%) ... </b>
+                                        <v-progress-circular
+                                            indeterminate
+                                            color="primary"
+                                        ></v-progress-circular>
+                                    </span>
+                                </div>
+                            </div>
+                        </v-card>
+                    </v-tab-item>
+                </v-tabs-items>
             </v-tabs>
         </v-card>
 
@@ -756,46 +758,46 @@
                     }
                 } else if(me.editTemplateMode){
                     setTabItems = [
-                        { tab: 'Repository', index: 1, tabKey: 'changeRepo' },
-                        { tab: 'Push', index: 2, tabKey: 'push' },
-                        { tab: 'Editor', index: 3, tabKey: 'openGithubEditor' }
+                        { tab: 'Repository', index: 0, tabKey: 'changeRepo' },
+                        { tab: 'Push', index: 1, tabKey: 'push' },
+                        { tab: 'Editor', index: 2, tabKey: 'openGithubEditor' }
                     ]
                 } else {
                     if(me.projectVersion){
                         setTabItems = [
-                            { tab: 'IDE', tabKey: 'info', index: 1 },
+                            { tab: 'IDE', tabKey: 'info', index: 0 },
                         ]
                     } else if(me.isOwnModel){
                         if(me.isFirstCommit){
                             setTabItems = [
-                                { tab: 'Repository', index: 1, tabKey: 'setFirstRepo' },
-                                { tab: 'Push', index: 2, tabKey: 'push' },
-                                { tab: 'IDE', tabKey: 'info', index: 3 },
+                                { tab: 'Repository', index: 0, tabKey: 'setFirstRepo' },
+                                { tab: 'Push', index: 1, tabKey: 'push' },
+                                { tab: 'IDE', tabKey: 'info', index: 2 },
                             ]
                         } else {
                             setTabItems = [
-                                { tab: 'Repository', index: 1, tabKey: 'changeRepo' },
-                                { tab: 'Push', index: 2, tabKey: 'push' },
-                                { tab: 'IDE', tabKey: 'info', index: 3 }
+                                { tab: 'Repository', index: 0, tabKey: 'changeRepo' },
+                                { tab: 'Push', index: 1, tabKey: 'push' },
+                                { tab: 'IDE', tabKey: 'info', index: 2 }
                             ]
                         }
                     } else if(me.isPrivilegedUser){
                         if(me.information.permissions[me.userInfo.uid].firstCommit == "false"){
                             setTabItems = [
-                                { tab: 'Repository', index: 1, tabKey: 'changeRepo' },
-                                { tab: 'Push', index: 2, tabKey: 'push' },
-                                { tab: 'IDE', tabKey: 'info', index: 3 }
+                                { tab: 'Repository', index: 0, tabKey: 'changeRepo' },
+                                { tab: 'Push', index: 1, tabKey: 'push' },
+                                { tab: 'IDE', tabKey: 'info', index: 2 }
                             ]
                         } else {
                             setTabItems = [
-                                { tab: 'Repository', index: 1, tabKey: 'setFirstRepo' },
-                                { tab: 'Push', index: 2, tabKey: 'push' },
-                                { tab: 'IDE', tabKey: 'info', index: 3 },
+                                { tab: 'Repository', index: 0, tabKey: 'setFirstRepo' },
+                                { tab: 'Push', index: 1, tabKey: 'push' },
+                                { tab: 'IDE', tabKey: 'info', index: 2 },
                             ]
                         }
                     } else {
                         setTabItems = [
-                            { tab: 'IDE', tabKey: 'info', index: 1 }
+                            { tab: 'IDE', tabKey: 'info', index: 0 }
                         ]
                     }
                     
@@ -853,6 +855,12 @@
             window.removeEventListener("message", me.messageProcessing())
         },
         watch: {
+            gitTab(newTabName) {
+                var me = this
+                if(typeof newTabName == 'string') {
+                    me.selectTab(newTabName);
+                }
+            },
             pushType(newVal) {
                 if(newVal == 'Push'){
                     this.pushBtnName = "Push"
@@ -973,6 +981,16 @@
             },
         },
         methods: {
+            selectTab(tabName) {
+                var me = this;
+                // gitTabItems 배열에서 일치하는 탭을 찾습니다.
+                const tabToSelect = me.gitTabItems.find(item => item.tab === tabName);
+
+                // 일치하는 탭이 있고, 현재 gitTab 값과 다르면 gitTab 값을 업데이트합니다.
+                if (tabToSelect && me.gitTab == tabToSelect.tab) {
+                    me.gitTab = tabToSelect.index;
+                }
+            },
             messageProcessing(e) {
                 var me = this;
                 if(e){
@@ -1091,7 +1109,7 @@
                                 }
                                 let createBranchResult = await me.git.createBranch(me.value.org, me.value.repo, templateBranchData)
                                 me.isFirstCommit = false
-                                me.gitTab = 2
+                                me.gitTab = 'IDE'
                                 me.gitTabKey++;
                                 me.gitCommitMessage = null
                                 me.isPushing = false
@@ -1416,7 +1434,7 @@
                     me.isPushing = false
                     me.isNewProject = false
                     me.isFirstCommit = false
-                    me.gitTab = 2
+                    me.gitTab = 'IDE'
                     me.gitTabKey++;
                     me.commitStepText = null
                     me.gitCommitMessage = null
@@ -1518,7 +1536,7 @@
                         }
                         if(me.isExistRepo){
                             me.isFirstCommit = false
-                            me.gitTab = 2
+                            me.gitTab = 'IDE'
                             me.gitTabKey++;
                             me.gitCommitMessage = null
                             me.isPushing = false
@@ -1548,7 +1566,7 @@
                                 }, 5000)
                             } else {
                                 me.isFirstCommit = false
-                                me.gitTab = 2
+                                me.gitTab = 'IDE'
                                 me.gitTabKey++;
                                 me.gitCommitMessage = null
                                 me.isPushing = false
@@ -1559,6 +1577,8 @@
                                 me.gitSnackBar.Color = "success"
                                 me.gitSnackBar.icon="check_circle"
                                 me.gitSnackBar.title="Success"
+                                me.isExistRepo = true
+                                me.isExistRepoMessage = "The repository name already exist"
                             }
                         }
                     }
@@ -1602,7 +1622,7 @@
                             }
                         }
                         me.isFirstCommit = false
-                        me.gitTab = 2
+                        me.gitTab = 'IDE'
                         me.gitTabKey++;
                         me.gitCommitMessage = null
                         me.isPushing = false
@@ -1612,6 +1632,8 @@
                         me.gitSnackBar.Color = "success"
                         me.gitSnackBar.icon="check_circle"
                         me.gitSnackBar.title="Success"
+                        me.isExistRepo = true
+                        me.isExistRepoMessage = "The repository name already exist"
                     }
                 } catch(e) {
                     me.showErrSnackBar(e.message)
@@ -1667,7 +1689,7 @@
 
                 }
                 if(!me.gitUserName || !me.gitToken){
-                    if(!me.isGitLogin) me.gitTab = 0
+                    if(!me.isGitLogin) me.gitTab = 'Repository'
                     // me.gitMenuMode = "settings"
                 }
                 if(localStorage.getItem("forkedModelInfo")){
@@ -1764,13 +1786,13 @@
                 }
 
                 if(((me.isOwnModel || me.isPrivilegedUser) && !me.isFirstCommit) || me.editTemplateMode){
-                    me.gitTab = 1
+                    me.gitTab = 'Push'
                 } else {
-                    me.gitTab = 0
+                    me.gitTab = 'Repository'
                 }
                 
                 if(me.githubTokenError){
-                    me.gitTab = 0
+                    me.gitTab = 'Repository'
                 }
                 me.gitTabKey++;
 
@@ -1954,7 +1976,7 @@
                 me.gitPicture = localStorage.getItem('picture')
                 me.isGitLogin = true
                 // me.gitMenuMode = "push"
-                if(!me.isGitLogin) me.gitTab = 1
+                if(!me.isGitLogin) me.gitTab = 'Push'
             },
             copytoClipBoard(paramKeys) {
                 var me = this
@@ -2167,7 +2189,7 @@
                                                 me.commitStepText = null
                                                 me.isPushing = false
                                                 me.isFirstCommit = false
-                                                me.gitTab = 2
+                                                me.gitTab = 'IDE'
                                                 me.gitCommitMessage = null
                                                 me.copyChangedPathLists = []
                                                 me.gitSnackBar.show = true
@@ -2312,7 +2334,7 @@
                             let pushResult = await me.git.push(options)
                             me.isPushing = false
                             me.isFirstCommit = false
-                            me.gitTab = 2
+                            me.gitTab = 'IDE'
                             me.gitCommitMessage = null
                             me.copyChangedPathLists = []
                             me.gitSnackBar.show = true
@@ -2321,6 +2343,8 @@
                             me.gitSnackBar.Color = "success"
                             me.gitSnackBar.icon="check_circle"
                             me.gitSnackBar.title="Success"
+                            me.isExistRepo = true
+                            me.isExistRepoMessage = "The repository name already exist"
                             if(me.isSIgpt){
                                 setTimeout(() => {
                                     me.getActionLogs()
@@ -2359,7 +2383,7 @@
 
                         me.commitStepText = null
                         me.isPushing = false
-                        me.gitTab = 2
+                        me.gitTab = 'IDE'
                         me.gitCommitMessage = null
                         me.copyChangedPathLists = []
                         me.gitSnackBar.show = true
