@@ -236,6 +236,16 @@
                     };
             },
             generate(){
+                if(localStorage.getItem("prompt")) {
+                    if(localStorage.getItem("prompt")==this.prompt) {
+                        localStorage.setItem("useCache", true);
+                    }else{
+                        localStorage.setItem("useCache", false);
+                    }
+                }else{
+                    localStorage.setItem("prompt", this.prompt);
+                }
+                
                 this.selectedModelId = null;
                 this.scenario = '';
                 this.generator.generate();
@@ -248,6 +258,7 @@
             jump(){
                 var me = this
                 let uuid = me.uuid();
+
                 let personaIndex = me.value.personas.findIndex(x => x.persona == me.value.selectedPersona.persona)
                 if(!me.value.personas[personaIndex].modelList){
                     me.value.personas[personaIndex].modelList = []

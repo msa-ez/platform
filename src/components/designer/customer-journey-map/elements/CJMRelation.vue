@@ -1,10 +1,10 @@
 <template>
     <div>
         <edge-element
-                selectable
-                connectable
-                deletable
-                movable
+                :selectable="!movingElement"
+                :movable="!canvas.isReadOnlyModel && !movingElement"
+                :deletable="!canvas.isReadOnlyModel && isEditElement"
+                :connectable="!canvas.isReadOnlyModel"
                 :id.sync="value.relationView.id"
                 :vertices.sync="vertices"
                 :from.sync="value.from"
