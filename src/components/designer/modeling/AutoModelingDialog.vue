@@ -256,56 +256,6 @@
             UIWizardDialoger,
             ModelStorageDialog
         },
-        computed: {
-            isForeign() {
-                if (window.countryCode == 'ko') {
-                    return false
-                }
-                return true
-            },
-        },
-        created(){
-            this.setUserInfo()
-        },
-        watch: {
-        },
-        beforeDestroy() {},
-        async mounted(){
-            var me = this
-            if(me.mode == "project"){
-                me.openChatUI = true
-                if(me.projectId){
-                    await me.open();
-                }
-            }
-            me.scrollToBottom();
-
-            //// listen to generators done to save the cacheModels
-            const aiGeneratorChannel = new BroadcastChannel('ai-generator');
-            aiGeneratorChannel.onmessage = function(e) {
-                if (e.data) {
-                    me.cachedModels[e.data.generator] = Object.assign([], e.data.model)
-                }
-            };
-
-            const eventStormingCanvasChannel = new BroadcastChannel('event-storming-model-canvas')//this.$vnode.tag);
-
-            eventStormingCanvasChannel.onmessage = function(e) {
-                if (e.data) {
-                    me.cachedModels["ESGenerator"] = Object.assign([], e.data.model)
-                }
-            };
-
-            const modelCanvasChannel = new BroadcastChannel('model-canvas')//this.$vnode.tag);
-
-            modelCanvasChannel.onmessage = async function(e) {
-                if (e.data && e.data.event === "ProjectIdChanged") {
-                    me.modifyModelList(e.data)
-                } else if (e.data && e.data.event === "ScreenShot") {
-                    await me.putString(`storage://definitions/${me.projectId}/information/image`, e.data.image);
-                }
-            };
-        },
         data() {
             return {
                 disableSaveBtn: false,
@@ -314,7 +264,7 @@
                 //     customerJourneyMap: null,
                 //     prompt: ""
                 // },
-                cachedModels: {},
+                cachedModels: null,
                 uiStyle: null,
                 reGenKey: 0,
                 autoScroll: true,
@@ -363,6 +313,59 @@
                 storageCondition: null,
                 showStorageDialog: false,
             }
+        },
+        computed: {
+            isForeign() {
+                if (window.countryCode == 'ko') {
+                    return false
+                }
+                return true
+            },
+        },
+        created(){
+            this.setUserInfo()
+        },
+        watch: {
+        },
+        beforeDestroy() {
+        },
+        async mounted(){
+            var me = this
+            if(me.mode == "project"){
+                me.openChatUI = true
+                if(me.projectId){
+                    await me.open();
+                }
+            }
+            me.scrollToBottom();
+
+            //// listen to generators done to save the cacheModels
+            me.cachedModels = {}
+            const aiGeneratorChannel = new BroadcastChannel('ai-generator');
+            aiGeneratorChannel.onmessage = function(e) {
+                if (e.data) {
+                    // me.cachedModels[e.data.generator] = Object.assign([], e.data.model)
+                    me.cachedModels[e.data.generator] = e.data.model
+                }
+            };
+
+            const eventStormingCanvasChannel = new BroadcastChannel('event-storming-model-canvas')//this.$vnode.tag);
+
+            eventStormingCanvasChannel.onmessage = function(e) {
+                if (e.data) {
+                    me.cachedModels["ESGenerator"] = Object.assign([], e.data.model)
+                }
+            };
+
+            const modelCanvasChannel = new BroadcastChannel('model-canvas')//this.$vnode.tag);
+
+            modelCanvasChannel.onmessage = async function(e) {
+                if (e.data && e.data.event === "ProjectIdChanged") {
+                    me.modifyModelList(e.data)
+                } else if (e.data && e.data.event === "ScreenShot") {
+                    await me.putString(`storage://definitions/${me.projectId}/information/image`, e.data.image);
+                }
+            };
         },
         updated() {
             this.$nextTick(() => {
