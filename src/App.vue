@@ -107,23 +107,28 @@
                     <v-row
                         style="margin:0px;"
                     >
-                        <v-col v-for="(item,index) in newProjectBtns"
+                        <v-col
+                            v-for="(item,index) in newProjectBtns"
                             :key="index"
-                            lg="3"
+                            lg="2"
                             md="4"
                             sm="6"
                             xs="12"
                         >
-                            <v-card style="height:100%;"
+                            <v-card
+                                class="mx-auto"
                                 outlined
+                                style="padding:15px; height:100%; position: relative;"
                             >
-                                <v-card-title class="justify-center">{{ $t(item.title) }}</v-card-title>
-                                <v-img @click.native="moveToModel(item.type)"
-                                    :src="item.image"
-                                    style="cursor: pointer; height:200px;"
-                                >
-                                </v-img>
-                                <v-card-subtitle style="margin-bottom:20px;">{{ $t(item.subtitle) }}</v-card-subtitle>
+                                <div class="mb-1" style="font-weight: 500; font-size:18px; color:black; margin-top:5px;">
+                                    {{$t(item.title)}}
+                                </div>
+                                <v-row>
+                                    <v-col cols="12">
+                                        <v-img style="height:110px; margin:5px 0px;" :src="item.image"></v-img>
+                                    </v-col>
+                                </v-row>
+                                <div style="font-size:14px; color:#757575; margin-bottom:30px;">{{ $t(item.subtitle) }}</div>
                                 <v-card-actions style="position: absolute; right:0px; bottom:0px;">
                                     <v-spacer></v-spacer>
                                     <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
