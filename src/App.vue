@@ -120,18 +120,18 @@
                                 outlined
                                 style="padding:15px; height:100%; position: relative;"
                             >
-                                <div class="mb-1" style="font-weight: 500; font-size:18px; color:black; margin-top:5px;">
+                                <div style="font-weight: 500; font-size:18px; color:black;">
                                     {{$t(item.title)}}
                                 </div>
                                 <v-row>
                                     <v-col cols="12">
                                         <v-img @click.native="moveToModel(item.type)"
                                             :src="item.image"
-                                            style="height:110px; margin:5px 0px; cursor:pointer;"
+                                            style="height:110px; margin:10px 0px; cursor:pointer;"
                                         ></v-img>
                                     </v-col>
                                 </v-row>
-                                <div style="font-size:14px; color:#757575; margin-bottom:30px;">{{ $t(item.subtitle) }}</div>
+                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
                                 <v-card-actions style="position: absolute; right:0px; bottom:0px;">
                                     <v-spacer></v-spacer>
                                     <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>

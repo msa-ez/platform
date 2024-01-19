@@ -136,12 +136,12 @@
                                                         >
                                                             <v-chip
                                                                 :color="card.color"
-                                                                style="width: auto; height: 20px; font-size: 12px; font-weight:bold; z-index: 200;"
+                                                                style="width: auto; height: 20px; font-size: 12px; margin-bottom:5px; font-weight:bold; z-index: 200;"
                                                                 small
                                                                 outlined
                                                             >{{$t(card.chip)}}
                                                             </v-chip>
-                                                            <div class="mb-1" style="font-weight: 500; font-size:18px; color:black; margin-top:5px;">
+                                                            <div style="font-weight: 500; font-size:18px; color:black;">
                                                                 {{$t(card.title)}}
                                                             </div>
                                                             <v-row>
@@ -149,7 +149,7 @@
                                                                     <v-img :src="card.imageUrl"></v-img>
                                                                 </v-col>
                                                             </v-row>
-                                                            <div style="font-size:14px; color:#757575;">{{$t(card.subtitle)}}</div>
+                                                            <div style="font-size:14px; margin-top:10px; color:#757575;">{{$t(card.subtitle)}}</div>
                                                         </v-card>
                                                     </v-col>
                                                 </v-row>
@@ -175,12 +175,15 @@
                                                             outlined
                                                             style="padding:15px; height:100%;"
                                                         >
-                                                        <div class="mb-1" style="font-weight: 500; font-size:18px; color:black; margin-top:5px;">
+                                                        <div style="font-weight: 500; font-size:18px; color:black;">
                                                             {{$t(card.title)}}
                                                         </div>
                                                         <v-row>
                                                             <v-col cols="12">
-                                                                <v-img :src="card.imageUrl"></v-img>
+                                                                <v-img
+                                                                    :src="card.imageUrl"
+                                                                    style="height:110px; margin:10px 0px; cursor:pointer;"
+                                                                ></v-img>
                                                             </v-col>
                                                         </v-row>
                                                         <!-- <v-list-item three-line>
