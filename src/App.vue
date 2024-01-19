@@ -97,7 +97,7 @@
                         v-on="on"
                         v-bind="attrs"
                         text
-                        style="font-size:16px;"
+                        style="font-size:16px; margin-top:5px;"
                         :style="isLogin ? 'margin-right:120px' : 'margin-right:105px;'"
                     >{{$t('main.newModeling')}}
                     </v-btn>
@@ -755,8 +755,8 @@
                     disabled: false,
                 },
                 {
-                    type: 'bmc', 
-                    title: 'tools.bmc',
+                    type: 'bm', 
+                    title: 'tools.bm',
                     image: '/static/image/main/mainBMC.png',
                     subtitle: 'tools.kubernetes-inst',
                     disabled: true,
@@ -787,6 +787,13 @@
                     title: 'tools.project',
                     image: '/static/image/main/mainProject.png',
                     subtitle: 'tools.project-inst',
+                    disabled: true,
+                },
+                {
+                    type: 'cjm', 
+                    title: 'tools.cjm',
+                    image: 'https://miro.medium.com/v2/resize:fit:0/1*GeerSkalcxLlE3bp83i1XA.png',
+                    subtitle: 'tools.cjm-inst',
                     disabled: true,
                 },
             ],
@@ -1604,7 +1611,7 @@
                         me.$router.push({path: `storming/${me.dbuid()}`});
                     } else if (type == 'k8s') {
                         me.$router.push({path: `kubernetes/${me.dbuid()}`});
-                    } else if (type == 'bmc') {
+                    } else if (type == 'bm') {
                         me.$router.push({path: `business-model-canvas/${me.dbuid()}`});
                     } else if (type == 'sticky') {
                         me.$router.push({path: `sticky/${me.dbuid()}`});
@@ -1614,6 +1621,8 @@
                         me.$router.push({path: `uml/${me.dbuid()}`});
                     } else if (type == 'project'){
                         me.$router.push({path: `project/${me.dbuid()}`});
+                    }else if (type == 'cjm') {
+                        me.$router.push({path: `cjm/${me.dbuid()}`});
                     } else {
                         me.$router.push({path: `storming/${me.dbuid()}`});
                     }

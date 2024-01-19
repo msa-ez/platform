@@ -33,7 +33,9 @@
     "introduction": "Introduction",
     "partnership": "Partnership",
     "learn": "learn",
-    "project": "Project"
+    "project": "Project",
+    "company": "Company In Use",
+    "pricing": "Pricing Policy"
   },
   "main": {
     "title": "Microservices Architecture made easy!",
@@ -48,9 +50,17 @@
     "content7": "iterate on implementation until issues in compilation and functionality are resolved",
     "content8": "by finding solutions online and passing tests.",
     "goToUrlText": "Learn more",
-    "goToLectures" : "Lectures",
-    "training" : "Training",
     "newModeling" : "new modeling"
+  },
+  "mainNavSubCard" : {
+    "tutorial": "Tutorial",
+    "tutorial-inst": "",
+    "examples": "Mdeling Examples",
+    "examples-inst": "",
+    "goToLectures" : "Lectures",
+    "goToLectures-inst" : "",
+    "training" : "Training",
+    "training-inst" : ""
   },
   "tools": {
     "modeling": "MODELING TOOLS",
@@ -58,8 +68,8 @@
     "eventstorming-inst": "Event Storming is a workshop for MSA DDD that is conducted with Sticky Notes.",
     "kubernetes": "Kubernetes Modeling",
     "kubernetes-inst": "Kubernetes is an open-source system for automating deployment, scaling, and management of containerized applications.",
-    "bmc": "Business Model Canvas",
-    "bmc-inst": "The Business Model Canvas is a strategic management template used for developing new business models and documenting existing ones.",
+    "bm": "Business Model Canvas",
+    "bm-inst": "The Business Model Canvas is a strategic management template used for developing new business models and documenting existing ones.",
     "bpmn": "BPMN",
     "bpmn-inst": "Business Process Model and Notation (BPMN) is a graphical representation for specifying business processes in a business process model.",
     "tutorial-btn": "TUTORIAL",
@@ -70,7 +80,9 @@
     "uml": "UML Class Diagram",
     "uml-inst": "Class diagram provides a tool for designing the structure of software object.",
     "project": "Project",
-    "project-inst": "Projects are used when grouping one or more models into a new project. You can reference and import elements from other models associated with the project."
+    "project-inst": "Projects are used when grouping one or more models into a new project. You can reference and import elements from other models associated with the project.",
+    "cjm": "Customer Journey Map",
+    "cjm-inst": ""
   },
   "tutorials": {
     "tutorial": "TUTORIALS",
