@@ -125,7 +125,10 @@
                                 </div>
                                 <v-row>
                                     <v-col cols="12">
-                                        <v-img style="height:110px; margin:5px 0px;" :src="item.image"></v-img>
+                                        <v-img @click.native="moveToModel(item.type)"
+                                            :src="item.image"
+                                            style="height:110px; margin:5px 0px; cursor:pointer;"
+                                        ></v-img>
                                     </v-col>
                                 </v-row>
                                 <div style="font-size:14px; color:#757575; margin-bottom:30px;">{{ $t(item.subtitle) }}</div>
