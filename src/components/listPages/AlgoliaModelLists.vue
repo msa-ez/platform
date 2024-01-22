@@ -440,7 +440,7 @@
                                     <v-row justify="start" align="center">
                                         <v-col cols="2"></v-col>
                                         <v-col cols="5">
-                                            <div style="display: flex; justify-content: flex-end;">
+                                            <div style="display: flex; justify-content: flex-start;">
                                                 <div style="text-align: left;">
                                                     <div class="gs-main-page-top-title" style="white-space: pre-wrap;">{{$t(item.title)}}</div>
                                                     <div class="gs-main-page-sub-title">
@@ -1328,14 +1328,13 @@
             </div>
         </slot>
 
-        <slot name="footer">
-            <div style="min-height: 190px;">
+        <!-- <slot name="footer">
+            <div>
                 <v-footer padless>
-                    <ProvisionIndication :style="!showLoading && showMoreButton ? 'padding-top:40px':''"
-                                         divider></ProvisionIndication>
+                    <ProvisionIndication divider></ProvisionIndication>
                 </v-footer>
             </div>
-        </slot>
+        </slot> -->
 
 
         <v-dialog v-model="deleteDialog" v-if="deleteItem" persistent max-width="470">
@@ -1371,7 +1370,7 @@
         mixins: [CommonStorageBase],
         components: {
             'EventStormingListCard': () => import('./EventStormingListCard'),
-            'ProvisionIndication': () => import('../payment/ProvisionIndication'),
+            // 'ProvisionIndication': () => import('../payment/ProvisionIndication'),
             YoutubeIcon,
             AutoModelingDialog,
         },

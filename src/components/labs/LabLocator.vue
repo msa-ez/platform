@@ -904,11 +904,11 @@
                     </div>
                 </blur-purchase-item>
             </div>
-            <div style="width: 100%;" v-if=" !(isPaidLab && myId) ">
+            <!-- <div style="width: 100%;" v-if=" !(isPaidLab && myId) ">
                 <v-footer padless>
                     <ProvisionIndication divider></ProvisionIndication>
                 </v-footer>
-            </div>
+            </div> -->
         </v-row>
         <v-row v-else>
             <v-col>

@@ -584,7 +584,7 @@
         <!--            </v-stepper>-->
         <!--        </v-alert>-->
 
-        <v-footer padless
+        <!-- <v-footer padless
                   v-if="showReplayBar"
         >
             <v-col cols="12">
@@ -594,17 +594,15 @@
                         thumb-label
                 ></v-slider>
             </v-col>
-        </v-footer>
-
-
-        <v-footer
+        </v-footer> -->
+        <!-- <slot name="footer"> -->
+            <v-footer v-if="showFooter"
                 padless
-                style="border-top: solid; border-block-width: 0.5px; border-color: darkgray; background: white;"
-        >
-            <div style="margin-left: 7%; margin-right: 7%;">
-
-            </div>
-        </v-footer>
+                style="background-color: transparent;"
+            >
+                <ProvisionIndication style="margin:0; padding:0px; width:100%;"></ProvisionIndication>
+            </v-footer>
+        <!-- </slot> -->
     </v-app>
 </template>
 
@@ -626,6 +624,7 @@
     import SubscriptionItemTemplate from "./components/payment/SubscriptionItemTemplate";
     const fs = require('fs');
     import Draggable from 'vue-draggable';
+    import ProvisionIndication from './components/payment/ProvisionIndication.vue'
 
     export default {
         name: 'App',
@@ -835,6 +834,7 @@
 
         }),
         components: {
+            ProvisionIndication,
             SubscriptionItemTemplate,
             PodEvents,
             ParticipantIcons,
@@ -850,6 +850,10 @@
         // beforeMount(){
         // },
         computed: {
+            showFooter() {
+                const path = this.$route.path;
+                return path === '/courses' || path === '/' || path === '/myPage';
+            },
             isForeign() {
                 if (window.countryCode == 'ko') {
                     return false
