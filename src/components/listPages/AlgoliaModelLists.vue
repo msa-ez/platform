@@ -2714,9 +2714,7 @@
     }
     
     @media only screen and (max-width: 1110px) {
-        .main-tap-list {
-            max-width:50% !important;
-        }
+        
 
     }
 
@@ -2767,9 +2765,6 @@
         } */
         .mobile-tab-list {
             display:block;
-        }
-        .main-tap-list {
-            display:none;
         }
 
         .main-search {
