@@ -623,6 +623,7 @@
             ],
             api: [],
             snackbar: false,
+            snackbarText: '',
             fab: false,
             courseNavi: false,
             overlay: true,
