@@ -350,7 +350,7 @@
                                             <template v-slot:activator="{ on }">
                                                 <v-btn class="k8s-hide-code-btn"
                                                         style="margin-right: 5px;margin-top: 15px;"
-                                                        color="primary" dark
+                                                        dark
                                                         @click="openCodeViewer()"
                                                         v-on="on">
                                                     <v-icon> {{ icon.code }}</v-icon>
@@ -477,6 +477,7 @@
                                                             @click="openCodeViewer()"
                                                             v-on="on"
                                                             small
+                                                            text
                                                     >
                                                         <v-icon> {{ icon.code }}</v-icon>
                                                         CODE

@@ -157,8 +157,7 @@
                             </v-btn>
                         </template>
                         <v-row id="mobile-action-btn" justify="end" align="start"
-                                style="margin-right: 10px;">
-                            <slot name="saveButton">
+                                style="margin-right: 10px;"><slot name="saveButton">
                                 <v-menu
                                         open-on-hover
                                         offset-y
@@ -227,7 +226,6 @@
                                         <div>
                                             <v-btn
                                                     text
-                                                    color="primary"
                                                     dark
                                                     v-on="on"
                                                     @click="openInviteUsers()"
@@ -263,7 +261,6 @@
                                     <template v-slot:activator="{ on }">
                                         <div>
                                             <v-btn
-                                                    color="primary"
                                                     dark
                                                     @click='showReplay()'
                                                     small
@@ -332,7 +329,6 @@
                                                     <v-btn
                                                             text
                                                             style="margin-right: 5px; margin-top: 15px;"
-                                                            color="primary"
                                                             @click='showReplay()'
                                                             :disabled="disableBtn"
                                                     >
@@ -426,7 +422,6 @@
                                                     <v-btn
                                                             text
                                                             style="margin-right: 5px; margin-top: 15px;"
-                                                            color="primary"
                                                             :disabled="!initLoad"
                                                             v-on="on"
                                                             @click="openInviteUsers()"
