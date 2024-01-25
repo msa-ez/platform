@@ -10,7 +10,10 @@ export default class UserStoryMapGenerator extends JsonAIGenerator{
     
     createPrompt(){
         let modelDescription = ""
-        let persona = this.client.input.persona.scenario
+        let persona = ""
+        if(this.client.input.persona.scenario){
+            persona = this.client.input.persona.scenario
+        }
 
         if(this.client.input.painpointAnalysis){
             modelDescription += "Painpoint analysis and Possible solutions: \n\n"
