@@ -33,9 +33,16 @@
     "introduction": "Introduction",
     "partnership": "Partnership",
     "learn": "learn",
-    "project": "Project",
+    "Storage": "Storage",
     "company": "Company In Use",
     "pricing": "Pricing Policy"
+  },
+  "making" : {
+    "title" : "Making",
+    "planning" : "Planning",
+    "design" : "Design",
+    "operation" : "Operation",
+    "project" : "Project"
   },
   "main": {
     "title": "Microservices Architecture made easy!",
@@ -49,8 +56,7 @@
     "content6": "Utilize ChatGPT-4 and internet searches to write code,",
     "content7": "iterate on implementation until issues in compilation and functionality are resolved",
     "content8": "by finding solutions online and passing tests.",
-    "goToUrlText": "Learn more",
-    "newModeling" : "new modeling"
+    "goToUrlText": "Learn more"
   },
   "mainNavSubCard" : {
     "tutorial": "Tutorial",

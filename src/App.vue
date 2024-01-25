@@ -15,7 +15,6 @@
             app
             fixed
             style="left:0px; background-color:transparent; z-index:1;"
-            hide-on-scroll
         >
 
             <v-toolbar-title style="width: 360px;" class="ml-0 pl-3">
@@ -89,28 +88,32 @@
                 <span>신규 강의 생성</span>
             </v-tooltip>
             <v-dialog v-if="showNewButton"
-                v-model="newModelingDialog"
+                v-model="makingDialog"
                 max-width="90%"
             >
                 <template v-slot:activator="{ on, attrs }">
-                    <v-btn
+                    <v-btn class="main-nav-modeling-is-mobile"
                         v-on="on"
                         v-bind="attrs"
                         text
-                        style="font-size:16px; margin-top:5px;"
-                        :style="isLogin ? 'margin-right:120px' : 'margin-right:105px;'"
-                    >{{$t('main.newModeling')}}
+                        style="font-size:16px; margin-top:8px; font-weight: 700; padding:0px;"
+                        :style="isLogin ? 'margin-right:145px' : 'margin-right:105px;'"
+                    ><v-icon style="margin-top:-3px;">mdi-file-plus</v-icon>
+                    {{$t('making.title')}}
                     </v-btn>
                 </template>
                 <v-card style="padding:20px; height:85vh; overflow:auto;">
-                    <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('main.newModeling')}}</div>
+                    <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('making.title')}}</div>
+
+                    <!-- 만들기 기획(planning) -->
+                    <div class="making-sub-title">{{$t('making.planning')}}</div>
                     <v-row
                         style="margin:0px;"
                     >
                         <v-col
-                            v-for="(item,index) in newProjectBtns"
+                            v-for="(item,index) in planning"
                             :key="index"
-                            lg="2"
+                            lg="3"
                             md="4"
                             sm="6"
                             xs="12"
@@ -127,7 +130,133 @@
                                     <v-col cols="12">
                                         <v-img @click.native="moveToModel(item.type)"
                                             :src="item.image"
-                                            style="height:110px; margin:10px 0px; cursor:pointer;"
+                                            style="height:150px; margin:10px 0px; cursor:pointer;"
+                                        ></v-img>
+                                    </v-col>
+                                </v-row>
+                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
+                                <v-card-actions style="position: absolute; right:0px; bottom:0px;">
+                                    <v-spacer></v-spacer>
+                                    <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                    <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                        @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+                    <!-- 만들기 설계(design) -->
+                    <div class="making-sub-title">{{$t('making.design')}}</div>
+                    <v-row
+                        style="margin:0px;"
+                    >
+                        <v-col
+                            v-for="(item,index) in design"
+                            :key="index"
+                            lg="3"
+                            md="4"
+                            sm="6"
+                            xs="12"
+                        >
+                            <v-card
+                                class="mx-auto"
+                                outlined
+                                style="padding:15px; height:100%; position: relative;"
+                            >
+                                <div style="font-weight: 500; font-size:18px; color:black;">
+                                    {{$t(item.title)}}
+                                </div>
+                                <v-row>
+                                    <v-col cols="12">
+                                        <v-img @click.native="moveToModel(item.type)"
+                                            :src="item.image"
+                                            style="height:150px; margin:10px 0px; cursor:pointer;"
+                                        ></v-img>
+                                    </v-col>
+                                </v-row>
+                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
+                                <v-card-actions style="position: absolute; right:0px; bottom:0px;">
+                                    <v-spacer></v-spacer>
+                                    <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                    <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                        @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+                    <!-- 만들기 개발(development) -->
+                    <div class="making-sub-title">{{$t('making.operation')}}</div>
+                    <v-row
+                        style="margin:0px;"
+                    >
+                        <v-col
+                            v-for="(item,index) in development"
+                            :key="index"
+                            lg="3"
+                            md="4"
+                            sm="6"
+                            xs="12"
+                        >
+                            <v-card
+                                class="mx-auto"
+                                outlined
+                                style="padding:15px; height:100%; position: relative;"
+                            >
+                                <div style="font-weight: 500; font-size:18px; color:black;">
+                                    {{$t(item.title)}}
+                                </div>
+                                <v-row>
+                                    <v-col cols="12">
+                                        <v-img @click.native="moveToModel(item.type)"
+                                            :src="item.image"
+                                            style="height:150px; margin:10px 0px; cursor:pointer;"
+                                        ></v-img>
+                                    </v-col>
+                                </v-row>
+                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
+                                <v-card-actions style="position: absolute; right:0px; bottom:0px;">
+                                    <v-spacer></v-spacer>
+                                    <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                    <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                        @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+                    <!-- 만들기 프로젝트(project) -->
+                    <div class="making-sub-title">{{$t('making.project')}}</div>
+                    <v-row
+                        style="margin:0px;"
+                    >
+                        <v-col
+                            v-for="(item,index) in makingProject"
+                            :key="index"
+                            lg="3"
+                            md="4"
+                            sm="6"
+                            xs="12"
+                        >
+                            <v-card
+                                class="mx-auto"
+                                outlined
+                                style="padding:15px; height:100%; position: relative;"
+                            >
+                                <div style="font-weight: 500; font-size:18px; color:black;">
+                                    {{$t(item.title)}}
+                                </div>
+                                <v-row>
+                                    <v-col cols="12">
+                                        <v-img @click.native="moveToModel(item.type)"
+                                            :src="item.image"
+                                            style="height:150px; margin:10px 0px; cursor:pointer;"
                                         ></v-img>
                                     </v-col>
                                 </v-row>
@@ -747,20 +876,65 @@
             //             page: 'bpmn'
             //         },
             //     ],
-            newProjectBtns: [
-                {   type: 'es',
-                    title: 'tools.eventstorming',
-                    image: '/static/image/main/mainModeling.png',
-                    subtitle: 'tools.eventstorming-inst',
-                    disabled: false,
-                },
-                {
-                    type: 'k8s', 
-                    title: 'tools.kubernetes',
-                    image: '/static/image/main/maink8s.png',
-                    subtitle: 'tools.kubernetes-inst',
-                    disabled: false,
-                },
+            // newProjectBtns: [
+            //     {   
+            //         type: 'es',
+            //         title: 'tools.eventstorming',
+            //         image: '/static/image/main/mainModeling.png',
+            //         subtitle: 'tools.eventstorming-inst',
+            //         disabled: false,
+            //     },
+            //     {
+            //         type: 'k8s', 
+            //         title: 'tools.kubernetes',
+            //         image: '/static/image/main/maink8s.png',
+            //         subtitle: 'tools.kubernetes-inst',
+            //         disabled: false,
+            //     },
+            //     {
+            //         type: 'bm', 
+            //         title: 'tools.bm',
+            //         image: '/static/image/main/mainBMC.png',
+            //         subtitle: 'tools.kubernetes-inst',
+            //         disabled: true,
+            //     },
+            //     {
+            //         type: 'bpmn', 
+            //         title: 'tools.bpmn',
+            //         image: '/static/image/main/mainBPMN.png',
+            //         subtitle: 'tools.bpmn-inst',
+            //         disabled: false,
+            //     },
+            //     {
+            //         type: 'sticky', 
+            //         title: 'tools.sticky',
+            //         subtitle: 'tools.sticky-inst',
+            //         image: '/static/image/main/mainSticky.png',
+            //         disabled: true,
+            //     },
+            //     {
+            //         type: 'uml', 
+            //         title: 'tools.uml',
+            //         image: '/static/image/main/mainUml.png',
+            //         subtitle: 'tools.uml-inst',
+            //         disabled: true,
+            //     },
+            //     {
+            //         type: 'project', 
+            //         title: 'tools.project',
+            //         image: '/static/image/main/mainProject.png',
+            //         subtitle: 'tools.project-inst',
+            //         disabled: true,
+            //     },
+            //     {
+            //         type: 'cjm', 
+            //         title: 'tools.cjm',
+            //         image: 'https://miro.medium.com/v2/resize:fit:0/1*GeerSkalcxLlE3bp83i1XA.png',
+            //         subtitle: 'tools.cjm-inst',
+            //         disabled: true,
+            //     },
+            // ],
+            planning : [
                 {
                     type: 'bm', 
                     title: 'tools.bm',
@@ -769,11 +943,11 @@
                     disabled: true,
                 },
                 {
-                    type: 'bpmn', 
-                    title: 'tools.bpmn',
-                    image: '/static/image/main/mainBPMN.png',
-                    subtitle: 'tools.bpmn-inst',
-                    disabled: false,
+                    type: 'cjm', 
+                    title: 'tools.cjm',
+                    image: 'https://miro.medium.com/v2/resize:fit:0/1*GeerSkalcxLlE3bp83i1XA.png',
+                    subtitle: 'tools.cjm-inst',
+                    disabled: true,
                 },
                 {
                     type: 'sticky', 
@@ -781,6 +955,15 @@
                     subtitle: 'tools.sticky-inst',
                     image: '/static/image/main/mainSticky.png',
                     disabled: true,
+                },
+            ],
+            design : [
+                {
+                    type: 'es',
+                    title: 'tools.eventstorming',
+                    image: '/static/image/main/mainModeling.png',
+                    subtitle: 'tools.eventstorming-inst',
+                    disabled: false,
                 },
                 {
                     type: 'uml', 
@@ -790,17 +973,28 @@
                     disabled: true,
                 },
                 {
+                    type: 'bpmn', 
+                    title: 'tools.bpmn',
+                    image: '/static/image/main/mainBPMN.png',
+                    subtitle: 'tools.bpmn-inst',
+                    disabled: false,
+                },
+            ],
+            development : [
+                {
+                    type: 'k8s', 
+                    title: 'tools.kubernetes',
+                    image: '/static/image/main/maink8s.png',
+                    subtitle: 'tools.kubernetes-inst',
+                    disabled: false,
+                },
+            ],
+            makingProject : [
+                {
                     type: 'project', 
                     title: 'tools.project',
                     image: '/static/image/main/mainProject.png',
                     subtitle: 'tools.project-inst',
-                    disabled: true,
-                },
-                {
-                    type: 'cjm', 
-                    title: 'tools.cjm',
-                    image: 'https://miro.medium.com/v2/resize:fit:0/1*GeerSkalcxLlE3bp83i1XA.png',
-                    subtitle: 'tools.cjm-inst',
                     disabled: true,
                 },
             ],
@@ -830,7 +1024,7 @@
             currentY: 0,
             offsetX: 0,
             offsetY: 0,
-            newModelingDialog: null,
+            makingDialog: null,
 
         }),
         components: {
@@ -932,6 +1126,9 @@
             var me = this
 
             Vue.prototype.$app = me
+            me.$EventBus.$on('open-new-making-dialog', function () {
+                me.makingDialog = true
+            })
 
             if (this.$isElectron) {
                 // Electron-specific code
@@ -1615,7 +1812,7 @@
             },
             moveToModel(type) {
                 var me = this
-                me.newModelingDialog = false
+                me.makingDialog = false
                 try {
                     if (!type) type = me.mode
 
@@ -2056,7 +2253,18 @@
 
 </script>
 <style>
-
+    .making-sub-title {
+        font-size:20px;
+        font-weight: 700;
+        margin-left:13px;
+        margin-top:30px;
+    }
+    .main-nav-modeling-is-mobile:hover {
+        color: #2C81D5 !important;
+    }
+    .main-nav-modeling-is-mobile {
+        display:block;
+    }
     .upload {
         height: 48px;
         cursor: pointer;
@@ -2120,6 +2328,11 @@
     }
     
     /* 추가 */
+    @media only screen and (max-width: 1200px) { 
+        .main-nav-modeling-is-mobile {
+            display:none;
+        }
+    }
 
     @media only screen and (max-width: 1110px) {
         .app-docs-text, .app-new-text {
@@ -2130,6 +2343,7 @@
             min-width:32px !important;
             max-width:32px !important;
         }
+        
     }
 
     @media only screen and (max-width: 781px) {

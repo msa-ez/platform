@@ -55,15 +55,14 @@
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on: tooltip }">
                                         <v-btn
-                                                :disabled="!isGeneratorDone"
-                                                class="code-preview-btn"
-                                                icon x-small
-                                                v-bind="attrs"
-                                                v-on="{ ...tooltip, ...menu }"
+                                            :disabled="!isGeneratorDone"
+                                            class="code-preview-btn"
+                                            icon x-small
+                                            v-bind="attrs"
+                                            v-on="{ ...tooltip, ...menu }"
+                                            :color="gitMenu ? '':'primary'"
                                         >
-                                            <v-icon size="22" :color="gitMenu ? 'primary':''">
-                                                mdi-git
-                                            </v-icon>
+                                            <v-icon size="22" style="float:right;" :style="gitMenu ? 'color:gray':''">mdi-git</v-icon>
                                         </v-btn>
                                     </template>
                                     <span>Push to Git</span>
