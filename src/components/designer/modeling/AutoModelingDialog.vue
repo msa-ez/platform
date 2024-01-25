@@ -20,9 +20,9 @@
 
         <v-col class="shrink">
             <v-expand-x-transition>
-                <v-card @scroll="handleScroll" id="scroll-text"
+                <v-card
                     v-show="openChatUI"
-                    style="height: 100%; position: absolute; width: 100%; background-color: aliceblue; left: 0px; top: 0px;  overflow:auto; z-index:201;"
+                    style="height: 100%; width: 100%;  background-color: aliceblue; margin-top:-545px; min-height:650px; z-index:201;"
                     class="mx-auto bg-secondary"
                 >   
                    
@@ -337,7 +337,7 @@
                 //     customerJourneyMap: null,
                 //     prompt: ""
                 // },
-                cachedModels: {},
+                cachedModels: null,
                 uiStyle: null,
                 reGenKey: 0,
                 autoScroll: true,
@@ -393,6 +393,59 @@
                     UIDefinitionId : null,
                 }
             }
+        },
+        computed: {
+            isForeign() {
+                if (window.countryCode == 'ko') {
+                    return false
+                }
+                return true
+            },
+        },
+        created(){
+            this.setUserInfo()
+        },
+        watch: {
+        },
+        beforeDestroy() {
+        },
+        async mounted(){
+            var me = this
+            if(me.mode == "project"){
+                me.openChatUI = true
+                if(me.projectId){
+                    await me.open();
+                }
+            }
+            me.scrollToBottom();
+
+            //// listen to generators done to save the cacheModels
+            me.cachedModels = {}
+            const aiGeneratorChannel = new BroadcastChannel('ai-generator');
+            aiGeneratorChannel.onmessage = function(e) {
+                if (e.data) {
+                    // me.cachedModels[e.data.generator] = Object.assign([], e.data.model)
+                    me.cachedModels[e.data.generator] = e.data.model
+                }
+            };
+
+            const eventStormingCanvasChannel = new BroadcastChannel('event-storming-model-canvas')//this.$vnode.tag);
+
+            eventStormingCanvasChannel.onmessage = function(e) {
+                if (e.data) {
+                    me.cachedModels["ESGenerator"] = Object.assign([], e.data.model)
+                }
+            };
+
+            const modelCanvasChannel = new BroadcastChannel('model-canvas')//this.$vnode.tag);
+
+            modelCanvasChannel.onmessage = async function(e) {
+                if (e.data && e.data.event === "ProjectIdChanged") {
+                    me.modifyModelList(e.data)
+                } else if (e.data && e.data.event === "ScreenShot") {
+                    await me.putString(`storage://definitions/${me.projectId}/information/image`, e.data.image);
+                }
+            };
         },
         updated() {
             this.$nextTick(() => {

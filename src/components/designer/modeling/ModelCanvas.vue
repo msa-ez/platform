@@ -1456,7 +1456,7 @@
                                         me.isDisable = true
 
                                         me.alertInfo.show = true
-                                        me.alertInfo.text = 'This is an unauthorized model.(Permission list does not exist)'
+                                        me.alertInfo.text = 'This model is not shared with you. Please send share request to the author.'
                                         me.alertInfo.type = 'info'
                                         me.alertInfo.fnNum = 1
                                         me.alertInfo.submit = 'Request'
@@ -1466,7 +1466,7 @@
                                 me.isDisable = true
 
                                 me.alertInfo.show = true
-                                me.alertInfo.text = 'This is an unauthorized model.(personal model)'
+                                me.alertInfo.text = 'You\'re not permitted to access. (Need to request acess right to the author)'
                                 me.alertInfo.type = 'info'
                                 me.alertInfo.fnNum = 1
                                 me.alertInfo.submit = 'Request'
@@ -1475,7 +1475,7 @@
                             me.isDisable = true
 
                             me.alertInfo.show = true
-                            me.alertInfo.text = 'This is an unauthorized model.(No login)'
+                            me.alertInfo.text = 'You\'re not permitted to access (Need to logged in)'
                             me.alertInfo.fnNum = 1
                             me.alertInfo.submit = 'Request'
 

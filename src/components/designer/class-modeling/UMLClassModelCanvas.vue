@@ -189,7 +189,7 @@
                                     left>
                                 <template v-slot:activator="{ on }">
                                     <v-btn class="uml-btn"
-                                        color="primary" text
+                                        text
                                         v-on="on"
                                         @click="openInviteUsers()"
                                         style="margin-right: 5px;"

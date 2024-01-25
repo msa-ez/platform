@@ -38,7 +38,6 @@ Result Format JSON:
        ]
      }
    ]
-
  }
   
 `
@@ -170,6 +169,8 @@ Result Format JSON:
                         elementView: view
                     };
 
+                    let painPointAndpossibleSolution = {}
+
                     uuid = me.uuid();
                     view = JSON.parse(JSON.stringify(view));
                     view.id = uuid;
@@ -182,6 +183,8 @@ Result Format JSON:
                                 "org.uengine.modeling.model.Issue" : "PainPoint",
                         elementView: view
                     };
+
+                    painPointAndpossibleSolution['painPoint'] = convertedModel.elements[uuid]
 
                     uuid = me.uuid();
                     view = JSON.parse(JSON.stringify(view));
@@ -196,6 +199,29 @@ Result Format JSON:
                         elementView: view,
                         controllerInfo: {}
                     };
+
+                    painPointAndpossibleSolution['possibleSolution'] = convertedModel.elements[uuid]
+
+                    uuid = me.uuid();
+                    let relationView = {
+                        from: painPointAndpossibleSolution.painPoint.elementView.id,
+                        id: uuid,
+                        needReconnect: true,
+                        style: `{"arrow-start":"none","arrow-end":"none"}`,
+                        to: painPointAndpossibleSolution.possibleSolution.elementView.id,
+                        value: "[]"
+                    }
+
+                    convertedModel.relations[uuid] = {
+                        _type: "cjm-relation",
+                        sourceElement: painPointAndpossibleSolution.painPoint,
+                        targetElement: painPointAndpossibleSolution.possibleSolution,
+                        relationView: relationView,
+                        from: painPointAndpossibleSolution.painPoint.elementView.id,
+                        to: painPointAndpossibleSolution.possibleSolution.elementView.id,
+                        sourceMultiplicity: 1,
+                        targetMultiplicity: 1,
+                    }
                 });
 
 

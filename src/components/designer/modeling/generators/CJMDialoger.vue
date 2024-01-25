@@ -364,21 +364,17 @@
                         
                     };
             },
-            async generate(){
-                // let issuedTimeStamp = Date.now()
-                // let usage = new Usage({
-                //     serviceType: `CJM_AIGeneration`,
-                //     issuedTimeStamp: issuedTimeStamp,
-                //     expiredTimeStamp: Date.now(),
-                //     metadata: {
-                //         projectId: this.modelIds.projectId,
-                //         modelId: this.modelIds.CJMDefinitionId
-                //     }
-                // });
-                // if(!await usage.use()) {
-                //     this.stop()
-                //     return false;
-                // }
+            generate(){
+                if(localStorage.getItem("prompt")) {
+                    if(localStorage.getItem("prompt")==this.prompt) {
+                        localStorage.setItem("useCache", true);
+                    }else{
+                        localStorage.setItem("useCache", false);
+                    }
+                }else{
+                    localStorage.setItem("prompt", this.prompt);
+                }
+                
                 this.selectedModelId = null;
                 this.scenario = '';
                 this.generator.generate();

@@ -32,7 +32,6 @@
         </div>
         <v-card v-if="!state.secondMessageIsTyping" class="auto-modeling-user-story-card">
             <v-card-subtitle>{{$t('autoModeling.explanation')}}</v-card-subtitle>
-            <v-btn v-if="!done" class="auto-modeling-btn" style="margin-left: 15px;" @click="stop()"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
             <v-card-text class="auto-modling-textarea">
                 <v-textarea 
                         v-model="value.userStory"
@@ -51,6 +50,7 @@
                 <!--                    <v-btn x-small @click="jumpToModel(modelId)">{{ modelId }}</v-btn>    -->
                 <!--                </div>-->
             </v-card-text>
+            <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; bottom:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
             <v-card-actions v-if="done" class="auto-modeling-btn-box">
                 <v-btn class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>Try again</v-btn>
                 <v-btn class="auto-modeling-btn" color="primary" @click="openStorageDialog()">Create Model<v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon></v-btn>
@@ -147,7 +147,8 @@
                 input:{
                     title: this.prompt,
                     separationPrinciple:  "Conway's Principle.", // "Business Capability" // "Infra Diversity" // "Per Persona",
-                    businessModel: this.cachedModels["BMGenerator"]
+                    businessModel: this.cachedModels["BMGenerator"],
+                    painpointAnalysis: this.cachedModels["CJMGenerator"]
                 },
                 done: false,
                 generator: null,
@@ -304,6 +305,7 @@
                 let issuedTimeStamp = Date.now()
                 this.value.userStory = '';
                 this.input.businessModel = this.cachedModels["BMGenerator"]
+                this.input.painpointAnalysis = this.cachedModels["CJMGenerator"]
                 this.generator = new Generator(this);
 
                 // let usage = new Usage({

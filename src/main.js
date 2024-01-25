@@ -194,72 +194,72 @@ window.vueFilePath = process.env.VUE_APP_FILE_PATH
 
 
 /////////////// template & Base /////////////////////
-const templateFiles = require.context('../public/static/templates', true)
-var tempRootPathList = []
-templateFiles.keys().forEach(function (templateFile) {
-    // templateFile = "./spring-boot/for-model/gateway/src/main/resources/application.yml"
-    var tempFileStructure = templateFile.replace('./', '').split('/')
-    tempRootPathList.push(tempFileStructure[0])
-})
-tempRootPathList.push('Custom Template')
+// const templateFiles = require.context('../public/static/templates', true)
+// var tempRootPathList = []
+// templateFiles.keys().forEach(function (templateFile) {
+//     // templateFile = "./spring-boot/for-model/gateway/src/main/resources/application.yml"
+//     var tempFileStructure = templateFile.replace('./', '').split('/')
+//     tempRootPathList.push(tempFileStructure[0])
+// })
+// tempRootPathList.push('Custom Template')
 
 
-var tempRootPath = new Set(tempRootPathList)
-var rootPathList = Array.from(tempRootPath)
-// rootPathList = ['spring-boot', '' ...]
+// var tempRootPath = new Set(tempRootPathList)
+// var rootPathList = Array.from(tempRootPath)
+// // rootPathList = ['spring-boot', '' ...]
 
 Vue.prototype.$manifestsPerTemplate = {};
 Vue.prototype.$manifestsPerBaseTemplate = {};
 
-rootPathList.forEach(function (item) {
-    if(item){
-        eval('Vue.prototype.$manifestsPerTemplate[\"' + item + '\"] = []');
-        eval('Vue.prototype.$manifestsPerBaseTemplate[\"' + item + '\"] = []');
-    }
-})
+// rootPathList.forEach(function (item) {
+//     if(item){
+//         eval('Vue.prototype.$manifestsPerTemplate[\"' + item + '\"] = []');
+//         eval('Vue.prototype.$manifestsPerBaseTemplate[\"' + item + '\"] = []');
+//     }
+// })
 
 
-templateFiles.keys().forEach(function (templateFile) {
-    var tempFileStructure = templateFile.replace('./', '').split('/')
-    var rootName = tempFileStructure[0]
-    var tmp = null;
-    eval(`tmp = templateFile.replace("${rootName}/","")`)
+// templateFiles.keys().forEach(function (templateFile) {
+//     var tempFileStructure = templateFile.replace('./', '').split('/')
+//     var rootName = tempFileStructure[0]
+//     var tmp = null;
+//     eval(`tmp = templateFile.replace("${rootName}/","")`)
 
-    if(templateFile.includes(`${rootName}/for-model/`) ){
-        eval(`Vue.prototype.$manifestsPerBaseTemplate['${rootName}'].push(tmp)`)
-    }else{
-        // eval('tmp' + '= tempFiles.replace(\"' + rootName + '\/\",\"\"\)')
-        eval(`Vue.prototype.$manifestsPerTemplate['${rootName}'].push(tmp)`)
-    }
-})
-//////////////////////////////////////////
+//     if(templateFile.includes(`${rootName}/for-model/`) ){
+//         eval(`Vue.prototype.$manifestsPerBaseTemplate['${rootName}'].push(tmp)`)
+//     }else{
+//         // eval('tmp' + '= tempFiles.replace(\"' + rootName + '\/\",\"\"\)')
+//         eval(`Vue.prototype.$manifestsPerTemplate['${rootName}'].push(tmp)`)
+//     }
+// })
+// //////////////////////////////////////////
 
-//////////////////// toppings /////////////
-const toppingFiles = require.context('../public/static/toppings', true)
-var toppingRootPathList = []
+// //////////////////// toppings /////////////
+// const toppingFiles = require.context('../public/static/toppings', true)
+// var toppingRootPathList = []
 
-toppingFiles.keys().forEach(function (toppingFile) {
-    // console.log("topping :  " + toppingFile)
-    var tempFileStructure = toppingFile.replace('./', '').split('/')
-    toppingRootPathList.push(tempFileStructure[0])
-})
+// toppingFiles.keys().forEach(function (toppingFile) {
+//     // console.log("topping :  " + toppingFile)
+//     var tempFileStructure = toppingFile.replace('./', '').split('/')
+//     toppingRootPathList.push(tempFileStructure[0])
+// })
 
-var toppingRootPath = new Set(toppingRootPathList)
-var toppingRootPathLists = Array.from(toppingRootPath)
+// var toppingRootPath = new Set(toppingRootPathList)
+// var toppingRootPathLists = Array.from(toppingRootPath)
 
 Vue.prototype.$manifestsPerToppings = {};
 
-toppingRootPathLists.forEach(function (item) {
-    eval('Vue.prototype.$manifestsPerToppings[\"' + item + '\"] = []')
-})
-toppingFiles.keys().forEach(function (tempFiles) {
-    var tempFileStructure = tempFiles.replace('./', '').split('/')
-    var rootName = tempFileStructure[0]
-    var tmp;
-    eval('tmp' + '= tempFiles.replace(\"' + rootName + '\/\",\"\"\)')
-    eval('Vue.prototype.$manifestsPerToppings[\"' + rootName + '\"].push(tmp)')
-})
-////////////////////////////////////////////////
+// toppingRootPathLists.forEach(function (item) {
+//     eval('Vue.prototype.$manifestsPerToppings[\"' + item + '\"] = []')
+// })
+// toppingFiles.keys().forEach(function (tempFiles) {
+//     var tempFileStructure = tempFiles.replace('./', '').split('/')
+//     var rootName = tempFileStructure[0]
+//     var tmp;
+//     eval('tmp' + '= tempFiles.replace(\"' + rootName + '\/\",\"\"\)')
+//     eval('Vue.prototype.$manifestsPerToppings[\"' + rootName + '\"].push(tmp)')
+// })
+// ////////////////////////////////////////////////
 
 
 Vue.prototype.$innerWidth = window.innerWidth;

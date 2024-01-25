@@ -60,11 +60,53 @@ class AIGenerator {
         })
     }
 
+    generateHashKey(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return hash;
+    }
+
     async generate(){
         this.state = 'running'
         let me = this;
         me.openaiToken = await me.getToken();
         let responseCnt = 0;
+
+        let messages
+        messages = this.createMessages();
+
+
+        if(localStorage.getItem("useCache")=="true"){
+            let message = JSON.stringify(messages)
+
+            let hashKey = this.generateHashKey(message)
+            let existingResult = localStorage.getItem("cache-" + hashKey)
+
+            if(existingResult){
+                setTimeout(()=>{
+
+                    me.state = 'end';
+
+                    let model = me.createModel(existingResult)
+        
+                    if(me.client.onModelCreated){
+                        me.client.onModelCreated(model);
+                    } 
+                    
+                    if(me.client.onGenerationFinished)
+                        me.client.onGenerationFinished(model)
+        
+
+                }, 0)
+
+                return
+            }
+
+        }
         
         me.gptResponseId = null;
         const url = "https://api.openai.com/v1/chat/completions";
@@ -163,12 +205,16 @@ class AIGenerator {
                         // } else {
                     // }
                 // }
+
+
+                if(localStorage.getItem("useCache")=="true"){
+                    let hashKey = me.generateHashKey(JSON.stringify(messages))
+                    localStorage.setItem("cache-" + hashKey, me.modelJson)
+                }
+            
             }
         };
         
-        let messages
-        messages = this.createMessages();
-
         
         const data = JSON.stringify({
             model: this.model,

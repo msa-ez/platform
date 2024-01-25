@@ -153,7 +153,7 @@
                                     <v-card-title style="text-align: center;" class="home-card-title">{{$t('tools.kubernetes')}}</v-card-title>
                                     <v-img @click="checkNewProject('k8s')"
                                            class="introduction-img"
-                                           src="/static/image/main/deploy.png"
+                                           src="/static/image/main/mainBPMN.png"
                                     >
                                     </v-img>
                                     <v-card-subtitle>{{$t('tools.kubernetes-inst')}}</v-card-subtitle>
@@ -889,10 +889,10 @@
 
         <slot name="footer">
             <div style="min-height: 190px;">
-                <v-footer padless>
+                <!-- <v-footer padless>
                     <ProvisionIndication :style="!showLoading && showMoreButton ? 'padding-top:40px':''"
                                           divider></ProvisionIndication>
-                </v-footer>
+                </v-footer> -->
             </div>
         </slot>
         <!-- <div style="position: fixed; z-index:999; right:5px; bottom:5px;">

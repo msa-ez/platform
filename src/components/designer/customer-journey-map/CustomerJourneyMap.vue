@@ -157,8 +157,7 @@
                             </v-btn>
                         </template>
                         <v-row id="mobile-action-btn" justify="end" align="start"
-                                style="margin-right: 10px;">
-                            <slot name="saveButton">
+                                style="margin-right: 10px;"><slot name="saveButton">
                                 <v-menu
                                         open-on-hover
                                         offset-y
@@ -227,7 +226,6 @@
                                         <div>
                                             <v-btn
                                                     text
-                                                    color="primary"
                                                     dark
                                                     v-on="on"
                                                     @click="openInviteUsers()"
@@ -263,7 +261,6 @@
                                     <template v-slot:activator="{ on }">
                                         <div>
                                             <v-btn
-                                                    color="primary"
                                                     dark
                                                     @click='showReplay()'
                                                     small
@@ -332,7 +329,6 @@
                                                     <v-btn
                                                             text
                                                             style="margin-right: 5px; margin-top: 15px;"
-                                                            color="primary"
                                                             @click='showReplay()'
                                                             :disabled="disableBtn"
                                                     >
@@ -426,7 +422,6 @@
                                                     <v-btn
                                                             text
                                                             style="margin-right: 5px; margin-top: 15px;"
-                                                            color="primary"
                                                             :disabled="!initLoad"
                                                             v-on="on"
                                                             @click="openInviteUsers()"
@@ -457,10 +452,7 @@
                 </slot>
                 <v-fab-transition>
                     <v-btn
-                            v-if="!rtcLogin && (
-                                (isServerModel &&
-                                    (information && information.permissions))
-                            )"
+                            v-if="!rtcLogin && ((isServerModel && (information && information.permissions)))"
                             color="blue"
                             dark
                             fab
@@ -782,37 +774,19 @@
                 alert('Error: CustomerJourneyMap Created().', e)
             }
         },
-        mounted: function () {
-            var me = this
-        }
-        ,
         watch: {
-            value: {
-                deep: true,
-                handler:
-                    _.debounce(function (newVal, oldVal) {
-                        var me = this
-                        if (newVal) {
-                            // following is right way
-                            me.$emit("input", newVal);
-                            me.$emit("change", newVal, me.projectName);
-                        }
-                    }, 1000)
-            },
-            projectName: _.debounce(function (newVal, oldVal) {
-                    var me = this
-                    if (me.initLoad) {
-                        me.modelChanged = true
-                    }
-                    
-                    if (newVal) {
-                        me.projectNameHint = null
-                        me.projectNameColor = null
-                    } else {
-                        me.projectNameHint = 'Project name is required.'
-                        me.projectNameColor = 'red'
-                    }
-            }, 0),
+            //     value: {
+            //         deep: true,
+            //         handler:
+            //             _.debounce(function (newVal, oldVal) {
+            //                 var me = this
+            //                 if (newVal) {
+            //                     // following is right way
+            //                     me.$emit("input", newVal);
+            //                     me.$emit("change", newVal, me.projectName);
+            //                 }
+            //             }, 1000)
+            //     },
         },
         methods: {
             clearModelValue(){
@@ -1068,7 +1042,6 @@
                 var me = this
                 if (title == 'Save to Server') {
                     me.saveComposition('save')
-
                 } else if (title == 'Duplicate') {
                     me.saveComposition('duplicate')
                     // me.storageDialogReady('duplicate')

@@ -11,7 +11,7 @@
             >
             </GitActionDialog>
         </v-dialog>
-        <v-dialog v-model="marketplaceDialog" fullscreen>
+        <v-dialog v-model="marketplaceDialog" max-width="90%" persistent>
             <MarketPlace :marketplaceDialog="marketplaceDialog"
                 @applyTemplate="applyTemplateInMarket"
                 @applyTopping="applyToppingInMarket"
@@ -74,16 +74,17 @@
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on: tooltip }">
                                         <v-btn :disabled="!isGeneratorDone"
-                                            style="font-size:16px;
-                                                margin-right:5px;
-                                                padding:0px 5px;"
+                                            style="font-size: 16px;
+                                                margin-right: 5px;
+                                                margin-top: 1px;
+                                                padding: 0px 5px;"
+                                            icon
                                             small
                                             v-bind="attrs"
                                             v-on="{ ...tooltip, ...menu }"
                                             :color="gitMenu ? '':'primary'"
                                         >
                                             <v-icon size="22" style="float:right;" :style="gitMenu ? 'color:gray':''">mdi-git</v-icon>
-                                            <span :style="gitMenu ? 'color:gray':''">Git</span>
                                         </v-btn>
                                     </template>
                                     <span>Push to Git</span>
@@ -631,7 +632,6 @@
                                                         @close="closeCodeConfiguration"
                                                 ></CodeConfiguration>
                                             </v-tab-item>
-                                            
                                         </v-tabs>
                                     </v-menu>
 
@@ -777,7 +777,7 @@
                                                                                     v-for="(tempItem, index) in templateList"
                                                                                     :key="index"
                                                                                 >
-                                                                                    <subMenu 
+                                                                                    <subMenu
                                                                                         :templateInfo="tempItem"
                                                                                         :isBaseTemplate="true" 
                                                                                         @selectTemplate="openTemplateDialog('TEMPLATE', $event.tmp, item)"
@@ -1957,7 +1957,7 @@
                     
                     this.isLoadingExpectedTemplate = true
                     if((this.openCode && this.openCode[0]) || this.value.basePlatform){
-                        var platform = this.openCode && this.openCode[0] ? this.openCode[0].template : this.value.basePlatform
+                        var platform = this.openCode && this.openCode[0] && this.openCode[0].template  ? this.openCode[0].template : this.value.basePlatform
                         if(!platform.includes("http")){
                             platform = await me.gitAPI.getTemplateURL(platform)
                         }
@@ -2249,57 +2249,64 @@
                 var me = this
                 var list = []
                 Object.keys(me.$manifestsPerTemplate).forEach(function (template) {
-                    if(template == 'Custom Template'){
-                        var obj = {
-                            display: template,
-                            template: template
-                        }
-                    } else {
-                        if(!template.includes("http")){
-                            var obj = {
-                                display: template,
-                                template: "template-" + template
-                            }
-                        } else {
+                        if(template == 'Custom Template'){
                             var obj = {
                                 display: template,
                                 template: template
                             }
+                        } else {
+                            if(!template.includes("http")){
+                                var obj = {
+                                    display: template,
+                                    template: "template-" + template
+                                }
+                            } else {
+                                var obj = {
+                                    display: template,
+                                    template: template
+                                }
+                            }
                         }
-                    }
-                    if(!list.find(x => x.template == obj.template)){
-                        list.push(obj)
-                    }
-                })
-
+                        if(!list.find(x => x.template == obj.template)){
+                            list.push(obj)
+                        }
+                    })
+                
                 return list
             },
             baseTemplateList: function () {
                 var me = this
                 var list = []
-                Object.keys(me.$manifestsPerBaseTemplate).forEach(function (template) {
-                    if(template == 'Custom Template'){
-                        var obj = {
-                            display: template,
-                            template: template
-                        }
-                    } else {
-                        if(!template.includes("http")){
-                            var obj = {
-                                display: template,
-                                template: "template-" + template
-                            }
-                        } else {
+                if( !Object.keys(me.$manifestsPerTemplate).includes('Custom Template') ){
+                    list.push({
+                            display: 'Custom Template',
+                            template: 'Custom Template'
+                    })
+                } else {
+                    Object.keys(me.$manifestsPerTemplate).forEach(function (template) {
+                        if(template == 'Custom Template'){
                             var obj = {
                                 display: template,
                                 template: template
                             }
+                        } else {
+                            if(!template.includes("http")){
+                                var obj = {
+                                    display: template,
+                                    template: "template-" + template
+                                }
+                            } else {
+                                var obj = {
+                                    display: template,
+                                    template: template
+                                }
+                            }
                         }
-                    }
-                    if(!list.find(x => x.template == obj.template)){
-                        list.push(obj)
-                    }
-                })
+                        if(!list.find(x => x.template == obj.template)){
+                            list.push(obj)
+                        }
+                    })
+                }
 
                 return list
             },
@@ -5239,7 +5246,9 @@ jobs:
                     })
                     me.editTemplateFrameWorkList = {}
                 }
-                me.refreshCallGenerate();
+                setTimeout(function () {
+                    me.refreshCallGenerate();
+                }, 500)
                 // me.changeBasePlatform();
             },
             pushTemplateToGit(platform){
@@ -5750,57 +5759,62 @@ jobs:
                 var me = this
                 // division : Base, Template, Topping
                 return new Promise(async function (resolve, reject) {
-                    try{
-                        // if( me.templateFrameWorkList[gitRepoUrl] && Object.keys(me.templateFrameWorkList[gitRepoUrl]).length > 0 ){
-                        // }
-                        let templateUrl = gitRepoUrl ? gitRepoUrl : me.basePlatform
-                        me.$manifestsPerTemplate[templateUrl] = [];
-                        let org = templateUrl.split('/')[templateUrl.split('/').length - 2].trim()
-                        let repo = templateUrl.split('/')[templateUrl.split('/').length - 1].trim()
-                        
-                        // Template은 Main Branch에서 받아오도록 처리
-                        let commitRes = await me.gitAPI.getCommit(org, repo, "main")
-                        .then(async function (res) {
-                            // Commit List 받아오는 것.
-                            let tree = await me.gitAPI.getTree(org, repo, res)
-                            .then(async function (list) {
-                                // console.log("try me.gitAPI.setGitList()")
-                                let gitList = await me.gitAPI.setGitList(list, repo, templateUrl)
-                                .then(function (resultLists) {
-                                    // console.log(resultLists)
-                                    Object.assign(me.$manifestsPerBaseTemplate, resultLists.manifestsPerBaseTemplate)
-                                    me.$manifestsPerTemplate[templateUrl] = resultLists.manifestsPerTemplate[templateUrl]
-                                    me.templateFrameWorkList = resultLists.templateFrameWorkList
-                                    resolve()
+                    me.$app.try( 
+                    {
+                        context: me,
+                        async action(me){
+                            // if( me.templateFrameWorkList[gitRepoUrl] && Object.keys(me.templateFrameWorkList[gitRepoUrl]).length > 0 ){
+                            // }
+                            let templateUrl = gitRepoUrl ? gitRepoUrl : me.basePlatform
+                            me.$manifestsPerTemplate[templateUrl] = [];
+                            let org = templateUrl.split('/')[templateUrl.split('/').length - 2].trim()
+                            let repo = templateUrl.split('/')[templateUrl.split('/').length - 1].trim()
+                            
+                            // Template은 Main Branch에서 받아오도록 처리
+                            let commitRes = await me.gitAPI.getCommit(org, repo, "main")
+                            .then(async function (res) {
+                                // Commit List 받아오는 것.
+                                let tree = await me.gitAPI.getTree(org, repo, res)
+                                .then(async function (list) {
+                                    // console.log("try me.gitAPI.setGitList()")
+                                    let gitList = await me.gitAPI.setGitList(list, repo, templateUrl)
+                                    .then(function (resultLists) {
+                                        // console.log(resultLists)
+                                        Object.assign(me.$manifestsPerBaseTemplate, resultLists.manifestsPerBaseTemplate)
+                                        me.$manifestsPerTemplate[templateUrl] = resultLists.manifestsPerTemplate[templateUrl]
+                                        me.templateFrameWorkList = resultLists.templateFrameWorkList
+                                        resolve()
+                                    })
+                                    .catch(e => {
+                                        console.log(e)
+                                    })
                                 })
                                 .catch(e => {
                                     console.log(e)
+                                    if(e.response.status === 401){
+                                        me.alertReLogin()
+                                    }
+                                    alert(e)
                                 })
                             })
-                            .catch(e => {
-                                console.log(e)
-                                if(e.response.status === 401){
+                            .catch(error => {
+                                console.log(error)
+                                if(error.response.status === 401){
                                     me.alertReLogin()
                                 }
-                                alert(e)
+                                alert(error)              
                             })
-                        })
-                        .catch(error => {
-                            console.log(error)
-                            if(error.response.status === 401){
-                                me.alertReLogin()
+                        },
+                    
+                        onFail(e){
+                            if(e.response.data.message.includes("Bad credentials")){
+                                me.githubTokenError = true
+                                me.gitMenu = true
+                                reject()
                             }
-                            alert(error)              
-                        })
-                    } catch (e) {
-                        console.log(`Error] Load Git Template: ${e}`)
-                        if(e.response.data.message.includes("Bad credentials")){
-                            me.githubTokenError = true
-                            me.gitMenu = true
-                            reject()
-                            return false
                         }
-                    }
+                    
+                    })
                 })
 
             },
@@ -6622,6 +6636,7 @@ jobs:
                     'key': uuid,
                     'code': 'test  ',
                     'file': 'txt',
+                    'template': '',
                     'boundedContext': 'for-model',
                     'representativeFor': null,
                     'forEach': 'for-model',
@@ -7244,39 +7259,42 @@ jobs:
             async callGenerate(options){
                 var me = this
 
-                try {
-                    console.log('>>> Generate Code] Start Main<<<', Date.now() )
-                    me.isGeneratorDone = false;
+                me.$app.try({
+                    
+                    context: me,
+                    async action(me){
 
-                    var isRecursion = options && options.recursion ? true: false
+                        console.log('>>> Generate Code] Start Main<<<', Date.now() )
+                        me.isGeneratorDone = false;
 
-                    // if(options && !options.editCode){
-                    //     me.isListSettingDone = false
-                    // }
-                    if( !isRecursion && !me.reGenerateOnlyModifiedTemplate){
-                        me.codeLists = []
-                    } else {
-                        if(me.reGenerateOnlyModifiedTemplate){
-                            Object.keys(me.editTemplateFrameWorkList).forEach(function (platform){
-                                Object.keys(me.editTemplateFrameWorkList[platform]).forEach(function (template){
-                                    var idx
-                                    while(idx != -1){
-                                        idx = me.codeLists.findIndex(x => x.templatePath == template)
-                                        if(idx != -1){
-                                            me.codeLists.splice(idx, 1)
+                        var isRecursion = options && options.recursion ? true: false
+
+                        // if(options && !options.editCode){
+                        //     me.isListSettingDone = false
+                        // }
+                        if( !isRecursion && !me.reGenerateOnlyModifiedTemplate){
+                            me.codeLists = []
+                        } else {
+                            if(me.reGenerateOnlyModifiedTemplate){
+                                Object.keys(me.editTemplateFrameWorkList).forEach(function (platform){
+                                    Object.keys(me.editTemplateFrameWorkList[platform]).forEach(function (template){
+                                        var idx
+                                        while(idx != -1){
+                                            idx = me.codeLists.findIndex(x => x.templatePath == template)
+                                            if(idx != -1){
+                                                me.codeLists.splice(idx, 1)
+                                            }
                                         }
-                                    }
+                                    })
                                 })
-                            })
+                            }
                         }
+
+                        let values = JSON.parse(JSON.stringify(me.value));
+                        me.callGenerateCode(values, options);
+
                     }
-
-                    let values = JSON.parse(JSON.stringify(me.value));
-                    me.callGenerateCode(values, options);
-
-                } catch (e){
-                    console.log(`ERROR] Generate ${e}`);
-                }
+                })
             },
             // async callGenerate(options){
             //     var me = this
