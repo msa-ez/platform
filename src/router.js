@@ -64,6 +64,10 @@ const ClazzListPage = () =>
   import(
     /* webpackChunkName: "ClazzListPage" */ "./components/labs/ClazzListPage"
   );
+const UserStoryMap = () =>
+  import(
+    /* webpackChunkName: "UserStoryMap" */ "./components/designer/user-story-map/UserStoryMapCanvas"
+  );
 // const labAdminTest = () =>
 //   import(
 //     /* webpackChunkName: "labAdminTest" */ "./components/labs/labAdminTest"
@@ -205,6 +209,11 @@ var options = {
         path: "/courses",
         name: "classList",
         component: ClazzListPage,
+    },
+    {
+      path: "/user-story-map/:projectId",
+      name: "UserStoryMap",
+      component: UserStoryMap,
     },
     // {
     //     path: "/courses/labAdminTest",

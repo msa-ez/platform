@@ -1,5 +1,6 @@
 <template xmlns:v-on="http://www.w3.org/1999/xhtml">
     <div class="canvas-panel" style="left:0">
+
         <v-overlay v-if="showOverlay">
             <v-col align="center">
                 <div>{{ showOverlay }}</div>
@@ -8,34 +9,6 @@
                 </v-progress-circular>
             </v-col>
         </v-overlay>
-
-        <v-layout>
-            <modal name="uml-modal" 
-                    :height='"80%"'
-                    :width="'80%'"
-            >
-                <class-modeler></class-modeler>
-            </modal>
-        </v-layout>
-
-        <v-snackbar v-model="snackbar.show" 
-                :color="snackbar.color" 
-                :multi-line="snackbar.mode === 'multi-line'"
-                :timeout="snackbar.timeout"
-                :vertical="snackbar.mode === 'vertical'" 
-                top 
-                centered
-        >
-            {{ snackbar.text }}
-            <v-btn @click="snackbar.show = false" 
-                    small
-                    dark  
-                    style="margin-left: 10px;"
-            >
-                Close
-            </v-btn>
-        </v-snackbar>
-
 
         <v-alert
                 dense
@@ -77,10 +50,10 @@
                     :enableHotkeyCtrlD="false"
                     :enableHotkeyCtrlG="false" 
                     :slider="true"
-                    :movable="!isReadOnlyModel"
-                    :resizable="!isReadOnlyModel"
+                    :movable="!getReadOnly"
+                    :resizable="!getReadOnly"
                     :selectable="true"
-                    :connectable="!isReadOnlyModel"
+                    :connectable="!getReadOnly"
                     v-if="value"
                     :autoSliderUpdate="true"
                     :imageBase="imageBase"
@@ -112,7 +85,7 @@
 
 
             <v-layout row>
-                <v-flex v-if="!isReadOnlyModel">
+                <v-flex v-if="!getReadOnly">
                     <v-row class="gs-modeling-undo-redo" style="margin-top:24px;">
                         <v-tooltip bottom>
                             <template v-slot:activator="{ on }">
@@ -135,7 +108,7 @@
                     </v-row>
                 </v-flex>
 
-                <div class="cjm-mobile-btn">
+                <div class="sticky-mobile-btn">
                     <v-speed-dial
                         v-model="fab"
                         style="position:absolute; bottom:50px; right:50px;"
@@ -157,7 +130,8 @@
                             </v-btn>
                         </template>
                         <v-row id="mobile-action-btn" justify="end" align="start"
-                                style="margin-right: 10px;"><slot name="saveButton">
+                                style="margin-right: 10px;">
+                            <slot name="saveButton">
                                 <v-menu
                                         open-on-hover
                                         offset-y
@@ -166,7 +140,7 @@
 
                                         <v-btn
                                                 text
-                                                v-if="isReadOnlyModel"
+                                                v-if="getReadOnly"
                                                 :color="joinRequestedText.show ? 'primary' :'success'"
                                                 dark
                                                 @click="requestInviteUser()"
@@ -180,7 +154,7 @@
 
                                         <v-btn
                                                 text
-                                                v-if="isReadOnlyModel"
+                                                v-if="getReadOnly"
                                                 color="primary"
                                                 dark
                                                 @click="saveComposition('fork')"
@@ -217,7 +191,7 @@
 
                             <slot name="shareButton">
                                 <v-menu
-                                        v-if="isOwnModel && isServerModel && !isReadOnlyModel "
+                                        v-if="isOwnModel && isServerModel && !getReadOnly "
                                         class="pa-2"
                                         offset-y
                                         open-on-hover
@@ -226,6 +200,7 @@
                                         <div>
                                             <v-btn
                                                     text
+                                                    color="primary"
                                                     dark
                                                     v-on="on"
                                                     @click="openInviteUsers()"
@@ -261,6 +236,7 @@
                                     <template v-slot:activator="{ on }">
                                         <div>
                                             <v-btn
+                                                    color="primary"
                                                     dark
                                                     @click='showReplay()'
                                                     small
@@ -305,7 +281,7 @@
                                     >
                                         <v-text-field
                                                 v-model="projectName"
-                                                :disabled="isReadOnlyModel || (fullPath && fullPath.includes('replay'))"
+                                                :disabled="getReadOnly || (fullPath && fullPath.includes('replay'))"
                                                 :color="projectNameColor"
                                                 :error-messages="projectNameHint"
                                                 label="Project Name" 
@@ -314,7 +290,7 @@
                                     </v-col>
                                 </slot>
                             </v-row>
-                            <div class="cjm-btn">
+                            <div class="sticky-btn">
                                 <v-row id="action-btn" justify="end" align="start" style="margin-right: 15px; margin-top: 15px;">
                                     <slot name="versionButton">
                                         <v-menu
@@ -329,6 +305,7 @@
                                                     <v-btn
                                                             text
                                                             style="margin-right: 5px; margin-top: 15px;"
+                                                            color="primary"
                                                             @click='showReplay()'
                                                             :disabled="disableBtn"
                                                     >
@@ -348,7 +325,7 @@
                                                 left
                                         >
                                             <template v-slot:activator="{ on }">
-                                                <div v-if="isReadOnlyModel">
+                                                <div v-if="getReadOnly">
                                                     <v-btn
                                                             text
                                                             color="primary"
@@ -374,7 +351,6 @@
                                                 </div>
                                                 <div v-else>
                                                     <v-btn
-                                                        text
                                                         v-if="isOwnModel"
                                                         style="margin-right: 5px; margin-top: 15px;"
                                                         color="primary"
@@ -412,7 +388,7 @@
 
                                     <slot name="shareButton">
                                         <v-menu
-                                                v-if="isOwnModel && isServerModel && !isReadOnlyModel "
+                                                v-if="isOwnModel && isServerModel&& !getReadOnly "
                                                 offset-y
                                                 open-on-hover
                                                 left
@@ -422,6 +398,7 @@
                                                     <v-btn
                                                             text
                                                             style="margin-right: 5px; margin-top: 15px;"
+                                                            color="primary"
                                                             :disabled="!initLoad"
                                                             v-on="on"
                                                             @click="openInviteUsers()"
@@ -493,7 +470,7 @@
                                 :_width="item.width"
                                 :_height="item.height"
                         >
-                            <img v-if="!isReadOnlyModel"
+                            <img v-if="!getReadOnly"
                                     height="30px" 
                                     width="30px" 
                                     :src="item.src" 
@@ -517,7 +494,7 @@
                 :showDialog="inviteDialog"
                 :checkPublic="showPublicModel"
                 :canvas="canvas"
-                canvasComponentName="customer-journey-map"
+                canvasComponentName="user-story-map-canvas"
                 @all="invitePublic"
                 @apply="applyInviteUsers"
                 @close="closeInviteUsers"
@@ -569,7 +546,6 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
-        <GeneratorUI ref="generatorUI" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
 
 
         <!-- model IMAGE -->
@@ -621,7 +597,7 @@
 </template>
 
 <script>
-    import CustomerJourneyMapModeling from "./index";
+    import UserStoryMap from "./index";
     import ModelCanvas from "../modeling/ModelCanvas";
     import ParticipantPanel from "../modeling/ParticipantPanel";
     import AutoPaymentComposition from "../../payment/AutoPaymentComposition";
@@ -641,7 +617,7 @@
     });
 
     export default {
-        name: 'customer-journey-map',
+        name: 'user-story-map-canvas',
         mixins: [ModelCanvas],
         components: {
             ParticipantPanel,
@@ -671,7 +647,6 @@
                     {title: 'Save to Server'},
                     {title: 'Download model File'},
                     {title: 'Duplicate'},
-                    {title: 'Generate PowerPoint'},
                 ],
 
                 //project Name
@@ -682,76 +657,56 @@
                     min: v => v.length >= 8 || 'Min 8 characters',
                     emailMatch: () => ('The email and password you entered don\'t match'),
                 },
-
+                
                 imageBase: 'https://raw.githubusercontent.com/kimsanghoon1/k8s-UI/master/public/static/image/symbol/',
-
+                
                 //version
                 version: '',
                 revisionInfo: {},
                 
                 //fork
                 forkAlertDialog: false,
-                
+
                 elementTypes: [
                     {
-                        'component': 'persona-element',
-                        'label': 'Persona',
-                        'width': 80,
-                        'height': 70,
-                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/event/actor.png`,
-                    },
-                    {
-                        'component': 'phase-element',
-                        'label': 'Phases',
-                        'width': 170,
-                        'height': 70,
-                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/event/issue.png`,
-                    },
-                    {
-                        'component': 'user-action-element',
-                        'label': 'User actions',
-                        'width': 170,
-                        'height': 70,
-                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/event/command.png`,
-                    },
-                    {
-                        'component': 'touch-point-element',
-                        'label': 'Touch Points',
-                        'width': 170,
-                        'height': 70,
-                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/event/view.png`,
-                    },
-                    {
-                        'component': 'pain-point-element',
-                        'label': 'Pain Points',
-                        'width': 170,
-                        'height': 105,
-                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/event/event.png`,
-                    },
-                    {
-                        'component': 'possible-solution-element',
-                        'label': 'Possible Solutions',
-                        'width': 170,
-                        'height': 140,
+                        'icon': 'bpmn-icon-start-event-none',
+                        'component': 'userActivity',
+                        'label': 'User Activity',
+                        'width': '100',
+                        'height': '100',
                         'src': `${window.location.protocol + "//" + window.location.host}/static/image/event/external.png`,
                     },
                     {
-                        'component': 'cjm-line-element',
-                        'label': 'Line',
-                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/symbol/edge.png`,
+                        'icon': 'bpmn-icon-start-event-none',
+                        'component': 'userTask',
+                        'label': 'User Task',
+                        'width': '100',
+                        'height': '100',
+                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/event/event.png`,
                     },
                     {
-                        'component': 'cjm-text-element',
-                        'label': 'Text',
-                        'width': 100,
-                        'height': 100,
-                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/symbol/text_element.png`,
+                        'icon': 'bpmn-icon-start-event-none',
+                        'component': 'userStory',
+                        'label': 'User Story',
+                        'width': '100',
+                        'height': '100',
+                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/event/aggregate.png`,
+                    },
+                    {
+                        'component': 'user-story-map-line-element',
+                        'label': 'Line',
+                        'width': '100',
+                        'height': '100',
+                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/symbol/edge.png`,
                     },
                 ],
 
             }
         },
         computed: {
+            getReadOnly() {
+                return this.readOnly
+            },
             disableBtn() {
                 if (this.isDisable || !this.initLoad) {
                     return true
@@ -762,8 +717,8 @@
         created: function () {
             var me = this
             try {
-                Vue.use(CustomerJourneyMapModeling);
-                me.canvasType = 'cjm'
+                Vue.use(UserStoryMap);
+                me.canvasType = 'userStoryMap'
                 if (this.$isElectron) {
                     me.isQueueModel = false
                 } else {
@@ -771,60 +726,58 @@
                 }
                 me.track()
             } catch (e) {
-                alert('Error: CustomerJourneyMap Created().', e)
+                alert('Error: userStoryMapCanvas Created().', e)
             }
         },
+        mounted: function () {
+        }
+        ,
         watch: {
-            //     value: {
-            //         deep: true,
-            //         handler:
-            //             _.debounce(function (newVal, oldVal) {
-            //                 var me = this
-            //                 if (newVal) {
-            //                     // following is right way
-            //                     me.$emit("input", newVal);
-            //                     me.$emit("change", newVal, me.projectName);
-            //                 }
-            //             }, 1000)
-            //     },
+            value: {
+                deep: true,
+                handler:
+                    _.debounce(function (newVal, oldVal) {
+                        var me = this
+                        if (newVal) {
+                            // following is right way
+                            me.$emit("input", newVal);
+                            me.$emit("change", newVal, me.projectName);
+                        }
+                    }, 1000)
+            },
+            projectName: _.debounce(function (newVal, oldVal) {
+                    var me = this
+                    if (me.initLoad) {
+                        me.modelChanged = true
+                    }
+
+                    if (newVal) {
+                        me.projectNameHint = null
+                        me.projectNameColor = null
+                    } else {
+                        me.projectNameHint = 'Project name is required.'
+                        me.projectNameColor = 'red'
+                    }
+            }, 0),
         },
         methods: {
-            clearModelValue(){
-                var me = this
-                me.value.elements = {}
-                me.value.relations = {}
-            },
-            createModel(val){
-                var me = this
+            createModel(val) {
+                var me = this;
 
-                if(val && val.elements){
-                    if(val.projectName)
-                        me.projectName = val.projectName;
+                if (val && val.elements) {
+                    if (val.projectName) me.projectName = val.projectName;
 
                     // Create Model in BoundedContext > Model Merge
-                    let elements = me.value.elements
-                    let relations = me.value.relations
+                    let elements = me.value.elements;
+                    let relations = me.value.relations;
 
-                    me.value.elements = {}
-                    me.value.relations = {}
-                    
-                    if(me.createModelInBoundedContext) {
-                        me.value.elements = Object.assign(elements, val.elements);
-                        me.value.relations = Object.assign(relations, val.relations);
-                        me.createModelInBoundedContext = false;
-                    } else {
-                        me.value.elements = val.elements
-                        me.value.relations = val.relations
-                        me.value.uiStyle = val.uiStyle;
-                    }
-                    me.changedByMe = true
+                    me.value.elements = {};
+                    me.value.relations = {};
 
-                    // me.addAppendedProperties(me.value.elements, val.elements);
-                    // me.addAppendedProperties(me.value.relations, val.relations);
+                    me.value.elements = Object.assign(elements, val.elements);
+                    me.value.relations = Object.assign(relations, val.relations);
 
-//                    console.log(me.value.elements);
-
-//                    me.value.__ob__.dep.notify();
+                    me.changedByMe = true;
                 }
             },
             bindEvents: function (opengraph) {
@@ -880,12 +833,29 @@
                     }
                 });
             },
-            addElement: function (componentInfo) {
+            addElement: function (componentInfo, bounded) {
                 this.enableHistoryAdd = true;
                 var me = this;
                 var vueComponent = me.getComponentByName(componentInfo.component);
                 var element;
 
+                if(!componentInfo.isRelation) {
+                    if(componentInfo.src.includes('event.png')) {
+                        componentInfo.color = '#F1A746'
+                    } else if(componentInfo.src.includes('command.png')) {
+                        componentInfo.color = '#5099F7'
+                    } else if(componentInfo.src.includes('policy.png')) {
+                        componentInfo.color = '#BB94BF'
+                    } else if(componentInfo.src.includes('aggregate.png')) {
+                        componentInfo.color = '#F8D454'
+                    } else if(componentInfo.src.includes('external.png')) {
+                        componentInfo.color = '#ED73B6'
+                    } else if(componentInfo.src.includes('view.png')) {
+                        componentInfo.color = '#5FC08B'
+                    } else if(componentInfo.src.includes('issue.png')) {
+                        componentInfo.color = '#8E24AA'
+                    }
+                }
 
                 if (componentInfo.isRelation && componentInfo.component.includes('relation')) {
                     /* make Relation */
@@ -921,10 +891,10 @@
                         this.uuid(),
                         componentInfo.x,
                         componentInfo.y,
-                        componentInfo.width,
-                        componentInfo.height,
+                        me.$store.getters.getWidth(componentInfo.component),
+                        me.$store.getters.getHeight(componentInfo.component),
                         componentInfo.description,
-                        componentInfo.src
+                        componentInfo.color
                     );
                 }
 
@@ -968,7 +938,7 @@
                 if (edgeElement && from && to) {
                     var vertices = '[' + edgeElement.shape.geom.vertices.toString() + ']';
                     var componentInfo = {
-                        component: 'cjm-relation',
+                        component: 'user-story-map-relation',
                         sourceElement: from.$parent,
                         targetElement: to.$parent,
                         vertices: vertices,
@@ -984,16 +954,7 @@
                     to.$parent.value.elementView.id = to.id;
 
                     me.canvas.removeShape(edgeElement, true);
-                    if (me.connectableType(from.$parent.value, to.$parent.value)) {
-                        this.addElement(componentInfo);
-                    }
-                }
-            },
-            connectableType(source, target) {
-                if (source._type == "PainPoint" && target._type == "PossibleSolution") {
-                    return true
-                } else {
-                    return false
+                    this.addElement(componentInfo);
                 }
             },
             filterProjectName(projectName) {
@@ -1015,7 +976,7 @@
                 var componentByClassName;
                 var me = this
 
-                $.each(window.Vue.customerJourneyMapComponents, function (i, component) {
+                $.each(window.Vue.userStoryMapComponents, function (i, component) {
                     if (component.default.computed && component.default.computed.className && component.default.computed.className() == className) {
                         componentByClassName = component.default;
                     }
@@ -1042,6 +1003,7 @@
                 var me = this
                 if (title == 'Save to Server') {
                     me.saveComposition('save')
+
                 } else if (title == 'Duplicate') {
                     me.saveComposition('duplicate')
                     // me.storageDialogReady('duplicate')
@@ -1050,24 +1012,49 @@
                 } else if (title == 'Share') {
                     // me.openEventShareDialog()
                     me.openInviteUsers()
-                } else if(title == 'Generate PowerPoint') {
-                    me.generatePowerPoint()
                 }
             },
+            _isAttached(outer, inner) {
+                if (
+                    //왼쪽 상단 모서리에 걸린 경우
+                    (outer.x < inner.x + inner.width &&
+                        outer.y < inner.y + inner.height)
+
+                    &&
+
+                    //우측 하단 모서리에 걸린 경우
+                    (inner.x < outer.x + outer.width &&
+                        inner.y < outer.y + outer.height)
+
+                    &&
+
+                    //오른쪽 상단 모서리에 걸린 경우
+                    (inner.x < outer.x + outer.width &&
+                        outer.y < inner.y + inner.height)
+
+                    &&
+
+                    //왼쪽 하단 모서리에 걸린 경우
+                    (outer.x < inner.x + inner.width &&
+                        inner.y < outer.y + outer.height)
+                ) return true;
+
+                return false;
+            }
         }
     }
 </script>
 
 <style>
-    .cjm-mobile-btn {
+    .sticky-mobile-btn {
         display: none;
     }
 
     @media only screen and (max-width: 785px) {
-        .cjm-mobile-btn {
+        .sticky-mobile-btn {
             display:block;
         }
-        .cjm-btn {
+        .sticky-btn {
             display:none;
         }
     }

@@ -10,8 +10,41 @@
 <!--                    :projectId="projectUid"-->
 <!--                    @closeDialog="closeDialog"-->
 <!--                ></AutoModelingDialog>-->
+                    <!-- <v-list nav> -->
+                    <div class="main-nav-tabs-box">
+                        <v-tabs class="main-nav-tabs" background-color="transparent" show-arrows color="none">
+                            <v-tab @click="wikiOpen('introduction')"
+                                class="main-nav-tab"
+                            >{{$t('mainNav.introduction')}}
+                            </v-tab>
+                            <v-tab @click="wikiOpen('company')"
+                                class="main-nav-tab"
+                            >{{$t('mainNav.company')}}
+                            </v-tab>
+                            <v-tab @click="wikiOpen('pricing')"
+                                class="main-nav-tab"
+                            >{{$t('mainNav.pricing')}}
+                            </v-tab>
+                            <v-tab @click="wikiOpen('partnership')"
+                                class="main-nav-tab"
+                            >{{$t('mainNav.partnership')}}
+                            </v-tab>
+                            <v-tab @click="learnNavDialog = true"
+                                class="main-nav-tab"
+                            >{{$t('mainNav.learn')}}
+                            </v-tab>
+                            <v-tab @click="openMakingDialog()"
+                                class="main-nav-tab main-nav-tab-display"
+                            >{{$t('making.title')}}
+                            </v-tab>
+                            <v-icon @click="searchOpen = !searchOpen"
+                                class="main-nav-tab"
+                            >mdi-magnify
+                            </v-icon>
+                        </v-tabs>
+                    </div>
                 
-                        <v-list nav>
+                        <!-- <v-tabs>
                             <v-row class="main-tap-list" style="margin-top:-80px; margin-bottom:10px; position:absolute; max-width:60%; min-width:10%; z-index:1; left: 50%; transform: translate(-50%, 0%);">
                                 <v-btn @click="wikiOpen('introduction')"
                                     text
@@ -39,15 +72,21 @@
                                 >{{$t('mainNav.learn')}}
                                 </v-btn>
                             </v-row>
-                        </v-list>
+                        </v-list> -->
                         <v-hover v-slot="{ hover }">
-                            <v-list-group class="nav-project-list"
+                            <v-list-group class="nav-storage-list"
                                 :value="hover"
-                                style="background-color:white; position:absolute; top:-56px; z-index:1"
+                                style="background-color:white; position:fixed; top:7px; z-index:1; width:100px;"
                                 :style="isLogin ? 'right:85px;' : 'right:60px;'"
+                                :append-icon="null"
                             >
                                 <template v-slot:activator>
-                                    <v-list-item-title style="margin:5px -20px 0px 0px;">{{$t('mainNav.project')}}</v-list-item-title>
+                                    <v-list-item-title style="margin:5px 0px 0px 10px; font-weight: 700;">
+                                        <div style="display: flex;">
+                                            <Icon icon="material-symbols:home-storage" width="28" height="28" style="margin-right:3px;" />
+                                            <div style="margin-top:5px;">{{$t('mainNav.Storage')}}</div>
+                                        </div>
+                                    </v-list-item-title>
                                 </template>
                             
                                 <v-list-item
@@ -270,7 +309,7 @@
                         </v-row>
                     </v-tabs> -->
 
-                <div class="mobile-tab-list" style="position: fixed; bottom:15px; right:30px; z-index:999;">
+                <!-- <div class="mobile-tab-list" style="position: fixed; bottom:15px; right:30px; z-index:999;">
                     <v-speed-dial
                         v-model="fab"
                         direction="top"
@@ -327,7 +366,7 @@
                             </v-tabs>
                         </v-list>
                     </v-speed-dial>
-                </div>
+                </div> -->
 
                 <v-alert
                         v-if="searchOpen"
@@ -439,7 +478,7 @@
                                 <div v-for="item in mainTexts" :key="item.id" v-if="currentTextId === item.id">
                                     <v-row justify="start" align="center">
                                         <v-col cols="2"></v-col>
-                                        <v-col cols="5">
+                                        <v-col cols="6" class="gs-main-page-text-box">
                                             <div style="display: flex; justify-content: flex-start;">
                                                 <div style="text-align: left;">
                                                     <div class="gs-main-page-top-title" style="white-space: pre-wrap;">{{$t(item.title)}}</div>
@@ -458,7 +497,7 @@
                                                 </div>
                                             </div>
                                         </v-col>
-                                        <v-col cols="3">
+                                        <v-col cols="4" class="gs-main-page-img-box">
                                             <v-img :src="item.imageUrl"/>
                                         </v-col>
                                         <v-col cols="2"></v-col>
@@ -471,7 +510,7 @@
                                 <div v-for="item in mainTexts" :key="item.id" v-if="currentTextId === item.id">
                                     <v-row>
                                         <v-col cols="3.5"></v-col>
-                                        <v-col cols="5">
+                                        <v-col cols="5" class="gs-main-page-img-box-mobile">
                                             <v-img :src="item.imageUrl"/>
                                         </v-col>
                                         <v-col cols="3.5"></v-col>
@@ -1645,7 +1684,7 @@
             var me = this
 
             me.showMainIndex = 1
-            setInterval(me.toggleMainTexts, 8500);
+            setInterval(me.toggleMainTexts, 10000);
             $(window).scroll(function () {
                 if (Math.ceil($(window).scrollTop()) >= (($(document).height() - $(window).height()))) {
                     if (!me.showLoading && me.showMoreButton && !me.searchObj.name) {
@@ -1892,6 +1931,10 @@
             },
         },
         methods: {
+            openMakingDialog() {
+                var me = this
+                me.$EventBus.$emit('open-new-making-dialog');
+            },
             wikiOpen(linkType) {
                 const link = this.wikiOpenUrl.find(item => item.type === linkType);
                 if (link) {
@@ -2544,8 +2587,35 @@
 </script>
 
 <style>
-    .nav-project-list .v-list-item {
+    .main-nav-tabs-box {
+        margin-top:-78px;
+        margin-bottom:10px;
+        position:absolute;
+        max-width:60%;
+        min-width:10%;
+        z-index:1;
+        left: 50%;
+        transform: translate(-50%, 0%);
+    }
+    .main-nav-tab {
+        height:45px;
+        font-size:16px;
+        color:#898989 !important;
+        font-weight: 700;
+        margin-right:10px;
+        margin-top:2px;
+    }
+    .main-nav-tabs {
+        cursor: pointer !important;
+    }
+    .main-nav-tabs .v-tabs-slider-wrapper {
+        display: none;
+    }
+    .nav-storage-list .v-list-item {
         padding:0px 5px;
+    }
+    .main-nav-tab:hover {
+        color: #2C81D5 !important; /* Vuetify의 primary 색상 */
     }
 </style>
 
@@ -2630,6 +2700,10 @@
         color: #8e44ad;
     }
 
+    .main-nav-tab-display {
+        display: none;
+    }
+
     .x-pagination a, .x-pagination span {
         -webkit-box-shadow: none !important;
         -moz-box-shadow: none !important;
@@ -2689,9 +2763,9 @@
     .mobile-tab {
         display: none;
     }
-    .mobile-tab-list {
+    /* .mobile-tab-list {
         display: none;
-    }
+    } */
     /* .main-search {
         position:fixed; 
         top:50px; 
@@ -2713,9 +2787,10 @@
         margin-top: 10px;
     }
     
-    @media only screen and (max-width: 1110px) {
-        
-
+    @media only screen and (max-width: 1200px) {
+        .main-nav-tab-display {
+            display:flex;
+        }
     }
 
     @media only screen and (max-width: 850px) {
@@ -2727,6 +2802,12 @@
             margin-left: -10px;
         }
 
+        .main-nav-tabs-box {
+            max-width: 450px;
+            left: 46%;
+            margin-top: -76px;
+        }
+
     }
 
     @media only screen and (max-width: 800px) {
@@ -2736,62 +2817,33 @@
 
     }
 
-    @media only screen and (max-width: 600px) {
+    @media only screen and (max-width: 750px) {
+        .main-nav-tabs-box {
+            max-width: 300px;
+            left: 45%;
+        }
+    }
+
+    @media only screen and (max-width: 599px) {
         .main-logo-image {
             display:block;
         }
         .main-chair-image {
             display: none;
         }
-        /* .mobile-menu-tab {
-            width: 45px;
+        .main-nav-tabs-box {
+            max-width: 300px;
+            left: 45%;
         }
-        .mobile-tab {
-            display:block;
-        }
-        .web-tab {
-            display:none;
-        }
-        .mobile-tab-list {
-            display: flex;
-            margin-top:-76px; 
-            margin-bottom:10px; 
-            position:absolute; 
-            z-index:1;  
-            max-width:100%; 
-            min-width:10%;
-            left: 50%; 
-            transform: translate(-50%, 0%);
-        } */
-        .mobile-tab-list {
-            display:block;
-        }
-
         .main-search {
             width: 75%;
         }
     }
 
-    /* @media only screen and (max-width: 575px) {
-        .mobile-tab-list {
-            left: 40%;
+    @media only screen and (max-width: 499px) {
+        .main-nav-tabs-box {
+            max-width: 200px;
+            left: 28%;
         }
-
     }
-    @media only screen and (max-width: 475px) {
-        .mobile-tab-list {
-            left: 25px;
-            transform: none;
-        }
-
-    }
-
-
-    @media only screen and (max-width: 400px) {
-        .mobile-tab-list {
-            left: 10px;
-            transform: none;
-        }
-
-    } */
 </style>

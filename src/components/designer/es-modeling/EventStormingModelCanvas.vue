@@ -368,7 +368,6 @@
                                                             <div>
                                                                 <v-btn
                                                                         class="gs-model-z-index-1 es-hide-k8s-btn"
-                                                                        color="primary"
                                                                         text
                                                                         style="margin-right: 5px;"
                                                                         :disabled="disableBtn"
@@ -399,7 +398,6 @@
                                                                         style="
                                                                         margin-right: 5px;
                                                                     "
-                                                                        color="primary"
                                                                         @click="generateModel()"
                                                                         :disabled="disableBtn"
                                                                         v-on="on"
@@ -416,7 +414,6 @@
                                                                         v-else
                                                                         text
                                                                         style="margin-right: 5px;"
-                                                                        color="primary"
                                                                         @click="generateHexagonal()"
                                                                         :disabled="disableBtn"
                                                                         v-on="on"
@@ -510,7 +507,6 @@
                                                                         style="
                                                                         margin-right: 5px;
                                                                     "
-                                                                        color="primary"
                                                                         @click="
                                                                         loadVersions()
                                                                     "
@@ -615,7 +611,6 @@
                                                                 <v-btn
                                                                         class="gs-model-z-index-1 es-hide-fork-btn"
                                                                         text
-                                                                        color="primary"
                                                                         :disabled="disableBtn"
                                                                         @click="saveComposition('fork')"
                                                                         style="
@@ -659,7 +654,6 @@
                                                                         style="
                                                                         margin-right: 5px;
                                                                     "
-                                                                        color="primary"
                                                                         :disabled="
                                                                         disableBtn
                                                                     "
@@ -679,7 +673,6 @@
                                                                         class="gs-model-z-index-1"
                                                                         text
                                                                         v-else
-                                                                        color="primary"
                                                                         :disabled="
                                                                         disableBtn
                                                                     "
@@ -739,7 +732,6 @@
                                                                         style="
                                                                         margin-right: 5px;
                                                                     "
-                                                                        color="primary"
                                                                         :disabled="
                                                                         !initLoad
                                                                     "
@@ -816,6 +808,7 @@
                                                                         color: white;
                                                                     "
                                                                         color="primary"
+                                                                        text
                                                                         @click="openCodeViewer()"
                                                                         :disabled="
                                                                         !initLoad
@@ -901,7 +894,6 @@
                                                 >
                                                     <div>
                                                         <v-btn class="mobile-btn"
-                                                            color="primary"
                                                             text
                                                             :disabled="disableBtn"
                                                             @click="openEmbeddedCanvas('Kubernetes')"
@@ -925,7 +917,6 @@
                                                 >
                                                     <div>
                                                         <v-btn
-                                                                color="primary"
                                                                 dark
                                                                 @click="showReplay()"
                                                                 small
@@ -960,7 +951,6 @@
                                                     <v-btn
                                                             text
                                                             v-if="isReadOnlyModel"
-                                                            color="primary"
                                                             dark
                                                             class="mobile-btn"
                                                             @click="saveComposition('fork')"
@@ -972,7 +962,6 @@
                                                     <v-btn
                                                             text
                                                             v-else
-                                                            color="primary"
                                                             dark
                                                             class="mobile-btn"
                                                             @click.native="saveComposition('save')"
@@ -1008,7 +997,6 @@
                                                     <div>
                                                         <v-btn
                                                                 text
-                                                                color="primary"
                                                                 dark
                                                                 class="mobile-btn"
                                                                 v-on="on"
@@ -1059,7 +1047,6 @@
                                                             class="gs-model-z-index-1 mobile-btn"
                                                             v-if="isHexagonalModeling"
                                                             text
-                                                            color="primary"
                                                             style="margin-top:2px;"
                                                             @click="generateModel()"
                                                             :disabled="disableBtn"
@@ -1071,7 +1058,6 @@
                                                             class="gs-model-z-index-1 mobile-btn"
                                                             v-else
                                                             text
-                                                            color="primary"
                                                             style="margin-top:2px;"
                                                             @click="generateHexagonal()"
                                                             :disabled="disableBtn"
@@ -1148,6 +1134,7 @@
                                                     <div>
                                                         <v-btn
                                                             color="primary"
+                                                            text
                                                             dark
                                                             class="mobile-btn"
                                                             @click="openCodeViewer()"
