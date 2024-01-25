@@ -2,7 +2,7 @@
     <div style="height:85vh; background-color:white;">
         <v-row style="margin:0px; padding:0px;">
             <v-col cols="auto">
-                <v-icon v-if="selectedTopping || selectedTemplate" @click="closeDetailDialog()" class="marketplace-details-page-back-btn">mdi-arrow-left</v-icon>
+                <v-icon v-if="detailMarketMode" @click="closeDetailDialog()" class="marketplace-details-page-back-btn">mdi-arrow-left</v-icon>
             </v-col>
             <v-spacer></v-spacer>
             <v-col cols="auto">
