@@ -167,12 +167,19 @@
     import CJMGenerator from './CJMGenerator.js'
     import UMLGenerator from './UMLGenerator.js'
     import BMGenerator from './BMGenerator.js'
+    import Usage from '../../../../utils/Usage'
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
 
     export default {
         name: 'es-generator-ui',
         props: {
+            projectId: {
+                type: String,
+                default:function(){
+                    return null;
+                }
+            },
             generator: String,
             generatorParameter: Object,
             modelerValue: Object,
@@ -295,7 +302,21 @@
                 // this.generator.onGenerationFinished();
             // }, 
 
-            generate(changedInput){
+            async generate(changedInput){
+                // let issuedTimeStamp = Date.now()
+                // let usage = new Usage({
+                //     serviceType: `${this.generatorComponent.generateType}_AIGeneration`,
+                //     issuedTimeStamp: issuedTimeStamp,
+                //     expiredTimeStamp: Date.now(),
+                //     metadata: {
+                //         modelId: this.projectId
+                //     }
+                // });
+                // if(!await usage.use()){
+                //     this.stop()
+                //     return false;
+                // }
+
                 if(changedInput)
                     this.input = changedInput;
 

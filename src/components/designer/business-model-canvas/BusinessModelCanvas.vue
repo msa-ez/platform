@@ -312,9 +312,10 @@
             :showDialog="dialogModeOfAutoModeling"
             :showChat="dialogModeOfAutoModeling"
             :BMState="BMState"
+            :projectId="projectId"
             @startCreateModel="openEventStorming"
         ></AutoModelingDialog>
-        <GeneratorUI ref="generatorUI" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
+        <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
     </div>
 </template>
 

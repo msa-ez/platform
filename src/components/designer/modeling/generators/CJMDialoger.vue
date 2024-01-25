@@ -85,7 +85,7 @@
                             solo
                         >
                         </v-textarea>
-                        <v-btn color="primary" style="float:right; margin-top:5px;" @click="jump()">Create Model<v-icon>mdi-arrow-right</v-icon></v-btn>
+                        <v-btn color="primary" style="float:right; margin-top:5px;" @click="openStorageDialog()">Create Model<v-icon>mdi-arrow-right</v-icon></v-btn>
                     </v-card-text>
                 </v-card>
                 <!-- <div
@@ -106,15 +106,22 @@
 <script>
     import { VueTypedJs } from 'vue-typed-js'
     import Generator from './CJMPersonaGenerator.js'
+    import Usage from '../../../../utils/Usage'
+    import ModelStorageDialog from '../ModelStorageDialog.vue';
+    import StorageBase from '../../../CommonStorageBase.vue';
+
     export default {
         name: 'customer-journey-map-dialoger',
         props: {
             value: Object,
             prompt: String,
             projectId: String,
+            modelIds: Object,
+            isServerProject: Boolean
         },
         components: {
             VueTypedJs,
+            ModelStorageDialog
         },
         computed: {
             isForeign() {
@@ -124,9 +131,19 @@
                 return true
             },
         },
-        created(){
+        async created(){
+            await this.setUserInfo()
         },
         watch: {
+            "prompt": {
+                deep:true,
+                handler:  _.debounce(function(newVal, oldVal)  {
+                    if(this.isCreatedModel){
+                        this.modelIds.CJMDefinitionId = this.uuid()
+                        this.isCreatedModel = false
+                    }
+                },1000)
+            }
         },
         async mounted(){
             var me = this
@@ -137,6 +154,7 @@
         },
         data() {
             return {
+                isCreatedModel: false,
                 selectedEditPersona: null,
                 listKey: 0,
                 input:{title: this.prompt},
@@ -169,9 +187,119 @@
                 },
                 generator: null,
                 personaEditMode: false,
+                storageCondition: null,
+                showStorageDialog: false,
             }
         },
         methods: {
+            async saveModel(){
+                var me = this
+        
+                let validate = await me.validateStorageCondition(me.storageCondition, 'save');
+                if(validate) {
+                    var settingModelId = me.storageCondition.projectId.replaceAll(' ', '-').trim();
+                    me.modelIds.CJMDefinitionId = settingModelId 
+                    let personaIndex = me.value.personas.findIndex(x => x.persona == me.value.selectedPersona.persona)
+                    if(!me.value.personas[personaIndex].modelList){
+                        me.value.personas[personaIndex].modelList = []
+                    }
+                    me.value.personas[personaIndex].modelList.push(settingModelId)
+                    me.selectPersona(me.value.personas[personaIndex])
+
+                    if(!me.value) me.value = {}
+                    if(!me.value.modelList)me.value.modelList = []
+                    me.value.modelList.push(settingModelId);
+
+                    me.state.title = me.value; 
+                    let stateJson = JSON.stringify(me.state);
+                    localStorage["gen-state"] = stateJson;
+
+                    me.$emit("input", me.value)
+                    me.$emit("change", "customerJourneyMap")              
+  
+                    await me.putObject(`db://definitions/${settingModelId}/information`, {
+                        associatedProject: me.modelIds.projectId,
+                        author:  me.userInfo.uid,
+                        authorEmail : me.userInfo.email,
+                        projectId: settingModelId,
+                        projectName: me.storageCondition.projectName ? me.storageCondition.projectName : me.projectInfo.prompt,
+                        type: 'cjm',
+                        createdTimeStamp: Date.now(),
+                        lastModifiedTimeStamp: Date.now()
+                    })
+                   
+                    me.isCreatedModel = true;
+                    window.open(`/#/cjm/${settingModelId}`, "_blank")
+                    me.closeStorageDialog()
+                } else{
+                    me.storageCondition.loading = false
+                }
+            },
+            async validateStorageCondition(condition, action){
+                var me = this
+
+                if( !this.isLogin ) {
+                    var otherMsg = 'Please check your login.';
+                    var obj ={
+                        'projectId': otherMsg
+                    }
+                    condition.error = obj
+                    return false;
+                }
+
+                if( !condition.projectId || condition.projectId.includes('/') ){
+                    var otherMsg = 'ProjectId must be non-empty strings and can\'t contain  "/"'
+                    var obj ={
+                        'projectId': otherMsg
+                    }
+                    condition.error = obj
+                    return false;
+                }
+
+                // checked duplicate projectId
+                var validateInfo = await me.isValidatePath(`db://definitions/${condition.projectId}/information`);
+                if( !validateInfo.status ){
+                    var obj ={
+                        'projectId': validateInfo.msg,
+                    }
+                    condition.error = obj
+                    return false;
+                }
+
+                var information = await me.list(`db://definitions/${condition.projectId}/information`)
+                if(information){
+                    var obj ={
+                        'projectId': 'This project id already exists.'
+                    }
+                    condition.error = obj
+                    return false;
+                }
+
+
+                return true;
+            },
+            openStorageDialog(){
+                if(!this.isServerProject){
+                    this.$emit('saveProject')
+                    return;
+                }
+
+                this.storageCondition = {
+                    action: 'save',
+                    title: 'Save Definition',
+                    comment: '',
+                    projectName: this.prompt,
+                    projectId: this.isServerProject ? `${this.modelIds.projectId}_${this.modelIds.CJMDefinitionId}`: this.modelIds.CJMDefinitionId,
+                    error: null,
+                    loading: false,
+                    type: 'cjm'
+                }
+                this.showStorageDialog = true;
+            },
+            closeStorageDialog(){
+                this.storageCondition = null;
+                this.showStorageDialog = false
+            },
             deleteModel(id){
                 var me = this
                 var personaIndex = me.value.personas.findIndex(x => x.persona == me.state.persona)
@@ -184,6 +312,7 @@
             },
             init(){
                 var me = this
+                if(!me.modelIds.CJMDefinitionId) me.modelIds.CJMDefinitionId = me.uuid();
                 if(!me.value){
                     me.value = {
                         personas: [],
@@ -257,13 +386,12 @@
             },
             jump(){
                 var me = this
-                let uuid = me.uuid();
 
                 let personaIndex = me.value.personas.findIndex(x => x.persona == me.value.selectedPersona.persona)
                 if(!me.value.personas[personaIndex].modelList){
                     me.value.personas[personaIndex].modelList = []
                 }
-                me.value.personas[personaIndex].modelList.push(uuid)
+                me.value.personas[personaIndex].modelList.push(me.modelIds.CJMDefinitionId)
                 me.selectPersona(me.value.personas[personaIndex])
                 me.$emit("input", me.value)
                 me.$emit("change", "customerJourneyMap")
@@ -275,7 +403,8 @@
                 );
                 
                 localStorage["gen-state"] = stateJson;
-                window.open(`/#/cjm/${uuid}`, "_blank")
+                window.open(`/#/cjm/${me.modelIds.CJMDefinitionId}`, "_blank")
+                me.isCreatedModel = true;
                // window.open(`/#/sticky/${uuid}`, "_blank")
 //                this.$router.push({path: `sticky/${uuid}`});
             },
