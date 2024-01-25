@@ -577,7 +577,7 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
-        <GeneratorUI ref="generatorUI" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
+        <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
 
 
         <!-- model IMAGE -->

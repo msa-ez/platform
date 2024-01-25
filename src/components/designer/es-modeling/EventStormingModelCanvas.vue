@@ -1447,7 +1447,8 @@
 
                     <GeneratorUI
                             key="eventGenerator"
-                            v-if="generatorStep === 'event'"
+                            v-if="generatorStep === 'event' && projectId"
+                            :projectId="projectId"
                             ref="generatorUI"
                             @createModel="createModel"
                             @clearModelValue="clearModelValue"
@@ -1472,7 +1473,8 @@
                     </GeneratorUI>
                     <GeneratorUI
                             key="aggregateGenerator"
-                            v-if="generatorStep === 'aggregate'"
+                            v-if="generatorStep === 'aggregate' && projectId"
+                            :projectId="projectId"
                             generator="ESGenerator"
                             :generatorParameter="generatorParameter"
                             ref="aggregateGeneratorUI"
@@ -2031,6 +2033,7 @@
                         :newTreeHashLists.sync="newTreeHashLists"
                         :projectVersion="projectVersion"
                         :generatorStep="generatorStep"
+                        :userInfo="userInfo"
                         @changedByMe="settingChangedByMe"
                         @editModelData="editModelData"
                         canvas-name="event-storming-model-canvas"

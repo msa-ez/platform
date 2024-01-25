@@ -5,6 +5,7 @@ export default class CJMGenerator extends JsonAIGenerator{
 
     constructor(client){
         super(client);
+        this.generateType = 'CJM'
         this.forEventStorming = false;
     }
     

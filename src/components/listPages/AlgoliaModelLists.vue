@@ -347,8 +347,6 @@
                             mode="es"
                             :showDialog="false"
                             :showChat="true"
-                            @startCreateModel="openCanvas"
-                            :projectId="null"
                         ></AutoModelingDialog>
                         <div class="title-page-title gs-modeling-tools-title-page-title">{{$t('tools.modeling')}}</div>
                         <v-row class="title-page-card-box-row">
@@ -1580,19 +1578,7 @@
             },
             selectMode(item){
                 this.searchObj.type = item.type
-            },
-            openCanvas(val){
-                var me = this
-                var dbuid = me.dbuid()
-                localStorage.setItem(dbuid + '-model-info', JSON.stringify(val))
-                //localStorage.setItem(dbuid + '-Project-Name', val.name)
-                // localStorage.setItem(dbuid + '-Scenario', val.result)
-                if(val.type == 'ES'){
-                    me.$router.push({path: `storming/${dbuid}`});
-                } else if(val.type == 'BM'){
-                    me.$router.push({path: `business-model-canvas/${dbuid}`});
-                }
-            },  
+            }, 
             searchClose(close) {
                 var me = this
                 if(close) me.searchObj.name = '';

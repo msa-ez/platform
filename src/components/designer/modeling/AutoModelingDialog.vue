@@ -71,7 +71,7 @@
                                     >
                                         <v-col style="text-align: center;">
                                             <v-card :style="genType == 'CJM' ? 'border: solid darkturquoise;':'background-color: white;'" >
-                                                <div @click="genType='CJM'" style="cursor: pointer; ">
+                                                <div @click="checkLogin('CJM')" style="cursor: pointer; ">
                                                     <v-avatar
                                                         class="ma-3"
                                                         size="125"
@@ -91,7 +91,7 @@
                                         </v-col>
                                         <v-col style="text-align: center;">
                                             <v-card :style="genType == 'BM2' ? 'border: solid darkturquoise;':'background-color: white;'">
-                                                <div @click="genType='BM2'" style="cursor: pointer;">
+                                                <div @click="checkLogin('BM2')" style="cursor: pointer;">
                                                     <v-avatar
                                                         class="ma-3"
                                                         size="125"
@@ -111,7 +111,7 @@
                                         </v-col>
                                         <v-col style="text-align: center;">
                                             <v-card :style="genType == 'ES2' ? 'border: solid darkturquoise;':'background-color: white;'">
-                                                <div @click="genType='ES2'" style="cursor: pointer;">
+                                                <div @click="checkLogin('ES2')" style="cursor: pointer;">
                                                     <v-avatar
                                                         class="ma-3"
                                                         size="125"
@@ -131,7 +131,7 @@
                                         </v-col>
                                         <v-col style="text-align: center;">
                                             <v-card :style="genType == 'UI' ? 'border: solid darkturquoise;':'background-color: white;'">
-                                                <div @click="genType='UI'" style="cursor: pointer;">
+                                                <div @click="checkLogin('UI')" style="cursor: pointer;">
                                                     <v-avatar
                                                         class="ma-3"
                                                         size="125"
@@ -159,10 +159,10 @@
                                 </div>
                             </div>
                             <div :key="reGenKey">
-                                <ESDialoger ref="esDialoger" v-model="projectInfo.eventStorming" :projectId="projectId" :prompt="projectInfo.prompt" :cachedModels="cachedModels" :uiStyle="uiStyle" v-if="genType == 'ES2'" @change="backupProject"></ESDialoger>
-                                <CJMDialoger ref="cjMDialoger" v-model="projectInfo.customerJourneyMap" :projectId="projectId" :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'CJM'" @change="backupProject"></CJMDialoger>
-                                <BMDialoger ref="bmDialoger" v-model="projectInfo.businessModel" :projectId="projectId"  :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'BM2'" @change="backupProject"></BMDialoger>
-                                <UIWizardDialoger v-model="projectInfo.ui" :projectId="projectId"  :prompt="projectInfo.prompt" :cachedModels="cachedModels" @selected="onUIStyleSelected" v-if="genType == 'UI'" @change="backupProject"></UIWizardDialoger>
+                                <ESDialoger ref="esDialoger" v-model="projectInfo.eventStorming" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" :uiStyle="uiStyle" v-if="genType == 'ES2'" @change="backupProject" @saveProject="openStorageDialog"></ESDialoger>
+                                <CJMDialoger ref="cjMDialoger" v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'CJM'" @change="backupProject" @saveProject="openStorageDialog"></CJMDialoger>
+                                <BMDialoger ref="bmDialoger" v-model="projectInfo.businessModel" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'BM2'" @change="backupProject" @saveProject="openStorageDialog"></BMDialoger>
+                                <UIWizardDialoger v-model="projectInfo.ui" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @selected="onUIStyleSelected" v-if="genType == 'UI'" @change="backupProject" @saveProject="openStorageDialog"></UIWizardDialoger>
                             </div>
                         </v-card-text>
                     <!-- </div> -->
@@ -214,19 +214,27 @@
     import StorageBase from "../../CommonStorageBase";
     import ModelStorageDialog from "./ModelStorageDialog";
     import getParent from '../../../utils/getParent'
+    import Usage from '../../../utils/Usage'
+
     // const axios = require('axios');
     let partialParse = require('partial-json-parser');
     let changeCase = require('change-case');
     export default {
         name: 'auto-modeling-dialog',
         props: {
-            projectId: String,
+            projectId: {
+                type: String,
+                default: function(){
+                    return null;
+                }
+            },
             projectInfo: {
                 type: Object,
                 default: function(){
                     return {
                         eventStorming: null,
                         customerJourneyMap: null,
+                        businessModel: null,
                         prompt: ''
                     }
                 }
@@ -264,12 +272,27 @@
                 return true
             },
         },
-        created(){
-            this.setUserInfo()
+        async created(){
+            await this.setUserInfo()
+            this.setModelIds()
+
+            let getPrompt = localStorage.getItem('noLoginPrompt')
+            if(this.isLogin && getPrompt){
+                this.projectInfo.prompt = getPrompt
+                this.openChatUI = true
+            }
         },
         watch: {
+            "projectInfo.prompt":_.debounce(function(){
+                localStorage.setItem('noLoginPrompt',this.projectInfo.prompt)
+            }, 1000)
         },
-        beforeDestroy() {},
+        beforeDestroy() {
+            let getPrompt = localStorage.getItem('noLoginPrompt')
+            if( !(this.isLogin && getPrompt)){
+                localStorage.removeItem('noLoginPrompt')
+            }
+        },
         async mounted(){
             var me = this
             if(me.mode == "project"){
@@ -362,6 +385,13 @@
                 },
                 storageCondition: null,
                 showStorageDialog: false,
+                modelIds:{
+                    projectId : null,
+                    ESDefinitionId : null,
+                    CJMDefinitionId : null,
+                    BMDefinitionId : null,
+                    UIDefinitionId : null,
+                }
             }
         },
         updated() {
@@ -373,13 +403,30 @@
             });
         },
         methods: {
+            setModelIds(){
+                var me = this
+
+                if(!me.projectId) me.projectId = me.uuid();
+                if(!me.modelIds.projectId) me.modelIds.projectId = me.projectId
+                if(!me.modelIds.ESDefinitionId) me.modelIds.ESDefinitionId = me.uuid()
+                if(!me.modelIds.CJMDefinitionId) me.modelIds.CJMDefinitionId = me.uuid()
+                if(!me.modelIds.BMDefinitionId) me.modelIds.BMDefinitionId = me.uuid()
+                if(!me.modelIds.UIDefinitionId) me.modelIds.UIDefinitionId = me.uuid()
+            },
+            checkLogin(type){
+                if(this.isLogin){
+                    this.genType = type
+                } else {
+                    this.$EventBus.$emit('showLoginDialog')
+                }
+            },
             openStorageDialog(){
                 this.storageCondition = {
                     action: 'save',
                     title: 'Save Project',
                     comment: '',
                     projectName: this.projectInfo.prompt,
-                    projectId: this.uuid(),
+                    projectId: this.projectId,
                     error: null,
                     loading: false,
                     type: 'project'
@@ -398,6 +445,8 @@
                     var originProjectId = me.projectId
                     var settingProjectId = me.storageCondition.projectId.replaceAll(' ', '-').trim();
 
+                    me.projectInfo.author = me.userInfo.uid
+                    me.projectInfo.authorEmail = me.userInfo.email
                     me.projectInfo.projectId =settingProjectId
                     me.projectInfo.projectName = me.storageCondition.projectName ? me.storageCondition.projectName : me.projectInfo.prompt;
                     me.projectInfo.prompt =  me.projectInfo.prompt ? me.projectInfo.prompt : me.projectInfo.projectName
@@ -506,34 +555,37 @@
 
             modifyModelList(changedInfo){
                 var me = this
-                let saveType
+                
                 // event: "ProjectIdChanged",
                 // type: me.canvasType,
                 // old: originProjectId,
                 // new: settingProjectId
                 if(changedInfo.type == 'es'){
-                    saveType = "eventStorming"
                     var oldModelIndex = me.projectInfo.eventStorming.modelList.findIndex(x => x == changedInfo.old)
                     me.projectInfo.eventStorming.modelList[oldModelIndex] = changedInfo.new
                     me.projectInfo.eventStorming.modelList.__ob__.dep.notify()
                 }
                 if(changedInfo.type == 'bm'){
-                    saveType = "businessModel"
                     var oldModelIndex = me.projectInfo.businessModel.modelList.findIndex(x => x == changedInfo.old)
                     me.projectInfo.businessModel.modelList[oldModelIndex] = changedInfo.new
+                    me.projectInfo.businessModel.modelList.__ob__.dep.notify()
                 }
-                // if(changedInfo.type == 'cjm'){
-                //     saveType = null
-                //     var oldModelIndex = me.projectInfo.customerJourneyMap.modelList.findIndex(x => x == changedInfo.old)
-                //     me.projectInfo.eventStorming.modelList[oldModelIndex] = changedInfo.new
-                // }
-                me.backupProject(saveType);
+                if(changedInfo.type == 'cjm'){
+                    var oldModelIndex = me.projectInfo.customerJourneyMap.modelList.findIndex(x => x == changedInfo.old)
+                    me.projectInfo.customerJourneyMap.modelList[oldModelIndex] = changedInfo.new
+                    me.projectInfo.customerJourneyMap.modelList.__ob__.dep.notify()
+                }
+                me.backupProject();
             },
             openProjectDialog(){
                 var me = this
-                me.openChatUI = true
                 me.genType = null
-                me.projectId = me.uuid();
+                me.setModelIds()
+                me.openChatUI = true
+
+                if(!me.isLogin){
+                    localStorage.setItem('noLoginPrompt', me.projectInfo.prompt)
+                }
             },
             uuid: function () {
                 function s4() {
@@ -546,6 +598,7 @@
             },
             cancelCreateModel(val){
                 var me = this
+                localStorage.removeItem('noLoginPrompt')
                 if(!val){
                     me.openChatUI = false
                     me.openaiPopup = false
@@ -553,6 +606,7 @@
                     me.projectInfo = {
                         eventStorming: null,
                         customerJourneyMap: null,
+                        businessModel: null,
                         prompt: ""
                     },
                     me.modelScenarioPrompt = ""

@@ -8,6 +8,7 @@ class ESGenerator extends JsonAIGenerator{
     constructor(client){
         super(client);
         
+        this.generateType = 'ES'
         this.generateCnt = 0;
         this.modelElements = {}
         this.sequenceForUUID = 0;
