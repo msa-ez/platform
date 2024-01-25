@@ -502,7 +502,7 @@ code[class*=language-]:nth-child(1) {
 
 
 .gs-main-page-top-title {
-    font-size:40px;
+    font-size:36px;
     font-weight: 500;
 }
 
@@ -529,6 +529,7 @@ code[class*=language-]:nth-child(1) {
 
 .gs-main-page-top-box-mobile {
     display: none;
+    margin-bottom: 20px;
 }
 
 .gs-main-page-top-image-mobile {
@@ -569,7 +570,21 @@ code[class*=language-]:nth-child(1) {
 }
 
 .gs-main-page-top-box {
-    min-height:400px;
+    min-height:440px;
+    margin-top:30px;
+}
+
+.gs-main-page-text-box {
+    margin:0px -90px 0px -20px;
+}
+
+.gs-main-page-img-box {
+    padding-right:120px;
+}
+
+.gs-main-page-img-box-mobile {
+    padding-right:80px;
+    padding-left:80px;
 }
 
 @media only screen and (max-width:1409px) and (min-width:1298px){
@@ -578,12 +593,20 @@ code[class*=language-]:nth-child(1) {
         font-weight: 500;
     }
 
+    .gs-main-page-text-box {
+        margin:0px -70px 0px -20px;
+    }
+
+    .gs-main-page-img-box {
+        padding-right:110px;
+    }
+
     .gs-main-page-top-box {
-        min-height:340px;
+        min-height:400px;
     }
     
     .gs-main-page-sub-title {
-        font-size:20px;
+        font-size:16px;
     }
     .gs-main-page-top-image {
         float: left;
@@ -602,12 +625,20 @@ code[class*=language-]:nth-child(1) {
         font-weight: 500;
     }
 
+    .gs-main-page-text-box {
+        margin:0px -50px 0px -20px;
+    }
+
+    .gs-main-page-img-box {
+        padding-right:110px;
+    }
+
     .gs-main-page-top-box {
-        min-height:320px;
+        min-height:380px;
     }
     
     .gs-main-page-sub-title {
-        font-size:18px;
+        font-size:14px;
     }
 
     .gs-main-page-top-image {
@@ -625,13 +656,21 @@ code[class*=language-]:nth-child(1) {
         font-size:30px;
         font-weight: 500;
     }
+
+    .gs-main-page-text-box {
+        margin:0px -50px 0px -20px;
+    }
+
+    .gs-main-page-img-box {
+        padding-right:95px;
+    }
     
     .gs-main-page-sub-title {
-        font-size:16px;
+        font-size:14px;
     }
 
     .gs-main-page-top-box {
-        min-height:300px;
+        min-height:320px;
     }
 
     .gs-main-page-top-image {
@@ -644,18 +683,36 @@ code[class*=language-]:nth-child(1) {
     }
 }
 
+@media only screen and (max-width:1110px) {
+    .gs-main-page-top-box-mobile {
+        display: block;
+        min-height:490px;
+    }
+
+    .gs-main-page-top-box {
+        display: none;
+    }
+}
+
 @media only screen and (max-width:1073px) and (min-width:962px) {
     .gs-main-page-top-title {
         font-size:28px;
         font-weight: 500;
     }
+
+    .gs-main-page-text-box {
+        margin:0px -50px 0px -20px;
+    }
+    .gs-main-page-top-box-mobile {
+        min-height:480px;
+    }
+    .gs-main-page-img-box-mobile {
+        padding-right:60px;
+        padding-left:60px;
+    }
     
     .gs-main-page-sub-title {
-        font-size:15px;
-    }
-
-    .gs-main-page-top-box {
-        min-height:300px;
+        font-size:13px;
     }
 
     .gs-main-page-top-image {
@@ -682,11 +739,7 @@ code[class*=language-]:nth-child(1) {
     }
     
     .gs-main-page-sub-title {
-        font-size:14px;
-    }
-
-    .gs-main-page-top-box {
-        min-height:300px;
+        font-size:13px;
     }
 
     .gs-main-page-top-image {
@@ -697,39 +750,35 @@ code[class*=language-]:nth-child(1) {
     .gs-main-page-title-box {
         width:420px;
     }
-}
-
-@media only screen and (max-width:897px){
     .gs-main-page-top-box-mobile {
-        display: block;
-        min-height:560px;
+        min-height:460px;
     }
-
-    .gs-main-page-top-box {
-        display: none;
+    .gs-main-page-img-box-mobile {
+        padding-right:30px;
+        padding-left:30px;
     }
 }
 
-
-@media only screen and (max-width:797px){
+@media only screen and (max-width:897px) {
     .gs-main-page-top-box-mobile {
-        min-height:500px;
+        min-height:460px;
+    }
+    .gs-main-page-img-box-mobile {
+        padding-right:30px;
+        padding-left:30px;
     }
 }
 
-
-
-@media only screen and (max-width:707px){
+@media only screen and (max-width:680px) {
     .gs-main-page-top-box-mobile {
-        min-height:480px;
+        min-height:380px;
     }
 }
 
 
 @media only screen and (max-width:600px){
     .gs-main-page-top-box-mobile {
-        display: block;
-        min-height:440px;
+        min-height:320px;
     }
     .gs-window-width-610-under-zoom {
         position:fixed !important;
@@ -764,7 +813,7 @@ code[class*=language-]:nth-child(1) {
 }
 
 .auto-modling-textarea {
-    max-height: 1385px !important;
+    max-height:100% !important;
     overflow-y: auto !important;
 }
 

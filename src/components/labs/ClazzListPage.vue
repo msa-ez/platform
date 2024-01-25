@@ -632,9 +632,9 @@
                 </v-tab-item>
 
             </v-tabs>
-            <v-footer padless style="max-width: 1500px; margin:0 auto">
+            <!-- <v-footer padless style="max-width: 1500px; margin:0 auto">
                 <ProvisionIndication divider></ProvisionIndication>
-            </v-footer>
+            </v-footer> -->
         </div>
         <v-dialog
                 v-model="openAlbum"

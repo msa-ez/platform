@@ -11,7 +11,7 @@
             >
             </GitActionDialog>
         </v-dialog>
-        <v-dialog v-model="marketplaceDialog" fullscreen>
+        <v-dialog v-model="marketplaceDialog" max-width="90%" persistent>
             <MarketPlace :marketplaceDialog="marketplaceDialog"
                 @applyTemplate="applyTemplateInMarket"
                 @applyTopping="applyToppingInMarket"
@@ -74,16 +74,17 @@
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on: tooltip }">
                                         <v-btn :disabled="!isGeneratorDone"
-                                            style="font-size:16px;
-                                                margin-right:5px;
-                                                padding:0px 5px;"
+                                            style="font-size: 16px;
+                                                margin-right: 5px;
+                                                margin-top: 1px;
+                                                padding: 0px 5px;"
+                                            icon
                                             small
                                             v-bind="attrs"
                                             v-on="{ ...tooltip, ...menu }"
                                             :color="gitMenu ? '':'primary'"
                                         >
                                             <v-icon size="22" style="float:right;" :style="gitMenu ? 'color:gray':''">mdi-git</v-icon>
-                                            <span :style="gitMenu ? 'color:gray':''">Git</span>
                                         </v-btn>
                                     </template>
                                     <span>Push to Git</span>
