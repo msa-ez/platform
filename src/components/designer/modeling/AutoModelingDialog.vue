@@ -18,11 +18,11 @@
             </v-card-text>
         </v-card>
 
-        <v-col class="shrink">
+        <v-col class="shrink" :style="openChatUI ? 'height:3000px;':''">
             <v-expand-x-transition>
                 <v-card
                     v-show="openChatUI"
-                    style="height: 100%; width: 100%;  background-color: aliceblue; margin-top:-545px; min-height:650px; z-index:201;"
+                    style="height: 100%; position: absolute; width: 100%; background-color: aliceblue; left: 0px; top: 0px; z-index:201;"
                     class="mx-auto bg-secondary"
                 >   
                    
