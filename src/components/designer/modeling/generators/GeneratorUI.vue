@@ -66,7 +66,7 @@
                     </v-tooltip> -->
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
-                            <v-btn v-if="generatorStep === 'aggregate' || generatorName === 'CJMGenerator' || generatorName === 'BMGenerator'"
+                            <v-btn v-if="generatorStep === 'aggregate' || generatorName === 'CJMGenerator' || generatorName === 'BMGenerator' || generatorName === 'UserStoryMapGenerator'"
                                 @click="finishModelCreation()"
                                 small
                                 v-bind="attrs"
@@ -75,7 +75,7 @@
                                 style="padding:0px 5px; margin-right:10px;"
                                 color="primary"
                             >
-                                <div v-if="generatorName === 'CJMGenerator' || generatorName === 'BMGenerator'">
+                                <div v-if="generatorName === 'CJMGenerator' || generatorName === 'BMGenerator' || generatorName === 'UserStoryMapGenerator'">
                                     <span><Icon style="float:left; margin-right:3px;" icon="ri:check-fill" width="16" height="16"/>complete</span>
                                 </div>
                                 <div v-else>
@@ -167,6 +167,7 @@
     import CJMGenerator from './CJMGenerator.js'
     import UMLGenerator from './UMLGenerator.js'
     import BMGenerator from './BMGenerator.js'
+    import UserStoryMapGenerator from './UserStoryMapGenerator.js'
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
 
@@ -256,6 +257,7 @@
                         case "CJMGenerator": this.generatorComponent = new CJMGenerator(this); break;
                         case "UMLGenerator": this.generatorComponent = new UMLGenerator(this); break;
                         case "BMGenerator": this.generatorComponent = new BMGenerator(this); break;
+                        case "UserStoryMapGenerator": this.generatorComponent = new UserStoryMapGenerator(this); break;
 
                     }
 
