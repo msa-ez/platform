@@ -120,21 +120,19 @@
                                 </v-btn>
                             </template>
                             <v-col style="margin-right:390px;">
-                                <v-btn small color=primary text
+                                <v-btn small text dark
                                         @click="saveComposition('save')">save
                                 </v-btn>
                                 <v-btn
                                         text
                                         v-if="isOwnModel && !getReadOnly"
-                                        color="primary"
-                                        dark
                                         @click="openInviteUsers()"
                                         small
                                 >
                                     <v-icon>{{icon.share}}</v-icon>
                                     SHARE
                                 </v-btn>
-                                <v-btn class="action-btn" color=primary @click="generateImplementationModel()">
+                                <v-btn class="action-btn" text color=primary @click="generateImplementationModel()">
                                     <Icon icon="mdi:head-cog-outline"
                                         height="24"
                                         style="margin-right:5px;"
@@ -163,14 +161,14 @@
                                 <div class="action-btn-box">
                                     <v-row>
                                         <v-col align="right">
-                                            <v-btn class="action-btn" color=primary @click="generateImplementationModel()">
+                                            <v-btn class="action-btn" text color=primary @click="generateImplementationModel()">
                                                 <Icon icon="mdi:head-cog-outline"
                                                     height="24"
                                                     style="margin-right:5px;"
                                                 />
                                                 <div>implementation model</div>
                                             </v-btn>
-                                            <v-btn class="action-btn" color=primary @click="storageDialogReady('save')"
+                                            <v-btn class="action-btn" @click="storageDialogReady('save')"
                                                     text>
                                                 <v-icon>{{icon.save}}</v-icon>
                                                 save
@@ -178,7 +176,6 @@
                                             <v-btn
                                                     text
                                                     v-if="isOwnModel && isServerModel && !getReadOnly"
-                                                    color="primary"
                                                     dark
                                                     @click="openInviteUsers()"
                                             >
@@ -315,9 +312,10 @@
             :showDialog="dialogModeOfAutoModeling"
             :showChat="dialogModeOfAutoModeling"
             :BMState="BMState"
+            :projectId="projectId"
             @startCreateModel="openEventStorming"
         ></AutoModelingDialog>
-        <GeneratorUI ref="generatorUI" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
+        <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
     </div>
 </template>
 

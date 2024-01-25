@@ -443,6 +443,8 @@
             prompt: String,
             cachedModels: Object,
             projectId: String,
+            isServer: Boolean,
+            modelIds: Object
         },
         components: {
             VueTypedJs,
@@ -1103,8 +1105,23 @@
                 this.value.palettes = palettes;
                 
             },
-            generate(){
-                this.selectedPaletteId = this.uuid();
+            async generate(){
+                let issuedTimeStamp = Date.now()
+                if(!this.modelIds.UIDefinitionId) this.modelIds.UIDefinitionId = this.uuid();
+                
+                // let usage = new Usage({
+                //     serviceType: `UI_AIGeneration`,
+                //     issuedTimeStamp: issuedTimeStamp,
+                //     expiredTimeStamp: Date.now(),
+                //     metadata: {
+                //         projectId: this.modelIds.projectId,
+                //         modelId: this.modelIds.UIDefinitionId
+                //     }
+                // });
+                // if(!await usage.use()) {
+                //     this.stop()
+                //     return false;
+                // }
                 this.scenario = '';
                 this.generator.generate();
                 this.done = false;

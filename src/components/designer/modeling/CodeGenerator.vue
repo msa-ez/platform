@@ -632,7 +632,6 @@
                                                         @close="closeCodeConfiguration"
                                                 ></CodeConfiguration>
                                             </v-tab-item>
-                                            
                                         </v-tabs>
                                     </v-menu>
 
@@ -778,7 +777,7 @@
                                                                                     v-for="(tempItem, index) in templateList"
                                                                                     :key="index"
                                                                                 >
-                                                                                    <subMenu 
+                                                                                    <subMenu
                                                                                         :templateInfo="tempItem"
                                                                                         :isBaseTemplate="true" 
                                                                                         @selectTemplate="openTemplateDialog('TEMPLATE', $event.tmp, item)"
@@ -1958,7 +1957,7 @@
                     
                     this.isLoadingExpectedTemplate = true
                     if((this.openCode && this.openCode[0]) || this.value.basePlatform){
-                        var platform = this.openCode && this.openCode[0] ? this.openCode[0].template : this.value.basePlatform
+                        var platform = this.openCode && this.openCode[0] && this.openCode[0].template  ? this.openCode[0].template : this.value.basePlatform
                         if(!platform.includes("http")){
                             platform = await me.gitAPI.getTemplateURL(platform)
                         }
@@ -2250,57 +2249,64 @@
                 var me = this
                 var list = []
                 Object.keys(me.$manifestsPerTemplate).forEach(function (template) {
-                    if(template == 'Custom Template'){
-                        var obj = {
-                            display: template,
-                            template: template
-                        }
-                    } else {
-                        if(!template.includes("http")){
-                            var obj = {
-                                display: template,
-                                template: "template-" + template
-                            }
-                        } else {
+                        if(template == 'Custom Template'){
                             var obj = {
                                 display: template,
                                 template: template
                             }
+                        } else {
+                            if(!template.includes("http")){
+                                var obj = {
+                                    display: template,
+                                    template: "template-" + template
+                                }
+                            } else {
+                                var obj = {
+                                    display: template,
+                                    template: template
+                                }
+                            }
                         }
-                    }
-                    if(!list.find(x => x.template == obj.template)){
-                        list.push(obj)
-                    }
-                })
-
+                        if(!list.find(x => x.template == obj.template)){
+                            list.push(obj)
+                        }
+                    })
+                
                 return list
             },
             baseTemplateList: function () {
                 var me = this
                 var list = []
-                Object.keys(me.$manifestsPerBaseTemplate).forEach(function (template) {
-                    if(template == 'Custom Template'){
-                        var obj = {
-                            display: template,
-                            template: template
-                        }
-                    } else {
-                        if(!template.includes("http")){
-                            var obj = {
-                                display: template,
-                                template: "template-" + template
-                            }
-                        } else {
+                if( !Object.keys(me.$manifestsPerTemplate).includes('Custom Template') ){
+                    list.push({
+                            display: 'Custom Template',
+                            template: 'Custom Template'
+                    })
+                } else {
+                    Object.keys(me.$manifestsPerTemplate).forEach(function (template) {
+                        if(template == 'Custom Template'){
                             var obj = {
                                 display: template,
                                 template: template
                             }
+                        } else {
+                            if(!template.includes("http")){
+                                var obj = {
+                                    display: template,
+                                    template: "template-" + template
+                                }
+                            } else {
+                                var obj = {
+                                    display: template,
+                                    template: template
+                                }
+                            }
                         }
-                    }
-                    if(!list.find(x => x.template == obj.template)){
-                        list.push(obj)
-                    }
-                })
+                        if(!list.find(x => x.template == obj.template)){
+                            list.push(obj)
+                        }
+                    })
+                }
 
                 return list
             },
@@ -5240,7 +5246,9 @@ jobs:
                     })
                     me.editTemplateFrameWorkList = {}
                 }
-                me.refreshCallGenerate();
+                setTimeout(function () {
+                    me.refreshCallGenerate();
+                }, 500)
                 // me.changeBasePlatform();
             },
             pushTemplateToGit(platform){
@@ -6628,6 +6636,7 @@ jobs:
                     'key': uuid,
                     'code': 'test  ',
                     'file': 'txt',
+                    'template': '',
                     'boundedContext': 'for-model',
                     'representativeFor': null,
                     'forEach': 'for-model',
