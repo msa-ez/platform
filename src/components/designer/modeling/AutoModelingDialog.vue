@@ -401,9 +401,6 @@
                 return true
             },
         },
-        created(){
-            this.setUserInfo()
-        },
         watch: {
         },
         beforeDestroy() {
@@ -508,7 +505,7 @@
 
                     await me.putObject(`db://definitions/${settingProjectId}/information`, me.projectInfo)
                     me.isServer = true;
-                    if( settingProjectId != me.projectId ) me.$router.push({path: `/${me.projectInfo.type}/${settingProjectId}`});
+                    me.$router.push({path: `/${me.projectInfo.type}/${settingProjectId}`});
                     me.$emit('forceUpdateKey')
                 } else{
                     me.storageCondition.loading = false
