@@ -37,7 +37,6 @@ Result Format JSON:
        ]
      }
    ]
-
  }
   
 `

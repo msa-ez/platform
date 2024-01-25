@@ -36,3 +36,4 @@ yarn-error.log*
 package-lock.json
 #Electron-builder output
 /dist_electron
+public/static/env.txt
