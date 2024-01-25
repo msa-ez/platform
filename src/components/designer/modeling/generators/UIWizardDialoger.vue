@@ -435,7 +435,6 @@
     import Preview from './Preview.vue';
     import ImageDescriptionGenerator from './ImageDescriptionGenerator'
     import UIStyleGenerator from './UIStyleGenerator.js'
-    import Usage from '../../../../utils/Usage'
     
     export default {
         name: 'ui-wizard-dialoger',

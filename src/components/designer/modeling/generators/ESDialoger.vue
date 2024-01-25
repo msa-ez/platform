@@ -84,7 +84,6 @@
     // import StorageBase from "../StorageBase";
     import StorageBase from '../../../CommonStorageBase.vue';
     import getParent from '../../../../utils/getParent'
-    import Usage from '../../../../utils/Usage'
     import ModelStorageDialog from '../ModelStorageDialog.vue';
 
     export default {

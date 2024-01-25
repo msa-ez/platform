@@ -106,7 +106,6 @@
 <script>
     import { VueTypedJs } from 'vue-typed-js'
     import Generator from './CJMPersonaGenerator.js'
-    import Usage from '../../../../utils/Usage'
     import ModelStorageDialog from '../ModelStorageDialog.vue';
     import StorageBase from '../../../CommonStorageBase.vue';
 
