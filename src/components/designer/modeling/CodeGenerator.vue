@@ -11,7 +11,7 @@
             >
             </GitActionDialog>
         </v-dialog>
-        <v-dialog v-model="marketplaceDialog" fullscreen>
+        <v-dialog v-model="marketplaceDialog" max-width="90%" persistent>
             <MarketPlace :marketplaceDialog="marketplaceDialog"
                 @applyTemplate="applyTemplateInMarket"
                 @applyTopping="applyToppingInMarket"

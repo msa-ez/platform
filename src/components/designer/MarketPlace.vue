@@ -1,8 +1,16 @@
 <template>
-    <div  style="height:100%; width:100%; background-color:white;">
+    <div style="height:85vh; background-color:white;">
+        <v-row style="margin:0px; padding:0px;">
+            <v-col cols="auto">
+                <v-icon v-if="selectedTopping || selectedTemplate" @click="closeDetailDialog()" class="marketplace-details-page-back-btn">mdi-arrow-left</v-icon>
+            </v-col>
+            <v-spacer></v-spacer>
+            <v-col cols="auto">
+                <v-icon @click="closeDialog()">mdi-close</v-icon>
+            </v-col>
+        </v-row>
         <div v-if="!detailMarketMode">
             <h1 style="text-align:center;">Marketplace</h1>
-            <v-icon @click="closeDialog()" style="position: absolute; right: 10px; top: 10px;">mdi-close</v-icon>
             <v-tabs
                     v-if="templateLists.length > 1"
                     v-model="tab"
@@ -40,7 +48,7 @@
             </v-row>
             <v-tabs-items v-model="tab">
                 <v-tab-item key="templates">
-                    <v-row>
+                    <v-row class="ma-0">
                         <v-col cols="2">
                             <v-list dense>
                                 <v-list-item-group
@@ -64,7 +72,7 @@
                             </v-list>
                         </v-col>
                         <v-col cols="10">
-                            <v-row class="marketplace-card-row">
+                            <v-row class="marketplace-card-row ma-0">
                                 <v-col cols="12" lg="2" md="3" sm="6"
                                        v-for="temp in filteredTemplateLists" :key="temp.id"
                                 >
@@ -72,7 +80,7 @@
                                         <div class="marketplace-image-text-container">
                                             <v-img class="marketplace-card-image" :src="temp.imageUrl" />
                                             <v-card-subtitle class="marketplace-card-subtitle"
-                                                             @click="openTempDetailDialog(temp)"
+                                                @click="openTempDetailDialog(temp)"
                                             >{{ temp.description }}
                                             </v-card-subtitle>
                                         </div>
@@ -95,7 +103,7 @@
                     </v-row>
                 </v-tab-item>
                 <v-tab-item key="toppings">
-                    <v-row>
+                    <v-row class="ma-0">
                         <v-col cols="2">
                             <v-list dense>
                                 <v-list-item-group
@@ -155,9 +163,6 @@
         </div>
         <div v-else class="marketplace-details-page-box">
             <div v-if="selectedTemplate">
-                <div class="marketplace-details-page-bar">
-                    <v-icon @click="closeDetailDialog()" class="marketplace-details-page-back-btn">mdi-arrow-left</v-icon>
-                </div>
                 <div>
                     <v-row class="marketplace-details-page-row">
                         <v-col cols="5" lg="3" md="4" sm="5"
@@ -201,9 +206,6 @@
                 </div>
             </div>
             <div v-else-if="selectedTopping">
-                <div class="marketplace-details-page-bar">
-                    <v-icon @click="closeDetailDialog()" class="marketplace-details-page-back-btn">mdi-arrow-left</v-icon>
-                </div>
                 <div>
                     <v-row class="marketplace-details-page-row">
                         <v-col cols="5" lg="3" md="4" sm="5"
@@ -472,19 +474,13 @@
         margin-top:10px;
         float:right;
     }
-    .marketplace-details-page-bar {
-        height:64px;
-    }
     .marketplace-details-page-box {
         background-color:white;
         padding:0px 10% 0px 10%;
     }
     .marketplace-details-page-back-btn {
         font-size: 25px !important;
-        position: absolute !important;
         z-index: 1;
-        left: 10px;
-        top: 10px;
     }
     .marketplace-details-page-row {
         margin:0px;
