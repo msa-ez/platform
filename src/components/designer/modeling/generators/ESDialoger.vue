@@ -50,7 +50,7 @@
                 <!--                    <v-btn x-small @click="jumpToModel(modelId)">{{ modelId }}</v-btn>    -->
                 <!--                </div>-->
             </v-card-text>
-            <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; bottom:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
+            <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
             <v-card-actions v-if="done" class="auto-modeling-btn-box">
                 <v-btn class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>Try again</v-btn>
                 <v-btn class="auto-modeling-btn" color="primary" @click="openStorageDialog()">Create Model<v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon></v-btn>
