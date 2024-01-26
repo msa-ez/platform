@@ -1226,7 +1226,7 @@
                 let lists = await me.list(`db://definitions/${associatedProject}/information/contextMapping`);
                 let index = -1;
                 if (lists && lists.modelList) {
-                    index = lists.modelList.findIndex((x) => x == oldId);
+                    index = lists.modelList.findIndex((x) => x == newId);
                     index = index == -1 ? lists.modelList.length : index;
                 }
 

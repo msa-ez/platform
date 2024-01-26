@@ -1861,7 +1861,7 @@
 
                         if(associatedProject){
                             // Sync connected associatedProject.
-                            await me.synchronizeAssociatedProject(associatedProject, settingProjectId);
+                            await me.synchronizeAssociatedProject(associatedProject, originProjectId);
                         }
 
                         me.projectName = putInformation.projectName
