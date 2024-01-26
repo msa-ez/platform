@@ -9,7 +9,7 @@
                     <v-chip style="margin:0px 5px; opacity: 0.8; border-width: 1.5px;"
                         v-for="(inputAutoModelingChip, index) in setAutoModelingTextChips"
                         :key="index"
-                        @click="setAutoModelingText(inputAutoModelingChip)"
+                        @click="setAutoModelingText($t(inputAutoModelingChip))"
                         outlined
                     >{{ $t(inputAutoModelingChip) }}
                     </v-chip>
