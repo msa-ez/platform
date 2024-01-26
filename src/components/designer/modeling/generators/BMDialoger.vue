@@ -14,18 +14,11 @@
                 </div>
             </v-col> -->
         </div>
-        <ModelStorageDialog
-                :showDialog="showStorageDialog"
-                :condition="storageCondition"
-                @save="saveModel"
-                @close="closeStorageDialog()"
-        ></ModelStorageDialog>
     </div>
 </template>
 
 <script>
     import { VueTypedJs } from 'vue-typed-js'
-    import ModelStorageDialog from '../ModelStorageDialog.vue';
     import StorageBase from '../../../CommonStorageBase.vue';
 
     export default {
@@ -39,8 +32,7 @@
             isServerProject: Boolean
         },
         components: {
-            VueTypedJs,
-            ModelStorageDialog
+            VueTypedJs
         },
         async created(){
             await this.setUserInfo()
@@ -188,12 +180,9 @@
                 this.$emit('state','BM')
 
                 // this.state.title = this.value;
-                if(!me.value){
-                    me.value = {}
-                    if(!me.value.modelList){
-                        me.value.modelList = []
-                    }
-                }
+                if(!me.value) me.value = {}
+                if(!me.value.modelList)me.value.modelList = []
+
                 if(me.isServerProject) me.value.modelList.push(me.modelIds.BMDefinitionId)
                 me.$emit("input", me.value);
                 me.$emit("change", 'businessModel');

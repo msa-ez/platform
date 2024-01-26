@@ -1826,7 +1826,8 @@
                     if(check){
                         var originProjectId = me.projectId;
                         var projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
-
+                        let associatedProject = me.storageCondition.associatedProject
+                        
                         // set tag
                         if(me.value.scm.org && me.value.scm.repo){
                             me.value.scm.tag = me.storageCondition.version;
@@ -1856,6 +1857,11 @@
                             timeStamp: Date.now(),
                             comment: me.storageCondition.comment,
                             valueUrl: valueUrl
+                        }
+
+                        if(associatedProject){
+                            // Sync connected associatedProject.
+                            await me.synchronizeAssociatedProject(associatedProject, settingProjectId);
                         }
 
                         me.projectName = putInformation.projectName

@@ -267,6 +267,7 @@
                         eventStorming: null,
                         customerJourneyMap: null,
                         businessModel: null,
+                        userStoryMap: null,
                         prompt: ''
                     }
                 }
@@ -746,7 +747,7 @@
                             eventStorming: me.projectInfo.eventStorming,
                             businessModel: me.projectInfo.businessModel,
                             customerJourneyMap: me.projectInfo.customerJourneyMap,
-                            customerJourneyMap: me.projectInfo.userStoryMap,
+                            userStoryMap: me.projectInfo.userStoryMap,
                         })
                     }
                 } else  {

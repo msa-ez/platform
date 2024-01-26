@@ -56,7 +56,7 @@
                             v-if="condition.action != 'fork' && condition.type != 'project'"
                             v-model="condition.version"
                             label="Version Name"
-                            :style="condition.action == 'save' ? '' :'margin-top: -20px; font-weight: 900;'"
+                            :style="condition.action == 'save' ? '' :' font-weight: 900;'"
                             :error-messages="condition.error && condition.error['version']"
                     ></v-text-field>
 
