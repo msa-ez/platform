@@ -338,6 +338,8 @@
                 me.state.personaDescription=persona.description; 
                 me.step=2;
                 me.listKey++;
+
+                me.$emit("selectedPersona", me.value.selectedPersona);
             },
 
             async onGenerationFinished(){

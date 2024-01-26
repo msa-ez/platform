@@ -110,6 +110,26 @@
                                             </v-card>
                                         </v-col>
                                         <v-col style="text-align: center;">
+                                            <v-card :style="genType == 'USM' ? 'border: solid darkturquoise;':'background-color: white;'">
+                                                <div @click="genType='USM'" style="cursor: pointer;">
+                                                    <v-avatar
+                                                        class="ma-3"
+                                                        size="125"
+                                                        rounded="0"
+                                                    >
+                                                        <v-img src="/static/image/userStoryMap.png"></v-img>
+                                                    </v-avatar>
+                                                    
+                                                    <v-card-text style="justify-content: center; margin-top: -10px;">
+                                                        <div :style="genType == 'USM' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
+                                                            <v-icon v-if="genType == 'USM'" small color="success">mdi-check</v-icon>
+                                                            User Story Map
+                                                        </div>
+                                                    </v-card-text>
+                                                </div>
+                                            </v-card>
+                                        </v-col>
+                                        <v-col style="text-align: center;">
                                             <v-card :style="genType == 'ES2' ? 'border: solid darkturquoise;':'background-color: white;'">
                                                 <div @click="checkLogin('ES2')" style="cursor: pointer;">
                                                     <v-avatar
@@ -160,8 +180,9 @@
                             </div>
                             <div :key="reGenKey">
                                 <ESDialoger ref="esDialoger" v-model="projectInfo.eventStorming" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" :uiStyle="uiStyle" v-if="genType == 'ES2'" @change="backupProject" @saveProject="openStorageDialog"></ESDialoger>
-                                <CJMDialoger ref="cjMDialoger" v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'CJM'" @change="backupProject" @saveProject="openStorageDialog"></CJMDialoger>
+                                <CJMDialoger ref="cjMDialoger" v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @selectedPersona="setSelectedPersona" v-if="genType == 'CJM'" @change="backupProject" @saveProject="openStorageDialog"></CJMDialoger>
                                 <BMDialoger ref="bmDialoger" v-model="projectInfo.businessModel" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'BM2'" @change="backupProject" @saveProject="openStorageDialog"></BMDialoger>
+                                <USMDialoger ref="usmDialoger" v-model="projectInfo.eventStorming" :projectId="projectId"  :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'USM'" @change="backupProject"></USMDialoger>
                                 <UIWizardDialoger v-model="projectInfo.ui" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @selected="onUIStyleSelected" v-if="genType == 'UI'" @change="backupProject" @saveProject="openStorageDialog"></UIWizardDialoger>
                             </div>
                         </v-card-text>
@@ -210,6 +231,7 @@
     import ESDialoger from './generators/ESDialoger'
     import BMDialoger from './generators/BMDialoger'
     import UIWizardDialoger from './generators/UIWizardDialoger'
+    import USMDialoger from './generators/USMDialoger'
     import PowerPointGenerator from "./generators/PowerPointGenerator";
     import StorageBase from "../../CommonStorageBase";
     import ModelStorageDialog from "./ModelStorageDialog";
@@ -261,6 +283,7 @@
             CJMDialoger,
             BMDialoger,
             UIWizardDialoger,
+            USMDialoger,
             ModelStorageDialog
         },
         computed: {
@@ -656,6 +679,7 @@
                         eventStorming: null,
                         customerJourneyMap: null,
                         businessModel: null,
+                        userStoryMap: null,
                         prompt: ""
                     },
                     me.modelScenarioPrompt = ""
@@ -711,6 +735,9 @@
             },
             onUIStyleSelected(uiStyle){
                 this.uiStyle = uiStyle;
+            },
+            setSelectedPersona(persona){
+                this.cachedModels['selectedPersona'] = persona;
             },
             handleContentChange() {
                 this.$nextTick(() => {

@@ -35,6 +35,7 @@
                                 v-model="value.description"
                                 label="Description"
                                 :disabled="canvas.isReadOnlyModel"
+                                auto-grow
                         ></v-textarea>
                         <div class="my-5">
                             <v-label>Color</v-label>

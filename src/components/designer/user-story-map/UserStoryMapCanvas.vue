@@ -593,6 +593,7 @@
                 </v-layout>
             </hsc-window>
         </hsc-window-style-metal>
+        <GeneratorUI ref="generatorUI" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
     </div>
 </template>
 
@@ -701,6 +702,7 @@
                     },
                 ],
 
+                generator: null,
             }
         },
         computed: {
@@ -761,23 +763,42 @@
             }, 0),
         },
         methods: {
-            createModel(val) {
-                var me = this;
+            clearModelValue(){
+                var me = this
+                me.value.elements = {}
+                me.value.relations = {}
+            },
+            createModel(val){
+                var me = this
 
-                if (val && val.elements) {
-                    if (val.projectName) me.projectName = val.projectName;
+                if(val && val.elements){
+                    if(val.projectName)
+                        me.projectName = val.projectName;
 
                     // Create Model in BoundedContext > Model Merge
-                    let elements = me.value.elements;
-                    let relations = me.value.relations;
+                    let elements = me.value.elements
+                    let relations = me.value.relations
 
-                    me.value.elements = {};
-                    me.value.relations = {};
+                    me.value.elements = {}
+                    me.value.relations = {}
+                    
+                    if(me.createModelInBoundedContext) {
+                        me.value.elements = Object.assign(elements, val.elements);
+                        me.value.relations = Object.assign(relations, val.relations);
+                        me.createModelInBoundedContext = false;
+                    } else {
+                        me.value.elements = val.elements
+                        me.value.relations = val.relations
+                        me.value.uiStyle = val.uiStyle;
+                    }
+                    me.changedByMe = true
 
-                    me.value.elements = Object.assign(elements, val.elements);
-                    me.value.relations = Object.assign(relations, val.relations);
+                    // me.addAppendedProperties(me.value.elements, val.elements);
+                    // me.addAppendedProperties(me.value.relations, val.relations);
 
-                    me.changedByMe = true;
+//                    console.log(me.value.elements);
+
+//                    me.value.__ob__.dep.notify();
                 }
             },
             bindEvents: function (opengraph) {
