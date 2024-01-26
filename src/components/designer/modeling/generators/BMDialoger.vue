@@ -1,7 +1,7 @@
 <template>
     <div style="margin-top: 10px;">
         <div>
-            <v-btn v-if="value && value.modelList" class="auto-modeling-btn" color="primary" @click="openStorageDialog()">Create Model<v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon></v-btn>
+            <v-btn v-if="value && value.modelList" class="auto-modeling-btn" color="primary" @click="jump()">Create Model<v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon></v-btn>
         </div>
         <div v-if="value && value.modelList && value.modelList.length > 0"
              class="auto-modeling-message-card"
@@ -59,8 +59,7 @@
         mounted(){
             var me = this
             if(!me.value || !me.value.modelList){
-                // this.jump();
-                this.openStorageDialog()
+                this.jump();
             }
         },
         data() {

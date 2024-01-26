@@ -111,7 +111,7 @@
                                         </v-col>
                                         <v-col style="text-align: center;">
                                             <v-card :style="genType == 'USM' ? 'border: solid darkturquoise;':'background-color: white;'">
-                                                <div @click="genType='USM'" style="cursor: pointer;">
+                                                <div @click="checkLogin('USM')" style="cursor: pointer;">
                                                     <v-avatar
                                                         class="ma-3"
                                                         size="125"
@@ -182,7 +182,7 @@
                                 <ESDialoger ref="esDialoger" v-model="projectInfo.eventStorming" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" :uiStyle="uiStyle" v-if="genType == 'ES2'" @change="backupProject" @saveProject="openStorageDialog"></ESDialoger>
                                 <CJMDialoger ref="cjMDialoger" v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @selectedPersona="setSelectedPersona" v-if="genType == 'CJM'" @change="backupProject" @saveProject="openStorageDialog"></CJMDialoger>
                                 <BMDialoger ref="bmDialoger" v-model="projectInfo.businessModel" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'BM2'" @change="backupProject" @saveProject="openStorageDialog"></BMDialoger>
-                                <USMDialoger ref="usmDialoger" v-model="projectInfo.eventStorming" :projectId="projectId"  :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'USM'" @change="backupProject"></USMDialoger>
+                                <USMDialoger ref="usmDialoger" v-model="projectInfo.userStoryMap" :projectId="projectId"  :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'USM'" @change="backupProject"></USMDialoger>
                                 <UIWizardDialoger v-model="projectInfo.ui" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @selected="onUIStyleSelected" v-if="genType == 'UI'" @change="backupProject" @saveProject="openStorageDialog"></UIWizardDialoger>
                             </div>
                         </v-card-text>
@@ -647,6 +647,11 @@
                     me.projectInfo.customerJourneyMap.modelList[oldModelIndex] = changedInfo.new
                     me.projectInfo.customerJourneyMap.modelList.__ob__.dep.notify()
                 }
+                if(changedInfo.type == 'usm'){
+                    var oldModelIndex = me.projectInfo.userStoryMap.modelList.findIndex(x => x == changedInfo.old)
+                    me.projectInfo.userStoryMap.modelList[oldModelIndex] = changedInfo.new
+                    me.projectInfo.userStoryMap.modelList.__ob__.dep.notify()
+                }
                 me.backupProject();
             },
             openProjectDialog(){
@@ -717,6 +722,7 @@
                             eventStorming: me.projectInfo.eventStorming,
                             businessModel: me.projectInfo.businessModel,
                             customerJourneyMap: me.projectInfo.customerJourneyMap,
+                            customerJourneyMap: me.projectInfo.userStoryMap,
                         })
                     }
                 } else  {

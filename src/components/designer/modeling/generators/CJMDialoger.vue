@@ -85,7 +85,7 @@
                             solo
                         >
                         </v-textarea>
-                        <v-btn color="primary" style="float:right; margin-top:5px;" @click="openStorageDialog()">Create Model<v-icon>mdi-arrow-right</v-icon></v-btn>
+                        <v-btn color="primary" style="float:right; margin-top:5px;" @click="jump()">Create Model<v-icon>mdi-arrow-right</v-icon></v-btn>
                     </v-card-text>
                 </v-card>
                 <!-- <div
@@ -118,9 +118,7 @@
             modelIds: Object,
             isServerProject: Boolean
         },
-        mixins: {
-            StorageBase
-        },
+        mixins: [StorageBase],
         components: {
             VueTypedJs,
             ModelStorageDialog
