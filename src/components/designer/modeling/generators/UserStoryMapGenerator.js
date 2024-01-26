@@ -10,8 +10,8 @@ export default class UserStoryMapGenerator extends JsonAIGenerator{
     
     createPrompt(){
         let modelDescription = ""
-        let persona = ""
-        if(this.client.input.persona.scenario){
+        let persona = "Persona"
+        if(this.client.input.persona){
             persona = this.client.input.persona.scenario
         }
 
@@ -205,13 +205,16 @@ ${modelDescription}
                         view.height = HEIGHT * 2
                         view.y = START_Y + (HEIGHT + BORDER) * 5;
 
-                        let persona = me.client.input.persona;
-                        let personaAndStory = "As: \n"
+                        let personaAndStory = ""
+                        if(me.client.input.persona){
+                            let persona = me.client.input.persona;
+                            personaAndStory += "As: \n"
                             personaAndStory += "- "+persona.persona+" ("+persona.age+" / "+persona.job+") \n"
                             personaAndStory += "- "+persona.description+"\n"
                             personaAndStory += "- "+persona.scenario+"\n\n"
                             personaAndStory += "I Want: "+story.iWant+"\n\n"
                             personaAndStory += "So That: "+story.soThat+"\n"
+                        }
 
                         convertedModel.elements[storyUuid] = {
                             _type: "UserStory",
