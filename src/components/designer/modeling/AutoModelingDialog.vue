@@ -179,11 +179,11 @@
                                 </div>
                             </div>
                             <div :key="reGenKey">
-                                <ESDialoger ref="esDialoger" v-model="projectInfo.eventStorming" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" :uiStyle="uiStyle" v-if="genType == 'ES2'" @change="backupProject" @saveProject="openStorageDialog"></ESDialoger>
-                                <CJMDialoger ref="cjMDialoger" v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @selectedPersona="setSelectedPersona" v-if="genType == 'CJM'" @change="backupProject" @saveProject="openStorageDialog"></CJMDialoger>
-                                <BMDialoger ref="bmDialoger" v-model="projectInfo.businessModel" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'BM2'" @change="backupProject" @saveProject="openStorageDialog"></BMDialoger>
+                                <ESDialoger ref="esDialoger" v-model="projectInfo.eventStorming" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" :uiStyle="uiStyle" v-if="genType == 'ES2'" @change="backupProject" ></ESDialoger>
+                                <CJMDialoger ref="cjMDialoger" v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @selectedPersona="setSelectedPersona" v-if="genType == 'CJM'" @change="backupProject"></CJMDialoger>
+                                <BMDialoger ref="bmDialoger" v-model="projectInfo.businessModel" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'BM2'" @change="backupProject"></BMDialoger>
                                 <USMDialoger ref="usmDialoger" v-model="projectInfo.userStoryMap" :projectId="projectId"  :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'USM'" @change="backupProject"></USMDialoger>
-                                <UIWizardDialoger v-model="projectInfo.ui" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @selected="onUIStyleSelected" v-if="genType == 'UI'" @change="backupProject" @saveProject="openStorageDialog"></UIWizardDialoger>
+                                <UIWizardDialoger v-model="projectInfo.ui" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @selected="onUIStyleSelected" v-if="genType == 'UI'" @change="backupProject"></UIWizardDialoger>
                             </div>
                         </v-card-text>
                     <!-- </div> -->

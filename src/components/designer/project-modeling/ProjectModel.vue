@@ -70,7 +70,7 @@
                                         </template>
                                         <span>add Model</span>
                                     </v-tooltip>
-                                </v-card:>
+                                </v-card>
                             </v-row>
                         </v-card-text>
                     </v-card>

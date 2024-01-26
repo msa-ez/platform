@@ -727,12 +727,6 @@
                 window.addEventListener('resize', this.onResize);
             })
 
-            //새로고침 감지 && 탭 닫기
-            window.onbeforeunload = function (e) {
-                console.log('reload')
-                me.exitUser()
-                me.releaseMoveEvents();
-            }
 
             try{
                 me.isConnection('db://', function (connection) {
@@ -756,7 +750,11 @@
                 }
             })
 
-
+            // 탭 닫기
+            window.addEventListener('unload', this.handleUnload);         
+            //새로고침 감지 
+            window.addEventListener('beforeunload', this.handleBeforeUnload);
+            // key down
             this.$nextTick(function () {
 
                 let startTime = Date.now()
@@ -772,11 +770,13 @@
                     var VkeyCode = 86;
                     var ZkeyCode = 90;
 
-                    if (evt.keyCode == CkeyCode && (evt.metaKey || evt.ctrlKey)) {
+                    if(evt.keyCode === 116 || (evt.metaKey && evt.keyCode === 82) || (evt.metaKey && evt.shiftKey && evt.keyCode === 82) ){
+                        //새로고침 감지 
+                        this.handleBeforeUnload();
+                    } else if (evt.keyCode == CkeyCode && (evt.metaKey || evt.ctrlKey)) {
                         me.copy();
                     } else if (evt.keyCode == VkeyCode && (evt.ctrlKey || evt.metaKey)) {
                         me.paste();
-
                     } else if (evt.keyCode == ZkeyCode && (evt.metaKey || evt.ctrlKey)) {
                         if (evt.shiftKey) {
                             if (me.isEditable) {
@@ -895,6 +895,20 @@
 
         },
         methods: {
+            handleBeforeUnload(event) {        
+                // reload || close tab
+                console.log('reload')
+                this.exitUser()
+                this.releaseMoveEvents();
+            },
+            handleUnload(event) {
+                // // close tab
+                console.log('close tab')
+                // this.saveComposition('save');
+                // console.log("Tab or browser is being closed");
+
+                // return false; // For some older browsers
+            },
             overrideElements(elementValues){
               // use code core.
                 return elementValues
@@ -978,10 +992,6 @@
                         // await me.putObject(`localstorage://serverImageLists`, imageObjects);
                     }
                 }
-
-                await me.exitUser()
-                await me.releaseMoveEvents();
-
 
                 if( me.isServerModel  && !me.isReadOnlyModel ) {
                     // server && permission O
@@ -1354,7 +1364,7 @@
             },
             exitUser() {
                 var me = this
-                if ( me.isServerModel && me.isQueueModel && me.isInitRender && !me.isReadOnlyModel && !me.isClazzModeling  ) {
+                if ( me.isLogin && me.isServerModel && me.isQueueModel && me.isInitRender && !me.isReadOnlyModel && !me.isClazzModeling  ) {
                     var pushObj = {
                         action: 'userExit',
                         editUid: me.userInfo.uid,
