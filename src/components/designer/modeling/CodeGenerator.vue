@@ -1691,7 +1691,7 @@
                 sampleData: {"glossary":{"title":"example glossary","GlossDiv":{"title":"S","GlossList":{"GlossEntry":{"ID":"SGML","SortAs":"SGML","GlossTerm":"Standard Generalized Markup Language","Acronym":"SGML","Abbrev":"ISO 8879:1986","GlossDef":{"para":"A meta-markup language, used to create markup languages such as DocBook.","GlossSeeAlso":["GML","XML"]},"GlossSee":"markup"}}}}},
                 openaiContent: null,
                 showOpenaiToken: false,
-                openaiToken: (new AIGenerator()).openaiToken,
+                openaiToken: null,
                 copyKey: 0,
                 isCopied: false,
                 startGenerate: false,
@@ -2665,7 +2665,7 @@
             window.removeEventListener("message", me.messageProcessing);
             this.closeCodeViewer()
         },
-        mounted: function () { 
+        mounted: async function () { 
 
             var me = this
 
@@ -2735,10 +2735,6 @@
                 await me.callGenerate();
             });
 
-            if(localStorage.getItem("openaiToken")){
-                me.openaiToken = localStorage.getItem("openaiToken")
-            }
-
             me.$EventBus.$on('downloadCode',function () {
                 me.downloadArchive()
             });
@@ -2776,8 +2772,22 @@
                     }
                 }
             });
+
+            me.openaiToken = await me.getToken();
         },
         methods: {
+            getToken() {
+                var me = this
+                return new Promise(async function (resolve, reject) {
+                    await me.getString(`db://tokens/openai`)
+                    .then((token) => {
+                        resolve(atob(token))
+                    })
+                    .catch(e => {
+                        reject(e)
+                    })
+                })
+            },
             async rollBack(sha){
                 var me = this
                 let data = {
@@ -3297,20 +3307,33 @@ jobs:
                 //         startGen = true
                 //     }
                 // }
+                        
+                
                 if(me.openaiToken && startGen){
-                    let tokenLength = 4092 - Math.round(content.length/3.5)
+                    let messages = [{
+                        role: "user",
+                        content: content
+                    }]
                     let data = {
-                        model: "text-davinci-003",
-                        prompt: content,
-                        temperature: 0.5,
-                        max_tokens: tokenLength ? tokenLength : 3000, 
-                    }
+                        model: "gpt-3.5-turbo-16k",
+                        messages: messages,
+                        temperature: 1,
+                        frequency_penalty: 0,
+                        presence_penalty: 0,
+                    };
+                    // let tokenLength = 4092 - Math.round(content.length/3.5)
+                    // let data = {
+                    //     model: "text-davinci-003",
+                    //     prompt: content,
+                    //     temperature: 0.5,
+                    //     max_tokens: tokenLength ? tokenLength : 3000, 
+                    // }
                     let header = {
                         Authorization: `Bearer ${me.openaiToken}`,
                         'Content-Type': 'application/json'
                     }
 
-                    let respones = await axios.post(`https://api.openai.com/v1/completions`, data, { headers: header })
+                    let respones = await axios.post(`https://api.openai.com/v1/chat/completions`, data, { headers: header })
                     .catch(function (error) {
                         me.startGenerateUseOpenAI = false
                         if(error.response && error.response.data && error.response.data.message){
@@ -3323,9 +3346,9 @@ jobs:
                             alert(error.message)
                         }
                     }); 
-                    if(respones.data.choices[0].text){
+                    if(respones.data.choices[0].message.content){
                         // if(prompt == "autoGen"){
-                            me.modifiedMustacheTemplate[0].code = respones.data.choices[0].text
+                            me.modifiedMustacheTemplate[0].code = respones.data.choices[0].message.content
                             me.startGenerateUseOpenAI = false
                         // } else {
                         //     // console.log(respones.data.choices[0].text)
@@ -4464,25 +4487,36 @@ jobs:
                         })
                         promptValue = promptValue.join("\n")
                         suffixValue = suffixValue.join("\n")
-                        
-                        let tokenLength
-                        if(moreHintMode){
-                            tokenLength = 4092 - Math.round(`${content}\n${testA.join('\n')}`.length/3.5)
-                        } 
 
+                        let prompt = `You have to look at the java file and figure out the entire code and business logic.
+Full code: ${content}
+
+Then, you must properly implement the corresponding function or class contents in the '//implement business logic here:' section at the bottom of the code I cut and sent.
+implement here: ${promptValue}
+
+Example correct answer: '\nrepository().findById(orderPlaced.getProductId()).ifPresent(inventory -> {\n inventory.setStockRemain(inventory.getStockRemain() - orderPlaced.getQuantity());\n repository(). save(inventory);\n\n InventoryUpdated inventoryUpdated = new InventoryUpdated(inventory);\n inventoryUpdated.publishAfterCommit();\n});\n'
+
+Please do not "never" describe natural language or code descriptions, but only answer the code content implemented within the function or class.
+`
+                        
+                        let messages = [{
+                            role: "user",
+                            content: prompt
+                        }]
                         let data = {
-                            model: "text-davinci-003",
-                            prompt: promptValue,
-                            suffix: moreHintMode ? `${suffixValue}\n${testA.join('\n')}` : suffixValue,
-                            temperature: 0.5,
-                            max_tokens: moreHintMode ? tokenLength : 3000, 
-                        }
+                            model: "gpt-3.5-turbo-16k",
+                            messages: messages,
+                            temperature: 1,
+                            frequency_penalty: 0,
+                            presence_penalty: 0,
+                        };
+
                         let header = {
                             Authorization: `Bearer ${me.openaiToken}`,
                             'Content-Type': 'application/json'
                         }
     
-                        let respones = await axios.post(`https://api.openai.com/v1/completions`, data, { headers: header })
+                        let respones = await axios.post(`https://api.openai.com/v1/chat/completions`, data, { headers: header })
                         .catch(function (error) {
                             me.startGenerate = false
                             if(me.openaiContent){
@@ -4499,16 +4533,21 @@ jobs:
                             }
                         });
                         if(respones && !me.stopAutoGenerate){
-                            if(respones.data.choices[0].text){
-                                var autoGenerateResult = promptValue + respones.data.choices[0].text + suffixValue
+                            console.log(respones)
+                            if(respones.data.choices[0].message.content){
+                                let implementedCode = respones.data.choices[0].message.content
+                                if(implementedCode.includes("```")){
+                                    implementedCode = implementedCode.replaceAll("```java", "```")
+                                    implementedCode = implementedCode.split("```")[1]
+                                }
+                                var autoGenerateResult = promptValue + implementedCode + suffixValue
                                 me.autoGenerateResponse = autoGenerateResult
         
                                 me.changedDiffCodeViewer = true
                                 me.changedDiffCode = JSON.parse(JSON.stringify(me.filteredOpenCode))
                                 me.changedDiffCode[0].code = content
                                 me.filteredOpenCode[0].code = me.autoGenerateResponse
-        
-                                localStorage.setItem('openaiToken', me.openaiToken)
+    
                                 me.startGenerate = false
         
                                 me.setAutoGenerateCodetoList = JSON.parse(JSON.stringify(me.codeLists))
