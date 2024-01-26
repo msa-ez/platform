@@ -1,82 +1,32 @@
 <template>
     <div style="margin-top: 10px;">
-        <div class="auto-modeling-message-border">
-            <v-col class="auto-modeling-message-box">
-                <v-card class="auto-modeling-message-card">
-                    <v-card-text class="auto-modeling-message">
-                        <vue-typed-js
-                                :strings="[$t('autoModeling.selectMessage1')]"
-                                :typeSpeed="10"
-                                :showCursor="false"
-                                @onComplete="state.firstMessageIsTyping = false"
-                        >
-                            <span class="typing"></span>
-                        </vue-typed-js>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-            <v-col class="auto-modeling-message-box">
-                <v-card v-if="!state.firstMessageIsTyping" class="auto-modeling-message-card">
-                    <v-card-text class="auto-modeling-message">
-                        <vue-typed-js
-                                :strings="[$t('autoModeling.selectMessage2')]"
-                                :typeSpeed="5"
-                                :showCursor="false"
-                                @onComplete="state.secondMessageIsTyping = false"
-                        >
-                            <span class="typing"></span>
-                        </vue-typed-js>
-                    </v-card-text>
-                </v-card>
-            </v-col>
+        <div>
+            <v-btn v-if="value && value.modelList" class="auto-modeling-btn" color="primary" @click="jump()">Create Model<v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon></v-btn>
         </div>
-        <v-card v-if="!state.secondMessageIsTyping" class="auto-modeling-user-story-card">
-            <v-card-subtitle>{{$t('autoModeling.explanation')}}</v-card-subtitle>
-            <v-card-text class="auto-modling-textarea">
-                <v-textarea 
-                        v-model="value.userStory"
-                        flat
-                        class="elevation-0"
-                        dense
-                        auto-grow
-                        rows="2"
-                        solo
-                >
-                </v-textarea>
-                <!--                <div-->
-                <!--                    v-for="modelId in value.modelList"-->
-                <!--                    :key="modelId"-->
-                <!--                >-->
-                <!--                    <v-btn x-small @click="jumpToModel(modelId)">{{ modelId }}</v-btn>    -->
-                <!--                </div>-->
-            </v-card-text>
-            <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; bottom:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
-            <v-card-actions v-if="done" class="auto-modeling-btn-box">
-                <v-btn class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>Try again</v-btn>
-                <v-btn class="auto-modeling-btn" color="primary" @click="jump()">Create Model<v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon></v-btn>
-            </v-card-actions>
-        </v-card>
-        <div
+        <div v-if="value && value.modelList && value.modelList.length > 0"
              class="auto-modeling-message-card"
              style="margin-top:25px; height: 100%; width: 20%;">
-            <v-col v-if="value && value.modelList && value.modelList.length > 0"
+            <!-- <v-col v-if="value && value.modelList && value.modelList.length > 0"
                    style="height: 100%; align-items: center; margin: 2px; width: 100%;"
             >
                 <div v-for="id in value.modelList" :key="id">
-                    <jump-to-model-lists-card :id="id" path="storming" @deleteModel="deleteModel" ></jump-to-model-lists-card>
+                    <jump-to-model-lists-card :id="id" path="business-model-canvas" @deleteModel="deleteModel" ></jump-to-model-lists-card>
                 </div>
-            </v-col>
+            </v-col> -->
         </div>
+        <ModelStorageDialog
+                :showDialog="showStorageDialog"
+                :condition="storageCondition"
+                @save="saveModel"
+                @close="closeStorageDialog()"
+        ></ModelStorageDialog>
     </div>
-
 </template>
 
 <script>
     import { VueTypedJs } from 'vue-typed-js'
-    import Generator from './UserStoryMapSecnarioGenerator.js'
-    //import UserStoryGenerator from './UserStoryGenerator.js'
-    import StorageBase from "../StorageBase";
-    import getParent from '../../../../utils/getParent'
+    import ModelStorageDialog from '../ModelStorageDialog.vue';
+    import StorageBase from '../../../CommonStorageBase.vue';
 
     export default {
         name: 'usm-dialoger',
@@ -84,12 +34,17 @@
         props: {
             value: Object,
             prompt: String,
-            uiStyle: Object,
-            cachedModels: Object,
             projectId: String,
+            cachedModels: Object,
+            modelIds: Object,
+            isServerProject: Boolean
         },
         components: {
-            VueTypedJs
+            VueTypedJs,
+            ModelStorageDialog
+        },
+        async created(){
+            await this.setUserInfo()
         },
         computed: {
             isForeign() {
@@ -99,19 +54,28 @@
                 return true
             },
         },
-        created(){
-            this.autoModel = getParent(this.$parent, 'auto-modeling-dialog');
+        async created(){
+            await this.setUserInfo()
         },
         watch: {
+            "prompt": {
+                deep:true,
+                handler:  _.debounce(function(newVal, oldVal)  {
+                    if(this.isCreatedModel){
+                        this.modelIds.BMDefinitionId = this.uuid()
+                        this.isCreatedModel = false
+                    }
+                },1000)
+            }
         },
         mounted(){
             var me = this;
-            me.setUIStyle(me.uiStyle);
-            me.init();
+            me.jump();
         },
         data() {
             return {
-                autoModel: null,
+                isCreatedModel: false,
+                projectExisted: false,
                 state:{
                     generator: "UserStoryMapGenerator",
                     businessModel: this.cachedModels["BMGenerator"],
@@ -121,11 +85,92 @@
                 input:{
                     title: this.prompt,
                 },
-                done: false,
-                generator: null,
+                storageCondition: null,
+                showStorageDialog: false,
             }
         },
         methods: {
+            async saveModel(){
+                var me = this
+        
+                let validate = await me.validateStorageCondition(me.storageCondition, 'save');
+                if(validate) {
+                    var settingModelId = me.storageCondition.projectId.replaceAll(' ', '-').trim();
+                    me.modelIds.BMDefinitionId = settingModelId   
+                    
+                    me.$emit('state','BM')
+                    if(!me.value) me.value = {}
+                    if(!me.value.modelList)me.value.modelList = []
+                    me.value.modelList.push(settingModelId);
+
+                    me.state.userStory = me.value.userStory;
+                    let stateJson = JSON.stringify(me.state);
+                    localStorage["gen-state"] = stateJson;
+                   
+                    me.$emit("input", me.value);
+                    me.$emit("change", 'businessModel');
+
+                    await me.putObject(`db://definitions/${settingModelId}/information`, {
+                        associatedProject: me.modelIds.projectId,
+                        author:  me.userInfo.uid,
+                        authorEmail : me.userInfo.email,
+                        projectId: settingModelId,
+                        projectName: me.storageCondition.projectName ? me.storageCondition.projectName : me.projectInfo.prompt,
+                        type: 'bm',
+                        createdTimeStamp: Date.now(),
+                        lastModifiedTimeStamp: Date.now()
+                    })
+                   
+                    me.isCreatedModel = true;
+                    window.open(`/#/business-model-canvas/${settingModelId}`, "_blank")
+                    me.closeStorageDialog()
+                } else{
+                    me.storageCondition.loading = false
+                }
+            },
+            async validateStorageCondition(condition, action){
+                var me = this
+
+                if( !this.isLogin ) {
+                    var otherMsg = 'Please check your login.';
+                    var obj ={
+                        'projectId': otherMsg
+                    }
+                    condition.error = obj
+                    return false;
+                }
+
+                if( !condition.projectId || condition.projectId.includes('/') ){
+                    var otherMsg = 'ProjectId must be non-empty strings and can\'t contain  "/"'
+                    var obj ={
+                        'projectId': otherMsg
+                    }
+                    condition.error = obj
+                    return false;
+                }
+
+                // checked duplicate projectId
+                var validateInfo = await me.isValidatePath(`db://definitions/${condition.projectId}/information`);
+                if( !validateInfo.status ){
+                    var obj ={
+                        'projectId': validateInfo.msg,
+                    }
+                    condition.error = obj
+                    return false;
+                }
+
+                var information = await me.list(`db://definitions/${condition.projectId}/information`)
+                if(information){
+                    var obj ={
+                        'projectId': 'This project id already exists.'
+                    }
+                    condition.error = obj
+                    return false;
+                }
+
+
+                return true;
+            },
             deleteModel(id){
                 var me = this
                 var index = me.value.modelList.findIndex(x => x == id)
@@ -134,59 +179,19 @@
                 this.$emit("input", this.value);
                 this.$emit("change", 'eventStorming');
             },
-            setUIStyle(uiStyle){
-                this.uiStyle = uiStyle;
-            },
-            init(){
-                var me = this 
-                if(!me.value){
-                    me.value = {
-                        userStory: ''
-                    }
-                    me.generate();
-                } else {
-                    me.done = true;
-                }
-            },
-
-            onReceived(content){
-                if(!this.value){
-                    this.value = {
-                        userStory: ''
-                    }
-                }
-                this.value.userStory = content;
-            },
 
             async onGenerationFinished(){
-                this.done = true;
-
-                this.$emit("input", this.value);
-                this.$emit("change", 'eventStorming');
-                
             },  
-
-            generate(){
-                this.input.businessModel = this.cachedModels["BMGenerator"]
-                this.input.painpointAnalysis = this.cachedModels["CJMGenerator"]
-                this.generator = new Generator(this);
-                this.generator.generate();
-                this.state.startTemplateGenerate = true
-                this.done = false;            
-            },
-
-            stop(){
-                this.generator.stop();
-                this.state.startTemplateGenerate = false
-                this.done = true;
-            },
 
             jump(){
                 try{
                     var me = this
                     let uuid = me.uuid();
-                    if(!me.value.modelList){
-                        me.value.modelList = []
+                    if(!me.value){
+                        me.value = {}
+                        if(!me.value.modelList){
+                            me.value.modelList = []
+                        }
                     }
                     me.value.modelList.push(uuid);
 

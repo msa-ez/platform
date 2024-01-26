@@ -348,6 +348,7 @@
 
                 
                 this.publishModelChanges(model)
+                this.input['userStory'] = this.generatorComponent.previousMessages[0].content
 
             },
 
