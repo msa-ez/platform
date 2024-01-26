@@ -174,7 +174,11 @@
     "selectMessage2": "Here's a user story for you.",
     "explanation": "You can edit this user story, or create model as is:",
     "scenario": "You can edit this scenario:",
-    "user": "Generating Persona... Choose a persona to generate customer journey map:"
+    "user": "Generating Persona... Choose a persona to generate customer journey map:",
+    "chip1": "Google Drive",
+    "chip2": "Food Delivery App",
+    "chip3": "Production Distribution ERP",
+    "chip4": "Internet Banking"
   },
   "UIWizardDialoger": {
     "imageMessage": "Here are a logo for this service:",

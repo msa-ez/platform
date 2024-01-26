@@ -4,6 +4,17 @@
             class="mx-auto"
             style="max-width: 70%; background-color: aliceblue;"
         >
+            <v-row class="justify-start" style="padding:10px 0px 0px 10px; margin:0px 0px -5px 0px;">
+                <v-col class="text-left" style="padding:0px;">
+                    <v-chip style="margin:0px 5px; opacity: 0.8; border-width: 1.5px;"
+                        v-for="(inputAutoModelingChip, index) in setAutoModelingTextChips"
+                        :key="index"
+                        @click="setAutoModelingText(inputAutoModelingChip)"
+                        outlined
+                    >{{ $t(inputAutoModelingChip) }}
+                    </v-chip>
+                </v-col>
+            </v-row>
             <v-card-text style="font-weight: 500;">
                 <v-text-field
                     style="margin-bottom: -30px;"
@@ -11,7 +22,7 @@
                     solo
                     :placeholder="$t('autoModeling.mainClick')"
                     :label="$t('autoModeling.main1')"
-                    :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-send'"
+                    :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-auto-fix'"
                     @click:append="openProjectDialog()"
                     @keydown.enter="openProjectDialog()"
                 ></v-text-field>
@@ -45,7 +56,7 @@
                                 :hint="$t('autoModeling.mainClick')"
                                 persistent-hint
                                 :label="$t('autoModeling.main2')"
-                                :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-send'"
+                                :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-auto-fix'"
                                 @click:append="startGen(genType)"
                                 @keydown.enter="startGen(genType)"
                             ></v-text-field>
@@ -353,6 +364,12 @@
         },
         data() {
             return {
+                setAutoModelingTextChips: [
+                    'autoModeling.chip1',
+                    'autoModeling.chip2',
+                    'autoModeling.chip3',
+                    'autoModeling.chip4'
+                ],
                 disableSaveBtn: false,
                 // projectInfo: {
                 //     eventStorming: null,
@@ -475,6 +492,11 @@
             });
         },
         methods: {
+            setAutoModelingText(inputAutoModelingChip) {
+                var me = this
+                me.projectInfo.prompt = inputAutoModelingChip;
+                me.openProjectDialog()
+            },
             setModelIds(){
                 var me = this
 
