@@ -118,6 +118,9 @@
             modelIds: Object,
             isServerProject: Boolean
         },
+        mixins: {
+            StorageBase
+        },
         components: {
             VueTypedJs,
             ModelStorageDialog
