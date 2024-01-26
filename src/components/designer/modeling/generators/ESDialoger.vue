@@ -157,11 +157,6 @@
         },
         methods: {
             openStorageDialog(){
-                if(!this.isServerProject){
-                    this.$emit('saveProject')
-                    return;
-                }
-
                 this.storageCondition = {
                     action: 'save',
                     title: 'Save Definition',
