@@ -3,6 +3,23 @@
             <v-card>
                 <v-card-title class="headline">{{condition.title}}</v-card-title>
                 <v-card-text>
+                    <div v-if="condition.type != 'project'">
+                        <div v-if="condition.connectedAssociatedProject" @click="openProjectTab()">
+                            <v-icon small>mdi-link-variant</v-icon> {{ condition.associatedProject }}
+                        </div>
+                        <div v-else  :style="openAssociatedProject ? 'height: 45px': ''">
+                            <div @click="openAssociatedProject = !openAssociatedProject" > <v-icon small>mdi-pencil</v-icon> Connect Project</div>
+                
+                            <v-text-field
+                                v-if="openAssociatedProject"
+                                v-model="condition.associatedProject"
+                                style="font-weight: 900; margin-top: -20px;"
+                                hint="Once connected, changes cannot be made."
+                                class="custom-hint-color"
+                                :error-messages="condition.error && condition.error['associatedProject']"
+                            ></v-text-field>
+                        </div>
+                    </div>
                     <div v-if="condition.action == 'fork' && condition.isForkModel"
                          style="font-size: 15px;">
                         <span class="mdi mdi-alert-outline" style="color: #FFA726; font-weight: 700; font-size:20px;"></span> You've already FORKED this model.<br>
@@ -20,7 +37,7 @@
                     <v-text-field
                             v-if="condition.action != 'backup'"
                             v-model="condition.projectId"
-                            label="* Project ID(Unique ID)"
+                            label="* Definition ID(Unique ID)"
                             style="font-weight: 900;"
                             :error-messages="condition.error && condition.error['projectId']"
                     ></v-text-field>
@@ -95,8 +112,11 @@
 </template>
 
 <script>
+    import CommonStorageBase from '../../CommonStorageBase.vue'
+
     export default {
         name: 'model-storage-dialog',
+        mixins:[CommonStorageBase],
         components: {},
         props: {
             condition: {
@@ -124,6 +144,7 @@
         data() {
             return {
                 key: 0,
+                openAssociatedProject: false,
             }
         },
         watch: {
@@ -171,7 +192,24 @@
                     }, 100)
                 }
             },
+            openProjectTab(){
+                window.open(`/#/project/${this.condition.associatedProject }`, "_blank")
+            }
 
+            // async validateConnectedAssociatedProject(){
+            //     var me = this
+            //     if(!me.condition.associatedProject) return false;
+              
+            //     var validateInfo = await me.getObject(`db://definitions/${this.condition.associatedProject}/information`);
+            //     if(!validateInfo) return false;
+            //     if(validateInfo.type == 'project') {
+            //         return true;
+            //     } else {
+            //         condition.error['associatedProject'] = 'The model is not a project'
+            //     }
+
+            //     return false;
+            // },
         }
         ,
     }
@@ -180,6 +218,11 @@
 <style>
     .v-messages__message{
         white-space: pre-line;
+    }
+
+    .custom-hint-color .v-messages__message {
+        font-size: 14px; 
+        color: lightcoral; /* Set your desired hint color */
     }
 
 </style>

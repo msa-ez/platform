@@ -1664,6 +1664,8 @@
                         editProjectName :JSON.parse(JSON.stringify(proName)),
                         projectId: convertProjectId,
                         version: me.defaultVersion,
+                        associatedProject: me.information.associatedProject,
+                        connectedAssociatedProject : me.information.associatedProject ? true : false,
                         error: null,
                         loading: false,
                     }
@@ -1734,21 +1736,28 @@
                 // 빈칸 -> - 변경
                 convertProjectId = convertProjectId.replaceAll(' ','-');
 
-                if( convertProjectId.includes('/') ){
-                    var otherMsg = 'ProjectId must be non-empty strings and can\'t contain  "/"'
-                    var obj ={
-                        'projectId': otherMsg
+                item.error = {};
+
+                if(!item.connectedAssociatedProject && item.associatedProject){
+                    // new connection.
+                    var validateInfo = await me.getObject(`db://definitions/${item.associatedProject}/information`);
+                    if(!validateInfo) {
+                        item.error['associatedProject'] = 'This model does not exist.'
+                    } else {
+                        if(validateInfo.type != 'project') {
+                        item.error['associatedProject'] = 'The model is not a project type.'
+                        } else if(validateInfo.author != me.userInfo.uid){
+                            item.error['associatedProject'] = 'You can only set up your own models.'
+                        }
                     }
-                    me.storageCondition.error = obj
-                    return false;
+                }
+
+                if( convertProjectId.includes('/') ){
+                    item.error['projectId'] = 'ProjectId must be non-empty strings and can\'t contain  "/"'
                 }
 
                 if( item.version == 'latest'){
-                    var obj ={
-                        'version': 'The version name cannot be specified as "latest".'
-                    }
-                    item.error = obj
-                    return false
+                    item.error['version'] = 'The version name cannot be specified as "latest".'
                 }
 
                 // checked duplicate projectId
@@ -1756,20 +1765,12 @@
 
                     var validateInfo = await me.isValidatePath(`db://definitions/${convertProjectId}/information`);
                     if( !validateInfo.status ){
-                        var obj ={
-                            'projectId': validateInfo.msg,
-                        }
-                        me.storageCondition.error = obj
-                        return false;
+                        item.error['projectId'] = validateInfo.msg
                     }
 
                     var information = await me.list(`db://definitions/${convertProjectId}/information`)
                     if(information){
-                        var obj ={
-                            'projectId': 'This project id already exists.'
-                        }
-                        me.storageCondition.error = obj
-                        return false;
+                        item.error['projectId'] = 'This project id already exists.'
                     }
                 }
 
@@ -1784,25 +1785,16 @@
                     var validate = await me.isValidatePath(`db://definitions/${originProjectId}/versionLists/${item.version.replaceAll('.','-')}`)
                     if( !(validate.status && !item.version.replaceAll('.','-').includes('/') && !item.version.replaceAll('.','-').includes(':')) ){
                         var otherMsg = 'Paths must be non-empty strings and can\'t contain  "/" or ":"'
-                        var obj ={
-                            'version': item.version.replaceAll('.','-').includes('/') || item.version.replaceAll('.','-').includes(':') ? otherMsg : validate.msg,
-                        }
-                        item.error = obj
-                        return false
+                        item.error['version'] = item.version.replaceAll('.','-').includes('/') || item.version.replaceAll('.','-').includes(':') ? otherMsg : validate.msg
                     }
 
                     var existVersion = await me.list(`db://definitions/${originProjectId}/versionLists/${item.version.replaceAll('.','-')}`)
                     if(existVersion){
-                        var otherMsg = 'This version already exists.'
-                        var obj ={
-                            'version': otherMsg,
-                        }
-                        item.error = obj
-                        return false
+                        item.error['version'] = 'This version already exists.'
                     }
                 }
 
-                return true
+                return Object.keys(item.error).length > 0 ? false : true
             },
             async addView(){
                 var me = this
@@ -1895,6 +1887,7 @@
                         var originProjectId =  me.projectId
                         var settingProjectId = me.storageCondition.projectId.replaceAll(' ','-').trim();
                         var projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
+                        let associatedProject = me.storageCondition.associatedProject
 
                         me.projectName = me.storageCondition.projectName
 
@@ -1930,10 +1923,8 @@
                             projectName: me.projectName,
                             type: me.canvasType,
                             projectId: settingProjectId,
-                            // gitOrgName: me.information && me.information.gitOrgName ? me.information.gitOrgName:null,
-                            // gitRepoName: me.information && me.information.gitRepoName ? me.information.gitRepoName:null,
                             firstCommit: me.information && me.information.firstCommit ? me.information.firstCommit:null,
-                            associatedProject: me.information.associatedProject
+                            associatedProject: associatedProject
                         }
 
                         let valueUrl = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(me.value));
@@ -1959,9 +1950,9 @@
                         }
 
 
-                        if(me.projectSendable){
+                        if(associatedProject){
                             // Sync connected associatedProject.
-                            me.synchronizeAssociatedProject(originProjectId, settingProjectId);
+                            await me.synchronizeAssociatedProject(associatedProject, settingProjectId);
 
                             // if channel disconnect not Sync.
                             // me.modelCanvasChannel.postMessage({
@@ -2045,7 +2036,7 @@
             moveModelUrl(modelId){
                 this.$router.push({path: `/${this.canvasType}/${modelId}`});
             },
-            synchronizeAssociatedProject(oldId, newId){},
+            synchronizeAssociatedProject(projectId, definitionId){},
             async checkedForkModel(){
                 var me = this
                 if(me.isServerModel){

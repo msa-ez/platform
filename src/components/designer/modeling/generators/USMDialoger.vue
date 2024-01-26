@@ -90,94 +90,13 @@
             }
         },
         methods: {
-            async saveModel(){
-                var me = this
-        
-                let validate = await me.validateStorageCondition(me.storageCondition, 'save');
-                if(validate) {
-                    var settingModelId = me.storageCondition.projectId.replaceAll(' ', '-').trim();
-                    me.modelIds.BMDefinitionId = settingModelId   
-                    
-                    me.$emit('state','BM')
-                    if(!me.value) me.value = {}
-                    if(!me.value.modelList)me.value.modelList = []
-                    me.value.modelList.push(settingModelId);
-
-                    me.state.userStory = me.value.userStory;
-                    let stateJson = JSON.stringify(me.state);
-                    localStorage["gen-state"] = stateJson;
-                   
-                    me.$emit("input", me.value);
-                    me.$emit("change", 'businessModel');
-
-                    await me.putObject(`db://definitions/${settingModelId}/information`, {
-                        associatedProject: me.modelIds.projectId,
-                        author:  me.userInfo.uid,
-                        authorEmail : me.userInfo.email,
-                        projectId: settingModelId,
-                        projectName: me.storageCondition.projectName ? me.storageCondition.projectName : me.projectInfo.prompt,
-                        type: 'bm',
-                        createdTimeStamp: Date.now(),
-                        lastModifiedTimeStamp: Date.now()
-                    })
-                   
-                    me.isCreatedModel = true;
-                    window.open(`/#/business-model-canvas/${settingModelId}`, "_blank")
-                    me.closeStorageDialog()
-                } else{
-                    me.storageCondition.loading = false
-                }
-            },
-            async validateStorageCondition(condition, action){
-                var me = this
-
-                if( !this.isLogin ) {
-                    var otherMsg = 'Please check your login.';
-                    var obj ={
-                        'projectId': otherMsg
-                    }
-                    condition.error = obj
-                    return false;
-                }
-
-                if( !condition.projectId || condition.projectId.includes('/') ){
-                    var otherMsg = 'ProjectId must be non-empty strings and can\'t contain  "/"'
-                    var obj ={
-                        'projectId': otherMsg
-                    }
-                    condition.error = obj
-                    return false;
-                }
-
-                // checked duplicate projectId
-                var validateInfo = await me.isValidatePath(`db://definitions/${condition.projectId}/information`);
-                if( !validateInfo.status ){
-                    var obj ={
-                        'projectId': validateInfo.msg,
-                    }
-                    condition.error = obj
-                    return false;
-                }
-
-                var information = await me.list(`db://definitions/${condition.projectId}/information`)
-                if(information){
-                    var obj ={
-                        'projectId': 'This project id already exists.'
-                    }
-                    condition.error = obj
-                    return false;
-                }
-
-
-                return true;
-            },
             deleteModel(id){
                 var me = this
                 var index = me.value.modelList.findIndex(x => x == id)
                 me.value.modelList.splice(index, 1)
                 
                 this.$emit("input", this.value);
-                this.$emit("change", 'eventStorming');
+                this.$emit("change", 'userStoryMap');
             },
 
             async onGenerationFinished(){
@@ -186,14 +105,11 @@
             jump(){
                 try{
                     var me = this
-                    let uuid = me.uuid();
-                    if(!me.value){
-                        me.value = {}
-                        if(!me.value.modelList){
-                            me.value.modelList = []
-                        }
+                   
+                    if(!me.value.modelList){
+                        me.value.modelList = []
                     }
-                    me.value.modelList.push(uuid);
+                    if(me.isServerProject) me.value.modelList.push(me.modelIds.USMDefinitionId);
 
                     me.$emit("input", me.value);
                     me.$emit("change", 'userStoryMap');
@@ -202,7 +118,7 @@
                     let stateJson = JSON.stringify(me.state);
                     localStorage["gen-state"] = stateJson;
 
-                    window.open(`/#/user-story-map/${uuid}`, "_blank")
+                    window.open(`/#/userStoryMap/${me.modelIds.USMDefinitionId}`, "_blank")
                     // this.$router.push({path: `storming/${uuid}`});
                 }catch(e){
                     if(e.name=="QuotaExceededError"){

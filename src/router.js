@@ -211,7 +211,7 @@ var options = {
         component: ClazzListPage,
     },
     {
-      path: "/user-story-map/:projectId",
+      path: "/userStoryMap/:projectId",
       name: "UserStoryMap",
       component: UserStoryMap,
     },

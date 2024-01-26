@@ -194,7 +194,7 @@
                         me.value.modelList = []
                     }
                 }
-                me.value.modelList.push(me.modelIds.BMDefinitionId)
+                if(me.isServerProject) me.value.modelList.push(me.modelIds.BMDefinitionId)
                 me.$emit("input", me.value);
                 me.$emit("change", 'businessModel');
 
