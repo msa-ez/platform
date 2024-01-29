@@ -190,11 +190,11 @@
                                 </div>
                             </div>
                             <div :key="reGenKey">
-                                <ESDialoger ref="esDialoger" v-model="projectInfo.eventStorming" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" :uiStyle="uiStyle" v-if="genType == 'ES2'" @change="backupProject" @saveProject="openStorageDialog"></ESDialoger>
-                                <CJMDialoger ref="cjMDialoger" v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @selectedPersona="setSelectedPersona" v-if="genType == 'CJM'" @change="backupProject" @saveProject="openStorageDialog"></CJMDialoger>
-                                <BMDialoger ref="bmDialoger" v-model="projectInfo.businessModel" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'BM2'" @change="backupProject" @saveProject="openStorageDialog"></BMDialoger>
-                                <USMDialoger ref="usmDialoger" v-model="projectInfo.userStoryMap" :projectId="projectId"  :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'USM'" @change="backupProject"></USMDialoger>
-                                <UIWizardDialoger v-model="projectInfo.ui" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @selected="onUIStyleSelected" v-if="genType == 'UI'" @change="backupProject" @saveProject="openStorageDialog"></UIWizardDialoger>
+                                <ESDialoger v-if="genType == 'ES2'"     ref="esDialoger"    v-model="projectInfo.eventStorming"      :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" :uiStyle="uiStyle"   ></ESDialoger>
+                                <CJMDialoger v-if="genType == 'CJM'"    ref="cjMDialoger"   v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @selectedPersona="setSelectedPersona" ></CJMDialoger>
+                                <BMDialoger v-if="genType == 'BM2'"     ref="bmDialoger"    v-model="projectInfo.businessModel"      :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject"></BMDialoger>
+                                <USMDialoger v-if="genType == 'USM'"    ref="usmDialoger"   v-model="projectInfo.userStoryMap"       :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject"></USMDialoger>
+                                <UIWizardDialoger v-if="genType == 'UI'" ref="uiDialoger"   v-model="projectInfo.ui"                 :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @selected="onUIStyleSelected"  ></UIWizardDialoger>
                             </div>
                         </v-card-text>
                     <!-- </div> -->
@@ -267,6 +267,7 @@
                         eventStorming: null,
                         customerJourneyMap: null,
                         businessModel: null,
+                        userStoryMap: null,
                         prompt: ''
                     }
                 }
@@ -430,6 +431,7 @@
                     CJMDefinitionId : null,
                     BMDefinitionId : null,
                     UIDefinitionId : null,
+                    USMDefinitionId: null,
                 }
             }
         },
@@ -506,6 +508,7 @@
                 if(!me.modelIds.CJMDefinitionId) me.modelIds.CJMDefinitionId = me.uuid()
                 if(!me.modelIds.BMDefinitionId) me.modelIds.BMDefinitionId = me.uuid()
                 if(!me.modelIds.UIDefinitionId) me.modelIds.UIDefinitionId = me.uuid()
+                if(!me.modelIds.USMDefinitionId) me.modelIds.USMDefinitionId = me.uuid()
             },
             checkLogin(type){
                 if(this.isLogin){
@@ -744,7 +747,7 @@
                             eventStorming: me.projectInfo.eventStorming,
                             businessModel: me.projectInfo.businessModel,
                             customerJourneyMap: me.projectInfo.customerJourneyMap,
-                            customerJourneyMap: me.projectInfo.userStoryMap,
+                            userStoryMap: me.projectInfo.userStoryMap,
                         })
                     }
                 } else  {

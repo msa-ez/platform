@@ -226,7 +226,7 @@
                     if(!me.value.modelList){
                         me.value.modelList = []
                     }
-                    me.value.modelList.push(me.modelIds.ESDefinitionId);
+                    if(me.isServerProject) me.value.modelList.push(me.modelIds.ESDefinitionId);
 
                     me.$emit("input", me.value);
                     me.$emit("change", 'eventStorming');

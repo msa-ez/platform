@@ -834,7 +834,7 @@
                             me.canvas.changedTemplateCode = true
                         }
                     }
-                } else if(me.value.boundedContext.id){
+                } else if(me.value.boundedContext && me.value.boundedContext.id){
                     me.value.boundedContext = {}
                     if(me.canvas.initLoad) me.canvas.changedByMe = true;
                 }

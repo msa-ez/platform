@@ -283,7 +283,7 @@
                 if(!me.value.personas[personaIndex].modelList){
                     me.value.personas[personaIndex].modelList = []
                 }
-                me.value.personas[personaIndex].modelList.push(me.modelIds.CJMDefinitionId)
+                if(me.isServerProject) me.value.personas[personaIndex].modelList.push(me.modelIds.CJMDefinitionId)
                 me.selectPersona(me.value.personas[personaIndex])
                 me.$emit("input", me.value)
                 me.$emit("change", "customerJourneyMap")

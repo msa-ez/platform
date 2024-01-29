@@ -2918,18 +2918,19 @@
                     me.changedByMe = true;
                 }
             },
-            async synchronizeAssociatedProject(oldId, newId) {
+            async synchronizeAssociatedProject(associatedProject, newId) {
                 var me = this;
+                if(!associatedProject) return;
 
-                let lists = await me.list(`db://definitions/${me.information.associatedProject}/information/eventStorming`);
+                let lists = await me.list(`db://definitions/${associatedProject}/information/eventStorming`);
                 let index = -1;
                 if (lists && lists.modelList) {
-                    index = lists.modelList.findIndex((x) => x == oldId);
+                    index = lists.modelList.findIndex((x) => x == newId);
                     index = index == -1 ? lists.modelList.length : index;
                 }
 
                 index = index == -1 ? 0 : index;
-                await me.setString(`db://definitions/${me.information.associatedProject}/information/eventStorming/modelList/${index}`, newId);
+                await me.setString(`db://definitions/${associatedProject}/information/eventStorming/modelList/${index}`, newId);
             },
             overrideElements(elementValues) {
                 // Event, Command, Aggregate
