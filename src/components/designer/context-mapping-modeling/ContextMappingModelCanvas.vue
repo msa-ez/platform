@@ -1210,7 +1210,7 @@
             me.value.elements[contextBC.elementView.id].mirrorElement = element.elementView.id;
             me.changedByMe = true;
             me.syncMirrorElements();
-            me.synchronizeAssociatedProject(null,settingProjectId);
+            me.synchronizeAssociatedProject(me.information.associatedProject, settingProjectId);
           }
 
           window.open(`/#/storming/${settingProjectId}`, "_blank");
@@ -1218,6 +1218,20 @@
         } else {
           this.storageCondition.loading = false
         }
+      },
+      async synchronizeAssociatedProject(associatedProject, newId) {
+                var me = this;
+                if(!associatedProject) return;
+
+                let lists = await me.list(`db://definitions/${associatedProject}/information/contextMapping`);
+                let index = -1;
+                if (lists && lists.modelList) {
+                    index = lists.modelList.findIndex((x) => x == newId);
+                    index = index == -1 ? lists.modelList.length : index;
+                }
+
+                index = index == -1 ? 0 : index;
+                await me.setString(`db://definitions/${associatedProject}/information/contextMapping/modelList/${index}`, newId);
       },
       overrideElements(elementValues){
         var me = this

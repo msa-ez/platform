@@ -6,6 +6,7 @@ const os=require('os');
 const CompressionPlugin = require("compression-webpack-plugin");
 // const TerserPlugin = require("terser-webpack-plugin");
 module.exports = {
+    filenameHashing: true,
     configureWebpack: {
         // plugins: [new CompressionPlugin({algorithm: "gzip", compressionOptions: { level: 1 }})],
         // optimization: {
@@ -15,6 +16,10 @@ module.exports = {
         //         chunks: 'all',
         //     },
         // },
+        output: {
+            filename: 'js/[name].[hash].js',
+            chunkFilename: 'js/[name].[hash].js'
+        },
         devtool: 'source-map',
         devServer: {
             port: '8080',

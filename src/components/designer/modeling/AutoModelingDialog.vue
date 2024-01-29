@@ -4,6 +4,17 @@
             class="mx-auto"
             style="max-width: 70%; background-color: aliceblue;"
         >
+            <v-row class="justify-start" style="padding:10px 0px 0px 10px; margin:0px 0px -5px 0px;">
+                <v-col class="text-left" style="padding:0px;">
+                    <v-chip style="margin:0px 5px; opacity: 0.8; border-width: 1.5px;"
+                        v-for="(inputAutoModelingChip, index) in setAutoModelingTextChips"
+                        :key="index"
+                        @click="setAutoModelingText($t(inputAutoModelingChip))"
+                        outlined
+                    >{{ $t(inputAutoModelingChip) }}
+                    </v-chip>
+                </v-col>
+            </v-row>
             <v-card-text style="font-weight: 500;">
                 <v-text-field
                     style="margin-bottom: -30px;"
@@ -11,7 +22,7 @@
                     solo
                     :placeholder="$t('autoModeling.mainClick')"
                     :label="$t('autoModeling.main1')"
-                    :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-send'"
+                    :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-auto-fix'"
                     @click:append="openProjectDialog()"
                     @keydown.enter="openProjectDialog()"
                 ></v-text-field>
@@ -45,7 +56,7 @@
                                 :hint="$t('autoModeling.mainClick')"
                                 persistent-hint
                                 :label="$t('autoModeling.main2')"
-                                :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-send'"
+                                :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-auto-fix'"
                                 @click:append="startGen(genType)"
                                 @keydown.enter="startGen(genType)"
                             ></v-text-field>
@@ -179,11 +190,11 @@
                                 </div>
                             </div>
                             <div :key="reGenKey">
-                                <ESDialoger ref="esDialoger" v-model="projectInfo.eventStorming" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" :uiStyle="uiStyle" v-if="genType == 'ES2'" @change="backupProject" @saveProject="openStorageDialog"></ESDialoger>
-                                <CJMDialoger ref="cjMDialoger" v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @selectedPersona="setSelectedPersona" v-if="genType == 'CJM'" @change="backupProject" @saveProject="openStorageDialog"></CJMDialoger>
-                                <BMDialoger ref="bmDialoger" v-model="projectInfo.businessModel" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'BM2'" @change="backupProject" @saveProject="openStorageDialog"></BMDialoger>
-                                <USMDialoger ref="usmDialoger" v-model="projectInfo.userStoryMap" :projectId="projectId"  :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'USM'" @change="backupProject"></USMDialoger>
-                                <UIWizardDialoger v-model="projectInfo.ui" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @selected="onUIStyleSelected" v-if="genType == 'UI'" @change="backupProject" @saveProject="openStorageDialog"></UIWizardDialoger>
+                                <ESDialoger v-if="genType == 'ES2'"     ref="esDialoger"    v-model="projectInfo.eventStorming"      :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" :uiStyle="uiStyle"   ></ESDialoger>
+                                <CJMDialoger v-if="genType == 'CJM'"    ref="cjMDialoger"   v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @selectedPersona="setSelectedPersona" ></CJMDialoger>
+                                <BMDialoger v-if="genType == 'BM2'"     ref="bmDialoger"    v-model="projectInfo.businessModel"      :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject"></BMDialoger>
+                                <USMDialoger v-if="genType == 'USM'"    ref="usmDialoger"   v-model="projectInfo.userStoryMap"       :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject"></USMDialoger>
+                                <UIWizardDialoger v-if="genType == 'UI'" ref="uiDialoger"   v-model="projectInfo.ui"                 :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @selected="onUIStyleSelected"  ></UIWizardDialoger>
                             </div>
                         </v-card-text>
                     <!-- </div> -->
@@ -256,6 +267,7 @@
                         eventStorming: null,
                         customerJourneyMap: null,
                         businessModel: null,
+                        userStoryMap: null,
                         prompt: ''
                     }
                 }
@@ -353,6 +365,12 @@
         },
         data() {
             return {
+                setAutoModelingTextChips: [
+                    'autoModeling.chip1',
+                    'autoModeling.chip2',
+                    'autoModeling.chip3',
+                    'autoModeling.chip4'
+                ],
                 disableSaveBtn: false,
                 // projectInfo: {
                 //     eventStorming: null,
@@ -413,6 +431,7 @@
                     CJMDefinitionId : null,
                     BMDefinitionId : null,
                     UIDefinitionId : null,
+                    USMDefinitionId: null,
                 }
             }
         },
@@ -475,6 +494,11 @@
             });
         },
         methods: {
+            setAutoModelingText(inputAutoModelingChip) {
+                var me = this
+                me.projectInfo.prompt = inputAutoModelingChip;
+                me.openProjectDialog()
+            },
             setModelIds(){
                 var me = this
 
@@ -484,6 +508,7 @@
                 if(!me.modelIds.CJMDefinitionId) me.modelIds.CJMDefinitionId = me.uuid()
                 if(!me.modelIds.BMDefinitionId) me.modelIds.BMDefinitionId = me.uuid()
                 if(!me.modelIds.UIDefinitionId) me.modelIds.UIDefinitionId = me.uuid()
+                if(!me.modelIds.USMDefinitionId) me.modelIds.USMDefinitionId = me.uuid()
             },
             checkLogin(type){
                 if(this.isLogin){
@@ -722,7 +747,7 @@
                             eventStorming: me.projectInfo.eventStorming,
                             businessModel: me.projectInfo.businessModel,
                             customerJourneyMap: me.projectInfo.customerJourneyMap,
-                            customerJourneyMap: me.projectInfo.userStoryMap,
+                            userStoryMap: me.projectInfo.userStoryMap,
                         })
                     }
                 } else  {

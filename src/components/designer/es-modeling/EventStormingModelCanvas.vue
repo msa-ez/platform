@@ -2918,18 +2918,19 @@
                     me.changedByMe = true;
                 }
             },
-            async synchronizeAssociatedProject(oldId, newId) {
+            async synchronizeAssociatedProject(associatedProject, newId) {
                 var me = this;
+                if(!associatedProject) return;
 
-                let lists = await me.list(`db://definitions/${me.information.associatedProject}/information/eventStorming`);
+                let lists = await me.list(`db://definitions/${associatedProject}/information/eventStorming`);
                 let index = -1;
                 if (lists && lists.modelList) {
-                    index = lists.modelList.findIndex((x) => x == oldId);
+                    index = lists.modelList.findIndex((x) => x == newId);
                     index = index == -1 ? lists.modelList.length : index;
                 }
 
                 index = index == -1 ? 0 : index;
-                await me.setString(`db://definitions/${me.information.associatedProject}/information/eventStorming/modelList/${index}`, newId);
+                await me.setString(`db://definitions/${associatedProject}/information/eventStorming/modelList/${index}`, newId);
             },
             overrideElements(elementValues) {
                 // Event, Command, Aggregate
@@ -3129,15 +3130,15 @@
                     if (val.projectName) me.projectName = val.projectName;
 
                     // Create Model in BoundedContext > Model Merge
-                    let elements = me.value.elements;
-                    let relations = me.value.relations;
+                    let elements = JSON.parse(JSON.stringify(me.value.elements));
+                    let relations = JSON.parse(JSON.stringify(me.value.relations));
 
                     me.value.elements = {};
                     me.value.relations = {};
 
                     if (me.createModelInBoundedContext) {
                         Object.keys(elements).forEach(function (ele) {
-                            if(elements[ele].boundedContext){
+                            if(elements[ele]!=null && elements[ele].boundedContext){
                                 if(elements[ele].boundedContext.id == Object.keys(val.elements)[0]){
                                     delete elements[ele]
                                 }
@@ -3145,8 +3146,10 @@
                         });
 
                         Object.keys(relations).forEach(function (rel) {
-                            if(relations[rel].sourceElement.boundedContext.id == Object.keys(val.elements)[0]){
-                                delete relations[rel]
+                            if(relations[rel]!=null){
+                                if(relations[rel].sourceElement.boundedContext.id == Object.keys(val.elements)[0]){
+                                    delete relations[rel]
+                                }
                             }
                         });
 

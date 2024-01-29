@@ -384,6 +384,20 @@
             moveModelUrl(modelId){
                 this.$router.push({path: `/business-model-canvas/${modelId}`});
             },
+            async synchronizeAssociatedProject(associatedProject, newId) {
+                var me = this;
+                if(!associatedProject) return;
+
+                let lists = await me.list(`db://definitions/${associatedProject}/information/businessModel`);
+                let index = -1;
+                if (lists && lists.modelList) {
+                    index = lists.modelList.findIndex((x) => x == newId);
+                    index = index == -1 ? lists.modelList.length : index;
+                }
+
+                index = index == -1 ? 0 : index;
+                await me.setString(`db://definitions/${associatedProject}/information/businessModel/modelList/${index}`, newId);
+            },
             onChangedValue(oldVal, newVal){
                 var me = this
                 var diff = jsondiffpatch.diff(oldVal, newVal);

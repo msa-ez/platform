@@ -1,6 +1,6 @@
 {
   "name": "eventstorming-tool",
-  "version": "0.1.1",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "serve": "node --max_old_space_size=8192 node_modules/@vue/cli-service/bin/vue-cli-service.js serve --host 0.0.0.0 --disableHostCheck true",

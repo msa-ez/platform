@@ -727,12 +727,6 @@
                 window.addEventListener('resize', this.onResize);
             })
 
-            //새로고침 감지 && 탭 닫기
-            window.onbeforeunload = function (e) {
-                console.log('reload')
-                me.exitUser()
-                me.releaseMoveEvents();
-            }
 
             try{
                 me.isConnection('db://', function (connection) {
@@ -756,7 +750,11 @@
                 }
             })
 
-
+            // 탭 닫기
+            window.addEventListener('unload', this.handleUnload);         
+            //새로고침 감지 
+            window.addEventListener('beforeunload', this.handleBeforeUnload);
+            // key down
             this.$nextTick(function () {
 
                 let startTime = Date.now()
@@ -772,11 +770,13 @@
                     var VkeyCode = 86;
                     var ZkeyCode = 90;
 
-                    if (evt.keyCode == CkeyCode && (evt.metaKey || evt.ctrlKey)) {
+                    if(evt.keyCode === 116 || (evt.metaKey && evt.keyCode === 82) || (evt.metaKey && evt.shiftKey && evt.keyCode === 82) ){
+                        //새로고침 감지 
+                        this.handleBeforeUnload();
+                    } else if (evt.keyCode == CkeyCode && (evt.metaKey || evt.ctrlKey)) {
                         me.copy();
                     } else if (evt.keyCode == VkeyCode && (evt.ctrlKey || evt.metaKey)) {
                         me.paste();
-
                     } else if (evt.keyCode == ZkeyCode && (evt.metaKey || evt.ctrlKey)) {
                         if (evt.shiftKey) {
                             if (me.isEditable) {
@@ -895,6 +895,20 @@
 
         },
         methods: {
+            handleBeforeUnload(event) {        
+                // reload || close tab
+                console.log('reload')
+                this.exitUser()
+                this.releaseMoveEvents();
+            },
+            handleUnload(event) {
+                // // close tab
+                console.log('close tab')
+                // this.saveComposition('save');
+                // console.log("Tab or browser is being closed");
+
+                // return false; // For some older browsers
+            },
             overrideElements(elementValues){
               // use code core.
                 return elementValues
@@ -978,10 +992,6 @@
                         // await me.putObject(`localstorage://serverImageLists`, imageObjects);
                     }
                 }
-
-                await me.exitUser()
-                await me.releaseMoveEvents();
-
 
                 if( me.isServerModel  && !me.isReadOnlyModel ) {
                     // server && permission O
@@ -1354,7 +1364,7 @@
             },
             exitUser() {
                 var me = this
-                if ( me.isServerModel && me.isQueueModel && me.isInitRender && !me.isReadOnlyModel && !me.isClazzModeling  ) {
+                if ( me.isLogin && me.isServerModel && me.isQueueModel && me.isInitRender && !me.isReadOnlyModel && !me.isClazzModeling  ) {
                     var pushObj = {
                         action: 'userExit',
                         editUid: me.userInfo.uid,
@@ -1654,6 +1664,8 @@
                         editProjectName :JSON.parse(JSON.stringify(proName)),
                         projectId: convertProjectId,
                         version: me.defaultVersion,
+                        associatedProject: me.information.associatedProject,
+                        connectedAssociatedProject : me.information.associatedProject ? true : false,
                         error: null,
                         loading: false,
                     }
@@ -1724,21 +1736,28 @@
                 // 빈칸 -> - 변경
                 convertProjectId = convertProjectId.replaceAll(' ','-');
 
-                if( convertProjectId.includes('/') ){
-                    var otherMsg = 'ProjectId must be non-empty strings and can\'t contain  "/"'
-                    var obj ={
-                        'projectId': otherMsg
+                item.error = {};
+
+                if(!item.connectedAssociatedProject && item.associatedProject){
+                    // new connection.
+                    var validateInfo = await me.getObject(`db://definitions/${item.associatedProject}/information`);
+                    if(!validateInfo) {
+                        item.error['associatedProject'] = 'This model does not exist.'
+                    } else {
+                        if(validateInfo.type != 'project') {
+                        item.error['associatedProject'] = 'The model is not a project type.'
+                        } else if(validateInfo.author != me.userInfo.uid){
+                            item.error['associatedProject'] = 'You can only set up your own models.'
+                        }
                     }
-                    me.storageCondition.error = obj
-                    return false;
+                }
+
+                if( convertProjectId.includes('/') ){
+                    item.error['projectId'] = 'ProjectId must be non-empty strings and can\'t contain  "/"'
                 }
 
                 if( item.version == 'latest'){
-                    var obj ={
-                        'version': 'The version name cannot be specified as "latest".'
-                    }
-                    item.error = obj
-                    return false
+                    item.error['version'] = 'The version name cannot be specified as "latest".'
                 }
 
                 // checked duplicate projectId
@@ -1746,20 +1765,12 @@
 
                     var validateInfo = await me.isValidatePath(`db://definitions/${convertProjectId}/information`);
                     if( !validateInfo.status ){
-                        var obj ={
-                            'projectId': validateInfo.msg,
-                        }
-                        me.storageCondition.error = obj
-                        return false;
+                        item.error['projectId'] = validateInfo.msg
                     }
 
                     var information = await me.list(`db://definitions/${convertProjectId}/information`)
                     if(information){
-                        var obj ={
-                            'projectId': 'This project id already exists.'
-                        }
-                        me.storageCondition.error = obj
-                        return false;
+                        item.error['projectId'] = 'This project id already exists.'
                     }
                 }
 
@@ -1774,25 +1785,16 @@
                     var validate = await me.isValidatePath(`db://definitions/${originProjectId}/versionLists/${item.version.replaceAll('.','-')}`)
                     if( !(validate.status && !item.version.replaceAll('.','-').includes('/') && !item.version.replaceAll('.','-').includes(':')) ){
                         var otherMsg = 'Paths must be non-empty strings and can\'t contain  "/" or ":"'
-                        var obj ={
-                            'version': item.version.replaceAll('.','-').includes('/') || item.version.replaceAll('.','-').includes(':') ? otherMsg : validate.msg,
-                        }
-                        item.error = obj
-                        return false
+                        item.error['version'] = item.version.replaceAll('.','-').includes('/') || item.version.replaceAll('.','-').includes(':') ? otherMsg : validate.msg
                     }
 
                     var existVersion = await me.list(`db://definitions/${originProjectId}/versionLists/${item.version.replaceAll('.','-')}`)
                     if(existVersion){
-                        var otherMsg = 'This version already exists.'
-                        var obj ={
-                            'version': otherMsg,
-                        }
-                        item.error = obj
-                        return false
+                        item.error['version'] = 'This version already exists.'
                     }
                 }
 
-                return true
+                return Object.keys(item.error).length > 0 ? false : true
             },
             async addView(){
                 var me = this
@@ -1824,7 +1826,8 @@
                     if(check){
                         var originProjectId = me.projectId;
                         var projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
-
+                        let associatedProject = me.storageCondition.associatedProject
+                        
                         // set tag
                         if(me.value.scm.org && me.value.scm.repo){
                             me.value.scm.tag = me.storageCondition.version;
@@ -1856,6 +1859,11 @@
                             valueUrl: valueUrl
                         }
 
+                        if(associatedProject){
+                            // Sync connected associatedProject.
+                            await me.synchronizeAssociatedProject(associatedProject, originProjectId);
+                        }
+
                         me.projectName = putInformation.projectName
                         me.onCreateGitTagName(me.storageCondition);
                         await me.putObject(`db://definitions/${originProjectId}/versionLists/${projectVersion}`, versionInfoObj)
@@ -1885,6 +1893,7 @@
                         var originProjectId =  me.projectId
                         var settingProjectId = me.storageCondition.projectId.replaceAll(' ','-').trim();
                         var projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
+                        let associatedProject = me.storageCondition.associatedProject
 
                         me.projectName = me.storageCondition.projectName
 
@@ -1920,10 +1929,8 @@
                             projectName: me.projectName,
                             type: me.canvasType,
                             projectId: settingProjectId,
-                            // gitOrgName: me.information && me.information.gitOrgName ? me.information.gitOrgName:null,
-                            // gitRepoName: me.information && me.information.gitRepoName ? me.information.gitRepoName:null,
                             firstCommit: me.information && me.information.firstCommit ? me.information.firstCommit:null,
-                            associatedProject: me.information.associatedProject
+                            associatedProject: associatedProject
                         }
 
                         let valueUrl = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(me.value));
@@ -1949,9 +1956,9 @@
                         }
 
 
-                        if(me.projectSendable){
+                        if(associatedProject){
                             // Sync connected associatedProject.
-                            me.synchronizeAssociatedProject(originProjectId, settingProjectId);
+                            await me.synchronizeAssociatedProject(associatedProject, settingProjectId);
 
                             // if channel disconnect not Sync.
                             // me.modelCanvasChannel.postMessage({
@@ -2035,7 +2042,7 @@
             moveModelUrl(modelId){
                 this.$router.push({path: `/${this.canvasType}/${modelId}`});
             },
-            synchronizeAssociatedProject(oldId, newId){},
+            synchronizeAssociatedProject(projectId, definitionId){},
             async checkedForkModel(){
                 var me = this
                 if(me.isServerModel){
