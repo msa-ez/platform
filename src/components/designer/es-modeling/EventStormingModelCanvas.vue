@@ -3129,15 +3129,15 @@
                     if (val.projectName) me.projectName = val.projectName;
 
                     // Create Model in BoundedContext > Model Merge
-                    let elements = me.value.elements;
-                    let relations = me.value.relations;
+                    let elements = JSON.parse(JSON.stringify(me.value.elements));
+                    let relations = JSON.parse(JSON.stringify(me.value.relations));
 
                     me.value.elements = {};
                     me.value.relations = {};
 
                     if (me.createModelInBoundedContext) {
                         Object.keys(elements).forEach(function (ele) {
-                            if(elements[ele].boundedContext){
+                            if(elements[ele]!=null && elements[ele].boundedContext){
                                 if(elements[ele].boundedContext.id == Object.keys(val.elements)[0]){
                                     delete elements[ele]
                                 }
@@ -3145,8 +3145,10 @@
                         });
 
                         Object.keys(relations).forEach(function (rel) {
-                            if(relations[rel].sourceElement.boundedContext.id == Object.keys(val.elements)[0]){
-                                delete relations[rel]
+                            if(relations[rel]!=null){
+                                if(relations[rel].sourceElement.boundedContext.id == Object.keys(val.elements)[0]){
+                                    delete relations[rel]
+                                }
                             }
                         });
 
