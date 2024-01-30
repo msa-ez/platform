@@ -46,69 +46,6 @@
                 
                         <!-- <v-tabs>
                             <v-row class="main-tap-list" style="margin-top:-80px; margin-bottom:10px; position:absolute; max-width:60%; min-width:10%; z-index:1; left: 50%; transform: translate(-50%, 0%);">
-<<<<<<< HEAD
-                                <v-hover v-slot="{ hover }">
-                                    <v-list-group
-                                        :value="hover"
-                                        style="background-color:white;"
-                                    >
-                                        <template v-slot:activator>
-                                            <v-list-item-title style="margin-right:-20px;">{{$t('mainNav.project')}}</v-list-item-title>
-                                        </template>
-
-                                        <v-list-item
-                                            v-for="(tabObj, tabIndex) in filterTabLists"
-                                            v-if="tabObj.id !== 'home'"
-                                            :key="tabObj.id"
-                                            link
-                                            @click="tabId = tabObj.id"
-                                        >
-                                            <v-list-item-title style="margin-top:-4px;">{{ tabObj.display }}</v-list-item-title>
-                                            <v-avatar v-if="tabIndex > 0 && tabObj.totalCount != null" color="green lighten-5" size="30"
-                                                    style="font-size:10px;">
-                                                {{ tabObj.totalCount == null ? '...' : (tabObj.totalCount == 0 ? '0' : tabObj.totalCount) }}
-                                            </v-avatar>
-                                        </v-list-item>
-                                    </v-list-group>
-                                </v-hover>
-                                <v-btn v-for="(item, index) in mainNav"
-                                    :key="index"
-                                    text
-                                    style="height:48px; font-size:16px;"
-                                    @click="toggleDialog(item)"
-                                >{{$t(item.title)}}
-                                </v-btn>
-                            </v-row>
-                        </v-list>
-
-                        <v-dialog v-for="(item, index) in mainNav"
-                                v-if="item.dialogType === 'introduction'"
-                                :key="`dialog-${index}`"
-                                v-model="item.dialog"
-                        >
-                            <v-card>
-                                <v-card-title class="text-h5" >{{ item.title }}</v-card-title>
-                            </v-card>
-                        </v-dialog>
-                        <v-dialog v-for="(item, index) in mainNav"
-                                v-if="item.dialogType === 'pricing'"
-                                :key="`dialog-${index}`"
-                                v-model="item.dialog"
-                        >
-                            <v-card>
-                                <v-card-title class="text-h5">{{ item.title }}</v-card-title>
-                                <div>
-                                    <v-card-text>Your Content Here</v-card-text>
-                                    <v-card-actions>
-                                    </v-card-actions>
-                                </div>
-                            </v-card>
-                        </v-dialog>
-                        <v-dialog v-for="(item, index) in mainNav"
-                            v-if="item.dialogType === 'learn'"
-                            :key="`dialog-${index}`"
-                            v-model="item.dialog"
-=======
                                 <v-btn @click="wikiOpen('introduction')"
                                     text
                                     style="font-size:16px; margin:0px 10px;">
@@ -169,7 +106,6 @@
                         </v-hover>
 
                         <v-dialog v-model="learnNavDialog"
->>>>>>> ed2b17e62c8bf95300fb6e70f58b751cc3d8a56a
                             max-width="90%"
                         >
                             <v-card style="padding:10px; height:85vh; overflow:auto;">
@@ -1434,16 +1370,10 @@
                     </v-row>
                 </div>
             </div>
-<<<<<<< HEAD
-        </slot>    
-        <slot name="footer">
-            <div style="min-height: 190px;">
-=======
         </slot>
 
         <!-- <slot name="footer">
             <div>
->>>>>>> ed2b17e62c8bf95300fb6e70f58b751cc3d8a56a
                 <v-footer padless>
                     <ProvisionIndication divider></ProvisionIndication>
                 </v-footer>
@@ -1493,12 +1423,8 @@
         },
         data() {
             return {
-<<<<<<< HEAD
-                navLearnModelingCards: [
-=======
                 navLectureTab: null,
                 wikiOpenUrl: [
->>>>>>> ed2b17e62c8bf95300fb6e70f58b751cc3d8a56a
                     {
                         type: 'introduction',
                         ko: 'https://intro-kor.msaez.io/started/',
@@ -1650,7 +1576,6 @@
                         page: '/storming/human-resource-mgmt-0303:v0.0.1'
                     }
                 ],
-<<<<<<< HEAD
                 mainNav: [
                     {   
                         title: '제품 소개',
@@ -1671,9 +1596,8 @@
                         dialog: false,
                     }
                 ],
-=======
+
                 learnNavDialog: false,
->>>>>>> ed2b17e62c8bf95300fb6e70f58b751cc3d8a56a
                 projectUid: "",
                 showDialog: false,
                 showMainText1: true,

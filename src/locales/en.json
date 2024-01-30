@@ -32,11 +32,6 @@
   "mainNav": {
     "introduction": "Introduction",
     "partnership": "Partnership",
-<<<<<<< HEAD
-    "pricing": "Pricing",
-    "learn": "Learn",
-    "project": "Project"
-=======
     "learn": "learn",
     "Storage": "Storage",
     "company": "Company In Use",
@@ -48,7 +43,6 @@
     "design" : "Design",
     "operation" : "Operation",
     "project" : "Project"
->>>>>>> ed2b17e62c8bf95300fb6e70f58b751cc3d8a56a
   },
   "main": {
     "title": "Microservices Architecture made easy!",
@@ -62,12 +56,10 @@
     "content6": "Utilize ChatGPT-4 and internet searches to write code,",
     "content7": "iterate on implementation until issues in compilation and functionality are resolved",
     "content8": "by finding solutions online and passing tests.",
-<<<<<<< HEAD
     "goToUrlText": "Learn more",
     "goToLearn" : "Learn",
     "goToLectures" : "Lectures"
-=======
-    "goToUrlText": "Learn more"
+
   },
   "mainNavSubCard" : {
     "tutorial": "Tutorial",
@@ -85,7 +77,6 @@
     "userStory": "User Story Map",
     "eventstorming": "Event Storming Model",
     "Brand" : "Brands & UIs"
->>>>>>> ed2b17e62c8bf95300fb6e70f58b751cc3d8a56a
   },
   "tools": {
     "modeling": "MODELING TOOLS",
@@ -99,9 +90,7 @@
     "bpmn-inst": "Business Process Model and Notation (BPMN) is a graphical representation for specifying business processes in a business process model.",
     "tutorial-btn": "TUTORIAL",
     "video-btn": "VIDEOS",
-<<<<<<< HEAD
-    "create-btn": "CREATE"
-=======
+
     "create-btn": "CREATE",
     "sticky": "Sticky Note Collaboration",
     "sticky-inst": "Sticky note helps you to conduct collaborative idea meetings through free collaboration.",
@@ -111,7 +100,6 @@
     "project-inst": "Projects are used when grouping one or more models into a new project. You can reference and import elements from other models associated with the project.",
     "cjm": "Customer Journey Map",
     "cjm-inst": ""
->>>>>>> ed2b17e62c8bf95300fb6e70f58b751cc3d8a56a
   },
   "tutorials": {
     "tutorial": "TUTORIALS",
