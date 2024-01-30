@@ -4466,71 +4466,68 @@ jobs:
             },
             onGenerationFinished(model){
                 var me = this
-                me.$app.try({
-                    context: me,
-                    async action(me){
-                        if(model && model.code && !me.stopAutoGenerate){
-                            let implementedCode = model.code
-                            if(implementedCode.includes("```")){
-                                implementedCode = implementedCode.replaceAll("```java", "```")
-                                implementedCode = implementedCode.split("```")[1]
-                            }
-        
-                            me.changedDiffCodeViewer = true
-                            me.changedDiffCode = JSON.parse(JSON.stringify(me.filteredOpenCode))
-                            me.filteredOpenCode[0].code = me.promptValue + implementedCode + me.suffixValue
-        
-                            me.startGenerate = false
-        
-                            me.setAutoGenerateCodetoList = JSON.parse(JSON.stringify(me.codeLists))
-                            var idx = me.setAutoGenerateCodetoList.findIndex(x => x.fullPath == me.filteredOpenCode[0].fullPath)
-                            me.setAutoGenerateCodetoList[idx].code = me.filteredOpenCode[0].code
-        
-                            me.refreshCallGenerate();
-                        } else {
-                            me.stopAutoGenerate = false
-                            me.startGenerate = false
-                        }
+                if(model && model.code && !me.stopAutoGenerate){
+                    let implementedCode = model.code
+                    if(implementedCode.includes("```")){
+                        implementedCode = implementedCode.replaceAll("```java", "```")
+                        implementedCode = implementedCode.split("```")[1]
                     }
-                })
+
+                    me.changedDiffCodeViewer = true
+                    me.changedDiffCode = JSON.parse(JSON.stringify(me.filteredOpenCode))
+                    me.filteredOpenCode[0].code = me.promptValue + implementedCode + me.suffixValue
+
+                    me.startGenerate = false
+
+                    me.setAutoGenerateCodetoList = JSON.parse(JSON.stringify(me.codeLists))
+                    var idx = me.setAutoGenerateCodetoList.findIndex(x => x.fullPath == me.filteredOpenCode[0].fullPath)
+                    me.setAutoGenerateCodetoList[idx].code = me.filteredOpenCode[0].code
+
+                    me.refreshCallGenerate();
+                } else {
+                    me.stopAutoGenerate = false
+                    me.startGenerate = false
+                    alert("Please, try again")
+                }
 
             },
             async autoGenerateCode(idx, id){
                 var me = this
-                me.$app.try({
-                    context: me,
-                    async action(me){
-                        if(id == '2'){
-                            let idx = me.treeLists.findIndex(x => x.name == me.openCode[0].path.split('/')[0])
-                            if(idx != -1){
-                                me.javaFileList = me.getSelectedFilesDeeply([me.treeLists[idx]])
-                            }
-                        }
-                        if(me.openaiToken){
-                            var splitContent = null
-                            me.promptValue = []
-                            me.suffixValue = []
-                            splitContent = me.filteredOpenCode[0].code.split("\n")
-                            splitContent.forEach(function (content, contentIndex){
-                                if(contentIndex <= idx){
-                                    me.promptValue.push(content)
-                                } else if(contentIndex > idx) {
-                                    me.suffixValue.push(content)
-                                }
-                            })
-                            me.promptValue = me.promptValue.join("\n")
-                            me.suffixValue = me.suffixValue.join("\n")
-        
-                            me.stopAutoGenerate = false;
-                            me.generator = new BusinessLogicGenerator(this);
-                            me.generator.generate();
-        
-                        } else {
-                            me.stopAutoGenerate = false
-                            alert("input Token")
+                try {
+                    if(id == '2'){
+                        let idx = me.treeLists.findIndex(x => x.name == me.openCode[0].path.split('/')[0])
+                        if(idx != -1){
+                            me.javaFileList = me.getSelectedFilesDeeply([me.treeLists[idx]])
                         }
                     }
-                })
+                    if(me.openaiToken){
+                        var splitContent = null
+                        me.promptValue = []
+                        me.suffixValue = []
+                        splitContent = me.filteredOpenCode[0].code.split("\n")
+                        splitContent.forEach(function (content, contentIndex){
+                            if(contentIndex <= idx){
+                                me.promptValue.push(content)
+                            } else if(contentIndex > idx) {
+                                me.suffixValue.push(content)
+                            }
+                        })
+                        me.promptValue = me.promptValue.join("\n")
+                        me.suffixValue = me.suffixValue.join("\n")
+
+                        me.stopAutoGenerate = false;
+                        me.generator = new BusinessLogicGenerator(this);
+                        me.generator.generate();
+    
+                    } else {
+                        me.stopAutoGenerate = false
+                        alert("input Token")
+                    }
+                } catch(e) {
+                    me.startGenerate = false
+                    console.log(e)
+                    alert(e)
+                }
             },
             async autoGenerateMustacheTemplate(modelData, path, convertModelData, mode){
                 var me = this
