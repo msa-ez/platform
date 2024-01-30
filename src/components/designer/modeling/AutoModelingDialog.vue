@@ -4,9 +4,9 @@
             class="mx-auto"
             style="max-width: 70%; background-color: aliceblue;"
         >
-            <v-row class="justify-start" style="padding:10px 0px 0px 10px; margin:0px 0px -5px 0px;">
+            <v-row class="justify-start main-auto-modeling-chip-row">
                 <v-col class="text-left" style="padding:0px;">
-                    <v-chip style="margin:0px 5px; opacity: 0.8; border-width: 1.5px;"
+                    <v-chip class="main-auto-modeling-chip"
                         v-for="(inputAutoModelingChip, index) in setAutoModelingTextChips"
                         :key="index"
                         @click="setAutoModelingText($t(inputAutoModelingChip))"
@@ -826,6 +826,25 @@
     }
 </script>
 <style>
+.main-auto-modeling-chip {
+    margin:0px 5px;
+    opacity: 0.8;
+    border-width: 1.5px;
+}
+.main-auto-modeling-chip-row { 
+    padding:10px 0px 0px 10px;
+    margin:0px 0px -5px 0px;
+}
+
+@media only screen and (max-width:672px) {
+    .main-auto-modeling-chip {
+        margin-top:10px;
+    }
+    .main-auto-modeling-chip-row { 
+        padding:0px 0px 0px 10px;
+    }
+    
+}
 </style>
 <style lang="scss">
 </style>
