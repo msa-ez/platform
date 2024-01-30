@@ -161,7 +161,7 @@
                 isDelete: false,
                 copyInformation: null,
                 projectPath: null,
-                defaultImage: 'https://user-images.githubusercontent.com/54785805/125735022-10b4560f-51c3-4d0d-8c05-9641c6d8a8b0.png',
+                defaultImage: '/static/image/listCard/eventStormingDefaultImage.png',
             }
         },
         created() {
@@ -242,12 +242,19 @@
                     let result;
                    
                         result =  await me.getString(`storage://definitions/${me.copyInformation.projectId}/information/image`);
-                        if( result != undefined ){
+                        if( result && !result.Error ){
                             me.copyInformation.img = result
                         } else {
                             let image = await me.getString(`localstorage://image_${me.copyInformation.projectId}`);
-                            if( image ) me.copyInformation.img = image
-
+                            if(image) {
+                                me.copyInformation.img = image
+                            } else {
+                                if(me.copyInformation.type == 'project') {
+                                    me.copyInformation.img = me.defaultImage
+                                } else if (me.copyInformation.type == 'es'){
+                                    me.copyInformation.img = me.defaultImage
+                                }
+                            }
                             // let serverImageLists = await me.getObject(`localstorage://serverImageLists`)
                             // if(serverImageLists && serverImageLists[me.copyInformation.projectId]){
                             //     me.copyInformation.img = serverImageLists[me.copyInformation.projectId];

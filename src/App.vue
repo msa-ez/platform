@@ -110,10 +110,10 @@
                     <v-row
                         style="margin:0px;"
                     >
-                        <v-col
+                        <v-col class="making-col"
                             v-for="(item,index) in planning"
                             :key="index"
-                            lg="3"
+                            lg="4"
                             md="4"
                             sm="6"
                             xs="12"
@@ -152,10 +152,10 @@
                     <v-row
                         style="margin:0px;"
                     >
-                        <v-col
+                        <v-col class="making-col"
                             v-for="(item,index) in design"
                             :key="index"
-                            lg="3"
+                            lg="4"
                             md="4"
                             sm="6"
                             xs="12"
@@ -194,10 +194,10 @@
                     <v-row
                         style="margin:0px;"
                     >
-                        <v-col
+                        <v-col class="making-col"
                             v-for="(item,index) in development"
                             :key="index"
-                            lg="3"
+                            lg="4"
                             md="4"
                             sm="6"
                             xs="12"
@@ -233,13 +233,13 @@
 
                     <!-- 만들기 프로젝트(project) -->
                     <div class="making-sub-title">{{$t('making.project')}}</div>
-                    <v-row
+                    <v-row class="making-col"
                         style="margin:0px;"
                     >
-                        <v-col
+                        <v-col class="making-col"
                             v-for="(item,index) in makingProject"
                             :key="index"
-                            lg="3"
+                            lg="4"
                             md="4"
                             sm="6"
                             xs="12"
@@ -2254,10 +2254,13 @@
 
 </script>
 <style>
+    .making-col {
+        padding:20px;
+    }
     .making-sub-title {
         font-size:20px;
         font-weight: 700;
-        margin-left:13px;
+        margin-left:20px;
         margin-top:30px;
     }
     .main-nav-modeling-is-mobile:hover {
