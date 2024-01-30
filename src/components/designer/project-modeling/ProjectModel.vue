@@ -30,19 +30,18 @@
                         </v-card-text>
                     </v-card>
                     <v-divider></v-divider>
-
                     <v-card flat>
-                        <v-card-title>Event Storming Model</v-card-title>
+                        <v-card-title>Customer Journey Map</v-card-title>
                         <v-card-text style="width: 100%; white-space: nowrap; overflow-x: scroll;">
                             <v-row style="height: 100%; margin: 2px; width: max-content;">
-                                <div v-for="id in esModelLists" :key="id">
-                                    <jump-to-model-lists-card :id="id" path="storming" @deleteDefinition="openDeleteDialog"></jump-to-model-lists-card>
+                                <div v-for="id in cjmModelLists" :key="id">
+                                    <jump-to-model-lists-card :id="id" path="cjm" @deleteDefinition="openDeleteDialog"></jump-to-model-lists-card>
                                 </div>
 
-                                <v-card :style="esModelLists.length == 0 ? 'height: 150px': ''" style="text-align: center; margin-top: 5px; margin-left: 5px;" flat>
+                                <v-card :style="cjmModelLists.length == 0 ? 'height: 150px': ''" style="text-align: center; margin-top: 5px; margin-left: 5px;" flat>
                                     <v-tooltip right>
                                         <template v-slot:activator="{ on }">
-                                            <v-btn text style="align-items: center; width: 100%; height: 100%;" @click="openStorageDialog('es')">
+                                            <v-btn text style="align-items: center; width: 100%; height: 100%;" @click="openStorageDialog('cjm')">
                                                 <v-icon>mdi-plus</v-icon>
                                             </v-btn>
                                         </template>
@@ -53,7 +52,6 @@
                         </v-card-text>
                     </v-card>
                     <v-divider></v-divider>
-
                     <v-card flat>
                         <v-card-title>Business Model</v-card-title>
                         <v-card-text style="width: 100%; white-space: nowrap; overflow-x: scroll;">
@@ -75,7 +73,6 @@
                         </v-card-text>
                     </v-card>
                     <v-divider></v-divider>
-
                     <v-card flat>
                         <v-card-title>UserStory Map</v-card-title>
                         <v-card-text style="width: 100%; white-space: nowrap; overflow-x: scroll;">
@@ -88,6 +85,28 @@
                                     <v-tooltip right>
                                         <template v-slot:activator="{ on }">
                                             <v-btn text style="align-items: center; width: 100%; height: 100%;" @click="openStorageDialog('userStoryMap')">
+                                                <v-icon>mdi-plus</v-icon>
+                                            </v-btn>
+                                        </template>
+                                        <span>add Model</span>
+                                    </v-tooltip>
+                                </v-card>
+                            </v-row>
+                        </v-card-text>
+                    </v-card>
+                    <v-divider></v-divider>
+                    <v-card flat>
+                        <v-card-title>Event Storming Model</v-card-title>
+                        <v-card-text style="width: 100%; white-space: nowrap; overflow-x: scroll;">
+                            <v-row style="height: 100%; margin: 2px; width: max-content;">
+                                <div v-for="id in esModelLists" :key="id">
+                                    <jump-to-model-lists-card :id="id" path="storming" @deleteDefinition="openDeleteDialog"></jump-to-model-lists-card>
+                                </div>
+
+                                <v-card :style="esModelLists.length == 0 ? 'height: 150px': ''" style="text-align: center; margin-top: 5px; margin-left: 5px;" flat>
+                                    <v-tooltip right>
+                                        <template v-slot:activator="{ on }">
+                                            <v-btn text style="align-items: center; width: 100%; height: 100%;" @click="openStorageDialog('es')">
                                                 <v-icon>mdi-plus</v-icon>
                                             </v-btn>
                                         </template>
@@ -291,6 +310,12 @@
                 if( !this.information.userStoryMap ) return []
                 if( !this.information.userStoryMap.modelList) return  []
                 return this.information.userStoryMap.modelList
+            },
+            cjmModelLists(){
+                if( !this.information) return []
+                if( !this.information.customerJourneyMap ) return []
+                if( !this.information.customerJourneyMap.modelList) return  []
+                return this.information.customerJourneyMap.modelList
             }
         },
         created: async function () {
@@ -375,7 +400,10 @@
                     me.information.contextMapping.modelList = me.information.contextMapping.modelList.filter(id => id != me.deleteCondition.projectId)
                 } else if(me.deleteCondition.type == 'userStoryMap'){
                     me.information.userStoryMap.modelList = me.information.userStoryMap.modelList.filter(id => id != me.deleteCondition.projectId)
+                } else if(me.deleteCondition.type == 'cjm'){
+                    me.information.customerJourneyMap.modelList = me.information.customerJourneyMap.modelList.filter(id => id != me.deleteCondition.projectId)
                 }
+                
 
                 await me.delete(`db://userLists/${me.deleteCondition.author}/mine/${me.deleteCondition.projectId}`)
                 me.backupProject()
@@ -446,6 +474,11 @@
                         if(!me.information.userStoryMap ) me.information.userStoryMap = {}
                         if(!me.information.userStoryMap.modelList) me.information.userStoryMap.modelList = []
                         me.information.userStoryMap.modelList.push(settingProjectId);
+                    } else if(me.storageCondition.type == 'cjm'){
+                        path = me.storageCondition.type
+                        if(!me.information.customerJourneyMap ) me.information.customerJourneyMap = {}
+                        if(!me.information.customerJourneyMap.modelList) me.information.customerJourneyMap.modelList = []
+                        me.information.customerJourneyMap.modelList.push(settingProjectId);
                     }
                     
                     me.backupProject();
