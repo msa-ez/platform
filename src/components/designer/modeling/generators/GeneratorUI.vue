@@ -306,18 +306,18 @@
 
             async generate(changedInput){
                 let issuedTimeStamp = Date.now()
-                // let usage = new Usage({
-                //     serviceType: `${this.generatorComponent.generateType}_AIGeneration`,
-                //     issuedTimeStamp: issuedTimeStamp,
-                //     expiredTimeStamp: Date.now(),
-                //     metadata: {
-                //         modelId: this.projectId
-                //     }
-                // });
-                // if(!await usage.use()){
-                //     this.stop()
-                //     return false;
-                // }
+                let usage = new Usage({
+                    serviceType: `${this.generatorComponent.generateType}_AIGeneration`,
+                    issuedTimeStamp: issuedTimeStamp,
+                    expiredTimeStamp: Date.now(),
+                    metadata: {
+                        modelId: this.projectId
+                    }
+                });
+                if(!await usage.use()){
+                    this.stop()
+                    return false;
+                }
 
                 if(changedInput)
                     this.input = changedInput;

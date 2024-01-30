@@ -593,7 +593,7 @@
                 </v-layout>
             </hsc-window>
         </hsc-window-style-metal>
-        <GeneratorUI ref="generatorUI" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
+        <GeneratorUI v-if="projectId" ref="generatorUI" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
     </div>
 </template>
 

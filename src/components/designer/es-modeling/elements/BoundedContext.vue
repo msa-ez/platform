@@ -307,7 +307,7 @@
                 }
             },
             onModelCreated(model){
-                this.$EventBus.$emit('createModelInBoundedContext', model);
+                this.$EventBus.$emit('createModelInBoundedContext', model, this.originModel);
             },
             async onGenerationFinished(model){
                 this.generateDone = true;
