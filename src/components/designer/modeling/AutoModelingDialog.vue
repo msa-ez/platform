@@ -94,7 +94,7 @@
                                                     <v-card-text style="justify-content: center; margin-top: -10px;">
                                                         <div :style="genType == 'CJM' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
                                                             <v-icon v-if="genType == 'CJM'" small color="success">mdi-check</v-icon>
-                                                            Customer Journey Map
+                                                            {{$t('mainAutoModelingText.cjm')}}
                                                         </div>
                                                     </v-card-text>
                                                 </div>
@@ -114,7 +114,7 @@
                                                     <v-card-text style="justify-content: center; margin-top: -10px;">
                                                         <div :style="genType == 'BM2' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
                                                             <v-icon v-if="genType == 'BM2'" small color="success">mdi-check</v-icon>
-                                                            Business Model Canvas
+                                                            {{$t('mainAutoModelingText.bm')}}
                                                         </div>
                                                     </v-card-text>
                                                 </div>
@@ -134,7 +134,7 @@
                                                     <v-card-text style="justify-content: center; margin-top: -10px;">
                                                         <div :style="genType == 'USM' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
                                                             <v-icon v-if="genType == 'USM'" small color="success">mdi-check</v-icon>
-                                                            User Story Map
+                                                            {{$t('mainAutoModelingText.userStory')}}
                                                         </div>
                                                     </v-card-text>
                                                 </div>
@@ -148,13 +148,13 @@
                                                         size="125"
                                                         rounded="0"
                                                     >
-                                                        <v-img src="https://user-images.githubusercontent.com/113568664/208291359-e7ce6d88-776b-4447-a236-d7a1cddadcf4.png"></v-img>
+                                                        <v-img src="/static/image/main/mainModeling.png"></v-img>
                                                     </v-avatar>
                                     
                                                     <v-card-text style="justify-content: center; margin-top: -10px;">
                                                         <div :style="genType == 'ES2' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
                                                             <v-icon v-if="genType == 'ES2'" small color="success">mdi-check</v-icon>
-                                                            Event Storming Model
+                                                            {{$t('mainAutoModelingText.eventstorming')}}
                                                         </div>
                                                     </v-card-text>
                                                 </div>
@@ -174,7 +174,7 @@
                                                     <v-card-text style="justify-content: center; margin-top: -10px;">
                                                         <div :style="genType == 'UI' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
                                                             <v-icon v-if="genType == 'UI'" small color="success">mdi-check</v-icon>
-                                                            Brands & UIs
+                                                            {{$t('mainAutoModelingText.Brand')}}
                                                         </div>
                                                     </v-card-text>
                                                 </div>
