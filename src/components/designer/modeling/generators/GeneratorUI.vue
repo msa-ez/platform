@@ -39,7 +39,7 @@
                     </v-tooltip> -->
                     <v-tooltip  bottom>
                         <template v-slot:activator="{ on, attrs }">
-                            <v-btn @click="generate()"
+                            <v-btn @click="reGenerate(input['userStory'])"
                                 icon small
                                 v-bind="attrs"
                                 v-on="on"
@@ -66,7 +66,7 @@
                     </v-tooltip> -->
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
-                            <v-btn v-if="generatorStep === 'aggregate' || generatorName === 'CJMGenerator' || generatorName === 'BMGenerator'"
+                            <v-btn v-if="generatorStep === 'aggregate' || generatorName === 'CJMGenerator' || generatorName === 'BMGenerator' || generatorName === 'UserStoryMapGenerator'"
                                 @click="finishModelCreation()"
                                 small
                                 v-bind="attrs"
@@ -75,7 +75,7 @@
                                 style="padding:0px 5px; margin-right:10px;"
                                 color="primary"
                             >
-                                <div v-if="generatorName === 'CJMGenerator' || generatorName === 'BMGenerator'">
+                                <div v-if="generatorName === 'CJMGenerator' || generatorName === 'BMGenerator' || generatorName === 'UserStoryMapGenerator'">
                                     <span><Icon style="float:left; margin-right:3px;" icon="ri:check-fill" width="16" height="16"/>complete</span>
                                 </div>
                                 <div v-else>
@@ -167,12 +167,20 @@
     import CJMGenerator from './CJMGenerator.js'
     import UMLGenerator from './UMLGenerator.js'
     import BMGenerator from './BMGenerator.js'
+    import UserStoryMapGenerator from './UserStoryMapGenerator.js'
+    import Usage from '../../../../utils/Usage'
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
 
     export default {
         name: 'es-generator-ui',
         props: {
+            projectId: {
+                type: String,
+                default:function(){
+                    return null;
+                }
+            },
             generator: String,
             generatorParameter: Object,
             modelerValue: Object,
@@ -256,6 +264,7 @@
                         case "CJMGenerator": this.generatorComponent = new CJMGenerator(this); break;
                         case "UMLGenerator": this.generatorComponent = new UMLGenerator(this); break;
                         case "BMGenerator": this.generatorComponent = new BMGenerator(this); break;
+                        case "UserStoryMapGenerator": this.generatorComponent = new UserStoryMapGenerator(this); break;
 
                     }
 
@@ -295,13 +304,39 @@
                 // this.generator.onGenerationFinished();
             // }, 
 
-            generate(changedInput){
+            async generate(changedInput){
+                let issuedTimeStamp = Date.now()
+                // let usage = new Usage({
+                //     serviceType: `${this.generatorComponent.generateType}_AIGeneration`,
+                //     issuedTimeStamp: issuedTimeStamp,
+                //     expiredTimeStamp: Date.now(),
+                //     metadata: {
+                //         modelId: this.projectId
+                //     }
+                // });
+                // if(!await usage.use()){
+                //     this.stop()
+                //     return false;
+                // }
+
                 if(changedInput)
                     this.input = changedInput;
 
                 this.result = '';
                 this.$emit("clearModelValue")
                 this.generatorComponent.generate();
+                this.generationStopped = true;
+            },
+
+            async reGenerate(userStory){
+                let reGeneratePrompt = {
+                    action: "reGenerate",
+                    messages: userStory
+                }
+
+                this.result = '';
+                this.$emit("clearModelValue")
+                this.generatorComponent.generate(reGeneratePrompt);
                 this.generationStopped = true;
             },
 
@@ -326,6 +361,7 @@
 
                 
                 this.publishModelChanges(model)
+                this.input['userStory'] = this.generatorComponent.previousMessages[0].content
 
             },
 

@@ -597,20 +597,25 @@
         methods: {
             async rollBack(sha, idx){
                 var me = this
-                me.siTestResults.splice(idx + 1);
-                me.lastIndex = me.siTestResults.lastIndex
-                me.resultLength = me.siTestResults.length
-                
-                me.siTestResults[me.lastIndex].userMessage = null
-                me.siTestResults[me.lastIndex].errorLog = null
-                me.siTestResults[me.lastIndex].fullErrorLog = null
-                me.siTestResults[me.lastIndex].compilerMessageIdx = null
-                me.siTestResults[me.lastIndex].systemMessage = false 
-                me.siTestResults[me.lastIndex].stopLoading = false
-
-                me.commitMsg = me.siTestResults[me.lastIndex].solutionType + ': ' + me.siTestResults[me.lastIndex].solution
-                
-                me.$emit("rollBack", sha)
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.siTestResults.splice(idx + 1);
+                        me.lastIndex = me.siTestResults.lastIndex
+                        me.resultLength = me.siTestResults.length
+                        
+                        me.siTestResults[me.lastIndex].userMessage = null
+                        me.siTestResults[me.lastIndex].errorLog = null
+                        me.siTestResults[me.lastIndex].fullErrorLog = null
+                        me.siTestResults[me.lastIndex].compilerMessageIdx = null
+                        me.siTestResults[me.lastIndex].systemMessage = false 
+                        me.siTestResults[me.lastIndex].stopLoading = false
+        
+                        me.commitMsg = me.siTestResults[me.lastIndex].solutionType + ': ' + me.siTestResults[me.lastIndex].solution
+                        
+                        me.$emit("rollBack", sha)
+                    }
+                })
             },
             openIDE(type) {
                 this.$emit('openIDE', type)
@@ -684,72 +689,89 @@
             },
             async summaryCodeList(){
                 var me = this
-                let query
-                let apiKey = await me.generator.getToken();
+                me.$app.try({
+                    context: me,
+                    async action(me){
 
-                me.summarizedCodeList = {}
-
-                const vectorStore = new VectorStorage({ openAIApiKey: apiKey });
-                Object.keys(me.codeList).forEach(async function (key){
-                    await vectorStore.addText(me.codeList[key], {
-                        category: key,
-                    });
-                })
-                if(me.generatedErrorDetails){
-                    query = `Error list: ${JSON.stringify(me.generatedErrorDetails)}
-What files do I need to modify and what related files do I need to fix the errors in the error list?`
-                } else {
-                    query = `To pass the test, you must implement domain logic in the ${me.testFile.name} file.`
-                }
-
-                const results = await vectorStore.similaritySearch({
-                    query: query,
-                    k: 10,
-                });
-                
-                if(results){
-                    results.similarItems.forEach(function (item){
-                        me.summarizedCodeList[item.metadata.category] = me.codeList[item.metadata.category]
-                    })
-                } 
-                me.summarizedCodeList[me.testFile.name] = me.codeList[me.testFile.name]
-                Object.keys(me.codeList).some(function (key){
-                    if(!me.summarizedCodeList[key]){
-                        if(JSON.stringify(me.summarizedCodeList).length < 21000){
-                            me.summarizedCodeList[key] = me.codeList[key]
+                        let query
+                        let apiKey = await me.generator.getToken();
+        
+                        me.summarizedCodeList = {}
+        
+                        const vectorStore = new VectorStorage({ openAIApiKey: apiKey });
+                        Object.keys(me.codeList).forEach(async function (key){
+                            await vectorStore.addText(me.codeList[key], {
+                                category: key,
+                            });
+                        })
+                        if(me.generatedErrorDetails){
+                            query = `Error list: ${JSON.stringify(me.generatedErrorDetails)}
+        What files do I need to modify and what related files do I need to fix the errors in the error list?`
                         } else {
-                            return true;
+                            query = `To pass the test, you must implement domain logic in the ${me.testFile.name} file.`
                         }
+        
+                        const results = await vectorStore.similaritySearch({
+                            query: query,
+                            k: 10,
+                        });
+                        
+                        if(results){
+                            results.similarItems.forEach(function (item){
+                                me.summarizedCodeList[item.metadata.category] = me.codeList[item.metadata.category]
+                            })
+                        } 
+                        me.summarizedCodeList[me.testFile.name] = me.codeList[me.testFile.name]
+                        Object.keys(me.codeList).some(function (key){
+                            if(!me.summarizedCodeList[key]){
+                                if(JSON.stringify(me.summarizedCodeList).length < 21000){
+                                    me.summarizedCodeList[key] = me.codeList[key]
+                                } else {
+                                    return true;
+                                }
+                            }
+                        })
                     }
                 })
             },
             async generate(){
                 var me = this
-                me.commitMsg = null
-                me.model = 'gpt-4'
-                me.startGitAction = true
-                me.generator = new SIGenerator(this);
-                if(!me.prompt){
-                    await me.summaryCodeList()
-                }
-                me.generator.generate();
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.commitMsg = null
+                        me.model = 'gpt-4'
+                        me.startGitAction = true
+                        me.generator = new SIGenerator(this);
+                        if(!me.prompt){
+                            await me.summaryCodeList()
+                        }
+                        me.generator.generate();
+                    }
+                })
             },
             regenerate(prompt){
-                if(prompt){
-                    this.siTestResults[this.lastIndex].userMessage = prompt
-                } else {
-                    if(this.solutionCnt){
-                        for(var i = 0; i < this.solutionCnt; i++){
-                            this.siTestResults.pop()
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(prompt){
+                            this.siTestResults[this.lastIndex].userMessage = prompt
+                        } else {
+                            if(this.solutionCnt){
+                                for(var i = 0; i < this.solutionCnt; i++){
+                                    this.siTestResults.pop()
+                                }
+                                this.lastIndex = this.siTestResults.lastIndex
+                                this.resultLength = this.siTestResults.length
+                            }
+                            if(this.savedGeneratedErrorDetails){
+                                this.generatedErrorDetails = this.savedGeneratedErrorDetails
+                            }
                         }
-                        this.lastIndex = this.siTestResults.lastIndex
-                        this.resultLength = this.siTestResults.length
+                        this.generate()
                     }
-                    if(this.savedGeneratedErrorDetails){
-                        this.generatedErrorDetails = this.savedGeneratedErrorDetails
-                    }
-                }
-                this.generate()
+                })
             },
             scrollToBottom() {
                 const element = document.getElementById('si_gpt');
@@ -764,26 +786,31 @@ What files do I need to modify and what related files do I need to fix the error
             },
             commitToGit(){
                 var me = this
-                me.prompt = null
-                me.openAiMessageList = []
-                me.selectedIdx = null
-                me.startGitAction = true
-                me.isFirstCommit = false
-                me.siTestResults[me.lastIndex].compilerMessageIdx = me.commitCnt;
-                me.commitCnt++;
-                if(!me.isAutoMode){
-                    me.siTestResults[me.lastIndex].userMessage = "Go ahead"
-                }
-                me.scrollToBottom();
-                me.codeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
-                let commitData = {
-                    codeList: me.codeList,
-                    message: me.commitMsg
-                }
-                me.$emit("startCommitWithSigpt", commitData)
-                if(me.commitCnt >= 15){
-                    me.isAutoMode = false
-                }
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.prompt = null
+                        me.openAiMessageList = []
+                        me.selectedIdx = null
+                        me.startGitAction = true
+                        me.isFirstCommit = false
+                        me.siTestResults[me.lastIndex].compilerMessageIdx = me.commitCnt;
+                        me.commitCnt++;
+                        if(!me.isAutoMode){
+                            me.siTestResults[me.lastIndex].userMessage = "Go ahead"
+                        }
+                        me.scrollToBottom();
+                        me.codeList = JSON.parse(JSON.stringify(me.copySelectedCodeList))
+                        let commitData = {
+                            codeList: me.codeList,
+                            message: me.commitMsg
+                        }
+                        me.$emit("startCommitWithSigpt", commitData)
+                        if(me.commitCnt >= 15){
+                            me.isAutoMode = false
+                        }
+                    }
+                })
             },
             setDialog(model, option){
                 if(model){

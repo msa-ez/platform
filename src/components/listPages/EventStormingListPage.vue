@@ -889,10 +889,10 @@
 
         <slot name="footer">
             <div style="min-height: 190px;">
-                <v-footer padless>
+                <!-- <v-footer padless>
                     <ProvisionIndication :style="!showLoading && showMoreButton ? 'padding-top:40px':''"
                                           divider></ProvisionIndication>
-                </v-footer>
+                </v-footer> -->
             </div>
         </slot>
         <!-- <div style="position: fixed; z-index:999; right:5px; bottom:5px;">

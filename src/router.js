@@ -6,6 +6,7 @@ import ModelerRouter from './components/designer/ModelerRouter'
 import ModelerImageGenerator from './components/designer/ModelerImageGenerator'
 import ProcessDesigner from './components/designer/process/ProcessDesigner'
 import OpenIdRedirect from './components/oauth/OpenIdRedirect'
+import ModelingResult from './components/designer/ModelingResult'
 // import ViewModelingDesigner from "./components/designer/modeling/ViewModelingDesigner";
 Vue.component("modeler-router", ModelerRouter);
 Vue.component("modeler-image-generator", ModelerImageGenerator);
@@ -63,6 +64,10 @@ const ClazzListPage = () =>
   import(
     /* webpackChunkName: "ClazzListPage" */ "./components/labs/ClazzListPage"
   );
+const UserStoryMap = () =>
+  import(
+    /* webpackChunkName: "UserStoryMap" */ "./components/designer/user-story-map/UserStoryMapCanvas"
+  );
 // const labAdminTest = () =>
 //   import(
 //     /* webpackChunkName: "labAdminTest" */ "./components/labs/labAdminTest"
@@ -99,6 +104,10 @@ const BpmnProcessDesigner = () =>
   import(
     /* webpackChunkName: "ProcessDesigner" */ "./components/designer/bpmnModeling/ProcessDesigner"
   );
+const MyPage = () =>
+import(
+  /* webpackChunkName: "MyPage" */ "./components/mypage/MyPage"
+);
 const MyPageManager = () =>
   import(
     /* webpackChunkName: "MyPageManager" */ "./components/oauth/MyPageManager"
@@ -205,6 +214,11 @@ var options = {
         name: "classList",
         component: ClazzListPage,
     },
+    {
+      path: "/userStoryMap/:projectId",
+      name: "UserStoryMap",
+      component: UserStoryMap,
+    },
     // {
     //     path: "/courses/labAdminTest",
     //     name: "labAdminTest",
@@ -273,7 +287,7 @@ var options = {
     {
         path: "/myPage",
         name: "MyPage",
-        component: MyPageManager,
+        component: MyPage,
     },
     {
         path: "/sign-in-helper",
@@ -299,6 +313,11 @@ var options = {
         path: '/dpg/redirect',
         name: "OpenId",
         component: OpenIdRedirect
+    },
+    {
+        path: '/result',
+        name: "Result",
+        component: ModelingResult
     }
     ]
 }

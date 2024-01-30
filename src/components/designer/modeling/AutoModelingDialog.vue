@@ -4,6 +4,17 @@
             class="mx-auto"
             style="max-width: 70%; background-color: aliceblue;"
         >
+            <v-row class="justify-start main-auto-modeling-chip-row">
+                <v-col class="text-left" style="padding:0px;">
+                    <v-chip class="main-auto-modeling-chip"
+                        v-for="(inputAutoModelingChip, index) in setAutoModelingTextChips"
+                        :key="index"
+                        @click="setAutoModelingText($t(inputAutoModelingChip))"
+                        outlined
+                    >{{ $t(inputAutoModelingChip) }}
+                    </v-chip>
+                </v-col>
+            </v-row>
             <v-card-text style="font-weight: 500;">
                 <v-text-field
                     style="margin-bottom: -30px;"
@@ -11,18 +22,18 @@
                     solo
                     :placeholder="$t('autoModeling.mainClick')"
                     :label="$t('autoModeling.main1')"
-                    :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-send'"
+                    :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-auto-fix'"
                     @click:append="openProjectDialog()"
                     @keydown.enter="openProjectDialog()"
                 ></v-text-field>
             </v-card-text>
         </v-card>
 
-        <v-col class="shrink">
+        <v-col class="shrink" :style="openChatUI ? 'height:3000px;':''">
             <v-expand-x-transition>
-                <v-card @scroll="handleScroll" id="scroll-text"
+                <v-card
                     v-show="openChatUI"
-                    style="height: 100%; position: absolute; width: 100%; background-color: aliceblue; left: 0px; top: 0px;  overflow:auto; z-index:201;"
+                    style="height: 100%; position: absolute; width: 100%; background-color: aliceblue; left: 0px; top: 0px; z-index:201;"
                     class="mx-auto bg-secondary"
                 >   
                    
@@ -45,7 +56,7 @@
                                 :hint="$t('autoModeling.mainClick')"
                                 persistent-hint
                                 :label="$t('autoModeling.main2')"
-                                :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-send'"
+                                :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-auto-fix'"
                                 @click:append="startGen(genType)"
                                 @keydown.enter="startGen(genType)"
                             ></v-text-field>
@@ -71,7 +82,7 @@
                                     >
                                         <v-col style="text-align: center;">
                                             <v-card :style="genType == 'CJM' ? 'border: solid darkturquoise;':'background-color: white;'" >
-                                                <div @click="genType='CJM'" style="cursor: pointer; ">
+                                                <div @click="checkLogin('CJM')" style="cursor: pointer; ">
                                                     <v-avatar
                                                         class="ma-3"
                                                         size="125"
@@ -83,7 +94,7 @@
                                                     <v-card-text style="justify-content: center; margin-top: -10px;">
                                                         <div :style="genType == 'CJM' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
                                                             <v-icon v-if="genType == 'CJM'" small color="success">mdi-check</v-icon>
-                                                            Customer Journey Map
+                                                            {{$t('mainAutoModelingText.cjm')}}
                                                         </div>
                                                     </v-card-text>
                                                 </div>
@@ -91,7 +102,7 @@
                                         </v-col>
                                         <v-col style="text-align: center;">
                                             <v-card :style="genType == 'BM2' ? 'border: solid darkturquoise;':'background-color: white;'">
-                                                <div @click="genType='BM2'" style="cursor: pointer;">
+                                                <div @click="checkLogin('BM2')" style="cursor: pointer;">
                                                     <v-avatar
                                                         class="ma-3"
                                                         size="125"
@@ -103,7 +114,27 @@
                                                     <v-card-text style="justify-content: center; margin-top: -10px;">
                                                         <div :style="genType == 'BM2' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
                                                             <v-icon v-if="genType == 'BM2'" small color="success">mdi-check</v-icon>
-                                                            Business Model Canvas
+                                                            {{$t('mainAutoModelingText.bm')}}
+                                                        </div>
+                                                    </v-card-text>
+                                                </div>
+                                            </v-card>
+                                        </v-col>
+                                        <v-col style="text-align: center;">
+                                            <v-card :style="genType == 'USM' ? 'border: solid darkturquoise;':'background-color: white;'">
+                                                <div @click="checkLogin('USM')" style="cursor: pointer;">
+                                                    <v-avatar
+                                                        class="ma-3"
+                                                        size="125"
+                                                        rounded="0"
+                                                    >
+                                                        <v-img src="/static/image/userStoryMap.png"></v-img>
+                                                    </v-avatar>
+                                                    
+                                                    <v-card-text style="justify-content: center; margin-top: -10px;">
+                                                        <div :style="genType == 'USM' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
+                                                            <v-icon v-if="genType == 'USM'" small color="success">mdi-check</v-icon>
+                                                            {{$t('mainAutoModelingText.userStory')}}
                                                         </div>
                                                     </v-card-text>
                                                 </div>
@@ -111,19 +142,19 @@
                                         </v-col>
                                         <v-col style="text-align: center;">
                                             <v-card :style="genType == 'ES2' ? 'border: solid darkturquoise;':'background-color: white;'">
-                                                <div @click="genType='ES2'" style="cursor: pointer;">
+                                                <div @click="checkLogin('ES2')" style="cursor: pointer;">
                                                     <v-avatar
                                                         class="ma-3"
                                                         size="125"
                                                         rounded="0"
                                                     >
-                                                        <v-img src="https://user-images.githubusercontent.com/113568664/208291359-e7ce6d88-776b-4447-a236-d7a1cddadcf4.png"></v-img>
+                                                        <v-img src="/static/image/main/mainModeling.png"></v-img>
                                                     </v-avatar>
                                     
                                                     <v-card-text style="justify-content: center; margin-top: -10px;">
                                                         <div :style="genType == 'ES2' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
                                                             <v-icon v-if="genType == 'ES2'" small color="success">mdi-check</v-icon>
-                                                            Event Storming Model
+                                                            {{$t('mainAutoModelingText.eventstorming')}}
                                                         </div>
                                                     </v-card-text>
                                                 </div>
@@ -131,7 +162,7 @@
                                         </v-col>
                                         <v-col style="text-align: center;">
                                             <v-card :style="genType == 'UI' ? 'border: solid darkturquoise;':'background-color: white;'">
-                                                <div @click="genType='UI'" style="cursor: pointer;">
+                                                <div @click="checkLogin('UI')" style="cursor: pointer;">
                                                     <v-avatar
                                                         class="ma-3"
                                                         size="125"
@@ -143,7 +174,7 @@
                                                     <v-card-text style="justify-content: center; margin-top: -10px;">
                                                         <div :style="genType == 'UI' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
                                                             <v-icon v-if="genType == 'UI'" small color="success">mdi-check</v-icon>
-                                                            Brands & UIs
+                                                            {{$t('mainAutoModelingText.Brand')}}
                                                         </div>
                                                     </v-card-text>
                                                 </div>
@@ -159,10 +190,11 @@
                                 </div>
                             </div>
                             <div :key="reGenKey">
-                                <ESDialoger ref="esDialoger" v-model="projectInfo.eventStorming" :projectId="projectId" :prompt="projectInfo.prompt" :cachedModels="cachedModels" :uiStyle="uiStyle" v-if="genType == 'ES2'" @change="backupProject"></ESDialoger>
-                                <CJMDialoger ref="cjMDialoger" v-model="projectInfo.customerJourneyMap" :projectId="projectId" :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'CJM'" @change="backupProject"></CJMDialoger>
-                                <BMDialoger ref="bmDialoger" v-model="projectInfo.businessModel" :projectId="projectId"  :prompt="projectInfo.prompt" :cachedModels="cachedModels" v-if="genType == 'BM2'" @change="backupProject"></BMDialoger>
-                                <UIWizardDialoger v-model="projectInfo.ui" :projectId="projectId"  :prompt="projectInfo.prompt" :cachedModels="cachedModels" @selected="onUIStyleSelected" v-if="genType == 'UI'" @change="backupProject"></UIWizardDialoger>
+                                <ESDialoger v-if="genType == 'ES2'"     ref="esDialoger"    v-model="projectInfo.eventStorming"      :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" :uiStyle="uiStyle"   ></ESDialoger>
+                                <CJMDialoger v-if="genType == 'CJM'"    ref="cjMDialoger"   v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @selectedPersona="setSelectedPersona" ></CJMDialoger>
+                                <BMDialoger v-if="genType == 'BM2'"     ref="bmDialoger"    v-model="projectInfo.businessModel"      :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject"></BMDialoger>
+                                <USMDialoger v-if="genType == 'USM'"    ref="usmDialoger"   v-model="projectInfo.userStoryMap"       :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject"></USMDialoger>
+                                <UIWizardDialoger v-if="genType == 'UI'" ref="uiDialoger"   v-model="projectInfo.ui"                 :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @selected="onUIStyleSelected"  ></UIWizardDialoger>
                             </div>
                         </v-card-text>
                     <!-- </div> -->
@@ -210,23 +242,32 @@
     import ESDialoger from './generators/ESDialoger'
     import BMDialoger from './generators/BMDialoger'
     import UIWizardDialoger from './generators/UIWizardDialoger'
+    import USMDialoger from './generators/USMDialoger'
     import PowerPointGenerator from "./generators/PowerPointGenerator";
     import StorageBase from "../../CommonStorageBase";
     import ModelStorageDialog from "./ModelStorageDialog";
     import getParent from '../../../utils/getParent'
+
     // const axios = require('axios');
     let partialParse = require('partial-json-parser');
     let changeCase = require('change-case');
     export default {
         name: 'auto-modeling-dialog',
         props: {
-            projectId: String,
+            projectId: {
+                type: String,
+                default: function(){
+                    return null;
+                }
+            },
             projectInfo: {
                 type: Object,
                 default: function(){
                     return {
                         eventStorming: null,
                         customerJourneyMap: null,
+                        businessModel: null,
+                        userStoryMap: null,
                         prompt: ''
                     }
                 }
@@ -254,10 +295,82 @@
             CJMDialoger,
             BMDialoger,
             UIWizardDialoger,
+            USMDialoger,
             ModelStorageDialog
+        },
+        computed: {
+            isForeign() {
+                if (window.countryCode == 'ko') {
+                    return false
+                }
+                return true
+            },
+        },
+        async created(){
+            await this.setUserInfo()
+            this.setModelIds()
+
+            let getPrompt = localStorage.getItem('noLoginPrompt')
+            if(this.isLogin && getPrompt){
+                this.projectInfo.prompt = getPrompt
+                this.openChatUI = true
+            }
+        },
+        watch: {
+            "projectInfo.prompt":_.debounce(function(){
+                localStorage.setItem('noLoginPrompt',this.projectInfo.prompt)
+            }, 1000)
+        },
+        beforeDestroy() {
+            let getPrompt = localStorage.getItem('noLoginPrompt')
+            if( !(this.isLogin && getPrompt)){
+                localStorage.removeItem('noLoginPrompt')
+            }
+        },
+        async mounted(){
+            var me = this
+            if(me.mode == "project"){
+                me.openChatUI = true
+                if(me.projectId){
+                    await me.open();
+                }
+            }
+            me.scrollToBottom();
+
+            //// listen to generators done to save the cacheModels
+            const aiGeneratorChannel = new BroadcastChannel('ai-generator');
+            aiGeneratorChannel.onmessage = function(e) {
+                if (e.data) {
+                    me.cachedModels[e.data.generator] = Object.assign([], e.data.model)
+                }
+            };
+
+            const eventStormingCanvasChannel = new BroadcastChannel('event-storming-model-canvas')//this.$vnode.tag);
+
+            eventStormingCanvasChannel.onmessage = function(e) {
+                if (e.data) {
+                    me.cachedModels["ESGenerator"] = Object.assign([], e.data.model)
+                }
+            };
+
+            const modelCanvasChannel = new BroadcastChannel('model-canvas')//this.$vnode.tag);
+
+            modelCanvasChannel.onmessage = async function(e) {
+                if (e.data && e.data.event === "ProjectIdChanged") {
+                    me.modifyModelList(e.data)
+                } else if (e.data && e.data.event === "ScreenShot") {
+                    await me.putString(`storage://definitions/${me.projectId}/information/image`, e.data.image);
+                }
+            };
         },
         data() {
             return {
+                setAutoModelingTextChips: [
+                    'autoModeling.chip1',
+                    'autoModeling.chip2',
+                    'autoModeling.chip3',
+                    'autoModeling.chip4'
+                ],
                 disableSaveBtn: false,
                 // projectInfo: {
                 //     eventStorming: null,
@@ -312,6 +425,14 @@
                 },
                 storageCondition: null,
                 showStorageDialog: false,
+                modelIds:{
+                    projectId : null,
+                    ESDefinitionId : null,
+                    CJMDefinitionId : null,
+                    BMDefinitionId : null,
+                    UIDefinitionId : null,
+                    USMDefinitionId: null,
+                }
             }
         },
         computed: {
@@ -321,9 +442,6 @@
                 }
                 return true
             },
-        },
-        created(){
-            this.setUserInfo()
         },
         watch: {
         },
@@ -376,13 +494,36 @@
             });
         },
         methods: {
+            setAutoModelingText(inputAutoModelingChip) {
+                var me = this
+                me.projectInfo.prompt = inputAutoModelingChip;
+                me.openProjectDialog()
+            },
+            setModelIds(){
+                var me = this
+
+                if(!me.projectId) me.projectId = me.uuid();
+                if(!me.modelIds.projectId) me.modelIds.projectId = me.projectId
+                if(!me.modelIds.ESDefinitionId) me.modelIds.ESDefinitionId = me.uuid()
+                if(!me.modelIds.CJMDefinitionId) me.modelIds.CJMDefinitionId = me.uuid()
+                if(!me.modelIds.BMDefinitionId) me.modelIds.BMDefinitionId = me.uuid()
+                if(!me.modelIds.UIDefinitionId) me.modelIds.UIDefinitionId = me.uuid()
+                if(!me.modelIds.USMDefinitionId) me.modelIds.USMDefinitionId = me.uuid()
+            },
+            checkLogin(type){
+                if(this.isLogin){
+                    this.genType = type
+                } else {
+                    this.$EventBus.$emit('showLoginDialog')
+                }
+            },
             openStorageDialog(){
                 this.storageCondition = {
                     action: 'save',
                     title: 'Save Project',
                     comment: '',
                     projectName: this.projectInfo.prompt,
-                    projectId: this.uuid(),
+                    projectId: this.projectId,
                     error: null,
                     loading: false,
                     type: 'project'
@@ -401,6 +542,8 @@
                     var originProjectId = me.projectId
                     var settingProjectId = me.storageCondition.projectId.replaceAll(' ', '-').trim();
 
+                    me.projectInfo.author = me.userInfo.uid
+                    me.projectInfo.authorEmail = me.userInfo.email
                     me.projectInfo.projectId =settingProjectId
                     me.projectInfo.projectName = me.storageCondition.projectName ? me.storageCondition.projectName : me.projectInfo.prompt;
                     me.projectInfo.prompt =  me.projectInfo.prompt ? me.projectInfo.prompt : me.projectInfo.projectName
@@ -410,7 +553,7 @@
 
                     await me.putObject(`db://definitions/${settingProjectId}/information`, me.projectInfo)
                     me.isServer = true;
-                    if( settingProjectId != me.projectId ) me.$router.push({path: `/${me.projectInfo.type}/${settingProjectId}`});
+                    me.$router.push({path: `/${me.projectInfo.type}/${settingProjectId}`});
                     me.$emit('forceUpdateKey')
                 } else{
                     me.storageCondition.loading = false
@@ -509,34 +652,42 @@
 
             modifyModelList(changedInfo){
                 var me = this
-                let saveType
+                
                 // event: "ProjectIdChanged",
                 // type: me.canvasType,
                 // old: originProjectId,
                 // new: settingProjectId
                 if(changedInfo.type == 'es'){
-                    saveType = "eventStorming"
                     var oldModelIndex = me.projectInfo.eventStorming.modelList.findIndex(x => x == changedInfo.old)
                     me.projectInfo.eventStorming.modelList[oldModelIndex] = changedInfo.new
                     me.projectInfo.eventStorming.modelList.__ob__.dep.notify()
                 }
                 if(changedInfo.type == 'bm'){
-                    saveType = "businessModel"
                     var oldModelIndex = me.projectInfo.businessModel.modelList.findIndex(x => x == changedInfo.old)
                     me.projectInfo.businessModel.modelList[oldModelIndex] = changedInfo.new
+                    me.projectInfo.businessModel.modelList.__ob__.dep.notify()
                 }
-                // if(changedInfo.type == 'cjm'){
-                //     saveType = null
-                //     var oldModelIndex = me.projectInfo.customerJourneyMap.modelList.findIndex(x => x == changedInfo.old)
-                //     me.projectInfo.eventStorming.modelList[oldModelIndex] = changedInfo.new
-                // }
-                me.backupProject(saveType);
+                if(changedInfo.type == 'cjm'){
+                    var oldModelIndex = me.projectInfo.customerJourneyMap.modelList.findIndex(x => x == changedInfo.old)
+                    me.projectInfo.customerJourneyMap.modelList[oldModelIndex] = changedInfo.new
+                    me.projectInfo.customerJourneyMap.modelList.__ob__.dep.notify()
+                }
+                if(changedInfo.type == 'usm'){
+                    var oldModelIndex = me.projectInfo.userStoryMap.modelList.findIndex(x => x == changedInfo.old)
+                    me.projectInfo.userStoryMap.modelList[oldModelIndex] = changedInfo.new
+                    me.projectInfo.userStoryMap.modelList.__ob__.dep.notify()
+                }
+                me.backupProject();
             },
             openProjectDialog(){
                 var me = this
-                me.openChatUI = true
                 me.genType = null
-                me.projectId = me.uuid();
+                me.setModelIds()
+                me.openChatUI = true
+
+                if(!me.isLogin){
+                    localStorage.setItem('noLoginPrompt', me.projectInfo.prompt)
+                }
             },
             uuid: function () {
                 function s4() {
@@ -549,6 +700,7 @@
             },
             cancelCreateModel(val){
                 var me = this
+                localStorage.removeItem('noLoginPrompt')
                 if(!val){
                     me.openChatUI = false
                     me.openaiPopup = false
@@ -556,6 +708,8 @@
                     me.projectInfo = {
                         eventStorming: null,
                         customerJourneyMap: null,
+                        businessModel: null,
+                        userStoryMap: null,
                         prompt: ""
                     },
                     me.modelScenarioPrompt = ""
@@ -593,6 +747,7 @@
                             eventStorming: me.projectInfo.eventStorming,
                             businessModel: me.projectInfo.businessModel,
                             customerJourneyMap: me.projectInfo.customerJourneyMap,
+                            userStoryMap: me.projectInfo.userStoryMap,
                         })
                     }
                 } else  {
@@ -611,6 +766,9 @@
             },
             onUIStyleSelected(uiStyle){
                 this.uiStyle = uiStyle;
+            },
+            setSelectedPersona(persona){
+                this.cachedModels['selectedPersona'] = persona;
             },
             handleContentChange() {
                 this.$nextTick(() => {
@@ -668,6 +826,25 @@
     }
 </script>
 <style>
+.main-auto-modeling-chip {
+    margin:0px 5px;
+    opacity: 0.8;
+    border-width: 1.5px;
+}
+.main-auto-modeling-chip-row { 
+    padding:10px 0px 0px 10px;
+    margin:0px 0px -5px 0px;
+}
+
+@media only screen and (max-width:672px) {
+    .main-auto-modeling-chip {
+        margin-top:10px;
+    }
+    .main-auto-modeling-chip-row { 
+        padding:0px 0px 0px 10px;
+    }
+    
+}
 </style>
 <style lang="scss">
 </style>

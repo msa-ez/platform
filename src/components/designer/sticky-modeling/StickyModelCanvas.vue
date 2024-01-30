@@ -131,7 +131,7 @@
                         </template>
                         <v-row id="mobile-action-btn" justify="end" align="start"
                                 style="margin-right: 10px;">
-                            <slot name="saveButton">
+                                <slot name="saveButton">
                                 <v-menu
                                         open-on-hover
                                         offset-y
@@ -155,7 +155,6 @@
                                         <v-btn
                                                 text
                                                 v-if="getReadOnly"
-                                                color="primary"
                                                 dark
                                                 @click="saveComposition('fork')"
                                                 small
@@ -200,7 +199,6 @@
                                         <div>
                                             <v-btn
                                                     text
-                                                    color="primary"
                                                     dark
                                                     v-on="on"
                                                     @click="openInviteUsers()"
@@ -236,7 +234,6 @@
                                     <template v-slot:activator="{ on }">
                                         <div>
                                             <v-btn
-                                                    color="primary"
                                                     dark
                                                     @click='showReplay()'
                                                     small
@@ -305,7 +302,6 @@
                                                     <v-btn
                                                             text
                                                             style="margin-right: 5px; margin-top: 15px;"
-                                                            color="primary"
                                                             @click='showReplay()'
                                                             :disabled="disableBtn"
                                                     >
@@ -354,6 +350,7 @@
                                                         v-if="isOwnModel"
                                                         style="margin-right: 5px; margin-top: 15px;"
                                                         color="primary"
+                                                        text
                                                         :disabled="disableBtn"
                                                         @click="saveComposition('save')"
                                                         v-on="on"
@@ -385,7 +382,6 @@
                                             </v-list>
                                         </v-menu>
                                     </slot>
-
                                     <slot name="shareButton">
                                         <v-menu
                                                 v-if="isOwnModel && isServerModel&& !getReadOnly "
@@ -398,7 +394,6 @@
                                                     <v-btn
                                                             text
                                                             style="margin-right: 5px; margin-top: 15px;"
-                                                            color="primary"
                                                             :disabled="!initLoad"
                                                             v-on="on"
                                                             @click="openInviteUsers()"

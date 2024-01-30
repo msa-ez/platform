@@ -8,6 +8,7 @@ export default class BMGenerator extends JsonAIGenerator{
     constructor(client){
         super(client);
 
+        this.generateType = 'BM'
         this.sequenceForUUID = 0;
         this.lastBCView = null;
         this.bcPosition = {};

@@ -15,7 +15,6 @@
             app
             fixed
             style="left:0px; background-color:transparent; z-index:1;"
-            hide-on-scroll
         >
 
             <v-toolbar-title style="width: 360px;" class="ml-0 pl-3">
@@ -89,41 +88,179 @@
                 <span>신규 강의 생성</span>
             </v-tooltip>
             <v-dialog v-if="showNewButton"
-                v-model="newModelingDialog"
+                v-model="makingDialog"
                 max-width="90%"
             >
                 <template v-slot:activator="{ on, attrs }">
-                    <v-btn
+                    <v-btn class="main-nav-modeling-is-mobile"
                         v-on="on"
                         v-bind="attrs"
                         text
-                        style="font-size:16px;"
-                        :style="isLogin ? 'margin-right:120px' : 'margin-right:105px;'"
-                    >{{$t('main.newModeling')}}
+                        style="font-size:16px; margin-top:8px; font-weight: 700; padding:0px;"
+                        :style="isLogin ? 'margin-right:145px' : 'margin-right:105px;'"
+                    ><v-icon style="margin-top:-3px;">mdi-file-plus</v-icon>
+                    {{$t('making.title')}}
                     </v-btn>
                 </template>
                 <v-card style="padding:20px; height:85vh; overflow:auto;">
-                    <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('main.newModeling')}}</div>
+                    <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('making.title')}}</div>
+
+                    <!-- 만들기 기획(planning) -->
+                    <div class="making-sub-title">{{$t('making.planning')}}</div>
                     <v-row
                         style="margin:0px;"
                     >
-                        <v-col v-for="(item,index) in newProjectBtns"
+                        <v-col class="making-col"
+                            v-for="(item,index) in planning"
                             :key="index"
-                            lg="3"
+                            lg="4"
                             md="4"
                             sm="6"
                             xs="12"
                         >
-                            <v-card style="height:100%;"
+                            <v-card
+                                class="mx-auto"
                                 outlined
+                                style="padding:15px; height:100%; position: relative;"
                             >
-                                <v-card-title class="justify-center">{{ $t(item.title) }}</v-card-title>
-                                <v-img @click.native="moveToModel(item.type)"
-                                    :src="item.image"
-                                    style="cursor: pointer; height:200px;"
-                                >
-                                </v-img>
-                                <v-card-subtitle style="margin-bottom:20px;">{{ $t(item.subtitle) }}</v-card-subtitle>
+                                <div style="font-weight: 500; font-size:18px; color:black;">
+                                    {{$t(item.title)}}
+                                </div>
+                                <v-row>
+                                    <v-col cols="12">
+                                        <v-img @click.native="moveToModel(item.type)"
+                                            :src="item.image"
+                                            style="height:150px; margin:10px 0px; cursor:pointer;"
+                                        ></v-img>
+                                    </v-col>
+                                </v-row>
+                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
+                                <v-card-actions style="position: absolute; right:0px; bottom:0px;">
+                                    <v-spacer></v-spacer>
+                                    <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                    <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                        @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+                    <!-- 만들기 설계(design) -->
+                    <div class="making-sub-title">{{$t('making.design')}}</div>
+                    <v-row
+                        style="margin:0px;"
+                    >
+                        <v-col class="making-col"
+                            v-for="(item,index) in design"
+                            :key="index"
+                            lg="4"
+                            md="4"
+                            sm="6"
+                            xs="12"
+                        >
+                            <v-card
+                                class="mx-auto"
+                                outlined
+                                style="padding:15px; height:100%; position: relative;"
+                            >
+                                <div style="font-weight: 500; font-size:18px; color:black;">
+                                    {{$t(item.title)}}
+                                </div>
+                                <v-row>
+                                    <v-col cols="12">
+                                        <v-img @click.native="moveToModel(item.type)"
+                                            :src="item.image"
+                                            style="height:150px; margin:10px 0px; cursor:pointer;"
+                                        ></v-img>
+                                    </v-col>
+                                </v-row>
+                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
+                                <v-card-actions style="position: absolute; right:0px; bottom:0px;">
+                                    <v-spacer></v-spacer>
+                                    <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                    <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                        @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+                    <!-- 만들기 개발(development) -->
+                    <div class="making-sub-title">{{$t('making.operation')}}</div>
+                    <v-row
+                        style="margin:0px;"
+                    >
+                        <v-col class="making-col"
+                            v-for="(item,index) in development"
+                            :key="index"
+                            lg="4"
+                            md="4"
+                            sm="6"
+                            xs="12"
+                        >
+                            <v-card
+                                class="mx-auto"
+                                outlined
+                                style="padding:15px; height:100%; position: relative;"
+                            >
+                                <div style="font-weight: 500; font-size:18px; color:black;">
+                                    {{$t(item.title)}}
+                                </div>
+                                <v-row>
+                                    <v-col cols="12">
+                                        <v-img @click.native="moveToModel(item.type)"
+                                            :src="item.image"
+                                            style="height:150px; margin:10px 0px; cursor:pointer;"
+                                        ></v-img>
+                                    </v-col>
+                                </v-row>
+                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
+                                <v-card-actions style="position: absolute; right:0px; bottom:0px;">
+                                    <v-spacer></v-spacer>
+                                    <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                    <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                        @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+                    <!-- 만들기 프로젝트(project) -->
+                    <div class="making-sub-title">{{$t('making.project')}}</div>
+                    <v-row class="making-col"
+                        style="margin:0px;"
+                    >
+                        <v-col class="making-col"
+                            v-for="(item,index) in makingProject"
+                            :key="index"
+                            lg="4"
+                            md="4"
+                            sm="6"
+                            xs="12"
+                        >
+                            <v-card
+                                class="mx-auto"
+                                outlined
+                                style="padding:15px; height:100%; position: relative;"
+                            >
+                                <div style="font-weight: 500; font-size:18px; color:black;">
+                                    {{$t(item.title)}}
+                                </div>
+                                <v-row>
+                                    <v-col cols="12">
+                                        <v-img @click.native="moveToModel(item.type)"
+                                            :src="item.image"
+                                            style="height:150px; margin:10px 0px; cursor:pointer;"
+                                        ></v-img>
+                                    </v-col>
+                                </v-row>
+                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
                                 <v-card-actions style="position: absolute; right:0px; bottom:0px;">
                                     <v-spacer></v-spacer>
                                     <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
@@ -576,7 +713,7 @@
         <!--            </v-stepper>-->
         <!--        </v-alert>-->
 
-        <v-footer padless
+        <!-- <v-footer padless
                   v-if="showReplayBar"
         >
             <v-col cols="12">
@@ -586,17 +723,15 @@
                         thumb-label
                 ></v-slider>
             </v-col>
-        </v-footer>
-
-
-        <v-footer
+        </v-footer> -->
+        <!-- <slot name="footer"> -->
+            <v-footer v-if="showFooter"
                 padless
-                style="border-top: solid; border-block-width: 0.5px; border-color: darkgray; background: white;"
-        >
-            <div style="margin-left: 7%; margin-right: 7%;">
-
-            </div>
-        </v-footer>
+                style="background-color: transparent;"
+            >
+                <ProvisionIndication style="margin:0; padding:0px; width:100%;"></ProvisionIndication>
+            </v-footer>
+        <!-- </slot> -->
     </v-app>
 </template>
 
@@ -618,6 +753,7 @@
     import SubscriptionItemTemplate from "./components/payment/SubscriptionItemTemplate";
     const fs = require('fs');
     import Draggable from 'vue-draggable';
+    import ProvisionIndication from './components/payment/ProvisionIndication.vue'
 
     export default {
         name: 'App',
@@ -672,6 +808,7 @@
             ],
             api: [],
             snackbar: false,
+            snackbarText: '',
             fab: false,
             courseNavi: false,
             overlay: true,
@@ -714,51 +851,42 @@
             ],
             loginText: 'Login',
             LoginHover: false,
-            // navLearnModelingCards: [
-            //         {
-            //             title: 'tools.eventstorming',
-            //             image: 'https://user-images.githubusercontent.com/113568664/208291359-e7ce6d88-776b-4447-a236-d7a1cddadcf4.png',
-            //             subtitle: 'tools.eventstorming-inst',
-            //             page: 'es'
-            //         },
-            //         {
-            //             title: 'tools.kubernetes',
-            //             image: 'https://user-images.githubusercontent.com/113568664/208291286-15b57907-3126-48f6-bf71-490df5ce027d.png',
-            //             subtitle: 'tools.kubernetes-inst',
-            //             page: 'k8s'
-            //         },
-            //         {
-            //             title: 'tools.bmc',
-            //             image: 'https://user-images.githubusercontent.com/92732781/233012222-d0662c4b-5546-4e7b-af28-c07617a57ef0.png',
-            //             subtitle: 'tools.bmc-inst',
-            //             page: 'bm'
-            //         },
-            //         {
-            //             title: 'tools.bpmn',
-            //             image: 'https://user-images.githubusercontent.com/92732781/233012303-64841fa2-2952-43eb-a768-f75be9a73679.png',
-            //             subtitle: 'tools.bpmn-inst',
-            //             page: 'bpmn'
-            //         },
-            //     ],
-            newProjectBtns: [
-                {   type: 'es',
+            planning : [
+                {
+                    type: 'bm', 
+                    title: 'tools.bm',
+                    image: '/static/image/main/mainBMC.png',
+                    subtitle: 'tools.kubernetes-inst',
+                    disabled: true,
+                },
+                {
+                    type: 'cjm', 
+                    title: 'tools.cjm',
+                    image: 'https://miro.medium.com/v2/resize:fit:0/1*GeerSkalcxLlE3bp83i1XA.png',
+                    subtitle: 'tools.cjm-inst',
+                    disabled: true,
+                },
+                {
+                    type: 'sticky', 
+                    title: 'tools.sticky',
+                    subtitle: 'tools.sticky-inst',
+                    image: '/static/image/main/mainSticky.png',
+                    disabled: true,
+                },
+            ],
+            design : [
+                {
+                    type: 'es',
                     title: 'tools.eventstorming',
                     image: '/static/image/main/mainModeling.png',
                     subtitle: 'tools.eventstorming-inst',
                     disabled: false,
                 },
                 {
-                    type: 'k8s', 
-                    title: 'tools.kubernetes',
-                    image: '/static/image/main/maink8s.png',
-                    subtitle: 'tools.kubernetes-inst',
-                    disabled: false,
-                },
-                {
-                    type: 'bmc', 
-                    title: 'tools.bmc',
-                    image: '/static/image/main/mainBMC.png',
-                    subtitle: 'tools.kubernetes-inst',
+                    type: 'uml', 
+                    title: 'tools.uml',
+                    image: '/static/image/main/mainUml.png',
+                    subtitle: 'tools.uml-inst',
                     disabled: true,
                 },
                 {
@@ -768,20 +896,17 @@
                     subtitle: 'tools.bpmn-inst',
                     disabled: false,
                 },
+            ],
+            development : [
                 {
-                    type: 'sticky', 
-                    title: 'tools.sticky',
-                    subtitle: 'tools.sticky-inst',
-                    image: '/static/image/main/mainSticky.png',
-                    disabled: true,
+                    type: 'k8s', 
+                    title: 'tools.kubernetes',
+                    image: '/static/image/main/maink8s.png',
+                    subtitle: 'tools.kubernetes-inst',
+                    disabled: false,
                 },
-                {
-                    type: 'uml', 
-                    title: 'tools.uml',
-                    image: '/static/image/main/mainUml.png',
-                    subtitle: 'tools.uml-inst',
-                    disabled: true,
-                },
+            ],
+            makingProject : [
                 {
                     type: 'project', 
                     title: 'tools.project',
@@ -816,10 +941,11 @@
             currentY: 0,
             offsetX: 0,
             offsetY: 0,
-            newModelingDialog: null,
+            makingDialog: null,
 
         }),
         components: {
+            ProvisionIndication,
             SubscriptionItemTemplate,
             PodEvents,
             ParticipantIcons,
@@ -835,6 +961,10 @@
         // beforeMount(){
         // },
         computed: {
+            showFooter() {
+                const path = this.$route.path;
+                return path === '/courses' || path === '/' || path === '/myPage';
+            },
             isForeign() {
                 if (window.countryCode == 'ko') {
                     return false
@@ -913,6 +1043,9 @@
             var me = this
 
             Vue.prototype.$app = me
+            me.$EventBus.$on('open-new-making-dialog', function () {
+                me.makingDialog = true
+            })
 
             if (this.$isElectron) {
                 // Electron-specific code
@@ -1596,7 +1729,7 @@
             },
             moveToModel(type) {
                 var me = this
-                me.newModelingDialog = false
+                me.makingDialog = false
                 try {
                     if (!type) type = me.mode
 
@@ -1604,7 +1737,7 @@
                         me.$router.push({path: `storming/${me.dbuid()}`});
                     } else if (type == 'k8s') {
                         me.$router.push({path: `kubernetes/${me.dbuid()}`});
-                    } else if (type == 'bmc') {
+                    } else if (type == 'bm') {
                         me.$router.push({path: `business-model-canvas/${me.dbuid()}`});
                     } else if (type == 'sticky') {
                         me.$router.push({path: `sticky/${me.dbuid()}`});
@@ -1614,6 +1747,8 @@
                         me.$router.push({path: `uml/${me.dbuid()}`});
                     } else if (type == 'project'){
                         me.$router.push({path: `project/${me.dbuid()}`});
+                    }else if (type == 'cjm') {
+                        me.$router.push({path: `cjm/${me.dbuid()}`});
                     } else {
                         me.$router.push({path: `storming/${me.dbuid()}`});
                     }
@@ -2035,7 +2170,21 @@
 
 </script>
 <style>
-
+    .making-col {
+        padding:20px;
+    }
+    .making-sub-title {
+        font-size:20px;
+        font-weight: 700;
+        margin-left:20px;
+        margin-top:30px;
+    }
+    .main-nav-modeling-is-mobile:hover {
+        color: #2C81D5 !important;
+    }
+    .main-nav-modeling-is-mobile {
+        display:block;
+    }
     .upload {
         height: 48px;
         cursor: pointer;
@@ -2099,6 +2248,11 @@
     }
     
     /* 추가 */
+    @media only screen and (max-width: 1200px) { 
+        .main-nav-modeling-is-mobile {
+            display:none;
+        }
+    }
 
     @media only screen and (max-width: 1110px) {
         .app-docs-text, .app-new-text {
@@ -2109,6 +2263,7 @@
             min-width:32px !important;
             max-width:32px !important;
         }
+        
     }
 
     @media only screen and (max-width: 781px) {

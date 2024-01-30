@@ -32,9 +32,23 @@
   "mainNav": {
     "introduction": "Introduction",
     "partnership": "Partnership",
+<<<<<<< HEAD
     "pricing": "Pricing",
     "learn": "Learn",
     "project": "Project"
+=======
+    "learn": "learn",
+    "Storage": "Storage",
+    "company": "Company In Use",
+    "pricing": "Pricing Policy"
+  },
+  "making" : {
+    "title" : "Making",
+    "planning" : "Planning",
+    "design" : "Design",
+    "operation" : "Operation",
+    "project" : "Project"
+>>>>>>> ed2b17e62c8bf95300fb6e70f58b751cc3d8a56a
   },
   "main": {
     "title": "Microservices Architecture made easy!",
@@ -48,9 +62,30 @@
     "content6": "Utilize ChatGPT-4 and internet searches to write code,",
     "content7": "iterate on implementation until issues in compilation and functionality are resolved",
     "content8": "by finding solutions online and passing tests.",
+<<<<<<< HEAD
     "goToUrlText": "Learn more",
     "goToLearn" : "Learn",
     "goToLectures" : "Lectures"
+=======
+    "goToUrlText": "Learn more"
+  },
+  "mainNavSubCard" : {
+    "tutorial": "Tutorial",
+    "tutorial-inst": "",
+    "examples": "Mdeling Examples",
+    "examples-inst": "",
+    "goToLectures" : "Lectures",
+    "goToLectures-inst" : "",
+    "training" : "Training",
+    "training-inst" : ""
+  },
+  "mainAutoModelingText": {
+    "cjm": "Customer Journey Map",
+    "bm": "Business Model Canvas",
+    "userStory": "User Story Map",
+    "eventstorming": "Event Storming Model",
+    "Brand" : "Brands & UIs"
+>>>>>>> ed2b17e62c8bf95300fb6e70f58b751cc3d8a56a
   },
   "tools": {
     "modeling": "MODELING TOOLS",
@@ -58,13 +93,25 @@
     "eventstorming-inst": "Event Storming is a workshop for MSA DDD that is conducted with Sticky Notes.",
     "kubernetes": "Kubernetes Modeling",
     "kubernetes-inst": "Kubernetes is an open-source system for automating deployment, scaling, and management of containerized applications.",
-    "bmc": "Business Model Canvas",
-    "bmc-inst": "The Business Model Canvas is a strategic management template used for developing new business models and documenting existing ones.",
+    "bm": "Business Model Canvas",
+    "bm-inst": "The Business Model Canvas is a strategic management template used for developing new business models and documenting existing ones.",
     "bpmn": "BPMN",
     "bpmn-inst": "Business Process Model and Notation (BPMN) is a graphical representation for specifying business processes in a business process model.",
     "tutorial-btn": "TUTORIAL",
     "video-btn": "VIDEOS",
+<<<<<<< HEAD
     "create-btn": "CREATE"
+=======
+    "create-btn": "CREATE",
+    "sticky": "Sticky Note Collaboration",
+    "sticky-inst": "Sticky note helps you to conduct collaborative idea meetings through free collaboration.",
+    "uml": "UML Class Diagram",
+    "uml-inst": "Class diagram provides a tool for designing the structure of software object.",
+    "project": "Project",
+    "project-inst": "Projects are used when grouping one or more models into a new project. You can reference and import elements from other models associated with the project.",
+    "cjm": "Customer Journey Map",
+    "cjm-inst": ""
+>>>>>>> ed2b17e62c8bf95300fb6e70f58b751cc3d8a56a
   },
   "tutorials": {
     "tutorial": "TUTORIALS",
@@ -129,6 +176,12 @@
     "refundComment": "In case of complaints about exchange/refund for products, 'uEngine Solutions' handles it, and 'uEngine Solutions' is responsible for all the responsibilities."
   },
   "myPage": {
+    "tab_usage": "Usage",
+    "tab_admin": "Admin",
+    "tab_billing": "Billing",
+    "tab_privacy": "Privacy",
+    "usage_title": "Usage",
+    "admin_usage_title": "Usage",
     "purchaseManagement": "Purchase Management",
     "privacy": "Privacy",
     "couponManagement": "Coupon Management",
@@ -150,7 +203,11 @@
     "selectMessage2": "Here's a user story for you.",
     "explanation": "You can edit this user story, or create model as is:",
     "scenario": "You can edit this scenario:",
-    "user": "Generating Persona... Choose a persona to generate customer journey map:"
+    "user": "Generating Persona... Choose a persona to generate customer journey map:",
+    "chip1": "Google Drive",
+    "chip2": "Food Delivery App",
+    "chip3": "Fish Distribution ERP",
+    "chip4": "Internet Banking"
   },
   "UIWizardDialoger": {
     "imageMessage": "Here are a logo for this service:",

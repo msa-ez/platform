@@ -11,7 +11,7 @@
             >
             </GitActionDialog>
         </v-dialog>
-        <v-dialog v-model="marketplaceDialog" fullscreen>
+        <v-dialog v-model="marketplaceDialog" max-width="90%" persistent>
             <MarketPlace :marketplaceDialog="marketplaceDialog"
                 @applyTemplate="applyTemplateInMarket"
                 @applyTopping="applyToppingInMarket"
@@ -74,16 +74,17 @@
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on: tooltip }">
                                         <v-btn :disabled="!isGeneratorDone"
-                                            style="font-size:16px;
-                                                margin-right:5px;
-                                                padding:0px 5px;"
+                                            style="font-size: 16px;
+                                                margin-right: 5px;
+                                                margin-top: 1px;
+                                                padding: 0px 5px;"
+                                            icon
                                             small
                                             v-bind="attrs"
                                             v-on="{ ...tooltip, ...menu }"
                                             :color="gitMenu ? '':'primary'"
                                         >
                                             <v-icon size="22" style="float:right;" :style="gitMenu ? 'color:gray':''">mdi-git</v-icon>
-                                            <span :style="gitMenu ? 'color:gray':''">Git</span>
                                         </v-btn>
                                     </template>
                                     <span>Push to Git</span>
@@ -631,7 +632,6 @@
                                                         @close="closeCodeConfiguration"
                                                 ></CodeConfiguration>
                                             </v-tab-item>
-                                            
                                         </v-tabs>
                                     </v-menu>
 
@@ -777,7 +777,7 @@
                                                                                     v-for="(tempItem, index) in templateList"
                                                                                     :key="index"
                                                                                 >
-                                                                                    <subMenu 
+                                                                                    <subMenu
                                                                                         :templateInfo="tempItem"
                                                                                         :isBaseTemplate="true" 
                                                                                         @selectTemplate="openTemplateDialog('TEMPLATE', $event.tmp, item)"
@@ -1536,6 +1536,7 @@
     import 'core-js';
     import subMenu from '../subMenu.vue';
     import AIGenerator from './generators/AIGenerator';
+    import BusinessLogicGenerator from './generators/BusinessLogicGenerator';
     import CodeGeneratorCore from './CodeGeneratorCore';
     // import Login from "../../oauth/Login";
     import LoginByGitlab from "../../oauth/LoginByGitlab";
@@ -1546,7 +1547,8 @@
     import GitAPI from "../../../utils/GitAPI"
     import Github from "../../../utils/Github"
     import Gitlab from "../../../utils/Gitlab"
-
+    import Usage from "../../../utils/Usage";
+    
     import GitActionDialog from './GitActionDialog'
 
     import json2yaml from 'json2yaml'
@@ -1600,6 +1602,9 @@
         },
         data() {
             return {
+                generator: null,
+                promptValue: [],
+                suffixValue: [],
                 // si-gpt
                 commitMsg: null,
                 fileLoadCnt: 0,
@@ -1691,12 +1696,11 @@
                 sampleData: {"glossary":{"title":"example glossary","GlossDiv":{"title":"S","GlossList":{"GlossEntry":{"ID":"SGML","SortAs":"SGML","GlossTerm":"Standard Generalized Markup Language","Acronym":"SGML","Abbrev":"ISO 8879:1986","GlossDef":{"para":"A meta-markup language, used to create markup languages such as DocBook.","GlossSeeAlso":["GML","XML"]},"GlossSee":"markup"}}}}},
                 openaiContent: null,
                 showOpenaiToken: false,
-                openaiToken: (new AIGenerator()).openaiToken,
+                openaiToken: null,
                 copyKey: 0,
                 isCopied: false,
                 startGenerate: false,
                 startGenerateUseOpenAI: false,
-                autoGenerateResponse: null,
                 autoGenerateCodeValue: "",
                 openaiPopup: false,
                 modelForElement: {},
@@ -1957,7 +1961,7 @@
                     
                     this.isLoadingExpectedTemplate = true
                     if((this.openCode && this.openCode[0]) || this.value.basePlatform){
-                        var platform = this.openCode && this.openCode[0] ? this.openCode[0].template : this.value.basePlatform
+                        var platform = this.openCode && this.openCode[0] && this.openCode[0].template  ? this.openCode[0].template : this.value.basePlatform
                         if(!platform.includes("http")){
                             platform = await me.gitAPI.getTemplateURL(platform)
                         }
@@ -2249,57 +2253,64 @@
                 var me = this
                 var list = []
                 Object.keys(me.$manifestsPerTemplate).forEach(function (template) {
-                    if(template == 'Custom Template'){
-                        var obj = {
-                            display: template,
-                            template: template
-                        }
-                    } else {
-                        if(!template.includes("http")){
-                            var obj = {
-                                display: template,
-                                template: "template-" + template
-                            }
-                        } else {
+                        if(template == 'Custom Template'){
                             var obj = {
                                 display: template,
                                 template: template
                             }
+                        } else {
+                            if(!template.includes("http")){
+                                var obj = {
+                                    display: template,
+                                    template: "template-" + template
+                                }
+                            } else {
+                                var obj = {
+                                    display: template,
+                                    template: template
+                                }
+                            }
                         }
-                    }
-                    if(!list.find(x => x.template == obj.template)){
-                        list.push(obj)
-                    }
-                })
-
+                        if(!list.find(x => x.template == obj.template)){
+                            list.push(obj)
+                        }
+                    })
+                
                 return list
             },
             baseTemplateList: function () {
                 var me = this
                 var list = []
-                Object.keys(me.$manifestsPerBaseTemplate).forEach(function (template) {
-                    if(template == 'Custom Template'){
-                        var obj = {
-                            display: template,
-                            template: template
-                        }
-                    } else {
-                        if(!template.includes("http")){
-                            var obj = {
-                                display: template,
-                                template: "template-" + template
-                            }
-                        } else {
+                if( !Object.keys(me.$manifestsPerTemplate).includes('Custom Template') ){
+                    list.push({
+                            display: 'Custom Template',
+                            template: 'Custom Template'
+                    })
+                } else {
+                    Object.keys(me.$manifestsPerTemplate).forEach(function (template) {
+                        if(template == 'Custom Template'){
                             var obj = {
                                 display: template,
                                 template: template
                             }
+                        } else {
+                            if(!template.includes("http")){
+                                var obj = {
+                                    display: template,
+                                    template: "template-" + template
+                                }
+                            } else {
+                                var obj = {
+                                    display: template,
+                                    template: template
+                                }
+                            }
                         }
-                    }
-                    if(!list.find(x => x.template == obj.template)){
-                        list.push(obj)
-                    }
-                })
+                        if(!list.find(x => x.template == obj.template)){
+                            list.push(obj)
+                        }
+                    })
+                }
 
                 return list
             },
@@ -2658,7 +2669,7 @@
             window.removeEventListener("message", me.messageProcessing);
             this.closeCodeViewer()
         },
-        mounted: function () { 
+        mounted: async function () { 
 
             var me = this
 
@@ -2728,10 +2739,6 @@
                 await me.callGenerate();
             });
 
-            if(localStorage.getItem("openaiToken")){
-                me.openaiToken = localStorage.getItem("openaiToken")
-            }
-
             me.$EventBus.$on('downloadCode',function () {
                 me.downloadArchive()
             });
@@ -2769,8 +2776,22 @@
                     }
                 }
             });
+
+            me.openaiToken = await me.getToken();
         },
         methods: {
+            getToken() {
+                var me = this
+                return new Promise(async function (resolve, reject) {
+                    await me.getString(`db://tokens/openai`)
+                    .then((token) => {
+                        resolve(atob(token))
+                    })
+                    .catch(e => {
+                        reject(e)
+                    })
+                })
+            },
             async rollBack(sha){
                 var me = this
                 let data = {
@@ -3290,20 +3311,33 @@ jobs:
                 //         startGen = true
                 //     }
                 // }
+                        
+                
                 if(me.openaiToken && startGen){
-                    let tokenLength = 4092 - Math.round(content.length/3.5)
+                    let messages = [{
+                        role: "user",
+                        content: content
+                    }]
                     let data = {
-                        model: "text-davinci-003",
-                        prompt: content,
-                        temperature: 0.5,
-                        max_tokens: tokenLength ? tokenLength : 3000, 
-                    }
+                        model: "gpt-3.5-turbo-16k",
+                        messages: messages,
+                        temperature: 1,
+                        frequency_penalty: 0,
+                        presence_penalty: 0,
+                    };
+                    // let tokenLength = 4092 - Math.round(content.length/3.5)
+                    // let data = {
+                    //     model: "text-davinci-003",
+                    //     prompt: content,
+                    //     temperature: 0.5,
+                    //     max_tokens: tokenLength ? tokenLength : 3000, 
+                    // }
                     let header = {
                         Authorization: `Bearer ${me.openaiToken}`,
                         'Content-Type': 'application/json'
                     }
 
-                    let respones = await axios.post(`https://api.openai.com/v1/completions`, data, { headers: header })
+                    let respones = await axios.post(`https://api.openai.com/v1/chat/completions`, data, { headers: header })
                     .catch(function (error) {
                         me.startGenerateUseOpenAI = false
                         if(error.response && error.response.data && error.response.data.message){
@@ -3316,9 +3350,9 @@ jobs:
                             alert(error.message)
                         }
                     }); 
-                    if(respones.data.choices[0].text){
+                    if(respones.data.choices[0].message.content){
                         // if(prompt == "autoGen"){
-                            me.modifiedMustacheTemplate[0].code = respones.data.choices[0].text
+                            me.modifiedMustacheTemplate[0].code = respones.data.choices[0].message.content
                             me.startGenerateUseOpenAI = false
                         // } else {
                         //     // console.log(respones.data.choices[0].text)
@@ -4117,6 +4151,21 @@ jobs:
             },
             async downloadArchive(){
                 var me = this
+                let freeTopping = ["isVanillaK8s"];
+                let issuedTimeStamp = Date.now()
+                let toppings = me.toppingPlatforms.filter(topping => freeTopping.find(free=> topping!=free)) 
+                let usage = new Usage({
+                    serviceType: `${me.canvas.canvasType.toUpperCase()}_codeArchive`,
+                    usageDetail: { usedToppingNum: toppings.length },
+                    issuedTimeStamp: issuedTimeStamp,
+                    expiredTimeStamp: issuedTimeStamp,
+                    metadata: {
+                        modelId: me.modelingProjectId,
+                        modelName: me.canvas.projectName
+                    }
+                });
+                if(!await usage.use()) return false;
+
                 if(this.$parent.downloadArchive){
                     me.$parent.downloadArchive(me);
                     return true;
@@ -4246,10 +4295,10 @@ jobs:
                         // }
                         if (!set.has(item.code)) {
                             codeBag.push("# "+ item.name + ": \n" + item.code);
-                            if(option.keyword == "si" && item.name.includes("Test.java") && item.template === "https://github.com/msa-ez/topping-unit-test"){
+                            if((option && option.keyword == "si") && item.name.includes("Test.java") && item.template === "https://github.com/msa-ez/topping-unit-test"){
                                 me.testFileList.push(item)
                             }
-                            if(option.keyword == "si"){
+                            if(option && option.keyword == "si"){
                                 me.selectedCodeList[item.name] = item.code
                             } else {
                                 set.add(item.code);
@@ -4379,12 +4428,14 @@ jobs:
                 }
                 me.codeGenTimeout = setTimeout(function () {
                     me.setAutoGenerateCodetoList = JSON.parse(JSON.stringify(me.codeLists))
-                    me.setAutoGenerateCodetoList.some(function (element, index){
-                        if(me.filteredOpenCode[0].path == element.fullPath){
-                            me.setAutoGenerateCodetoList[index].code = value
-                            return true;
-                        }
-                    })
+                    // me.setAutoGenerateCodetoList.some(function (element, index){
+                    //     if(me.filteredOpenCode[0].path == element.fullPath){
+                    //         me.setAutoGenerateCodetoList[index].code = value
+                    //         return true;
+                    //     }
+                    // })
+                    var idx = me.setAutoGenerateCodetoList.findIndex(x => x.fullPath == me.filteredOpenCode[0].fullPath)
+                    me.setAutoGenerateCodetoList[idx].code = me.filteredOpenCode[0].code
                     me.codeGenTimeout = null
                 }, 2000)
                 // me.filteredOpenCode[0].code = value
@@ -4410,113 +4461,107 @@ jobs:
                     me.openaiPopup = true
                 }
             },
+            onModelCreated(model){
+                console.log(model)
+            },
+            onGenerationFinished(model){
+                var me = this
+                console.log(me.promptValue)
+                console.log(model)
+                console.log(me.suffixValue)
+
+                if(model && !me.stopAutoGenerate){
+
+                    let implementedCode = model
+                    if(implementedCode.includes("```")){
+                        implementedCode = implementedCode.replaceAll("```java", "```")
+                        implementedCode = implementedCode.split("```")[1]
+                    }
+
+                    me.changedDiffCodeViewer = true
+                    me.changedDiffCode = JSON.parse(JSON.stringify(me.filteredOpenCode))
+                    me.filteredOpenCode[0].code = me.promptValue + implementedCode + me.suffixValue
+
+                    me.startGenerate = false
+
+                    me.setAutoGenerateCodetoList = JSON.parse(JSON.stringify(me.codeLists))
+                    var idx = me.setAutoGenerateCodetoList.findIndex(x => x.fullPath == me.filteredOpenCode[0].fullPath)
+                    me.setAutoGenerateCodetoList[idx].code = me.filteredOpenCode[0].code
+
+                    me.refreshCallGenerate();
+                } else {
+                    me.stopAutoGenerate = false
+                }
+            },
             async autoGenerateCode(idx, id){
                 var me = this
                 try {
-                    var moreHintMode = false
                     if(id == '2'){
-                        moreHintMode = true 
-                    }
-                    if(moreHintMode){
-                        var inputSwitch
-                        var testA = []
-                        me.filteredCodeLists.forEach(function (file){
-                            if(file.fileName != file.fullPath && file.fullPath != me.filteredOpenCode[0].path){
-                                if(file.fullPath.replace(file.fileName, "") == me.filteredOpenCode[0].path.replace(me.filteredOpenCode[0].name, "")){
-                                    file.code.split('\n').forEach(function (line){
-                                        inputSwitch = false
-                                        if(!line.includes("package ") && !line.includes("import ") && line != "" && line != "    "){
-                                            inputSwitch = true
-                                        }
-                                        if(inputSwitch){
-                                            testA.push(line)
-                                        }
-                                    })
-                                }
-                            } 
-                        })
+                        var test = me.getSelectedFilesDeeply(me.openCode)
+                        console.log(test)
                     }
                     if(me.openaiToken){
-                        var content
-                        if(me.openaiContent){
-                            content = me.openaiContent
-                        } else {
-                            content = me.filteredOpenCode[0].code
-                        }
-    
                         var splitContent = null
-                        var promptValue = []
-                        var suffixValue = []
-                        splitContent = content.split("\n")
+                        me.promptValue = []
+                        me.suffixValue = []
+                        splitContent = me.filteredOpenCode[0].code.split("\n")
                         splitContent.forEach(function (content, contentIndex){
                             if(contentIndex <= idx){
-                                promptValue.push(splitContent[contentIndex])
+                                me.promptValue.push(content)
                             } else if(contentIndex > idx) {
-                                suffixValue.push(splitContent[contentIndex])
+                                me.suffixValue.push(content)
                             }
                         })
-                        promptValue = promptValue.join("\n")
-                        suffixValue = suffixValue.join("\n")
-                        
-                        let tokenLength
-                        if(moreHintMode){
-                            tokenLength = 4092 - Math.round(`${content}\n${testA.join('\n')}`.length/3.5)
-                        } 
+                        me.promptValue = me.promptValue.join("\n")
+                        me.suffixValue = me.suffixValue.join("\n")
 
-                        let data = {
-                            model: "text-davinci-003",
-                            prompt: promptValue,
-                            suffix: moreHintMode ? `${suffixValue}\n${testA.join('\n')}` : suffixValue,
-                            temperature: 0.5,
-                            max_tokens: moreHintMode ? tokenLength : 3000, 
-                        }
-                        let header = {
-                            Authorization: `Bearer ${me.openaiToken}`,
-                            'Content-Type': 'application/json'
-                        }
+                        me.generator = new BusinessLogicGenerator(this);
+                        me.generator.generate();
+
+//                         let prompt = `You have to look at the java file and figure out the entire code and business logic.
+// Full code: ${content}
+
+// Then, you must properly implement the corresponding function or class contents in the '//implement business logic here:' section at the bottom of the code I cut and sent.
+// implement here: ${promptValue}
+
+// Example correct answer: '\nrepository().findById(orderPlaced.getProductId()).ifPresent(inventory -> {\n inventory.setStockRemain(inventory.getStockRemain() - orderPlaced.getQuantity());\n repository(). save(inventory);\n\n InventoryUpdated inventoryUpdated = new InventoryUpdated(inventory);\n inventoryUpdated.publishAfterCommit();\n});\n'
+
+// Please do not "never" describe natural language or code descriptions, but only answer the code content implemented within the function or class.
+// `
+                        
+//                         let messages = [{
+//                             role: "user",
+//                             content: prompt
+//                         }]
+//                         let data = {
+//                             model: "gpt-3.5-turbo-16k",
+//                             messages: messages,
+//                             temperature: 1,
+//                             frequency_penalty: 0,
+//                             presence_penalty: 0,
+//                         };
+
+//                         let header = {
+//                             Authorization: `Bearer ${me.openaiToken}`,
+//                             'Content-Type': 'application/json'
+//                         }
     
-                        let respones = await axios.post(`https://api.openai.com/v1/completions`, data, { headers: header })
-                        .catch(function (error) {
-                            me.startGenerate = false
-                            if(me.openaiContent){
-                                me.filteredOpenCode[0].code = me.openaiContent
-                            }
-                            if(error.response && error.response.data && error.response.data.message){
-                                var errText = error.response.data.message
-                                if(error.response.data.errors && error.response.data.errors[0] && error.response.data.errors[0].message){
-                                    errText = errText + ', ' + error.response.data.errors[0].message
-                                }
-                                alert(errText)
-                            } else {
-                                alert(error.message)
-                            }
-                        });
-                        if(respones && !me.stopAutoGenerate){
-                            if(respones.data.choices[0].text){
-                                var autoGenerateResult = promptValue + respones.data.choices[0].text + suffixValue
-                                me.autoGenerateResponse = autoGenerateResult
-        
-                                me.changedDiffCodeViewer = true
-                                me.changedDiffCode = JSON.parse(JSON.stringify(me.filteredOpenCode))
-                                me.changedDiffCode[0].code = content
-                                me.filteredOpenCode[0].code = me.autoGenerateResponse
-        
-                                localStorage.setItem('openaiToken', me.openaiToken)
-                                me.startGenerate = false
-        
-                                me.setAutoGenerateCodetoList = JSON.parse(JSON.stringify(me.codeLists))
-                                me.setAutoGenerateCodetoList.some(function (element, index){
-                                    if(me.filteredOpenCode[0].path == element.fullPath){
-                                        me.setAutoGenerateCodetoList[index].code = me.filteredOpenCode[0].code
-                                        return true;
-                                    }
-                                })
-        
-                                me.refreshCallGenerate();
-                            }
-                        } else {
-                            me.stopAutoGenerate = false
-                        }
+//                         let respones = await axios.post(`https://api.openai.com/v1/chat/completions`, data, { headers: header })
+//                         .catch(function (error) {
+//                             me.startGenerate = false
+//                             if(me.openaiContent){
+//                                 me.filteredOpenCode[0].code = me.openaiContent
+//                             }
+//                             if(error.response && error.response.data && error.response.data.message){
+//                                 var errText = error.response.data.message
+//                                 if(error.response.data.errors && error.response.data.errors[0] && error.response.data.errors[0].message){
+//                                     errText = errText + ', ' + error.response.data.errors[0].message
+//                                 }
+//                                 alert(errText)
+//                             } else {
+//                                 alert(error.message)
+//                             }
+//                         });
     
                     } else {
                         me.stopAutoGenerate = false
@@ -4524,9 +4569,9 @@ jobs:
                     }
                 } catch(e) {
                     me.startGenerate = false
-                    if(me.openaiContent){
-                        me.filteredOpenCode[0].code = me.openaiContent
-                    }
+                    // if(me.openaiContent){
+                    //     me.filteredOpenCode[0].code = me.openaiContent
+                    // }
                     console.log(e)
                 }
             },
@@ -5239,7 +5284,9 @@ jobs:
                     })
                     me.editTemplateFrameWorkList = {}
                 }
-                me.refreshCallGenerate();
+                setTimeout(function () {
+                    me.refreshCallGenerate();
+                }, 500)
                 // me.changeBasePlatform();
             },
             pushTemplateToGit(platform){
@@ -6627,6 +6674,7 @@ jobs:
                     'key': uuid,
                     'code': 'test  ',
                     'file': 'txt',
+                    'template': '',
                     'boundedContext': 'for-model',
                     'representativeFor': null,
                     'forEach': 'for-model',
