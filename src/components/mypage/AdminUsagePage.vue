@@ -153,8 +153,6 @@ export default {
                 ],
                 selectedTenant: null,
                 tenant:[],
-
-                
                 billingData:[]
             }
         },
