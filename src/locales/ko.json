@@ -33,6 +33,7 @@
   "mainNav": {
     "introduction": "제품소개",
     "partnership": "파트너십",
+    "pricing": "가격 정책",
     "learn": "학습하기",
     "Storage": "저장소",
     "company": "사용기업",
@@ -68,6 +69,13 @@
     "goToLectures-inst" : "",
     "training" : "교육신청",
     "training-inst" : "교육신청"
+  },
+  "mainAutoModelingText": {
+    "cjm": "고객 여정 지도",
+    "bm": "비즈니스 모델 캔버스",
+    "userStory": "사용자 스토리 맵",
+    "eventstorming": "이벤트스토밍",
+    "Brand" : "브랜드 & UI"
   },
   "tools": {
     "modeling": "모델링 도구",

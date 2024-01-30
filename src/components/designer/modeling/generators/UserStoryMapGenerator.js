@@ -5,6 +5,7 @@ export default class UserStoryMapGenerator extends JsonAIGenerator{
 
     constructor(client){
         super(client);
+        this.generateType = 'USM'
         this.forEventStorming = false;
     }
     

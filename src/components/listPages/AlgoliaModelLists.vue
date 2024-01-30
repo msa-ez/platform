@@ -1219,6 +1219,13 @@
                                 </v-card>
                             </v-col>
                         </v-row> -->
+                    <div style="margin-top:30px;">
+                        <carousel :perPageCustom="[[0, 1], [576, 2], [768, 3], [992, 4], [1200, 5]]">
+                            <slide v-for="(logo, index) in logos" :key="index">
+                                <img :src="logo.url" :alt="logo.alt">
+                            </slide>
+                        </carousel>
+                    </div>
                     </v-tab-item>
                     <v-tab-item v-else-if="0 < selectedTabIndex && selectedTabIndex < 4" :value="selectedTabIndex" :key="selectedTabIndex">
                         <!-- MINE, SHARE,PUBLIC -->
@@ -1399,6 +1406,7 @@
     import {YoutubeIcon} from 'vue-feather-icons'
     import 'instantsearch.css/themes/satellite-min.css';
     import AutoModelingDialog from '../designer/modeling/AutoModelingDialog.vue';
+    import { Carousel, Slide } from 'vue-carousel';
     // import VueCookies from "vue-cookies";
     var _ = require('lodash');
 
@@ -1410,6 +1418,8 @@
             // 'ProvisionIndication': () => import('../payment/ProvisionIndication'),
             YoutubeIcon,
             AutoModelingDialog,
+            Carousel,
+            Slide,
         },
         data() {
             return {
@@ -1566,6 +1576,27 @@
                         page: '/storming/human-resource-mgmt-0303:v0.0.1'
                     }
                 ],
+                mainNav: [
+                    {   
+                        title: '제품 소개',
+                        icon: 'mdi-information',
+                        dialog: false,
+                        dialogType: 'introduction',
+                    },
+                    {
+                        title: 'mainNav.partnership',
+                        icon: 'mdi-handshake',
+                        dialogType: 'partnership',
+                        dialog: false,
+                    },
+                    {
+                        title: 'mainNav.learn',
+                        icon: 'mdi-school',
+                        dialogType: 'learn',
+                        dialog: false,
+                    }
+                ],
+
                 learnNavDialog: false,
                 projectUid: "",
                 showDialog: false,
@@ -2791,7 +2822,7 @@
         .main-nav-tabs-box {
             max-width: 450px;
             left: 46%;
-            margin-top: -76px;
+            margin-top: -70px;
         }
 
     }
@@ -2819,7 +2850,7 @@
         }
         .main-nav-tabs-box {
             max-width: 300px;
-            left: 45%;
+            left: 32%;
         }
         .main-search {
             width: 75%;
