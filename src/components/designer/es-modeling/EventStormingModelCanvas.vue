@@ -3137,6 +3137,11 @@
                     me.value.relations = {};
 
                     if (me.createModelInBoundedContext) {
+                        if(originModel && Object.keys(me.value.elements).length === 0 && Object.keys(me.value.relations).length === 0){
+                            elements = originModel.elements
+                            relations = originModel.relations
+                        }
+
                         Object.keys(elements).forEach(function (ele) {
                             if(elements[ele]!=null && elements[ele].boundedContext){
                                 if(elements[ele].boundedContext.id == Object.keys(val.elements)[0]){
@@ -3146,7 +3151,7 @@
                         });
 
                         Object.keys(relations).forEach(function (rel) {
-                            if(relations[rel]!=null){
+                            if(relations[rel]!=null && relations[rel].boundedContext){
                                 if(relations[rel].sourceElement.boundedContext.id == Object.keys(val.elements)[0]){
                                     delete relations[rel]
                                 }
