@@ -2791,7 +2791,7 @@
         .main-nav-tabs-box {
             max-width: 450px;
             left: 46%;
-            margin-top: -76px;
+            margin-top: -70px;
         }
 
     }
@@ -2819,7 +2819,7 @@
         }
         .main-nav-tabs-box {
             max-width: 300px;
-            left: 45%;
+            left: 32%;
         }
         .main-search {
             width: 75%;

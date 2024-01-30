@@ -68,6 +68,13 @@
     "training" : "Training",
     "training-inst" : ""
   },
+  "mainAutoModelingText": {
+    "cjm": "Customer Journey Map",
+    "bm": "Business Model Canvas",
+    "userStory": "User Story Map",
+    "eventstorming": "Event Storming Model",
+    "Brand" : "Brands & UIs"
+  },
   "tools": {
     "modeling": "MODELING TOOLS",
     "eventstorming": "Eventstorming",
