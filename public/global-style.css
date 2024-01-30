@@ -901,4 +901,16 @@ code[class*=language-]:nth-child(1) {
 }
 
 
+/* Usage Page Css*/
+.row-title {
+    font-size: medium;
+    font-weight: 500;
+    color: rgb(86 84 81)!important;
+    opacity: 1;
+}
 
+.row-detail {
+    font-size: .775rem!important;
+    font-weight: 400;
+    color: rgb(116 115 114)!important;
+}

@@ -36,9 +36,6 @@
         components: {
             VueTypedJs
         },
-        async created(){
-            await this.setUserInfo()
-        },
         computed: {
             isForeign() {
                 if (window.countryCode == 'ko') {

@@ -4,9 +4,9 @@
             class="mx-auto"
             style="max-width: 70%; background-color: aliceblue;"
         >
-            <v-row class="justify-start" style="padding:10px 0px 0px 10px; margin:0px 0px -5px 0px;">
+            <v-row class="justify-start main-auto-modeling-chip-row">
                 <v-col class="text-left" style="padding:0px;">
-                    <v-chip style="margin:0px 5px; opacity: 0.8; border-width: 1.5px;"
+                    <v-chip class="main-auto-modeling-chip"
                         v-for="(inputAutoModelingChip, index) in setAutoModelingTextChips"
                         :key="index"
                         @click="setAutoModelingText($t(inputAutoModelingChip))"
@@ -94,7 +94,7 @@
                                                     <v-card-text style="justify-content: center; margin-top: -10px;">
                                                         <div :style="genType == 'CJM' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
                                                             <v-icon v-if="genType == 'CJM'" small color="success">mdi-check</v-icon>
-                                                            Customer Journey Map
+                                                            {{$t('mainAutoModelingText.cjm')}}
                                                         </div>
                                                     </v-card-text>
                                                 </div>
@@ -114,7 +114,7 @@
                                                     <v-card-text style="justify-content: center; margin-top: -10px;">
                                                         <div :style="genType == 'BM2' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
                                                             <v-icon v-if="genType == 'BM2'" small color="success">mdi-check</v-icon>
-                                                            Business Model Canvas
+                                                            {{$t('mainAutoModelingText.bm')}}
                                                         </div>
                                                     </v-card-text>
                                                 </div>
@@ -134,7 +134,7 @@
                                                     <v-card-text style="justify-content: center; margin-top: -10px;">
                                                         <div :style="genType == 'USM' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
                                                             <v-icon v-if="genType == 'USM'" small color="success">mdi-check</v-icon>
-                                                            User Story Map
+                                                            {{$t('mainAutoModelingText.userStory')}}
                                                         </div>
                                                     </v-card-text>
                                                 </div>
@@ -148,13 +148,13 @@
                                                         size="125"
                                                         rounded="0"
                                                     >
-                                                        <v-img src="https://user-images.githubusercontent.com/113568664/208291359-e7ce6d88-776b-4447-a236-d7a1cddadcf4.png"></v-img>
+                                                        <v-img src="/static/image/main/mainModeling.png"></v-img>
                                                     </v-avatar>
                                     
                                                     <v-card-text style="justify-content: center; margin-top: -10px;">
                                                         <div :style="genType == 'ES2' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
                                                             <v-icon v-if="genType == 'ES2'" small color="success">mdi-check</v-icon>
-                                                            Event Storming Model
+                                                            {{$t('mainAutoModelingText.eventstorming')}}
                                                         </div>
                                                     </v-card-text>
                                                 </div>
@@ -174,7 +174,7 @@
                                                     <v-card-text style="justify-content: center; margin-top: -10px;">
                                                         <div :style="genType == 'UI' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
                                                             <v-icon v-if="genType == 'UI'" small color="success">mdi-check</v-icon>
-                                                            Brands & UIs
+                                                            {{$t('mainAutoModelingText.Brand')}}
                                                         </div>
                                                     </v-card-text>
                                                 </div>
@@ -826,6 +826,25 @@
     }
 </script>
 <style>
+.main-auto-modeling-chip {
+    margin:0px 5px;
+    opacity: 0.8;
+    border-width: 1.5px;
+}
+.main-auto-modeling-chip-row { 
+    padding:10px 0px 0px 10px;
+    margin:0px 0px -5px 0px;
+}
+
+@media only screen and (max-width:672px) {
+    .main-auto-modeling-chip {
+        margin-top:10px;
+    }
+    .main-auto-modeling-chip-row { 
+        padding:0px 0px 0px 10px;
+    }
+    
+}
 </style>
 <style lang="scss">
 </style>

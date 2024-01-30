@@ -138,6 +138,7 @@
     "vee-validate": "^2.2.15",
     "vue": "^2.6.12",
     "vue-axios-interceptors": "^0.3.2",
+    "vue-carousel": "^0.18.0",
     "vue-click-outside": "^1.1.0",
     "vue-code-highlight": "^0.7.8",
     "vue-codemirror": "^4.0.6",

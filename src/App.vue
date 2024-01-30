@@ -110,10 +110,10 @@
                     <v-row
                         style="margin:0px;"
                     >
-                        <v-col
+                        <v-col class="making-col"
                             v-for="(item,index) in planning"
                             :key="index"
-                            lg="3"
+                            lg="4"
                             md="4"
                             sm="6"
                             xs="12"
@@ -152,10 +152,10 @@
                     <v-row
                         style="margin:0px;"
                     >
-                        <v-col
+                        <v-col class="making-col"
                             v-for="(item,index) in design"
                             :key="index"
-                            lg="3"
+                            lg="4"
                             md="4"
                             sm="6"
                             xs="12"
@@ -194,10 +194,10 @@
                     <v-row
                         style="margin:0px;"
                     >
-                        <v-col
+                        <v-col class="making-col"
                             v-for="(item,index) in development"
                             :key="index"
-                            lg="3"
+                            lg="4"
                             md="4"
                             sm="6"
                             xs="12"
@@ -233,13 +233,13 @@
 
                     <!-- 만들기 프로젝트(project) -->
                     <div class="making-sub-title">{{$t('making.project')}}</div>
-                    <v-row
+                    <v-row class="making-col"
                         style="margin:0px;"
                     >
-                        <v-col
+                        <v-col class="making-col"
                             v-for="(item,index) in makingProject"
                             :key="index"
-                            lg="3"
+                            lg="4"
                             md="4"
                             sm="6"
                             xs="12"
@@ -851,90 +851,6 @@
             ],
             loginText: 'Login',
             LoginHover: false,
-            // navLearnModelingCards: [
-            //         {
-            //             title: 'tools.eventstorming',
-            //             image: 'https://user-images.githubusercontent.com/113568664/208291359-e7ce6d88-776b-4447-a236-d7a1cddadcf4.png',
-            //             subtitle: 'tools.eventstorming-inst',
-            //             page: 'es'
-            //         },
-            //         {
-            //             title: 'tools.kubernetes',
-            //             image: 'https://user-images.githubusercontent.com/113568664/208291286-15b57907-3126-48f6-bf71-490df5ce027d.png',
-            //             subtitle: 'tools.kubernetes-inst',
-            //             page: 'k8s'
-            //         },
-            //         {
-            //             title: 'tools.bmc',
-            //             image: 'https://user-images.githubusercontent.com/92732781/233012222-d0662c4b-5546-4e7b-af28-c07617a57ef0.png',
-            //             subtitle: 'tools.bmc-inst',
-            //             page: 'bm'
-            //         },
-            //         {
-            //             title: 'tools.bpmn',
-            //             image: 'https://user-images.githubusercontent.com/92732781/233012303-64841fa2-2952-43eb-a768-f75be9a73679.png',
-            //             subtitle: 'tools.bpmn-inst',
-            //             page: 'bpmn'
-            //         },
-            //     ],
-            // newProjectBtns: [
-            //     {   
-            //         type: 'es',
-            //         title: 'tools.eventstorming',
-            //         image: '/static/image/main/mainModeling.png',
-            //         subtitle: 'tools.eventstorming-inst',
-            //         disabled: false,
-            //     },
-            //     {
-            //         type: 'k8s', 
-            //         title: 'tools.kubernetes',
-            //         image: '/static/image/main/maink8s.png',
-            //         subtitle: 'tools.kubernetes-inst',
-            //         disabled: false,
-            //     },
-            //     {
-            //         type: 'bm', 
-            //         title: 'tools.bm',
-            //         image: '/static/image/main/mainBMC.png',
-            //         subtitle: 'tools.kubernetes-inst',
-            //         disabled: true,
-            //     },
-            //     {
-            //         type: 'bpmn', 
-            //         title: 'tools.bpmn',
-            //         image: '/static/image/main/mainBPMN.png',
-            //         subtitle: 'tools.bpmn-inst',
-            //         disabled: false,
-            //     },
-            //     {
-            //         type: 'sticky', 
-            //         title: 'tools.sticky',
-            //         subtitle: 'tools.sticky-inst',
-            //         image: '/static/image/main/mainSticky.png',
-            //         disabled: true,
-            //     },
-            //     {
-            //         type: 'uml', 
-            //         title: 'tools.uml',
-            //         image: '/static/image/main/mainUml.png',
-            //         subtitle: 'tools.uml-inst',
-            //         disabled: true,
-            //     },
-            //     {
-            //         type: 'project', 
-            //         title: 'tools.project',
-            //         image: '/static/image/main/mainProject.png',
-            //         subtitle: 'tools.project-inst',
-            //         disabled: true,
-            //     },
-            //     {
-            //         type: 'cjm', 
-            //         title: 'tools.cjm',
-            //         image: 'https://miro.medium.com/v2/resize:fit:0/1*GeerSkalcxLlE3bp83i1XA.png',
-            //         subtitle: 'tools.cjm-inst',
-            //         disabled: true,
-            //     },
-            // ],
             planning : [
                 {
                     type: 'bm', 
@@ -2254,10 +2170,13 @@
 
 </script>
 <style>
+    .making-col {
+        padding:20px;
+    }
     .making-sub-title {
         font-size:20px;
         font-weight: 700;
-        margin-left:13px;
+        margin-left:20px;
         margin-top:30px;
     }
     .main-nav-modeling-is-mobile:hover {

@@ -1547,7 +1547,8 @@
     import GitAPI from "../../../utils/GitAPI"
     import Github from "../../../utils/Github"
     import Gitlab from "../../../utils/Gitlab"
-
+    import Usage from "../../../utils/Usage";
+    
     import GitActionDialog from './GitActionDialog'
 
     import json2yaml from 'json2yaml'
@@ -4150,6 +4151,21 @@ jobs:
             },
             async downloadArchive(){
                 var me = this
+                let freeTopping = ["isVanillaK8s"];
+                let issuedTimeStamp = Date.now()
+                let toppings = me.toppingPlatforms.filter(topping => freeTopping.find(free=> topping!=free)) 
+                let usage = new Usage({
+                    serviceType: `${me.canvas.canvasType.toUpperCase()}_codeArchive`,
+                    usageDetail: { usedToppingNum: toppings.length },
+                    issuedTimeStamp: issuedTimeStamp,
+                    expiredTimeStamp: issuedTimeStamp,
+                    metadata: {
+                        modelId: me.modelingProjectId,
+                        modelName: me.canvas.projectName
+                    }
+                });
+                if(!await usage.use()) return false;
+
                 if(this.$parent.downloadArchive){
                     me.$parent.downloadArchive(me);
                     return true;

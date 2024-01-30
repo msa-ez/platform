@@ -39,7 +39,7 @@
                     </v-tooltip> -->
                     <v-tooltip  bottom>
                         <template v-slot:activator="{ on, attrs }">
-                            <v-btn @click="generate()"
+                            <v-btn @click="reGenerate(input['userStory'])"
                                 icon small
                                 v-bind="attrs"
                                 v-on="on"
@@ -168,6 +168,7 @@
     import UMLGenerator from './UMLGenerator.js'
     import BMGenerator from './BMGenerator.js'
     import UserStoryMapGenerator from './UserStoryMapGenerator.js'
+    import Usage from '../../../../utils/Usage'
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
 
@@ -304,19 +305,19 @@
             // }, 
 
             async generate(changedInput){
-                // let issuedTimeStamp = Date.now()
-                // let usage = new Usage({
-                //     serviceType: `${this.generatorComponent.generateType}_AIGeneration`,
-                //     issuedTimeStamp: issuedTimeStamp,
-                //     expiredTimeStamp: Date.now(),
-                //     metadata: {
-                //         modelId: this.projectId
-                //     }
-                // });
-                // if(!await usage.use()){
-                //     this.stop()
-                //     return false;
-                // }
+                let issuedTimeStamp = Date.now()
+                let usage = new Usage({
+                    serviceType: `${this.generatorComponent.generateType}_AIGeneration`,
+                    issuedTimeStamp: issuedTimeStamp,
+                    expiredTimeStamp: Date.now(),
+                    metadata: {
+                        modelId: this.projectId
+                    }
+                });
+                if(!await usage.use()){
+                    this.stop()
+                    return false;
+                }
 
                 if(changedInput)
                     this.input = changedInput;
@@ -324,6 +325,18 @@
                 this.result = '';
                 this.$emit("clearModelValue")
                 this.generatorComponent.generate();
+                this.generationStopped = true;
+            },
+
+            async reGenerate(userStory){
+                let reGeneratePrompt = {
+                    action: "reGenerate",
+                    messages: userStory
+                }
+
+                this.result = '';
+                this.$emit("clearModelValue")
+                this.generatorComponent.generate(reGeneratePrompt);
                 this.generationStopped = true;
             },
 

@@ -33,6 +33,7 @@
   "mainNav": {
     "introduction": "제품소개",
     "partnership": "파트너십",
+    "pricing": "가격 정책",
     "learn": "학습하기",
     "Storage": "저장소",
     "company": "사용기업",
@@ -68,6 +69,13 @@
     "goToLectures-inst" : "",
     "training" : "교육신청",
     "training-inst" : "교육신청"
+  },
+  "mainAutoModelingText": {
+    "cjm": "고객 여정 지도",
+    "bm": "비즈니스 모델 캔버스",
+    "userStory": "사용자 스토리 맵",
+    "eventstorming": "이벤트스토밍",
+    "Brand" : "브랜드 & UI"
   },
   "tools": {
     "modeling": "모델링 도구",
@@ -154,6 +162,12 @@
     "refundComment": "상품에 대하여 교환/환불 민원 발생시 '(주)유엔진솔루션즈'에서 처리하며, 모든 책임은 '(주)유엔진솔루션즈'에 있습니다."
   },
   "myPage": {
+    "tab_usage": "Usage",
+    "tab_admin": "Admin",
+    "tab_billing": "Billing",
+    "tab_privacy": "Privacy",
+    "usage_title": "Usage",
+    "admin_usage_title": "Usage",
     "purchaseManagement": "구매 관리",
     "privacy": "개인정보",
     "couponManagement": "쿠폰 관리",
@@ -177,7 +191,7 @@
     "user": "페르소나 생성 중... 사용자여정맵(Customer Journey Map)을 생성할 페르소나를 선택하세요:",
     "chip1": "구글 드라이브",
     "chip2": "음식 배달 앱",
-    "chip3": "생산 유통 ERP",
+    "chip3": "생선 유통 ERP",
     "chip4": "인터넷 뱅킹"
   },
   "UIWizardDialoger": {
