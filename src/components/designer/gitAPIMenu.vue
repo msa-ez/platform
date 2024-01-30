@@ -984,13 +984,17 @@
         methods: {
             selectTab(tabName) {
                 var me = this;
-                // gitTabItems 배열에서 일치하는 탭을 찾습니다.
-                const tabToSelect = me.gitTabItems.find(item => item.tab === tabName);
-
-                // 일치하는 탭이 있고, 현재 gitTab 값과 다르면 gitTab 값을 업데이트합니다.
-                if (tabToSelect && me.gitTab == tabToSelect.tab) {
-                    me.gitTab = tabToSelect.index;
-                }
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        const tabToSelect = me.gitTabItems.find(item => item.tab === tabName);
+        
+                        // 일치하는 탭이 있고, 현재 gitTab 값과 다르면 gitTab 값을 업데이트합니다.
+                        if (tabToSelect && me.gitTab == tabToSelect.tab) {
+                            me.gitTab = tabToSelect.index;
+                        }
+                    }
+                })
             },
             messageProcessing(e) {
                 var me = this;
@@ -1016,24 +1020,29 @@
             },
             async getActionLogs(){
                 var me = this
-                await me.git.getActionId(me.value.org, me.value.repo)
-                .then(async (id) => {
-                    me.$EventBus.$emit('setActionId', `https://github.com/${me.value.org}/${me.value.repo}/actions/runs/${id.run_id}/job/${id.job_id}`)
-                    await me.git.getActionLogs(me.value.org, me.value.repo, id)
-                    .then((result) => {
-                        me.$EventBus.$emit('getActionLogs', result)
-                    })
-                    .catch((e) => {
-                        if(e.response && e.response.status === 401){
-                            me.alertReLogin()
-                        }
-                        console.log(e)
-                    })
-                })
-                .catch((e) => {
-                    console.log(e)
-                    if(e.response && e.response.status === 401){
-                        me.alertReLogin()
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        await me.git.getActionId(me.value.org, me.value.repo)
+                        .then(async (id) => {
+                            me.$EventBus.$emit('setActionId', `https://github.com/${me.value.org}/${me.value.repo}/actions/runs/${id.run_id}/job/${id.job_id}`)
+                            await me.git.getActionLogs(me.value.org, me.value.repo, id)
+                            .then((result) => {
+                                me.$EventBus.$emit('getActionLogs', result)
+                            })
+                            .catch((e) => {
+                                if(e.response && e.response.status === 401){
+                                    me.alertReLogin()
+                                }
+                                console.log(e)
+                            })
+                        })
+                        .catch((e) => {
+                            console.log(e)
+                            if(e.response && e.response.status === 401){
+                                me.alertReLogin()
+                            }
+                        })
                     }
                 })
             },
@@ -1085,133 +1094,158 @@
             },
             async validateRepoBranch(){
                 var me = this
-                const branches = await me.git.getBranch(me.value.org, me.value.repo, me.value.forkedTag)
-                .then((result) => {
-                    me.isVersionBranch = true;
-                })
-                .catch((e) => {
-                    if(e.response.status === 401){
-                        me.alertReLogin()
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        const branches = await me.git.getBranch(me.value.org, me.value.repo, me.value.forkedTag)
+                        .then((result) => {
+                            me.isVersionBranch = true;
+                        })
+                        .catch((e) => {
+                            if(e.response.status === 401){
+                                me.alertReLogin()
+                            }
+                            me.isVersionBranch = false;
+                        })
                     }
-                    me.isVersionBranch = false;
                 })
             },
             async createNewBranchByTagName(){
                 var me = this
-                if(me.value.org && me.value.repo){
-                    const tagList = await me.git.getTags(me.value.org, me.value.repo)
-                    .then((result) => {
-                        // console.log(tagList)
-                        result.data.forEach(async function (tag) {
-                            if(me.value.forkedTag && tag.name == me.value.forkedTag){
-                                let templateBranchData = {
-                                    ref: `refs/heads/branch-${tag.name}`,
-                                    sha: tag.commit.sha
-                                }
-                                let createBranchResult = await me.git.createBranch(me.value.org, me.value.repo, templateBranchData)
-                                me.isFirstCommit = false
-                                me.gitTab = 'IDE'
-                                me.gitTabKey++;
-                                me.gitCommitMessage = null
-                                me.isPushing = false
-                                me.isVersionBranch = true 
-
-                                me.gitSnackBar = {
-                                    show: true,
-                                    timeout: 3000,
-                                    Text: "Fork 완료되었습니다.",
-                                    Color: "success",
-                                    icon: "check_circle",
-                                    title: "Success"
-                                }
-                            }
-                        })
-                    })
-                    .catch((error) => {
-                        me.commonError(error)
-                        me.isVersionBranch = false;
-                    })
-                }
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(me.value.org && me.value.repo){
+                            const tagList = await me.git.getTags(me.value.org, me.value.repo)
+                            .then((result) => {
+                                // console.log(tagList)
+                                result.data.forEach(async function (tag) {
+                                    if(me.value.forkedTag && tag.name == me.value.forkedTag){
+                                        let templateBranchData = {
+                                            ref: `refs/heads/branch-${tag.name}`,
+                                            sha: tag.commit.sha
+                                        }
+                                        let createBranchResult = await me.git.createBranch(me.value.org, me.value.repo, templateBranchData)
+                                        me.isFirstCommit = false
+                                        me.gitTab = 'IDE'
+                                        me.gitTabKey++;
+                                        me.gitCommitMessage = null
+                                        me.isPushing = false
+                                        me.isVersionBranch = true 
+        
+                                        me.gitSnackBar = {
+                                            show: true,
+                                            timeout: 3000,
+                                            Text: "Fork 완료되었습니다.",
+                                            Color: "success",
+                                            icon: "check_circle",
+                                            title: "Success"
+                                        }
+                                    }
+                                })
+                            })
+                            .catch((error) => {
+                                me.commonError(error)
+                                me.isVersionBranch = false;
+                            })
+                        }
+                    }
+                })
             },
             async checkReleasedTags(){
                 var me = this
-                if(me.projectVersion){
-                    let result = await me.git.getReleasedTag(me.value.org, me.value.repo, me.value.tag)
-                    .then(() => {
-                        me.isReleasedTag = true; 
-                    })
-                    .catch((error) => {
-                        if(error.response.status === 401){
-                            me.alertReLogin()
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(me.projectVersion){
+                            let result = await me.git.getReleasedTag(me.value.org, me.value.repo, me.value.tag)
+                            .then(() => {
+                                me.isReleasedTag = true; 
+                            })
+                            .catch((error) => {
+                                if(error.response.status === 401){
+                                    me.alertReLogin()
+                                }
+                                me.isReleasedTag = false;
+                                me.gitPodError = true
+                            })
                         }
-                        me.isReleasedTag = false;
-                        me.gitPodError = true
-                    })
-                }
+                    }
+                })
             },
             closeMenu(){
                 this.$emit("closeMenu")
             },
             async startCommitTemplate(){
                 var me = this
-                me.isPushing = true
-                me.commitStepText = 'Check Git Repo'
-                let gitRepoMainInfo = await me.git.getMainRepo(me.gitOrgName, me.gitRepoName)
-                .then((result) => {
-                    setTimeout(function () {
-                        me.startCommitTemplateList(me.gitRepoName)
-                    }, 1000)
-                })
-                .catch(async (error) => {
-                    if (error.response) {
-                        if(error.response.data.message == "Not Found" || error.response.status == 404){
-                            me.commitStepText = 'Create New Repo'
-                            // let newRepoData = {
-                            //     name: me.gitRepoName,
-                            //     auto_init: true
-                            // }
-                            let addNewRepo = await me.git.createRepo(me.gitOrgName, me.gitRepoName, me.gitUserName)
-                            .then(() => {
-                                setTimeout(function () {
-                                    me.startCommitTemplateList(me.gitRepoName)
-                                }, 3000)
-                            })
-                            .catch((error) => {
-                                me.commonError(error)
-                            })
-                        } else {
-                            me.commonError(error)
-                        }
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.isPushing = true
+                        me.commitStepText = 'Check Git Repo'
+                        let gitRepoMainInfo = await me.git.getMainRepo(me.gitOrgName, me.gitRepoName)
+                        .then((result) => {
+                            setTimeout(function () {
+                                me.startCommitTemplateList(me.gitRepoName)
+                            }, 1000)
+                        })
+                        .catch(async (error) => {
+                            if (error.response) {
+                                if(error.response.data.message == "Not Found" || error.response.status == 404){
+                                    me.commitStepText = 'Create New Repo'
+                                    // let newRepoData = {
+                                    //     name: me.gitRepoName,
+                                    //     auto_init: true
+                                    // }
+                                    let addNewRepo = await me.git.createRepo(me.gitOrgName, me.gitRepoName, me.gitUserName)
+                                    .then(() => {
+                                        setTimeout(function () {
+                                            me.startCommitTemplateList(me.gitRepoName)
+                                        }, 3000)
+                                    })
+                                    .catch((error) => {
+                                        me.commonError(error)
+                                    })
+                                } else {
+                                    me.commonError(error)
+                                }
+                            }
+                        })
                     }
                 })
             },
             async startCommitTemplateList(forkedRepoName) {
                 var me = this
-                me.commitStepText = 'Started Commit'
-                me.getRoofCnt = 0
-                me.commitStepText = 'Check Git Repo'
-                let gitRepoInfo = await me.git.getMainRepo(me.gitOrgName, me.gitRepoName)
-                .then((result) => {
-                    me.treesha = result.data.sha
-                    me.setPushTemplateList()
-                })
-                .catch((error) => {
-                    if (error.response) {
-                        if(error.response.data.message == "Not Found" || error.response.status == 404){
-                            if(forkedRepoName){
-                                me.gitSnackBar.show = true
-                                me.gitSnackBar.timeout = -1
-                                me.gitSnackBar.Text = "A forked repository already exists. The name of the configured repository is changed to the name of the forked repository. If you want to push, proceed to push again"
-                                me.gitSnackBar.Color = "warning"
-                                me.gitSnackBar.icon="warning"
-                                me.gitSnackBar.title="Warning"
-                                me.gitRepoName = forkedRepoName
-                                me.isPushing = false
-                                me.commitStepText = null
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.commitStepText = 'Started Commit'
+                        me.getRoofCnt = 0
+                        me.commitStepText = 'Check Git Repo'
+                        let gitRepoInfo = await me.git.getMainRepo(me.gitOrgName, me.gitRepoName)
+                        .then((result) => {
+                            me.treesha = result.data.sha
+                            me.setPushTemplateList()
+                        })
+                        .catch((error) => {
+                            if (error.response) {
+                                if(error.response.data.message == "Not Found" || error.response.status == 404){
+                                    if(forkedRepoName){
+                                        me.gitSnackBar.show = true
+                                        me.gitSnackBar.timeout = -1
+                                        me.gitSnackBar.Text = "A forked repository already exists. The name of the configured repository is changed to the name of the forked repository. If you want to push, proceed to push again"
+                                        me.gitSnackBar.Color = "warning"
+                                        me.gitSnackBar.icon="warning"
+                                        me.gitSnackBar.title="Warning"
+                                        me.gitRepoName = forkedRepoName
+                                        me.isPushing = false
+                                        me.commitStepText = null
+                                    }
+                                } else {
+                                    me.commonError(error)
+                                }
                             }
-                        } else {
-                            me.commonError(error)
-                        }
+                        })
                     }
                 })
             },
@@ -1462,130 +1496,132 @@
             },
             async startForkTemplate() {
                 var me = this
-                me.isPushing = true
-                try {
-                    let forkData
-                    if(me.gitOrgName != me.gitUserName){
-                        forkData = {
-                            organization: me.gitOrgName,
-                            name: me.gitRepoName
-                        };
-                    } else {
-                        forkData = {
-                            name: me.gitRepoName
-                        };
-                    }
-
-                    let forkRes = await axios.post(`https://api.github.com/repos/${me.templateGitPath[3]}/${me.templateGitPath[4]}/forks`, forkData, { headers: me.gitHeaders })
-                        .catch(async function (error) {
-                            me.commonError(error)
-                        });
-                    // console.log(forkRes)
-                    if(forkRes){
-                        var forkedRepoName
-                        if(forkRes.data && forkRes.data.name){
-                            forkedRepoName = forkRes.data.name
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.isPushing = true
+                        let forkData
+                        if(me.gitOrgName != me.gitUserName){
+                            forkData = {
+                                organization: me.gitOrgName,
+                                name: me.gitRepoName
+                            };
+                        } else {
+                            forkData = {
+                                name: me.gitRepoName
+                            };
                         }
-
-                        me.startCommitTemplateList(forkedRepoName)
+    
+                        let forkRes = await axios.post(`https://api.github.com/repos/${me.templateGitPath[3]}/${me.templateGitPath[4]}/forks`, forkData, { headers: me.gitHeaders })
+                            .catch(async function (error) {
+                                me.commonError(error)
+                            });
+                        // console.log(forkRes)
+                        if(forkRes){
+                            var forkedRepoName
+                            if(forkRes.data && forkRes.data.name){
+                                forkedRepoName = forkRes.data.name
+                            }
+    
+                            me.startCommitTemplateList(forkedRepoName)
+                        }   
                     }
-                } catch(e) {
-                    me.showErrSnackBar(e.message)
-                }
+                })
             },
             async startForkWithGitHub(){
                 var me = this
-                me.isPushing = true
-                try {
-                    if(me.projectId){
-                        if(me.isServerModel){
-                            if(!me.isPrivilegedUser){
-                                me.value.org = me.gitOrgName
-                                me.value.repo = me.gitRepoName
-                                // me.setString(`db://definitions/${me.projectId}/information/gitOrgName`, me.gitOrgName)
-                                // me.setString(`db://definitions/${me.projectId}/information/gitRepoName`, me.gitRepoName)
-                            } else {
-                                me.setString(`db://definitions/${me.projectId}/information/permissions/${me.userInfo.uid}/gitOrgName`, me.gitOrgName)
-                                me.setString(`db://definitions/${me.projectId}/information/permissions/${me.userInfo.uid}/gitRepoName`, me.gitRepoName)
-                            }
-                        }
-                    }
-                    let forkData
-                    if(me.gitOrgName != me.gitUserName){
-                        forkData = {
-                            organization: me.gitOrgName,
-                            name: me.gitRepoName
-                        };
-                    } else {
-                        forkData = {
-                            name: me.gitRepoName
-                        };
-                    }
-
-                    let forkRes = await axios.post(`https://api.github.com/repos/${me.gitForkOrgName}/${me.gitForkRepoName}/forks`, forkData, { headers: me.gitHeaders })
-                        .catch(async function (error) {
-                            me.commonError(error)
-                        });
-                    // console.log(forkRes)
-                    if(forkRes){
-                        if(me.isServerModel){
-                            if(!me.isPrivilegedUser){
-                                me.setString(`db://definitions/${me.projectId}/information/firstCommit`, "false")
-                            } else {
-                                me.setString(`db://definitions/${me.projectId}/information/permissions/${me.userInfo.uid}/firstCommit`, "false")
-                            }
-                        }
-                        if(me.isExistRepo){
-                            me.isFirstCommit = false
-                            me.gitTab = 'IDE'
-                            me.gitTabKey++;
-                            me.gitCommitMessage = null
-                            me.isPushing = false
-
-                            me.gitSnackBar.show = true
-                            me.gitSnackBar.timeout = -1
-                            me.gitSnackBar.Text = "Forked repository already exists on currently org."
-                            me.gitSnackBar.Color = "warning"
-                            me.gitSnackBar.icon="warning"
-                            me.gitSnackBar.title="Warning"
-                            me.gitRepoName = forkRes.data.name
-
-                            if(me.projectId){
-                                if(me.isServerModel){
-                                    if(!me.isPrivilegedUser){
-                                        me.value.repo = me.gitRepoName;
-                                        // me.setString(`db://definitions/${me.projectId}/information/gitRepoName`, me.gitRepoName)
-                                    } else {
-                                        me.setString(`db://definitions/${me.projectId}/information/permissions/${me.userInfo.uid}/gitRepoName`, me.gitRepoName)
-                                    }
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.isPushing = true
+                        if(me.projectId){
+                            if(me.isServerModel){
+                                if(!me.isPrivilegedUser){
+                                    me.value.org = me.gitOrgName
+                                    me.value.repo = me.gitRepoName
+                                    // me.setString(`db://definitions/${me.projectId}/information/gitOrgName`, me.gitOrgName)
+                                    // me.setString(`db://definitions/${me.projectId}/information/gitRepoName`, me.gitRepoName)
+                                } else {
+                                    me.setString(`db://definitions/${me.projectId}/information/permissions/${me.userInfo.uid}/gitOrgName`, me.gitOrgName)
+                                    me.setString(`db://definitions/${me.projectId}/information/permissions/${me.userInfo.uid}/gitRepoName`, me.gitRepoName)
                                 }
                             }
+                        }
+                        let forkData
+                        if(me.gitOrgName != me.gitUserName){
+                            forkData = {
+                                organization: me.gitOrgName,
+                                name: me.gitRepoName
+                            };
                         } else {
-                            if(me.value.forkedTag){
-                                setTimeout(() => {
-                                    me.createNewBranchByTagName()
-                                }, 5000)
-                            } else {
+                            forkData = {
+                                name: me.gitRepoName
+                            };
+                        }
+    
+                        let forkRes = await axios.post(`https://api.github.com/repos/${me.gitForkOrgName}/${me.gitForkRepoName}/forks`, forkData, { headers: me.gitHeaders })
+                            .catch(async function (error) {
+                                me.commonError(error)
+                            });
+                        // console.log(forkRes)
+                        if(forkRes){
+                            if(me.isServerModel){
+                                if(!me.isPrivilegedUser){
+                                    me.setString(`db://definitions/${me.projectId}/information/firstCommit`, "false")
+                                } else {
+                                    me.setString(`db://definitions/${me.projectId}/information/permissions/${me.userInfo.uid}/firstCommit`, "false")
+                                }
+                            }
+                            if(me.isExistRepo){
                                 me.isFirstCommit = false
                                 me.gitTab = 'IDE'
                                 me.gitTabKey++;
                                 me.gitCommitMessage = null
                                 me.isPushing = false
-
+    
                                 me.gitSnackBar.show = true
-                                me.gitSnackBar.timeout = 3000
-                                me.gitSnackBar.Text = "Fork 완료되었습니다."
-                                me.gitSnackBar.Color = "success"
-                                me.gitSnackBar.icon="check_circle"
-                                me.gitSnackBar.title="Success"
-                                me.isExistRepo = true
-                                me.isExistRepoMessage = "The repository name already exist"
+                                me.gitSnackBar.timeout = -1
+                                me.gitSnackBar.Text = "Forked repository already exists on currently org."
+                                me.gitSnackBar.Color = "warning"
+                                me.gitSnackBar.icon="warning"
+                                me.gitSnackBar.title="Warning"
+                                me.gitRepoName = forkRes.data.name
+    
+                                if(me.projectId){
+                                    if(me.isServerModel){
+                                        if(!me.isPrivilegedUser){
+                                            me.value.repo = me.gitRepoName;
+                                            // me.setString(`db://definitions/${me.projectId}/information/gitRepoName`, me.gitRepoName)
+                                        } else {
+                                            me.setString(`db://definitions/${me.projectId}/information/permissions/${me.userInfo.uid}/gitRepoName`, me.gitRepoName)
+                                        }
+                                    }
+                                }
+                            } else {
+                                if(me.value.forkedTag){
+                                    setTimeout(() => {
+                                        me.createNewBranchByTagName()
+                                    }, 5000)
+                                } else {
+                                    me.isFirstCommit = false
+                                    me.gitTab = 'IDE'
+                                    me.gitTabKey++;
+                                    me.gitCommitMessage = null
+                                    me.isPushing = false
+    
+                                    me.gitSnackBar.show = true
+                                    me.gitSnackBar.timeout = 3000
+                                    me.gitSnackBar.Text = "Fork 완료되었습니다."
+                                    me.gitSnackBar.Color = "success"
+                                    me.gitSnackBar.icon="check_circle"
+                                    me.gitSnackBar.title="Success"
+                                    me.isExistRepo = true
+                                    me.isExistRepoMessage = "The repository name already exist"
+                                }
                             }
                         }
                     }
-                } catch(e) {
-                    me.showErrSnackBar(e.message)
-                }
+                })
             },
             async startForkWithGitLab(){
                 var me = this
@@ -1642,216 +1678,226 @@
             },
             async setGitInfo(){
                 var me = this
-                if(me.isOnPrem){
-                    me.gitlabDomain = window.GITLAB ? window.GITLAB : window.location.host.replace("www.", "")
-                    // me.gitlabDomain = "msastudy.io"
+                me.$app.try({
+                    context: me,
+                    async action(me){
 
-                    if(localStorage.getItem('gitToken')){
-                        me.gitToken = localStorage.getItem('gitToken')
-                    }
-
-                    me.gitHeaders = {
-                        Authorization: 'Bearer ' + me.gitToken,
-                        Accept: 'application/json'
-                    }
-
-                    if(localStorage.getItem('gitUserName')){
-                        me.gitUserName = localStorage.getItem('gitUserName')
-                    }
-
-                    if(localStorage.getItem('picture')){
-                        me.gitPicture = localStorage.getItem('picture')
-                    }
-
-                    if(localStorage.getItem('loginType') && localStorage.getItem('loginType') == 'gitlab'){
-                        me.isGitLogin = true
-                    }
-                } else {
-                    if(localStorage.getItem('gitToken')){
-                        me.gitToken = localStorage.getItem('gitToken')
-                    }
-
-                    me.gitHeaders = {
-                        Authorization: 'token ' + me.gitToken,
-                        Accept: 'application/vnd.github+json'
-                    }
-
-                    if(localStorage.getItem('gitUserName')){
-                        me.gitUserName = localStorage.getItem('gitUserName')
-                    }
-
-                    if(localStorage.getItem('picture')){
-                        me.gitPicture = localStorage.getItem('picture')
-                    }
-
-                    if(localStorage.getItem('loginType') && localStorage.getItem('loginType') == 'github'){
-                        me.isGitLogin = true
-                    }
-
-                }
-                if(!me.gitUserName || !me.gitToken){
-                    if(!me.isGitLogin) me.gitTab = 'Repository'
-                    // me.gitMenuMode = "settings"
-                }
-                if(localStorage.getItem("forkedModelInfo")){
-                    if(localStorage.getItem("forkedModelInfo").includes('gitOrgName')){
-                        var beforeModelInfo = JSON.parse(JSON.parse(localStorage.getItem("forkedModelInfo")))
-                        if(beforeModelInfo && beforeModelInfo.org != null){
-                            me.gitForkOrgName = beforeModelInfo.org
-                            me.gitForkRepoName = beforeModelInfo.repo
-                            if(me.isServerModel){
-                                me.value.forkedOrg = me.gitForkOrgName
-                                me.value.forkedRepo = me.gitForkRepoName
-                                // me.setString(`db://definitions/${me.projectId}/information/forkedByModelGitOrgName`, me.gitForkOrgName)
-                                // me.setString(`db://definitions/${me.projectId}/information/forkedByModelGitRepoName`, me.gitForkRepoName)
+                        if(me.isOnPrem){
+                            me.gitlabDomain = window.GITLAB ? window.GITLAB : window.location.host.replace("www.", "")
+                            // me.gitlabDomain = "msastudy.io"
+        
+                            if(localStorage.getItem('gitToken')){
+                                me.gitToken = localStorage.getItem('gitToken')
                             }
+        
+                            me.gitHeaders = {
+                                Authorization: 'Bearer ' + me.gitToken,
+                                Accept: 'application/json'
+                            }
+        
+                            if(localStorage.getItem('gitUserName')){
+                                me.gitUserName = localStorage.getItem('gitUserName')
+                            }
+        
+                            if(localStorage.getItem('picture')){
+                                me.gitPicture = localStorage.getItem('picture')
+                            }
+        
+                            if(localStorage.getItem('loginType') && localStorage.getItem('loginType') == 'gitlab'){
+                                me.isGitLogin = true
+                            }
+                        } else {
+                            if(localStorage.getItem('gitToken')){
+                                me.gitToken = localStorage.getItem('gitToken')
+                            }
+        
+                            me.gitHeaders = {
+                                Authorization: 'token ' + me.gitToken,
+                                Accept: 'application/vnd.github+json'
+                            }
+        
+                            if(localStorage.getItem('gitUserName')){
+                                me.gitUserName = localStorage.getItem('gitUserName')
+                            }
+        
+                            if(localStorage.getItem('picture')){
+                                me.gitPicture = localStorage.getItem('picture')
+                            }
+        
+                            if(localStorage.getItem('loginType') && localStorage.getItem('loginType') == 'github'){
+                                me.isGitLogin = true
+                            }
+        
                         }
-                    }
-
-                    localStorage.removeItem("forkedModelInfo")
-                }
-
-                me.copyChangedPathLists = JSON.parse(JSON.stringify(me.changedPathListsForGit))
-                me.gitRepoName = me.core.filterProjectName (me.projectName);
-                //
-                if(me.value && !me.isPrivilegedUser){
-                    if(me.value.repo){
-                        me.gitRepoName = me.value.repo
-                        me.gitForkRepoName = me.value.repo
-                    } else if(me.projectName){
+                        if(!me.gitUserName || !me.gitToken){
+                            if(!me.isGitLogin) me.gitTab = 'Repository'
+                            // me.gitMenuMode = "settings"
+                        }
+                        if(localStorage.getItem("forkedModelInfo")){
+                            if(localStorage.getItem("forkedModelInfo").includes('gitOrgName')){
+                                var beforeModelInfo = JSON.parse(JSON.parse(localStorage.getItem("forkedModelInfo")))
+                                if(beforeModelInfo && beforeModelInfo.org != null){
+                                    me.gitForkOrgName = beforeModelInfo.org
+                                    me.gitForkRepoName = beforeModelInfo.repo
+                                    if(me.isServerModel){
+                                        me.value.forkedOrg = me.gitForkOrgName
+                                        me.value.forkedRepo = me.gitForkRepoName
+                                        // me.setString(`db://definitions/${me.projectId}/information/forkedByModelGitOrgName`, me.gitForkOrgName)
+                                        // me.setString(`db://definitions/${me.projectId}/information/forkedByModelGitRepoName`, me.gitForkRepoName)
+                                    }
+                                }
+                            }
+        
+                            localStorage.removeItem("forkedModelInfo")
+                        }
+        
+                        me.copyChangedPathLists = JSON.parse(JSON.stringify(me.changedPathListsForGit))
                         me.gitRepoName = me.core.filterProjectName (me.projectName);
-                    }
-
-                    me.gitOrganizations.push(me.gitUserName)
-
-                    if(me.value.org){
-                        me.gitOrgName = me.value.org
-                        if(me.gitOrgName != me.gitUserName){
+                        //
+                        if(me.value && !me.isPrivilegedUser){
+                            if(me.value.repo){
+                                me.gitRepoName = me.value.repo
+                                me.gitForkRepoName = me.value.repo
+                            } else if(me.projectName){
+                                me.gitRepoName = me.core.filterProjectName (me.projectName);
+                            }
+        
+                            me.gitOrganizations.push(me.gitUserName)
+        
+                            if(me.value.org){
+                                me.gitOrgName = me.value.org
+                                if(me.gitOrgName != me.gitUserName){
+                                    me.gitOrganizations.push(me.gitOrgName)
+                                }
+                            } else {
+                                me.gitOrgName = me.gitUserName
+                            }
+        
+                            if(me.information.firstCommit == "false"){
+                                me.isFirstCommit = false
+                            }
+        
+                            if(me.isFirstCommit){
+                                if(me.information.forkOrigin){
+                                    if(me.value.forkedOrg && me.value.forkedRepo){
+                                        me.gitForkOrgName = me.value.forkedOrg
+                                        me.gitForkRepoName = me.value.forkedRepo
+                                    }
+                                }
+                            }
+                            if(!me.information.useIdeItem){
+                                if(me.isServerModel){
+                                    me.setString(`db://definitions/${me.projectId}/information/useIdeItem`, 'gitpod')
+                                }
+                            } else if(me.information.useIdeItem == 'theia'){
+                                me.usegitPod = false
+                            }
+                        } else if(me.isPrivilegedUser){
+                            if(me.information.permissions[me.userInfo.uid].firstCommit == "false"){
+                                me.gitOrgName = me.information.permissions[me.userInfo.uid].gitOrgName
+                                me.gitOrganizations.push(me.gitOrgName)
+                                if(me.information.permissions[me.userInfo.uid].gitRepoName){
+                                    me.gitRepoName = me.information.permissions[me.userInfo.uid].gitRepoName
+                                }
+                            } else {
+                                me.gitOrganizations = []
+                                me.gitOrgName = me.gitUserName
+                                me.gitOrganizations.push(me.gitOrgName)
+                                if(me.information && me.projectName){
+                                    me.gitRepoName = me.core.filterProjectName (me.projectName);
+                                }
+                                if(me.information.firstCommit == "false"){
+                                    me.gitForkOrgName = me.value.org
+                                    me.gitForkRepoName = me.value.repo
+                                }
+                            }
+                            me.setPrivilegedUserGitInfo = true
+                        } else {
+                            me.gitOrgName = me.gitUserName
                             me.gitOrganizations.push(me.gitOrgName)
-                        }
-                    } else {
-                        me.gitOrgName = me.gitUserName
-                    }
-
-                    if(me.information.firstCommit == "false"){
-                        me.isFirstCommit = false
-                    }
-
-                    if(me.isFirstCommit){
-                        if(me.information.forkOrigin){
-                            if(me.value.forkedOrg && me.value.forkedRepo){
-                                me.gitForkOrgName = me.value.forkedOrg
-                                me.gitForkRepoName = me.value.forkedRepo
+                            me.gitRepoName = me.core.filterProjectName (me.projectName);
+        
+                            if(me.isServerModel){
+                                me.setString(`db://definitions/${me.projectId}/information/useIdeItem`, 'gitpod')
                             }
                         }
-                    }
-                    if(!me.information.useIdeItem){
-                        if(me.isServerModel){
-                            me.setString(`db://definitions/${me.projectId}/information/useIdeItem`, 'gitpod')
+                        if(me.value){
+                            me.value.org = me.gitOrgName
+                            me.value.repo = me.gitRepoName
                         }
-                    } else if(me.information.useIdeItem == 'theia'){
-                        me.usegitPod = false
-                    }
-                } else if(me.isPrivilegedUser){
-                    if(me.information.permissions[me.userInfo.uid].firstCommit == "false"){
-                        me.gitOrgName = me.information.permissions[me.userInfo.uid].gitOrgName
-                        me.gitOrganizations.push(me.gitOrgName)
-                        if(me.information.permissions[me.userInfo.uid].gitRepoName){
-                            me.gitRepoName = me.information.permissions[me.userInfo.uid].gitRepoName
+        
+                        if(((me.isOwnModel || me.isPrivilegedUser) && !me.isFirstCommit) || me.editTemplateMode){
+                            me.gitTab = 'Push'
+                        } else {
+                            me.gitTab = 'Repository'
                         }
-                    } else {
-                        me.gitOrganizations = []
-                        me.gitOrgName = me.gitUserName
-                        me.gitOrganizations.push(me.gitOrgName)
-                        if(me.information && me.projectName){
-                            me.gitRepoName = me.core.filterProjectName (me.projectName);
+                        
+                        if(me.githubTokenError){
+                            me.gitTab = 'Repository'
                         }
-                        if(me.information.firstCommit == "false"){
-                            me.gitForkOrgName = me.value.org
-                            me.gitForkRepoName = me.value.repo
+                        me.gitTabKey++;
+        
+                        if(me.gitUserName && me.gitOrgName && me.gitToken){
+                            me.checkRepoExist()
+                            me.checkReleasedTags();
+                            me.validateRepoBranch();
+                        }
+                        if(me.editTemplateMode){
+                            me.templateGitPath = me.templateRepoName.split('/')
+                            if(me.templateRepoName.includes('/')){
+                                me.gitRepoName = me.templateGitPath[4]
+                            } else {
+                                me.gitRepoName = me.templateRepoName
+                            }
+                            if(me.isCustomTemplate){
+                                me.gitOrganizations.push(me.templateGitPath[3])
+                                me.gitOrgName = me.templateGitPath[3]
+                            } else {
+                                me.gitOrgName = this.gitUserName
+                                // me.gitRepoName = me.templateRepoName
+                            }
+                            if(me.gitRepoName.includes("template-")){
+                                me.isTemplate = true
+                            } else {
+                                me.isTemplate = false
+                                me.autoApplyTemplate = false
+                            }
+                        }
+                        if(me.ShowCreateRepoTab){
+                            me.gitSnackBar.show = true
+                            me.gitSnackBar.timeout = -1
+                            me.gitSnackBar.Text = "The target repository does not exist."
+                            me.gitSnackBar.multiLineText = "Click the Create button to create the github repository and push your code."
+                            me.gitSnackBar.Color = "info"
+                            me.gitSnackBar.icon="info"
+                            me.gitSnackBar.title="Instruction"
+                            me.$emit("settingDone")
                         }
                     }
-                    me.setPrivilegedUserGitInfo = true
-                } else {
-                    me.gitOrgName = me.gitUserName
-                    me.gitOrganizations.push(me.gitOrgName)
-                    me.gitRepoName = me.core.filterProjectName (me.projectName);
-
-                    if(me.isServerModel){
-                        me.setString(`db://definitions/${me.projectId}/information/useIdeItem`, 'gitpod')
-                    }
-                }
-                if(me.value){
-                    me.value.org = me.gitOrgName
-                    me.value.repo = me.gitRepoName
-                }
-
-                if(((me.isOwnModel || me.isPrivilegedUser) && !me.isFirstCommit) || me.editTemplateMode){
-                    me.gitTab = 'Push'
-                } else {
-                    me.gitTab = 'Repository'
-                }
-                
-                if(me.githubTokenError){
-                    me.gitTab = 'Repository'
-                }
-                me.gitTabKey++;
-
-                if(me.gitUserName && me.gitOrgName && me.gitToken){
-                    me.checkRepoExist()
-                    me.checkReleasedTags();
-                    me.validateRepoBranch();
-                }
-                if(me.editTemplateMode){
-                    me.templateGitPath = me.templateRepoName.split('/')
-                    if(me.templateRepoName.includes('/')){
-                        me.gitRepoName = me.templateGitPath[4]
-                    } else {
-                        me.gitRepoName = me.templateRepoName
-                    }
-                    if(me.isCustomTemplate){
-                        me.gitOrganizations.push(me.templateGitPath[3])
-                        me.gitOrgName = me.templateGitPath[3]
-                    } else {
-                        me.gitOrgName = this.gitUserName
-                        // me.gitRepoName = me.templateRepoName
-                    }
-                    if(me.gitRepoName.includes("template-")){
-                        me.isTemplate = true
-                    } else {
-                        me.isTemplate = false
-                        me.autoApplyTemplate = false
-                    }
-                }
-                if(me.ShowCreateRepoTab){
-                    me.gitSnackBar.show = true
-                    me.gitSnackBar.timeout = -1
-                    me.gitSnackBar.Text = "The target repository does not exist."
-                    me.gitSnackBar.multiLineText = "Click the Create button to create the github repository and push your code."
-                    me.gitSnackBar.Color = "info"
-                    me.gitSnackBar.icon="info"
-                    me.gitSnackBar.title="Instruction"
-                    me.$emit("settingDone")
-                }
+                })
             },
             openGuide(){
                 window.open(`https://github.com/TheOpenCloudEngine/msaschool/wiki/Github-Personal-Access-Token-%EB%B0%9C%ED%96%89-%EB%B0%A9%EB%B2%95`, '_blank');
             },
             async checkRepoExist(){
                 var me = this
-                
-                let gitRepo = await me.git.getRepo(me.gitOrgName, me.gitRepoName)
-                    .then((result) => {
-                        me.isExistRepo = true
-                        me.isExistRepoMessage = "The repository name already exist"
-                    })
-                    .catch(async function (error) {
-                        if(error.response.status === 401){
-                            me.alertReLogin()
-                        }
-                        me.isExistRepo = false
-                        me.isExistRepoMessage = null
-                    }); 
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let gitRepo = await me.git.getRepo(me.gitOrgName, me.gitRepoName)
+                            .then((result) => {
+                                me.isExistRepo = true
+                                me.isExistRepoMessage = "The repository name already exist"
+                            })
+                            .catch(async function (error) {
+                                if(error.response.status === 401){
+                                    me.alertReLogin()
+                                }
+                                me.isExistRepo = false
+                                me.isExistRepoMessage = null
+                            }); 
+                    }
+                })
 
                 // TODO: Gitlab 부분 -> 작업 예정
                 // if(me.isOnPrem){
@@ -2125,250 +2171,267 @@
             },
             async startCommitWithGit(branch) {
                 var me = this
-                me.gitTreeList = []
-                let gitTreeList = []
-                me.commitStepText = 'Started Commit'
-
-                if(me.projectId){
-                    if(me.isServerModel){
-                        if(!me.isPrivilegedUser){
-                            me.value.org = me.gitOrgName
-                            me.value.repo = me.gitRepoName
-                            me.setString(`db://definitions/${me.projectId}/information/firstCommit`, "false")
-                            // me.setString(`db://definitions/${me.projectId}/information/gitOrgName`, me.gitOrgName)
-                            // me.setString(`db://definitions/${me.projectId}/information/gitRepoName`, me.gitRepoName)
-                        } else {
-                            me.setString(`db://definitions/${me.projectId}/information/permissions/${me.userInfo.uid}/gitOrgName`, me.gitOrgName)
-                            me.setString(`db://definitions/${me.projectId}/information/permissions/${me.userInfo.uid}/gitRepoName`, me.gitRepoName)
-                            me.setString(`db://definitions/${me.projectId}/information/permissions/${me.userInfo.uid}/firstCommit`, "false")
-                        }
-                    }
-                }
-                me.isPushing = true
-                me.isFirstCommit = false
-                me.pushTree = []
-                me.removeTree = []
-                me.getRoofCnt = 0
-                me.commitStepText = 'Check Git Repo'
-                let gitRepoInfo = await me.git.getTemplateBranch(me.gitOrgName, me.gitRepoName, branch)
-                .then(async (result) => {
-                    if(!me.isFirstCommit && result) {
-                        me.commitStepText = 'Get Git Repo'
-                        me.treesha = result.data.sha
-                        if(result.data.tree) {
-                            let treeOptions = {
-                                tree: result.data.tree,
-                                name: result.data.name,
-                                repo: me.gitRepoName,
-                                org: me.gitOrgName
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.gitTreeList = []
+                        let gitTreeList = []
+                        me.commitStepText = 'Started Commit'
+        
+                        if(me.projectId){
+                            if(me.isServerModel){
+                                if(!me.isPrivilegedUser){
+                                    me.value.org = me.gitOrgName
+                                    me.value.repo = me.gitRepoName
+                                    me.setString(`db://definitions/${me.projectId}/information/firstCommit`, "false")
+                                    // me.setString(`db://definitions/${me.projectId}/information/gitOrgName`, me.gitOrgName)
+                                    // me.setString(`db://definitions/${me.projectId}/information/gitRepoName`, me.gitRepoName)
+                                } else {
+                                    me.setString(`db://definitions/${me.projectId}/information/permissions/${me.userInfo.uid}/gitOrgName`, me.gitOrgName)
+                                    me.setString(`db://definitions/${me.projectId}/information/permissions/${me.userInfo.uid}/gitRepoName`, me.gitRepoName)
+                                    me.setString(`db://definitions/${me.projectId}/information/permissions/${me.userInfo.uid}/firstCommit`, "false")
+                                }
                             }
-                            gitTreeList = await me.git.getFiles(treeOptions)
-                            .then(async function(files) {
-                                me.commitStepText = 'Set Git Commit Tree'
-                                let options = {
-                                    gitTree: files,
-                                    generateCodeLists: me.generateCodeLists,
-                                    copyChangedPathLists: me.copyChangedPathLists,
-                                    pushType: me.pushType,
-                                    isOne: me.isOneBCModel,
-                                    onlyOneBcId: me.onlyOneBcId,
-                                    org: me.gitOrgName,
-                                    repo: me.gitRepoName,
-                                    testFile: me.isSIgpt ? me.selectedTestFile:null
-                                }
-                                let setTreeList = await me.git.setPushList(options)
-                                .then(async function (list) {
-                                    me.commitStepText = 'Commit to Git'
-                                    if(!list) {
-                                        me.isPushing = false
-                                        me.commitStepText = null
-                                        me.gitSnackBar.show = true
-                                        me.gitSnackBar.timeout = -1
-                                        me.gitSnackBar.Text = "Nothing changed"
-                                        me.gitSnackBar.Color = "warning"
-                                        me.gitSnackBar.icon="warning"
-                                        me.gitSnackBar.title="Warning"
-                                    } else {
-                                        let commitResult = await me.git.commit(me.gitOrgName, me.gitRepoName, branch, list, me.isFirstCommit, me.gitCommitMessage)
-                                        .then(async (commit) => {
-                                            me.commitStepText = 'Push to Git'
-                                            let options = {
-                                                org: me.gitOrgName, 
-                                                repo: me.gitRepoName, 
-                                                commitData: commit, 
-                                                list: list,
-                                                branch: branch
-                                            }
-                                            me.$EventBus.$emit("getCommitId", commit.data.sha)
-                                            let pushResult = await me.git.push(options)
-                                            .then(function () {
-                                                me.commitStepText = null
-                                                me.isPushing = false
-                                                me.isFirstCommit = false
-                                                me.gitTab = 'IDE'
-                                                me.gitCommitMessage = null
-                                                me.copyChangedPathLists = []
-                                                me.gitSnackBar.show = true
-                                                me.gitSnackBar.timeout = 3000
-                                                me.gitSnackBar.Text = "Commit/Push Success."
-                                                me.gitSnackBar.Color = "success"
-                                                me.gitSnackBar.icon="check_circle"
-                                                me.gitSnackBar.title="Success"
-                                                if(me.isSIgpt){
-                                                    setTimeout(() => {
-                                                        me.getActionLogs()
-                                                    }, 5000)
-                                                }
-                                            })
-                                        })
-                                        .catch((error) =>{
-                                            me.commonError(error)
-                                        })
-                                    }
-                                })
-                            })
-                            .catch(error => {
-                                me.commonError(error)
-                            })
                         }
-                    }
-                })
-                .catch((error) => {
-                    if (error.response) {
-                        if(error.response.data.message == "Not Found" || error.response.status == 404) {
-                            me.isFirstCommit = true
-                            let gitRepoMainInfo = me.git.getMainRepo(me.gitOrgName, me.gitRepoName)
-                            .then((result) => {
-                                setTimeout(function () {
-                                    me.setPushListWithGit(gitTreeList)
-                                }, 1000)
-                            })
-                            .catch(async (error) => {
-                                if (error.response) {
-                                    if(error.response.data.message == "Not Found" || error.response.status == 404) {
-                                        me.commitStepText = 'Create New Repo'
-                                        let newRepoData = {
-                                            name: me.gitRepoName,
-                                            auto_init: true
+                        me.isPushing = true
+                        me.isFirstCommit = false
+                        me.pushTree = []
+                        me.removeTree = []
+                        me.getRoofCnt = 0
+                        me.commitStepText = 'Check Git Repo'
+                        let gitRepoInfo = await me.git.getTemplateBranch(me.gitOrgName, me.gitRepoName, branch)
+                        .then(async (result) => {
+                            if(!me.isFirstCommit && result) {
+                                me.commitStepText = 'Get Git Repo'
+                                me.treesha = result.data.sha
+                                if(result.data.tree) {
+                                    let treeOptions = {
+                                        tree: result.data.tree,
+                                        name: result.data.name,
+                                        repo: me.gitRepoName,
+                                        org: me.gitOrgName
+                                    }
+                                    gitTreeList = await me.git.getFiles(treeOptions)
+                                    .then(async function(files) {
+                                        me.commitStepText = 'Set Git Commit Tree'
+                                        let options = {
+                                            gitTree: files,
+                                            generateCodeLists: me.generateCodeLists,
+                                            copyChangedPathLists: me.copyChangedPathLists,
+                                            pushType: me.pushType,
+                                            isOne: me.isOneBCModel,
+                                            onlyOneBcId: me.onlyOneBcId,
+                                            org: me.gitOrgName,
+                                            repo: me.gitRepoName,
+                                            testFile: me.isSIgpt ? me.selectedTestFile:null
                                         }
-                                        let addNewRepo = await me.git.createRepo(me.gitOrgName, me.gitRepoName, me.gitUserName)
-                                        .then((result) => {
-                                            setTimeout(function () {
-                                                me.setPushListWithGit()
-                                            }, 3000)
+                                        let setTreeList = await me.git.setPushList(options)
+                                        .then(async function (list) {
+                                            me.commitStepText = 'Commit to Git'
+                                            if(!list) {
+                                                me.isPushing = false
+                                                me.commitStepText = null
+                                                me.gitSnackBar.show = true
+                                                me.gitSnackBar.timeout = -1
+                                                me.gitSnackBar.Text = "Nothing changed"
+                                                me.gitSnackBar.Color = "warning"
+                                                me.gitSnackBar.icon="warning"
+                                                me.gitSnackBar.title="Warning"
+                                            } else {
+                                                let commitResult = await me.git.commit(me.gitOrgName, me.gitRepoName, branch, list, me.isFirstCommit, me.gitCommitMessage)
+                                                .then(async (commit) => {
+                                                    me.commitStepText = 'Push to Git'
+                                                    let options = {
+                                                        org: me.gitOrgName, 
+                                                        repo: me.gitRepoName, 
+                                                        commitData: commit, 
+                                                        list: list,
+                                                        branch: branch
+                                                    }
+                                                    me.$EventBus.$emit("getCommitId", commit.data.sha)
+                                                    let pushResult = await me.git.push(options)
+                                                    .then(function () {
+                                                        me.commitStepText = null
+                                                        me.isPushing = false
+                                                        me.isFirstCommit = false
+                                                        me.gitTab = 'IDE'
+                                                        me.gitCommitMessage = null
+                                                        me.copyChangedPathLists = []
+                                                        me.gitSnackBar.show = true
+                                                        me.gitSnackBar.timeout = 3000
+                                                        me.gitSnackBar.Text = "Commit/Push Success."
+                                                        me.gitSnackBar.Color = "success"
+                                                        me.gitSnackBar.icon="check_circle"
+                                                        me.gitSnackBar.title="Success"
+                                                        if(me.isSIgpt){
+                                                            setTimeout(() => {
+                                                                me.getActionLogs()
+                                                            }, 5000)
+                                                        }
+                                                    })
+                                                })
+                                                .catch((error) =>{
+                                                    me.commonError(error)
+                                                })
+                                            }
                                         })
-                                        .catch((error) => {
-                                            me.commonError(error)
-                                        })
-                                    } else {
+                                    })
+                                    .catch(error => {
                                         me.commonError(error)
-                                    }
+                                    })
                                 }
-                            })
-                        } else {
-                            me.commonError(error)
-                        }
+                            }
+                        })
+                        .catch((error) => {
+                            if (error.response) {
+                                if(error.response.data.message == "Not Found" || error.response.status == 404) {
+                                    me.isFirstCommit = true
+                                    let gitRepoMainInfo = me.git.getMainRepo(me.gitOrgName, me.gitRepoName)
+                                    .then((result) => {
+                                        setTimeout(function () {
+                                            me.setPushListWithGit(gitTreeList)
+                                        }, 1000)
+                                    })
+                                    .catch(async (error) => {
+                                        if (error.response) {
+                                            if(error.response.data.message == "Not Found" || error.response.status == 404) {
+                                                me.commitStepText = 'Create New Repo'
+                                                let newRepoData = {
+                                                    name: me.gitRepoName,
+                                                    auto_init: true
+                                                }
+                                                let addNewRepo = await me.git.createRepo(me.gitOrgName, me.gitRepoName, me.gitUserName)
+                                                .then((result) => {
+                                                    setTimeout(function () {
+                                                        me.setPushListWithGit()
+                                                    }, 3000)
+                                                })
+                                                .catch((error) => {
+                                                    me.commonError(error)
+                                                })
+                                            } else {
+                                                me.commonError(error)
+                                            }
+                                        }
+                                    })
+                                } else {
+                                    me.commonError(error)
+                                }
+                            }
+                        })
                     }
                 })
             },
             async setPushTemplateList(){
                 var me = this
-                me.commitStepText = 'Set Git Commit Tree'
-                var pushTemplatTree = []
-                var pushCnt = 0
-                Object.keys(me.editTemplateList).forEach(async function (tmpPath) {
-                    var code
-                    if(me.editTemplateList[tmpPath]){
-                        code = me.editTemplateList[tmpPath].code
+                me.$app.try({
+                    context: me,
+                    async action(me){
+
+                        me.commitStepText = 'Set Git Commit Tree'
+                        var pushTemplatTree = []
+                        var pushCnt = 0
+                        Object.keys(me.editTemplateList).forEach(async function (tmpPath) {
+                            var code
+                            if(me.editTemplateList[tmpPath]){
+                                code = me.editTemplateList[tmpPath].code
+                            }
+                            if(!code){
+                                code = 'undefined'
+                            }
+                            let data = {
+                                content: code,
+                                encoding: 'utf-8',
+                            };
+                            pushCnt++;
+                            let res = me.git.pushFile(me.gitOrgName, me.gitRepoName, data)
+                            .then(async result => {
+                                let pushData = {
+                                    path: tmpPath,
+                                    mode:"100644",
+                                    type:"blob",
+                                    sha: result.data.sha
+                                }
+                                pushTemplatTree.push(pushData)
+                                pushCnt--;
+                                if(pushCnt == 0){
+                                    me.pushTemplateList(pushTemplatTree)
+                                }
+                            })
+                            .catch((error) => {
+                                me.commonError(error)
+                            })
+                        });
                     }
-                    if(!code){
-                        code = 'undefined'
-                    }
-                    let data = {
-                        content: code,
-                        encoding: 'utf-8',
-                    };
-                    pushCnt++;
-                    let res = me.git.pushFile(me.gitOrgName, me.gitRepoName, data)
-                    .then(async result => {
-                        let pushData = {
-                            path: tmpPath,
-                            mode:"100644",
-                            type:"blob",
-                            sha: result.data.sha
-                        }
-                        pushTemplatTree.push(pushData)
-                        pushCnt--;
-                        if(pushCnt == 0){
-                            me.pushTemplateList(pushTemplatTree)
-                        }
-                    })
-                    .catch((error) => {
-                        me.commonError(error)
-                    })
-                });
+                })
             },
             async setPushListWithGit(gitTreeList) {
                 var me = this
-                if(gitTreeList == null) {
-                    gitTreeList = []
-                }
-                let options = {
-                    gitTree: gitTreeList,
-                    generateCodeLists: me.generateCodeLists,
-                    copyChangedPathLists: me.copyChangedPathLists,
-                    pushType: me.pushType,
-                    isOne: me.isOneBCModel,
-                    onlyOneBcId: me.onlyOneBcId,
-                    org: me.gitOrgName,
-                    repo: me.gitRepoName
-                }
-                let setTreeList = await me.git.setPushList(options)
-                .then(async function (list) {
-                    // console.log(list)
-                    me.commitStepText = 'Commit to Git'
-                    if(!list) {
-                        me.isPushing = false
-                        me.commitStepText = null
-                        me.gitSnackBar.show = true
-                        me.gitSnackBar.timeout = -1
-                        me.gitSnackBar.Text = "Nothing changed"
-                        me.gitSnackBar.Color = "warning"
-                        me.gitSnackBar.icon="warning"
-                        me.gitSnackBar.title="Warning"
-                    } else {
-                        let commitResult = await me.git.commit(me.gitOrgName, me.gitRepoName, "main", list, me.isFirstCommit, "commit")
-                        .then(async (commit) => {
-                            me.commitStepText = 'Push to Git'
-                            let options = {
-                                org: me.gitOrgName, 
-                                repo: me.gitRepoName, 
-                                commitData: commit, 
-                                list: list,
-                                branch: "main"
+                me.$app.try({
+                    context: me,
+                    async action(me){
+
+                        if(gitTreeList == null) {
+                            gitTreeList = []
+                        }
+                        let options = {
+                            gitTree: gitTreeList,
+                            generateCodeLists: me.generateCodeLists,
+                            copyChangedPathLists: me.copyChangedPathLists,
+                            pushType: me.pushType,
+                            isOne: me.isOneBCModel,
+                            onlyOneBcId: me.onlyOneBcId,
+                            org: me.gitOrgName,
+                            repo: me.gitRepoName
+                        }
+                        let setTreeList = await me.git.setPushList(options)
+                        .then(async function (list) {
+                            // console.log(list)
+                            me.commitStepText = 'Commit to Git'
+                            if(!list) {
+                                me.isPushing = false
+                                me.commitStepText = null
+                                me.gitSnackBar.show = true
+                                me.gitSnackBar.timeout = -1
+                                me.gitSnackBar.Text = "Nothing changed"
+                                me.gitSnackBar.Color = "warning"
+                                me.gitSnackBar.icon="warning"
+                                me.gitSnackBar.title="Warning"
+                            } else {
+                                let commitResult = await me.git.commit(me.gitOrgName, me.gitRepoName, "main", list, me.isFirstCommit, "commit")
+                                .then(async (commit) => {
+                                    me.commitStepText = 'Push to Git'
+                                    let options = {
+                                        org: me.gitOrgName, 
+                                        repo: me.gitRepoName, 
+                                        commitData: commit, 
+                                        list: list,
+                                        branch: "main"
+                                    }
+                                    let pushResult = await me.git.push(options)
+                                    me.isPushing = false
+                                    me.isFirstCommit = false
+                                    me.gitTab = 'IDE'
+                                    me.gitCommitMessage = null
+                                    me.copyChangedPathLists = []
+                                    me.gitSnackBar.show = true
+                                    me.gitSnackBar.timeout = 3000
+                                    me.gitSnackBar.Text = "Commit/Push Success."
+                                    me.gitSnackBar.Color = "success"
+                                    me.gitSnackBar.icon="check_circle"
+                                    me.gitSnackBar.title="Success"
+                                    me.isExistRepo = true
+                                    me.isExistRepoMessage = "The repository name already exist"
+                                    if(me.isSIgpt){
+                                        setTimeout(() => {
+                                            me.getActionLogs()
+                                        }, 5000)
+                                    }
+                                })
+                                .catch((error) =>{
+                                    me.commonError(error)
+                                })
                             }
-                            let pushResult = await me.git.push(options)
-                            me.isPushing = false
-                            me.isFirstCommit = false
-                            me.gitTab = 'IDE'
-                            me.gitCommitMessage = null
-                            me.copyChangedPathLists = []
-                            me.gitSnackBar.show = true
-                            me.gitSnackBar.timeout = 3000
-                            me.gitSnackBar.Text = "Commit/Push Success."
-                            me.gitSnackBar.Color = "success"
-                            me.gitSnackBar.icon="check_circle"
-                            me.gitSnackBar.title="Success"
-                            me.isExistRepo = true
-                            me.isExistRepoMessage = "The repository name already exist"
-                            if(me.isSIgpt){
-                                setTimeout(() => {
-                                    me.getActionLogs()
-                                }, 5000)
-                            }
-                        })
-                        .catch((error) =>{
-                            me.commonError(error)
                         })
                     }
                 })
@@ -2382,48 +2445,54 @@
             },
             async pushTemplateList(treeList) {
                 var me = this
-                me.commitStepText = 'Commit to Git'
-                let commitResult = await me.git.commit(me.gitOrgName, me.gitRepoName, "main", treeList, me.isFirstCommit, "commit")
-                .then(async commit => {
-                    me.commitStepText = 'Push to Git'
-                    let options = {
-                        org: me.gitOrgName, 
-                        repo: me.gitRepoName, 
-                        commitData: commit, 
-                        list: treeList,
-                        branch: "main"
-                    }
-                    let pushResult = await me.git.push(options)
-                    .then(function(push) {
-                        // console.log(patchMainResult)
+                me.$app.try({
+                    context: me,
+                    async action(me){
 
-                        me.commitStepText = null
-                        me.isPushing = false
-                        me.gitTab = 'IDE'
-                        me.gitCommitMessage = null
-                        me.copyChangedPathLists = []
-                        me.gitSnackBar.show = true
-                        me.gitSnackBar.timeout = 3000
-                        me.gitSnackBar.Text = "Commit/Push Success."
-                        me.gitSnackBar.Color = "success"
-                        me.gitSnackBar.icon="check_circle"
-                        me.gitSnackBar.title="Success"
-
-                        if(me.autoApplyTemplate){
-                            var platformPath = me.git.getUrl(me.gitOrgName, me.gitRepoName)
-                            me.$emit("successToPush", platformPath)
-                        } else {
-                            if(me.isTemplate){
-                                me.autoApplyTemplate = true 
+                        me.commitStepText = 'Commit to Git'
+                        let commitResult = await me.git.commit(me.gitOrgName, me.gitRepoName, "main", treeList, me.isFirstCommit, "commit")
+                        .then(async commit => {
+                            me.commitStepText = 'Push to Git'
+                            let options = {
+                                org: me.gitOrgName, 
+                                repo: me.gitRepoName, 
+                                commitData: commit, 
+                                list: treeList,
+                                branch: "main"
                             }
-                        }
-                    })
-                    .catch(error => {
-                        me.commonError(error)
-                    })
-                })
-                .catch(error => {
-                    me.commonError(error)
+                            let pushResult = await me.git.push(options)
+                            .then(function(push) {
+                                // console.log(patchMainResult)
+        
+                                me.commitStepText = null
+                                me.isPushing = false
+                                me.gitTab = 'IDE'
+                                me.gitCommitMessage = null
+                                me.copyChangedPathLists = []
+                                me.gitSnackBar.show = true
+                                me.gitSnackBar.timeout = 3000
+                                me.gitSnackBar.Text = "Commit/Push Success."
+                                me.gitSnackBar.Color = "success"
+                                me.gitSnackBar.icon="check_circle"
+                                me.gitSnackBar.title="Success"
+        
+                                if(me.autoApplyTemplate){
+                                    var platformPath = me.git.getUrl(me.gitOrgName, me.gitRepoName)
+                                    me.$emit("successToPush", platformPath)
+                                } else {
+                                    if(me.isTemplate){
+                                        me.autoApplyTemplate = true 
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                me.commonError(error)
+                            })
+                        })
+                        .catch(error => {
+                            me.commonError(error)
+                        })
+                    }
                 })
             },
         }
