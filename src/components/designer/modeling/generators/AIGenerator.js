@@ -70,7 +70,7 @@ class AIGenerator {
         return hash;
     }
 
-    async generate(){
+    async generate(reGeneratePrompt){
         this.state = 'running'
         let me = this;
         me.openaiToken = await me.getToken();
@@ -78,7 +78,7 @@ class AIGenerator {
 
         let messages
         messages = this.createMessages();
-
+        
 
         if(localStorage.getItem("useCache")=="true"){
             let message = JSON.stringify(messages)
@@ -215,7 +215,10 @@ class AIGenerator {
             }
         };
         
-        
+        if(reGeneratePrompt && reGeneratePrompt.action=="reGenerate"){
+            messages[0].content = reGeneratePrompt.messages
+        }
+
         const data = JSON.stringify({
             model: this.model,
             messages: messages,
