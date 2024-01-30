@@ -549,6 +549,7 @@
     import Gitlab from "../../utils/Gitlab";
     import GitAPI from "../../utils/GitAPI";
     import Github from "../../utils/Github";
+    import Usage from "../../utils/Usage";
 
     export default {
         name: 'gitAPIMenu',
@@ -2079,8 +2080,23 @@
                     me.startForkWithGitHub()
                 }
             },
-            startCommit(){
+            async startCommit(){
                 var me = this
+                let freeTopping = ["isVanillaK8s"];
+                let toppings = me.toppingPlatforms.filter(topping => freeTopping.find(free=> topping!=free));
+                let issuedTimeStamp = Date.now()
+
+                let usage = new Usage({
+                    serviceType: `${me.canvas.canvasType.toUpperCase()}_codeArchive`,
+                    usageDetail: { usedToppingNum: toppings.length },
+                    issuedTimeStamp: issuedTimeStamp,
+                    expiredTimeStamp: issuedTimeStamp,
+                    metadata:{
+                        modelId: me.projectId
+                    }
+                });
+                if(!await usage.use()) return false;
+
                 if(me.editTemplateMode){
                     if(me.templateGitPath && me.templateGitPath.length > 1){
                         me.startForkTemplate()

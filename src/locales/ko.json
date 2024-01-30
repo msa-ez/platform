@@ -154,6 +154,12 @@
     "refundComment": "상품에 대하여 교환/환불 민원 발생시 '(주)유엔진솔루션즈'에서 처리하며, 모든 책임은 '(주)유엔진솔루션즈'에 있습니다."
   },
   "myPage": {
+    "tab_usage": "Usage",
+    "tab_admin": "Admin",
+    "tab_billing": "Billing",
+    "tab_privacy": "Privacy",
+    "usage_title": "Usage",
+    "admin_usage_title": "Usage",
     "purchaseManagement": "구매 관리",
     "privacy": "개인정보",
     "couponManagement": "쿠폰 관리",
