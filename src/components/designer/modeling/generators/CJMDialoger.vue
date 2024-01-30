@@ -107,6 +107,7 @@
     import { VueTypedJs } from 'vue-typed-js'
     import Generator from './CJMPersonaGenerator.js'
     import StorageBase from '../../../CommonStorageBase.vue';
+    import Usage from '../../../../utils/Usage'
 
     export default {
         name: 'customer-journey-map-dialoger',
@@ -256,7 +257,22 @@
                         
                     };
             },
-            generate(){
+            async generate(){
+                let issuedTimeStamp = Date.now()
+                let usage = new Usage({
+                    serviceType: `CJM_AIGeneration`,
+                    issuedTimeStamp: issuedTimeStamp,
+                    expiredTimeStamp: Date.now(),
+                    metadata: {
+                        projectId: this.modelIds.projectId,
+                        modelId: this.modelIds.CJMDefinitionId
+                    }
+                });
+                if(!await usage.use()) {
+                    this.stop()
+                    return false;
+                }
+
                 if(localStorage.getItem("prompt")) {
                     if(localStorage.getItem("prompt")==this.prompt) {
                         localStorage.setItem("useCache", true);
@@ -283,7 +299,7 @@
                 if(!me.value.personas[personaIndex].modelList){
                     me.value.personas[personaIndex].modelList = []
                 }
-                me.value.personas[personaIndex].modelList.push(me.modelIds.CJMDefinitionId)
+                if(me.isServerProject) me.value.personas[personaIndex].modelList.push(me.modelIds.CJMDefinitionId)
                 me.selectPersona(me.value.personas[personaIndex])
                 me.$emit("input", me.value)
                 me.$emit("change", "customerJourneyMap")

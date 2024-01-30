@@ -78,6 +78,7 @@
     // import StorageBase from "../StorageBase";
     import StorageBase from '../../../CommonStorageBase.vue';
     import getParent from '../../../../utils/getParent'
+    import Usage from '../../../../utils/Usage'
 
     export default {
         name: 'es-dialoger',
@@ -194,19 +195,19 @@
                 this.input.painpointAnalysis = this.cachedModels["CJMGenerator"]
                 this.generator = new Generator(this);
 
-                // let usage = new Usage({
-                //     serviceType: `ES_AIGeneration`,
-                //     issuedTimeStamp: issuedTimeStamp,
-                //     expiredTimeStamp: Date.now(),
-                //     metadata: {
-                //         projectId: this.modelIds.projectId, 
-                //         modelId: this.modelIds.ESDefinitionId
-                //     }
-                // });
-                // if(!await usage.use()) {
-                //     this.stop()
-                //     return false;
-                // }
+                let usage = new Usage({
+                    serviceType: `ES_AIGeneration`,
+                    issuedTimeStamp: issuedTimeStamp,
+                    expiredTimeStamp: Date.now(),
+                    metadata: {
+                        projectId: this.modelIds.projectId, 
+                        modelId: this.modelIds.ESDefinitionId
+                    }
+                });
+                if(!await usage.use()) {
+                    this.stop()
+                    return false;
+                }
 
                 this.generator.generate();
                 this.state.startTemplateGenerate = true
@@ -226,7 +227,7 @@
                     if(!me.value.modelList){
                         me.value.modelList = []
                     }
-                    me.value.modelList.push(me.modelIds.ESDefinitionId);
+                    if(me.isServerProject) me.value.modelList.push(me.modelIds.ESDefinitionId);
 
                     me.$emit("input", me.value);
                     me.$emit("change", 'eventStorming');

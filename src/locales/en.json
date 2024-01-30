@@ -153,6 +153,12 @@
     "refundComment": "In case of complaints about exchange/refund for products, 'uEngine Solutions' handles it, and 'uEngine Solutions' is responsible for all the responsibilities."
   },
   "myPage": {
+    "tab_usage": "Usage",
+    "tab_admin": "Admin",
+    "tab_billing": "Billing",
+    "tab_privacy": "Privacy",
+    "usage_title": "Usage",
+    "admin_usage_title": "Usage",
     "purchaseManagement": "Purchase Management",
     "privacy": "Privacy",
     "couponManagement": "Coupon Management",

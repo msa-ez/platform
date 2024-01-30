@@ -1536,6 +1536,7 @@
     import 'core-js';
     import subMenu from '../subMenu.vue';
     import AIGenerator from './generators/AIGenerator';
+    import BusinessLogicGenerator from './generators/BusinessLogicGenerator';
     import CodeGeneratorCore from './CodeGeneratorCore';
     // import Login from "../../oauth/Login";
     import LoginByGitlab from "../../oauth/LoginByGitlab";
@@ -1546,7 +1547,8 @@
     import GitAPI from "../../../utils/GitAPI"
     import Github from "../../../utils/Github"
     import Gitlab from "../../../utils/Gitlab"
-
+    import Usage from "../../../utils/Usage";
+    
     import GitActionDialog from './GitActionDialog'
 
     import json2yaml from 'json2yaml'
@@ -1600,6 +1602,9 @@
         },
         data() {
             return {
+                generator: null,
+                promptValue: [],
+                suffixValue: [],
                 // si-gpt
                 commitMsg: null,
                 fileLoadCnt: 0,
@@ -1696,7 +1701,6 @@
                 isCopied: false,
                 startGenerate: false,
                 startGenerateUseOpenAI: false,
-                autoGenerateResponse: null,
                 autoGenerateCodeValue: "",
                 openaiPopup: false,
                 modelForElement: {},
@@ -4147,6 +4151,21 @@ jobs:
             },
             async downloadArchive(){
                 var me = this
+                let freeTopping = ["isVanillaK8s"];
+                let issuedTimeStamp = Date.now()
+                let toppings = me.toppingPlatforms.filter(topping => freeTopping.find(free=> topping!=free)) 
+                let usage = new Usage({
+                    serviceType: `${me.canvas.canvasType.toUpperCase()}_codeArchive`,
+                    usageDetail: { usedToppingNum: toppings.length },
+                    issuedTimeStamp: issuedTimeStamp,
+                    expiredTimeStamp: issuedTimeStamp,
+                    metadata: {
+                        modelId: me.modelingProjectId,
+                        modelName: me.canvas.projectName
+                    }
+                });
+                if(!await usage.use()) return false;
+
                 if(this.$parent.downloadArchive){
                     me.$parent.downloadArchive(me);
                     return true;
@@ -4276,10 +4295,10 @@ jobs:
                         // }
                         if (!set.has(item.code)) {
                             codeBag.push("# "+ item.name + ": \n" + item.code);
-                            if(option.keyword == "si" && item.name.includes("Test.java") && item.template === "https://github.com/msa-ez/topping-unit-test"){
+                            if((option && option.keyword == "si") && item.name.includes("Test.java") && item.template === "https://github.com/msa-ez/topping-unit-test"){
                                 me.testFileList.push(item)
                             }
-                            if(option.keyword == "si"){
+                            if(option && option.keyword == "si"){
                                 me.selectedCodeList[item.name] = item.code
                             } else {
                                 set.add(item.code);
@@ -4409,12 +4428,14 @@ jobs:
                 }
                 me.codeGenTimeout = setTimeout(function () {
                     me.setAutoGenerateCodetoList = JSON.parse(JSON.stringify(me.codeLists))
-                    me.setAutoGenerateCodetoList.some(function (element, index){
-                        if(me.filteredOpenCode[0].path == element.fullPath){
-                            me.setAutoGenerateCodetoList[index].code = value
-                            return true;
-                        }
-                    })
+                    // me.setAutoGenerateCodetoList.some(function (element, index){
+                    //     if(me.filteredOpenCode[0].path == element.fullPath){
+                    //         me.setAutoGenerateCodetoList[index].code = value
+                    //         return true;
+                    //     }
+                    // })
+                    var idx = me.setAutoGenerateCodetoList.findIndex(x => x.fullPath == me.filteredOpenCode[0].fullPath)
+                    me.setAutoGenerateCodetoList[idx].code = me.filteredOpenCode[0].code
                     me.codeGenTimeout = null
                 }, 2000)
                 // me.filteredOpenCode[0].code = value
@@ -4440,129 +4461,107 @@ jobs:
                     me.openaiPopup = true
                 }
             },
+            onModelCreated(model){
+                console.log(model)
+            },
+            onGenerationFinished(model){
+                var me = this
+                console.log(me.promptValue)
+                console.log(model)
+                console.log(me.suffixValue)
+
+                if(model && !me.stopAutoGenerate){
+
+                    let implementedCode = model
+                    if(implementedCode.includes("```")){
+                        implementedCode = implementedCode.replaceAll("```java", "```")
+                        implementedCode = implementedCode.split("```")[1]
+                    }
+
+                    me.changedDiffCodeViewer = true
+                    me.changedDiffCode = JSON.parse(JSON.stringify(me.filteredOpenCode))
+                    me.filteredOpenCode[0].code = me.promptValue + implementedCode + me.suffixValue
+
+                    me.startGenerate = false
+
+                    me.setAutoGenerateCodetoList = JSON.parse(JSON.stringify(me.codeLists))
+                    var idx = me.setAutoGenerateCodetoList.findIndex(x => x.fullPath == me.filteredOpenCode[0].fullPath)
+                    me.setAutoGenerateCodetoList[idx].code = me.filteredOpenCode[0].code
+
+                    me.refreshCallGenerate();
+                } else {
+                    me.stopAutoGenerate = false
+                }
+            },
             async autoGenerateCode(idx, id){
                 var me = this
                 try {
-                    var moreHintMode = false
                     if(id == '2'){
-                        moreHintMode = true 
-                    }
-                    if(moreHintMode){
-                        var inputSwitch
-                        var testA = []
-                        me.filteredCodeLists.forEach(function (file){
-                            if(file.fileName != file.fullPath && file.fullPath != me.filteredOpenCode[0].path){
-                                if(file.fullPath.replace(file.fileName, "") == me.filteredOpenCode[0].path.replace(me.filteredOpenCode[0].name, "")){
-                                    file.code.split('\n').forEach(function (line){
-                                        inputSwitch = false
-                                        if(!line.includes("package ") && !line.includes("import ") && line != "" && line != "    "){
-                                            inputSwitch = true
-                                        }
-                                        if(inputSwitch){
-                                            testA.push(line)
-                                        }
-                                    })
-                                }
-                            } 
-                        })
+                        var test = me.getSelectedFilesDeeply(me.openCode)
+                        console.log(test)
                     }
                     if(me.openaiToken){
-                        var content
-                        if(me.openaiContent){
-                            content = me.openaiContent
-                        } else {
-                            content = me.filteredOpenCode[0].code
-                        }
-    
                         var splitContent = null
-                        var promptValue = []
-                        var suffixValue = []
-                        splitContent = content.split("\n")
+                        me.promptValue = []
+                        me.suffixValue = []
+                        splitContent = me.filteredOpenCode[0].code.split("\n")
                         splitContent.forEach(function (content, contentIndex){
                             if(contentIndex <= idx){
-                                promptValue.push(splitContent[contentIndex])
+                                me.promptValue.push(content)
                             } else if(contentIndex > idx) {
-                                suffixValue.push(splitContent[contentIndex])
+                                me.suffixValue.push(content)
                             }
                         })
-                        promptValue = promptValue.join("\n")
-                        suffixValue = suffixValue.join("\n")
+                        me.promptValue = me.promptValue.join("\n")
+                        me.suffixValue = me.suffixValue.join("\n")
 
-                        let prompt = `You have to look at the java file and figure out the entire code and business logic.
-Full code: ${content}
+                        me.generator = new BusinessLogicGenerator(this);
+                        me.generator.generate();
 
-Then, you must properly implement the corresponding function or class contents in the '//implement business logic here:' section at the bottom of the code I cut and sent.
-implement here: ${promptValue}
+//                         let prompt = `You have to look at the java file and figure out the entire code and business logic.
+// Full code: ${content}
 
-Example correct answer: '\nrepository().findById(orderPlaced.getProductId()).ifPresent(inventory -> {\n inventory.setStockRemain(inventory.getStockRemain() - orderPlaced.getQuantity());\n repository(). save(inventory);\n\n InventoryUpdated inventoryUpdated = new InventoryUpdated(inventory);\n inventoryUpdated.publishAfterCommit();\n});\n'
+// Then, you must properly implement the corresponding function or class contents in the '//implement business logic here:' section at the bottom of the code I cut and sent.
+// implement here: ${promptValue}
 
-Please do not "never" describe natural language or code descriptions, but only answer the code content implemented within the function or class.
-`
+// Example correct answer: '\nrepository().findById(orderPlaced.getProductId()).ifPresent(inventory -> {\n inventory.setStockRemain(inventory.getStockRemain() - orderPlaced.getQuantity());\n repository(). save(inventory);\n\n InventoryUpdated inventoryUpdated = new InventoryUpdated(inventory);\n inventoryUpdated.publishAfterCommit();\n});\n'
+
+// Please do not "never" describe natural language or code descriptions, but only answer the code content implemented within the function or class.
+// `
                         
-                        let messages = [{
-                            role: "user",
-                            content: prompt
-                        }]
-                        let data = {
-                            model: "gpt-3.5-turbo-16k",
-                            messages: messages,
-                            temperature: 1,
-                            frequency_penalty: 0,
-                            presence_penalty: 0,
-                        };
+//                         let messages = [{
+//                             role: "user",
+//                             content: prompt
+//                         }]
+//                         let data = {
+//                             model: "gpt-3.5-turbo-16k",
+//                             messages: messages,
+//                             temperature: 1,
+//                             frequency_penalty: 0,
+//                             presence_penalty: 0,
+//                         };
 
-                        let header = {
-                            Authorization: `Bearer ${me.openaiToken}`,
-                            'Content-Type': 'application/json'
-                        }
+//                         let header = {
+//                             Authorization: `Bearer ${me.openaiToken}`,
+//                             'Content-Type': 'application/json'
+//                         }
     
-                        let respones = await axios.post(`https://api.openai.com/v1/chat/completions`, data, { headers: header })
-                        .catch(function (error) {
-                            me.startGenerate = false
-                            if(me.openaiContent){
-                                me.filteredOpenCode[0].code = me.openaiContent
-                            }
-                            if(error.response && error.response.data && error.response.data.message){
-                                var errText = error.response.data.message
-                                if(error.response.data.errors && error.response.data.errors[0] && error.response.data.errors[0].message){
-                                    errText = errText + ', ' + error.response.data.errors[0].message
-                                }
-                                alert(errText)
-                            } else {
-                                alert(error.message)
-                            }
-                        });
-                        if(respones && !me.stopAutoGenerate){
-                            console.log(respones)
-                            if(respones.data.choices[0].message.content){
-                                let implementedCode = respones.data.choices[0].message.content
-                                if(implementedCode.includes("```")){
-                                    implementedCode = implementedCode.replaceAll("```java", "```")
-                                    implementedCode = implementedCode.split("```")[1]
-                                }
-                                var autoGenerateResult = promptValue + implementedCode + suffixValue
-                                me.autoGenerateResponse = autoGenerateResult
-        
-                                me.changedDiffCodeViewer = true
-                                me.changedDiffCode = JSON.parse(JSON.stringify(me.filteredOpenCode))
-                                me.changedDiffCode[0].code = content
-                                me.filteredOpenCode[0].code = me.autoGenerateResponse
-    
-                                me.startGenerate = false
-        
-                                me.setAutoGenerateCodetoList = JSON.parse(JSON.stringify(me.codeLists))
-                                me.setAutoGenerateCodetoList.some(function (element, index){
-                                    if(me.filteredOpenCode[0].path == element.fullPath){
-                                        me.setAutoGenerateCodetoList[index].code = me.filteredOpenCode[0].code
-                                        return true;
-                                    }
-                                })
-        
-                                me.refreshCallGenerate();
-                            }
-                        } else {
-                            me.stopAutoGenerate = false
-                        }
+//                         let respones = await axios.post(`https://api.openai.com/v1/chat/completions`, data, { headers: header })
+//                         .catch(function (error) {
+//                             me.startGenerate = false
+//                             if(me.openaiContent){
+//                                 me.filteredOpenCode[0].code = me.openaiContent
+//                             }
+//                             if(error.response && error.response.data && error.response.data.message){
+//                                 var errText = error.response.data.message
+//                                 if(error.response.data.errors && error.response.data.errors[0] && error.response.data.errors[0].message){
+//                                     errText = errText + ', ' + error.response.data.errors[0].message
+//                                 }
+//                                 alert(errText)
+//                             } else {
+//                                 alert(error.message)
+//                             }
+//                         });
     
                     } else {
                         me.stopAutoGenerate = false
@@ -4570,9 +4569,9 @@ Please do not "never" describe natural language or code descriptions, but only a
                     }
                 } catch(e) {
                     me.startGenerate = false
-                    if(me.openaiContent){
-                        me.filteredOpenCode[0].code = me.openaiContent
-                    }
+                    // if(me.openaiContent){
+                    //     me.filteredOpenCode[0].code = me.openaiContent
+                    // }
                     console.log(e)
                 }
             },

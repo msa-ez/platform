@@ -104,6 +104,10 @@ const BpmnProcessDesigner = () =>
   import(
     /* webpackChunkName: "ProcessDesigner" */ "./components/designer/bpmnModeling/ProcessDesigner"
   );
+const MyPage = () =>
+import(
+  /* webpackChunkName: "MyPage" */ "./components/mypage/MyPage"
+);
 const MyPageManager = () =>
   import(
     /* webpackChunkName: "MyPageManager" */ "./components/oauth/MyPageManager"
@@ -211,7 +215,7 @@ var options = {
         component: ClazzListPage,
     },
     {
-      path: "/user-story-map/:projectId",
+      path: "/userStoryMap/:projectId",
       name: "UserStoryMap",
       component: UserStoryMap,
     },
@@ -283,7 +287,7 @@ var options = {
     {
         path: "/myPage",
         name: "MyPage",
-        component: MyPageManager,
+        component: MyPage,
     },
     {
         path: "/sign-in-helper",
