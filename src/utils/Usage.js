@@ -44,7 +44,7 @@ class Usage {
             userUid: userInfo.uid,
             userName: userInfo.name,
             userEmail: userInfo.email,
-            userCompany: userInfo.company,
+            tenant: userInfo.tenant,
             metadata: me.metadata ? me.metadata : null
         })
         if(!result) return false;

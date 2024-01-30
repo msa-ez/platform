@@ -31,16 +31,15 @@ class StorageBase {
             let profile = currentUserInfo.photoURL
 
             let authorized = email && email.includes('@uengine.org') ? 'admin' : 'student'
-            let company = localStorage.getItem('loginType') == 'dpg' ? 'DPG' : null  
+            let tenant = localStorage.getItem('loginType') == 'dpg' ? 'DPG' : null  
             name = name ? name : email
-            company = 'DPG'
 
             return {
                 uid: uid,
                 name: name,
                 email: email,
                 profile: profile,
-                company: company,
+                tenant: tenant,
                 authorized: authorized,
                 enrolledUserEmail: email.replace(/\./gi, '_')
             }

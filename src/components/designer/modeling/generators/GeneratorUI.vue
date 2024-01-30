@@ -39,7 +39,7 @@
                     </v-tooltip> -->
                     <v-tooltip  bottom>
                         <template v-slot:activator="{ on, attrs }">
-                            <v-btn @click="generate()"
+                            <v-btn @click="reGenerate(input['userStory'])"
                                 icon small
                                 v-bind="attrs"
                                 v-on="on"
@@ -325,6 +325,18 @@
                 this.result = '';
                 this.$emit("clearModelValue")
                 this.generatorComponent.generate();
+                this.generationStopped = true;
+            },
+
+            async reGenerate(userStory){
+                let reGeneratePrompt = {
+                    action: "reGenerate",
+                    messages: userStory
+                }
+
+                this.result = '';
+                this.$emit("clearModelValue")
+                this.generatorComponent.generate(reGeneratePrompt);
                 this.generationStopped = true;
             },
 
