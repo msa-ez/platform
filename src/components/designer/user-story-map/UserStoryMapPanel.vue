@@ -6,7 +6,7 @@
             <v-list class="pa-1">
                 <v-list-item>
                     <v-list-item-avatar>
-                        <img v-if="value._type == 'StickyTextElement' || value._type == 'UserStoryMapLineElement'" :src="value.imgSrc">
+                        <img v-if="value._type == 'StickyTextElement'" :src="value.imgSrc">
                         <img v-else :src="imgSrc">
                     </v-list-item-avatar>
                     <v-col>
@@ -23,7 +23,7 @@
             <v-list class="pt-0" dense flat>
                 <v-divider></v-divider>
                 <v-card outlined>
-                    <v-card-text v-if="value._type != 'StickyTextElement' && value._type != 'UserStoryMapLineElement'">
+                    <v-card-text v-if="value._type != 'StickyTextElement'">
                         <div style="color: skyblue" v-if="isShowError">Notice: {{showError}}</div>
                         <v-text-field
                                 v-model="value.name"
@@ -37,6 +37,12 @@
                                 :disabled="canvas.isReadOnlyModel"
                                 auto-grow
                         ></v-textarea>
+                        <v-text-field
+                                v-if="value._type == 'UserStory'"
+                                v-model="value.persona.persona"
+                                :disabled="canvas.isReadOnlyModel"
+                                label="Persona"
+                        ></v-text-field>
                         <div class="my-5">
                             <v-label>Color</v-label>
                             <div style="display: flex;">
