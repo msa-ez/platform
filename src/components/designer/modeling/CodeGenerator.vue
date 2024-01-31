@@ -120,6 +120,7 @@
                                     :commitMsg="commitMsg"
                                     :selectedTestFile="selectedTestFile"
                                     :toppingPlatforms="toppingPlatforms"
+                                    :canvas="canvas"
                                 />
                             </div>
                         </v-menu>
@@ -1064,6 +1065,7 @@
                                                                                                     :isServerModel="isServerModel"
                                                                                                     @pushSuccessed="pushSuccessed"
                                                                                                     :toppingPlatforms="toppingPlatforms"
+                                                                                                    :canvas="canvas"
                                                                                             />
                                                                                         </div>
                                                                                     </v-menu>

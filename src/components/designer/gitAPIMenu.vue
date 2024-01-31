@@ -582,6 +582,7 @@
             ShowCreateRepoTab: Boolean,
             isServerModel: Boolean,
             toppingPlatforms: Array,
+            canvas: Object
         },
         data() {
             return {
