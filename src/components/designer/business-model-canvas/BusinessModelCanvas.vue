@@ -145,15 +145,26 @@
 
                     <slot name="top">
                         <v-flex style="align:start;">
-                            <v-row style="position: absolute; left: 50%; transform: translate(-50%, 0%);" class="gs-model-z-index-1" >
+                            <v-row class="gs-model-z-index-1 business-model-canvas-top-menu" >
                                 <v-row align="start" style="margin-top:10px; width:150px;">
+                                    <div class="business-model-canvas-mobile-home-button">
+                                        <router-link to="/">
+                                            <v-icon
+                                                style="height: 24px; margin-top: 38px; margin-right: 5px;"
+                                                color="primary"
+                                            >
+                                                mdi-home
+                                            </v-icon>
+                                        </router-link>
+                                    </div>
                                     <slot name="projectName">
                                         <v-col align="start" id="project-name">
                                             <v-text-field
                                                 style="z-index:2;"
-                                                    :disabled="getReadOnly"
-                                                    label="Project Name" v-model="projectName"
-                                                    @click.native="unselectedAll">
+                                                :disabled="getReadOnly"
+                                                label="Project Name" v-model="projectName"
+                                                @click.native="unselectedAll"
+                                            >
                                             </v-text-field>
                                         </v-col>
                                     </slot>
@@ -190,9 +201,7 @@
                     </slot>
 
                     <slot name="palette">
-                        <v-card class="tools"
-                                style="top:100px; text-align: center;"
-                        >
+                        <v-card class="business-model-canvas-sticker">
                             <v-tooltip v-if="!getReadOnly" right v-for="(category, categoryIndex) in elementTypes"
                                     :key="categoryIndex">
 
@@ -1905,6 +1914,23 @@
 
 
 <style>
+    .business-model-canvas-sticker {
+        position: absolute;
+        width: 48px;
+        left: 20px;
+        padding: 4px;
+        overflow: hidden;
+        top: 100px;
+        text-align: center;
+    }
+    .business-model-canvas-mobile-home-button {
+        display: none;
+    }
+    .business-model-canvas-top-menu {
+        position: absolute;
+        left: 50%;
+        transform: translate(-50%, 0%);
+    }
     .action-btn-box {
         margin-right: 10px;
         margin-top:25px;
@@ -1917,6 +1943,27 @@
     @media only screen and (max-width: 1090px) {
         .action-btn-box {
             display:none;
+        }
+    }
+
+    @media only screen and (max-width: 600px) {
+        .business-model-canvas-top-menu {
+            position: absolute;
+            left:120px;
+            top:5px;
+        }
+        .business-model-canvas-mobile-home-button {
+            display: block;
+        }
+        .business-model-canvas-sticker {
+            width: 330px !important;
+            top: auto !important;
+            bottom: 45px;
+            left: 33px;
+            padding-top: 10px;
+        }
+        .business-model-canvas-sticker span img {
+            margin-right:5px;
         }
     }
 </style>

@@ -301,8 +301,8 @@
                                             <div class="mobile-home-button">
                                                 <router-link to="/">
                                                     <v-icon
-                                                            style="height: 24px; margin-top: 38px; margin-right: 5px;"
-                                                            color="primary"
+                                                        style="height: 24px; margin-top: 38px; margin-right: 5px;"
+                                                        color="primary"
                                                     >
                                                         mdi-home
                                                     </v-icon>
@@ -320,33 +320,21 @@
                                             </v-icon>
                                             <slot name="projectName">
                                                 <v-text-field
-                                                        class="es-modeling-project-name"
-                                                        :disabled="
-                                                        isReadOnlyModel ||
-                                                        (fullPath &&
-                                                            fullPath.includes(
-                                                                'replay'
-                                                            ))
-                                                    "
-                                                        :color="projectNameColor"
-                                                        :error-messages="
-                                                        projectNameHint
-                                                    "
-                                                        label="Project Name"
-                                                        v-model="projectName"
-                                                        @click.native="
-                                                        unselectedAll
-                                                    "
+                                                    class="es-modeling-project-name"
+                                                    :disabled="isReadOnlyModel || (fullPath && fullPath.includes('replay'))"
+                                                    :color="projectNameColor"
+                                                    :error-messages="projectNameHint"
+                                                    label="Project Name"
+                                                    v-model="projectName"
+                                                    @click.native="unselectedAll"
                                                 >
                                                 </v-text-field>
                                             </slot>
                                         </v-row>
                                         <div
-                                                class="es-is-not-mobile"
-                                                style="
-                                                margin: 40px 0px 0px 15px;
-                                                z-index: 1;
-                                            "
+                                            class="es-is-not-mobile"
+                                            style="margin: 40px 0px 0px 15px;
+                                            z-index: 1;"
                                         >
                                             <v-row
                                                     justify="end"
