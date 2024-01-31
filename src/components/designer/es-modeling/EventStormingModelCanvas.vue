@@ -298,7 +298,7 @@
                                                 background-color: transparent;
                                             "
                                         >
-                                            <div class="mobile-home-button">
+                                            <div class="eventstorming-mobile-home-button">
                                                 <router-link to="/">
                                                     <v-icon
                                                         style="height: 24px; margin-top: 38px; margin-right: 5px;"
@@ -6732,7 +6732,7 @@
 </script>
 
 <style scoped lang="scss" rel="stylesheet/scss">
-    .mobile-home-button {
+    .eventstorming-mobile-home-button {
         display: none;
     }
     .mobile-btn {
@@ -7149,8 +7149,9 @@
             overflow: hidden;
             transform: translate(-50%, -50%);
         }
-        .mobile-home-button {
+        .eventstorming-mobile-home-button {
             display: block;
+            z-index:1;
         }
     }
 </style>

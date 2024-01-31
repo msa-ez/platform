@@ -150,8 +150,9 @@
                                     <div class="business-model-canvas-mobile-home-button">
                                         <router-link to="/">
                                             <v-icon
-                                                style="height: 24px; margin-top: 38px; margin-right: 5px;"
-                                                color="primary"
+                                                style="height: 24px;
+                                                margin-top: 38px;
+                                                margin-right: 5px;"
                                             >
                                                 mdi-home
                                             </v-icon>
@@ -1954,6 +1955,7 @@
         }
         .business-model-canvas-mobile-home-button {
             display: block;
+            z-index:1;
         }
         .business-model-canvas-sticker {
             width: 330px !important;
