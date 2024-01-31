@@ -191,7 +191,7 @@
                             </div>
                             <div :key="reGenKey">
                                 <ESDialoger v-if="genType == 'ES2'"     ref="esDialoger"    v-model="projectInfo.eventStorming"      :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" :uiStyle="uiStyle"   ></ESDialoger>
-                                <CJMDialoger v-if="genType == 'CJM'"    ref="cjMDialoger"   v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @selectedPersona="setSelectedPersona" ></CJMDialoger>
+                                <CJMDialoger v-if="genType == 'CJM'"    ref="cjMDialoger"   v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @setPersonas="setPersonas" ></CJMDialoger>
                                 <BMDialoger v-if="genType == 'BM2'"     ref="bmDialoger"    v-model="projectInfo.businessModel"      :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject"></BMDialoger>
                                 <USMDialoger v-if="genType == 'USM'"    ref="usmDialoger"   v-model="projectInfo.userStoryMap"       :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject"></USMDialoger>
                                 <UIWizardDialoger v-if="genType == 'UI'" ref="uiDialoger"   v-model="projectInfo.ui"                 :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @selected="onUIStyleSelected"  ></UIWizardDialoger>
@@ -298,71 +298,6 @@
             USMDialoger,
             ModelStorageDialog
         },
-        computed: {
-            isForeign() {
-                if (window.countryCode == 'ko') {
-                    return false
-                }
-                return true
-            },
-        },
-        async created(){
-            await this.setUserInfo()
-            this.setModelIds()
-
-            let getPrompt = localStorage.getItem('noLoginPrompt')
-            if(this.isLogin && getPrompt){
-                this.projectInfo.prompt = getPrompt
-                this.openChatUI = true
-            }
-        },
-        watch: {
-            "projectInfo.prompt":_.debounce(function(){
-                localStorage.setItem('noLoginPrompt',this.projectInfo.prompt)
-            }, 1000)
-        },
-        beforeDestroy() {
-            let getPrompt = localStorage.getItem('noLoginPrompt')
-            if( !(this.isLogin && getPrompt)){
-                localStorage.removeItem('noLoginPrompt')
-            }
-        },
-        async mounted(){
-            var me = this
-            if(me.mode == "project"){
-                me.openChatUI = true
-                if(me.projectId){
-                    await me.open();
-                }
-            }
-            me.scrollToBottom();
-
-            //// listen to generators done to save the cacheModels
-            const aiGeneratorChannel = new BroadcastChannel('ai-generator');
-            aiGeneratorChannel.onmessage = function(e) {
-                if (e.data) {
-                    me.cachedModels[e.data.generator] = Object.assign([], e.data.model)
-                }
-            };
-
-            const eventStormingCanvasChannel = new BroadcastChannel('event-storming-model-canvas')//this.$vnode.tag);
-
-            eventStormingCanvasChannel.onmessage = function(e) {
-                if (e.data) {
-                    me.cachedModels["ESGenerator"] = Object.assign([], e.data.model)
-                }
-            };
-
-            const modelCanvasChannel = new BroadcastChannel('model-canvas')//this.$vnode.tag);
-
-            modelCanvasChannel.onmessage = async function(e) {
-                if (e.data && e.data.event === "ProjectIdChanged") {
-                    me.modifyModelList(e.data)
-                } else if (e.data && e.data.event === "ScreenShot") {
-                    await me.putString(`storage://definitions/${me.projectId}/information/image`, e.data.image);
-                }
-            };
-        },
         data() {
             return {
                 setAutoModelingTextChips: [
@@ -443,9 +378,26 @@
                 return true
             },
         },
+        async created(){
+            await this.setUserInfo()
+            this.setModelIds()
+
+            let getPrompt = localStorage.getItem('noLoginPrompt')
+            if(this.isLogin && getPrompt){
+                this.projectInfo.prompt = getPrompt
+                this.openChatUI = true
+            }
+        },
         watch: {
+            "projectInfo.prompt":_.debounce(function(){
+                localStorage.setItem('noLoginPrompt',this.projectInfo.prompt)
+            }, 1000)
         },
         beforeDestroy() {
+            let getPrompt = localStorage.getItem('noLoginPrompt')
+            if( !(this.isLogin && getPrompt)){
+                localStorage.removeItem('noLoginPrompt')
+            }
         },
         async mounted(){
             var me = this
@@ -459,11 +411,28 @@
 
             //// listen to generators done to save the cacheModels
             me.cachedModels = {}
+
             const aiGeneratorChannel = new BroadcastChannel('ai-generator');
             aiGeneratorChannel.onmessage = function(e) {
                 if (e.data) {
-                    // me.cachedModels[e.data.generator] = Object.assign([], e.data.model)
-                    me.cachedModels[e.data.generator] = e.data.model
+                    if(e.data.generator=='CJMGenerator'){
+                        let persona = me.projectInfo.customerJourneyMap.selectedPersona.persona
+                        if(!me.cachedModels[e.data.generator]){
+                            me.cachedModels[e.data.generator] = {}
+                        }
+                        me.cachedModels[e.data.generator][persona] = e.data.model
+                        // Object.keys(e.data.model.elements).forEach(function (ele) {
+                        //     if(e.data.model.elements[ele]!=null && e.data.model.elements[ele]._type=="Persona"){
+                        //         // persona = e.data.model.elements[ele].name
+                        //         if(!me.cachedModels[e.data.generator]){
+                        //             me.cachedModels[e.data.generator] = {}
+                        //         }
+                        //         me.cachedModels[e.data.generator][persona] = e.data.model
+                        //     }
+                        // });
+                    }else{
+                        me.cachedModels[e.data.generator] = e.data.model
+                    }
                 }
             };
 
@@ -767,8 +736,8 @@
             onUIStyleSelected(uiStyle){
                 this.uiStyle = uiStyle;
             },
-            setSelectedPersona(persona){
-                this.cachedModels['selectedPersona'] = persona;
+            setPersonas(personas){
+                this.cachedModels['Personas'] = personas;
             },
             handleContentChange() {
                 this.$nextTick(() => {

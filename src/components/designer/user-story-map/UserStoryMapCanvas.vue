@@ -142,7 +142,6 @@
                                                 text
                                                 v-if="getReadOnly"
                                                 :color="joinRequestedText.show ? 'primary' :'success'"
-                                                dark
                                                 @click="requestInviteUser()"
                                                 small
                                         >
@@ -156,7 +155,6 @@
                                                 text
                                                 v-if="getReadOnly"
                                                 color="primary"
-                                                dark
                                                 @click="saveComposition('fork')"
                                                 small
                                         >
@@ -167,7 +165,6 @@
                                                 text
                                                 v-else
                                                 color="primary"
-                                                dark
                                                 @click="saveComposition('save')"
                                                 v-on="on"
                                                 small
@@ -354,6 +351,7 @@
                                                         v-if="isOwnModel"
                                                         style="margin-right: 5px; margin-top: 15px;"
                                                         color="primary"
+                                                        text
                                                         :disabled="disableBtn"
                                                         @click="saveComposition('save')"
                                                         v-on="on"
@@ -552,8 +550,6 @@
         <modeler-image-generator 
                 ref="modeler-image-generator"
         ></modeler-image-generator>
-        <!-- autoPay -->
-        <auto-payment-composition></auto-payment-composition>
 
 
         <hsc-window-style-metal>
@@ -601,7 +597,6 @@
     import UserStoryMap from "./index";
     import ModelCanvas from "../modeling/ModelCanvas";
     import ParticipantPanel from "../modeling/ParticipantPanel";
-    import AutoPaymentComposition from "../../payment/AutoPaymentComposition";
     import DialogPurchaseItem from "../../payment/DialogPurchaseItem";
     import ModelStorageDialog from "../modeling/ModelStorageDialog";
     import ModelCanvasShareDialog from "../modeling/ModelCanvasShareDialog";
@@ -629,8 +624,7 @@
             GeneratorUI,
             'model-canvas-share-dialog': ModelCanvasShareDialog,
             'model-storage-dialog': ModelStorageDialog,
-            'dialog-purchase-item' : DialogPurchaseItem,
-            'auto-payment-composition': AutoPaymentComposition
+            'dialog-purchase-item' : DialogPurchaseItem
         },
         data() {
             return {

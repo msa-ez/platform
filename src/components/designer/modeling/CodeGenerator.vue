@@ -119,6 +119,8 @@
                                     :isSIgpt="isSIgpt"
                                     :commitMsg="commitMsg"
                                     :selectedTestFile="selectedTestFile"
+                                    :toppingPlatforms="toppingPlatforms"
+                                    :canvas="canvas"
                                 />
                             </div>
                         </v-menu>
@@ -1062,6 +1064,8 @@
                                                                                                     :ShowCreateRepoTab="ShowCreateRepoTab"
                                                                                                     :isServerModel="isServerModel"
                                                                                                     @pushSuccessed="pushSuccessed"
+                                                                                                    :toppingPlatforms="toppingPlatforms"
+                                                                                                    :canvas="canvas"
                                                                                             />
                                                                                         </div>
                                                                                     </v-menu>

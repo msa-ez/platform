@@ -95,6 +95,15 @@
                         'angle': 0,
                     },
                     color: color,
+                    persona: {
+                        "persona":"",
+                        "description":"",
+                        "gender":"",
+                        "job":null,
+                        "age":0,
+                        "scenario":null,
+                        "avatar":"",
+                        "modelList":[]},
                 }
             },
             showError() {

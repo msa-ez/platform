@@ -298,11 +298,11 @@
                                                 background-color: transparent;
                                             "
                                         >
-                                            <div class="mobile-home-button">
+                                            <div class="eventstorming-mobile-home-button">
                                                 <router-link to="/">
                                                     <v-icon
-                                                            style="height: 24px; margin-top: 38px; margin-right: 5px;"
-                                                            color="primary"
+                                                        style="height: 24px; margin-top: 38px; margin-right: 5px;"
+                                                        color="primary"
                                                     >
                                                         mdi-home
                                                     </v-icon>
@@ -320,33 +320,21 @@
                                             </v-icon>
                                             <slot name="projectName">
                                                 <v-text-field
-                                                        class="es-modeling-project-name"
-                                                        :disabled="
-                                                        isReadOnlyModel ||
-                                                        (fullPath &&
-                                                            fullPath.includes(
-                                                                'replay'
-                                                            ))
-                                                    "
-                                                        :color="projectNameColor"
-                                                        :error-messages="
-                                                        projectNameHint
-                                                    "
-                                                        label="Project Name"
-                                                        v-model="projectName"
-                                                        @click.native="
-                                                        unselectedAll
-                                                    "
+                                                    class="es-modeling-project-name"
+                                                    :disabled="isReadOnlyModel || (fullPath && fullPath.includes('replay'))"
+                                                    :color="projectNameColor"
+                                                    :error-messages="projectNameHint"
+                                                    label="Project Name"
+                                                    v-model="projectName"
+                                                    @click.native="unselectedAll"
                                                 >
                                                 </v-text-field>
                                             </slot>
                                         </v-row>
                                         <div
-                                                class="es-is-not-mobile"
-                                                style="
-                                                margin: 40px 0px 0px 15px;
-                                                z-index: 1;
-                                            "
+                                            class="es-is-not-mobile"
+                                            style="margin: 40px 0px 0px 15px;
+                                            z-index: 1;"
                                         >
                                             <v-row
                                                     justify="end"
@@ -802,22 +790,15 @@
                                                         >
                                                             <div>
                                                                 <v-btn
-                                                                        class="gs-model-z-index-1"
-                                                                        style="
-                                                                        margin-right: 5px;
-                                                                        color: white;
-                                                                    "
-                                                                        color="primary"
-                                                                        text
-                                                                        @click="openCodeViewer()"
-                                                                        :disabled="
-                                                                        !initLoad
-                                                                    "
-                                                                        v-on="on"
+                                                                    class="gs-model-z-index-1"
+                                                                    style="margin-right: 5px;"
+                                                                    color="primary"
+                                                                    text
+                                                                    @click="openCodeViewer()"
+                                                                    :disabled="!initLoad"
+                                                                    v-on="on"
                                                                 >
-                                                                    <v-icon>{{
-                                                                        icon.code
-                                                                        }}</v-icon>
+                                                                    <v-icon>{{ icon.code }}</v-icon>
                                                                     <div>
                                                                         CODE
                                                                     </div>
@@ -834,42 +815,16 @@
                                                                 style="width: 175px"
                                                         >
                                                             <v-list-item
-                                                                    v-for="(
-                                                                    item, index
-                                                                ) in codeItems"
+                                                                    v-for="( item, index ) in codeItems"
                                                                     :key="index"
                                                                     @click="functionSelect(item.title,index)"
                                                             >
                                                                 <v-list-item-title
-                                                                >{{
-                                                                    item.title
-                                                                    }}
+                                                                >{{ item.title }}
                                                                 </v-list-item-title>
                                                             </v-list-item>
                                                         </v-list>
                                                     </v-menu>
-
-                                                    <!-- <v-menu
-                                                            offset-y
-                                                            open-on-hover
-                                                            left
-                                                    >
-                                                        <template v-slot:activator="{ on }">
-                                                            <div>
-                                                                <v-btn  class="gs-model-z-index-1 es-hide-code-btn"
-                                                                        text
-                                                                        style="margin-right: 5px; color: white;"
-                                                                        color="orange"
-                                                                        @click="showUiWizard=true"
-                                                                        v-on="on"
-                                                                >
-                                                                    <v-icon>{{icon.code}}</v-icon>
-                                                                    <div class="es-hide-code">UI</div>
-                                                                </v-btn>
-                                                            </div>
-                                                        </template>
-
-                                                    </v-menu> -->
                                                 </slot>
                                             </v-row>
                                         </div>
@@ -951,26 +906,22 @@
                                                     <v-btn
                                                             text
                                                             v-if="isReadOnlyModel"
-                                                            dark
                                                             class="mobile-btn"
                                                             @click="saveComposition('fork')"
                                                             v-on="on"
                                                             small
                                                     >
-                                                        <v-icon>{{ icon.fork}}</v-icon>
+                                                        <v-icon>{{ icon.fork }}</v-icon>
                                                     </v-btn>
                                                     <v-btn
                                                             text
                                                             v-else
-                                                            dark
                                                             class="mobile-btn"
                                                             @click.native="saveComposition('save')"
                                                             v-on="on"
                                                             small
                                                     >
-                                                        <v-icon>{{
-                                                            icon.save
-                                                            }}</v-icon>
+                                                        <v-icon>{{ icon.save }}</v-icon>
                                                     </v-btn>
                                                 </template>
                                                 <v-list v-if="!isClazzModeling">
@@ -1003,16 +954,12 @@
                                                                 @click="openInviteUsers()"
                                                                 small
                                                         >
-                                                            <v-icon>{{
-                                                                icon.share
-                                                                }}</v-icon>
+                                                            <v-icon>{{ icon.share }}</v-icon>
                                                             <v-avatar
-                                                                    v-if="requestCount"
-                                                                    size="25"
-                                                                    color="red"
-                                                                    style="
-                                                                    margin-left: 2px;
-                                                                "
+                                                                v-if="requestCount"
+                                                                size="25"
+                                                                color="red"
+                                                                style="margin-left: 2px;"
                                                             >
                                                                 {{ requestCount }}
                                                             </v-avatar>
@@ -1021,11 +968,9 @@
                                                 </template>
                                                 <v-list>
                                                     <v-list-item
-                                                            v-for="(
-                                                            item, index
-                                                        ) in shareItems"
-                                                            :key="index"
-                                                            @click="functionSelect(item.title,index)"
+                                                        v-for="( item, index ) in shareItems"
+                                                        :key="index"
+                                                        @click="functionSelect(item.title,index)"
                                                     >
                                                         <v-list-item-title
                                                         >{{ item.title }}
@@ -1034,13 +979,13 @@
                                                 </v-list>
                                             </v-menu>
                                             <v-menu
-                                                    class="pa-2"
-                                                    open-on-hover
-                                                    offset-y
-                                                    left
+                                                class="pa-2"
+                                                open-on-hover
+                                                offset-y
+                                                left
                                             >
                                                 <template
-                                                        v-slot:activator="{ on }"
+                                                    v-slot:activator="{ on }"
                                                 >
                                                     <div>
                                                         <v-btn
@@ -1069,11 +1014,9 @@
                                                 </template>
                                                 <v-list>
                                                     <v-list-item
-                                                            v-for="(
-                                                            item, index
-                                                        ) in conversionItems"
-                                                            :key="index"
-                                                            @click="functionSelect(item.title,index)"
+                                                        v-for="( item, index ) in conversionItems"
+                                                        :key="index"
+                                                        @click="functionSelect(item.title,index)"
                                                     >
                                                         <v-list-item-title
                                                         >{{ item.title }}
@@ -1081,51 +1024,6 @@
                                                     </v-list-item>
                                                 </v-list>
                                             </v-menu>
-                                            <!-- <v-menu
-                                                    class="pa-2"
-                                                    open-on-hover
-                                                    offset-y
-                                                    left
-                                            >
-                                                <template
-                                                        v-slot:activator="{ on }"
-                                                >
-                                                    <div>
-                                                        <v-btn
-                                                                v-if="
-                                                                isHexagonalModeling
-                                                            "
-                                                                text
-                                                                color="primary"
-                                                                style="
-                                                                margin-left: -20px;
-                                                                margin-top: 1px;
-                                                            "
-                                                                @click="generateModel()"
-                                                                :disabled="disableBtn"
-                                                        >
-                                                            <v-icon>
-                                                                mdi-checkbox-multiple-blank-outline
-                                                            </v-icon>
-                                                        </v-btn>
-                                                        <v-btn
-                                                                v-else
-                                                                text
-                                                                color="primary"
-                                                                style="
-                                                                margin-left: -20px;
-                                                                margin-top: 1px;
-                                                            "
-                                                                @click="generateHexagonal()"
-                                                                :disabled="disableBtn"
-                                                        >
-                                                            <v-icon
-                                                            >mdi-hexagon-outline</v-icon
-                                                            >
-                                                        </v-btn>
-                                                    </div>
-                                                </template>
-                                            </v-menu> -->
 
                                             <v-menu open-on-hover offset-y>
                                                 <template
@@ -1135,14 +1033,13 @@
                                                         <v-btn
                                                             color="primary"
                                                             text
-                                                            dark
                                                             class="mobile-btn"
                                                             @click="openCodeViewer()"
                                                             v-on="on"
                                                             small
                                                             style="margin-left:10px;"
                                                         >
-                                                            <v-icon>{{icon.code}}</v-icon>CODE
+                                                            <v-icon>{{icon.code}}</v-icon>
                                                         </v-btn>
                                                     </div>
                                                 </template>
@@ -1159,100 +1056,76 @@
                                         </v-row>
                                     </div>
                                 </slot>
-                                <!-- <v-fab-transition>
-                                    <v-btn
-                                            v-if="!rtcLogin && ((isServerModel && (information && information.permissions)) )"
-                                            color="blue"
-                                            dark
-                                            fab
-                                            small
-                                            absolute
-                                            bottom
-                                            right
-                                            style="margin:0 5px 40px 0;"
-                                            @click="onJoin()"
-                                    >
-                                        <v-icon>mdi-camera</v-icon>
-                                    </v-btn>
-                                </v-fab-transition> -->
                             </div>
 
                             <v-card
-                                    class="tools"
-                                    style="top: 100px; text-align: center"
+                                class="tools"
+                                style="top: 100px; text-align: center"
                             >
                                 <v-tooltip right>
                                     <template v-slot:activator="{ on, attrs }">
                                         <span
-                                                class="bpmn-icon-hand-tool"
-                                                v-bind:class="{ icons: !dragPageMovable, hands: dragPageMovable,}"
-                                                _width="30"
-                                                _height="30"
-                                                v-on:click="toggleGrip"
-                                                v-bind="attrs"
-                                                v-on="on"
+                                            class="bpmn-icon-hand-tool"
+                                            v-bind:class="{ icons: !dragPageMovable, hands: dragPageMovable,}"
+                                            _width="30"
+                                            _height="30"
+                                            v-on:click="toggleGrip"
+                                            v-bind="attrs"
+                                            v-on="on"
                                         >
                                         </span>
                                     </template>
-                                    <span v-if="dragPageMovable == true"
-                                    >Draggable Screen : on</span
-                                    >
-                                    <span v-if="dragPageMovable == false"
-                                    >Draggable Screen : off</span
-                                    >
+                                    <span v-if="dragPageMovable == true">Draggable Screen : on</span>
+                                    <span v-if="dragPageMovable == false">Draggable Screen : off</span>
                                 </v-tooltip>
 
                                 <v-tooltip right v-if="!isReadOnlyModel">
                                     <template v-slot:activator="{ on, attrs }">
                                         <span
-                                                class="gs-automatic-guidance-btn"
-                                                @click="automaticGuidanceChange"
-                                                v-bind="attrs"
-                                                v-on="on"
+                                            class="gs-automatic-guidance-btn"
+                                            @click="automaticGuidanceChange"
+                                            v-bind="attrs"
+                                            v-on="on"
                                         >
                                             <v-icon
-                                                    class="gs-automatic-guidance-icon"
-                                                    large
-                                                    style="color: #fbc02d"
-                                                    v-if="automaticGuidance == true"
-                                            >mdi-border-inside</v-icon
-                                            >
+                                                class="gs-automatic-guidance-icon"
+                                                large
+                                                style="color: #fbc02d"
+                                                v-if="automaticGuidance == true"
+                                            >mdi-border-inside
+                                            </v-icon>
                                             <v-icon
-                                                    class="gs-automatic-guidance-icon"
-                                                    large
-                                                    v-if="automaticGuidance == false"
-                                            >mdi-border-none</v-icon
-                                            >
+                                                class="gs-automatic-guidance-icon"
+                                                large
+                                                v-if="automaticGuidance == false"
+                                            >mdi-border-none
+                                            </v-icon>
                                         </span>
                                     </template>
-                                    <span v-if="automaticGuidance == true"
-                                    >Arrange Guidance : on</span
-                                    >
-                                    <span v-if="automaticGuidance == false"
-                                    >Arrange Guidance : off</span
-                                    >
+                                    <span v-if="automaticGuidance == true">Arrange Guidance : on</span>
+                                    <span v-if="automaticGuidance == false">Arrange Guidance : off</span>
                                 </v-tooltip>
                                 <v-tooltip
-                                        large
-                                        nudge-top="10"
-                                        v-for="(item, key) in elementTypes"
-                                        :key="key"
-                                        right
+                                    large
+                                    nudge-top="10"
+                                    v-for="(item, key) in elementTypes"
+                                    :key="key"
+                                    right
                                 >
                                     <template v-slot:activator="{ on }">
                                         <span
-                                                class="draggable"
-                                                align="center"
-                                                :_component="item.component"
-                                                :_width="item.width"
-                                                :_height="item.height"
+                                            class="draggable"
+                                            align="center"
+                                            :_component="item.component"
+                                            :_width="item.width"
+                                            :_height="item.height"
                                         >
                                             <img
-                                                    height="30px"
-                                                    width="30px"
-                                                    :src="item.src"
-                                                    v-on="on"
-                                                    v-if="!isReadOnlyModel &&(!isHexagonal ||(isHexagonal && (item.component.includes('bounded-context') ||item.component.includes('packaged-business-capabilities'))))"
+                                                height="30px"
+                                                width="30px"
+                                                :src="item.src"
+                                                v-on="on"
+                                                v-if="!isReadOnlyModel &&(!isHexagonal ||(isHexagonal && (item.component.includes('bounded-context') ||item.component.includes('packaged-business-capabilities'))))"
                                             />
                                         </span>
                                     </template>
@@ -1708,12 +1581,8 @@
                                             <v-list-item-content>
                                                 <v-list-item-title>
                                                     <v-icon
-                                                            style="margin-right: 2%"
-                                                            :color="
-                                                            validationLevelIcon[
-                                                                item.level
-                                                            ].color
-                                                        "
+                                                        style="margin-right: 2%"
+                                                        :color="validationLevelIcon[item.level].color"
                                                     >{{validationLevelIcon[item.level].icon}}
                                                     </v-icon>
                                                     [ {{ item.eleName }} ] {{ item.msg }}
@@ -1951,8 +1820,6 @@
                     <modeler-image-generator
                             ref="modeler-image-generator"
                     ></modeler-image-generator>
-                    <!-- autoPay -->
-                    <auto-payment-composition></auto-payment-composition>
 
                     <hsc-window-style-metal>
                         <hsc-window
@@ -2109,7 +1976,6 @@
     import GitInformation from "../../GitInformation";
     import json2yaml from "json2yaml";
     import IDEResourceDialog from "../../IDEResourceDialog";
-    import AutoPaymentComposition from "../../payment/AutoPaymentComposition";
     import DialogPurchaseItem from "../../payment/DialogPurchaseItem";
     import { mdiAbTesting, mdiFolderEye } from "@mdi/js";
     import * as io from "socket.io-client";
@@ -2182,7 +2048,6 @@
             "model-canvas-share-dialog": ModelCanvasShareDialog,
             "dialog-purchase-item": DialogPurchaseItem,
             "model-storage-dialog": ModelStorageDialog,
-            "auto-payment-composition": AutoPaymentComposition,
             "uml-class-model-canvas": UMLClassDiagram,
             CodeGenerator,
             PBCModelList,
@@ -6867,7 +6732,7 @@
 </script>
 
 <style scoped lang="scss" rel="stylesheet/scss">
-    .mobile-home-button {
+    .eventstorming-mobile-home-button {
         display: none;
     }
     .mobile-btn {
@@ -7284,8 +7149,9 @@
             overflow: hidden;
             transform: translate(-50%, -50%);
         }
-        .mobile-home-button {
+        .eventstorming-mobile-home-button {
             display: block;
+            z-index:1;
         }
     }
 </style>

@@ -547,8 +547,6 @@
         <modeler-image-generator 
                 ref="modeler-image-generator"
         ></modeler-image-generator>
-        <!-- autoPay -->
-        <auto-payment-composition></auto-payment-composition>
 
 
         <hsc-window-style-metal>
@@ -595,7 +593,6 @@
     import StickyModeling from "./index";
     import ModelCanvas from "../modeling/ModelCanvas";
     import ParticipantPanel from "../modeling/ParticipantPanel";
-    import AutoPaymentComposition from "../../payment/AutoPaymentComposition";
     import DialogPurchaseItem from "../../payment/DialogPurchaseItem";
     import ModelStorageDialog from "../modeling/ModelStorageDialog";
     import ModelCanvasShareDialog from "../modeling/ModelCanvasShareDialog";
@@ -623,8 +620,7 @@
             GeneratorUI,
             'model-canvas-share-dialog': ModelCanvasShareDialog,
             'model-storage-dialog': ModelStorageDialog,
-            'dialog-purchase-item' : DialogPurchaseItem,
-            'auto-payment-composition': AutoPaymentComposition
+            'dialog-purchase-item' : DialogPurchaseItem
         },
         data() {
             return {

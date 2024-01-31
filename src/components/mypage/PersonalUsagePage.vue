@@ -61,10 +61,10 @@
                         >
                             <template v-slot:item.serviceType="{ item }">
                                 <div class="row-title">
-                                    {{ formatServiceType(item.value.serviceType).service }}
+                                    {{ formatServiceType(item.value.serviceType).title }}
                                 </div>
                                 <div class="row-detail">
-                                    {{ formatServiceType(item.value.serviceType).type }}
+                                    {{ formatServiceType(item.value.serviceType).detail }}
                                 </div>
                             </template>
                             <template v-slot:item.metadata="{ item }">
