@@ -119,6 +119,8 @@
                                     :isSIgpt="isSIgpt"
                                     :commitMsg="commitMsg"
                                     :selectedTestFile="selectedTestFile"
+                                    :toppingPlatforms="toppingPlatforms"
+                                    :canvas="canvas"
                                 />
                             </div>
                         </v-menu>
@@ -1062,6 +1064,8 @@
                                                                                                     :ShowCreateRepoTab="ShowCreateRepoTab"
                                                                                                     :isServerModel="isServerModel"
                                                                                                     @pushSuccessed="pushSuccessed"
+                                                                                                    :toppingPlatforms="toppingPlatforms"
+                                                                                                    :canvas="canvas"
                                                                                             />
                                                                                         </div>
                                                                                     </v-menu>
@@ -4462,17 +4466,12 @@ jobs:
                 }
             },
             onModelCreated(model){
-                console.log(model)
+                // console.log(model)
             },
             onGenerationFinished(model){
                 var me = this
-                console.log(me.promptValue)
-                console.log(model)
-                console.log(me.suffixValue)
-
-                if(model && !me.stopAutoGenerate){
-
-                    let implementedCode = model
+                if(model && model.code && !me.stopAutoGenerate){
+                    let implementedCode = model.code
                     if(implementedCode.includes("```")){
                         implementedCode = implementedCode.replaceAll("```java", "```")
                         implementedCode = implementedCode.split("```")[1]
@@ -4491,14 +4490,19 @@ jobs:
                     me.refreshCallGenerate();
                 } else {
                     me.stopAutoGenerate = false
+                    me.startGenerate = false
+                    alert("Please, try again")
                 }
+
             },
             async autoGenerateCode(idx, id){
                 var me = this
                 try {
                     if(id == '2'){
-                        var test = me.getSelectedFilesDeeply(me.openCode)
-                        console.log(test)
+                        let idx = me.treeLists.findIndex(x => x.name == me.openCode[0].path.split('/')[0])
+                        if(idx != -1){
+                            me.javaFileList = me.getSelectedFilesDeeply([me.treeLists[idx]])
+                        }
                     }
                     if(me.openaiToken){
                         var splitContent = null
@@ -4515,53 +4519,9 @@ jobs:
                         me.promptValue = me.promptValue.join("\n")
                         me.suffixValue = me.suffixValue.join("\n")
 
+                        me.stopAutoGenerate = false;
                         me.generator = new BusinessLogicGenerator(this);
                         me.generator.generate();
-
-//                         let prompt = `You have to look at the java file and figure out the entire code and business logic.
-// Full code: ${content}
-
-// Then, you must properly implement the corresponding function or class contents in the '//implement business logic here:' section at the bottom of the code I cut and sent.
-// implement here: ${promptValue}
-
-// Example correct answer: '\nrepository().findById(orderPlaced.getProductId()).ifPresent(inventory -> {\n inventory.setStockRemain(inventory.getStockRemain() - orderPlaced.getQuantity());\n repository(). save(inventory);\n\n InventoryUpdated inventoryUpdated = new InventoryUpdated(inventory);\n inventoryUpdated.publishAfterCommit();\n});\n'
-
-// Please do not "never" describe natural language or code descriptions, but only answer the code content implemented within the function or class.
-// `
-                        
-//                         let messages = [{
-//                             role: "user",
-//                             content: prompt
-//                         }]
-//                         let data = {
-//                             model: "gpt-3.5-turbo-16k",
-//                             messages: messages,
-//                             temperature: 1,
-//                             frequency_penalty: 0,
-//                             presence_penalty: 0,
-//                         };
-
-//                         let header = {
-//                             Authorization: `Bearer ${me.openaiToken}`,
-//                             'Content-Type': 'application/json'
-//                         }
-    
-//                         let respones = await axios.post(`https://api.openai.com/v1/chat/completions`, data, { headers: header })
-//                         .catch(function (error) {
-//                             me.startGenerate = false
-//                             if(me.openaiContent){
-//                                 me.filteredOpenCode[0].code = me.openaiContent
-//                             }
-//                             if(error.response && error.response.data && error.response.data.message){
-//                                 var errText = error.response.data.message
-//                                 if(error.response.data.errors && error.response.data.errors[0] && error.response.data.errors[0].message){
-//                                     errText = errText + ', ' + error.response.data.errors[0].message
-//                                 }
-//                                 alert(errText)
-//                             } else {
-//                                 alert(error.message)
-//                             }
-//                         });
     
                     } else {
                         me.stopAutoGenerate = false
@@ -4569,10 +4529,8 @@ jobs:
                     }
                 } catch(e) {
                     me.startGenerate = false
-                    // if(me.openaiContent){
-                    //     me.filteredOpenCode[0].code = me.openaiContent
-                    // }
                     console.log(e)
+                    alert(e)
                 }
             },
             async autoGenerateMustacheTemplate(modelData, path, convertModelData, mode){

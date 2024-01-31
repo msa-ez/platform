@@ -127,16 +127,6 @@
                             :width="theoryExtended ? 1240:1000"
                             height="800"
                     >
-                        <blur-purchase-item
-                                :item-id="`${courseId}@${classId}@${labId}`"
-                                :itemAmount="labInfo.price"
-                                :itemPeriod="labInfo.period"
-                                :itemOpenRange="100"
-                                :itemResourceType="'lab'"
-                                :lab-info="labInfo"
-                                :class-info="classInfo"
-                        >       
-                        </blur-purchase-item>
                         <v-card>
                             <v-card-title
                                     class="headline grey lighten-2"
@@ -259,17 +249,6 @@
                             width="500"
                             height="300"
                     >
-                            <blur-purchase-item
-                                    :item-id="`${courseId}@${classId}@${labId}`"
-                                    :itemAmount="labInfo.price"
-                                    :itemPeriod="labInfo.period"
-                                    :itemOpenRange="100"
-                                    :itemResourceType="'lab'"
-                                    :lab-info="labInfo"
-                                    :class-info="classInfo"
-                            >
-                            </blur-purchase-item>
-
                         <v-card>
                             <v-card-title
                                     class="headline grey lighten-2"
@@ -814,179 +793,169 @@
                             </div>
 
                             <div v-else>
-                                <blur-purchase-item
-                                        :item-id="`${courseId}@${classId}@${labId}`"
-                                        :itemAmount="labInfo.price"
-                                        :itemPeriod="labInfo.period"
-                                        :itemOpenRange="100"
-                                        :itemResourceType="'lab'"
-                                        :lab-info="labInfo"
-                                        :class-info="classInfo"
-                                >
-                                    <v-row align="center">
-                                        <v-col align="center"
-                                               @click="selectUser(user)"
-                                               v-for="(user,userKey,userIdx) in filteredUserList"
-                                               v-if="userResults[user.email]"
-                                               :key="user.email"
-                                               style="min-height: 100px; border-radius:10px;"
-                                               :style="selectedUser ? (selectedUser.email != user.email ? 'opacity:0.4':'background-color:#E0ECF8'):''"
+                                <v-row align="center">
+                                    <v-col align="center"
+                                            @click="selectUser(user)"
+                                            v-for="(user,userKey,userIdx) in filteredUserList"
+                                            v-if="userResults[user.email]"
+                                            :key="user.email"
+                                            style="min-height: 100px; border-radius:10px;"
+                                            :style="selectedUser ? (selectedUser.email != user.email ? 'opacity:0.4':'background-color:#E0ECF8'):''"
+                                    >
+                                    <div :style="avatarSize == 's' ? 'min-width:100px':(avatarSize == 'm' ? 'min-width:300px':(avatarSize == 'l' ? 'min-width:600px':''))">
+                                        <v-badge
+                                                v-if="viewMode=='avatar'" :key="keyForUserResultStatus"
+                                                :class="!userLabResult[user.email] ? (userMessages[user.email] ? (userMessages[user.email]=='헬프미' ? 'balloon_red':(userMessages[user.email]=='chat' ? (userMessagesStatus[user.email] == 'new' ? 'balloon_blue':(!userMessagesChat[user.email] ? '':'balloon_grey')):(userMessages[user.email]=='picture' ? '':'balloon_grey'))):''):''"
+                                                :color="!userLabResult[user.email] ? (userMessages[user.email]=='헬프미' ? 'red':(userMessages[user.email]=='chat' ? (userMessagesStatus[user.email] == 'new' ? 'blue':''):'')):''"
+                                                right
+                                                style="margin-top: 10px; margin-bottom: -10px;"
                                         >
-                                        <div :style="avatarSize == 's' ? 'min-width:100px':(avatarSize == 'm' ? 'min-width:300px':(avatarSize == 'l' ? 'min-width:600px':''))">
-                                            <v-badge
-                                                    v-if="viewMode=='avatar'" :key="keyForUserResultStatus"
-                                                    :class="!userLabResult[user.email] ? (userMessages[user.email] ? (userMessages[user.email]=='헬프미' ? 'balloon_red':(userMessages[user.email]=='chat' ? (userMessagesStatus[user.email] == 'new' ? 'balloon_blue':(!userMessagesChat[user.email] ? '':'balloon_grey')):(userMessages[user.email]=='picture' ? '':'balloon_grey'))):''):''"
-                                                    :color="!userLabResult[user.email] ? (userMessages[user.email]=='헬프미' ? 'red':(userMessages[user.email]=='chat' ? (userMessagesStatus[user.email] == 'new' ? 'blue':''):'')):''"
-                                                    right
-                                                    style="margin-top: 10px; margin-bottom: -10px;"
-                                            >
-                                            <!-- @mouseover="viewImageInLab(user.email)" -->
-                                                <template v-slot:badge style="margin-top:10px;">
-                                                    <v-icon 
-                                                            v-if="userMessages[user.email] == 'picture' && !userLabResult[user.email]" 
-                                                            :color="userMessagesStatus[user.email] == 'new' ? 'blue':'grey'"
-                                                            style="font-size: 22px; margin-top:8px; margin-left:-4px;"> 
-                                                        mdi-message-image
-                                                    </v-icon>
-                                                    <!-- <v-icon v-else-if="mouseOverUser[user.email]" color="white"
-                                                            @click="showChangedUserDialog(user)"
-                                                            style="cursor: pointer;">
-                                                        mdi-pencil
-                                                    </v-icon> -->
-                                                    <span slot="badge" v-if="userMessages[user.email] != 'chat' && userMessages[user.email] != 'picture' && !userLabResult[user.email]"><b>{{userMessages[user.email]}}</b></span>
-                                                    <span slot="badge" v-if="userMessages[user.email] == 'chat' && userMessagesChat[user.email] && !userLabResult[user.email]"><b>{{userMessagesChat[user.email]}}</b></span>
-                                                    <v-icon v-if="userMessages[user.email] == 'chat' && !userMessagesChat[user.email] && !userLabResult[user.email]" 
-                                                    :color="userMessagesStatus[user.email] == 'new' ? 'blue':'grey'"
-                                                    style="font-size: 22px; margin-top:8px; margin-left:-4px;"> 
-                                                        mdi-message-processing
-                                                    </v-icon>
-                                                </template>
-                                                <!-- @selectedUser -->
-                                                    <div v-if="userLabResult[user.email]">
-                                                        <div v-if="userRanking" 
-                                                        style="position:absolute; right:5%; top:5%; font-weight:bold; text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;"
-                                                        :style="labInfo.tool=='ide' ? 'color:white':''"
-                                                    >
-                                                        <div v-if="userRanking[user.email]>=0" style="font-size:15px">#{{userRanking[user.email]+1}}</div>
-                                                    </div>
-                                                    <div v-if="isUserActive && isUserActive[user.email]">
-                                                        <div v-if="isUserActive[user.email] == 'true'" style="position:absolute; left:8%; bottom:5%">
-                                                            <div class="ticontainer">
-                                                                <div class="tiblock">
-                                                                    <div class="tidot"></div>
-                                                                    <div class="tidot"></div>
-                                                                    <div class="tidot"></div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div v-if="userLabResult[user.email].labResult != 'data:,' && openWideScreen" @click="viewImageInLab(user.email), notSelectUser=true">
-                                                        <img :src=userLabResult[user.email].labResult style="width:100%">
-                                                    </div>
-                                                    <img v-else-if="userLabResult[user.email].labResult != 'data:,' && !openWideScreen" :src=userLabResult[user.email].labResult style="width:100%" @click="viewImageInLab(user.email)">
-                                                    <div v-else-if="userLabResult[user.email].labResult == 'data:,'" :style="avatarSize == 's' ? 'min-width:100px; min-height:100px':(avatarSize == 'm' ? 'min-width:300px; min-height:300px':(avatarSize == 'l' ? 'min-width:600px; min-height:600px':''))">
-                                                        <div><v-icon :style="avatarSize == 's' ? 'margin-top:30%':(avatarSize == 'm' ? 'margin-top:40%':(avatarSize == 'l' ? 'margin-top:50%':''))" x-large>mdi-alert-outline</v-icon></div>
-                                                    </div>
-                                                    <v-icon v-if="user.photoURL == undefined" x-large
-                                                            @click="selectUser(user)"
-                                                            style="cursor: pointer; z-index: 5; position:absolute; right:1%; bottom:5%;"
-                                                            :style="avatarSize == 'l' ? 'font-size:48px;':(avatarSize == 'm' ? 'font-size:36px;':(avatarSize == 's' ? 'font-size:24px;':''))"
-                                                            class="ma-0">
-                                                        mdi-account-circle
-                                                    </v-icon>
-                                                    <v-avatar v-else
-                                                            style="cursor: pointer; z-index: 5; position:absolute; right:1%; bottom:5%;"
-                                                            :style="avatarSize == 'm' ? 'width:36px; height:36px;':(avatarSize == 's' ? 'width:24px; height:24px;':'')"
-                                                            class="ma-0">
-                                                        <img
-                                                            :src=user.photoURL
-                                                        >
-                                                    </v-avatar>
-                                                </div>
-                                                <div v-else style="margin-bottom:20px;">
-                                                    <v-icon v-if="user.photoURL == undefined" x-large
-                                                            @click="selectUser(user)"
-                                                            style="cursor: pointer; z-index: 5;"
-                                                            class="ma-0">
-                                                        mdi-account-circle
-                                                    </v-icon>
-                                                    <v-avatar v-else
-                                                            style="cursor: pointer; z-index: 5;"
-                                                            class="ma-0">
-                                                        <img
-                                                            :src=user.photoURL
-                                                        >
-                                                    </v-avatar>
-                                                    <div v-if="isUserActive && isUserActive[user.email]">
-                                                        <div v-if="isUserActive[user.email] == 'true'" style="position:absolute; margin-top:7px; margin-left:15px">
-                                                            <div class="ticontainer">
-                                                                <div class="tiblock">
-                                                                    <div class="tidot"></div>
-                                                                    <div class="tidot"></div>
-                                                                    <div class="tidot"></div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <!-- <span class="dot"
-                                                      :style="ideStatus[user.email.replace('@','_')] ? (ideStatus[user.email.replace('@','_')]==null ? {'background-color':'red'}:{'background-color':'green'}): {'background-color':'grey'}"></span> -->
-                                            </v-badge>
-                                            <ReplayPlayer v-else-if="viewMode!='avatar'" :selected-user="user" :style="avatarSize == 's' ? 'width:150px':(avatarSize == 'm' ? 'width:300px':(avatarSize == 'l' ? 'width:600px':''))"></ReplayPlayer>
-                                                <div>
-                                                    <div v-if="userScores[user.email] && bestScores.indexOf(userScores[user.email].score) > -1" style="margin-top:15px;">
-                                                        <v-icon :color="['green','orange', 'silver', '#CD7F32'][bestScores.indexOf(userScores[user.email].score) + 1]"
-                                                                right>mdi-trophy
-                                                        </v-icon>
-                                                    </div>
-                                                    <font :color="userResults[user.email] && (userResults[user.email].allPassed || userResults[user.email].labPass) ? 'green':''">
-                                                        <br>
-                                                        <b>{{user.userName}} 
-                                                        <v-badge :color="userMessages[user.email] ? (userMessages[user.email]=='헬프미' ? 'red':(userMessages[user.email]=='chat' ? (userMessagesStatus[user.email] == 'new' ? 'blue':(!userMessagesChat[user.email] ? '':'grey')):(userMessages[user.email]=='picture' ? '':'grey'))):''"
-                                                        style="margin-left: 5px; margin-bottom: -2px;"
-                                                        v-if="userLabResult[user.email]"
-                                                        >
-                                                                        <!-- @mouseover="viewImageInLab(user.email)" -->
-                                                            <template v-slot:badge>
-                                                                <v-icon v-if="userMessages[user.email] == 'picture' && userLabResult[user.email].labResult"
-                                                                        :color="userMessagesStatus[user.email] == 'new' ? 'blue':'grey'"
-                                                                        style="font-size: 22px; margin-top: -4px; margin-left: -7px;"> 
-                                                                    mdi-image
-                                                                </v-icon>
-                                                                <span slot="badge" v-if="userMessages[user.email] != 'chat' && userMessages[user.email] != 'picture'"><b>{{userMessages[user.email]}}</b></span>
-                                                                <span slot="badge" v-if="userMessages[user.email] == 'chat' && userMessagesChat[user.email]"><b>{{userMessagesChat[user.email]}}</b></span>
-                                                                <v-icon v-if="userMessages[user.email] == 'chat' && !userMessagesChat[user.email] && userLabResult[user.email].labResult" 
-                                                                :color="userMessagesStatus[user.email] == 'new' ? 'blue':'grey'"
-                                                                style="font-size: 22px; margin-top: -4px; margin-left: -7px;"> 
-                                                                    mdi-dots-horizontal-circle
-                                                                </v-icon>
-                                                            </template>
-                                                        </v-badge>
-                                                        <br> {{userResults[user.email] ?
-                                                        userResults[user.email].passMessage: ''}}</b>
-
-                                                        <v-skeleton-loader v-if="userResults[user.email]==null"
-                                                                        ref="skeleton"
-                                                                        type="sentences"
-                                                                        max-height="10"
-                                                        >
-                                                        </v-skeleton-loader>
-                                                    </font>
-                                                </div>
-
-                                                <v-chip
-                                                        class="ma-0"
-                                                        :color="'green'"
-                                                        text-color="white"
-
-                                                        v-if="showingScores && newUserScores[user.email] && (newUserScores[user.email].score > 0)"
+                                        <!-- @mouseover="viewImageInLab(user.email)" -->
+                                            <template v-slot:badge style="margin-top:10px;">
+                                                <v-icon 
+                                                        v-if="userMessages[user.email] == 'picture' && !userLabResult[user.email]" 
+                                                        :color="userMessagesStatus[user.email] == 'new' ? 'blue':'grey'"
+                                                        style="font-size: 22px; margin-top:8px; margin-left:-4px;"> 
+                                                    mdi-message-image
+                                                </v-icon>
+                                                <!-- <v-icon v-else-if="mouseOverUser[user.email]" color="white"
+                                                        @click="showChangedUserDialog(user)"
+                                                        style="cursor: pointer;">
+                                                    mdi-pencil
+                                                </v-icon> -->
+                                                <span slot="badge" v-if="userMessages[user.email] != 'chat' && userMessages[user.email] != 'picture' && !userLabResult[user.email]"><b>{{userMessages[user.email]}}</b></span>
+                                                <span slot="badge" v-if="userMessages[user.email] == 'chat' && userMessagesChat[user.email] && !userLabResult[user.email]"><b>{{userMessagesChat[user.email]}}</b></span>
+                                                <v-icon v-if="userMessages[user.email] == 'chat' && !userMessagesChat[user.email] && !userLabResult[user.email]" 
+                                                :color="userMessagesStatus[user.email] == 'new' ? 'blue':'grey'"
+                                                style="font-size: 22px; margin-top:8px; margin-left:-4px;"> 
+                                                    mdi-message-processing
+                                                </v-icon>
+                                            </template>
+                                            <!-- @selectedUser -->
+                                                <div v-if="userLabResult[user.email]">
+                                                    <div v-if="userRanking" 
+                                                    style="position:absolute; right:5%; top:5%; font-weight:bold; text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;"
+                                                    :style="labInfo.tool=='ide' ? 'color:white':''"
                                                 >
-                                                    {{newUserScores[user.email].score ? Math.round(newUserScores[user.email].score): '0'}}
-                                                </v-chip>
+                                                    <div v-if="userRanking[user.email]>=0" style="font-size:15px">#{{userRanking[user.email]+1}}</div>
+                                                </div>
+                                                <div v-if="isUserActive && isUserActive[user.email]">
+                                                    <div v-if="isUserActive[user.email] == 'true'" style="position:absolute; left:8%; bottom:5%">
+                                                        <div class="ticontainer">
+                                                            <div class="tiblock">
+                                                                <div class="tidot"></div>
+                                                                <div class="tidot"></div>
+                                                                <div class="tidot"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div v-if="userLabResult[user.email].labResult != 'data:,' && openWideScreen" @click="viewImageInLab(user.email), notSelectUser=true">
+                                                    <img :src=userLabResult[user.email].labResult style="width:100%">
+                                                </div>
+                                                <img v-else-if="userLabResult[user.email].labResult != 'data:,' && !openWideScreen" :src=userLabResult[user.email].labResult style="width:100%" @click="viewImageInLab(user.email)">
+                                                <div v-else-if="userLabResult[user.email].labResult == 'data:,'" :style="avatarSize == 's' ? 'min-width:100px; min-height:100px':(avatarSize == 'm' ? 'min-width:300px; min-height:300px':(avatarSize == 'l' ? 'min-width:600px; min-height:600px':''))">
+                                                    <div><v-icon :style="avatarSize == 's' ? 'margin-top:30%':(avatarSize == 'm' ? 'margin-top:40%':(avatarSize == 'l' ? 'margin-top:50%':''))" x-large>mdi-alert-outline</v-icon></div>
+                                                </div>
+                                                <v-icon v-if="user.photoURL == undefined" x-large
+                                                        @click="selectUser(user)"
+                                                        style="cursor: pointer; z-index: 5; position:absolute; right:1%; bottom:5%;"
+                                                        :style="avatarSize == 'l' ? 'font-size:48px;':(avatarSize == 'm' ? 'font-size:36px;':(avatarSize == 's' ? 'font-size:24px;':''))"
+                                                        class="ma-0">
+                                                    mdi-account-circle
+                                                </v-icon>
+                                                <v-avatar v-else
+                                                        style="cursor: pointer; z-index: 5; position:absolute; right:1%; bottom:5%;"
+                                                        :style="avatarSize == 'm' ? 'width:36px; height:36px;':(avatarSize == 's' ? 'width:24px; height:24px;':'')"
+                                                        class="ma-0">
+                                                    <img
+                                                        :src=user.photoURL
+                                                    >
+                                                </v-avatar>
                                             </div>
-                                        </v-col>
-                                    </v-row>
-                                </blur-purchase-item>
+                                            <div v-else style="margin-bottom:20px;">
+                                                <v-icon v-if="user.photoURL == undefined" x-large
+                                                        @click="selectUser(user)"
+                                                        style="cursor: pointer; z-index: 5;"
+                                                        class="ma-0">
+                                                    mdi-account-circle
+                                                </v-icon>
+                                                <v-avatar v-else
+                                                        style="cursor: pointer; z-index: 5;"
+                                                        class="ma-0">
+                                                    <img
+                                                        :src=user.photoURL
+                                                    >
+                                                </v-avatar>
+                                                <div v-if="isUserActive && isUserActive[user.email]">
+                                                    <div v-if="isUserActive[user.email] == 'true'" style="position:absolute; margin-top:7px; margin-left:15px">
+                                                        <div class="ticontainer">
+                                                            <div class="tiblock">
+                                                                <div class="tidot"></div>
+                                                                <div class="tidot"></div>
+                                                                <div class="tidot"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- <span class="dot"
+                                                    :style="ideStatus[user.email.replace('@','_')] ? (ideStatus[user.email.replace('@','_')]==null ? {'background-color':'red'}:{'background-color':'green'}): {'background-color':'grey'}"></span> -->
+                                        </v-badge>
+                                        <ReplayPlayer v-else-if="viewMode!='avatar'" :selected-user="user" :style="avatarSize == 's' ? 'width:150px':(avatarSize == 'm' ? 'width:300px':(avatarSize == 'l' ? 'width:600px':''))"></ReplayPlayer>
+                                            <div>
+                                                <div v-if="userScores[user.email] && bestScores.indexOf(userScores[user.email].score) > -1" style="margin-top:15px;">
+                                                    <v-icon :color="['green','orange', 'silver', '#CD7F32'][bestScores.indexOf(userScores[user.email].score) + 1]"
+                                                            right>mdi-trophy
+                                                    </v-icon>
+                                                </div>
+                                                <font :color="userResults[user.email] && (userResults[user.email].allPassed || userResults[user.email].labPass) ? 'green':''">
+                                                    <br>
+                                                    <b>{{user.userName}} 
+                                                    <v-badge :color="userMessages[user.email] ? (userMessages[user.email]=='헬프미' ? 'red':(userMessages[user.email]=='chat' ? (userMessagesStatus[user.email] == 'new' ? 'blue':(!userMessagesChat[user.email] ? '':'grey')):(userMessages[user.email]=='picture' ? '':'grey'))):''"
+                                                    style="margin-left: 5px; margin-bottom: -2px;"
+                                                    v-if="userLabResult[user.email]"
+                                                    >
+                                                                    <!-- @mouseover="viewImageInLab(user.email)" -->
+                                                        <template v-slot:badge>
+                                                            <v-icon v-if="userMessages[user.email] == 'picture' && userLabResult[user.email].labResult"
+                                                                    :color="userMessagesStatus[user.email] == 'new' ? 'blue':'grey'"
+                                                                    style="font-size: 22px; margin-top: -4px; margin-left: -7px;"> 
+                                                                mdi-image
+                                                            </v-icon>
+                                                            <span slot="badge" v-if="userMessages[user.email] != 'chat' && userMessages[user.email] != 'picture'"><b>{{userMessages[user.email]}}</b></span>
+                                                            <span slot="badge" v-if="userMessages[user.email] == 'chat' && userMessagesChat[user.email]"><b>{{userMessagesChat[user.email]}}</b></span>
+                                                            <v-icon v-if="userMessages[user.email] == 'chat' && !userMessagesChat[user.email] && userLabResult[user.email].labResult" 
+                                                            :color="userMessagesStatus[user.email] == 'new' ? 'blue':'grey'"
+                                                            style="font-size: 22px; margin-top: -4px; margin-left: -7px;"> 
+                                                                mdi-dots-horizontal-circle
+                                                            </v-icon>
+                                                        </template>
+                                                    </v-badge>
+                                                    <br> {{userResults[user.email] ?
+                                                    userResults[user.email].passMessage: ''}}</b>
+
+                                                    <v-skeleton-loader v-if="userResults[user.email]==null"
+                                                                    ref="skeleton"
+                                                                    type="sentences"
+                                                                    max-height="10"
+                                                    >
+                                                    </v-skeleton-loader>
+                                                </font>
+                                            </div>
+
+                                            <v-chip
+                                                    class="ma-0"
+                                                    :color="'green'"
+                                                    text-color="white"
+
+                                                    v-if="showingScores && newUserScores[user.email] && (newUserScores[user.email].score > 0)"
+                                            >
+                                                {{newUserScores[user.email].score ? Math.round(newUserScores[user.email].score): '0'}}
+                                            </v-chip>
+                                        </div>
+                                    </v-col>
+                                </v-row>
                             </div>
                         </v-card-text>
                     </v-card>

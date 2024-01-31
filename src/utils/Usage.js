@@ -27,14 +27,16 @@ class Usage {
     var me = this;
     try{
         let userInfo = await this.storage.getCurrentUser();
+        if(!me.serviceType) return false;
         if(!userInfo || !userInfo.email) {
             alert("There is no login information. Please log in again.");
             return false;
         }
 
         // Already Usage(ONCE) 
-        let snapshot = await this.db.getObject(`/enrolledUsers/${userInfo.enrolledUserEmail}/purchaseItemSnapshots/${me.serviceType}`);
-        if(snapshot) return true;
+        if(await me.check()) return true;
+        // let snapshot = await this.db.getObject(`/enrolledUsers/${userInfo.enrolledUserEmail}/purchaseItemSnapshots/${me.serviceType}`);
+        // if(snapshot) return true;
         
         let result = await this.storage.pushObject(`/usages/queue/${this.convertTimestampToYearMonth()}`, {
             usageDetail: me.usageDetail ? JSON.stringify(me.usageDetail) : null,
@@ -53,6 +55,28 @@ class Usage {
           return false;
         }
         return true;
+    } catch(e) {
+        alert("An error occurred while using the function. Please try again or contact the administrator (help@uengine.org).");
+        return false;
+    }
+  }
+
+  async check(){
+    var me = this
+    try{
+
+      let userInfo = await this.storage.getCurrentUser();
+      if(!me.serviceType) return false;
+      if(!userInfo || !userInfo.email) {
+          alert("There is no login information. Please log in again.");
+          return false;
+      }
+
+      // Already Usage(ONCE) 
+      let snapshot = await this.db.getObject(`/enrolledUsers/${userInfo.enrolledUserEmail}/purchaseItemSnapshots/${me.serviceType}`);
+      if(snapshot) return true;
+
+      return false
     } catch(e) {
         alert("An error occurred while using the function. Please try again or contact the administrator (help@uengine.org).");
         return false;
