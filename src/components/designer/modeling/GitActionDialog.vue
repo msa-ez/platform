@@ -736,19 +736,14 @@
             },
             async generate(){
                 var me = this
-                me.$app.try({
-                    context: me,
-                    async action(me){
-                        me.commitMsg = null
-                        me.model = 'gpt-4'
-                        me.startGitAction = true
-                        me.generator = new SIGenerator(this);
-                        if(!me.prompt){
-                            await me.summaryCodeList()
-                        }
-                        me.generator.generate();
-                    }
-                })
+                me.commitMsg = null
+                me.model = 'gpt-4'
+                me.startGitAction = true
+                me.generator = new SIGenerator(this);
+                if(!me.prompt){
+                    await me.summaryCodeList()
+                }
+                me.generator.generate();
             },
             regenerate(prompt){
                 var me = this
