@@ -1048,8 +1048,6 @@
           <modeler-image-generator
                   ref="modeler-image-generator"
           ></modeler-image-generator>
-          <!-- autoPay -->
-          <auto-payment-composition></auto-payment-composition>
         </div>
       </template>
 

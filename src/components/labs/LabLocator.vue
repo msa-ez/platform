@@ -186,14 +186,12 @@
                             <v-icon color="white">mdi-link-variant</v-icon>&nbsp;Input Link
                         </v-card-title>
                         <v-card-text>
-                            <v-text-field v-model="video.url" clearable filled label="Youtube Link"
-                                          style="margin-top: 15px;"></v-text-field>
-                            <v-text-field
-                                    v-model="video.price"
-                                    label="Price"
-                                    prefix="₩"
-                                    style="margin-top: -15px;"
-                            ></v-text-field>
+                            <v-text-field 
+                                v-model="video.url" 
+                                clearable filled 
+                                label="Youtube Link"
+                                style="margin-top: 15px;">
+                            </v-text-field>
                         </v-card-text>
                         <v-card-actions style="justify-content: flex-end; margin-top: -40px;">
                             <v-btn @click="openVideoTextfield = false" text>cancel</v-btn>
@@ -205,457 +203,459 @@
                     <replay-player></replay-player>
                 </div>
                 <div>
-                    <blur-purchase-item
-                            :itemId='`${courseId}@${classId}@${labId}`'
-                            :itemResourceType="'lab'"
-                            :itemAmount="labInfo.price"
-                            :itemPeriod="labInfo.period"
-                            :lab-info="labInfo"
-                            :class-info="classInfo"
-                            :item-open-range="40"
-                    >
-                        <div v-if="labInfo && labInfo.video && renderComponent">
-                            <blur-purchase-item
-                                    :itemId="`video@${getLabVideoId}`"
-                                    :itemAmount="labInfo.videoPrice"
-                                    :itemPeriod="labInfo.videoPeriod"
-                                    itemResourceType="video"
-                                    :lab-info="labInfo"
-                                    :class-info="classInfo"
-                                    :item-open-range="90"
-                            >
-                                <div>
-                                    <youtube-media
-                                            style="width:100%; height: 100%;"
-                                            :video-id="getLabVideoId"
-                                    ></youtube-media>
-                                </div>
-                                <!--                                <div-->
-                                <!--                                        v-if="!menuOpen"-->
-                                <!--                                        class="child"-->
-                                <!--                                        style="position: sticky; width: 100%; margin-bottom:5px; top: 0; z-index: 800; background: #000000;"-->
-                                <!--                                        :style="{ height: videoHeight[videoHeightIndex] }"-->
-                                <!--                                >-->
-                                <!--                                    <v-spacer></v-spacer>-->
-                                <!--                                    <youtube-media-->
-                                <!--                                            style="width:100%; height: 100%;"-->
-                                <!--                                            :video-id="getLabVideoId"-->
-                                <!--                                    ></youtube-media>-->
-                                <!--                                </div>-->
-                            </blur-purchase-item>
+                    <div v-if="labInfo && labInfo.video && renderComponent">
+                        <div>
+                            <youtube-media
+                                    style="width:100%; height: 100%;"
+                                    :video-id="getLabVideoId"
+                            ></youtube-media>
                         </div>
-                        <!-- // 비디오 없는 경우 -->
-                        <div v-else>
-                            <v-card v-if="!openVideoTextfield && isOwner || isTeacher || isAdmin"
-                                    style="width: auto; height: 180px; background-color: #dcdde1; margin-bottom: 5px;"
-                                    @click="openVideoTextfield = true">
-                                <div style="text-align: center;">
-                                    <v-icon style="font-size: 40px;
-                                        margin-top: 64px;
-                                        background-color: gray;
-                                        width: 70px;
-                                        height: 55px;
-                                        color: #dcdde1;
-                                        border-radius: 27%"
-                                    >mdi-play
-                                    </v-icon>
-                                </div>
-                            </v-card>
-                        </div>
-                        <div class="lab-locator-fixed">
-                            <v-tooltip bottom>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <v-btn style="margin-left:5px;" v-bind="attrs" v-on="on" @click="resizeGuide()"
-                                           color="primary" v-if="isAdmin || myId==userId" icon large>
-                                        <span style="color:#1976d2; font-weight:900; font-size:26px; margin-top:-4px;">↹</span>
-                                    </v-btn>
-                                </template>
-                                <span>인스트럭션 크기 조절</span>
-                            </v-tooltip>
+                    </div>
+                    <!-- // 비디오 없는 경우 -->
+                    <div v-else>
+                        <v-card v-if="!openVideoTextfield && isOwner || isTeacher || isAdmin"
+                                style="width: auto; height: 180px; background-color: #dcdde1; margin-bottom: 5px;"
+                                @click="openVideoTextfield = true">
+                            <div style="text-align: center;">
+                                <v-icon style="font-size: 40px;
+                                    margin-top: 64px;
+                                    background-color: gray;
+                                    width: 70px;
+                                    height: 55px;
+                                    color: #dcdde1;
+                                    border-radius: 27%"
+                                >mdi-play
+                                </v-icon>
+                            </div>
+                        </v-card>
+                    </div>
+                    <div class="lab-locator-fixed">
+                        <v-tooltip bottom>
+                            <template v-slot:activator="{ on, attrs }">
+                                <v-btn style="margin-left:5px;" v-bind="attrs" v-on="on" @click="resizeGuide()"
+                                        color="primary" v-if="isAdmin || myId==userId" icon large>
+                                    <span style="color:#1976d2; font-weight:900; font-size:26px; margin-top:-4px;">↹</span>
+                                </v-btn>
+                            </template>
+                            <span>인스트럭션 크기 조절</span>
+                        </v-tooltip>
 
-                            <v-tooltip bottom>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <v-btn style="margin-left:5px;" v-bind="attrs" v-on="on" @click="answerDialog=true"
-                                           color="primary" icon large>
-                                        <v-icon>mdi-comment-check-outline</v-icon>
-                                    </v-btn>
-                                </template>
-                                <span>응답</span>
-                            </v-tooltip>
+                        <v-tooltip bottom>
+                            <template v-slot:activator="{ on, attrs }">
+                                <v-btn style="margin-left:5px;" v-bind="attrs" v-on="on" @click="answerDialog=true"
+                                        color="primary" icon large>
+                                    <v-icon>mdi-comment-check-outline</v-icon>
+                                </v-btn>
+                            </template>
+                            <span>응답</span>
+                        </v-tooltip>
 
-                            <v-tooltip v-if="isOwner || isTeacher || isAdmin && video.url" bottom>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <v-btn style="margin-left:5px;" v-bind="attrs" v-on="on" @click="editLabVideo()"
-                                           color="primary" icon large>
-                                        <Icon icon="material-symbols:video-settings-rounded"
-                                              style="margin-top:-4px; width:30px; height:30px;"
-                                        />
-                                    </v-btn>
-                                </template>
-                                <span>유튜브 Url 수정</span>
-                            </v-tooltip>
+                        <v-tooltip v-if="isOwner || isTeacher || isAdmin && video.url" bottom>
+                            <template v-slot:activator="{ on, attrs }">
+                                <v-btn style="margin-left:5px;" v-bind="attrs" v-on="on" @click="editLabVideo()"
+                                        color="primary" icon large>
+                                    <Icon icon="material-symbols:video-settings-rounded"
+                                            style="margin-top:-4px; width:30px; height:30px;"
+                                    />
+                                </v-btn>
+                            </template>
+                            <span>유튜브 Url 수정</span>
+                        </v-tooltip>
 
-                            <v-tooltip v-if="!opentextfield" bottom>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <v-btn v-if="isOwner || isTeacher || isAdmin"
-                                           v-bind="attrs" v-on="on"
-                                           @click="openMarkdown(labInfo.instructionMd)"
-                                           color="primary"
-                                           icon large
-                                           style="margin-left:5px;"
-                                    >
-                                        <v-icon style="margin-top:5px;">mdi-border-color</v-icon>
-                                    </v-btn>
-                                    <!-- <MergeInstruction
-                                            :cmOption="cmOption"
-                                            :labInfo="labInfo"
-                                            style="margin-top:-5px;"
-                                    /> -->
-                                </template>
-                                <span>인스트럭션 수정</span>
-                            </v-tooltip>
-
-                            <v-tooltip v-if="savebtn" bottom>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <v-btn v-bind="attrs" v-on="on"
-                                           icon large
-                                           style="margin-left:5px;"
-                                           color="primary" :disabled="loading" @click="save(instructionText)">
-                                        <v-icon>mdi-content-save</v-icon>
-                                    </v-btn>
-                                </template>
-                                <span>인스트럭션 저장</span>
-                            </v-tooltip>
-
-                            <v-tooltip bottom>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <v-btn
-                                            style="margin-left:5px;" v-bind="attrs" v-on="on"
-                                            @click="uploadImage()"
-                                            color="primary" icon large>
-                                        <v-icon>
-                                            mdi-folder-upload
-                                        </v-icon>
-                                    </v-btn>
-                                </template>
-                                <span>이미지 업로드</span>
-                            </v-tooltip>
-
-                            <v-tooltip bottom>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <v-btn style="margin-left:5px;" v-bind="attrs" v-on="on" @click="screenCapture()"
-                                           color="primary" v-if="isAdmin || myId==userId" icon large>
-                                        <v-icon>{{setIcon}}</v-icon>
-                                    </v-btn>
-                                </template>
-                                <span>제출</span>
-                            </v-tooltip>
-
-                            <v-tooltip bottom>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <v-btn
-                                            style="margin-left:5px;" v-bind="attrs" v-on="on"
-                                            @click="openClassRoom()"
-                                            color="primary" icon large>
-                                        <v-icon>
-                                            mdi-account-multiple
-                                        </v-icon>
-                                    </v-btn>
-                                </template>
-                                <span>유저 목록</span>
-                            </v-tooltip>
-
-                            <v-tooltip bottom>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <v-btn fill="none" style="margin-left:5px;" v-bind="attrs" v-on="on"
-                                           color="primary" icon large
-                                           :disabled="!loadAllgroupedLabsList"
-                                           @click="contextOpen()"
-                                    >
-                                        <v-icon>mdi-view-headline</v-icon>
-                                    </v-btn>
-                                </template>
-                                <span>랩 목록</span>
-                            </v-tooltip>
-
-                            <v-dialog
-                                    v-model="answerDialog"
-                                    width="500"
-                                    height="300"
-                            >
-                                <v-card>
-                                    <v-card-title
-                                            class="headline grey lighten-2"
-                                            primary-title
-                                    >
-                                        응답
-                                    </v-card-title>
-                                    <v-card-text>
-                                        <answer></answer>
-                                    </v-card-text>
-                                    <v-divider></v-divider>
-                                    <v-card-actions>
-                                        <v-spacer></v-spacer>
-                                        <v-btn
-                                                color="primary"
-                                                text
-                                                @click="answerDialog = false"
-                                        >
-                                            Close
-                                        </v-btn>
-                                    </v-card-actions>
-                                </v-card>
-                            </v-dialog>
-
-                            <!-- <v-tooltip bottom>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <v-btn style="margin-left:5px;" v-bind="attrs" v-on="on" @click="test()" color="primary"
-                                            v-if="isAdmin && labInfo.tool == 'ide'" icon large>
-                                        <v-icon>mdi-content-save</v-icon>
-                                    </v-btn>
-                                </template>
-                                <span>IDE 콘텐츠 저장</span>
-                            </v-tooltip>
-                            
-                            <v-tooltip bottom>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <v-btn style="margin-left:5px;" v-bind="attrs" v-on="on" @click="resetConfig()"
-                                        color="primary" v-if="myId==userId && labInfo.tool == 'ide'" icon large>
-                                        <v-icon>mdi-refresh</v-icon>
-                                    </v-btn>
-                                </template>
-                                <span>Reset Config</span>
-                            </v-tooltip> -->
-
-                            <v-tooltip bottom>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <v-chip
-                                            class="ma-2"
-                                            :color="attendance ? 'green darken-1':'red darken-1'"
-                                            text-color="white"
-                                            v-bind="attrs"
-                                            v-on="on"
-                                            small
-                                    >
-                                        {{labStateText}}
-                                    </v-chip>
-                                </template>
-                                <span v-if="attendance"> 출석처리 되었습니다</span>
-                                <span v-else>출석처리가 되려면 3분을 기다려야 합니다</span>
-                            </v-tooltip>
-                        </div>
-
-
-                        <v-navigation-drawer
-                                v-model="menuOpen"
-                                absolute
-                                temporary
-                                style="width:100%; z-index:100;"
-
-                        >
-                            <!-- <v-card
-                                v-if="menuOpen"
-                                class="mx-auto"
-                                width="300"
-                            > -->
-                            <v-list :key="updateList">
-                                <v-list-item-group
+                        <v-tooltip v-if="!opentextfield" bottom>
+                            <template v-slot:activator="{ on, attrs }">
+                                <v-btn v-if="isOwner || isTeacher || isAdmin"
+                                        v-bind="attrs" v-on="on"
+                                        @click="openMarkdown(labInfo.instructionMd)"
                                         color="primary"
+                                        icon large
+                                        style="margin-left:5px;"
                                 >
-                                    <v-row style="margin:0;">
-                                        <v-col clos="10">
-                                            <v-btn @click.prevent="onClick(listText)" text>
-                                                <v-icon>mdi-arrow-left</v-icon>
-                                                <b>{{listText}}</b>
-                                            </v-btn>
-                                        </v-col>
-                                        <v-col cols="2">
-                                            <v-btn @click="contextOpen()" icon>
-                                                <v-icon>mdi-close</v-icon>
-                                            </v-btn>
-                                        </v-col>
-                                    </v-row>
-                                    <v-divider/>
-                                    <div v-for="(groupinfo, i) in classInfo.groupedLabsList" :key="i">
-                                        <!-- <v-list-item v-if="groupinfo && !groupinfo.labsList.length > 0" @click="onClick(groupinfo.groupName)">
-                                            <v-list-item-title>{{groupinfo.groupName}}</v-list-item-title>
-                                        </v-list-item> -->
+                                    <v-icon style="margin-top:5px;">mdi-border-color</v-icon>
+                                </v-btn>
+                                <!-- <MergeInstruction
+                                        :cmOption="cmOption"
+                                        :labInfo="labInfo"
+                                        style="margin-top:-5px;"
+                                /> -->
+                            </template>
+                            <span>인스트럭션 수정</span>
+                        </v-tooltip>
 
-                                        <v-list-group
-                                                v-if="groupinfo && groupinfo.labsList.length > 0 && currentLabInfo"
-                                                :value="groupinfo.groupName == currentLabInfo.groupName ? true:false"
-                                        >
-                                            <template v-slot:activator>
-                                                <v-list-item-title><b>{{groupinfo.groupName}}</b></v-list-item-title>
-                                            </template>
-                                            <div v-for="(lab, i) in groupinfo.labsList" :key="i">
-                                                <div v-if="AlllabsList[groupinfo.groupName] && AlllabsList[groupinfo.groupName][lab]">
-                                                    <v-list-item
-                                                            v-if="AlllabsList[groupinfo.groupName][lab].active || isAdmin"
-                                                            link
-                                                            :style="lab == currentLabInfo.labId ? 'background-color: #dcf0ff':''"
-                                                            @mouseenter="mouseenterInLab = lab"
-                                                            @mouseleave="mouseenterInLab = null"
-                                                    >
-                                                        <v-list-item-content @click="onClick(lab)">
-                                                            <v-list-item-title style="font-size: 13px;">
-                                                                <li :style="AlllabsList[groupinfo.groupName][lab].active ? '':'opacity: 0.4;'">
-                                                                    {{AlllabsList[groupinfo.groupName][lab].labName}}
-                                                                    <v-icon small
-                                                                            v-if="AlllabsList[groupinfo.groupName][lab].price">
-                                                                        mdi-lock-outline
-                                                                    </v-icon>
-                                                                    <v-chip v-if="AlllabsList[groupinfo.groupName][lab].labStatus && AlllabsList[groupinfo.groupName][lab].labStatus.status=='completed'"
-                                                                            color="green"
-                                                                            text-color="white"
-                                                                            style="margin-left: 5px;"
-                                                                            x-small>완료
-                                                                    </v-chip>
-                                                                    <v-chip v-if="AlllabsList[groupinfo.groupName][lab].labStatus && AlllabsList[groupinfo.groupName][lab].labStatus.status=='started'"
-                                                                            color="red"
-                                                                            text-color="white"
-                                                                            style="margin-left: 5px;"
-                                                                            x-small>진행중
-                                                                    </v-chip>
-                                                                    <v-chip
-                                                                            v-if="AlllabsList[groupinfo.groupName][lab].passMessage"
-                                                                            :color="AlllabsList[groupinfo.groupName][lab].passMessage == '접속'? 'blue darken-1' :'green' "
-                                                                            text-color='white'
-                                                                            x-small
-                                                                            style="margin-left: 5px;"
-                                                                    >
-                                                                        {{AlllabsList[groupinfo.groupName][lab].passMessage}}
-                                                                    </v-chip>
-                                                                </li>
-                                                            </v-list-item-title>
-                                                        </v-list-item-content>
+                        <v-tooltip v-if="savebtn" bottom>
+                            <template v-slot:activator="{ on, attrs }">
+                                <v-btn v-bind="attrs" v-on="on"
+                                        icon large
+                                        style="margin-left:5px;"
+                                        color="primary" :disabled="loading" @click="save(instructionText)">
+                                    <v-icon>mdi-content-save</v-icon>
+                                </v-btn>
+                            </template>
+                            <span>인스트럭션 저장</span>
+                        </v-tooltip>
 
-                                                        <v-list-item-icon>
-                                                            <v-icon style="font-size: 18px;"
-                                                                    v-if="mouseenterInLab == lab"
-                                                                    @click.native="onClick(lab, 'newTab')">
-                                                                mdi-open-in-new
-                                                            </v-icon>
-                                                        </v-list-item-icon>
-                                                    </v-list-item>
-                                                </div>
-                                                <v-list-item v-else @click.native="onClick(lab)">
-                                                    <li>{{lab}}</li>
+                        <v-tooltip bottom>
+                            <template v-slot:activator="{ on, attrs }">
+                                <v-btn
+                                        style="margin-left:5px;" v-bind="attrs" v-on="on"
+                                        @click="uploadImage()"
+                                        color="primary" icon large>
+                                    <v-icon>
+                                        mdi-folder-upload
+                                    </v-icon>
+                                </v-btn>
+                            </template>
+                            <span>이미지 업로드</span>
+                        </v-tooltip>
+
+                        <v-tooltip bottom>
+                            <template v-slot:activator="{ on, attrs }">
+                                <v-btn style="margin-left:5px;" v-bind="attrs" v-on="on" @click="screenCapture()"
+                                        color="primary" v-if="isAdmin || myId==userId" icon large>
+                                    <v-icon>{{setIcon}}</v-icon>
+                                </v-btn>
+                            </template>
+                            <span>제출</span>
+                        </v-tooltip>
+
+                        <v-tooltip bottom>
+                            <template v-slot:activator="{ on, attrs }">
+                                <v-btn
+                                        style="margin-left:5px;" v-bind="attrs" v-on="on"
+                                        @click="openClassRoom()"
+                                        color="primary" icon large>
+                                    <v-icon>
+                                        mdi-account-multiple
+                                    </v-icon>
+                                </v-btn>
+                            </template>
+                            <span>유저 목록</span>
+                        </v-tooltip>
+
+                        <v-tooltip bottom>
+                            <template v-slot:activator="{ on, attrs }">
+                                <v-btn fill="none" style="margin-left:5px;" v-bind="attrs" v-on="on"
+                                        color="primary" icon large
+                                        :disabled="!loadAllgroupedLabsList"
+                                        @click="contextOpen()"
+                                >
+                                    <v-icon>mdi-view-headline</v-icon>
+                                </v-btn>
+                            </template>
+                            <span>랩 목록</span>
+                        </v-tooltip>
+
+                        <v-dialog
+                                v-model="answerDialog"
+                                width="500"
+                                height="300"
+                        >
+                            <v-card>
+                                <v-card-title
+                                        class="headline grey lighten-2"
+                                        primary-title
+                                >
+                                    응답
+                                </v-card-title>
+                                <v-card-text>
+                                    <answer></answer>
+                                </v-card-text>
+                                <v-divider></v-divider>
+                                <v-card-actions>
+                                    <v-spacer></v-spacer>
+                                    <v-btn
+                                            color="primary"
+                                            text
+                                            @click="answerDialog = false"
+                                    >
+                                        Close
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-dialog>
+
+                        <!-- <v-tooltip bottom>
+                            <template v-slot:activator="{ on, attrs }">
+                                <v-btn style="margin-left:5px;" v-bind="attrs" v-on="on" @click="test()" color="primary"
+                                        v-if="isAdmin && labInfo.tool == 'ide'" icon large>
+                                    <v-icon>mdi-content-save</v-icon>
+                                </v-btn>
+                            </template>
+                            <span>IDE 콘텐츠 저장</span>
+                        </v-tooltip>
+                        
+                        <v-tooltip bottom>
+                            <template v-slot:activator="{ on, attrs }">
+                                <v-btn style="margin-left:5px;" v-bind="attrs" v-on="on" @click="resetConfig()"
+                                    color="primary" v-if="myId==userId && labInfo.tool == 'ide'" icon large>
+                                    <v-icon>mdi-refresh</v-icon>
+                                </v-btn>
+                            </template>
+                            <span>Reset Config</span>
+                        </v-tooltip> -->
+
+                        <v-tooltip bottom>
+                            <template v-slot:activator="{ on, attrs }">
+                                <v-chip
+                                        class="ma-2"
+                                        :color="attendance ? 'green darken-1':'red darken-1'"
+                                        text-color="white"
+                                        v-bind="attrs"
+                                        v-on="on"
+                                        small
+                                >
+                                    {{labStateText}}
+                                </v-chip>
+                            </template>
+                            <span v-if="attendance"> 출석처리 되었습니다</span>
+                            <span v-else>출석처리가 되려면 3분을 기다려야 합니다</span>
+                        </v-tooltip>
+                    </div>
+
+
+                    <v-navigation-drawer
+                            v-model="menuOpen"
+                            absolute
+                            temporary
+                            style="width:100%; z-index:100;"
+
+                    >
+                        <!-- <v-card
+                            v-if="menuOpen"
+                            class="mx-auto"
+                            width="300"
+                        > -->
+                        <v-list :key="updateList">
+                            <v-list-item-group
+                                    color="primary"
+                            >
+                                <v-row style="margin:0;">
+                                    <v-col clos="10">
+                                        <v-btn @click.prevent="onClick(listText)" text>
+                                            <v-icon>mdi-arrow-left</v-icon>
+                                            <b>{{listText}}</b>
+                                        </v-btn>
+                                    </v-col>
+                                    <v-col cols="2">
+                                        <v-btn @click="contextOpen()" icon>
+                                            <v-icon>mdi-close</v-icon>
+                                        </v-btn>
+                                    </v-col>
+                                </v-row>
+                                <v-divider/>
+                                <div v-for="(groupinfo, i) in classInfo.groupedLabsList" :key="i">
+                                    <!-- <v-list-item v-if="groupinfo && !groupinfo.labsList.length > 0" @click="onClick(groupinfo.groupName)">
+                                        <v-list-item-title>{{groupinfo.groupName}}</v-list-item-title>
+                                    </v-list-item> -->
+
+                                    <v-list-group
+                                            v-if="groupinfo && groupinfo.labsList.length > 0 && currentLabInfo"
+                                            :value="groupinfo.groupName == currentLabInfo.groupName ? true:false"
+                                    >
+                                        <template v-slot:activator>
+                                            <v-list-item-title><b>{{groupinfo.groupName}}</b></v-list-item-title>
+                                        </template>
+                                        <div v-for="(lab, i) in groupinfo.labsList" :key="i">
+                                            <div v-if="AlllabsList[groupinfo.groupName] && AlllabsList[groupinfo.groupName][lab]">
+                                                <v-list-item
+                                                        v-if="AlllabsList[groupinfo.groupName][lab].active || isAdmin"
+                                                        link
+                                                        :style="lab == currentLabInfo.labId ? 'background-color: #dcf0ff':''"
+                                                        @mouseenter="mouseenterInLab = lab"
+                                                        @mouseleave="mouseenterInLab = null"
+                                                >
+                                                    <v-list-item-content @click="onClick(lab)">
+                                                        <v-list-item-title style="font-size: 13px;">
+                                                            <li :style="AlllabsList[groupinfo.groupName][lab].active ? '':'opacity: 0.4;'">
+                                                                {{AlllabsList[groupinfo.groupName][lab].labName}}
+                                                                <v-chip v-if="AlllabsList[groupinfo.groupName][lab].labStatus && AlllabsList[groupinfo.groupName][lab].labStatus.status=='completed'"
+                                                                        color="green"
+                                                                        text-color="white"
+                                                                        style="margin-left: 5px;"
+                                                                        x-small>완료
+                                                                </v-chip>
+                                                                <v-chip v-if="AlllabsList[groupinfo.groupName][lab].labStatus && AlllabsList[groupinfo.groupName][lab].labStatus.status=='started'"
+                                                                        color="red"
+                                                                        text-color="white"
+                                                                        style="margin-left: 5px;"
+                                                                        x-small>진행중
+                                                                </v-chip>
+                                                                <v-chip
+                                                                        v-if="AlllabsList[groupinfo.groupName][lab].passMessage"
+                                                                        :color="AlllabsList[groupinfo.groupName][lab].passMessage == '접속'? 'blue darken-1' :'green' "
+                                                                        text-color='white'
+                                                                        x-small
+                                                                        style="margin-left: 5px;"
+                                                                >
+                                                                    {{AlllabsList[groupinfo.groupName][lab].passMessage}}
+                                                                </v-chip>
+                                                            </li>
+                                                        </v-list-item-title>
+                                                    </v-list-item-content>
+
+                                                    <v-list-item-icon>
+                                                        <v-icon style="font-size: 18px;"
+                                                                v-if="mouseenterInLab == lab"
+                                                                @click.native="onClick(lab, 'newTab')">
+                                                            mdi-open-in-new
+                                                        </v-icon>
+                                                    </v-list-item-icon>
                                                 </v-list-item>
                                             </div>
-
-                                        </v-list-group>
-                                    </div>
-                                </v-list-item-group>
-                            </v-list>
-                            <!-- </v-card> -->
-                        </v-navigation-drawer>
-                        <!-- <v-menu
-                            :content-class="setClass"
-                            v-model="menuOpen"
-                            bottom
-                            origin="center center"
-                            transition="scale-transition"
-                        >
-                            <v-list dense style="overflow-y:scroll; width: 370px; height: 200px;">
-                                <v-list-item-group
-                                    color="primary"
-                                    v-model="selectedLabNumber"
-                                >
-                                    <v-list-item
-                                        @click.prevent="onClick($event.target.innerText)"
-                                    >
-                                        <v-list-item-content>
-                                            <v-list-item-title v-text="listText"></v-list-item-title>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                    <div v-for="(lab, i) in labsList" :key="i">
-                                        <v-list-item
-                                                @click.prevent="onClick(lab.labId)"
-                                                :key="i"
-                                        >
-                                                <v-list-item-content>
-                                                    <v-list-item-title
-                                                            v-text="lab ? lab.labName : ''"
-                                                    ></v-list-item-title>
-                                                </v-list-item-content>
+                                            <v-list-item v-else @click.native="onClick(lab)">
+                                                <li>{{lab}}</li>
                                             </v-list-item>
-                                    </div>
-                                </v-list-item-group>
-                            </v-list>
-                        </v-menu> -->
+                                        </div>
 
-                        <v-list dense style="margin-bottom:60px;">
-                            <!-- <v-subheader>
-                                <div v-if="labInfo.tool == 'url' && showUrlText">
-                                    <v-btn
-                                            small
-                                            rounded
-                                            outlined
-                                            color="primary"
-                                            @click="openUrltextfield()"
-                                            style="margin-right: 10px;"
-                                    >{{urlText}}
-                                    </v-btn>
+                                    </v-list-group>
                                 </div>
-                            </v-subheader> -->
-                            <!-- <v-col v-if="urltextfield">
-                                <v-text-field label="input url" v-model="urlText"
-                                            @keydown.enter="sendUrl(urlText)"></v-text-field>
-                                <div style="text-align: right">
-                                    <v-btn style="margin-right: 10px;" @click="urltextfield=false">cancel</v-btn>
-                                    <v-btn color="primary" @click="sendUrl(urlText)">send</v-btn>
-                                </div>
-                            </v-col> -->
-                            <v-divider></v-divider>
-                            <v-col v-if="opentextfield" style="margin-top:25px;">
-                                <vue-simplemde style="overflow:scroll;" v-model="instructionText" ref="markdownEditor"/>
-                            </v-col>
-                            <!-- <v-col style="text-align: right">
-                                <v-btn style="margin-right: 10px; color: white" v-if="savebtn && !isOwner" color="red"
-                                    @click="resetInstruction()">초기화
-                                </v-btn>
-                                <v-btn style="margin-right: 10px;" v-if="savebtn" @click="cancel()">Cancel</v-btn>
-                            </v-col> -->
-                            <v-col v-if="!opentextfield" :style="loadInstruction ? 'opacity: 0.4':''">
-                                <InstructionHtml
-                                        v-if="labInfo.instructionHtml"
-                                        :source="labInfo.instructionHtml"
-                                ></InstructionHtml>
-                                <vue-markdown
-                                        v-else
-                                        class="markdown-body"
-                                        :source="labInfo.instructionMd"
-                                        style="margin:0 10px 0 0px;"
+                            </v-list-item-group>
+                        </v-list>
+                        <!-- </v-card> -->
+                    </v-navigation-drawer>
+                    <!-- <v-menu
+                        :content-class="setClass"
+                        v-model="menuOpen"
+                        bottom
+                        origin="center center"
+                        transition="scale-transition"
+                    >
+                        <v-list dense style="overflow-y:scroll; width: 370px; height: 200px;">
+                            <v-list-item-group
+                                color="primary"
+                                v-model="selectedLabNumber"
+                            >
+                                <v-list-item
+                                    @click.prevent="onClick($event.target.innerText)"
                                 >
-                                </vue-markdown>
+                                    <v-list-item-content>
+                                        <v-list-item-title v-text="listText"></v-list-item-title>
+                                    </v-list-item-content>
+                                </v-list-item>
+                                <div v-for="(lab, i) in labsList" :key="i">
+                                    <v-list-item
+                                            @click.prevent="onClick(lab.labId)"
+                                            :key="i"
+                                    >
+                                            <v-list-item-content>
+                                                <v-list-item-title
+                                                        v-text="lab ? lab.labName : ''"
+                                                ></v-list-item-title>
+                                            </v-list-item-content>
+                                        </v-list-item>
+                                </div>
+                            </v-list-item-group>
+                        </v-list>
+                    </v-menu> -->
+
+                    <v-list dense style="margin-bottom:60px;">
+                        <!-- <v-subheader>
+                            <div v-if="labInfo.tool == 'url' && showUrlText">
+                                <v-btn
+                                        small
+                                        rounded
+                                        outlined
+                                        color="primary"
+                                        @click="openUrltextfield()"
+                                        style="margin-right: 10px;"
+                                >{{urlText}}
+                                </v-btn>
+                            </div>
+                        </v-subheader> -->
+                        <!-- <v-col v-if="urltextfield">
+                            <v-text-field label="input url" v-model="urlText"
+                                        @keydown.enter="sendUrl(urlText)"></v-text-field>
+                            <div style="text-align: right">
+                                <v-btn style="margin-right: 10px;" @click="urltextfield=false">cancel</v-btn>
+                                <v-btn color="primary" @click="sendUrl(urlText)">send</v-btn>
+                            </div>
+                        </v-col> -->
+                        <v-divider></v-divider>
+                        <v-col v-if="opentextfield" style="margin-top:25px;">
+                            <vue-simplemde style="overflow:scroll;" v-model="instructionText" ref="markdownEditor"/>
+                        </v-col>
+                        <!-- <v-col style="text-align: right">
+                            <v-btn style="margin-right: 10px; color: white" v-if="savebtn && !isOwner" color="red"
+                                @click="resetInstruction()">초기화
+                            </v-btn>
+                            <v-btn style="margin-right: 10px;" v-if="savebtn" @click="cancel()">Cancel</v-btn>
+                        </v-col> -->
+                        <v-col v-if="!opentextfield" :style="loadInstruction ? 'opacity: 0.4':''">
+                            <InstructionHtml
+                                    v-if="labInfo.instructionHtml"
+                                    :source="labInfo.instructionHtml"
+                            ></InstructionHtml>
+                            <vue-markdown
+                                    v-else
+                                    class="markdown-body"
+                                    :source="labInfo.instructionMd"
+                                    style="margin:0 10px 0 0px;"
+                            >
+                            </vue-markdown>
+                        </v-col>
+                        <v-divider></v-divider>
+                        <v-subheader>
+                            Checkpoints
+                            <v-col>
+                                <v-icon v-if="isAdmin && !editCheckpoint && labInfo.tool !='quiz'" small
+                                        @click="openEditCheckpointField()">
+                                    mdi-border-color
+                                </v-icon>
                             </v-col>
-                            <v-divider></v-divider>
-                            <v-subheader>
-                                Checkpoints
-                                <v-col>
-                                    <v-icon v-if="isAdmin && !editCheckpoint && labInfo.tool !='quiz'" small
-                                            @click="openEditCheckpointField()">
-                                        mdi-border-color
-                                    </v-icon>
-                                </v-col>
-                            </v-subheader>
-                            <div v-if="labInfo.tool =='quiz'">
-                                <v-list-item v-for="(item,idx) in setNewCheckPoints" :key="idx">
-                                    <v-list-item-content v-if="editCheckpoint">
+                        </v-subheader>
+                        <div v-if="labInfo.tool =='quiz'">
+                            <v-list-item v-for="(item,idx) in setNewCheckPoints" :key="idx">
+                                <v-list-item-content v-if="editCheckpoint">
+                                    <span style="display: flex;">
+                                        <b>{{idx + 1}}.</b> 
+                                        <v-text-field
+                                                @click:append-outer="removeCheckpoint(item)"
+                                                append-outer-icon="mdi-minus-circle-outline"
+                                                style="margin-top: -20px; margin-left: 6px;"
+                                                v-model="item.text"/>
+                                    </span>
+                                </v-list-item-content>
+                                <v-list-item-content v-else>
+                                    <v-list-item-title>{{idx + 1}}. {{item.quizNumber}}</v-list-item-title>
+                                </v-list-item-content>
+                                <v-list-item-action v-if="!editCheckpoint">
+                                    <v-checkbox
+                                            v-if="isAdmin && renderComponent"
+                                            @click.stop="sendCheckPoints(item)"
+                                            v-model="item.status"
+                                            success
+                                    ></v-checkbox>
+                                    <v-checkbox
+                                            v-if="!isAdmin && renderComponent"
+                                            v-model="item.status"
+                                            success
+                                            readonly
+                                    ></v-checkbox>
+                                </v-list-item-action>
+                            </v-list-item>
+                        </div>
+                        <div v-else>
+                            <div v-if="editCheckpoint">
+                                <v-list-item v-for="(item,idx) in copyCheckPoints" :key="idx">
+                                    <v-list-item-content>
                                         <span style="display: flex;">
                                             <b>{{idx + 1}}.</b> 
                                             <v-text-field
                                                     @click:append-outer="removeCheckpoint(item)"
                                                     append-outer-icon="mdi-minus-circle-outline"
                                                     style="margin-top: -20px; margin-left: 6px;"
-                                                    v-model="item.text"/>
+                                                    v-model="item.text"></v-text-field>
                                         </span>
                                     </v-list-item-content>
-                                    <v-list-item-content v-else>
-                                        <v-list-item-title>{{idx + 1}}. {{item.quizNumber}}</v-list-item-title>
+                                </v-list-item>
+                            </div>
+                            <div v-else>
+                                <v-list-item v-for="(item,idx) in labInfo.checkPoints" :key="idx">
+                                    <v-list-item-content>
+                                        <v-list-item-title v-if="item.text">{{idx + 1}}. {{item.text}}
+                                        </v-list-item-title>
                                     </v-list-item-content>
-                                    <v-list-item-action v-if="!editCheckpoint">
+                                    <v-list-item-action>
                                         <v-checkbox
                                                 v-if="isAdmin && renderComponent"
                                                 @click.stop="sendCheckPoints(item)"
@@ -671,116 +671,79 @@
                                     </v-list-item-action>
                                 </v-list-item>
                             </div>
-                            <div v-else>
-                                <div v-if="editCheckpoint">
-                                    <v-list-item v-for="(item,idx) in copyCheckPoints" :key="idx">
-                                        <v-list-item-content>
-                                            <span style="display: flex;">
-                                                <b>{{idx + 1}}.</b> 
-                                                <v-text-field
-                                                        @click:append-outer="removeCheckpoint(item)"
-                                                        append-outer-icon="mdi-minus-circle-outline"
-                                                        style="margin-top: -20px; margin-left: 6px;"
-                                                        v-model="item.text"></v-text-field>
-                                            </span>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </div>
-                                <div v-else>
-                                    <v-list-item v-for="(item,idx) in labInfo.checkPoints" :key="idx">
-                                        <v-list-item-content>
-                                            <v-list-item-title v-if="item.text">{{idx + 1}}. {{item.text}}
-                                            </v-list-item-title>
-                                        </v-list-item-content>
-                                        <v-list-item-action>
-                                            <v-checkbox
-                                                    v-if="isAdmin && renderComponent"
-                                                    @click.stop="sendCheckPoints(item)"
-                                                    v-model="item.status"
-                                                    success
-                                            ></v-checkbox>
-                                            <v-checkbox
-                                                    v-if="!isAdmin && renderComponent"
-                                                    v-model="item.status"
-                                                    success
-                                                    readonly
-                                            ></v-checkbox>
-                                        </v-list-item-action>
-                                    </v-list-item>
-                                </div>
-                            </div>
-                            <div style="text-align: center;">
-                                <v-icon v-if="editCheckpoint" @click="addNewCheckpoint()">mdi-plus-circle</v-icon>
-                            </div>
-                            <div v-if="editCheckpoint" style="float: right; margin-top: 10px; margin-right: 10px;">
-                                <v-btn text small @click="closeAddCheckPointField()">
-                                    cancel
-                                </v-btn>
-                                <v-icon v-if="updateCheckpointLoading" color="primary">mdi-spin mdi-loading</v-icon>
-                                <v-btn v-else color="primary" text small
-                                       @click="updateCheckpoints()">
-                                    save
-                                </v-btn>
-                            </div>
-                            <div v-if="editCheckpoint">
-                                <br><br>
-                            </div>
-                            <v-divider></v-divider>
+                        </div>
+                        <div style="text-align: center;">
+                            <v-icon v-if="editCheckpoint" @click="addNewCheckpoint()">mdi-plus-circle</v-icon>
+                        </div>
+                        <div v-if="editCheckpoint" style="float: right; margin-top: 10px; margin-right: 10px;">
+                            <v-btn text small @click="closeAddCheckPointField()">
+                                cancel
+                            </v-btn>
+                            <v-icon v-if="updateCheckpointLoading" color="primary">mdi-spin mdi-loading</v-icon>
+                            <v-btn v-else color="primary" text small
+                                    @click="updateCheckpoints()">
+                                save
+                            </v-btn>
+                        </div>
+                        <div v-if="editCheckpoint">
+                            <br><br>
+                        </div>
+                        <v-divider></v-divider>
 
-                            <v-subheader v-if="(labInfo.hints && labInfo.hints.length > 0) || isAdmin">
-                                Hints
-                                <v-col>
-                                    <v-icon v-if="isAdmin && !editHints" small @click="editHints = true">
-                                        mdi-border-color
-                                    </v-icon>
-                                </v-col>
-                            </v-subheader>
-                            <div v-if="labInfo.hints">
-                                <v-list-item v-for="(item,idx) in labInfo.hints" :key="idx">
-                                    <v-list-item-content v-if="editHints">
-                                        <span style="display: flex;">
-                                            <b>{{idx + 1}}.</b> 
-                                            <v-text-field
-                                                    :rules="validateRules"
-                                                    @click:append-outer="removeHints(idx)"
-                                                    append-outer-icon="mdi-minus-circle-outline"
-                                                    style="margin-top: -20px; margin-left: 6px;"
-                                                    v-model="item.text"/>
-                                        </span>
-                                    </v-list-item-content>
-                                    <v-list-item-content v-else>
-                                        <v-list-item-title>{{idx + 1}}. {{item.text}}</v-list-item-title>
-                                    </v-list-item-content>
-                                </v-list-item>
-                            </div>
-                            <!-- <span v-if="addHints" v-for="(count ,idx) in appendCount" :key="idx" style="display: flex; margin-top: 10px; margin-right: 15px; margin-left: 17px;">
-                                <b>{{labInfo.hints.length + 1 + idx}}.</b> 
-                                <v-text-field 
-                                    :rules="validateRules"
-                                    @click:append-outer="addHints = false, hints[idx] = ''"
-                                    append-outer-icon="mdi-minus-circle-outline"
-                                    style="margin-top: -20px; margin-left: 6px;" 
-                                    v-model="hints[idx]" />
-                            </span> -->
-                            <div style="text-align: center;">
-                                <v-icon v-if="editHints" @click="addNewHint()">mdi-plus-circle</v-icon>
-                            </div>
-                            <div style="float: right; margin-top: 10px; margin-right: 10px;">
-                                <v-btn v-if="editHints" text small @click="closeAddHintsField()">
-                                    cancel
-                                </v-btn>
-                                <v-btn color="primary" text small v-if="editHints"
-                                       :disabled="checkValidateHints"
-                                       @click="updateHints(labInfo, hints)">
-                                    save
-                                </v-btn>
-                            </div>
-                            <div v-if="editCheckpoint">
-                                <br><br>
-                            </div>
-                        </v-list>
-                        <v-divider v-if="(labInfo.hints && labInfo.hints.length > 0) || isAdmin"></v-divider>
-                    </blur-purchase-item>
+                        <v-subheader v-if="(labInfo.hints && labInfo.hints.length > 0) || isAdmin">
+                            Hints
+                            <v-col>
+                                <v-icon v-if="isAdmin && !editHints" small @click="editHints = true">
+                                    mdi-border-color
+                                </v-icon>
+                            </v-col>
+                        </v-subheader>
+                        <div v-if="labInfo.hints">
+                            <v-list-item v-for="(item,idx) in labInfo.hints" :key="idx">
+                                <v-list-item-content v-if="editHints">
+                                    <span style="display: flex;">
+                                        <b>{{idx + 1}}.</b> 
+                                        <v-text-field
+                                                :rules="validateRules"
+                                                @click:append-outer="removeHints(idx)"
+                                                append-outer-icon="mdi-minus-circle-outline"
+                                                style="margin-top: -20px; margin-left: 6px;"
+                                                v-model="item.text"/>
+                                    </span>
+                                </v-list-item-content>
+                                <v-list-item-content v-else>
+                                    <v-list-item-title>{{idx + 1}}. {{item.text}}</v-list-item-title>
+                                </v-list-item-content>
+                            </v-list-item>
+                        </div>
+                        <!-- <span v-if="addHints" v-for="(count ,idx) in appendCount" :key="idx" style="display: flex; margin-top: 10px; margin-right: 15px; margin-left: 17px;">
+                            <b>{{labInfo.hints.length + 1 + idx}}.</b> 
+                            <v-text-field 
+                                :rules="validateRules"
+                                @click:append-outer="addHints = false, hints[idx] = ''"
+                                append-outer-icon="mdi-minus-circle-outline"
+                                style="margin-top: -20px; margin-left: 6px;" 
+                                v-model="hints[idx]" />
+                        </span> -->
+                        <div style="text-align: center;">
+                            <v-icon v-if="editHints" @click="addNewHint()">mdi-plus-circle</v-icon>
+                        </div>
+                        <div style="float: right; margin-top: 10px; margin-right: 10px;">
+                            <v-btn v-if="editHints" text small @click="closeAddHintsField()">
+                                cancel
+                            </v-btn>
+                            <v-btn color="primary" text small v-if="editHints"
+                                    :disabled="checkValidateHints"
+                                    @click="updateHints(labInfo, hints)">
+                                save
+                            </v-btn>
+                        </div>
+                        <div v-if="editCheckpoint">
+                            <br><br>
+                        </div>
+                    </v-list>
+                    <v-divider v-if="(labInfo.hints && labInfo.hints.length > 0) || isAdmin"></v-divider>
+                
                 </div>
                 <LabLocatorChat
                         :lab-info="labInfo"
@@ -818,91 +781,23 @@
             </v-navigation-drawer>
 
             <div style="padding: 0px; height: 100% !important; width: 100%">
-                <!-- autopay -->
-                <auto-payment-composition></auto-payment-composition>
-
-                <blur-purchase-item
-                        :itemId='`${courseId}@${classId}@${labId}`'
-                        :itemResourceType="'lab'"
-                        :itemAmount="labInfo.price"
-                        :itemPeriod="labInfo.period"
-                        :item-open-range="100"
-                        :lab-info="labInfo"
-                        :class-info="classInfo"
-                        :open-delay-timer="-1"
-                        @paid="paid"
-                        @subscription="setExistSubscription"
-                >
-                    <div v-if="isPaidLab == undefined" style="text-align: -webkit-center;">
-                        <v-skeleton-loader type="article,image,image,image"></v-skeleton-loader>
-                        <div style="position:absolute;
-                                    top:50%; left:50%;
-                                    transfrom:translate(-50%,-50%);
-                                    color:#1E88E5;"
-                        >유효성 검사중 ...
-                        </div>
+                <div style="height:100%;">
+                    <div style="height:100%;">
+                        <!--                        <lab-tool v-model="tool" :lab-info="labInfo" :class-info="classInfo" ref="toolComp"></lab-tool>-->
+                        <component ref="toolComp"
+                                    :is="'lab-tool-' + labInfo.tool"
+                                    v-model="tool"
+                                    :passAll="passAll"
+                                    :certi="certi"
+                                    :basicPassed="basicPassed"
+                                    :lab-info="labInfo"
+                                    :class-info="classInfo"
+                                    @change="onResultChanged"
+                        >
+                        </component>
+                        <resize-observer @notify="handleResize"/>
                     </div>
-                    <div v-else-if="isPaidLab" style="height:100%;">
-
-                        <div v-if="isCheckedIDE" style="height:100%;">
-                            <div style="height:100%;">
-                                <!--                        <lab-tool v-model="tool" :lab-info="labInfo" :class-info="classInfo" ref="toolComp"></lab-tool>-->
-                                <component ref="toolComp"
-                                           :is="'lab-tool-' + labInfo.tool"
-                                           v-model="tool"
-                                           :passAll="passAll"
-                                           :certi="certi"
-                                           :basicPassed="basicPassed"
-                                           :lab-info="labInfo"
-                                           :class-info="classInfo"
-                                           @change="onResultChanged"
-                                           @terminate="terminate"
-                                >
-                                </component>
-                                <resize-observer @notify="handleResize"/>
-                            </div>
-                        </div>
-
-                        <div v-else class="basic-bg" style="height:100%;" align="center">
-                            <div v-if="!autoOpenIDE" class="basic-center">
-                                <v-btn outlined @click.once="openPaidToolTime()">
-                                    {{$t('word.useIDE')}}
-                                </v-btn>
-                            </div>
-                        </div>
-                    </div>
-                    <div v-else>
-                        <v-card outlined max-width="550" min-width="500" style="margin-top:25%; margin-left: 30%;">
-                            <h2 style="color: #00a000; padding-top:20px; margin-bottom: 10px; font-size:30px;"
-                                class="text-center "
-                            > 유료 강의 입니다.</h2>
-                            <v-card flat v-if="subscription">
-                                <v-card-text>
-                                    <div>
-                                        <div style="margin: 15px; word-break: keep-all;font-size: 15px;text-align: start; line-height: 0px;margin-left: 30%;">
-                                            구독 정보 : {{subscription.type}} <br/>
-                                        </div>
-                                        <div style="margin: 15px; word-break: keep-all;font-size: 20px;text-align: start; line-height: 15px;margin-left: 30%;">
-                                            잔여 랩 수강 : {{subscription.availableLabs}} (회) <br/>
-                                        </div>
-                                        <div style="margin: 15px; word-break: keep-all;font-size: 15px;text-align: start; line-height: 15px;margin-left: 30%;">
-                                            잔여 랩 에서 <u>차감</u> 됩니다.
-                                        </div>
-                                    </div>
-                                </v-card-text>
-                            </v-card>
-                            <v-card flat v-else>
-                                <v-card-text>
-                                    <div>
-                                        <div style=" margin:15px; word-break: keep-all; font-size:20px; text-align:center; line-height:36px;">
-                                            유료강의로 <u>결제</u> 후 이용이 가능합니다
-                                        </div>
-                                    </div>
-                                </v-card-text>
-                            </v-card>
-                        </v-card>
-                    </div>
-                </blur-purchase-item>
+                </div>
             </div>
             <!-- <div style="width: 100%;" v-if=" !(isPaidLab && myId) ">
                 <v-footer padless>
@@ -1053,9 +948,6 @@
     import DiffMatchPatch from "diff-match-patch";
     import firebase from 'firebase'
     import IDEMixins from "./tools/IDEMixins"
-    import AutoPaymentComposition from "../payment/AutoPaymentComposition";
-    import BlurPurchaseItem from "../payment/BlurPurchaseItem";
-
 
     const diffPatcher = new DiffMatchPatch();
     import {mdiMarkdown} from '@mdi/js'
@@ -1105,9 +997,7 @@
             codemirror,
             MergeInstruction,
             VueContext,
-            ClassRoom,
-            'blur-purchase-item': BlurPurchaseItem,
-            'auto-payment-composition': AutoPaymentComposition
+            ClassRoom
         },
         mixins: [LabBase, IDEMixins],
         props: {
@@ -1134,9 +1024,6 @@
             //     const pattern = /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/
             //     return pattern.test(value) || 'Invalid URL'
             // },
-            checkedIDE: false,
-            paidLab: undefined,
-            subscription: null,
 
             labInfo: null,
             renderComponent: true,
@@ -1447,9 +1334,6 @@
                     return 'student'
                 }
             },
-            isPaidLab() {
-                return this.paidLab
-            },
             savedIDEAmount() {
                 if (this.userInfo && this.userInfo.savedToolTime)
                     return Number(this.userInfo.savedToolTime.toFixed(1))
@@ -1470,24 +1354,11 @@
 
             },
             toolStyle() {
-                if (this.isPaidLab && this.myId) {
+                if (this.myId) {
                     return 'padding: 0px; height: 100%; width: 100%;'
                 }
                 return 'padding: 0px; height: 80%; width: 100%;'
 
-            },
-            isCheckedIDE() {
-                // if (this.isEnterpriseClass) {
-                //     return true
-                // }
-                if (this.labInfo && this.labInfo.tool != 'ide') {
-                    return true
-                }
-                if (this.isForeign) {
-                    return true
-                }
-
-                return this.checkedIDE
             },
             getNowTimeStamp() {
                 return Date.now()
@@ -1695,7 +1566,6 @@
 
                 if (me.getClassPath(me.labId) && me.getClassPath(me.labId) == localStorage.getItem('openIDE')) {
                     me.autoOpenIDE = true
-                    me.openPaidToolTime()
                 } else {
                     me.autoOpenIDE = false
                     localStorage.removeItem('openIDE')
@@ -1711,7 +1581,6 @@
                 me.resetInstructionMd = me.labInfo.instructionMd
                 if (me.labInfo.video) {
                     me.video.url = me.labInfo.video
-                    me.video.price = me.labInfo.videoPrice ? me.labInfo.videoPrice : 0
                 }
 
 
@@ -2051,9 +1920,7 @@
                             }
                             labs.attendance = getAttendance
                             labs.passMessage = null
-                            if (typeof labs.price == 'string') labs.price = Number(labs.price)
-                            if (labs.price && labs.price >= 0)
-                                labs.paid = false
+                         
 
 
                             if (getCheckpointResults) {
@@ -2172,10 +2039,7 @@
                     this.loadAllgroupedLabsList = true
                 }
                 // console.log(me.AlllabsList)
-            },
-            setExistSubscription(exist) {
-                this.subscription = exist
-            },
+            }, 
             instructionImage() {
                 // 인스트럭션 이미지 클릭시 이미지 확대 모달창
                 $('.markdown-body li img, .markdown-body p img').click(function () {
@@ -2222,9 +2086,6 @@
                     }
                 )
             },
-            terminate(newVal) {
-                this.checkedIDE = !newVal
-            },
             closeIDE() {
                 console.log('LabLocator------------------ IDE CLOSE')
             },
@@ -2260,35 +2121,7 @@
                 } catch (e) {
                     alert(e.message)
                 }
-            },
-            paid(paidLab) {
-                this.paidLab = paidLab
-            },
-            async openPaidToolTime() {
-                var me = this
-                localStorage.setItem('openIDE', me.getClassPath(me.labId))
-                if (me.isLogin) {
-                    var idePrice = await this.getString(`db://pricing/ide`)
-                    if (!idePrice) idePrice = 1000
-
-                    if (me.subscription && me.subscription.ideTime > 0) {
-                        me.checkedIDE = true
-                    } else {
-                        if (me.savedIDEAmount > 0) {
-                            me.checkedIDE = true
-                        } else if (me.savedCoinAmount >= idePrice / 100) {
-                            me.$EventBus.$emit('autoToolPay')
-                            me.checkedIDE = true
-                        } else {
-                            me.$EventBus.$emit('openPaymentTime', true)
-                        }
-                    }
-
-                } else {
-                    me.$EventBus.$emit('showLoginDialog', true)
-                }
-
-            },
+            }, 
             editLabVideo() {
                 var me = this
                 me.openVideoTextfield = true
@@ -2301,10 +2134,6 @@
                     // var setClassId = me.classId.replace('running@', '')
                     // me.setString('db://labs/' + me.getBucketByTenantId() + '/' + me.courseId + '/classes/running/' + setClassId + '/labs/' + me.labInfo.labId + '/youtubeLink', videoUrl)
                     me.putObject(`storage://labs-msaez.io/running/${me.courseId}/labs/${me.labId}/Lab_Metadata.json`, copyLabInfo)
-                    if (me.video.url && me.video.price) {
-                        me.setString(`db://pricing/video@${me.video.url.split('/')[me.video.url.split('/').length - 1]}`, Number(me.video.price))
-                    }
-                    // console.log(copyLabInfo)
                     me.openVideoTextfield = false
                 } catch (e) {
                     alert(e.message)
@@ -2778,9 +2607,10 @@
                         me.instructionText = me.labInfo.instructionMd
                         me.cmOption.value = me.labInfo.instructionMd
                     }
-                    // //기업강의
+
                     if (this.classInfo && !this.classInfo.openClass && this.classInfo.connectionKey) {
-                        this.labInfo.price = 0
+                        // 기업강의
+                        // this.labInfo.price = 0
                     }
 
                     if (!me.labInfo.modelUrl) {

@@ -1951,8 +1951,6 @@
                     <modeler-image-generator
                             ref="modeler-image-generator"
                     ></modeler-image-generator>
-                    <!-- autoPay -->
-                    <auto-payment-composition></auto-payment-composition>
 
                     <hsc-window-style-metal>
                         <hsc-window
@@ -2109,7 +2107,6 @@
     import GitInformation from "../../GitInformation";
     import json2yaml from "json2yaml";
     import IDEResourceDialog from "../../IDEResourceDialog";
-    import AutoPaymentComposition from "../../payment/AutoPaymentComposition";
     import DialogPurchaseItem from "../../payment/DialogPurchaseItem";
     import { mdiAbTesting, mdiFolderEye } from "@mdi/js";
     import * as io from "socket.io-client";
@@ -2182,7 +2179,6 @@
             "model-canvas-share-dialog": ModelCanvasShareDialog,
             "dialog-purchase-item": DialogPurchaseItem,
             "model-storage-dialog": ModelStorageDialog,
-            "auto-payment-composition": AutoPaymentComposition,
             "uml-class-model-canvas": UMLClassDiagram,
             CodeGenerator,
             PBCModelList,

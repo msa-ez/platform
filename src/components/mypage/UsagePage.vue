@@ -115,16 +115,23 @@ export default {
                 if(this.formatTimeToYearMonth(getMonthEndTimeStamp).date != endDate){
                     this.selectedMonth = 'Custom range'
                 }
-                this.loadRange(this.formatDateStringToTimeStamp(this.start.date, 'start'), this.formatDateStringToTimeStamp(endDate, 'end'))
+                this.loadRange(this.formatDateStringToTimeStamp(this.start.date, 'start'), this.formatDateStringToTimeStamp(endDate, 'end'));
                 this.end.menu = false
             },
 
             formatServiceType(serviceType) {
-                const [type, service] = serviceType.split('_');
-                if (type && service) {
-                    return {
-                        type: this.formatCanvasType(type),
-                        service: changeCase.pascalCase(service)
+                const [first, second] = serviceType.split('_');
+                if (first && second) {
+                    if(this.formatCanvasType(first)){
+                        return {
+                            title: changeCase.pascalCase(second),
+                            detail: this.formatCanvasType(first)
+                        }
+                    } else {
+                        return {
+                            title: changeCase.pascalCase(first),
+                            detail: null
+                        }
                     }
                 } 
                 return serviceType;
@@ -138,16 +145,20 @@ export default {
                 
                 // { "modelId": "a53c674e6de5b4d3800064dc9904733d", "projectId": "68f4ae88e3f1ac3691f19be2dee293f3" }
                 // 임시.
-                Object.keys(metadata).forEach(function(key){
-                    if(key == 'modelId'){
-                        title = metadata[key]
-                    } else if(key == 'projectId'){
-                        detail = `${me.formatCanvasUrl('project')}/${metadata[key]}`
-                    } else {
-                        detail = detail + `${key}: ${metadata[key]}`
-                    }
-                })
-            
+                if(me.formatCanvasType(type)){
+                    // use Canvas
+                    title = metadata['modelId']
+                    if(metadata['projectId']){
+                        detail = `${me.formatCanvasUrl('project')}/${metadata['projectId']}`
+                    } 
+                } else {
+                    title = `${metadata['labName']}`
+                    if(metadata['className']){
+                        detail = `Class name: ${metadata['className']}`
+                    } 
+                }
+                
+        
                 return {title: title, detail: detail};
             },
             formatMeasurement(rowInfo) {
@@ -155,6 +166,7 @@ export default {
                 if(!usedPlan) return rowInfo.measurement
                 if(!usedPlan[rowInfo.serviceType]) return rowInfo.measurement
 
+                if(usedPlan[rowInfo.serviceType].billingType == 'ONCE') return `Once`
                 if(usedPlan[rowInfo.serviceType].UOM) return `${rowInfo.measurement} ${usedPlan[rowInfo.serviceType].UOM}`
 
                 return rowInfo.measurement;
@@ -197,7 +209,7 @@ export default {
                 else if(type == 'project') return "Project"
                 else if(type == 'cm') return "Context Mapping"
     
-                return type
+                return null;
             },
             formatCanvasUrl(type){
                 if(!type) return null;
