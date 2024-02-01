@@ -384,7 +384,7 @@
 
             let getPrompt = localStorage.getItem('noLoginPrompt')
             if(this.isLogin && getPrompt){
-                this.projectInfo.prompt = getPrompt
+                this.projectInfo.prompt = this.projectInfo.prompt ? this.projectInfo.prompt : getPrompt
                 this.openChatUI = true
             }
         },
