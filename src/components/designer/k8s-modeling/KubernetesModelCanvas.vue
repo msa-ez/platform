@@ -94,7 +94,7 @@
                                 <v-row justify="end" align="start">
                                     <v-btn
                                         style="position: absolute; top:26px; right: 60px;"
-                                        color="primary"
+                                        text
                                         @click="openCommandViewer()"
                                         v-on="on"
                                         small
@@ -107,6 +107,17 @@
 
                             <v-flex v-if="!embedded" style="min-width:100%;">
                                 <v-row justify="center" align="center" >
+                                    <div class="kubernetes-mobile-home-button">
+                                        <router-link to="/">
+                                            <v-icon
+                                                style="height: 24px;
+                                                margin-top: 38px;
+                                                margin-right: 5px;"
+                                            >
+                                                mdi-home
+                                            </v-icon>
+                                        </router-link>
+                                    </div>
                                     <v-text-field class="k8s-is-mobile-project-name"
                                             style="margin-right: 5px; margin-top: 40px; max-width: 140px; z-index: 1;"
                                             label="Project Name"
@@ -125,8 +136,7 @@
                                             <template v-slot:activator="{ attrs, on }">
                                                 <v-btn text
                                                         style="margin-right: 5px; margin-top: 15px;"
-                                                        color="primary"
-                                                        class="white--text k8s-hide-cluster-btn"
+                                                        class="k8s-hide-cluster-btn"
                                                         v-bind="attrs"
                                                         v-on="on"
                                                 >
@@ -150,62 +160,7 @@
                                                 </v-list-item>
                                             </v-list>
                                         </v-menu>
-                                        <!--                        <v-btn-->
-                                        <!--                                style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                                color="cyan" dark-->
-                                        <!--                                @click="clusterDialog = true">-->
-                                        <!--                            <v-icon>settings</v-icon>-->
-                                        <!--                            {{ clusterInfo ? clusterInfo.name : '' }}-->
-                                        <!--                        </v-btn>-->
-
-                                        <!--<<<<<<< HEAD-->
-                                        <!--                    <v-btn-->
-                                        <!--                            style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                            color="pink" dark-->
-                                        <!--                            @click="terminal()">-->
-                                        <!--                        <v-icon>{{ icon.shell }}</v-icon>-->
-                                        <!--                        TERMINAL-->
-                                        <!--                    </v-btn>-->
-
-                                        <!--                    <v-btn-->
-                                        <!--                            style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                            color="primary" dark-->
-                                        <!--                            @click="deployDialog = true">-->
-                                        <!--                        <v-icon>{{ icon.version }}</v-icon>-->
-                                        <!--                        Deploy-->
-                                        <!--                    </v-btn>-->
-                                        <!--=======-->
-                                        <!--                    <v-btn-->
-                                        <!--                            style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                            color="pink" dark-->
-                                        <!--                            @click="terminal()">-->
-                                        <!--                        <v-icon>{{ icon.shell }}</v-icon>-->
-                                        <!--                        TERMINAL-->
-                                        <!--                    </v-btn>-->
-
-                                        <!--                    <v-btn-->
-                                        <!--                            style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                            color="primary" dark-->
-                                        <!--                            @click="deployDialog = true">-->
-                                        <!--                        <v-icon>{{ icon.version }}</v-icon>-->
-                                        <!--                        Deploy-->
-                                        <!--                    </v-btn>-->
-                                        <!--                    <v-btn-->
-                                        <!--                            style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                            color="pink" dark-->
-                                        <!--                            @click="terminal()">-->
-                                        <!--                        <v-icon>{{ icon.shell }}</v-icon>-->
-                                        <!--                        TERMINAL-->
-                                        <!--                    </v-btn>-->
-
-                                        <!--                    <v-btn-->
-                                        <!--                            style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                            color="primary" dark-->
-                                        <!--                            @click="deployDialog = true">-->
-                                        <!--                        <v-icon>{{ icon.version }}</v-icon>-->
-                                        <!--                        Deploy-->
-                                        <!--                    </v-btn>-->
-
+                                        
                                         <v-menu
                                                 offset-y
                                                 open-on-hover
@@ -215,8 +170,7 @@
                                             <template v-slot:activator="{ attrs, on }">
                                                 <v-btn text
                                                         style="margin-right: 5px; margin-top: 15px;"
-                                                        color="primary"
-                                                        class="white--text k8s-hide-reverse-btn"
+                                                        class="k8s-hide-reverse-btn"
                                                         v-bind="attrs"
                                                         v-on="on"
                                                 >
@@ -235,21 +189,6 @@
                                             </v-list>
                                         </v-menu>
 
-                                        <!--                    <v-btn-->
-                                        <!--                            style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                            color="primary" dark-->
-                                        <!--                            @click="apiCallTest()">-->
-                                        <!--                        <v-icon>{{ icon.version }}</v-icon>-->
-                                        <!--                        Test-->
-                                        <!--                    </v-btn>-->
-                                        <!--                    <v-btn-->
-                                        <!--                            style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                            color="primary" dark-->
-                                        <!--                            @click="clear()">-->
-                                        <!--                        <v-icon>{{ icon.version }}</v-icon>-->
-                                        <!--                        clear-->
-                                        <!--                    </v-btn>-->
-
                                         <v-menu
                                                 offset-y
                                                 open-on-hover
@@ -260,11 +199,15 @@
                                                 <v-btn class="k8s-hide-gitops-btn"
                                                         text
                                                         style="margin-right: 5px;margin-top: 15px;"
-                                                        color="primary" dark
                                                         @click="openCodeViewer()"
-                                                        v-on="on">
-                                                    <Icon class="gs-icon-style" icon="icomoon-free:git"
-                                                        style="margin-right: 2px; height: 22px; width: 22px"/>
+                                                        v-on="on"
+                                                >
+                                                    <Icon class="gs-icon-style"
+                                                        icon="icomoon-free:git"
+                                                        style="margin-right: 2px;
+                                                        height: 22px;
+                                                        width: 22px"
+                                                    />
                                                     <div class="k8s-hide-gitops">GITOPS</div>
                                                 </v-btn>
                                             </template>
@@ -290,8 +233,6 @@
                                                         text
                                                         v-if="readOnly"
                                                         style="margin-right: 5px; margin-top: 15px;"
-                                                        color="primary"
-                                                        dark
                                                         @click="saveComposition('fork')"
                                                 >
                                                     <v-icon>{{icon.fork}}</v-icon>
@@ -301,8 +242,6 @@
                                                         text
                                                         v-else
                                                         style="margin-right: 5px; margin-top: 15px;"
-                                                        color="primary"
-                                                        dark
                                                         @click="saveComposition('save')"
                                                         v-on="on"
                                                 >
@@ -332,8 +271,6 @@
                                                 <v-btn class="k8s-hide-share-btn"
                                                         text
                                                         style="margin-right: 5px; margin-top: 15px;"
-                                                        color="primary"
-                                                        dark
                                                         v-on="on"
                                                         @click="openInviteUsers()"
                                                 >
@@ -350,9 +287,11 @@
                                             <template v-slot:activator="{ on }">
                                                 <v-btn class="k8s-hide-code-btn"
                                                         style="margin-right: 5px;margin-top: 15px;"
-                                                        dark
                                                         @click="openCodeViewer()"
-                                                        v-on="on">
+                                                        v-on="on"
+                                                        color="primary"
+                                                        text
+                                                    >
                                                     <v-icon> {{ icon.code }}</v-icon>
                                                     <div class="k8s-hide-code">CODE</div>
                                                 </v-btn>
@@ -397,11 +336,9 @@
                                             >
                                                 <template v-slot:activator="{ attrs, on }">
                                                     <v-btn small
-                                                            color="primary"
-                                                            class="white--text"
-                                                            v-bind="attrs"
-                                                            v-on="on"
-                                                            text
+                                                        v-bind="attrs"
+                                                        v-on="on"
+                                                        text
                                                     >
                                                         <div v-if="loadTerminal">
                                                             <v-progress-circular
@@ -443,13 +380,11 @@
                                             >
                                                 <template v-slot:activator="{ attrs, on }">
                                                     <v-btn
-                                                            style="margin-right: 5px; margin-top: 15px;"
-                                                            color="primary"
-                                                            class="white--text"
-                                                            v-bind="attrs"
-                                                            v-on="on"
-                                                            small
-                                                            text
+                                                        style="margin-right: 5px; margin-top: 15px;"
+                                                        v-bind="attrs"
+                                                        v-on="on"
+                                                        small
+                                                        text
                                                     >
                                                         <v-icon>mdi-cached</v-icon>
                                                         <div>Reverse</div>
@@ -497,7 +432,7 @@
                                                 <template v-slot:activator="{ on }">
                                                     <v-btn
                                                             style="margin-right: 5px;margin-top: 15px;"
-                                                            color="primary"
+                                                            text
                                                             @click="openCodeViewer()"
                                                             v-on="on"
                                                             small
@@ -529,7 +464,6 @@
                                                     <v-btn
                                                             v-if="readOnly"
                                                             style="margin-right: 5px; margin-top: 15px;"
-                                                            color="primary"
                                                             @click="saveComposition('fork')"
                                                             small
                                                             text
@@ -540,7 +474,6 @@
                                                     <v-btn
                                                             v-else
                                                             style="margin-right: 5px; margin-top: 15px;"
-                                                            color="primary"
                                                             @click="saveComposition('save')"
                                                             v-on="on"
                                                             small
@@ -574,7 +507,6 @@
                                                     <v-btn
                                                             text
                                                             style="margin-right: 5px; margin-top: 15px;"
-                                                            color="primary"
                                                             v-on="on"
                                                             @click="openInviteUsers()"
                                                     >
@@ -791,7 +723,7 @@
                                     <v-spacer></v-spacer>
                                     <div v-if="!isDownloading">
                                         <v-btn text @click="generateZipDialog = false">Cancel</v-btn>
-                                        <v-btn color="primary" text @click="generateZip()">Download</v-btn>
+                                        <v-btn text @click="generateZip()">Download</v-btn>
                                     </div>
                                     <v-progress-circular
                                             v-else
@@ -5728,6 +5660,9 @@
 </script>
 
 <style scoped lang="scss" rel="stylesheet/scss">
+    .kubernetes-mobile-home-button {
+        display:none;
+    }
     .embedded {
         position: absolute;
         width: 100%;
@@ -6018,7 +5953,25 @@
         .k8s-is-mobile-project-name {
             position: absolute !important;
             right: 160px !important;
-            top:-15px
+            top: -15px
+        }
+    }
+
+    @media only screen and (max-width:600px){ 
+        .k8s-is-mobile-project-name {
+            position: absolute !important;
+            right: auto !important;
+            top: -5px;
+            left: 70px; 
+            max-width: 100px !important;
+        }
+
+        .kubernetes-mobile-home-button {
+            display:block;
+            z-index: 1;
+            position: absolute;
+            top:3px;
+            left:25px;
         }
     }
 </style>

@@ -227,8 +227,6 @@
                 me.state.personaDescription=persona.description; 
                 me.step=2;
                 me.listKey++;
-
-                me.$emit("selectedPersona", me.value.selectedPersona);
             },
 
             async onGenerationFinished(){
@@ -236,6 +234,7 @@
                 me.done = true;
                 me.$emit("input", me.value)
                 me.$emit("change", "customerJourneyMap")
+                me.$emit("setPersonas", me.value.personas);
             },
             onModelCreated(personas){
                 var me = this;

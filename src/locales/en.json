@@ -90,7 +90,6 @@
     "bpmn-inst": "Business Process Model and Notation (BPMN) is a graphical representation for specifying business processes in a business process model.",
     "tutorial-btn": "TUTORIAL",
     "video-btn": "VIDEOS",
-
     "create-btn": "CREATE",
     "sticky": "Sticky Note Collaboration",
     "sticky-inst": "Sticky note helps you to conduct collaborative idea meetings through free collaboration.",
@@ -99,7 +98,9 @@
     "project": "Project",
     "project-inst": "Projects are used when grouping one or more models into a new project. You can reference and import elements from other models associated with the project.",
     "cjm": "Customer Journey Map",
-    "cjm-inst": ""
+    "cjm-inst": "",
+    "userStoryMap": "User Story Map",
+    "userStoryMap-inst": "User Story Map is a visual tool to understand and upgrade user experience of the product or the service."
   },
   "tutorials": {
     "tutorial": "TUTORIALS",

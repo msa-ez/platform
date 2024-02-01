@@ -113,8 +113,8 @@
                         <v-col class="making-col"
                             v-for="(item,index) in planning"
                             :key="index"
-                            lg="4"
-                            md="4"
+                            lg="3"
+                            md="3"
                             sm="6"
                             xs="12"
                         >
@@ -274,62 +274,6 @@
                     </v-row>
                 </v-card>
             </v-dialog>
-
-            <!-- 기존 new project 리스트 -->
-            <!-- <v-menu
-                v-if="showNewButton"
-                open-on-hover
-                offset-y
-                left
-            >
-                <template v-slot:activator="{ on }">
-                    <v-btn class="app-new-btn"
-                        v-on="on"
-                        text
-                        @click="goToLectures('/courses')"
-                    >
-                        <div class="app-new-text" style=" font-weight:700;">{{$t('main.goToLectures')}}</div>
-                    </v-btn>
-                </template>
-
-                <v-list>
-                    <v-list-item-group
-                        v-model="selectedItem"
-                    >
-                        <v-list-item
-                            v-for="(item,index) in newProjectBtns"
-                            :key="index"
-                            @mouseleave="selectedItem=null"
-                            @click.native="moveToModel(item.type)"
-                        >
-                            <v-list-item-title>{{ item.title }}</v-list-item-title>
-                        </v-list-item>
-                        <div class="upload">
-                            <div>
-                                <v-divider style= "width:95%;"></v-divider>
-                                <label style="cursor:pointer;" for="file">Upload Model</label>
-                                <input style="display:none;" id="file" type="file" @change="loadTextFromFile"/>
-                            </div>
-                        </div>
-                    </v-list-item-group>
-                </v-list>
-            </v-menu> -->
-
-            <!-- <v-tooltip bottom>
-                <template v-slot:activator="{ on, attrs }">
-                    <v-btn class="app-docs-btn"
-                            v-on="on"
-                            v-bind="attrs"
-                            @click="wikiOpen()"
-                            text
-                            style="margin-right:10px; font-weight:700;"
-                    >
-                        <v-icon>mdi-book</v-icon>
-                        <div class="app-docs-text">DOCS</div>
-                    </v-btn>
-                </template>
-                <span>{{$t('word.introduceText')}}</span>
-            </v-tooltip> -->
             
             <v-btn
                     v-if="!(isLogin || isGuestLogin)"
@@ -679,59 +623,30 @@
             </v-stepper>
         </v-alert>
 
-        <!--        <v-alert-->
-        <!--                style="align-self: center; position: absolute; z-index:999; margin-left: 35%; right: 0;"-->
-        <!--        >-->
-        <!--            <v-stepper vertical alt-labels :width="'1000px'" :min-width="'1000px'">-->
-        <!--                <v-stepper-header>-->
-        <!--                    <v-stepper-step-->
-        <!--                            step="3"-->
-        <!--                            complete-->
-        <!--                    >-->
-        <!--                        Ad type-->
-        <!--                    </v-stepper-step>-->
-        <!--                    <v-divider></v-divider>-->
-        <!--                    <v-stepper-step-->
-        <!--                            step="4"-->
-        <!--                            complete-->
-        <!--                    >-->
-        <!--                        Ad style-->
-        <!--                    </v-stepper-step>-->
-        <!--                    <v-divider></v-divider>-->
-        <!--                    <v-stepper-step-->
-        <!--                            :rules="[() => false]"-->
-        <!--                            step="5"-->
-        <!--                    >-->
-        <!--                        Custom channels-->
-        <!--                        <small>Alert message</small>-->
-        <!--                    </v-stepper-step>-->
-        <!--                    <v-divider></v-divider>-->
-        <!--                    <v-stepper-step step="6">-->
-        <!--                        Get code-->
-        <!--                    </v-stepper-step>-->
-        <!--                </v-stepper-header>-->
-        <!--            </v-stepper>-->
-        <!--        </v-alert>-->
-
-        <!-- <v-footer padless
-                  v-if="showReplayBar"
+        <!-- <div v-if="showMain" class="d-flex flex-row mt-sm-8 mt-5 overflow-hidden">
+            <div class="main-page-slider-group">
+                <img src="/static/image/main/mainSubTutorial.png" />
+            </div>
+            <div class="main-page-slider-group">
+                <img src="/static/image/main/mainSubTutorial.png" />
+            </div>
+            <div class="main-page-slider-group">
+                <img src="/static/image/main/mainSubTutorial.png" />
+            </div>
+            <div class="main-page-slider-group">
+                <img src="/static/image/main/mainSubTutorial.png" />
+            </div>
+            <div class="main-page-slider-group">
+                <img src="/static/image/main/mainSubTutorial.png" />
+            </div>
+        </div> -->
+        
+        <v-footer v-if="showFooter"
+            padless
+            style="background-color: transparent;"
         >
-            <v-col cols="12">
-                <v-subheader class="pl-0">Show thumb when using slider</v-subheader>
-                <v-slider
-                        v-model="slider"
-                        thumb-label
-                ></v-slider>
-            </v-col>
-        </v-footer> -->
-        <!-- <slot name="footer"> -->
-            <v-footer v-if="showFooter"
-                padless
-                style="background-color: transparent;"
-            >
-                <ProvisionIndication style="margin:0; padding:0px; width:100%;"></ProvisionIndication>
-            </v-footer>
-        <!-- </slot> -->
+            <ProvisionIndication style="margin:0; padding:0px; width:100%;"></ProvisionIndication>
+        </v-footer>
     </v-app>
 </template>
 
@@ -873,6 +788,13 @@
                     image: '/static/image/main/mainSticky.png',
                     disabled: true,
                 },
+                {
+                    type: 'userStoryMap', 
+                    title: 'tools.userStoryMap',
+                    subtitle: 'tools.userStoryMap-inst',
+                    image: '/static/image/userStoryMap.png',
+                    disabled: true,
+                },
             ],
             design : [
                 {
@@ -961,6 +883,10 @@
         // beforeMount(){
         // },
         computed: {
+            // showMain() {
+            //     const path = this.$route.path;
+            //     return path === '/';
+            // },
             showFooter() {
                 const path = this.$route.path;
                 return path === '/courses' || path === '/' || path === '/myPage';
@@ -1749,6 +1675,8 @@
                         me.$router.push({path: `project/${me.dbuid()}`});
                     }else if (type == 'cjm') {
                         me.$router.push({path: `cjm/${me.dbuid()}`});
+                    }else if (type == 'userStoryMap') {
+                        me.$router.push({path: `userStoryMap/${me.dbuid()}`});
                     } else {
                         me.$router.push({path: `storming/${me.dbuid()}`});
                     }
@@ -2170,6 +2098,18 @@
 
 </script>
 <style>
+    /* .main-page-slider-group {
+        animation: slide 15s linear infinite;
+    }
+
+    @keyframes slide {
+        0% {
+            transform: translate3d(0, 0, 0);
+        }
+        100% {
+            transform: translate3d(-100%, 0, 0);
+        }
+    } */
     .making-col {
         padding:20px;
     }

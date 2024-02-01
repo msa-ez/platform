@@ -11,24 +11,31 @@ export default class UserStoryMapGenerator extends JsonAIGenerator{
     
     createPrompt(){
         let modelDescription = ""
-        let persona = "Persona"
-        if(this.client.input.persona){
-            persona = this.client.input.persona.scenario
-        }
 
         if(this.client.input.painpointAnalysis){
-            modelDescription += "Painpoint analysis and Possible solutions: \n\n"
-            let relations = this.client.input.painpointAnalysis.relations
-            Object.keys(relations).forEach(key=>{
-                let painPoint = relations[key].sourceElement.name
-                let possibleSolution = relations[key].targetElement.name
-
-                modelDescription += `${painPoint}:${possibleSolution}\n`
+            let modelPerPersona = this.client.input.painpointAnalysis
+            Object.keys(this.client.input.painpointAnalysis).forEach(persona=>{
+                modelDescription += "Persona definition and he(or her)'s painpoints and possible solutions as follows: \n\n"
+                modelDescription +="- "+ persona + "\n"
+                let relations = modelPerPersona[persona].relations
+                Object.keys(relations).forEach(key=>{
+                    let painPoint = relations[key].sourceElement.name
+                    let possibleSolution = relations[key].targetElement.name
+    
+                    modelDescription += `${painPoint}:${possibleSolution}\n`
+                });
             });
+            // modelDescription += "Painpoint analysis and Possible solutions: \n\n"
+        }else if(this.client.input.personas.length>0){
+            let personas = this.client.input.personas
+            modelDescription += "Create pain points and possible solutions that may arise by considering the following Personas. \n\n"
+            for(var i=0; i<personas.length; i++){
+                modelDescription +="- "+ personas[i].persona + "\n"
+            }
         }
 
         if(this.client.input.businessModel){
-            modelDescription += "\n Detailed Business Model of the service is: \n"
+            modelDescription += "\n\n Detailed Business Model of the service is: \n"
             let elementsByTypes = {};
             let model = this.client.input.businessModel;
             Object.keys(model)
@@ -51,21 +58,19 @@ export default class UserStoryMapGenerator extends JsonAIGenerator{
         return `
 Create a User Story Map by considering the contents below.
 
-Painpoint analysis and Possible solutions: 
-
 ${modelDescription}
 
   {
     "user-activities": [
       {
-        "name": "UserActivityName",
+        "name": "Name of the UserActivity",
         "user-tasks": [
           {
-            "name": "UserTaskName",
+            "name": "Name of the UserTask",
             "user-stories": [
               {
-                "name": "UserStoryName"
-                "as": "${persona}",
+                "name": "Name of the UserStory"
+                "as": "Name of the Persona",
                 "iWant": "Action",
                 "soThat": "Purpose",
               }
@@ -206,24 +211,25 @@ ${modelDescription}
                         view.height = HEIGHT * 2
                         view.y = START_Y + (HEIGHT + BORDER) * 5;
 
-                        let personaAndStory = ""
-                        if(me.client.input.persona){
-                            let persona = me.client.input.persona;
-                            personaAndStory += "As: \n"
-                            personaAndStory += "- "+persona.persona+" ("+persona.age+" / "+persona.job+") \n"
-                            personaAndStory += "- "+persona.description+"\n"
-                            personaAndStory += "- "+persona.scenario+"\n\n"
-                            personaAndStory += "I Want: "+story.iWant+"\n\n"
-                            personaAndStory += "So That: "+story.soThat+"\n"
-                        }
+                        let personas = me.client.input.personas
+                        let storyPersona = personas.find(x => x.persona == story.as)
+                        // for(var i=0; i<persona.length; i++){
+                        //     if(personas[i].persona==story.as){
+                        //         storyPersona
+                        //     }
+                        // }
+                        // Object.keys(persona).forEach(key=>{
+                            
+                        // });
 
                         convertedModel.elements[storyUuid] = {
                             _type: "UserStory",
                             name: story.name,
-                            description: personaAndStory,
+                            description: "",
                             author: null,
                             elementView: view,
                             color: "#F8D454",
+                            persona: storyPersona
                         };
                     });
                     
@@ -242,7 +248,7 @@ ${modelDescription}
                 relationView: {
                     id: lineUuid1,
                     style: "{}",
-                    value: "[[196,264],[1804,264]]",
+                    value: "[[196,264],[3000,264]]",
                 },
                 size: 10,
                 color: '#000000',
@@ -257,7 +263,7 @@ ${modelDescription}
                 relationView: {
                     id: lineUuid2,
                     style: "{}",
-                    value: "[[196,492],[1804,492]]",
+                    value: "[[196,492],[3000,492]]",
                 },
                 size: 10,
                 color: '#000000',

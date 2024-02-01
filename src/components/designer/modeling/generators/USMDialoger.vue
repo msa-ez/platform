@@ -72,7 +72,7 @@
                     generator: "UserStoryMapGenerator",
                     businessModel: this.cachedModels["BMGenerator"],
                     painpointAnalysis: this.cachedModels["CJMGenerator"],
-                    persona: this.cachedModels["selectedPersona"]
+                    personas: this.cachedModels["Personas"]
                 },
                 input:{
                     title: this.prompt,

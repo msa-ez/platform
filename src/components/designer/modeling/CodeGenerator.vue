@@ -1610,6 +1610,7 @@
             return {
                 usedTemplates: [],
                 usedToppings: [],
+                model: null,
                 generator: null,
                 promptValue: [],
                 suffixValue: [],
@@ -1702,7 +1703,6 @@
                 editTemplateTabNumber: 0,
                 modelData: {},
                 sampleData: {"glossary":{"title":"example glossary","GlossDiv":{"title":"S","GlossList":{"GlossEntry":{"ID":"SGML","SortAs":"SGML","GlossTerm":"Standard Generalized Markup Language","Acronym":"SGML","Abbrev":"ISO 8879:1986","GlossDef":{"para":"A meta-markup language, used to create markup languages such as DocBook.","GlossSeeAlso":["GML","XML"]},"GlossSee":"markup"}}}}},
-                openaiContent: null,
                 showOpenaiToken: false,
                 openaiToken: null,
                 copyKey: 0,
@@ -4294,7 +4294,7 @@ jobs:
                     if(!option){
                         condition = item.code != null && (item.name.endsWith(".vue") || item.name.endsWith(".java") || item.name.endsWith(".yaml") || item.name.endsWith(".yml")) && !item.path.includes("/test/")
                     }else{
-                        if(option.keyword == "si"){
+                        if(option.keyword == "si" || option.keyword == "ai"){
                             condition = item.code != null && item.name.endsWith(".java")
                         }
                     }
@@ -4430,26 +4430,25 @@ jobs:
             },
             setCurrentCodeForAutoCodeGenerate(value){
                 var me = this
-                me.openaiContent = value
-
                 if(me.codeGenTimeout){
                     clearTimeout(me.codeGenTimeout)
                     me.codeGenTimeout = null
                 }
                 me.codeGenTimeout = setTimeout(function () {
-                    me.setAutoGenerateCodetoList = JSON.parse(JSON.stringify(me.codeLists))
+                    if(!me.setAutoGenerateCodetoList){
+                        me.setAutoGenerateCodetoList = JSON.parse(JSON.stringify(me.codeLists))
+                    }
                     // me.setAutoGenerateCodetoList.some(function (element, index){
                     //     if(me.filteredOpenCode[0].path == element.fullPath){
                     //         me.setAutoGenerateCodetoList[index].code = value
                     //         return true;
                     //     }
                     // })
-                    var idx = me.setAutoGenerateCodetoList.findIndex(x => x.fullPath == me.filteredOpenCode[0].fullPath)
-                    me.setAutoGenerateCodetoList[idx].code = me.filteredOpenCode[0].code
+                    var idx = me.setAutoGenerateCodetoList.findIndex(x => x.fullPath == me.openCode[0].fullPath)
+                    me.openCode[0].code = value
+                    me.setAutoGenerateCodetoList[idx].code = value
                     me.codeGenTimeout = null
                 }, 2000)
-                // me.filteredOpenCode[0].code = value
-                // console.log(me.filteredOpenCode[0].code)
             },
             closeOpenaiPopup(){
                 var me = this
@@ -4476,24 +4475,25 @@ jobs:
             },
             onGenerationFinished(model){
                 var me = this
-                if(model && model.code && !me.stopAutoGenerate){
-                    let implementedCode = model.code
-                    if(implementedCode.includes("```")){
-                        implementedCode = implementedCode.replaceAll("```java", "```")
-                        implementedCode = implementedCode.split("```")[1]
-                    }
+                if(model && model.implementedCode && !me.stopAutoGenerate){
+                    let implementedCode = '\n' + model.implementedCode
+                    // if(implementedCode.includes("```")){
+                    //     implementedCode = implementedCode.replaceAll("```java", "```")
+                    //     implementedCode = implementedCode.split("```")[1]
+                    // }
 
                     me.changedDiffCodeViewer = true
-                    me.changedDiffCode = JSON.parse(JSON.stringify(me.filteredOpenCode))
-                    me.filteredOpenCode[0].code = me.promptValue + implementedCode + me.suffixValue
+                    me.changedDiffCode = JSON.parse(JSON.stringify(me.openCode))
+                    me.openCode[0].code = me.promptValue + implementedCode + me.suffixValue
 
                     me.startGenerate = false
 
                     me.setAutoGenerateCodetoList = JSON.parse(JSON.stringify(me.codeLists))
-                    var idx = me.setAutoGenerateCodetoList.findIndex(x => x.fullPath == me.filteredOpenCode[0].fullPath)
-                    me.setAutoGenerateCodetoList[idx].code = me.filteredOpenCode[0].code
+                    var idx = me.setAutoGenerateCodetoList.findIndex(x => x.fullPath == me.openCode[0].fullPath)
+                    me.setAutoGenerateCodetoList[idx].code = me.openCode[0].code
 
-                    me.refreshCallGenerate();
+                    me.javaFileList = []
+                    // me.refreshCallGenerate();
                 } else {
                     me.stopAutoGenerate = false
                     me.startGenerate = false
@@ -4505,9 +4505,17 @@ jobs:
                 var me = this
                 try {
                     if(id == '2'){
-                        let idx = me.treeLists.findIndex(x => x.name == me.openCode[0].path.split('/')[0])
-                        if(idx != -1){
-                            me.javaFileList = me.getSelectedFilesDeeply([me.treeLists[idx]])
+                        let path
+                        if(me.openCode && me.openCode[0]){
+                            if(me.openCode[0].path){
+                                path = me.openCode[0].path
+                            } else {
+                                path = me.openCode[0].fullPath
+                            }
+                            let idx = me.treeLists.findIndex(x => x.name == path.split('/')[0])
+                            if(idx != -1){
+                                me.javaFileList = me.getSelectedFilesDeeply([me.treeLists[idx]], {keyword: "ai"})
+                            }
                         }
                     }
                     if(me.openaiToken){
@@ -4526,6 +4534,7 @@ jobs:
                         me.suffixValue = me.suffixValue.join("\n")
 
                         me.stopAutoGenerate = false;
+                        me.model = 'gpt-4'
                         me.generator = new BusinessLogicGenerator(this);
                         me.generator.generate();
     

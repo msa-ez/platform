@@ -142,7 +142,6 @@
                                                 text
                                                 v-if="getReadOnly"
                                                 :color="joinRequestedText.show ? 'primary' :'success'"
-                                                dark
                                                 @click="requestInviteUser()"
                                                 small
                                         >
@@ -156,7 +155,6 @@
                                                 text
                                                 v-if="getReadOnly"
                                                 color="primary"
-                                                dark
                                                 @click="saveComposition('fork')"
                                                 small
                                         >
@@ -167,7 +165,6 @@
                                                 text
                                                 v-else
                                                 color="primary"
-                                                dark
                                                 @click="saveComposition('save')"
                                                 v-on="on"
                                                 small
@@ -354,6 +351,7 @@
                                                         v-if="isOwnModel"
                                                         style="margin-right: 5px; margin-top: 15px;"
                                                         color="primary"
+                                                        text
                                                         :disabled="disableBtn"
                                                         @click="saveComposition('save')"
                                                         v-on="on"
