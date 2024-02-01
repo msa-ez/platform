@@ -78,9 +78,11 @@
                         </v-row>
                     </div>
 
-                    <div v-if="embedded" 
+                    <!-- <div v-if="embedded"  -->
+                    <div 
                             class="d-flex justify-end"
                             style="position: absolute; top: 22px; right: 70px;"
+                            :style="embedded ? '':'z-index: 1'"
                     >
                         <!-- <v-btn
                             style="position: absolute; top:26px; right: 130px;"
@@ -411,8 +413,8 @@
                 <modeler-image-generator ref="modeler-image-generator"></modeler-image-generator>
             </template>
             <template v-slot:two>
+                <!-- v-if="embedded" -->
                 <CodeGenerator
-                    v-if="embedded"
                     v-model="value"
                     :isOwnModel="isOwnModel"
                     :isServerModel="isServerModel"
@@ -1011,8 +1013,10 @@
                 })
 
                 me.$nextTick(() => {
-                    me.$set(aggRoot.aggregateRoot.entities, "elements", me.value.elements)
-                    me.$set(aggRoot.aggregateRoot.entities, "relations", me.value.relations)
+                    if(aggRoot){
+                        me.$set(aggRoot.aggregateRoot.entities, "elements", me.value.elements)
+                        me.$set(aggRoot.aggregateRoot.entities, "relations", me.value.relations)
+                    }
                     me.alignClassElement()
                 })
                 
@@ -1046,10 +1050,12 @@
                     name: null,
                     fieldDescriptors: ""
                 }
-                me.input.aggregateRoot.name = me.aggregateRootList[0].name
-                me.aggregateRootList[0].aggregateRoot.fieldDescriptors.forEach(function (fieldDescriptor){
-                    me.input.aggregateRoot.fieldDescriptors = me.input.aggregateRoot.fieldDescriptors + fieldDescriptor.className + " " + fieldDescriptor.name + "\n"
-                })
+                if(me.aggregateRootList){
+                    me.input.aggregateRoot.name = me.aggregateRootList[0].name
+                    me.aggregateRootList[0].aggregateRoot.fieldDescriptors.forEach(function (fieldDescriptor){
+                        me.input.aggregateRoot.fieldDescriptors = me.input.aggregateRoot.fieldDescriptors + fieldDescriptor.className + " " + fieldDescriptor.name + "\n"
+                    })
+                }
                 me.generator = new Generator(this);
                 me.generator.generate();
                 me.input.instruction = ""
