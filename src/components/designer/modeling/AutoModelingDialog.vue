@@ -286,6 +286,12 @@
                     return false
                 }
             },
+            openChatUI:{
+                type: Boolean,
+                default: function () {
+                    return false
+                }
+            },
         },
         mixins: [StorageBase],
         components: {
@@ -334,7 +340,7 @@
                 // chat
                 isCheckedErr: false,
                 startCrateModel: false,
-                openChatUI: false, 
+                // openChatUI: false, 
                 modelScenario: "",
                 // dailog
                 pageNum: '1',
