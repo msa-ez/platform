@@ -2,7 +2,7 @@ const JsonAIGenerator = require("./JsonAIGenerator");
 
 class BusinessLogicGenerator extends JsonAIGenerator {
     constructor(client){
-        super(client);
+        super(client.context);
     }
 
     createPrompt(){
