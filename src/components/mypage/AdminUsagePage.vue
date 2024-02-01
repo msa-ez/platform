@@ -92,10 +92,10 @@
                         >
                             <template v-slot:item.serviceType="{ item }">
                                 <div class="row-title">
-                                    {{ formatServiceType(item.value.serviceType).service }}
+                                    {{ formatServiceType(item.value.serviceType).title }}
                                 </div>
                                 <div class="row-detail">
-                                    {{ formatServiceType(item.value.serviceType).type }}
+                                    {{ formatServiceType(item.value.serviceType).detail }}
                                 </div>
                             </template>
                             <template v-slot:item.metadata="{ item }">
@@ -145,11 +145,10 @@ export default {
                 totalSize: 0,
                 pagination: { page: 1, itemsPerPage: 50 },
                 headers: [
-                    {text: 'item', sortable: false, value: 'serviceType'},
+                    {text: 'Type', sortable: false, value: 'serviceType'},
                     {text: 'ID', sortable: false, value: 'metadata'},
                     {text: 'Plan', sortable: false, align: 'end', value: 'measurement'},
-                    {text: 'Timestamp', sortable: false, align: 'center', value: 'issuedTimeStamp'},
-                    {text: 'User', sortable: false, align: 'center', value: 'User'}
+                    {text: 'Timestamp', sortable: false, align: 'start', value: 'issuedTimeStamp'},
                 ],
                 selectedTenant: null,
                 tenant:[],

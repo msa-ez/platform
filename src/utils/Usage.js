@@ -35,8 +35,6 @@ class Usage {
 
         // Already Usage(ONCE) 
         if(await me.check()) return true;
-        // let snapshot = await this.db.getObject(`/enrolledUsers/${userInfo.enrolledUserEmail}/purchaseItemSnapshots/${me.serviceType}`);
-        // if(snapshot) return true;
         
         let result = await this.storage.pushObject(`/usages/queue/${this.convertTimestampToYearMonth()}`, {
             usageDetail: me.usageDetail ? JSON.stringify(me.usageDetail) : null,
@@ -46,6 +44,7 @@ class Usage {
             userUid: userInfo.uid,
             userName: userInfo.name,
             userEmail: userInfo.email,
+            userRegion: userInfo.region,
             tenant: userInfo.tenant,
             metadata: me.metadata ? me.metadata : null
         })

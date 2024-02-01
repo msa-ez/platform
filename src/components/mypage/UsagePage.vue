@@ -141,24 +141,15 @@ export default {
                 let title = ''
                 let detail = ''
                 let metadata = value.metadata
-                const [type, service] = value.serviceType.split('_');
-                
-                // { "modelId": "a53c674e6de5b4d3800064dc9904733d", "projectId": "68f4ae88e3f1ac3691f19be2dee293f3" }
-                // 임시.
-                if(me.formatCanvasType(type)){
-                    // use Canvas
+
+                if(value.serviceType.includes('codeArchive')){
                     title = metadata['modelId']
-                    if(metadata['projectId']){
-                        detail = `${me.formatCanvasUrl('project')}/${metadata['projectId']}`
-                    } 
-                } else {
-                    title = `${metadata['labName']}`
-                    if(metadata['className']){
-                        detail = `Class name: ${metadata['className']}`
-                    } 
+                    detail = `Model name: ${metadata['modelName']}`
+                } else if(value.serviceType.includes('AIGeneration')) {
+                    title = metadata['modelId']
+                    detail = `${me.formatCanvasUrl('project')}/${metadata['projectId']}`
                 }
-                
-        
+
                 return {title: title, detail: detail};
             },
             formatMeasurement(rowInfo) {
