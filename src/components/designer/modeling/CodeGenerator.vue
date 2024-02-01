@@ -119,7 +119,8 @@
                                     :isSIgpt="isSIgpt"
                                     :commitMsg="commitMsg"
                                     :selectedTestFile="selectedTestFile"
-                                    :toppingPlatforms="toppingPlatforms"
+                                    :usedTemplates="usedTemplates"
+                                    :usedToppings="usedToppings"
                                     :canvas="canvas"
                                 />
                             </div>
@@ -1064,7 +1065,8 @@
                                                                                                     :ShowCreateRepoTab="ShowCreateRepoTab"
                                                                                                     :isServerModel="isServerModel"
                                                                                                     @pushSuccessed="pushSuccessed"
-                                                                                                    :toppingPlatforms="toppingPlatforms"
+                                                                                                    :usedTemplates="usedTemplates"
+                                                                                                    :usedToppings="usedToppings"
                                                                                                     :canvas="canvas"
                                                                                             />
                                                                                         </div>
@@ -1606,6 +1608,8 @@
         },
         data() {
             return {
+                usedTemplates: [],
+                usedToppings: [],
                 generator: null,
                 promptValue: [],
                 suffixValue: [],
@@ -1964,8 +1968,8 @@
                     }
                     
                     this.isLoadingExpectedTemplate = true
-                    if((this.openCode && this.openCode[0]) || this.value.basePlatform){
-                        var platform = this.openCode && this.openCode[0] && this.openCode[0].template  ? this.openCode[0].template : this.value.basePlatform
+                    if((this.openCode && this.openCode[0]) || this.basePlatform){
+                        var platform = this.openCode && this.openCode[0] && this.openCode[0].template  ? this.openCode[0].template : this.basePlatform
                         if(!platform.includes("http")){
                             platform = await me.gitAPI.getTemplateURL(platform)
                         }
@@ -2976,7 +2980,7 @@ jobs:
             testTemplateModel(){
                 var me = this
                 me.startCheckDiff = true
-                var template = me.openCode && me.openCode[0] ? me.openCode[0].template : me.value.basePlatform
+                var template = me.openCode && me.openCode[0] ? me.openCode[0].template : me.basePlatform
 
                 if(me.templateFrameWorkList[template]['.template/metadata.yml']){
                     me.templateMetaData = YAML.parse(me.templateFrameWorkList[template]['.template/metadata.yml'].content)
@@ -4155,17 +4159,19 @@ jobs:
             },
             async downloadArchive(){
                 var me = this
+
                 let freeTopping = ["isVanillaK8s"];
                 let issuedTimeStamp = Date.now()
                 let toppings = me.toppingPlatforms.filter(topping => freeTopping.find(free=> topping!=free)) 
                 let usage = new Usage({
                     serviceType: `${me.canvas.canvasType.toUpperCase()}_codeArchive`,
-                    usageDetail: { usedToppingNum: toppings.length },
                     issuedTimeStamp: issuedTimeStamp,
                     expiredTimeStamp: issuedTimeStamp,
                     metadata: {
                         modelId: me.modelingProjectId,
-                        modelName: me.canvas.projectName
+                        modelName: me.canvas.projectName,
+                        usedTemplates: me.usedTemplates,
+                        usedToppingNum: toppings.length,
                     }
                 });
                 if(!await usage.use()) return false;
@@ -7149,7 +7155,7 @@ jobs:
                     me.testFileList = []
                     me.getSelectedFilesDeeply(me.openCode, {keyword: "si"})
                     
-                    if(me.value && me.value.basePlatform.includes("template-gpt-engineer")){
+                    if(me.value && me.basePlatform.includes("template-gpt-engineer")){
                         let src = await me.gitAPI.getFolder(me.value.scm.org, me.value.scm.repo, me.openCode[0].name + '/src');
                         if(src){
                             me.getJavaFileList(src.data, 'test')
@@ -7442,6 +7448,11 @@ jobs:
                         rootModel.boundedContexts = me.settingSCM(rootModel.boundedContexts, scmInfo );
                         me.rootModelBoundedContexts = rootModel.boundedContexts
                     }
+
+                    let usedPlatforms = JSON.parse(JSON.stringify(preferredPlatforms))
+                    usedPlatforms.push(basePlatforms)
+                    me.usedTemplates = [...new Set(usedPlatforms)];
+                    me.usedToppings = JSON.parse(JSON.stringify(toppingPlatforms))
 
                     //////////////////////////////////////////////// TEMPLATE START ////////////////////////////////////////////////
                     // setting Template

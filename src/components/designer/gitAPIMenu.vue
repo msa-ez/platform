@@ -581,8 +581,9 @@
             generateCodeLists: Array,
             ShowCreateRepoTab: Boolean,
             isServerModel: Boolean,
-            toppingPlatforms: Array,
-            canvas: Object
+            canvas: Object,
+            usedTemplates: Array,
+            usedToppings: Array,
         },
         data() {
             return {
@@ -2130,17 +2131,17 @@
             },
             async startCommit(){
                 var me = this
-                let freeTopping = ["isVanillaK8s"];
-                let toppings = me.toppingPlatforms.filter(topping => freeTopping.find(free=> topping!=free));
-                let issuedTimeStamp = Date.now()
 
+                let issuedTimeStamp = Date.now()
                 let usage = new Usage({
                     serviceType: `${me.canvas.canvasType.toUpperCase()}_codeArchive`,
-                    usageDetail: { usedToppingNum: toppings.length },
                     issuedTimeStamp: issuedTimeStamp,
                     expiredTimeStamp: issuedTimeStamp,
                     metadata:{
-                        modelId: me.projectId
+                        modelId: me.projectId,
+                        modelName: me.canvas.projectName,
+                        usedTemplates: me.usedTemplates,
+                        usedToppingNum: me.usedToppings.length,
                     }
                 });
                 if(!await usage.use()) return false;
