@@ -1221,7 +1221,9 @@
                 var me = this;
                 if(!associatedProject) return;
 
-                let lists = await me.list(`db://definitions/${associatedProject}/information/contextMapping`);
+                let type = me.storageCondition.type == 'es' ? 'eventStorming' : 'contextMapping'
+
+                let lists = await me.list(`db://definitions/${associatedProject}/information/${type}`);
                 let index = -1;
                 if (lists && lists.modelList) {
                     index = lists.modelList.findIndex((x) => x == newId);
@@ -1229,7 +1231,7 @@
                 }
 
                 index = index == -1 ? 0 : index;
-                await me.setString(`db://definitions/${associatedProject}/information/contextMapping/modelList/${index}`, newId);
+                await me.setString(`db://definitions/${associatedProject}/information/${type}/modelList/${index}`, newId);
       },
       overrideElements(elementValues){
         var me = this
