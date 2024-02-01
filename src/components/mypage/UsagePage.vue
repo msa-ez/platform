@@ -141,24 +141,15 @@ export default {
                 let title = ''
                 let detail = ''
                 let metadata = value.metadata
-                const [type, service] = value.serviceType.split('_');
-                
-                // { "modelId": "a53c674e6de5b4d3800064dc9904733d", "projectId": "68f4ae88e3f1ac3691f19be2dee293f3" }
-                // 임시.
-                if(me.formatCanvasType(type)){
-                    // use Canvas
+
+                if(value.serviceType.includes('codeArchive')){
                     title = metadata['modelId']
-                    if(metadata['projectId']){
-                        detail = `${me.formatCanvasUrl('project')}/${metadata['projectId']}`
-                    } 
-                } else {
-                    title = `${metadata['labName']}`
-                    if(metadata['className']){
-                        detail = `Class name: ${metadata['className']}`
-                    } 
+                    detail = `Model name: ${metadata['modelName']}`
+                } else if(value.serviceType.includes('AIGeneration')) {
+                    title = metadata['modelId']
+                    detail = `${me.formatCanvasUrl('project')}/${metadata['projectId']}`
                 }
-                
-        
+
                 return {title: title, detail: detail};
             },
             formatMeasurement(rowInfo) {
@@ -227,6 +218,35 @@ export default {
     
                 return type
             },
+            downloadCsv(csvData, title){
+                const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `${title}.csv`);
+                document.body.appendChild(link);
+
+                link.click();
+
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            },
+            stringifyObjectValues(obj) {
+                const result = {};
+                for (const key in obj) {
+                    const value = obj[key];
+
+                    if (typeof value === 'object' && value !== null) {
+                        result[key] = JSON.stringify(value);
+                    } else {
+                        result[key] = value;
+                    }
+                    
+                }
+
+                return result;
+            }
         }
     }
 </script>

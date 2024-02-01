@@ -166,6 +166,7 @@
     "vue-network": "^0.1.1",
     "vue-numeric-input": "^1.0.6",
     "vue-object-view": "^0.4.2",
+    "vue-papa-parse": "^3.1.0",
     "vue-property-decorator": "^8.5.1",
     "vue-resize": "^1.0.1",
     "vue-router": "^3.4.3",
