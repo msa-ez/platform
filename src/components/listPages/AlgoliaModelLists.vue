@@ -38,7 +38,7 @@
                     <v-list-group class="nav-storage-list"
                         :value="hover"
                         style="background-color:white; position:fixed; top:7px; z-index:1; width:100px;"
-                        :style="isLogin ? 'right:85px;' : 'right:60px;'"
+                        :style="isLogin ? 'right:85px;' : 'right:70px;'"
                         :append-icon="null"
                     >
                         <template v-slot:activator>

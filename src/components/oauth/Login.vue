@@ -12,22 +12,20 @@
         </v-btn>
     </div>
     <div v-else>
-        <v-card v-if="standard"
-                class="elevation-12"
-                style="background: #FFFFFF;
-                        min-width:500px;
-                        max-width:500px;
-                        position:absolute;
-                        display:block;
-                        left:50%;
-                        top:50%;
-                        margin:-250px 0 0 -250px;"
+        <!-- <v-card v-if="standard"
+            class="elevation-12"
+            style="background: #FFFFFF;
+            min-width:500px;
+            max-width:500px;
+            position:absolute;
+            display:block;
+            left:50%;
+            top:50%;
+            margin:-250px 0 0 -250px;"
         >
             <v-card flat>
                 <div>
                     <div style="margin:20px; text-align: center;">
-                        <div style="font-size:24px; font-weight:700;">{{ LoginInformation1 }}</div>
-                        {{ LoginInformation2 }}
                         <div>{{$t('loginList.LoginInformation1')}}</div>
                         <div>{{$t('loginList.LoginInformation2')}}</div>
                     </div>
@@ -49,7 +47,7 @@
                                 src="https://github.com/msa-ez/platform/assets/123912988/d2fd58a7-a2b1-4c62-9a2b-da3ef839e7eb"/>
                         <div>Google</div>
                     </v-btn>
-                    <!-- <v-btn @click="snsLogin('keycloak-oidc')"
+                    <v-btn @click="snsLogin('keycloak-oidc')"
                         style="background-color:white; width:400px; margin-left:50px; height:50px; "
                     >
                         <img id="git-hover"
@@ -57,13 +55,98 @@
                                 alt="Github sign-in"
                                 src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"/>
                         <div>DPG Testbed</div>
-                    </v-btn> -->
+                    </v-btn>
                 </div>
 
                 <div style="width:500px; margin-left:5px; margin-bottom:20px; text-align:center; font-size: small; color:#BDBDBD; margin-top: 30px;">
                     {{$t('loginList.cookieCheck1')}}<br> {{$t('loginList.cookieCheck2')}}
                 </div>
             </v-card>
+        </v-card> -->
+
+        <!-- 로그인 UI pc -->
+        <v-card v-if="standard" class="login-dialog-is-pc">
+            <v-row class="ma-0 pa-0">
+                <v-col class="ma-0 pa-0 d-flex flex-column align-center justify-center">
+                    <img style="width:100%;" src="/static/image/login/login-web.png" />
+                </v-col>
+                <v-col class="ma-0" style="padding:20px 10px;">
+                    <div style="font-size: 40px; font-weight: 700; text-align: center; padding:15px;">Welcome to MSAEZ</div>
+                    <div style="text-align: center; margin-bottom:25px;">
+                        <div>{{$t('loginList.LoginInformation1')}}</div>
+                        <div>{{$t('loginList.LoginInformation2')}}</div>
+                    </div>
+                    <div class="text-center">
+                        <v-btn @click="snsLogin('github')" class="login-btn git-login-btn" color="black" style="margin-right:20px; margin-top:0px;">
+                            <v-col>
+                                <Icon icon="fa6-brands:github" width="40" height="40" style="color: white" />
+                                <div style="color:white; white-space: normal; word-wrap: break-word; text-align: center; margin-top:5px;">
+                                    Continue<br>
+                                    With<br>
+                                    Github
+                                </div>
+                            </v-col>
+                        </v-btn>
+
+                        <v-btn v-if="!onlyGitLogin" @click="snsLogin('google')" class="login-btn" color="white" style="margin-top:0px;">
+                            <v-col>
+                                <Icon icon="flat-color-icons:google" width="40" height="40" />
+                                <div style="white-space: normal; word-wrap: break-word; text-align: center; margin-top:5px;">
+                                    Continue<br>
+                                    With<br>
+                                    Google
+                                </div>
+                            </v-col>
+                        </v-btn>
+                    </div>
+                    <div class="text-center login-message-box">
+                        <div class="login-sub-message-box">
+                            <div>{{$t('loginList.cookieCheck1')}}<br> {{$t('loginList.cookieCheck2')}}</div>
+                        </div>
+                    </div>
+                </v-col>
+            </v-row>
+        </v-card>
+
+        <!-- 로그인 UI 모바일 -->
+        <v-card v-if="standard" class="login-dialog-is-mobile">
+            <v-row class="ma-0 pa-0">
+                <v-col class="ma-0" style="padding:20px 10px;">
+                    <div style="font-size: 28px; font-weight: 700; text-align: center; padding:15px;">Welcome to MSAEZ</div>
+                    <div style="text-align: center; font-size:14px; margin-bottom:25px;">
+                        <div>{{$t('loginList.LoginInformation1')}}</div>
+                        <div>{{$t('loginList.LoginInformation2')}}</div>
+                    </div>
+                    <div class="text-center">
+                        <v-btn @click="snsLogin('github')" class="login-btn git-login-btn" color="black" style="margin-right:20px; margin-top:0px;">
+                            <v-col>
+                                <Icon icon="fa6-brands:github" width="40" height="40" style="color: white" />
+                                <div style="color:white; white-space: normal; word-wrap: break-word; text-align: center; margin-top:5px;">
+                                    Continue<br>
+                                    With<br>
+                                    Github
+                                </div>
+                            </v-col>
+                        </v-btn>
+
+                        <v-btn v-if="!onlyGitLogin" @click="snsLogin('google')" class="login-btn" color="white" style="margin-top:0px;">
+                            <v-col>
+                                <Icon icon="flat-color-icons:google" width="40" height="40" />
+                                <div style="white-space: normal; word-wrap: break-word; text-align: center; margin-top:5px;">
+                                    Continue<br>
+                                    With<br>
+                                    Google
+                                </div>
+                            </v-col>
+                        </v-btn>
+                    </div>
+                    <div class="text-center login-message-box">
+                        <div class="login-sub-message-box" style="font-size:12px;">
+                            <div>{{$t('loginList.cookieCheck1')}}<br> {{$t('loginList.cookieCheck2')}}</div>
+                        </div>
+                    </div>
+                </v-col>
+            </v-row>
         </v-card>
     
         <v-card v-else-if="guest"
@@ -106,114 +189,6 @@
                     {{$t('loginList.cookieCheck1')}}<br> {{$t('loginList.cookieCheck2')}}
                 </div>
             </v-card>
-            <!-- <v-tabs> // 게스트 로그인 + 소셜
-                <v-tab style="width:50%;">Social Login</v-tab>
-    
-                <v-tab style="width:50%">GUEST Login</v-tab>
-    
-                <v-tab-item>
-                    <v-card flat>
-                        <div style="height:150px; margin-top:50px;">
-                            <v-btn @click="snsLogin('google')"
-                                   class="login-row"
-                                   style="width:250px; height:150px; margin-left:75px; background-color:white;"
-                            >
-                                <img width="40px"
-                                     style="margin-top:-50px;"
-                                     alt="Google sign-in"
-                                     src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png"/>
-                                <div style="width:100px; height:20px; position:absolute; top:10px;">Google</div>
-                            </v-btn>
-                            <div class="login-row" style="width:50px; text-align:center; line-height:150px;">or</div>
-                            <v-btn @click="snsLogin('github')"
-                                   class="login-row"
-                                   style="width:250px; height:150px; background-color:white;"
-                            >
-                                <img id="git-hover"
-                                     width="50px"
-                                     style="margin-top:-50px;"
-                                     alt="Github sign-in"
-                                     src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"/>
-                                <div style="width:100px; height:20px; position:absolute; top:10px;">Github</div>
-                            </v-btn>
-                        </div>
-    
-                        <div style="width:700px; margin-left:5px; margin-bottom:20px; text-align:center; font-size: small; color:#BDBDBD; margin-top: 30px;">
-                        Please ensure 3rd party cookies are enabled if<br> login fails.
-                        </div>
-                    </v-card>
-                </v-tab-item>
-                <v-tab-item>
-                    <v-card-text>
-                        <v-form v-model="valid" style="width:550px; margin-left:60px;">
-                            <v-row>
-                                <v-text-field
-                                        v-if="isConnectionkey"
-                                        v-model="connectionKey"
-                                        label="접속 키"
-                                        required
-                                ></v-text-field>
-                            </v-row>
-                            <v-row>
-                                <v-text-field label="이름" v-model="guestUserInfo.name" required></v-text-field>
-                            </v-row>
-                            <v-row>
-                                <v-text-field label="이메일" v-model="guestUserInfo.email" required
-                                              :rules="emailRules"></v-text-field>
-                            </v-row>
-                            <div style="margin-left:-12px;">아바타</div>
-                            <v-row style="width:620px; margin-left:-30px;">
-                                <v-col v-for="i in 21">
-                                    <v-badge
-                                            v-if="userImage == i"
-                                            avatar
-                                            bordered
-                                            overlap
-                                            color="success"
-                                    >
-                                        <template v-slot:badge style="top: 1px; right: -2px;">
-                                            <v-icon style="color: #ffffff">
-                                                mdi-check-bold
-                                            </v-icon>
-                                        </template>
-    
-                                        <v-avatar
-                                                class="profile"
-                                                color="grey"
-                                                size="50"
-                                                style="margin-top: 5px; margin-right: 7px"
-                                                @click="userImage = null"
-                                        >
-                                            <v-img :src="userIcon(i)"></v-img>
-                                        </v-avatar>
-                                    </v-badge>
-                                    <v-avatar
-                                            v-else
-                                            class="profile"
-                                            color="grey"
-                                            size="50"
-                                            style="margin-top: 5px; margin-right: 7px"
-                                            @click="userImage = i"
-                                    >
-                                        <v-img :src="userIcon(i)"></v-img>
-                                    </v-avatar>
-                                </v-col>
-                            </v-row>
-    
-                            <div style="margin-left:-20px;" class="caption">아이콘 제작자 <a
-                                    href="https://www.flaticon.com/kr/authors/freepik"
-                                    title="Freepik">Freepik</a> from <a
-                                    href="https://www.flaticon.com/kr/" title="Flaticon"> www.flaticon.com</a>
-                            </div>
-                        </v-form>
-                    </v-card-text>
-                    <v-card-actions style="margin-top:-11px;">
-                        <v-spacer></v-spacer>
-                        <v-btn color="blue darken-1" text @click="closeLogin()">Close</v-btn>
-                        <v-btn color="blue darken-1" text @click="joinClassByKey()" :disabled="!valid">입장</v-btn>
-                    </v-card-actions>
-                </v-tab-item>
-            </v-tabs> -->
         </v-card>
     
         <v-card style="background: #FFFFFF; min-width:400px; position:absolute; top:150px; left:50%; margin-left:-200px;"
@@ -238,8 +213,6 @@
             </v-card>
         </v-card>
     </div>
-
-
 </template>
 
 <script>
@@ -731,6 +704,22 @@
 </script>
 
 <style>
+    .git-login-btn:hover {
+        opacity: 0.8;
+    }
+    .login-message-box {
+        margin-top:30px;
+    }
+    .login-sub-message-box {
+        margin-top:30px;
+        font-size: small;
+        color:#757575;
+    }
+    .login-btn {
+        height: auto !important;
+        padding:15px !important;
+        margin-top:20px;
+    }
     .loginDialog {
         position: relative;
         bottom: 5px;
@@ -764,6 +753,21 @@
         content: "";
         display: block;
         clear: both;
+    }
+    .login-dialog-is-pc {
+        display: block;
+    }
+    .login-dialog-is-mobile {
+        display: none;
+    }
+
+    @media only screen and (max-width:900px) {
+        .login-dialog-is-pc {
+            display:none !important;
+        }
+        .login-dialog-is-mobile {
+            display: block;
+        }
     }
 </style>
 
