@@ -97,7 +97,7 @@
                         v-bind="attrs"
                         text
                         style="font-size:16px; margin-top:8px; font-weight: 700; padding:0px;"
-                        :style="isLogin ? 'margin-right:145px' : 'margin-right:105px;'"
+                        :style="isLogin ? 'margin-right:145px' : 'margin-right:130px;'"
                     ><v-icon style="margin-top:-3px;">mdi-file-plus</v-icon>
                     {{$t('making.title')}}
                     </v-btn>
@@ -276,11 +276,12 @@
             </v-dialog>
             
             <v-btn
-                    v-if="!(isLogin || isGuestLogin)"
-                    @click="loginPage()"
-                    fab icon>
+                v-if="!(isLogin || isGuestLogin)"
+                @click="loginPage()"
+                fab icon
+            >
                 <v-avatar
-                        size="40"
+                    size="40"
                 >
                     <v-icon x-large>mdi-account-circle</v-icon>
                 </v-avatar>
@@ -504,9 +505,9 @@
 
         <!--login-->
         <v-dialog
-                v-model="loginDialog"
-                width="300"
-                @click:outside="closeLoginDialog()"
+            v-model="loginDialog"
+            width="900"
+            @click:outside="closeLoginDialog()"
         >
             <Login :loginMsg="loginText" @close="closeLoginDialog()" @login="login"></Login>
         </v-dialog>
@@ -771,7 +772,7 @@
                     type: 'bm', 
                     title: 'tools.bm',
                     image: '/static/image/main/mainBMC.png',
-                    subtitle: 'tools.kubernetes-inst',
+                    subtitle: 'tools.bm-inst',
                     disabled: true,
                 },
                 {
@@ -883,10 +884,10 @@
         // beforeMount(){
         // },
         computed: {
-            // showMain() {
-            //     const path = this.$route.path;
-            //     return path === '/';
-            // },
+            showMain() {
+                const path = this.$route.path;
+                return path === '/';
+            },
             showFooter() {
                 const path = this.$route.path;
                 return path === '/courses' || path === '/' || path === '/myPage';
