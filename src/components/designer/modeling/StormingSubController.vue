@@ -65,7 +65,7 @@
 
         <div v-if="canvasType == 'cm'">
             <sub-controller
-                    :image="'../event/link-box-variant-outline.png'"
+                    :image="'../event/link-box-variant-primary.png'"
                     v-on:click="moveToModel"
             ></sub-controller>
         </div>
