@@ -24,6 +24,7 @@
                     'label-angle':value.elementView.angle,
                     'font-weight': 'bold', 
                     'font-size': '16',
+                    'label-width': labelWidth,
                 }"
         >
             <!--v-on:dblclick="$refs['dialog'].open()"-->
