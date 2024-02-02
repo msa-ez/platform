@@ -237,22 +237,22 @@ ${modelDescription}
 
 
                         // Generate persona
-                        let personaUuid = me.uuid();
-                        view = JSON.parse(JSON.stringify(view));
-                        view._type = "Persona"
-                        view.id = personaUuid;
-                        view.width = 100;
-                        view.height = 100;
-                        view.y = START_Y + (HEIGHT + BORDER) * 6;
+                        // let personaUuid = me.uuid();
+                        // view = JSON.parse(JSON.stringify(view));
+                        // view._type = "Persona"
+                        // view.id = personaUuid;
+                        // view.width = 100;
+                        // view.height = 100;
+                        // view.y = START_Y + (HEIGHT + BORDER) * 6;
 
-                        convertedModel.elements[personaUuid] = {
-                            _type: "Persona",
-                            name: story.as,
-                            description: "",
-                            author: null,
-                            elementView: view,
-                            color: "#F8D454",
-                        };
+                        // convertedModel.elements[personaUuid] = {
+                        //     _type: "Persona",
+                        //     name: story.as,
+                        //     description: "",
+                        //     author: null,
+                        //     elementView: view,
+                        //     color: "#F8D454",
+                        // };
                     });
                     
                 });
