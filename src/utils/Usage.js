@@ -16,9 +16,8 @@ class Usage {
     
     // ITEM
     this.serviceType = options.serviceType;
-    this.metadata = options.metadata;
-    this.usageDetail = options.usageDetail;
-
+    this.metadata = options.metadata ? options.metadata : {};
+   
     this.issuedTimeStamp = options.issuedTimeStamp ? options.issuedTimeStamp : null
     this.expiredTimeStamp = options.expiredTimeStamp ? options.expiredTimeStamp : null 
   }
@@ -35,9 +34,9 @@ class Usage {
 
         // Already Usage(ONCE) 
         if(await me.check()) return true;
-        
-        let result = await this.storage.pushObject(`/usages/queue/${this.convertTimestampToYearMonth()}`, {
-            usageDetail: me.usageDetail ? JSON.stringify(me.usageDetail) : null,
+
+       
+        let usageObj = {
             serviceType: me.serviceType,
             issuedTimeStamp: me.issuedTimeStamp,
             expiredTimeStamp: me.expiredTimeStamp,
@@ -46,8 +45,13 @@ class Usage {
             userEmail: userInfo.email,
             userRegion: userInfo.region,
             tenant: userInfo.tenant,
-            metadata: me.metadata ? me.metadata : null
+        }
+        // add metadata
+        Object.keys(me.metadata).forEach(function(metaKey){
+          usageObj[metaKey] = me.metadata[metaKey]
         })
+
+        let result = await this.storage.pushObject(`/usages/queue/${this.convertTimestampToYearMonth()}`,usageObj)
         if(!result) return false;
         if(result.Error) {
           alert(result.Error);

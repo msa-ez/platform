@@ -236,6 +236,8 @@
                         me.projectPath = `/project/${me.copyInformation.projectId}`
                     } else if (me.information.type == 'cm') {
                         me.projectPath = `/cm/${me.copyInformation.projectId}`
+                    } else if (me.information.type == 'userStoryMap') {
+                        me.projectPath = `/userStoryMap/${me.copyInformation.projectId}`
                     }
 
                     // lazy image

@@ -140,14 +140,13 @@ export default {
                 var me = this
                 let title = ''
                 let detail = ''
-                let metadata = value.metadata
 
                 if(value.serviceType.includes('codeArchive')){
-                    title = metadata['modelId']
-                    detail = `Model name: ${metadata['modelName']}`
+                    title = value['modelId']
+                    detail = `Model name: ${value['modelName']}`
                 } else if(value.serviceType.includes('AIGeneration')) {
-                    title = metadata['modelId']
-                    detail = `${me.formatCanvasUrl('project')}/${metadata['projectId']}`
+                    title = value['modelId']
+                    detail = `${me.formatCanvasUrl('project')}/${value['projectId']}`
                 }
 
                 return {title: title, detail: detail};

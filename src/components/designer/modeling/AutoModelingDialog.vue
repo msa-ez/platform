@@ -286,6 +286,12 @@
                     return false
                 }
             },
+            openChatUI:{
+                type: Boolean,
+                default: function () {
+                    return false
+                }
+            },
         },
         mixins: [StorageBase],
         components: {
@@ -334,7 +340,7 @@
                 // chat
                 isCheckedErr: false,
                 startCrateModel: false,
-                openChatUI: false, 
+                // openChatUI: false, 
                 modelScenario: "",
                 // dailog
                 pageNum: '1',
@@ -384,7 +390,7 @@
 
             let getPrompt = localStorage.getItem('noLoginPrompt')
             if(this.isLogin && getPrompt){
-                this.projectInfo.prompt = getPrompt
+                this.projectInfo.prompt = this.projectInfo.prompt ? this.projectInfo.prompt : getPrompt
                 this.openChatUI = true
             }
         },

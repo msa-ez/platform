@@ -39,9 +39,21 @@
                         ></v-textarea>
                         <v-text-field
                                 v-if="value._type == 'UserStory'"
-                                v-model="value.persona.persona"
+                                v-model="value.as"
                                 :disabled="canvas.isReadOnlyModel"
-                                label="Persona"
+                                label="As"
+                        ></v-text-field>
+                        <v-text-field
+                                v-if="value._type == 'UserStory'"
+                                v-model="value.iWant"
+                                :disabled="canvas.isReadOnlyModel"
+                                label="I Want"
+                        ></v-text-field>
+                        <v-text-field
+                                v-if="value._type == 'UserStory'"
+                                v-model="value.soThat"
+                                :disabled="canvas.isReadOnlyModel"
+                                label="So that"
                         ></v-text-field>
                         <div class="my-5">
                             <v-label>Color</v-label>
@@ -202,7 +214,7 @@
             },
             getDescriptionText() {
                 var me = this
-                return 'Sticky Note Board'
+                return 'User Story Map'
             },
             imgSrc() {
                 var me = this
@@ -249,10 +261,6 @@
                         imgSrc: `${window.location.protocol + "//" + window.location.host}/static/image/event/policy.png`
                     },
                     {
-                        color: '#F8D454',
-                        imgSrc: `${window.location.protocol + "//" + window.location.host}/static/image/event/aggregate.png`
-                    },
-                    {
                         color: '#ED73B6',
                         imgSrc: `${window.location.protocol + "//" + window.location.host}/static/image/event/external.png`
                     },
@@ -263,6 +271,10 @@
                     {
                         color: '#8E24AA',
                         imgSrc: `${window.location.protocol + "//" + window.location.host}/static/image/event/issue.png`
+                    },
+                    {
+                        color: '#F8D454',
+                        imgSrc: `${window.location.protocol + "//" + window.location.host}/static/image/event/actor.png`
                     },
                 ],
 

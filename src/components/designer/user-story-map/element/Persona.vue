@@ -34,9 +34,9 @@
                         'fill-cx': .1,
                         'fill-cy': .1,
                         'stroke-width': 0,
-                        'stroke': value.color ? value.color : '#F1A746',
-                        'fill': value.color ? value.color : '#F1A746',
-                        'fill-opacity': 1,
+                        'stroke': value.color ? value.color : '#F8D454',
+                        'fill': value.color ? value.color : '#F8D454',
+                        'fill-opacity': .7,
                         'r': '1',
                     }"
             ></geometry-rect>
@@ -48,8 +48,17 @@
                             :sub-height="30"
                             :sub-top="0"
                             :sub-left="0"
-                            :text="'<<UserActivity>>'">
-                    </text-element>
+                            :text="'<<Persona>>'">
+                </text-element>
+
+                <image-element
+                    :image="userImage"
+                    :sub-width="actorImgSizeW"
+                    :sub-height="actorImgSizeH"
+                    :sub-left="actorHorizon"
+                    :sub-top="actorVertical"
+                >
+                </image-element>
             </sub-elements>
         </geometry-element>
 
@@ -70,14 +79,59 @@
 
     export default {
         mixins: [Element],
-        name: 'userActivity',
+        name: 'persona',
         props: {},
         computed: {
+            actorShortSide() {
+                if (this.value.elementView.width < this.value.elementView.height) {
+                    return this.value.elementView.width
+                }
+                return this.value.elementView.height
+            },
+            actorImgSizeW() {
+                return this.actorShortSide * 0.4
+            },
+            actorImgSizeH() {
+                return this.actorShortSide * 0.6
+            },
+            actorHorizon() {
+                return this.value.elementView.width / 2 - this.actorImgSizeW / 2
+            },
+            actorVertical() {
+                return this.value.elementView.height / 2 - this.actorImgSizeH / 2
+            },
+            actorHeadSize() {
+                if (this.value.elementView.width < this.value.elementView.height) {
+                    return this.value.elementView.width * 0.2
+                }
+                return this.value.elementView.height * 0.2
+            },
+            actorBody() {
+                var start = [50, 45.4]
+                var end = [50, 68]
+
+                return {'start': start, 'end': end}
+            },
+            actorArm() {
+                var start = [28, 50.4]
+                var end = [72, 50.4]
+                return {'start': start, 'end': end}
+            },
+            actorLegL() {
+                var start = [50, 68]
+                var end = [27, 80]
+                return {'start': start, 'end': end}
+            },
+            actorLegR() {
+                var start = [50, 68]
+                var end = [72, 80]
+                return {'start': start, 'end': end}
+            },
             defaultStyle() {
                 return {}
             },
             className() {
-                return 'UserActivity'
+                return 'Persona'
             },
             createNew(elementId, x, y, width, height, description, color) {
                 return {
@@ -108,6 +162,11 @@
         },
         data: function () {
             return {
+                itemH: 200,
+                titleH: (this.value.classReference ? 60 : 30),
+                reference: this.value.classReference != null,
+                referenceClassName: this.value.classReference,
+                userImage: location.pathname + ((location.pathname == '/' || location.pathname.lastIndexOf('/') > 0) ? '' : '/') + 'static/image/symbol/actor_in_actor.png',
                 fontColor: this.value.color == '#F8D454' ? '#000000' : '#FAFAFA'
             };
         },

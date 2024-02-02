@@ -186,6 +186,8 @@
                         me.projectPath = `/uml/${me.copyInformation.projectId}`
                     } else if (me.information.type == 'cjm') {
                         me.projectPath = `/cjm/${me.copyInformation.projectId}`
+                    } else if (me.information.type == 'userStoryMap') {
+                        me.projectPath = `/userStoryMap/${me.copyInformation.projectId}`
                     }
 
 

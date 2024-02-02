@@ -328,12 +328,6 @@
                 alert('Error: Project ModelCanvas Created().', e)
             }
         },
-        mounted: function () {
-
-        },
-        watch: {
-
-        },
         beforeDestroy(){
             this.watch_off(`db://definitions/${this.projectId}/information`)
         },
@@ -524,8 +518,9 @@
             async loadProject() {
                 var me = this
 
-                me.isInitLoading = false;
+                me.isInitLoading = false;  
                 var modelUrl = me.isClazzModeling ? me.projectId : me.$route.params.projectId
+                modelUrl = modelUrl ? modelUrl : me.uuid()
 
                 if(modelUrl.includes(':')){
                     me.projectId = modelUrl.split(':')[0]
