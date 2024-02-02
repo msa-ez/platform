@@ -7459,7 +7459,10 @@ jobs:
                     let usedPlatforms = JSON.parse(JSON.stringify(preferredPlatforms))
                     usedPlatforms.push(basePlatforms)
                     me.usedTemplates = [...new Set(usedPlatforms)];
-                    me.usedToppings = JSON.parse(JSON.stringify(toppingPlatforms))
+                    if(toppingPlatforms){
+                        me.usedToppings = JSON.parse(JSON.stringify(toppingPlatforms))
+                    }
+                    
 
                     //////////////////////////////////////////////// TEMPLATE START ////////////////////////////////////////////////
                     // setting Template

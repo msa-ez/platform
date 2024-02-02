@@ -1675,6 +1675,7 @@
                                         :embedded="true"
                                         v-model="embeddedCanvasValue"
                                         :aggregateRootList="aggregateRootList"
+                                        :esValue="value"
                                 ></uml-class-model-canvas>
                             </v-layout>
                             <v-layout
@@ -5288,7 +5289,6 @@
 
             async openCodeViewer() {
                 var me = this;
-
                 try {
                     me.gitAccessToken = localStorage.getItem("gitAccessToken");
                     // me.model = []
