@@ -70,7 +70,7 @@ ${modelDescription}
             "user-stories": [
               {
                 "name": "Name of the UserStory"
-                "as": "Name of the Persona",
+                "as": "Persona",
                 "iWant": "Action",
                 "soThat": "Purpose",
               }
@@ -206,13 +206,14 @@ ${modelDescription}
                     task['user-stories'].forEach((story, index) => {
 
                         let storyUuid = me.uuid();
+                        view._type = "UserStory"
                         view = JSON.parse(JSON.stringify(view));
                         view.id = storyUuid;
                         view.height = HEIGHT * 2
                         view.y = START_Y + (HEIGHT + BORDER) * 5;
 
-                        let personas = me.client.input.personas
-                        let storyPersona = personas.find(x => x.persona == story.as)
+                        // let personas = me.client.input.personas
+                        // let storyPersona = personas.find(x => x.persona.includes(story.as))
                         // for(var i=0; i<persona.length; i++){
                         //     if(personas[i].persona==story.as){
                         //         storyPersona
@@ -228,8 +229,29 @@ ${modelDescription}
                             description: "",
                             author: null,
                             elementView: view,
+                            color: "#5099F7",
+                            as: story.as,
+                            iWant: story.iWant,
+                            soThat: story.soThat, 
+                        };
+
+
+                        // Generate persona
+                        let personaUuid = me.uuid();
+                        view = JSON.parse(JSON.stringify(view));
+                        view._type = "Persona"
+                        view.id = personaUuid;
+                        view.width = 100;
+                        view.height = 100;
+                        view.y = START_Y + (HEIGHT + BORDER) * 6;
+
+                        convertedModel.elements[personaUuid] = {
+                            _type: "Persona",
+                            name: story.as,
+                            description: "",
+                            author: null,
+                            elementView: view,
                             color: "#F8D454",
-                            persona: storyPersona
                         };
                     });
                     

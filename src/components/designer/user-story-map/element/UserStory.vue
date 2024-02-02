@@ -24,6 +24,7 @@
                     'label-angle':value.elementView.angle,
                     'font-weight': 'bold', 
                     'font-size': '16',
+                    'label-width': labelWidth,
                 }"
         >
             <!--v-on:dblclick="$refs['dialog'].open()"-->
@@ -33,8 +34,8 @@
                         'fill-cx': .1,
                         'fill-cy': .1,
                         'stroke-width': 0,
-                        'stroke': value.color ? value.color : '#F1A746',
-                        'fill': value.color ? value.color : '#F1A746',
+                        'stroke': value.color ? value.color : '#5099F7',
+                        'fill': value.color ? value.color : '#5099F7',
                         'fill-opacity': 1,
                         'r': '1',
                     }"
@@ -95,15 +96,9 @@
                         'angle': 0,
                     },
                     color: color,
-                    persona: {
-                        "persona":"",
-                        "description":"",
-                        "gender":"",
-                        "job":null,
-                        "age":0,
-                        "scenario":null,
-                        "avatar":"",
-                        "modelList":[]},
+                    as:"",
+                    iWant:"",
+                    soThat:"", 
                 }
             },
             showError() {
@@ -116,7 +111,7 @@
         },
         data: function () {
             return {
-                fontColor: this.value.color == '#F8D454' ? '#000000' : '#FAFAFA'
+                fontColor: this.value.color == '#5099F7' ? '#000000' : '#FAFAFA'
             };
         },
         created: function () {
@@ -139,7 +134,7 @@
             "value.color": {
                 deep: true,
                 handler: _.debounce(function (newVal, oldVal) {
-                    this.fontColor = newVal == '#F8D454' ? '#000000' : '#FAFAFA'
+                    this.fontColor = newVal == '#5099F7' ? '#000000' : '#FAFAFA'
                     if (newVal != oldVal)
                         this.refreshImg()
                 }, 100)

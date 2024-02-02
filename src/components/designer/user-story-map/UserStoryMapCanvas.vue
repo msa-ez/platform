@@ -685,7 +685,15 @@
                         'label': 'User Story',
                         'width': '100',
                         'height': '100',
-                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/event/aggregate.png`,
+                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/event/command.png`,
+                    },
+                    {
+                        'icon': "bpmn-icon-start-actor-none",
+                        'component': "persona",
+                        'label': "Persona",
+                        'width': "100",
+                        'height': "100",
+                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/event/actor.png`,
                     },
                     {
                         'component': 'user-story-map-line-element',
@@ -883,6 +891,8 @@
                         componentInfo.color = '#5FC08B'
                     } else if(componentInfo.src.includes('issue.png')) {
                         componentInfo.color = '#8E24AA'
+                    } else if(componentInfo.src.includes('actor.png')) {
+                        componentInfo.color = '#F8D454'
                     }
                 }
 
