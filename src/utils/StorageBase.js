@@ -20,25 +20,35 @@ class StorageBase {
    
     // GetCurrentUser
     async getCurrentUser(){
+        let region = null
+
+        try{
+            const ipResponse = await fetch('https://ipinfo.io/json');
+            const ipInfo = await ipResponse.json();
+            region = ipInfo.country
+        } catch(e) {
+            let userRegion = (navigator.languages && navigator.languages.length > 0) ? navigator.languages[0] : navigator.language;
+            region = userRegion.includes('-') ? userRegion.split('-')[1] : userRegion
+        }
+
         try {
             let currentUserInfo = await this._currentUser();
             if(!currentUserInfo) return null;
-
-            let providerId =  currentUserInfo.providerData[0].providerId // github.com , google.com
-            let uid = currentUserInfo.uid
-            let name = currentUserInfo.providerData[0].displayName
-            let email = currentUserInfo.providerData[0].email
-            let profile = currentUserInfo.photoURL
-
-            let authorized = email && email.includes('@uengine.org') ? 'admin' : 'student'
-            let tenant = localStorage.getItem('loginType') == 'dpg' ? 'DPG' : null  
-            name = name ? name : email
-
+            
+            const uid        = currentUserInfo.uid // xxxdkdjf
+            const providerId = currentUserInfo.providerData[0].providerId // github.com , google.com
+            const email      = currentUserInfo.providerData[0].email // xxx@xxx.xx
+            const name       = currentUserInfo.providerData[0].displayName // hongil
+            const profile    = currentUserInfo.photoURL // https://ddd.png
+            const authorized = email && email.includes('@uengine.org') ? 'admin' : 'student'
+            const tenant     = localStorage.getItem('loginType') == 'dpg' ? 'DPG' : null  
+            
             return {
                 uid: uid,
-                name: name,
+                name: name ? name : email,
                 email: email,
                 profile: profile,
+                region: region,
                 tenant: tenant,
                 authorized: authorized,
                 enrolledUserEmail: email.replace(/\./gi, '_')

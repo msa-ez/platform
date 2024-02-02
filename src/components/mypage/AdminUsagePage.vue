@@ -45,6 +45,7 @@
                                 :items="months"
                                 item-text="label"
                                 item-value="label"
+                                :disabled="!inputValidation"
                                 @change="changeSelectedMonth"
                                 outlined dense
                             ></v-select>
@@ -54,6 +55,7 @@
                                 <template v-slot:activator="{ on, attrs }">
                                     <v-text-field
                                         v-model="start.date"
+                                        :disabled="!inputValidation"
                                         outlined
                                         dense
                                         v-bind="attrs" v-on="on"
@@ -68,6 +70,7 @@
                                 <template v-slot:activator="{ on, attrs }">
                                     <v-text-field
                                         v-model="end.date"
+                                        :disabled="!inputValidation"
                                         outlined
                                         dense
                                         v-bind="attrs" v-on="on"
@@ -76,6 +79,12 @@
                                 <v-date-picker v-model="end.date" no-title scrollable @input="updateSelectedEndDate"></v-date-picker>
                             </v-menu>
                         </div>    
+
+                        <div style="width: 175px; position: absolute; right: 0;">
+                            <v-btn flat @click="exportCSV()" small :disabled="!inputValidation">
+                                <v-icon left> mdi-download </v-icon> Export as CSV
+                            </v-btn>
+                        </div> 
                     </v-row>
                 
                     <div>
@@ -92,10 +101,10 @@
                         >
                             <template v-slot:item.serviceType="{ item }">
                                 <div class="row-title">
-                                    {{ formatServiceType(item.value.serviceType).service }}
+                                    {{ formatServiceType(item.value.serviceType).title }}
                                 </div>
                                 <div class="row-detail">
-                                    {{ formatServiceType(item.value.serviceType).type }}
+                                    {{ formatServiceType(item.value.serviceType).detail }}
                                 </div>
                             </template>
                             <template v-slot:item.metadata="{ item }">
@@ -130,6 +139,7 @@
 
 <script>
 import UsagePage from './UsagePage.vue';
+import Papa from 'papaparse';
 
 export default {
         name: 'admin-usage-page',
@@ -139,21 +149,20 @@ export default {
             return {
                  // admin
                 isFindComapny: false,
-                usageData:[],
                 search : '',
+                selectedTenant: null,
+
+                tenant:[],
+                usageData:[],
                 loading: false,
                 totalSize: 0,
                 pagination: { page: 1, itemsPerPage: 50 },
                 headers: [
-                    {text: 'item', sortable: false, value: 'serviceType'},
+                    {text: 'Type', sortable: false, value: 'serviceType'},
                     {text: 'ID', sortable: false, value: 'metadata'},
                     {text: 'Plan', sortable: false, align: 'end', value: 'measurement'},
-                    {text: 'Timestamp', sortable: false, align: 'center', value: 'issuedTimeStamp'},
-                    {text: 'User', sortable: false, align: 'center', value: 'User'}
+                    {text: 'Timestamp', sortable: false, align: 'start', value: 'issuedTimeStamp'},
                 ],
-                selectedTenant: null,
-                tenant:[],
-                billingData:[]
             }
         },
         async created(){
@@ -174,7 +183,15 @@ export default {
                     return `usages/perTenant/${this.selectedTenant}`
                 }
                 return `usages/perUser/${this.search}`
-            }
+            },
+            inputValidation(){
+                if(this.isFindComapny){
+                    if(!this.selectedTenant) return false;
+                } else {
+                    if(!this.search) return false;
+                }
+                return true;
+            },
         },
         methods:{
             searchUsage(){
@@ -197,7 +214,6 @@ export default {
             async loadFirstPage(){
                 var me = this
                 me.loading = true;
-                
                 let dateObj = me.formatTimeToYearMonth(me.start.date)
                 let totalDocumentsSnapshot = await me.storage.list(`${me.basePath}/${dateObj.yearMonth}/data` ,{snapshot: true})
                 me.totalSize = totalDocumentsSnapshot.size
@@ -205,9 +221,9 @@ export default {
                 let result = await me.storage.list(`${me.basePath}/${dateObj.yearMonth}/data`, {
                     sort: "desc", //desc 최신순 (default "asc")
                     orderBy: 'issuedTimeStamp',
-                    size: this.pagination.itemsPerPage,
-                    startAt: this.formatDateStringToTimeStamp(me.start.date),
-                    endAt: this.formatDateStringToTimeStamp(me.end.date),
+                    size: me.pagination.itemsPerPage,
+                    startAt: me.formatDateStringToTimeStamp(this.start.date, 'start'),
+                    endAt: me.formatDateStringToTimeStamp(this.end.date, 'end') ,
                     startAfter: null,
                     endBefore: null,
                 })
@@ -219,6 +235,8 @@ export default {
                 me.loading = false;   
             },
             async loadRange(startTimeStamp, endTimeStamp){
+                if(!this.inputValidation) return;
+
                 this.loading = true;
                 let result = null;
                 const startDate = this.formatTimeToYearMonth(startTimeStamp);
@@ -390,6 +408,74 @@ export default {
                 this.pagination.page = 1
                 this.loadFirstPage()
             }, 
+
+            async exportCSV() {
+                var me = this
+                if(!this.inputValidation) return;
+
+                let result = []
+                let startYearMonth  = this.formatTimeToYearMonth(this.start.date).yearMonth          // 202401
+                let endYearMonth  = this.formatTimeToYearMonth(this.end.date).yearMonth              // 202402
+                let startTimeStamp = this.formatDateStringToTimeStamp(this.start.date, 'start')      // 1706713200000
+                let endTimeStamp = this.formatDateStringToTimeStamp(this.end.date, 'end')            // 1706713200000
+
+
+                if(startYearMonth == endYearMonth){
+                    result = await me.storage.list(`${this.basePath}/${startYearMonth}/data`, {
+                                    sort: "desc", //desc 최신순 (default "asc")
+                                    orderBy: 'issuedTimeStamp',
+                                    size: null,
+                                    startAt: null,
+                                    endAt: null,
+                                    startAfter: startTimeStamp,
+                                    endBefore: endTimeStamp
+                                })
+                } else {
+                    let firstRange = await this.storage.list(`${this.basePath}/${endYearMonth}/data`, {
+                                            sort: "desc", //desc 최신순 (default "asc")
+                                            orderBy: 'issuedTimeStamp',
+                                            size: null,
+                                            startAt: startTimeStamp,
+                                            endAt: null,
+                                            startAfter: null,
+                                            endBefore: null,
+                                        });
+                    let secondRange = await this.storage.list(`${this.basePath}/${startYearMonth}/data`, {
+                                            sort: "desc", //desc 최신순 (default "asc")
+                                            orderBy: 'issuedTimeStamp',
+                                            size: null,
+                                            startAt: null,
+                                            endAt: endTimeStamp,
+                                            startAfter: null,
+                                            endBefore: null,
+                                        });
+
+                    if(firstRange.Error || secondRange.Error ){
+                        result = firstRange.Error ? firstRange : secondRange
+                    } else {
+                        if(!result) result = []
+                        if(!firstRange) firstRange = []
+                        if(!secondRange) secondRange = []
+                        result = result.concat(firstRange).concat(secondRange);
+                    }
+                }
+
+                if(result.Error){
+                    alert(result.Error);
+                } else {
+                    result = result.map(keyValue => {
+                        const item = keyValue.value;
+                        return this.stringifyObjectValues(item);
+                    });
+                    const csvData = Papa.unparse(result);
+
+                    let date = startYearMonth == endYearMonth ? startYearMonth : `${startYearMonth}_${endYearMonth}`
+                    let title = this.isFindComapny ? `${this.selectedTenant}_${date}` : `${this.search}_${date}`
+                    this.downloadCsv(csvData, title);
+                }
+            },
+
+            
         }
     }
 </script>
