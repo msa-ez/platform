@@ -4,6 +4,11 @@
             <div>
                 <div class="main-nav-tabs-box">
                     <v-tabs class="main-nav-tabs" background-color="transparent" show-arrows color="none">
+                        <v-tab to="/"
+                            class="main-nav-tab main-nav-tab-home"
+                        >
+                            <v-icon style="margin-top:10px;">mdi-home</v-icon>
+                        </v-tab>
                         <v-tab @click="wikiOpen('introduction')"
                             class="main-nav-tab"
                         >{{$t('mainNav.introduction')}}
@@ -1765,6 +1770,9 @@
 </script>
 
 <style>
+    .main-nav-tab-home {
+        display:none;
+    }
     .main-nav-tabs-box {
         margin-top:-78px;
         margin-bottom:10px;
@@ -2003,6 +2011,9 @@
     }
 
     @media only screen and (max-width: 599px) {
+        .main-nav-tab-home {
+            display:block;
+        }
         .main-logo-image {
             display:block;
         }

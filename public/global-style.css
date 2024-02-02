@@ -725,13 +725,6 @@ code[class*=language-]:nth-child(1) {
     }
 }
 
-@media only screen and (max-width:972px) {
-    .theme--dark.v-overlay {
-        display:none;
-    }
-}
-
-
 @media only screen and (max-width:961px) and (min-width:898px) {
     .gs-main-page-top-title {
         font-size:26px;
