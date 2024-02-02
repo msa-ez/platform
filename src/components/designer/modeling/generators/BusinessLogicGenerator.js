@@ -2,37 +2,31 @@ const JsonAIGenerator = require("./JsonAIGenerator");
 
 class BusinessLogicGenerator extends JsonAIGenerator {
     constructor(client){
-        super(client);
+        super(client.context);
     }
 
     createPrompt(){
-        return `You are a developer. You need to look at the contents of the file I provided and add the appropriate business logic to the specified location.
+        return `You are a developer. You need to look at the contents of the file I provided and fill in the appropriate business logic in the specified location.
 
-Full code list: ${this.client.javaFileList ? this.client.javaFileList:'null'}
+Full code list: ${JSON.stringify(this.client.javaFileList)}
 
-Code of file to edit: ${this.client.filteredOpenCode[0].code}
-If there is a complete code list provided, you must look at the entire code list to understand the business.
-If there is no complete code list provided, you will need to look at the contents of the file to be modified to understand the entire code and business of the file.
+If you have a complete code list provided, you should check each Java file in the complete code list provided to understand its business purpose and refer to the business logic of each file to implement the business logic.
+If there is no complete code listing provided, you should review the contents of the provided file to understand the entire code and business purpose of the file, and refer to the business logic in the file to implement the business logic.
 
-Once you have figured out the business logic, you need to create it in the ${this.client.filteredOpenCode[0].name } file.
+After understanding the business purpose, you need to create it in ${this.client.openCode[0].name } file.
+File content to modify:
+\`\`\`java
 ${this.client.promptValue}
-    // Location to create business logic
+{{ Where to create business logic }}
 ${this.client.suffixValue}
-You must implement only the appropriate business logic to be filled in the specified creation location.'
+\`\`\`
+Appropriate business logic (java code) must be filled in the specified creation location.'
 
-When generating code, you should only generate code that will be filled inside the class.
-for example
-public void className() {
-    “Code content” // All I need is the “code content”. Never create the rest of the content. please
-}
-Creating an entire class like this is absolutely prohibited.
-If you created the entire class, the content of the generated code
-The contents of "public void className() {" and the final "}" must be absolutely and unconditionally removed.
-Only implement the logic (// code content) that will be filled inside the class.
-
-When implementing code, you must follow the format below.
+When generating code, you should generate "only the Java code that will be populated inside the class."
+If you determine that the event publish() content appears to be necessary at the end of the generated code, it is recommended to add the same publish code by referring to another file or another class. e.g. "eventName.publishAfterCommit()"
+When implementing your code, you must follow this format:
 {
-    "code": // Code content to be filled inside the class
+    "implementedCode": // Implemented Java code to be filled inside the class. All you need to do is implement Java code. The results must not be implemented in anything other than natural language or Java code. For example // "Implement the business logic when taking an order." This type of content should never be included. please
 }
 `
     }

@@ -89,7 +89,6 @@
         > </rectangle-element>
       </sub-elements>
 
-
       <storming-sub-controller
         :type="value._type"
         :value="value"
@@ -242,7 +241,7 @@
 
         me.canvas.storageCondition = {
           action: 'save',
-          title: 'SAVE',
+          title: 'Added BounedContext',
           comment: '',
           projectName: `${me.canvas.information.associatedProject}-${me.value.name}`,
           projectId: `${me.canvas.information.associatedProject}-${me.value.name}`,

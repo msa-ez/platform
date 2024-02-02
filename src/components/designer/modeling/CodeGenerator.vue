@@ -119,7 +119,8 @@
                                     :isSIgpt="isSIgpt"
                                     :commitMsg="commitMsg"
                                     :selectedTestFile="selectedTestFile"
-                                    :toppingPlatforms="toppingPlatforms"
+                                    :usedTemplates="usedTemplates"
+                                    :usedToppings="usedToppings"
                                     :canvas="canvas"
                                 />
                             </div>
@@ -1064,7 +1065,8 @@
                                                                                                     :ShowCreateRepoTab="ShowCreateRepoTab"
                                                                                                     :isServerModel="isServerModel"
                                                                                                     @pushSuccessed="pushSuccessed"
-                                                                                                    :toppingPlatforms="toppingPlatforms"
+                                                                                                    :usedTemplates="usedTemplates"
+                                                                                                    :usedToppings="usedToppings"
                                                                                                     :canvas="canvas"
                                                                                             />
                                                                                         </div>
@@ -1606,6 +1608,9 @@
         },
         data() {
             return {
+                usedTemplates: [],
+                usedToppings: [],
+                model: null,
                 generator: null,
                 promptValue: [],
                 suffixValue: [],
@@ -1698,7 +1703,6 @@
                 editTemplateTabNumber: 0,
                 modelData: {},
                 sampleData: {"glossary":{"title":"example glossary","GlossDiv":{"title":"S","GlossList":{"GlossEntry":{"ID":"SGML","SortAs":"SGML","GlossTerm":"Standard Generalized Markup Language","Acronym":"SGML","Abbrev":"ISO 8879:1986","GlossDef":{"para":"A meta-markup language, used to create markup languages such as DocBook.","GlossSeeAlso":["GML","XML"]},"GlossSee":"markup"}}}}},
-                openaiContent: null,
                 showOpenaiToken: false,
                 openaiToken: null,
                 copyKey: 0,
@@ -1964,8 +1968,8 @@
                     }
                     
                     this.isLoadingExpectedTemplate = true
-                    if((this.openCode && this.openCode[0]) || this.value.basePlatform){
-                        var platform = this.openCode && this.openCode[0] && this.openCode[0].template  ? this.openCode[0].template : this.value.basePlatform
+                    if((this.openCode && this.openCode[0]) || this.basePlatform){
+                        var platform = this.openCode && this.openCode[0] && this.openCode[0].template  ? this.openCode[0].template : this.basePlatform
                         if(!platform.includes("http")){
                             platform = await me.gitAPI.getTemplateURL(platform)
                         }
@@ -2976,7 +2980,7 @@ jobs:
             testTemplateModel(){
                 var me = this
                 me.startCheckDiff = true
-                var template = me.openCode && me.openCode[0] ? me.openCode[0].template : me.value.basePlatform
+                var template = me.openCode && me.openCode[0] ? me.openCode[0].template : me.basePlatform
 
                 if(me.templateFrameWorkList[template]['.template/metadata.yml']){
                     me.templateMetaData = YAML.parse(me.templateFrameWorkList[template]['.template/metadata.yml'].content)
@@ -4155,17 +4159,19 @@ jobs:
             },
             async downloadArchive(){
                 var me = this
+
                 let freeTopping = ["isVanillaK8s"];
                 let issuedTimeStamp = Date.now()
                 let toppings = me.toppingPlatforms.filter(topping => freeTopping.find(free=> topping!=free)) 
                 let usage = new Usage({
                     serviceType: `${me.canvas.canvasType.toUpperCase()}_codeArchive`,
-                    usageDetail: { usedToppingNum: toppings.length },
                     issuedTimeStamp: issuedTimeStamp,
                     expiredTimeStamp: issuedTimeStamp,
                     metadata: {
                         modelId: me.modelingProjectId,
-                        modelName: me.canvas.projectName
+                        modelName: me.canvas.projectName,
+                        usedTemplates: me.usedTemplates,
+                        usedToppingNum: toppings.length,
                     }
                 });
                 if(!await usage.use()) return false;
@@ -4288,7 +4294,7 @@ jobs:
                     if(!option){
                         condition = item.code != null && (item.name.endsWith(".vue") || item.name.endsWith(".java") || item.name.endsWith(".yaml") || item.name.endsWith(".yml")) && !item.path.includes("/test/")
                     }else{
-                        if(option.keyword == "si"){
+                        if(option.keyword == "si" || option.keyword == "ai"){
                             condition = item.code != null && item.name.endsWith(".java")
                         }
                     }
@@ -4424,26 +4430,25 @@ jobs:
             },
             setCurrentCodeForAutoCodeGenerate(value){
                 var me = this
-                me.openaiContent = value
-
                 if(me.codeGenTimeout){
                     clearTimeout(me.codeGenTimeout)
                     me.codeGenTimeout = null
                 }
                 me.codeGenTimeout = setTimeout(function () {
-                    me.setAutoGenerateCodetoList = JSON.parse(JSON.stringify(me.codeLists))
+                    if(!me.setAutoGenerateCodetoList){
+                        me.setAutoGenerateCodetoList = JSON.parse(JSON.stringify(me.codeLists))
+                    }
                     // me.setAutoGenerateCodetoList.some(function (element, index){
                     //     if(me.filteredOpenCode[0].path == element.fullPath){
                     //         me.setAutoGenerateCodetoList[index].code = value
                     //         return true;
                     //     }
                     // })
-                    var idx = me.setAutoGenerateCodetoList.findIndex(x => x.fullPath == me.filteredOpenCode[0].fullPath)
-                    me.setAutoGenerateCodetoList[idx].code = me.filteredOpenCode[0].code
+                    var idx = me.setAutoGenerateCodetoList.findIndex(x => x.fullPath == me.openCode[0].fullPath)
+                    me.openCode[0].code = value
+                    me.setAutoGenerateCodetoList[idx].code = value
                     me.codeGenTimeout = null
                 }, 2000)
-                // me.filteredOpenCode[0].code = value
-                // console.log(me.filteredOpenCode[0].code)
             },
             closeOpenaiPopup(){
                 var me = this
@@ -4470,24 +4475,25 @@ jobs:
             },
             onGenerationFinished(model){
                 var me = this
-                if(model && model.code && !me.stopAutoGenerate){
-                    let implementedCode = model.code
-                    if(implementedCode.includes("```")){
-                        implementedCode = implementedCode.replaceAll("```java", "```")
-                        implementedCode = implementedCode.split("```")[1]
-                    }
+                if(model && model.implementedCode && !me.stopAutoGenerate){
+                    let implementedCode = '\n' + model.implementedCode
+                    // if(implementedCode.includes("```")){
+                    //     implementedCode = implementedCode.replaceAll("```java", "```")
+                    //     implementedCode = implementedCode.split("```")[1]
+                    // }
 
                     me.changedDiffCodeViewer = true
-                    me.changedDiffCode = JSON.parse(JSON.stringify(me.filteredOpenCode))
-                    me.filteredOpenCode[0].code = me.promptValue + implementedCode + me.suffixValue
+                    me.changedDiffCode = JSON.parse(JSON.stringify(me.openCode))
+                    me.openCode[0].code = me.promptValue + implementedCode + me.suffixValue
 
                     me.startGenerate = false
 
                     me.setAutoGenerateCodetoList = JSON.parse(JSON.stringify(me.codeLists))
-                    var idx = me.setAutoGenerateCodetoList.findIndex(x => x.fullPath == me.filteredOpenCode[0].fullPath)
-                    me.setAutoGenerateCodetoList[idx].code = me.filteredOpenCode[0].code
+                    var idx = me.setAutoGenerateCodetoList.findIndex(x => x.fullPath == me.openCode[0].fullPath)
+                    me.setAutoGenerateCodetoList[idx].code = me.openCode[0].code
 
-                    me.refreshCallGenerate();
+                    me.javaFileList = []
+                    // me.refreshCallGenerate();
                 } else {
                     me.stopAutoGenerate = false
                     me.startGenerate = false
@@ -4497,41 +4503,48 @@ jobs:
             },
             async autoGenerateCode(idx, id){
                 var me = this
-                try {
-                    if(id == '2'){
-                        let idx = me.treeLists.findIndex(x => x.name == me.openCode[0].path.split('/')[0])
-                        if(idx != -1){
-                            me.javaFileList = me.getSelectedFilesDeeply([me.treeLists[idx]])
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(id == '2'){
+                            let path
+                            if(me.openCode && me.openCode[0]){
+                                if(me.openCode[0].path){
+                                    path = me.openCode[0].path
+                                } else {
+                                    path = me.openCode[0].fullPath
+                                }
+                                let idx = me.treeLists.findIndex(x => x.name == path.split('/')[0])
+                                if(idx != -1){
+                                    me.javaFileList = me.getSelectedFilesDeeply([me.treeLists[idx]], {keyword: "ai"})
+                                }
+                            }
+                        }
+                        if(me.openaiToken){
+                            var splitContent = null
+                            me.promptValue = []
+                            me.suffixValue = []
+                            splitContent = me.filteredOpenCode[0].code.split("\n")
+                            splitContent.forEach(function (content, contentIndex){
+                                if(contentIndex <= idx){
+                                    me.promptValue.push(content)
+                                } else if(contentIndex > idx) {
+                                    me.suffixValue.push(content)
+                                }
+                            })
+                            me.promptValue = me.promptValue.join("\n")
+                            me.suffixValue = me.suffixValue.join("\n")
+    
+                            me.stopAutoGenerate = false;
+                            me.model = 'gpt-4'
+                            me.generator = new BusinessLogicGenerator(this);
+                            await me.generator.generate();
+                        } else {
+                            me.stopAutoGenerate = false
+                            alert("input Token")
                         }
                     }
-                    if(me.openaiToken){
-                        var splitContent = null
-                        me.promptValue = []
-                        me.suffixValue = []
-                        splitContent = me.filteredOpenCode[0].code.split("\n")
-                        splitContent.forEach(function (content, contentIndex){
-                            if(contentIndex <= idx){
-                                me.promptValue.push(content)
-                            } else if(contentIndex > idx) {
-                                me.suffixValue.push(content)
-                            }
-                        })
-                        me.promptValue = me.promptValue.join("\n")
-                        me.suffixValue = me.suffixValue.join("\n")
-
-                        me.stopAutoGenerate = false;
-                        me.generator = new BusinessLogicGenerator(this);
-                        me.generator.generate();
-    
-                    } else {
-                        me.stopAutoGenerate = false
-                        alert("input Token")
-                    }
-                } catch(e) {
-                    me.startGenerate = false
-                    console.log(e)
-                    alert(e)
-                }
+                })
             },
             async autoGenerateMustacheTemplate(modelData, path, convertModelData, mode){
                 var me = this
@@ -7149,7 +7162,7 @@ jobs:
                     me.testFileList = []
                     me.getSelectedFilesDeeply(me.openCode, {keyword: "si"})
                     
-                    if(me.value && me.value.basePlatform.includes("template-gpt-engineer")){
+                    if(me.value && me.basePlatform.includes("template-gpt-engineer")){
                         let src = await me.gitAPI.getFolder(me.value.scm.org, me.value.scm.repo, me.openCode[0].name + '/src');
                         if(src){
                             me.getJavaFileList(src.data, 'test')
@@ -7443,6 +7456,11 @@ jobs:
                         me.rootModelBoundedContexts = rootModel.boundedContexts
                     }
 
+                    let usedPlatforms = JSON.parse(JSON.stringify(preferredPlatforms))
+                    usedPlatforms.push(basePlatforms)
+                    me.usedTemplates = [...new Set(usedPlatforms)];
+                    me.usedToppings = JSON.parse(JSON.stringify(toppingPlatforms))
+
                     //////////////////////////////////////////////// TEMPLATE START ////////////////////////////////////////////////
                     // setting Template
                     if(basePlatforms == "Custom Template"){
@@ -7503,7 +7521,7 @@ jobs:
                     }
 
                     // setting of Topping Template
-                    if(toppingPlatforms.length > 0 ){
+                    if(toppingPlatforms && toppingPlatforms.length > 0 ){
                         toppingPlatforms = toppingPlatforms.filter(topping => {
                             return !Array.isArray(topping)
                         });

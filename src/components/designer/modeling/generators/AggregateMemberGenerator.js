@@ -12,13 +12,17 @@ class AggregateMemberGenerator extends JsonAIGenerator{
     createPrompt(){
         let prompt = 
 `
+${this.aggregateRoot.name ? 
+`
 In ddd, we have following aggregate root class:
-
 class ${this.aggregateRoot.name}{
-  ${this.aggregateRoot.fieldDescriptors}
+    ${this.aggregateRoot.fieldDescriptors}
+}
+Can you append more value objects and enumerations to this aggregate root:
+`:
+'Generate results according to the information requested below.'
 }
 
-Can you append more value objects and enumerations to this aggregate root:
 ${this.instruction}
 
 in this json format:
