@@ -12,16 +12,28 @@ export default class UserStoryGenerator extends AIGenerator{
 
         let modelDescription = ""
 
-
         if(this.client.input.painpointAnalysis){
-            modelDescription += "Painpoint analysis and Possible solutions: \n\n"
-            let relations = this.client.input.painpointAnalysis.relations
-            Object.keys(relations).forEach(key=>{
-                let painPoint = relations[key].sourceElement.name
-                let possibleSolution = relations[key].targetElement.name
-
-                modelDescription += `${painPoint}:${possibleSolution}\n`
+            let modelPerPersona = this.client.input.painpointAnalysis
+            modelDescription += "Persona definition and he(or her)'s painpoints and possible solutions as follows: \n\n"
+            Object.keys(this.client.input.painpointAnalysis).forEach(persona=>{
+                modelDescription +="- "+ persona + "\n"
+                let relations = modelPerPersona[persona].relations
+                Object.keys(relations).forEach(key=>{
+                    let painPoint = relations[key].sourceElement.name
+                    let possibleSolution = relations[key].targetElement.name
+    
+                    modelDescription += `${painPoint}:${possibleSolution}\n`
+                });
             });
+            // modelDescription += "Painpoint analysis and Possible solutions: \n\n"
+        }else {
+            if(this.client.input.personas.length>0){
+                let personas = this.client.input.personas
+                modelDescription += "Create pain points and possible solutions that may arise by considering the following Personas. \n\n"
+                for(var i=0; i<personas.length; i++){
+                    modelDescription +="- "+ personas[i].persona + "\n"
+                }
+            }
         }
 
         if(this.client.input.businessModel){
