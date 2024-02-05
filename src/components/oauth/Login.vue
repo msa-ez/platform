@@ -113,7 +113,7 @@
             <v-row class="ma-0 pa-0">
                 <v-col class="ma-0" style="padding:20px 10px;">
                     <div style="font-size: 28px; font-weight: 700; text-align: center; padding:15px;">Welcome to MSAEZ</div>
-                    <div style="text-align: center; font-size:14px; margin-bottom:25px;">
+                    <div style="text-align: center; font-size:13px; margin-bottom:25px;">
                         <div>{{$t('loginList.LoginInformation1')}}</div>
                         <div>{{$t('loginList.LoginInformation2')}}</div>
                     </div>

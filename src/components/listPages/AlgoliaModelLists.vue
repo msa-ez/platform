@@ -4,6 +4,11 @@
             <div>
                 <div class="main-nav-tabs-box">
                     <v-tabs class="main-nav-tabs" background-color="transparent" show-arrows color="none">
+                        <v-tab to="/"
+                            class="main-nav-tab main-nav-tab-home"
+                        >
+                            <v-icon style="margin-top:10px;">mdi-home</v-icon>
+                        </v-tab>
                         <v-tab @click="wikiOpen('introduction')"
                             class="main-nav-tab"
                         >{{$t('mainNav.introduction')}}
@@ -74,37 +79,17 @@
                         <v-row
                             style="margin:0px;"
                         >
-                            <!-- 강의목록 -->
-                            <v-col
-                                lg="3"
-                                md="4"
-                                sm="6"
-                                xs="12"
-                            >
-                                <v-card style="height:100%;"
-                                    outlined
-                                    @click="navigateTo('/courses')"
-                                >
-                                    <v-card-title class="justify-center">{{ $t('mainNavSubCard.goToLectures') }}</v-card-title>
-                                    <v-img 
-                                        src="/static/image/main/mainSubLectures.png"
-                                        style="cursor: pointer; height:200px;"
-                                    >
-                                    </v-img>
-                                    <v-card-subtitle style="margin-bottom:20px;">{{  }}</v-card-subtitle>
-                                </v-card>
-                            </v-col>
                             <!-- 튜토리얼, 모델링 예제 -->
                             <v-col v-for="(item,index) in navSubCards"
                                 :key="index"
-                                lg="3"
+                                lg="4"
                                 md="4"
                                 sm="6"
                                 xs="12"
                             >
                                 <v-card style="height:100%;"
                                     outlined
-                                    @click="toggleDialog(item)"
+                                    @click="wikiOpen('business')"
                                 >
                                     <v-card-title class="justify-center">{{ $t(item.title) }}</v-card-title>
                                     <v-img 
@@ -114,8 +99,8 @@
                                     </v-img>
                                     <v-card-subtitle style="margin-bottom:20px;">{{ $t(item.subtitle) }}</v-card-subtitle>
                                 </v-card>
-                                <!-- 튜토리얼 -->
-                                <v-dialog v-model="item.dialog"
+                                <!-- 튜토리얼 다이얼로그-->
+                                <!-- <v-dialog v-model="item.dialog"
                                     v-if="item.dialogType === 'tutorial'"
                                 >
                                     <v-card style="padding:10px; height:85vh; overflow:auto;">
@@ -154,9 +139,9 @@
                                             </v-col>
                                         </v-row>
                                     </v-card>
-                                </v-dialog>
-                                <!-- 모델링 예제 -->
-                                <v-dialog v-model="item.dialog"
+                                </v-dialog> -->
+                                <!-- 모델링 예제 다이얼로그 -->
+                                <!-- <v-dialog v-model="item.dialog"
                                     v-if="item.dialogType === 'examples'"
                                 >
                                     <v-card style="padding:10px; height:85vh; overflow:auto;">
@@ -190,11 +175,31 @@
                                             </v-col>
                                         </v-row>
                                     </v-card>
-                                </v-dialog>
+                                </v-dialog> -->
                             </v-col>
-                            <!-- 강의신청 -->
+                            <!-- 아카데미 -->
                             <v-col
-                                lg="3"
+                                lg="4"
+                                md="4"
+                                sm="6"
+                                xs="12"
+                            >
+                                <v-card style="height:100%;"
+                                    outlined
+                                    @click="navigateTo('/courses')"
+                                >
+                                    <v-card-title class="justify-center">{{ $t('mainNavSubCard.Academy') }}</v-card-title>
+                                    <v-img 
+                                        src="/static/image/main/mainSubLectures.png"
+                                        style="cursor: pointer; height:200px;"
+                                    >
+                                    </v-img>
+                                    <v-card-subtitle style="margin-bottom:20px;">{{  }}</v-card-subtitle>
+                                </v-card>
+                            </v-col>
+                            <!-- 교육신청 -->
+                            <v-col
+                                lg="4"
                                 md="4"
                                 sm="6"
                                 xs="12"
@@ -606,6 +611,11 @@
                         ko: 'https://intro-kor.msaez.io/info/partnership',
                         en: 'https://intro.msaez.io/info/partnership'
                     },
+                    {
+                        type: 'business',
+                        ko: 'https://intro-kor.msaez.io/business/',
+                        en: 'https://intro.msaez.io/business/'
+                    },
                 ],
                 navSubCards: [
                     {
@@ -615,13 +625,13 @@
                         dialogType: 'tutorial',
                         dialog: false,
                     },
-                    {
-                        title: 'mainNavSubCard.examples',
-                        image: '/static/image/main/mainSubExamples.png',
-                        subtitle: 'mainNavSubCard.examples-inst',
-                        dialogType: 'examples',
-                        dialog: false,
-                    },
+                    // {
+                    //     title: 'mainNavSubCard.examples',
+                    //     image: '/static/image/main/mainSubExamples.png',
+                    //     subtitle: 'mainNavSubCard.examples-inst',
+                    //     dialogType: 'examples',
+                    //     dialog: false,
+                    // },
                 ],
                 navLearnTutorialCards: [
                     {
@@ -848,7 +858,6 @@
             console.log('Ev beforeDestroy')
         },
         async created() {
-            this.$EventBus.$on('goToLectures', this.navigateTo);
             this.labURL = window.location.href.split('/');
             this.showLoading = true;
             this.$EventBus.$emit('showNewButton', true);
@@ -1765,6 +1774,9 @@
 </script>
 
 <style>
+    .main-nav-tab-home {
+        display:none;
+    }
     .main-nav-tabs-box {
         margin-top:-78px;
         margin-bottom:10px;
@@ -2003,6 +2015,9 @@
     }
 
     @media only screen and (max-width: 599px) {
+        .main-nav-tab-home {
+            display:block;
+        }
         .main-logo-image {
             display:block;
         }
