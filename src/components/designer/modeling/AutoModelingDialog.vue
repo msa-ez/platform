@@ -17,6 +17,7 @@
             </v-row>
             <v-card-text style="font-weight: 500;">
                 <v-text-field
+                    class="auto-modeling-text"
                     style="margin-bottom: -30px;"
                     v-model="projectInfo.prompt"
                     solo
@@ -81,7 +82,7 @@
                                         style="padding:10px;"
                                     >
                                         <v-col style="text-align: center;">
-                                            <v-card :style="genType == 'CJM' ? 'border: solid darkturquoise;':'background-color: white;'" >
+                                            <v-card :style="genType == 'CJM' ? 'border: solid darkturquoise;':'background-color: white;'" class="auto-cjm" >
                                                 <div @click="checkLogin('CJM')" style="cursor: pointer; ">
                                                     <v-avatar
                                                         class="ma-3"
