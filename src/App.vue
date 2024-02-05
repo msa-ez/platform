@@ -123,9 +123,16 @@
                                 outlined
                                 style="padding:15px; height:100%; position: relative;"
                             >
-                                <div style="font-weight: 500; font-size:18px; color:black;">
-                                    {{$t(item.title)}}
-                                </div>
+                                <v-row class="ma-0">
+                                    <div style="font-weight: 500; font-size:18px; color:black;">
+                                        {{$t(item.title)}}
+                                    </div>
+                                    <v-spacer></v-spacer>
+                                    <v-chip v-if="item.tagStatus === 'HOT'" class="gs-hot-chip" small>
+                                        {{ item.tagStatus }}
+                                    </v-chip>
+                                    <v-chip v-else outlined small color="green">{{ item.tagStatus }}</v-chip>
+                                </v-row>
                                 <v-row>
                                     <v-col cols="12">
                                         <v-img @click.native="moveToModel(item.type)"
@@ -165,9 +172,16 @@
                                 outlined
                                 style="padding:15px; height:100%; position: relative;"
                             >
-                                <div style="font-weight: 500; font-size:18px; color:black;">
-                                    {{$t(item.title)}}
-                                </div>
+                                <v-row class="ma-0">
+                                    <div style="font-weight: 500; font-size:18px; color:black;">
+                                        {{$t(item.title)}}
+                                    </div>
+                                    <v-spacer></v-spacer>
+                                    <v-chip v-if="item.tagStatus === 'HOT'" class="gs-hot-chip" small>
+                                        {{ item.tagStatus }}
+                                    </v-chip>
+                                    <v-chip v-else outlined small color="green">{{ item.tagStatus }}</v-chip>
+                                </v-row>
                                 <v-row>
                                     <v-col cols="12">
                                         <v-img @click.native="moveToModel(item.type)"
@@ -207,9 +221,16 @@
                                 outlined
                                 style="padding:15px; height:100%; position: relative;"
                             >
-                                <div style="font-weight: 500; font-size:18px; color:black;">
-                                    {{$t(item.title)}}
-                                </div>
+                                <v-row class="ma-0">
+                                    <div style="font-weight: 500; font-size:18px; color:black;">
+                                        {{$t(item.title)}}
+                                    </div>
+                                    <v-spacer></v-spacer>
+                                    <v-chip v-if="item.tagStatus === 'HOT'" class="gs-hot-chip" small>
+                                        {{ item.tagStatus }}
+                                    </v-chip>
+                                    <v-chip v-else outlined small color="green">{{ item.tagStatus }}</v-chip>
+                                </v-row>
                                 <v-row>
                                     <v-col cols="12">
                                         <v-img @click.native="moveToModel(item.type)"
@@ -249,9 +270,16 @@
                                 outlined
                                 style="padding:15px; height:100%; position: relative;"
                             >
-                                <div style="font-weight: 500; font-size:18px; color:black;">
-                                    {{$t(item.title)}}
-                                </div>
+                                <v-row class="ma-0">
+                                    <div style="font-weight: 500; font-size:18px; color:black;">
+                                        {{$t(item.title)}}
+                                    </div>
+                                    <v-spacer></v-spacer>
+                                    <v-chip v-if="item.tagStatus === 'HOT'" class="gs-hot-chip" small>
+                                        {{ item.tagStatus }}
+                                    </v-chip>
+                                    <v-chip v-else outlined small color="green">{{ item.tagStatus }}</v-chip>
+                                </v-row>
                                 <v-row>
                                     <v-col cols="12">
                                         <v-img @click.native="moveToModel(item.type)"
@@ -774,6 +802,7 @@
                     image: '/static/image/main/mainBMC.png',
                     subtitle: 'tools.bm-inst',
                     disabled: true,
+                    tagStatus: 'BETA'
                 },
                 {
                     type: 'cjm', 
@@ -781,6 +810,7 @@
                     image: 'https://miro.medium.com/v2/resize:fit:0/1*GeerSkalcxLlE3bp83i1XA.png',
                     subtitle: 'tools.cjm-inst',
                     disabled: true,
+                    tagStatus: 'BETA'
                 },
                 {
                     type: 'sticky', 
@@ -788,6 +818,7 @@
                     subtitle: 'tools.sticky-inst',
                     image: '/static/image/main/mainSticky.png',
                     disabled: true,
+                    tagStatus: 'BETA'
                 },
                 {
                     type: 'userStoryMap', 
@@ -795,6 +826,7 @@
                     subtitle: 'tools.userStoryMap-inst',
                     image: '/static/image/userStoryMap.png',
                     disabled: true,
+                    tagStatus: 'BETA'
                 },
             ],
             design : [
@@ -804,6 +836,7 @@
                     image: '/static/image/main/mainModeling.png',
                     subtitle: 'tools.eventstorming-inst',
                     disabled: false,
+                    tagStatus: 'HOT'
                 },
                 {
                     type: 'uml', 
@@ -811,6 +844,7 @@
                     image: '/static/image/main/mainUml.png',
                     subtitle: 'tools.uml-inst',
                     disabled: true,
+                    tagStatus: 'BETA'
                 },
                 {
                     type: 'bpmn', 
@@ -818,6 +852,7 @@
                     image: '/static/image/main/mainBPMN.png',
                     subtitle: 'tools.bpmn-inst',
                     disabled: false,
+                    tagStatus: 'BETA'
                 },
             ],
             development : [
@@ -827,6 +862,7 @@
                     image: '/static/image/main/maink8s.png',
                     subtitle: 'tools.kubernetes-inst',
                     disabled: false,
+                    tagStatus: 'BETA'
                 },
             ],
             makingProject : [
@@ -836,6 +872,7 @@
                     image: '/static/image/main/mainProject.png',
                     subtitle: 'tools.project-inst',
                     disabled: true,
+                    tagStatus: 'BETA'
                 },
             ],
             selectedItem: null,
