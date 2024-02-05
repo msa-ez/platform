@@ -143,12 +143,12 @@
                                         </v-col>
                                         <v-col style="text-align: center;">
                                             <v-card :style="genType == 'ES2' ? 'border: solid darkturquoise;':'background-color: white;'">
-                                                <v-chip class="gs-hot-chip" x-small
+                                                <v-chip class="gs-stable-chip" x-small
                                                     style="position: absolute;
                                                     right: 5px;
                                                     top: 5px;
                                                     z-index: 1;"
-                                                >HOT</v-chip>
+                                                >Stable</v-chip>
                                                 <div @click="checkLogin('ES2')" style="cursor: pointer;">
                                                     <v-avatar
                                                         class="ma-3"

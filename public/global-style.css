@@ -206,21 +206,13 @@ pre[class*="language-"] {
 
 
 /* card hot 표시 관련 스타일 */
-.gs-hot-chip {
-    background-color: red !important;
-    animation: hot-chip-blink-effect 1.5s infinite;
+.gs-stable-chip {
+    background-color: green !important;
 }
 
-@keyframes hot-chip-blink-effect {
-    100% { opacity: 1; }
-    30% { opacity: 0.3; }
+.gs-stable-chip .v-chip__content {
+    color:white !important;
 }
-
-.gs-hot-chip .v-chip__content {
-    color:white;
-}
-
-
 /* Code blocks */
 pre[class*="language-"] {
 	padding: 1em;
