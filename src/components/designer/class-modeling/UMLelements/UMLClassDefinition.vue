@@ -326,6 +326,13 @@
         created: function () {
         },
         watch: {
+            "value": {
+                deep: true,
+                handler(newVal, oldVal) {
+                    var me = this;
+                    me.refreshImg();
+                }
+            },
             "value.name": {
                 deep: true,
                 handler(newVal, oldVal) {

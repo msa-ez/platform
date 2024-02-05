@@ -478,6 +478,16 @@
                                     "label": "- id: Long",
                                     "isList": false,
                                 });
+                                me.value.fieldDescriptors = me.value.fieldDescriptors.reduce((acc, current) => {
+                                    const duplicate = acc.find(item => item.name === current.name && item.className === current.className && item.isVO === current.isVO);
+                                    if (duplicate) {
+                                        // If any of the duplicates has isKey as true, set isKey to true
+                                        duplicate.isKey = duplicate.isKey || current.isKey;
+                                    } else {
+                                        acc.push(current);
+                                    }
+                                    return acc;
+                                }, []);
                             }
                         }
                     }
