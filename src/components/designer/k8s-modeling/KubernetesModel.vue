@@ -1,14 +1,14 @@
 <template>
-    <CustomerJourneyMapCanvas :key="componentKey" :render-count="componentKey" @forceUpdateKey="forceRerender()"/>
+    <KubernetesModelCanvas :key="componentKey" :render-count="componentKey" @forceUpdateKey="forceRerender()"/>
 </template>
 
 <script>
-    import CustomerJourneyMapCanvas from './CustomerJourneyMapCanvas.vue'
+    import KubernetesModelCanvas from './KubernetesModelCanvas.vue'
 
     export default {
-        name: 'customer-journey-map',
+        name: 'kubernetes-model',
         components: {
-            CustomerJourneyMapCanvas
+            KubernetesModelCanvas
         },
         data() {
             return {

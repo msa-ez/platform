@@ -1,14 +1,14 @@
 <template>
-    <CustomerJourneyMapCanvas :key="componentKey" :render-count="componentKey" @forceUpdateKey="forceRerender()"/>
+    <UserStoryMapCanvas :key="componentKey" :render-count="componentKey" @forceUpdateKey="forceRerender()"/>
 </template>
 
 <script>
-    import CustomerJourneyMapCanvas from './CustomerJourneyMapCanvas.vue'
+    import UserStoryMapCanvas from './UserStoryMapCanvas.vue'
 
     export default {
-        name: 'customer-journey-map',
+        name: 'user-story-map',
         components: {
-            CustomerJourneyMapCanvas
+            UserStoryMapCanvas
         },
         data() {
             return {

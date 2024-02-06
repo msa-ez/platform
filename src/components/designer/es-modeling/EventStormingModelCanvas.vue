@@ -2271,9 +2271,8 @@
                         label: "Event",
                         width: "100",
                         height: "100",
-                        src: `${
-                            window.location.protocol + "//" + window.location.host
-                        }/static/image/event/event.png`,
+                        src: `${window.location.protocol + "//" + window.location.host}/static/image/event/event.png`,
+                        // image: `${ window.location.protocol + "//" + window.location.host}/static/image/event/event.svg`
                     },
                     {
                         icon: "bpmn-icon-start-event-none", //'OG.shape.essencia.Alpha',
@@ -2783,14 +2782,18 @@
                     me.changedByMe = true;
                 }
             },
-            async synchronizeAssociatedProject(associatedProject, newId) {
+            async synchronizeAssociatedProject(associatedProject, newId, oldId) {
                 var me = this;
                 if(!associatedProject) return;
 
                 let lists = await me.list(`db://definitions/${associatedProject}/information/eventStorming`);
                 let index = -1;
                 if (lists && lists.modelList) {
-                    index = lists.modelList.findIndex((x) => x == newId);
+                    if(oldId) {
+                        index = lists.modelList.findIndex((id) => id == oldId);
+                    } else {
+                        index = lists.modelList.findIndex((id) => id == newId); //duplicate
+                    }
                     index = index == -1 ? lists.modelList.length : index;
                 }
 
@@ -2993,6 +2996,7 @@
 
                 if (val && val.elements) {
                     if (val.projectName) me.projectName = val.projectName;
+                    if (val.associatedProject) me.information.associatedProject = val.associatedProject;
 
                     // Create Model in BoundedContext > Model Merge
                     let elements = JSON.parse(JSON.stringify(me.value.elements));

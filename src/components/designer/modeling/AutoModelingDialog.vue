@@ -292,6 +292,12 @@
                     return false
                 }
             },
+            genType: {
+                type: String,
+                default: function(){
+                    return null;
+                }
+            },
         },
         mixins: [StorageBase],
         components: {
@@ -323,7 +329,7 @@
                 reGenKey: 0,
                 autoScroll: true,
                 bmName: null,
-                genType: null,
+                // genType: null,
                 autoModelDialog: 0,
                 gptResponseId: null,
                 userPanel: 1,
@@ -636,22 +642,25 @@
                     var oldModelIndex = me.projectInfo.eventStorming.modelList.findIndex(x => x == changedInfo.old)
                     me.projectInfo.eventStorming.modelList[oldModelIndex] = changedInfo.new
                     me.projectInfo.eventStorming.modelList.__ob__.dep.notify()
-                }
-                if(changedInfo.type == 'bm'){
+                } else if(changedInfo.type == 'bm'){
                     var oldModelIndex = me.projectInfo.businessModel.modelList.findIndex(x => x == changedInfo.old)
                     me.projectInfo.businessModel.modelList[oldModelIndex] = changedInfo.new
                     me.projectInfo.businessModel.modelList.__ob__.dep.notify()
-                }
-                if(changedInfo.type == 'cjm'){
-                    var oldModelIndex = me.projectInfo.customerJourneyMap.modelList.findIndex(x => x == changedInfo.old)
-                    me.projectInfo.customerJourneyMap.modelList[oldModelIndex] = changedInfo.new
-                    me.projectInfo.customerJourneyMap.modelList.__ob__.dep.notify()
-                }
-                if(changedInfo.type == 'usm'){
+                } else if(changedInfo.type == 'usm'){
                     var oldModelIndex = me.projectInfo.userStoryMap.modelList.findIndex(x => x == changedInfo.old)
                     me.projectInfo.userStoryMap.modelList[oldModelIndex] = changedInfo.new
                     me.projectInfo.userStoryMap.modelList.__ob__.dep.notify()
+                } else if(changedInfo.type == 'cm'){
+                    var oldModelIndex = me.projectInfo.contextMapping.modelList.findIndex(x => x == changedInfo.old)
+                    me.projectInfo.contextMapping.modelList[oldModelIndex] = changedInfo.new
+                    me.projectInfo.contextMapping.modelList.__ob__.dep.notify()
+                }else if(changedInfo.type == 'cjm'){
+                    console.log('!!!', changedInfo);
+                    // var oldModelIndex = me.projectInfo.customerJourneyMap.modelList.findIndex(x => x == changedInfo.old)
+                    // me.projectInfo.customerJourneyMap.modelList[oldModelIndex] = changedInfo.new
+                    // me.projectInfo.customerJourneyMap.modelList.__ob__.dep.notify()
                 }
+                
                 me.backupProject();
             },
             openProjectDialog(){

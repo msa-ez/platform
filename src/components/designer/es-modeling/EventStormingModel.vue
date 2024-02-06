@@ -1,14 +1,14 @@
 <template>
-    <CustomerJourneyMapCanvas :key="componentKey" :render-count="componentKey" @forceUpdateKey="forceRerender()"/>
+    <EventStormingModelCanvas :key="componentKey" :render-count="componentKey" @forceUpdateKey="forceRerender()"/>
 </template>
 
 <script>
-    import CustomerJourneyMapCanvas from './CustomerJourneyMapCanvas.vue'
+    import EventStormingModelCanvas from "./EventStormingModelCanvas";
 
     export default {
-        name: 'customer-journey-map',
+        name: 'event-storming-model',
         components: {
-            CustomerJourneyMapCanvas
+            EventStormingModelCanvas
         },
         data() {
             return {

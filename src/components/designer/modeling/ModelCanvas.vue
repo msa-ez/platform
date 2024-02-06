@@ -895,6 +895,11 @@
 
         },
         methods: {
+            forceRerender(){
+                alert('1!!!!');
+                // console.log('!!')
+                // this.componentKey++;
+            },
             handleBeforeUnload(event) {        
                 // reload || close tab
                 console.log('reload')
@@ -1726,17 +1731,18 @@
             },
             async validateStorageCondition(item, action){
                 var me = this
+                if(!item.error) item.error = {};
 
-                var originProjectId = me.projectId
-                if(action == 'fork'){
-                    var convertProjectId = item.projectId ? item.projectId : me.dbuid();
-                } else {
-                    var convertProjectId = item.projectId ? item.projectId : originProjectId
-                }
-                // 빈칸 -> - 변경
+                // get Project
+                let originProjectId = me.projectId
+                let convertProjectId = item.projectId ? item.projectId : originProjectId
+                if(action == 'fork') convertProjectId = item.projectId ? item.projectId : me.dbuid();                
                 convertProjectId = convertProjectId.replaceAll(' ','-');
 
-                item.error = {};
+                if( convertProjectId.includes('/') ) item.error['projectId'] = 'ProjectId must be non-empty strings and can\'t contain  "/"'
+                
+                if( item.version == 'latest') item.error['version'] = 'The version name cannot be specified as "latest".'
+                
 
                 if(!item.connectedAssociatedProject && item.associatedProject){
                     // new connection.
@@ -1752,35 +1758,11 @@
                     }
                 }
 
-                if( convertProjectId.includes('/') ){
-                    item.error['projectId'] = 'ProjectId must be non-empty strings and can\'t contain  "/"'
-                }
-
-                if( item.version == 'latest'){
-                    item.error['version'] = 'The version name cannot be specified as "latest".'
-                }
-
-                // checked duplicate projectId
-                if( !action.includes('backup') ){
-
-                    var validateInfo = await me.isValidatePath(`db://definitions/${convertProjectId}/information`);
-                    if( !validateInfo.status ){
-                        item.error['projectId'] = validateInfo.msg
-                    }
-
-                    var information = await me.list(`db://definitions/${convertProjectId}/information`)
-                    if(information){
-                        item.error['projectId'] = 'This project id already exists.'
-                    }
-                }
-
                 // exists version
-                if( !action.includes('fork') ){
-                    // checked Version
-                    if( !item.version ){
-                        item.version = me.getNowDate();
-                    }
-
+                if( action.includes('backup') ){
+                    // BACKUP
+                    
+                    if( !item.version )item.version = me.getNowDate();
                     // validate Path
                     var validate = await me.isValidatePath(`db://definitions/${originProjectId}/versionLists/${item.version.replaceAll('.','-')}`)
                     if( !(validate.status && !item.version.replaceAll('.','-').includes('/') && !item.version.replaceAll('.','-').includes(':')) ){
@@ -1791,6 +1773,18 @@
                     var existVersion = await me.list(`db://definitions/${originProjectId}/versionLists/${item.version.replaceAll('.','-')}`)
                     if(existVersion){
                         item.error['version'] = 'This version already exists.'
+                    }
+                } else {
+                    // SAVE, FORK
+
+                    var validateInfo = await me.isValidatePath(`db://definitions/${convertProjectId}/information`);
+                    if( !validateInfo.status ){
+                        item.error['projectId'] = validateInfo.msg
+                    }
+
+                    var information = await me.list(`db://definitions/${convertProjectId}/information`)
+                    if(information){
+                        item.error['projectId'] = 'This project id already exists.'
                     }
                 }
 
@@ -1886,7 +1880,7 @@
             async saveModel() {
                 var me = this
                 me.$EventBus.$emit('progressValue', true);
-                await me.loadDefinitionLocal()
+                // await me.loadDefinitionLocal() ???
                 try {
                     var check = await me.validateStorageCondition(me.storageCondition, 'save');
                     if(check){
@@ -1932,6 +1926,12 @@
                             firstCommit: me.information && me.information.firstCommit ? me.information.firstCommit:null,
                             associatedProject: associatedProject
                         }
+                        
+                        Object.keys(me.information).forEach(function(key) {
+                            if( !informationObj[key] ){
+                                informationObj[key] = me.information[key]
+                            }
+                        })
 
                         let valueUrl = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(me.value));
                         let imagURL = await me.putString(`storage://definitions/${originProjectId}/versionLists/${projectVersion}/image`, img);
@@ -1959,14 +1959,6 @@
                         if(associatedProject){
                             // Sync connected associatedProject.
                             await me.synchronizeAssociatedProject(associatedProject, settingProjectId);
-
-                            // if channel disconnect not Sync.
-                            // me.modelCanvasChannel.postMessage({
-                            //     event: "ProjectIdChanged",
-                            //     type: me.canvasType,
-                            //     old: originProjectId,
-                            //     new: settingProjectId
-                            // });
                         }
 
 
@@ -1985,29 +1977,29 @@
                         me.putObject(`db://definitions/${settingProjectId}/versionLists/${projectVersion}`, versionInfoObj)
                         // me.putObject(`db://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, versionValueObj)
 
-                        console.log(settingProjectId, originProjectId)
+                        // remove Local Memory.
                         var lists = await me.getObject(`localstorage://localLists`)
                         var index = lists.findIndex(list => list.projectId == originProjectId)
-                        var location = 'storming'
-
                         if (index != -1) {
                             await me.delete(`localstorage://${originProjectId}`)
-                            if(me.canvasType == 'es') {
-                                location = 'storming'
-                            }else if (me.canvasType == 'k8s') {
-                                location = 'kubernetes'
-                            } else if (me.canvasType == 'bm') {
-                                location = 'business-model-canvas'
-                            } else if (me.canvasType == 'bpmn') {
-                                location = 'bpmn'
-                            } else {
-                                location = me.canvasType
-                            }
-
                             lists.splice(index, 1)
                             await me.putObject(`localstorage://localLists`, lists)
                         }
-                        
+
+                        // type
+                        var location = 'storming'
+                        if(me.canvasType == 'es') {
+                            location = 'storming'
+                        }else if (me.canvasType == 'k8s') {
+                            location = 'kubernetes'
+                        } else if (me.canvasType == 'bm') {
+                            location = 'business-model-canvas'
+                        } else if (me.canvasType == 'bpmn') {
+                            location = 'bpmn'
+                        } else {
+                            location = me.canvasType
+                        }
+
                         if (me.isClazzModeling) {
                             me.updateClassModelingId(settingProjectId);
                         } else {
@@ -2025,10 +2017,7 @@
                             me.$EventBus.$emit('progressValue', false)
                         }
 
-
-
                         me.storageDialogCancel()
-
                     } else {
                         this.storageCondition.loading = false
                         me.$EventBus.$emit('progressValue', false);
@@ -2042,7 +2031,7 @@
             moveModelUrl(modelId){
                 this.$router.push({path: `/${this.canvasType}/${modelId}`});
             },
-            synchronizeAssociatedProject(projectId, definitionId){},
+            synchronizeAssociatedProject(projectId, newId, oldId){},
             async checkedForkModel(){
                 var me = this
                 if(me.isServerModel){
@@ -2398,7 +2387,7 @@
                         // 기존 정보.
                         me.information = Object.assign(basicInformation,lists[index]);
                     } else {
-                        me.information = basicInformation;
+                        me.information = me.information ? Object.assign(me.information, basicInformation) : basicInformation;
                         lists.push(me.information)
                         me.putObject(`localstorage://localLists`, lists);
                     }

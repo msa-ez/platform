@@ -190,10 +190,14 @@ class AIGenerator {
                             let model = null;
                             if(me.client.onModelCreated){
                                 model = me.createModel(me.modelJson)
+                                if(me.client.input.associatedProject) model.associatedProject = me.client.input.associatedProject
+                                if(me.client.input.persona) model.persona = me.client.input.persona
                                 me.client.onModelCreated(model);
                             } 
                             // else {
                             if(me.client.onGenerationFinished)
+                                if(me.client.input.associatedProject) model.associatedProject = me.client.input.associatedProject
+                                if(me.client.input.persona) model.persona = me.client.input.persona
                                 me.client.onGenerationFinished(model)
                                 resolve(model); 
                             // }

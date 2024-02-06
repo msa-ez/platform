@@ -1,14 +1,14 @@
 <template>
-    <EventStormingModelCanvas :key="componentKey" :render-count="componentKey" @forceUpdateKey="forceRerender()"/>
+    <BusinessModelCanvas :key="componentKey" :render-count="componentKey" @forceUpdateKey="forceRerender()"/>
 </template>
 
 <script>
-    import EventStormingModelCanvas from "./EventStormingModelCanvas";
+    import BusinessModelCanvas from "./BusinessModelCanvas.vue";
 
     export default {
-        name: 'event-storming',
+        name: 'business-model',
         components: {
-            EventStormingModelCanvas
+            BusinessModelCanvas
         },
         data() {
             return {

@@ -25,7 +25,7 @@
                             sm="6"
                             cols="12"
                         >
-                            <v-col v-for="(persona) in value.personas" v-bind:key="persona.name">
+                            <v-col v-if="value.personas" v-for="(persona) in value.personas" v-bind:key="persona.name">
                                 <v-card style="text-align: center; min-width:200px; min-height:200px;"
                                     :style="state.persona == persona.persona ? 'border: solid darkturquoise;':''"
                                 >
@@ -148,8 +148,8 @@
             var me = this
             this.generator = new Generator(this);
             this.step=1;
-            
-            me.init()
+            this.init()
+        
         },
         data() {
             return {
@@ -298,22 +298,18 @@
                 if(!me.value.personas[personaIndex].modelList){
                     me.value.personas[personaIndex].modelList = []
                 }
-                if(me.isServerProject) me.value.personas[personaIndex].modelList.push(me.modelIds.CJMDefinitionId)
+
+                // if(me.isServerProject) me.value.personas[personaIndex].modelList.push(me.modelIds.CJMDefinitionId)
+                if(me.isServerProject) me.state.associatedProject = me.modelIds.projectId
                 me.selectPersona(me.value.personas[personaIndex])
                 me.$emit("input", me.value)
                 me.$emit("change", "customerJourneyMap")
 
-                me.state.title = me.value; // ? 
+                // me.state.title = me.value; // ? 
                     
-                let stateJson = JSON.stringify(
-                    me.state
-                );
-                
-                localStorage["gen-state"] = stateJson;
+                localStorage["gen-state"] = JSON.stringify(me.state);
                 window.open(`/#/cjm/${me.modelIds.CJMDefinitionId}`, "_blank")
                 me.isCreatedModel = true;
-               // window.open(`/#/sticky/${uuid}`, "_blank")
-//                this.$router.push({path: `sticky/${uuid}`});
             },
             uuid: function () {
                 function s4() {
