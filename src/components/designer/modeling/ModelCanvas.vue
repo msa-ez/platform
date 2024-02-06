@@ -987,13 +987,6 @@
                         }
                     } else {
                         await me.putString(`localstorage://image_${me.projectId}`, base64Img);
-
-                        // save iage in localstoage.
-                        // let imageObjects = await me.getObject(`localstorage://serverImageLists`);
-                        // if( !imageObjects ) imageObjects = {}
-                        //
-                        // imageObjects[me.projectId] = img
-                        // await me.putObject(`localstorage://serverImageLists`, imageObjects);
                     }
                 }
 
@@ -1896,15 +1889,6 @@
 
                         let img = await me.$refs['modeler-image-generator'].save(me.projectName, me.canvas);
 
-                        // input image storage.
-                        /** 
-                         * TODO: 분기 처리 필요
-                         * Issue: storage 자체는 설치형에서 사용 할 수 없음 (Cloud Storage)
-                         * 따라서 이미지 저장 / 호출 부분을 Acebase쪽으로 이관
-                         * */ 
-                    
-                        // await me.putString(`storage://definitions/${settingProjectId}/information/image`, img);
-
                         var userInfoObj = {
                             uid: me.userInfo.uid,
                             name: me.userInfo.name,
@@ -1933,8 +1917,9 @@
                         })
 
                         let valueUrl = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(me.value));
-                        let imagURL = await me.putString(`storage://definitions/${originProjectId}/versionLists/${projectVersion}/image`, img);
-                        console.log(settingProjectId, originProjectId)
+                        let imagURL = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/image`, img);
+
+                        // console.log(settingProjectId, originProjectId)
                         var versionInfoObj = {
                             saveUser: me.userInfo.uid,
                             saveUserEmail: me.userInfo.email,
@@ -1958,13 +1943,19 @@
                         if(associatedProject){
                             // Sync connected associatedProject.
                             await me.synchronizeAssociatedProject(associatedProject, settingProjectId);
+                            await me.putString(`storage://definitions/${associatedProject}/information/image`, img);
                         }
 
-
+                        /** 
+                         * TODO: 분기 처리 필요
+                         * Issue: storage 자체는 설치형에서 사용 할 수 없음 (Cloud Storage)
+                         * 따라서 이미지 저장 / 호출 부분을 Acebase쪽으로 이관
+                         * */ 
+                        if(true) {
+                            await me.putString(`storage://definitions/${settingProjectId}/information/image`, img);
+                        }
                         if ( me.isQueueModel ) {
                             me.pushObject(`db://definitions/${settingProjectId}/snapshotLists`, snapshotObj)
-                            // me.putObject(`db://definitions/${settingProjectId}`, snapshotSpecObj)
-                            // me.specVersion = '3.0'
                         }
 
                         me.onCreateGitTagName(me.storageCondition);
