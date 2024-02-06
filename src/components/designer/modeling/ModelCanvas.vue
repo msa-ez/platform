@@ -895,20 +895,16 @@
 
         },
         methods: {
-            forceRerender(){
-                alert('1!!!!');
-                // console.log('!!')
-                // this.componentKey++;
-            },
             handleBeforeUnload(event) {        
                 // reload || close tab
                 console.log('reload')
                 this.exitUser()
                 this.releaseMoveEvents();
             },
-            handleUnload(event) {
+            async handleUnload(event) {
                 // // close tab
                 console.log('close tab')
+                await this.executeBeforeDestroy()
                 // this.saveComposition('save');
                 // console.log("Tab or browser is being closed");
 

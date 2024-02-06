@@ -1,5 +1,5 @@
 <template xmlns:v-on="http://www.w3.org/1999/xhtml">
-    <div class="canvas-panel" style="left:0" @forceUpdateKey="forceRerender()" :key="componentKey">
+    <div class="canvas-panel" style="left:0">
         <v-overlay v-if="showOverlay">
             <v-col align="center">
                 <div>{{ showOverlay }}</div>
