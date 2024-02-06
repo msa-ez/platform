@@ -986,6 +986,9 @@
                     if(me.isServerModel){
                         // save image in cloud storage
                         await me.putString(`storage://definitions/${me.projectId}/information/image`, base64Img);
+                        if(me.information.associatedProject){
+                            await me.putString(`storage://definitions/${me.information.associatedProject}/information/image`, base64Img);
+                        }
                     } else {
                         await me.putString(`localstorage://image_${me.projectId}`, base64Img);
 
@@ -3478,104 +3481,22 @@
                 me.watch(`db://definitions/${associatedProjectId}/information`, function (information) {
                     let old = JSON.parse(JSON.stringify(me.projectInformation));
                     me.projectInformation = information ? information : null
-                    me.detectDeletedModel(old);
+                    me.watchDeletedModel(old);
                 })
             },
-            detectDeletedModel(info){
+            watchDeletedModel(info){
                 // reload condition.
+                return;
             },
-            async receiveAssociatedProject(associatedProjectId){
-                var me = this
-                let startKey = '';
-
-                me.isLoadedInitMirror = false;
-                me.projectInformation = await me.list(`db://definitions/${associatedProjectId}/information`);
-
-                if(!me.projectInformation) return; // local
-
-                // server
-                // TODO: Snapshot Logic.
-                let snapshots = await me.list(`db://definitions/${associatedProjectId}/snapshotLists`, {
-                    sort: "desc",
-                    orderBy: null,
-                    size: 1,
-                    startAt: null,
-                    endAt: null,
-
-                })
-
-                if (snapshots) {
-                    startKey = snapshots[0].lastSnapshotKey ? snapshots[0].lastSnapshotKey : ''
-                    me.mirrorValue = JSON.parse(snapshots[0].snapshot);
-                } else {
-                    startKey = ''
-                    me.mirrorValue =
-                    {
-                        'elements': {},
-                        'relations': {},
-                        'basePlatform': null,
-                        'basePlatformConf': {},
-                        'toppingPlatforms': null,
-                        'toppingPlatformsConf': {},
-                        'scm': {}
-                    }
-                }
-
-
-                let isWaitingQueue = null
-                let waitingTime = startKey ? 10000 : 3000
-                isWaitingQueue = setTimeout(function () {
-                    /* receivedSnapshot End */
-                    me.isLoadedInitMirror = true;
-                    me.watchProjectInformation(associatedProjectId)
-                }, waitingTime)
-
-
-                // TODO: Qeuue Logic.
-                me.watch_added(`db://definitions/${associatedProjectId}/queue`, {
-                    sort: null,
-                    orderBy: null,
-                    size: null,
-                    startAt: startKey,
-                    endAt: null,
-                }, async function (queue) {
-
-                    if( queue.action.includes('user') ){
-                        return;
-                    }
-                    me.isLoadedMirrorQueue = true
-                    clearTimeout(isWaitingQueue);
-
-                    var obj = {
-                        _ordered: false,
-                        childKey: queue.key,
-                        childValue: queue,
-                        isMirrorQueue: true,
-                    }
-                    obj.childValue.key = queue.key;
-                    obj.childValue.receivedTime = Date.now();
-
-                    me.receivedQueueDrawElement(obj, true);
-                    me.mirrorQueueCount++;
-
-                    me.saveAssociatedModelSnapshot(associatedProjectId, queue)
-
-                    isWaitingQueue = setTimeout(function () {
-                        /* receivedSnapshot End */
-                        if(!me.isLoadedInitMirror){
-                            me.isLoadedInitMirror = true;
-                            me.watchProjectInformation(associatedProjectId)
-                        }
-                        me.isLoadedMirrorQueue = false;
-                    }, 1000)
-                });
+            receiveAssociatedProject(associatedProjectId){
+                return;
             },
-            getProjectDefinitionLists(){
+            modelListOfassociatedProject(){
                 return []
             },
             syncMirrorElements() {
                 var me = this;
-                let modelLists = me.getProjectDefinitionLists()
+                let modelLists = me.modelListOfassociatedProject()
                 let disconnectDiff = {'elements': {}}
                 Object.values(me.value.elements)
                     .filter((ele) => ele && ele.mirrorElement)
