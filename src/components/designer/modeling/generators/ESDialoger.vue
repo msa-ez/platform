@@ -140,7 +140,8 @@
                     title: this.prompt,
                     separationPrinciple:  "Conway's Principle.", // "Business Capability" // "Infra Diversity" // "Per Persona",
                     businessModel: this.cachedModels["BMGenerator"],
-                    painpointAnalysis: this.cachedModels["CJMGenerator"]
+                    painpointAnalysis: this.cachedModels["CJMGenerator"],
+                    personas: this.cachedModels["Personas"]
                 },
                 done: false,
                 generator: null,

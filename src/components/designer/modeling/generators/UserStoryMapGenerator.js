@@ -14,8 +14,8 @@ export default class UserStoryMapGenerator extends JsonAIGenerator{
 
         if(this.client.input.painpointAnalysis){
             let modelPerPersona = this.client.input.painpointAnalysis
+            modelDescription += "Persona definition and he(or her)'s painpoints and possible solutions as follows: \n\n"
             Object.keys(this.client.input.painpointAnalysis).forEach(persona=>{
-                modelDescription += "Persona definition and he(or her)'s painpoints and possible solutions as follows: \n\n"
                 modelDescription +="- "+ persona + "\n"
                 let relations = modelPerPersona[persona].relations
                 Object.keys(relations).forEach(key=>{
@@ -63,13 +63,13 @@ ${modelDescription}
   {
     "user-activities": [
       {
-        "name": "Name of the UserActivity",
+        "name": "Name of the user activity",
         "user-tasks": [
           {
-            "name": "Name of the UserTask",
+            "name": "Name of the user task",
             "user-stories": [
               {
-                "name": "Name of the UserStory"
+                "name": "Name of the user story"
                 "as": "Persona",
                 "iWant": "Action",
                 "soThat": "Purpose",

@@ -204,6 +204,15 @@ pre[class*="language-"] {
 	hyphens: none;
 }
 
+
+/* card hot 표시 관련 스타일 */
+.gs-stable-chip {
+    background-color: green !important;
+}
+
+.gs-stable-chip .v-chip__content {
+    color:white !important;
+}
 /* Code blocks */
 pre[class*="language-"] {
 	padding: 1em;
@@ -724,13 +733,6 @@ code[class*=language-]:nth-child(1) {
         width:450px;
     }
 }
-
-@media only screen and (max-width:972px) {
-    .theme--dark.v-overlay {
-        display:none;
-    }
-}
-
 
 @media only screen and (max-width:961px) and (min-width:898px) {
     .gs-main-page-top-title {

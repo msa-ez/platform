@@ -19,6 +19,7 @@
                         :style="isMobile ? 'width: 65%; margin-top: 56px;':'width: 25%; margin-top: 65px;'"
                         :fixed="true"
                         :temporary="isMobile"
+                        hide-overlay
                     >
                         <v-list-item>
                             <v-tooltip bottom>

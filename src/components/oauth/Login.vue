@@ -79,7 +79,7 @@
                     <div class="text-center">
                         <v-btn @click="snsLogin('github')" class="login-btn git-login-btn" color="black" style="margin-right:20px; margin-top:0px;">
                             <v-col>
-                                <Icon icon="fa6-brands:github" width="40" height="40" style="color: white" />
+                                <Icon class="git-button" icon="fa6-brands:github" width="40" height="40" style="color: white" />
                                 <div style="color:white; white-space: normal; word-wrap: break-word; text-align: center; margin-top:5px;">
                                     Continue<br>
                                     With<br>
@@ -113,7 +113,7 @@
             <v-row class="ma-0 pa-0">
                 <v-col class="ma-0" style="padding:20px 10px;">
                     <div style="font-size: 28px; font-weight: 700; text-align: center; padding:15px;">Welcome to MSAEZ</div>
-                    <div style="text-align: center; font-size:14px; margin-bottom:25px;">
+                    <div style="text-align: center; font-size:13px; margin-bottom:25px;">
                         <div>{{$t('loginList.LoginInformation1')}}</div>
                         <div>{{$t('loginList.LoginInformation2')}}</div>
                     </div>

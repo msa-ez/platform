@@ -415,7 +415,7 @@
             <template v-slot:two>
                 <!-- v-if="embedded" -->
                 <CodeGenerator
-                    v-model="value"
+                    v-model="codeGenValue"
                     :isOwnModel="isOwnModel"
                     :isServerModel="isServerModel"
                     :projectInformation="information"
@@ -479,9 +479,11 @@
         },
         props: {
             aggregateRootList: Array,
+            esValue: Object,
         },
         data() {
             return {
+                codeGenValue: null,
                 autoScroll: true,
                 dummyMessage: {
                     text: "What do you want to create?",
@@ -1068,6 +1070,17 @@
             },
             openCommandViewer() {
                 var me = this
+                let dummyValue
+                if(me.embedded){
+                    me.esValue.elements[me.aggregateRootList[0].id].aggregateRoot.entities.elements = me.value.elements
+                    me.esValue.elements[me.aggregateRootList[0].id].aggregateRoot.entities.relations = me.value.relations
+                    dummyValue = me.esValue
+                } else {
+                    dummyValue = JSON.parse('{"elements":{"boundedContext_uid":{"_type":"org.uengine.modeling.model.BoundedContext","id":"boundedContext_uid","name":"BoundedContext","oldName":"BoundedContext","description":null,"author":"author","aggregates":[{"id":"aggregate_uid"}],"policies":[],"members":[],"views":[],"gitURL":null,"elementView":{"_type":"org.uengine.modeling.model.BoundedContext","id":"boundedContext_uid","x":497,"y":438,"width":350,"height":350,"style":"{}"},"hexagonalView":{"_type":"org.uengine.modeling.model.BoundedContextHexagonal","id":"boundedContext_uid","x":497,"y":438,"width":350,"height":350,"style":"{}"},"portGenerated":0,"tempId":"","templatePerElements":{},"preferredPlatform":"spring-boot","preferredPlatformConf":{},"rotateStatus":false},"aggregate_uid":{"_type":"org.uengine.modeling.model.Aggregate","id":"aggregate_uid","name":"Aggregate","oldName":"","namePlural":"aggregates","namePascalCase":"Aggregate","nameCamelCase":"aggregate","author":"author","description":null,"mirrorElement":null,"elementView":{"_type":"org.uengine.modeling.model.Aggregate","id":"aggregate_uid","x":502,"y":435,"width":100,"height":100,"style":"{}"},"hexagonalView":{"_type":"org.uengine.modeling.model.AggregateHexagonal","id":"aggregate_uid","width":150,"height":50,"style":"{}"},"boundedContext":{"id":"boundedContext_uid"},"aggregateRoot":{"_type":"org.uengine.modeling.model.AggregateRoot","fieldDescriptors":[{"_type":"org.uengine.model.FieldDescriptor","name":"id","className":"Long","nameCamelCase":"id","namePascalCase":"Id","isKey":true}],"entities":{"elements":{},"relations":{}},"operations":[]},"events":[],"commands":[],"visibility":"public","rotateStatus":false}},"relations":{},"version":3,"scm":{"tag":null,"org":null,"repo":null,"forkedOrg":null,"forkedRepo":null},"basePlatform":null,"basePlatformConf":{},"toppingPlatforms":[],"toppingPlatformsConf":{},"k8sValue":{"elements":{},"relations":{}}}')
+                    dummyValue.elements["aggregate_uid"].aggregateRoot.entities.elements = me.value.elements
+                    dummyValue.elements["aggregate_uid"].aggregateRoot.entities.relations = me.value.relations
+                }
+                me.codeGenValue = dummyValue
                 me.openSeparatePanel()
             },
             getComponent(componentName) {

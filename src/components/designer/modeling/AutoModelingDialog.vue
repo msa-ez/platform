@@ -17,6 +17,7 @@
             </v-row>
             <v-card-text style="font-weight: 500;">
                 <v-text-field
+                    class="auto-modeling-text"
                     style="margin-bottom: -30px;"
                     v-model="projectInfo.prompt"
                     solo
@@ -81,7 +82,7 @@
                                         style="padding:10px;"
                                     >
                                         <v-col style="text-align: center;">
-                                            <v-card :style="genType == 'CJM' ? 'border: solid darkturquoise;':'background-color: white;'" >
+                                            <v-card :style="genType == 'CJM' ? 'border: solid darkturquoise;':'background-color: white;'" class="auto-cjm" >
                                                 <div @click="checkLogin('CJM')" style="cursor: pointer; ">
                                                     <v-avatar
                                                         class="ma-3"
@@ -142,6 +143,12 @@
                                         </v-col>
                                         <v-col style="text-align: center;">
                                             <v-card :style="genType == 'ES2' ? 'border: solid darkturquoise;':'background-color: white;'">
+                                                <v-chip class="gs-stable-chip" x-small
+                                                    style="position: absolute;
+                                                    right: 5px;
+                                                    top: 5px;
+                                                    z-index: 1;"
+                                                >Stable</v-chip>
                                                 <div @click="checkLogin('ES2')" style="cursor: pointer;">
                                                     <v-avatar
                                                         class="ma-3"

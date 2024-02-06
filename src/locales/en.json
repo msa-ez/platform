@@ -57,17 +57,15 @@
     "content7": "iterate on implementation until issues in compilation and functionality are resolved",
     "content8": "by finding solutions online and passing tests.",
     "goToUrlText": "Learn more",
-    "goToLearn" : "Learn",
-    "goToLectures" : "Lectures"
-
+    "goToLearn" : "Learn"
   },
   "mainNavSubCard" : {
     "tutorial": "Tutorial",
     "tutorial-inst": "",
     "examples": "Mdeling Examples",
     "examples-inst": "",
-    "goToLectures" : "Lectures",
-    "goToLectures-inst" : "",
+    "Academy" : "Academy",
+    "Academy-inst" : "",
     "training" : "Training",
     "training-inst" : ""
   },
