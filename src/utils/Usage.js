@@ -41,9 +41,9 @@ class Usage {
             issuedTimeStamp: me.issuedTimeStamp,
             expiredTimeStamp: me.expiredTimeStamp,
             userUid: userInfo.uid,
-            userName: userInfo.name,
+            userName: userInfo.name ? userInfo.name : null,
             userEmail: userInfo.email,
-            userRegion: userInfo.region,
+            userRegion: userInfo.region ? userInfo.region : null,
             tenant: userInfo.tenant,
         }
         // add metadata
