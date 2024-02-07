@@ -43,7 +43,7 @@ class Usage {
             userUid: userInfo.uid,
             userName: userInfo.name,
             userEmail: userInfo.email,
-            userRegion: userInfo.region,
+            userRegion: userInfo.region ? userInfo.region : null,
             tenant: userInfo.tenant,
         }
         // add metadata
