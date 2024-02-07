@@ -439,7 +439,7 @@
                     me.canvas.openSelectionMirrorElement(me, equalsElements);
                 }
             },
-            onMoveAction(){
+            onMoveAction(executeRecursion){
                 var me = this
                 if(me.value.mirrorElement ) return;
                 if(me.isPBCModel) return;

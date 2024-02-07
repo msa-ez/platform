@@ -378,7 +378,7 @@
             onChangedElementName(newVal, oldVal){
                 this.setMirrorElementId();
             },
-            onMoveAction(){
+            onMoveAction(executeRecursion){
                 var me = this
                 if( me.value.mirrorElement ) return;
 
