@@ -895,20 +895,16 @@
 
         },
         methods: {
-            forceRerender(){
-                alert('1!!!!');
-                // console.log('!!')
-                // this.componentKey++;
-            },
             handleBeforeUnload(event) {        
                 // reload || close tab
                 console.log('reload')
                 this.exitUser()
                 this.releaseMoveEvents();
             },
-            handleUnload(event) {
+            async handleUnload(event) {
                 // // close tab
                 console.log('close tab')
+                await this.executeBeforeDestroy()
                 // this.saveComposition('save');
                 // console.log("Tab or browser is being closed");
 
@@ -986,15 +982,11 @@
                     if(me.isServerModel){
                         // save image in cloud storage
                         await me.putString(`storage://definitions/${me.projectId}/information/image`, base64Img);
+                        if(me.information.associatedProject){
+                            await me.putString(`storage://definitions/${me.information.associatedProject}/information/image`, base64Img);
+                        }
                     } else {
                         await me.putString(`localstorage://image_${me.projectId}`, base64Img);
-
-                        // save iage in localstoage.
-                        // let imageObjects = await me.getObject(`localstorage://serverImageLists`);
-                        // if( !imageObjects ) imageObjects = {}
-                        //
-                        // imageObjects[me.projectId] = img
-                        // await me.putObject(`localstorage://serverImageLists`, imageObjects);
                     }
                 }
 
@@ -1897,15 +1889,6 @@
 
                         let img = await me.$refs['modeler-image-generator'].save(me.projectName, me.canvas);
 
-                        // input image storage.
-                        /** 
-                         * TODO: 분기 처리 필요
-                         * Issue: storage 자체는 설치형에서 사용 할 수 없음 (Cloud Storage)
-                         * 따라서 이미지 저장 / 호출 부분을 Acebase쪽으로 이관
-                         * */ 
-                    
-                        // await me.putString(`storage://definitions/${settingProjectId}/information/image`, img);
-
                         var userInfoObj = {
                             uid: me.userInfo.uid,
                             name: me.userInfo.name,
@@ -1934,8 +1917,9 @@
                         })
 
                         let valueUrl = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(me.value));
-                        let imagURL = await me.putString(`storage://definitions/${originProjectId}/versionLists/${projectVersion}/image`, img);
-                        console.log(settingProjectId, originProjectId)
+                        let imagURL = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/image`, img);
+
+                        // console.log(settingProjectId, originProjectId)
                         var versionInfoObj = {
                             saveUser: me.userInfo.uid,
                             saveUserEmail: me.userInfo.email,
@@ -1959,13 +1943,19 @@
                         if(associatedProject){
                             // Sync connected associatedProject.
                             await me.synchronizeAssociatedProject(associatedProject, settingProjectId);
+                            await me.putString(`storage://definitions/${associatedProject}/information/image`, img);
                         }
 
-
+                        /** 
+                         * TODO: 분기 처리 필요
+                         * Issue: storage 자체는 설치형에서 사용 할 수 없음 (Cloud Storage)
+                         * 따라서 이미지 저장 / 호출 부분을 Acebase쪽으로 이관
+                         * */ 
+                        if(true) {
+                            await me.putString(`storage://definitions/${settingProjectId}/information/image`, img);
+                        }
                         if ( me.isQueueModel ) {
                             me.pushObject(`db://definitions/${settingProjectId}/snapshotLists`, snapshotObj)
-                            // me.putObject(`db://definitions/${settingProjectId}`, snapshotSpecObj)
-                            // me.specVersion = '3.0'
                         }
 
                         me.onCreateGitTagName(me.storageCondition);
@@ -3478,104 +3468,22 @@
                 me.watch(`db://definitions/${associatedProjectId}/information`, function (information) {
                     let old = JSON.parse(JSON.stringify(me.projectInformation));
                     me.projectInformation = information ? information : null
-                    me.detectDeletedModel(old);
+                    me.watchDeletedModel(old);
                 })
             },
-            detectDeletedModel(info){
+            watchDeletedModel(info){
                 // reload condition.
+                return;
             },
-            async receiveAssociatedProject(associatedProjectId){
-                var me = this
-                let startKey = '';
-
-                me.isLoadedInitMirror = false;
-                me.projectInformation = await me.list(`db://definitions/${associatedProjectId}/information`);
-
-                if(!me.projectInformation) return; // local
-
-                // server
-                // TODO: Snapshot Logic.
-                let snapshots = await me.list(`db://definitions/${associatedProjectId}/snapshotLists`, {
-                    sort: "desc",
-                    orderBy: null,
-                    size: 1,
-                    startAt: null,
-                    endAt: null,
-
-                })
-
-                if (snapshots) {
-                    startKey = snapshots[0].lastSnapshotKey ? snapshots[0].lastSnapshotKey : ''
-                    me.mirrorValue = JSON.parse(snapshots[0].snapshot);
-                } else {
-                    startKey = ''
-                    me.mirrorValue =
-                    {
-                        'elements': {},
-                        'relations': {},
-                        'basePlatform': null,
-                        'basePlatformConf': {},
-                        'toppingPlatforms': null,
-                        'toppingPlatformsConf': {},
-                        'scm': {}
-                    }
-                }
-
-
-                let isWaitingQueue = null
-                let waitingTime = startKey ? 10000 : 3000
-                isWaitingQueue = setTimeout(function () {
-                    /* receivedSnapshot End */
-                    me.isLoadedInitMirror = true;
-                    me.watchProjectInformation(associatedProjectId)
-                }, waitingTime)
-
-
-                // TODO: Qeuue Logic.
-                me.watch_added(`db://definitions/${associatedProjectId}/queue`, {
-                    sort: null,
-                    orderBy: null,
-                    size: null,
-                    startAt: startKey,
-                    endAt: null,
-                }, async function (queue) {
-
-                    if( queue.action.includes('user') ){
-                        return;
-                    }
-                    me.isLoadedMirrorQueue = true
-                    clearTimeout(isWaitingQueue);
-
-                    var obj = {
-                        _ordered: false,
-                        childKey: queue.key,
-                        childValue: queue,
-                        isMirrorQueue: true,
-                    }
-                    obj.childValue.key = queue.key;
-                    obj.childValue.receivedTime = Date.now();
-
-                    me.receivedQueueDrawElement(obj, true);
-                    me.mirrorQueueCount++;
-
-                    me.saveAssociatedModelSnapshot(associatedProjectId, queue)
-
-                    isWaitingQueue = setTimeout(function () {
-                        /* receivedSnapshot End */
-                        if(!me.isLoadedInitMirror){
-                            me.isLoadedInitMirror = true;
-                            me.watchProjectInformation(associatedProjectId)
-                        }
-                        me.isLoadedMirrorQueue = false;
-                    }, 1000)
-                });
+            receiveAssociatedProject(associatedProjectId){
+                return;
             },
-            getProjectDefinitionLists(){
+            modelListOfassociatedProject(){
                 return []
             },
             syncMirrorElements() {
                 var me = this;
-                let modelLists = me.getProjectDefinitionLists()
+                let modelLists = me.modelListOfassociatedProject()
                 let disconnectDiff = {'elements': {}}
                 Object.values(me.value.elements)
                     .filter((ele) => ele && ele.mirrorElement)

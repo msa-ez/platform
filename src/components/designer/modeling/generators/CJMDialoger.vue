@@ -225,6 +225,7 @@
                 me.state.modelList=persona.modelList; 
                 me.state.persona=persona.persona; 
                 me.state.personaDescription=persona.description; 
+                me.state.title = me.prompt; // ? 
                 me.step=2;
                 me.listKey++;
             },
@@ -304,8 +305,6 @@
                 me.selectPersona(me.value.personas[personaIndex])
                 me.$emit("input", me.value)
                 me.$emit("change", "customerJourneyMap")
-
-                // me.state.title = me.value; // ? 
                     
                 localStorage["gen-state"] = JSON.stringify(me.state);
                 window.open(`/#/cjm/${me.modelIds.CJMDefinitionId}`, "_blank")

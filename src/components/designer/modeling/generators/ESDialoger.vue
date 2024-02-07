@@ -141,6 +141,7 @@
                     separationPrinciple:  "Conway's Principle.", // "Business Capability" // "Infra Diversity" // "Per Persona",
                     businessModel: this.cachedModels["BMGenerator"],
                     painpointAnalysis: this.cachedModels["CJMGenerator"],
+                    userStoryMapModel: this.cachedModels["UserStoryMapGenerator"],
                     personas: this.cachedModels["Personas"]
                 },
                 done: false,

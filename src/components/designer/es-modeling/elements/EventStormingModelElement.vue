@@ -113,7 +113,7 @@
                 if(!this.value.definitionId) return false
                 if(!this.canvas) return false;
 
-                return this.canvas.getProjectDefinitionLists().includes(this.value.definitionId)
+                return this.canvas.modelListOfassociatedProject().includes(this.value.definitionId)
             },
             selectable(){
                 return !this.movingElement
@@ -464,7 +464,7 @@
                 //         && !me.canvas.value.elements[ele.elementView.id] // mine project
                 //         && ele.mirrorElement
                 //         && !me.canvas.mirrorValue.elements[ele.mirrorElement] // remove Element.
-                //         && me.canvas.getProjectDefinitionLists().includes(ele.definitionId)
+                //         && me.canvas.modelListOfassociatedProject().includes(ele.definitionId)
                 //     )
                 // if(reConnect) {
                 //     // reConnect.definitionId = me.canvas.projectId

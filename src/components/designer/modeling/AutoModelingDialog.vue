@@ -30,7 +30,7 @@
             </v-card-text>
         </v-card>
 
-        <v-col class="shrink" :style="openChatUI ? 'height:3000px;':''">
+        <v-col class="shrink" :style="openChatUI ? 'height:10000px;':''">
             <v-expand-x-transition>
                 <v-card
                     v-show="openChatUI"
