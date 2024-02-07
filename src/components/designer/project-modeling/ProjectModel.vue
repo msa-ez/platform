@@ -184,13 +184,14 @@
 
             <v-tab-item>
                 <AutoModelingDialog
-                        v-if="isInitLoading"
+                        v-if="loading"
                         ref="autoModelingDialog"
                         mode="project"
                         :showChat="true"
                         :projectId="projectId"
                         :projectInfo="information"
                         :isServer="isServer"
+                        :genType="generatorType"
                         @closeDialog="close()"
                         @forceUpdateKey="forceUpdateKey"
                         @saveProject="openStorageDialog('project')"
@@ -276,14 +277,16 @@
             return {
                 tab: 0,
                 componentKey: 0,
-                rtcRoomId: null,
-                isInitLoading: false,
+                loading: false,
 
+                // model modify.
                 showStorageDialog: false,
-                storageCondition: null,
-
                 showDeleteDialog: false,
-                deleteCondition: null
+                storageCondition: null,
+                deleteCondition: null,
+
+                //
+                generatorType: null,
             }
         },
         computed: {
@@ -314,8 +317,11 @@
             cjmModelLists(){
                 if( !this.information) return []
                 if( !this.information.customerJourneyMap ) return []
-                if( !this.information.customerJourneyMap.modelList) return  []
-                return this.information.customerJourneyMap.modelList
+                if( !this.information.customerJourneyMap.personas) return  []
+                if( !this.information.customerJourneyMap.personas) return  []
+                return this.information.customerJourneyMap.personas
+                    .filter(persona => persona.modelList)
+                    .flatMap(persona => persona.modelList);
             }
         },
         created: async function () {
@@ -365,6 +371,12 @@
             },
             openStorageDialog(type){
                 var me = this
+                me.generatorType = null;
+                if(type == 'cjm'){
+                    me.tab = 1
+                    me.generatorType = 'CJM'
+                    return;
+                } 
                 me.storageCondition = me.getCondition(type)
                 me.showStorageDialog = true;
             },
@@ -395,7 +407,8 @@
                 } else if(me.deleteCondition.type == 'userStoryMap'){
                     me.information.userStoryMap.modelList = me.information.userStoryMap.modelList.filter(id => id != me.deleteCondition.projectId)
                 } else if(me.deleteCondition.type == 'cjm'){
-                    me.information.customerJourneyMap.modelList = me.information.customerJourneyMap.modelList.filter(id => id != me.deleteCondition.projectId)
+                    console.log('!!!', me.deleteCondition);
+                    // me.information.customerJourneyMap.modelList = me.information.customerJourneyMap.modelList.filter(id => id != me.deleteCondition.projectId)
                 }
                 
 
@@ -468,12 +481,7 @@
                         if(!me.information.userStoryMap ) me.information.userStoryMap = {}
                         if(!me.information.userStoryMap.modelList) me.information.userStoryMap.modelList = []
                         me.information.userStoryMap.modelList.push(settingProjectId);
-                    } else if(me.storageCondition.type == 'cjm'){
-                        path = me.storageCondition.type
-                        if(!me.information.customerJourneyMap ) me.information.customerJourneyMap = {}
-                        if(!me.information.customerJourneyMap.modelList) me.information.customerJourneyMap.modelList = []
-                        me.information.customerJourneyMap.modelList.push(settingProjectId);
-                    }
+                    } 
                     
                     me.backupProject();
                     window.open(`/#/${path}/${settingProjectId}`, "_blank")
@@ -518,7 +526,7 @@
             async loadProject() {
                 var me = this
 
-                me.isInitLoading = false;  
+                me.loading = false;  
                 var modelUrl = me.isClazzModeling ? me.projectId : me.$route.params.projectId
                 modelUrl = modelUrl ? modelUrl : me.uuid()
 
@@ -529,9 +537,6 @@
                 }else{
                     me.projectId = modelUrl
                 }
-
-                // rtc
-                me.rtcRoomId = `projectRtc_${me.projectId}`
 
                 if (me.projectId) {
                     var information = await me.list(`db://definitions/${me.projectId}/information`);
@@ -549,7 +554,7 @@
                     }
                 }
 
-                me.isInitLoading = true;
+                me.loading = true;
             },
             loadServerProject(information){
                 var me = this

@@ -229,18 +229,16 @@
                     if(!me.value.modelList){
                         me.value.modelList = []
                     }
-                    if(me.isServerProject) me.value.modelList.push(me.modelIds.ESDefinitionId);
+                    me.state.userStory = me.value.userStory;
+                    // if(me.isServerProject) me.value.modelList.push(me.modelIds.ESDefinitionId);
+                    if(me.isServerProject) me.state.associatedProject = me.modelIds.projectId
 
                     me.$emit("input", me.value);
                     me.$emit("change", 'eventStorming');
 
-                    me.state.userStory = me.value.userStory;
-                    let stateJson = JSON.stringify(me.state);
-                    localStorage["gen-state"] = stateJson;
-
+                    localStorage["gen-state"] = JSON.stringify(me.state);;
                     window.open(`/#/storming/${me.modelIds.ESDefinitionId}`, "_blank")
                     me.isCreatedModel = true;
-                    // this.$router.push({path: `storming/${uuid}`});
                 }catch(e){
                     if(e.name=="QuotaExceededError"){
                         var keys = Object.keys(localStorage);

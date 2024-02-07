@@ -212,7 +212,7 @@
         methods: {
             setElementCanvas(){
                 var me = this;
-                me.canvas = getParent(me.$parent, "customer-journey-map");
+                me.canvas = getParent(me.$parent, "customer-journey-map-canvas");
             },
             changeColor(color) {
                 var me = this;

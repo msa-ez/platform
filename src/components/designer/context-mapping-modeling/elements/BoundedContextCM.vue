@@ -241,7 +241,7 @@
 
         me.canvas.storageCondition = {
           action: 'save',
-          title: 'Added BounedContext',
+          title: 'Edit BoundedContext',
           comment: '',
           projectName: `${me.canvas.information.associatedProject}-${me.value.name}`,
           projectId: `${me.canvas.information.associatedProject}-${me.value.name}`,
@@ -249,6 +249,8 @@
           error: null,
           loading: false,
           type: 'es',
+          associatedProject: me.canvas.information.associatedProject,
+          connectedAssociatedProject : me.canvas.information.associatedProject ? true : false,
           element: me.value
         }
         me.canvas.storageDialog = true

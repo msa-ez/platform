@@ -26,13 +26,11 @@ export default class UserStoryMapGenerator extends JsonAIGenerator{
                 });
             });
             // modelDescription += "Painpoint analysis and Possible solutions: \n\n"
-        }else {
-            if(this.client.input.personas.length>0){
-                let personas = this.client.input.personas
-                modelDescription += "Create pain points and possible solutions that may arise by considering the following Personas. \n\n"
-                for(var i=0; i<personas.length; i++){
-                    modelDescription +="- "+ personas[i].persona + "\n"
-                }
+        }else if(this.client.input.personas && this.client.input.personas.length>0){
+            let personas = this.client.input.personas
+            modelDescription += "Create pain points and possible solutions that may arise by considering the following Personas. \n\n"
+            for(var i=0; i<personas.length; i++){
+                modelDescription +="- "+ personas[i].persona + "\n"
             }
         }
 

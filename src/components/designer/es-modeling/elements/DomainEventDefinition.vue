@@ -378,7 +378,7 @@
             onChangedElementName(newVal, oldVal){
                 this.setMirrorElementId();
             },
-            onMoveAction(){
+            onMoveAction(executeRecursion){
                 var me = this
                 if( me.value.mirrorElement ) return;
 
@@ -390,7 +390,7 @@
                     var newId = attachedAggregate.elementView.id
 
                     // 움직일때 AGG 변화 파악.
-                    if(newId != me.value.aggregate.id){
+                    if(me.value.aggregate.id != newId){
                         // 서로 들다른 agg
                         me.value.aggregate = { id: newId };
 
@@ -400,7 +400,7 @@
                         }
                     }
 
-                } else if(me.value.aggregate.id){
+                } else if(!me.value.aggregate || me.value.aggregate.id){
                     me.value.aggregate = {};
                     if(me.canvas.initLoad) me.canvas.changedByMe = true;
                 }

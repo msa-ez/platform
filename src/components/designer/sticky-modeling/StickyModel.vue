@@ -1,14 +1,14 @@
 <template>
-    <CustomerJourneyMapCanvas :key="componentKey" :render-count="componentKey" @forceUpdateKey="forceRerender()"/>
+    <StickyModelCanvas :key="componentKey" :render-count="componentKey" @forceUpdateKey="forceRerender()"/>
 </template>
 
 <script>
-    import CustomerJourneyMapCanvas from './CustomerJourneyMapCanvas.vue'
+    import StickyModelCanvas from './StickyModelCanvas.vue'
 
     export default {
-        name: 'customer-journey-map',
+        name: 'sticky-model',
         components: {
-            CustomerJourneyMapCanvas
+            StickyModelCanvas
         },
         data() {
             return {

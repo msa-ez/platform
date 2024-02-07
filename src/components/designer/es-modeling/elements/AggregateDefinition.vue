@@ -596,7 +596,7 @@
             removeAction(){
                 this.onMoveAction()
             },
-            onMoveAction(){
+            onMoveAction(executeRecursion){
                 var me = this
                 if( me.value.mirrorElement ) return;
 
@@ -607,7 +607,7 @@
                     Object.values(me.canvas.attachedLists.eventLists).forEach(event => {
                         var eventComponent = me.canvas.$refs[`${event.elementView.id}`] ? me.canvas.$refs[`${event.elementView.id}`][0] : null
                         if (eventComponent) {
-                            eventComponent.onMoveAction(false)
+                            eventComponent.onMoveAction(true)
                         }
                     })
                 }
@@ -616,7 +616,7 @@
                     Object.values(me.canvas.attachedLists.commandLists).forEach(command => {
                         var commandComponent = me.canvas.$refs[`${command.elementView.id}`] ? me.canvas.$refs[`${command.elementView.id}`][0] : null
                         if (commandComponent) {
-                            commandComponent.onMoveAction(false)
+                            commandComponent.onMoveAction(true)
                         }
                     });
                 }
@@ -624,8 +624,8 @@
                 if (me.canvas.attachedLists && me.canvas.attachedLists.boundedContextLists) {
                     Object.values(me.canvas.attachedLists.boundedContextLists).forEach(bc => {
                         var commandComponent = me.canvas.$refs[`${bc.elementView.id}`] ? me.canvas.$refs[`${bc.elementView.id}`][0] : null
-                        if (commandComponent) {
-                            commandComponent.onMoveAction(false)
+                        if (commandComponent && !executeRecursion) {
+                            commandComponent.onMoveAction(true)
                         }
                     });
                 }

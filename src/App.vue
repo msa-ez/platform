@@ -652,23 +652,23 @@
             </v-stepper>
         </v-alert>
 
-        <!-- <div v-if="showMain" class="d-flex flex-row mt-sm-8 mt-5 overflow-hidden">
+        <div v-if="showMain" class="d-flex flex-row mt-sm-8 mt-5 overflow-hidden">
             <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSubTutorial.png" />
+                <img src="/static/image/main/mainSlide.png" />
             </div>
             <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSubTutorial.png" />
+                <img src="/static/image/main/mainSlide.png" />
             </div>
             <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSubTutorial.png" />
+                <img src="/static/image/main/mainSlide.png" />
             </div>
             <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSubTutorial.png" />
+                <img src="/static/image/main/mainSlide.png" />
             </div>
             <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSubTutorial.png" />
+                <img src="/static/image/main/mainSlide.png" />
             </div>
-        </div> -->
+        </div>
         
         <v-footer v-if="showFooter"
             padless
@@ -2136,18 +2136,18 @@
 
 </script>
 <style>
-    /* .main-page-slider-group {
-        animation: slide 15s linear infinite;
+    .main-page-slider-group {
+        animation: mainSlide 35s linear infinite;
     }
 
-    @keyframes slide {
+    @keyframes mainSlide {
         0% {
             transform: translate3d(0, 0, 0);
         }
         100% {
             transform: translate3d(-100%, 0, 0);
         }
-    } */
+    }
     .making-col {
         padding:20px;
     }

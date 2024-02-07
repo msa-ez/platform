@@ -1,14 +1,14 @@
-<template>
-    <CustomerJourneyMapCanvas :key="componentKey" :render-count="componentKey" @forceUpdateKey="forceRerender()"/>
+<template xmlns:v-on="http://www.w3.org/1999/xhtml">
+    <BpmnModelCanvas :key="componentKey" :render-count="componentKey" @forceUpdateKey="forceRerender()"/>
 </template>
 
 <script>
-    import CustomerJourneyMapCanvas from './CustomerJourneyMapCanvas.vue'
+    import BpmnModelCanvas from "./BpmnModelCanvas.vue";
 
     export default {
-        name: 'customer-journey-map',
+        name: 'bpmn-model',
         components: {
-            CustomerJourneyMapCanvas
+            BpmnModelCanvas
         },
         data() {
             return {
@@ -22,3 +22,5 @@
         }
     }
 </script>
+
+

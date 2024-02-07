@@ -1217,7 +1217,7 @@
           this.storageCondition.loading = false
         }
       },
-      async synchronizeAssociatedProject(associatedProject, newId) {
+      async synchronizeAssociatedProject(associatedProject, newId, oldId) {
                 var me = this;
                 if(!associatedProject) return;
 
@@ -1226,7 +1226,11 @@
                 let lists = await me.list(`db://definitions/${associatedProject}/information/${type}`);
                 let index = -1;
                 if (lists && lists.modelList) {
-                    index = lists.modelList.findIndex((x) => x == newId);
+                    if(oldId) {
+                        index = lists.modelList.findIndex((id) => id == oldId);
+                    } else {
+                        index = lists.modelList.findIndex((id) => id == newId); //duplicate
+                    }
                     index = index == -1 ? lists.modelList.length : index;
                 }
 

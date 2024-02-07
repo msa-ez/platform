@@ -2272,9 +2272,8 @@
                         label: "Event",
                         width: "100",
                         height: "100",
-                        src: `${
-                            window.location.protocol + "//" + window.location.host
-                        }/static/image/event/event.png`,
+                        src: `${window.location.protocol + "//" + window.location.host}/static/image/event/event.png`,
+                        // image: `${ window.location.protocol + "//" + window.location.host}/static/image/event/event.svg`
                     },
                     {
                         icon: "bpmn-icon-start-event-none", //'OG.shape.essencia.Alpha',
@@ -2413,7 +2412,7 @@
         computed: {
             projectSendable(){
                 var me = this
-                if(!me.getProjectDefinitionLists().includes(me.projectId)) return false;
+                if(!me.modelListOfassociatedProject().includes(me.projectId)) return false;
 
                 if(me.information && me.information.associatedProject) {
                     return true;
@@ -2739,7 +2738,93 @@
             }, 0),
         },
         methods: {
-            detectDeletedModel(beforeInfo){
+            async receiveAssociatedProject(associatedProjectId){
+                var me = this
+                let startKey = '';
+
+                me.isLoadedInitMirror = false;
+                me.projectInformation = await me.list(`db://definitions/${associatedProjectId}/information`);
+
+                if(!me.projectInformation) return; // local
+
+                // server
+                // TODO: Snapshot Logic.
+                let snapshots = await me.list(`db://definitions/${associatedProjectId}/snapshotLists`, {
+                    sort: "desc",
+                    orderBy: null,
+                    size: 1,
+                    startAt: null,
+                    endAt: null,
+
+                })
+
+                if (snapshots) {
+                    startKey = snapshots[0].lastSnapshotKey ? snapshots[0].lastSnapshotKey : ''
+                    me.mirrorValue = JSON.parse(snapshots[0].snapshot);
+                } else {
+                    startKey = ''
+                    me.mirrorValue =
+                    {
+                        'elements': {},
+                        'relations': {},
+                        'basePlatform': null,
+                        'basePlatformConf': {},
+                        'toppingPlatforms': null,
+                        'toppingPlatformsConf': {},
+                        'scm': {}
+                    }
+                }
+
+
+                let isWaitingQueue = null
+                let waitingTime = startKey ? 10000 : 3000
+                isWaitingQueue = setTimeout(function () {
+                    /* receivedSnapshot End */
+                    me.isLoadedInitMirror = true;
+                    me.watchProjectInformation(associatedProjectId)
+                }, waitingTime)
+
+
+                // TODO: Qeuue Logic.
+                me.watch_added(`db://definitions/${associatedProjectId}/queue`, {
+                    sort: null,
+                    orderBy: null,
+                    size: null,
+                    startAt: startKey,
+                    endAt: null,
+                }, async function (queue) {
+
+                    if( queue.action.includes('user') ){
+                        return;
+                    }
+                    me.isLoadedMirrorQueue = true
+                    clearTimeout(isWaitingQueue);
+
+                    var obj = {
+                        _ordered: false,
+                        childKey: queue.key,
+                        childValue: queue,
+                        isMirrorQueue: true,
+                    }
+                    obj.childValue.key = queue.key;
+                    obj.childValue.receivedTime = Date.now();
+
+                    me.receivedQueueDrawElement(obj, true);
+                    me.mirrorQueueCount++;
+
+                    me.saveAssociatedModelSnapshot(associatedProjectId, queue)
+
+                    isWaitingQueue = setTimeout(function () {
+                        /* receivedSnapshot End */
+                        if(!me.isLoadedInitMirror){
+                            me.isLoadedInitMirror = true;
+                            me.watchProjectInformation(associatedProjectId)
+                        }
+                        me.isLoadedMirrorQueue = false;
+                    }, 1000)
+                });
+            },
+            watchDeletedModel(beforeInfo){
                 var me = this
                 if(!me.projectInformation) return;
                 if(!beforeInfo) return;
@@ -2760,7 +2845,7 @@
                 // modified
                 me.$emit('forceUpdateKey')
             },
-            getProjectDefinitionLists(){
+            modelListOfassociatedProject(){
                 if( this.projectInformation && this.projectInformation.eventStorming ) {
                     return this.projectInformation.eventStorming.modelList
                 }
@@ -2784,14 +2869,18 @@
                     me.changedByMe = true;
                 }
             },
-            async synchronizeAssociatedProject(associatedProject, newId) {
+            async synchronizeAssociatedProject(associatedProject, newId, oldId) {
                 var me = this;
                 if(!associatedProject) return;
 
                 let lists = await me.list(`db://definitions/${associatedProject}/information/eventStorming`);
                 let index = -1;
                 if (lists && lists.modelList) {
-                    index = lists.modelList.findIndex((x) => x == newId);
+                    if(oldId) {
+                        index = lists.modelList.findIndex((id) => id == oldId);
+                    } else {
+                        index = lists.modelList.findIndex((id) => id == newId); //duplicate
+                    }
                     index = index == -1 ? lists.modelList.length : index;
                 }
 
@@ -2994,6 +3083,7 @@
 
                 if (val && val.elements) {
                     if (val.projectName) me.projectName = val.projectName;
+                    if (val.associatedProject) me.information.associatedProject = val.associatedProject;
 
                     // Create Model in BoundedContext > Model Merge
                     let elements = JSON.parse(JSON.stringify(me.value.elements));
