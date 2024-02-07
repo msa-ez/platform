@@ -79,7 +79,7 @@
                     <div class="text-center">
                         <v-btn @click="snsLogin('github')" class="login-btn git-login-btn" color="black" style="margin-right:20px; margin-top:0px;">
                             <v-col>
-                                <Icon icon="fa6-brands:github" width="40" height="40" style="color: white" />
+                                <Icon class="git-button" icon="fa6-brands:github" width="40" height="40" style="color: white" />
                                 <div style="color:white; white-space: normal; word-wrap: break-word; text-align: center; margin-top:5px;">
                                     Continue<br>
                                     With<br>

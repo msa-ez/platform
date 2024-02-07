@@ -6,7 +6,7 @@
     import EventStormingModelCanvas from "./EventStormingModelCanvas";
 
     export default {
-        name: 'event-storming',
+        name: 'event-storming-model',
         components: {
             EventStormingModelCanvas
         },
@@ -15,17 +15,9 @@
                 componentKey: 0,
             }
         },
-        computed: {},
-        created: function () {
-        },
-        beforeDestroy() {
-        },
-        mounted: function () {
-        },
         methods: {
             forceRerender() {
-                var me = this
-                me.componentKey += 1;
+                this.componentKey += 1;
             },
         }
     }

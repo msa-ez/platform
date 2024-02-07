@@ -140,8 +140,8 @@
         methods: {
             setElementCanvas(){
                 var me = this;
-                me.modelCanvasComponent = me.getComponent('customer-journey-map');
-                me.canvas = me.getComponent('customer-journey-map');
+                me.modelCanvasComponent = me.getComponent('customer-journey-map-canvas');
+                me.canvas = me.getComponent('customer-journey-map-canvas');
             },
             onMoveShape: function () {
             //     this.$EventBus.$emit('isMovedElement', this.value.elementView.id)

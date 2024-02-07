@@ -244,6 +244,8 @@
                 userPanel: 1,
                 isExpanded: false,
                 modelCreationCompleted: true,
+                associatedProject: null,
+                
             }
         },
         computed: {
@@ -268,10 +270,10 @@
                         let prevState = JSON.parse(prevStateJson);
 
                         if(!prevState.generator) throw new Error("No generator information inside localstroage.gen-state");
-
-                        this.generatorName = prevState.generator;
+                        
                         this.input = prevState;
-
+                        this.generatorName = prevState.generator;
+                       
                         localStorage["gen-state"] = null;
                     } else {
                         this.isAutoGen = false
@@ -340,6 +342,7 @@
                     issuedTimeStamp: issuedTimeStamp,
                     expiredTimeStamp: Date.now(),
                     metadata: {
+                        projectId: this.input.associatedProject ? this.input.associatedProject : null,
                         modelId: this.projectId
                     }
                 });

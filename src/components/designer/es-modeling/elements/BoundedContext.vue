@@ -370,7 +370,7 @@
             close(){
                 this.closePanel()
             },
-            onMoveAction(){
+            onMoveAction(executeRecursion){
                 var me = this
                 if(me.value.mirrorElement) return;
 
@@ -398,7 +398,7 @@
                 if(Object.keys(attachedElement).length > 0 ){
                     Object.keys(attachedElement).forEach(function(id){
                         var component = me.canvas.$refs[`${id}`] ? me.canvas.$refs[`${id}`][0] : null
-                        if (component) component.onMoveAction(false)
+                        if (component && !executeRecursion) component.onMoveAction(true)
                     })
                 }
 

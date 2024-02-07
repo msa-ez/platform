@@ -19,7 +19,7 @@ for persona:
     ${this.client.input.persona}
     ${this.client.input.personaDescription}
 for scenario:
-    ${this.client.input.scneario}
+    ${this.client.input.scenario}
 
 
 Result Format JSON:

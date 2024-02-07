@@ -20,7 +20,7 @@ class StorageBase {
    
     // GetCurrentUser
     async getCurrentUser(){
-        let region = null
+        let region = "KR" // default: KR
 
         try{
             const ipResponse = await fetch('https://ipinfo.io/json');

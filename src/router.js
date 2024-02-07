@@ -14,59 +14,36 @@ Vue.component("process-designer", ProcessDesigner);
 // Vue.component('view-modeling-designer', ViewModelingDesigner);
 
 ////////////////////////
+const BusinessModel = () => import(/* webpackChunkName: "BusinessModel" */ "./components/designer/business-model-canvas/BusinessModel");
+const ContextMappingModel = () => import(/* webpackChunkName: "ContextMappingModel" */ "./components/designer/context-mapping-modeling/ContextMappingModel");
+const CustomerJourneyMap = () => import(/* webpackChunkName: "CustomerJourneyMap" */ "./components/designer/customer-journey-map/CustomerJourneyMap");
+const EventStormingModel = () => import(/* webpackChunkName: "EventStormingModel" */ "./components/designer/es-modeling/EventStormingModel");
+const KubernetesModel = () => import(/* webpackChunkName: "KubernetesModel" */ "./components/designer/k8s-modeling/KubernetesModel");
+const StickyModel = () => import(/* webpackChunkName: "StickyModel" */ "./components/designer/sticky-modeling/StickyModel");
+const UserStoryMap = () => import(/* webpackChunkName: "UserStoryMap" */ "./components/designer/user-story-map/UserStoryMap");
+const UMLClassModel = () => import(/* webpackChunkName: "UMLClassModel" */ "./components/designer/class-modeling/UMLClassModel");
+const BpmnModel = () => import(/* webpackChunkName: "BpmnModel" */ "./components/designer/bpmnModeling/BpmnModel");
+
+
 const StartElectron = () =>
   import(/* webpackChunkName: "startelectron" */ "./components/labs/StartElectron");
 const LabPortal = () =>
   import(/* webpackChunkName: "LabPortal" */ "./components/labs/LabPortal");
-const EventStorming = () =>
-  import(/* webpackChunkName: "EventStorming" */ "./components/designer/es-modeling/EventStorming");
 const Project = () =>
   import(
     /* webpackChunkName: "EventStorming" */ "./components/designer/project-modeling/ProjectModel"
-  );
-const ContextMapping = () =>
-  import(
-    /* webpackChunkName: "EventStorming" */ "./components/designer/context-mapping-modeling/ContextMappingModelCanvas"
-  );
-const ClassModeler = () =>
-  import(
-    /* webpackChunkName: "ClassModeler" */ "./components/designer/class-modeling/ClassModeler"
   );
 const ReplayPortal = () =>
   import(
     /* webpackChunkName: "ReplayPortal" */ "./components/designer/modeling/ReplayPortal"
   );
-const BusinessModelCanvas = () =>
-  import(
-    /* webpackChunkName: "BusinessModelCanvas" */ "./components/designer/business-model-canvas/BusinessModelCanvas"
-  );
 const IdeLoadingPage = () =>
   import(
     /* webpackChunkName: "IdeLoadingPage" */ "./components/IdeLoadingPage"
   );
-const KubernetesModelCanvas = () =>
-  import(
-    /* webpackChunkName: "KubernetesModelCanvas" */ "./components/designer/k8s-modeling/KubernetesModelCanvas"
-  );
-const StickyModelCanvas = () =>
-  import(
-    /* webpackChunkName: "StickyModelCanvas" */ "./components/designer/sticky-modeling/StickyModelCanvas"
-  );
-const BpmnModelCanvas = () =>
-  import(
-    /* webpackChunkName: "BpmnModelCanvas" */ "./components/designer/bpmnModeling/BpmnModelCanvas"
-  );
-const CustomerJourneyMap = () =>
-  import(
-    /* webpackChunkName: "CustomerJourneyMap" */ "./components/designer/customer-journey-map/CustomerJourneyMap"
-  );
 const ClazzListPage = () =>
   import(
     /* webpackChunkName: "ClazzListPage" */ "./components/labs/ClazzListPage"
-  );
-const UserStoryMap = () =>
-  import(
-    /* webpackChunkName: "UserStoryMap" */ "./components/designer/user-story-map/UserStoryMapCanvas"
   );
 // const labAdminTest = () =>
 //   import(
@@ -108,10 +85,6 @@ const MyPage = () =>
 import(
   /* webpackChunkName: "MyPage" */ "./components/mypage/MyPage"
 );
-const MyPageManager = () =>
-  import(
-    /* webpackChunkName: "MyPageManager" */ "./components/oauth/MyPageManager"
-  );
 const SignInHelper = () =>
   import(
     /* webpackChunkName: "SignInHelper" */ "./components/oauth/SignInHelper"
@@ -150,13 +123,13 @@ var options = {
     },
     {
       path: "/storming/:projectId",
-      name: "EventStormingCanvas",
-      component: EventStorming, // EventStormingModelCanvas  EventStorming
+      name: "EventStormingModel",
+      component: EventStormingModel, // EventStormingModelCanvas  EventStorming
     },
     {
       path: "/uml-class/:aggregateId",
       name: "UMLClassCanvas",
-      component: ClassModeler,
+      component: UMLClassModel,
     },
     {
       // path: '/replay/:projectId/:snapshotKey/:queueKey',
@@ -166,8 +139,8 @@ var options = {
     },
     {
       path: "/business-model-canvas/:projectId",
-      name: "BusinessModelCanvas",
-      component: BusinessModelCanvas,
+      name: "BusinessModel",
+      component: BusinessModel,
     },
     {
       path: "/IdeLoadingPage",
@@ -176,23 +149,23 @@ var options = {
     },
     {
       path: "/kubernetes/:projectId",
-      name: "KubeModelingCanvas",
-      component: KubernetesModelCanvas,
+      name: "KubernetesModel",
+      component: KubernetesModel,
     },
     {
       path: "/sticky/:projectId",
-      name: "StickyModelCanvas",
-      component: StickyModelCanvas,
+      name: "StickyModel",
+      component: StickyModel,
     },
     {
       path: "/bpmn/:projectId",
-      name: "BpmnModelCanvas",
-      component: BpmnModelCanvas,
+      name: "BpmnModel",
+      component: BpmnModel,
     },
     {
       path: "/uml/:projectId",
       name: "ClassModelCanvas",
-      component: ClassModeler,
+      component: UMLClassModel,
     },
     {
       path: "/project/:projectId",
@@ -200,19 +173,19 @@ var options = {
       component: Project,
     },
     {
-        path: "/cm/:projectId",
-        name: "ContextMapping",
-        component: ContextMapping,
+      path: "/cm/:projectId",
+      name: "ContextMappingModel",
+      component: ContextMappingModel,
     },
     {
-        path: "/cjm/:projectId",
-        name: "CustomerJourneyMap",
-        component: CustomerJourneyMap,
+      path: "/cjm/:projectId",
+      name: "CustomerJourneyMap",
+      component: CustomerJourneyMap,
     },
     {
-        path: "/courses",
-        name: "classList",
-        component: ClazzListPage,
+      path: "/courses",
+      name: "classList",
+      component: ClazzListPage,
     },
     {
       path: "/userStoryMap/:projectId",

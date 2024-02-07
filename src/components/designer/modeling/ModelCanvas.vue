@@ -901,9 +901,10 @@
                 this.exitUser()
                 this.releaseMoveEvents();
             },
-            handleUnload(event) {
+            async handleUnload(event) {
                 // // close tab
                 console.log('close tab')
+                await this.executeBeforeDestroy()
                 // this.saveComposition('save');
                 // console.log("Tab or browser is being closed");
 
@@ -981,15 +982,11 @@
                     if(me.isServerModel){
                         // save image in cloud storage
                         await me.putString(`storage://definitions/${me.projectId}/information/image`, base64Img);
+                        if(me.information.associatedProject){
+                            await me.putString(`storage://definitions/${me.information.associatedProject}/information/image`, base64Img);
+                        }
                     } else {
                         await me.putString(`localstorage://image_${me.projectId}`, base64Img);
-
-                        // save iage in localstoage.
-                        // let imageObjects = await me.getObject(`localstorage://serverImageLists`);
-                        // if( !imageObjects ) imageObjects = {}
-                        //
-                        // imageObjects[me.projectId] = img
-                        // await me.putObject(`localstorage://serverImageLists`, imageObjects);
                     }
                 }
 
@@ -1726,17 +1723,18 @@
             },
             async validateStorageCondition(item, action){
                 var me = this
+                if(!item.error) item.error = {};
 
-                var originProjectId = me.projectId
-                if(action == 'fork'){
-                    var convertProjectId = item.projectId ? item.projectId : me.dbuid();
-                } else {
-                    var convertProjectId = item.projectId ? item.projectId : originProjectId
-                }
-                // 빈칸 -> - 변경
+                // get Project
+                let originProjectId = me.projectId
+                let convertProjectId = item.projectId ? item.projectId : originProjectId
+                if(action == 'fork') convertProjectId = item.projectId ? item.projectId : me.dbuid();                
                 convertProjectId = convertProjectId.replaceAll(' ','-');
 
-                item.error = {};
+                if( convertProjectId.includes('/') ) item.error['projectId'] = 'ProjectId must be non-empty strings and can\'t contain  "/"'
+                
+                if( item.version == 'latest') item.error['version'] = 'The version name cannot be specified as "latest".'
+                
 
                 if(!item.connectedAssociatedProject && item.associatedProject){
                     // new connection.
@@ -1752,35 +1750,11 @@
                     }
                 }
 
-                if( convertProjectId.includes('/') ){
-                    item.error['projectId'] = 'ProjectId must be non-empty strings and can\'t contain  "/"'
-                }
-
-                if( item.version == 'latest'){
-                    item.error['version'] = 'The version name cannot be specified as "latest".'
-                }
-
-                // checked duplicate projectId
-                if( !action.includes('backup') ){
-
-                    var validateInfo = await me.isValidatePath(`db://definitions/${convertProjectId}/information`);
-                    if( !validateInfo.status ){
-                        item.error['projectId'] = validateInfo.msg
-                    }
-
-                    var information = await me.list(`db://definitions/${convertProjectId}/information`)
-                    if(information){
-                        item.error['projectId'] = 'This project id already exists.'
-                    }
-                }
-
                 // exists version
-                if( !action.includes('fork') ){
-                    // checked Version
-                    if( !item.version ){
-                        item.version = me.getNowDate();
-                    }
-
+                if( action.includes('backup') ){
+                    // BACKUP
+                    
+                    if( !item.version )item.version = me.getNowDate();
                     // validate Path
                     var validate = await me.isValidatePath(`db://definitions/${originProjectId}/versionLists/${item.version.replaceAll('.','-')}`)
                     if( !(validate.status && !item.version.replaceAll('.','-').includes('/') && !item.version.replaceAll('.','-').includes(':')) ){
@@ -1791,6 +1765,18 @@
                     var existVersion = await me.list(`db://definitions/${originProjectId}/versionLists/${item.version.replaceAll('.','-')}`)
                     if(existVersion){
                         item.error['version'] = 'This version already exists.'
+                    }
+                } else {
+                    // SAVE, FORK
+
+                    var validateInfo = await me.isValidatePath(`db://definitions/${convertProjectId}/information`);
+                    if( !validateInfo.status ){
+                        item.error['projectId'] = validateInfo.msg
+                    }
+
+                    var information = await me.list(`db://definitions/${convertProjectId}/information`)
+                    if(information){
+                        item.error['projectId'] = 'This project id already exists.'
                     }
                 }
 
@@ -1886,7 +1872,7 @@
             async saveModel() {
                 var me = this
                 me.$EventBus.$emit('progressValue', true);
-                await me.loadDefinitionLocal()
+                // await me.loadDefinitionLocal() ???
                 try {
                     var check = await me.validateStorageCondition(me.storageCondition, 'save');
                     if(check){
@@ -1902,15 +1888,6 @@
                         }
 
                         let img = await me.$refs['modeler-image-generator'].save(me.projectName, me.canvas);
-
-                        // input image storage.
-                        /** 
-                         * TODO: 분기 처리 필요
-                         * Issue: storage 자체는 설치형에서 사용 할 수 없음 (Cloud Storage)
-                         * 따라서 이미지 저장 / 호출 부분을 Acebase쪽으로 이관
-                         * */ 
-                    
-                        // await me.putString(`storage://definitions/${settingProjectId}/information/image`, img);
 
                         var userInfoObj = {
                             uid: me.userInfo.uid,
@@ -1932,10 +1909,17 @@
                             firstCommit: me.information && me.information.firstCommit ? me.information.firstCommit:null,
                             associatedProject: associatedProject
                         }
+                        
+                        Object.keys(me.information).forEach(function(key) {
+                            if( !informationObj[key] ){
+                                informationObj[key] = me.information[key]
+                            }
+                        })
 
                         let valueUrl = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(me.value));
-                        let imagURL = await me.putString(`storage://definitions/${originProjectId}/versionLists/${projectVersion}/image`, img);
-                        console.log(settingProjectId, originProjectId)
+                        let imagURL = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/image`, img);
+
+                        // console.log(settingProjectId, originProjectId)
                         var versionInfoObj = {
                             saveUser: me.userInfo.uid,
                             saveUserEmail: me.userInfo.email,
@@ -1959,21 +1943,19 @@
                         if(associatedProject){
                             // Sync connected associatedProject.
                             await me.synchronizeAssociatedProject(associatedProject, settingProjectId);
-
-                            // if channel disconnect not Sync.
-                            // me.modelCanvasChannel.postMessage({
-                            //     event: "ProjectIdChanged",
-                            //     type: me.canvasType,
-                            //     old: originProjectId,
-                            //     new: settingProjectId
-                            // });
+                            await me.putString(`storage://definitions/${associatedProject}/information/image`, img);
                         }
 
-
+                        /** 
+                         * TODO: 분기 처리 필요
+                         * Issue: storage 자체는 설치형에서 사용 할 수 없음 (Cloud Storage)
+                         * 따라서 이미지 저장 / 호출 부분을 Acebase쪽으로 이관
+                         * */ 
+                        if(true) {
+                            await me.putString(`storage://definitions/${settingProjectId}/information/image`, img);
+                        }
                         if ( me.isQueueModel ) {
                             me.pushObject(`db://definitions/${settingProjectId}/snapshotLists`, snapshotObj)
-                            // me.putObject(`db://definitions/${settingProjectId}`, snapshotSpecObj)
-                            // me.specVersion = '3.0'
                         }
 
                         me.onCreateGitTagName(me.storageCondition);
@@ -1985,29 +1967,29 @@
                         me.putObject(`db://definitions/${settingProjectId}/versionLists/${projectVersion}`, versionInfoObj)
                         // me.putObject(`db://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, versionValueObj)
 
-                        console.log(settingProjectId, originProjectId)
+                        // remove Local Memory.
                         var lists = await me.getObject(`localstorage://localLists`)
                         var index = lists.findIndex(list => list.projectId == originProjectId)
-                        var location = 'storming'
-
                         if (index != -1) {
                             await me.delete(`localstorage://${originProjectId}`)
-                            if(me.canvasType == 'es') {
-                                location = 'storming'
-                            }else if (me.canvasType == 'k8s') {
-                                location = 'kubernetes'
-                            } else if (me.canvasType == 'bm') {
-                                location = 'business-model-canvas'
-                            } else if (me.canvasType == 'bpmn') {
-                                location = 'bpmn'
-                            } else {
-                                location = me.canvasType
-                            }
-
                             lists.splice(index, 1)
                             await me.putObject(`localstorage://localLists`, lists)
                         }
-                        
+
+                        // type
+                        var location = 'storming'
+                        if(me.canvasType == 'es') {
+                            location = 'storming'
+                        }else if (me.canvasType == 'k8s') {
+                            location = 'kubernetes'
+                        } else if (me.canvasType == 'bm') {
+                            location = 'business-model-canvas'
+                        } else if (me.canvasType == 'bpmn') {
+                            location = 'bpmn'
+                        } else {
+                            location = me.canvasType
+                        }
+
                         if (me.isClazzModeling) {
                             me.updateClassModelingId(settingProjectId);
                         } else {
@@ -2025,10 +2007,7 @@
                             me.$EventBus.$emit('progressValue', false)
                         }
 
-
-
                         me.storageDialogCancel()
-
                     } else {
                         this.storageCondition.loading = false
                         me.$EventBus.$emit('progressValue', false);
@@ -2042,7 +2021,7 @@
             moveModelUrl(modelId){
                 this.$router.push({path: `/${this.canvasType}/${modelId}`});
             },
-            synchronizeAssociatedProject(projectId, definitionId){},
+            synchronizeAssociatedProject(projectId, newId, oldId){},
             async checkedForkModel(){
                 var me = this
                 if(me.isServerModel){
@@ -2398,7 +2377,7 @@
                         // 기존 정보.
                         me.information = Object.assign(basicInformation,lists[index]);
                     } else {
-                        me.information = basicInformation;
+                        me.information = me.information ? Object.assign(me.information, basicInformation) : basicInformation;
                         lists.push(me.information)
                         me.putObject(`localstorage://localLists`, lists);
                     }
@@ -3489,104 +3468,22 @@
                 me.watch(`db://definitions/${associatedProjectId}/information`, function (information) {
                     let old = JSON.parse(JSON.stringify(me.projectInformation));
                     me.projectInformation = information ? information : null
-                    me.detectDeletedModel(old);
+                    me.watchDeletedModel(old);
                 })
             },
-            detectDeletedModel(info){
+            watchDeletedModel(info){
                 // reload condition.
+                return;
             },
-            async receiveAssociatedProject(associatedProjectId){
-                var me = this
-                let startKey = '';
-
-                me.isLoadedInitMirror = false;
-                me.projectInformation = await me.list(`db://definitions/${associatedProjectId}/information`);
-
-                if(!me.projectInformation) return; // local
-
-                // server
-                // TODO: Snapshot Logic.
-                let snapshots = await me.list(`db://definitions/${associatedProjectId}/snapshotLists`, {
-                    sort: "desc",
-                    orderBy: null,
-                    size: 1,
-                    startAt: null,
-                    endAt: null,
-
-                })
-
-                if (snapshots) {
-                    startKey = snapshots[0].lastSnapshotKey ? snapshots[0].lastSnapshotKey : ''
-                    me.mirrorValue = JSON.parse(snapshots[0].snapshot);
-                } else {
-                    startKey = ''
-                    me.mirrorValue =
-                    {
-                        'elements': {},
-                        'relations': {},
-                        'basePlatform': null,
-                        'basePlatformConf': {},
-                        'toppingPlatforms': null,
-                        'toppingPlatformsConf': {},
-                        'scm': {}
-                    }
-                }
-
-
-                let isWaitingQueue = null
-                let waitingTime = startKey ? 10000 : 3000
-                isWaitingQueue = setTimeout(function () {
-                    /* receivedSnapshot End */
-                    me.isLoadedInitMirror = true;
-                    me.watchProjectInformation(associatedProjectId)
-                }, waitingTime)
-
-
-                // TODO: Qeuue Logic.
-                me.watch_added(`db://definitions/${associatedProjectId}/queue`, {
-                    sort: null,
-                    orderBy: null,
-                    size: null,
-                    startAt: startKey,
-                    endAt: null,
-                }, async function (queue) {
-
-                    if( queue.action.includes('user') ){
-                        return;
-                    }
-                    me.isLoadedMirrorQueue = true
-                    clearTimeout(isWaitingQueue);
-
-                    var obj = {
-                        _ordered: false,
-                        childKey: queue.key,
-                        childValue: queue,
-                        isMirrorQueue: true,
-                    }
-                    obj.childValue.key = queue.key;
-                    obj.childValue.receivedTime = Date.now();
-
-                    me.receivedQueueDrawElement(obj, true);
-                    me.mirrorQueueCount++;
-
-                    me.saveAssociatedModelSnapshot(associatedProjectId, queue)
-
-                    isWaitingQueue = setTimeout(function () {
-                        /* receivedSnapshot End */
-                        if(!me.isLoadedInitMirror){
-                            me.isLoadedInitMirror = true;
-                            me.watchProjectInformation(associatedProjectId)
-                        }
-                        me.isLoadedMirrorQueue = false;
-                    }, 1000)
-                });
+            receiveAssociatedProject(associatedProjectId){
+                return;
             },
-            getProjectDefinitionLists(){
+            modelListOfassociatedProject(){
                 return []
             },
             syncMirrorElements() {
                 var me = this;
-                let modelLists = me.getProjectDefinitionLists()
+                let modelLists = me.modelListOfassociatedProject()
                 let disconnectDiff = {'elements': {}}
                 Object.values(me.value.elements)
                     .filter((ele) => ele && ele.mirrorElement)

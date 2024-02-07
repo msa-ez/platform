@@ -17,6 +17,7 @@
             </v-row>
             <v-card-text style="font-weight: 500;">
                 <v-text-field
+                    class="auto-modeling-text"
                     style="margin-bottom: -30px;"
                     v-model="projectInfo.prompt"
                     solo
@@ -29,7 +30,7 @@
             </v-card-text>
         </v-card>
 
-        <v-col class="shrink" :style="openChatUI ? 'height:3000px;':''">
+        <v-col class="shrink" :style="openChatUI ? 'height:10000px;':''">
             <v-expand-x-transition>
                 <v-card
                     v-show="openChatUI"
@@ -81,7 +82,7 @@
                                         style="padding:10px;"
                                     >
                                         <v-col style="text-align: center;">
-                                            <v-card :style="genType == 'CJM' ? 'border: solid darkturquoise;':'background-color: white;'" >
+                                            <v-card :style="genType == 'CJM' ? 'border: solid darkturquoise;':'background-color: white;'" class="auto-cjm" >
                                                 <div @click="checkLogin('CJM')" style="cursor: pointer; ">
                                                     <v-avatar
                                                         class="ma-3"
@@ -298,6 +299,12 @@
                     return false
                 }
             },
+            genType: {
+                type: String,
+                default: function(){
+                    return null;
+                }
+            },
         },
         mixins: [StorageBase],
         components: {
@@ -329,7 +336,7 @@
                 reGenKey: 0,
                 autoScroll: true,
                 bmName: null,
-                genType: null,
+                // genType: null,
                 autoModelDialog: 0,
                 gptResponseId: null,
                 userPanel: 1,
@@ -642,22 +649,25 @@
                     var oldModelIndex = me.projectInfo.eventStorming.modelList.findIndex(x => x == changedInfo.old)
                     me.projectInfo.eventStorming.modelList[oldModelIndex] = changedInfo.new
                     me.projectInfo.eventStorming.modelList.__ob__.dep.notify()
-                }
-                if(changedInfo.type == 'bm'){
+                } else if(changedInfo.type == 'bm'){
                     var oldModelIndex = me.projectInfo.businessModel.modelList.findIndex(x => x == changedInfo.old)
                     me.projectInfo.businessModel.modelList[oldModelIndex] = changedInfo.new
                     me.projectInfo.businessModel.modelList.__ob__.dep.notify()
-                }
-                if(changedInfo.type == 'cjm'){
-                    var oldModelIndex = me.projectInfo.customerJourneyMap.modelList.findIndex(x => x == changedInfo.old)
-                    me.projectInfo.customerJourneyMap.modelList[oldModelIndex] = changedInfo.new
-                    me.projectInfo.customerJourneyMap.modelList.__ob__.dep.notify()
-                }
-                if(changedInfo.type == 'usm'){
+                } else if(changedInfo.type == 'usm'){
                     var oldModelIndex = me.projectInfo.userStoryMap.modelList.findIndex(x => x == changedInfo.old)
                     me.projectInfo.userStoryMap.modelList[oldModelIndex] = changedInfo.new
                     me.projectInfo.userStoryMap.modelList.__ob__.dep.notify()
+                } else if(changedInfo.type == 'cm'){
+                    var oldModelIndex = me.projectInfo.contextMapping.modelList.findIndex(x => x == changedInfo.old)
+                    me.projectInfo.contextMapping.modelList[oldModelIndex] = changedInfo.new
+                    me.projectInfo.contextMapping.modelList.__ob__.dep.notify()
+                }else if(changedInfo.type == 'cjm'){
+                    console.log('!!!', changedInfo);
+                    // var oldModelIndex = me.projectInfo.customerJourneyMap.modelList.findIndex(x => x == changedInfo.old)
+                    // me.projectInfo.customerJourneyMap.modelList[oldModelIndex] = changedInfo.new
+                    // me.projectInfo.customerJourneyMap.modelList.__ob__.dep.notify()
                 }
+                
                 me.backupProject();
             },
             openProjectDialog(){

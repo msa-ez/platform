@@ -103,14 +103,14 @@
                     if(!me.value.modelList)me.value.modelList = []
                     
                 
-                    if(me.isServerProject) me.value.modelList.push(me.modelIds.USMDefinitionId);
+                    // if(me.isServerProject) me.value.modelList.push(me.modelIds.USMDefinitionId);
+                    if(me.isServerProject) me.state.associatedProject = me.modelIds.projectId
 
                     me.$emit("input", me.value);
                     me.$emit("change", 'userStoryMap');
-
                     me.state.userStory = me.value.userStory;
-                    let stateJson = JSON.stringify(me.state);
-                    localStorage["gen-state"] = stateJson;
+
+                    localStorage["gen-state"] = JSON.stringify(me.state);
 
                     window.open(`/#/userStoryMap/${me.modelIds.USMDefinitionId}`, "_blank")
                     // this.$router.push({path: `storming/${uuid}`});

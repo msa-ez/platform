@@ -14,9 +14,9 @@ export default class UserStoryMapGenerator extends JsonAIGenerator{
 
         if(this.client.input.painpointAnalysis){
             let modelPerPersona = this.client.input.painpointAnalysis
-            modelDescription += "Persona definition and he(or her)'s painpoints and possible solutions as follows: \n\n"
+            modelDescription += "Persona definition and he(or her)'s painpoints and possible solutions as follows: \n"
             Object.keys(this.client.input.painpointAnalysis).forEach(persona=>{
-                modelDescription +="- "+ persona + "\n"
+                modelDescription +="\n- "+ persona + "\n"
                 let relations = modelPerPersona[persona].relations
                 Object.keys(relations).forEach(key=>{
                     let painPoint = relations[key].sourceElement.name
@@ -26,13 +26,11 @@ export default class UserStoryMapGenerator extends JsonAIGenerator{
                 });
             });
             // modelDescription += "Painpoint analysis and Possible solutions: \n\n"
-        }else {
-            if(this.client.input.personas.length>0){
-                let personas = this.client.input.personas
-                modelDescription += "Create pain points and possible solutions that may arise by considering the following Personas. \n\n"
-                for(var i=0; i<personas.length; i++){
-                    modelDescription +="- "+ personas[i].persona + "\n"
-                }
+        }else if(this.client.input.personas && this.client.input.personas.length>0){
+            let personas = this.client.input.personas
+            modelDescription += "Create pain points and possible solutions that may arise by considering the following Personas. \n\n"
+            for(var i=0; i<personas.length; i++){
+                modelDescription +="- "+ personas[i].persona + "\n"
             }
         }
 
