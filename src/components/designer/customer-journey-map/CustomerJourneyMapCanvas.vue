@@ -569,8 +569,8 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
-        <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
 
+        <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" :defaultInputData="defaultGeneratorUiInputData" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
 
         <!-- model IMAGE -->
         <modeler-image-generator 
@@ -653,6 +653,14 @@
         },
         data() {
             return {
+                defaultGeneratorUiInputData: {
+                    "generator": "CJMGenerator",
+                    "title": {},
+                    "persona": "",
+                    "personaDescription": "",
+                    "scneario": "",
+                    "userStory": ""
+                },
                 fab: false,
 
                 //db permission

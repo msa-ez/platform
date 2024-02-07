@@ -1313,9 +1313,11 @@
                             ref="generatorUI"
                             @createModel="createModel"
                             @clearModelValue="clearModelValue"
+                            @showContinueBtn="showContinue = true"
                             :generatorStep="generatorStep"
+                            :defaultInputData="defaultGeneratorUiInputData"
                     >
-                        <v-tooltip slot="buttons" bottom>
+                        <v-tooltip v-if="showContinue" slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn
                                     @click="generateAggregate()"
@@ -2061,6 +2063,16 @@
         },
         data() {
             return {
+                showContinue: false,
+                defaultGeneratorUiInputData: {
+                    generator: "EventOnlyESGenerator", // EventOnlyESGenerator
+                    firstMessageIsTyping: true,
+                    secondMessageIsTyping: true,
+                    userStory: '생성할 서비스 종류: \n\n엑터: \n\n세부 유스케이스 명세: \n\n페인 포인트 및 해결 방안: \n\n시스템을 관리하는 개발팀 및 바운디드 컨텍스트: \n\n',
+                    communicationStyle: 'Choreography', // 'Orchestration'
+                    aggregateDetail: false,
+                    uiStyle: null
+                },
                 mirrorElementDialog: false,
                 mirrorElementInfo: {
                     component: null,

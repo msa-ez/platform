@@ -325,7 +325,7 @@
             :projectId="projectId"
             @startCreateModel="openEventStorming"
         ></AutoModelingDialog>
-        <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
+        <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" :defaultInputData="defaultGeneratorUiInputData" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
     </div>
 </template>
 
@@ -653,6 +653,11 @@
 
         data() {
             return {
+                defaultGeneratorUiInputData: {
+                    generator: "BMGenerator",
+                    title: "생성할 서비스명",
+                    userStory: "",
+                },
                 BMState: false,
                 dialogModeOfAutoModeling: false,
                 eleCnt: 0,
