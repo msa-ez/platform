@@ -23,6 +23,7 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+import '@4tw/cypress-drag-drop'
 
 Cypress.Commands.add('login', (username, password) => {
     cy.visit('https://github.com/login')
@@ -32,3 +33,9 @@ Cypress.Commands.add('login', (username, password) => {
 
     cy.get('input[type="submit"]').click()
 })
+
+Cypress.Commands.add('dragToPosition', { prevSubject: 'element' }, (subject, x, y) => {
+    cy.wrap(subject)
+      .trigger('mousedown', { which: 1 , force: true})
+      .trigger('mousemove', { x: x, y: y, force: true })
+  });

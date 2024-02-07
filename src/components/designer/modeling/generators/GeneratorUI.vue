@@ -12,6 +12,7 @@
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn @click="stop()"
+                                class="generatorui-stop"
                                 icon small
                                 v-bind="attrs"
                                 v-on="on"

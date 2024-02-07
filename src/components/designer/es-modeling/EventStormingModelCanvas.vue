@@ -1121,6 +1121,7 @@
                                             :_height="item.height"
                                         >
                                             <img
+                                                class="cp-sticker"
                                                 height="30px"
                                                 width="30px"
                                                 :src="item.src"

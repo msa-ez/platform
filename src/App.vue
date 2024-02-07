@@ -185,6 +185,7 @@
                                 <v-row>
                                     <v-col cols="12">
                                         <v-img @click.native="moveToModel(item.type)"
+                                            class="cp-create-model-img"
                                             :src="item.image"
                                             style="height:150px; margin:10px 0px; cursor:pointer;"
                                         ></v-img>
