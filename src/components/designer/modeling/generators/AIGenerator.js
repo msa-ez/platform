@@ -70,15 +70,26 @@ class AIGenerator {
         return hash;
     }
 
-    async generate(reGeneratePrompt){
+    async generate(generateOption){
         return new Promise((resolve, reject) => {
             this.state = 'running'
             let me = this;
             me.getToken().then(openaiToken => {
                 me.openaiToken = openaiToken;
                 let responseCnt = 0;
+                let messages
 
-                let messages = this.createMessages();
+                if(generateOption){
+                    if(generateOption.action=="reGenerate"){
+                        messages = this.createMessages();
+                        messages[0].content = generateOption.messages
+                    } else {
+                        messages = generateOption.messages
+                        me.previousMessages = generateOption.messages
+                    }
+                } else {
+                    messages = this.createMessages();
+                }
 
                 if(localStorage.getItem("useCache")=="true"){
                     let message = JSON.stringify(messages);
@@ -211,10 +222,6 @@ class AIGenerator {
                     
                     }
                 };
-                
-                if(reGeneratePrompt && reGeneratePrompt.action=="reGenerate"){
-                    messages[0].content = reGeneratePrompt.messages
-                }
 
                 const data = JSON.stringify({
                     model: this.model,
