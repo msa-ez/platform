@@ -2660,6 +2660,40 @@
             ); //this.$vnode.tag);
         },
         watch: {
+            "initLoad":function(newVal){
+                if(newVal){
+                    this.syncMirrorElements();
+                }
+            },
+            "isLoadedInitMirror": function (newVal) {
+                var me = this;
+                if (newVal && me.initLoad) {
+                    // changed MirrorValue and init definition load
+                    me.syncMirrorElements();
+                }
+            },
+            "isLoadedMirrorQueue": function (newVal) {
+                var me = this;
+                if (newVal && me.isLoadedInitMirror) {
+                    // changed MirrorValue and init definition load
+                    me.syncMirrorElements();
+                }
+            },
+            "projectName": _.debounce(function (newVal, oldVal) {
+                var me = this;
+                if (me.initLoad) me.modelChanged = true;
+                if (newVal) {
+                    if (me.gitRepoName == null) {
+                        me.gitRepoName = newVal;
+                    }
+                    me.gitInfo.name = newVal;
+                    me.projectNameHint = null;
+                    me.projectNameColor = null;
+                } else {
+                    me.projectNameHint = "Project name is required.";
+                    me.projectNameColor = "red";
+                }
+            }, 0),
             information: function () {
                 var me = this;
                 if (me.information) {
@@ -2684,58 +2718,6 @@
                     }
                 }
             },
-
-
-            // "initLoad": async function (newVal) {
-            //     var me = this
-            //     if (newVal) {
-            // !!!!!!!!!!!!!! Changed initLoad -> afterLoad !!!!
-            //         // complete for init model.
-            //         // me.mirrorIdsByValue(me.value)
-            //         if(me.value){
-            //             if(!me.value.elements || Object.keys(me.value.elements).length == 0){
-            //                 me.openAiMode = 'es'
-            //                 me.openAiMenu = true
-            //             }
-            //         }
-            //     }
-            // },
-            // "changedModifying": async function(newVal) {
-            //     var me = this
-            //
-            //     if (newVal) {
-            //         var parser = new ConfigIniParser("\n")
-            //         var initContent = await me.getGitConfig()
-            //         // parser.parse(iniContent);
-            //         var parseConfig = parser.parse(initContent);
-            //         parseConfig._ini.sections.forEach(function (section) {
-            //             if (section.name.includes('origin')) {
-            //                 section.options.forEach(function (option) {
-            //                     if (option.name == 'url') {
-            //                         me.linkedSCM = true;
-            //                         me.scmUrl = option.value
-            //                     }
-            //                 })
-            //
-            //             }
-            //         })
-            //     }
-            // },
-            projectName: _.debounce(function (newVal, oldVal) {
-                var me = this;
-                if (me.initLoad) me.modelChanged = true;
-                if (newVal) {
-                    if (me.gitRepoName == null) {
-                        me.gitRepoName = newVal;
-                    }
-                    me.gitInfo.name = newVal;
-                    me.projectNameHint = null;
-                    me.projectNameColor = null;
-                } else {
-                    me.projectNameHint = "Project name is required.";
-                    me.projectNameColor = "red";
-                }
-            }, 0),
         },
         methods: {
             async receiveAssociatedProject(associatedProjectId){
@@ -2743,9 +2725,9 @@
                 let startKey = '';
 
                 me.isLoadedInitMirror = false;
-                me.projectInformation = await me.list(`db://definitions/${associatedProjectId}/information`);
+                me.associatedProjectInformation = await me.list(`db://definitions/${associatedProjectId}/information`);
 
-                if(!me.projectInformation) return; // local
+                if(!me.associatedProjectInformation) return; // local
 
                 // server
                 // TODO: Snapshot Logic.
@@ -2826,28 +2808,28 @@
             },
             watchDeletedModel(beforeInfo){
                 var me = this
-                if(!me.projectInformation) return;
+                if(!me.associatedProjectInformation) return;
                 if(!beforeInfo) return;
 
                 if(!beforeInfo.eventStorming) return; // init added Model
 
                 // delete all
-                if(!me.projectInformation.eventStorming && beforeInfo.eventStorming) {
+                if(!me.associatedProjectInformation.eventStorming && beforeInfo.eventStorming) {
                     me.$emit('forceUpdateKey')
                 }
 
                 // equals
-                if(JSON.stringify(me.projectInformation.eventStorming.modelList) == JSON.stringify(beforeInfo.eventStorming.modelList)) return;
+                if(JSON.stringify(me.associatedProjectInformation.eventStorming.modelList) == JSON.stringify(beforeInfo.eventStorming.modelList)) return;
 
                 // add
-                if(me.projectInformation.eventStorming.modelList.length > beforeInfo.eventStorming.modelList.length) return;
+                if(me.associatedProjectInformation.eventStorming.modelList.length > beforeInfo.eventStorming.modelList.length) return;
 
                 // modified
                 me.$emit('forceUpdateKey')
             },
             modelListOfassociatedProject(){
-                if( this.projectInformation && this.projectInformation.eventStorming ) {
-                    return this.projectInformation.eventStorming.modelList
+                if( this.associatedProjectInformation && this.associatedProjectInformation.eventStorming ) {
+                    return this.associatedProjectInformation.eventStorming.modelList
                 }
                 return []
             },
@@ -4434,7 +4416,7 @@
 
                     if (me.projectSendable && !me.isHexagonal) {
                         element.definitionId = me.projectId
-                        options.definitionId = me.information.associatedProject
+                        options.associatedProject = me.information.associatedProject
                         me.pushAppendedQueue(element, options)
                     }
                 }
@@ -4454,7 +4436,7 @@
                     me.pushRemovedQueue(element, options)
 
                     if( me.projectSendable && !me.isHexagonal ) {
-                        options.definitionId = me.information.associatedProject
+                        options.associatedProject = me.information.associatedProject
                         me.pushRemovedQueue(element, options)
                     }
                 } else {
@@ -4526,7 +4508,7 @@
                 var me = this
                 if(!options) options = {}
                 let definitionId = me.projectId
-                if(options.definitionId) definitionId = options.definitionId
+                if(options.associatedProject) definitionId = options.associatedProject
 
                 let obj = {
                     action: element.relationView ? 'relationMove' : 'elementMove',
@@ -4592,9 +4574,11 @@
                 } catch (e) {
                     console.log("Error when to diffpatch for queue " + queue.childKey, e, "\n- queue is", (queue.childValue.item ? JSON.parse(queue.childValue.item) : queue.childValue), "\n- model is", value.elements, value.relations)
 
+                    me.receiveErrorQueue(e, queue)
                     // create default.
-                    value = await me.checkedDiffValue(diff, value);
-                    me.patchValue(diff, value)
+                    // value = await me.checkedDiffValue(diff, value);
+                    // me.patchValue(diff, value)
+
                 }
             },
             checkedDiffValue(diff, value) {
