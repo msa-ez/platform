@@ -70,6 +70,7 @@
                 projectExisted: false,
                 state:{
                     generator: "UserStoryMapGenerator",
+                    title: this.prompt,
                     businessModel: this.cachedModels["BMGenerator"],
                     painpointAnalysis: this.cachedModels["CJMGenerator"],
                     personas: this.cachedModels["Personas"]

@@ -58,6 +58,8 @@ export default class UserStoryMapGenerator extends JsonAIGenerator{
         return `
 Create a User Story Map by considering the contents below.
 
+Service Name: ${this.client.input.title}
+
 ${modelDescription}
 
   {
