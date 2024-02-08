@@ -8,113 +8,6 @@
                         style="margin-top: 10px; pointer-events: none;"
                     ></v-progress-linear>
 
-<<<<<<< HEAD
-                <div v-if="generationStopped" style="text-align: right; position: absolute; right: 30px; top: 25px;">
-                    <v-tooltip bottom>
-                        <template v-slot:activator="{ on, attrs }">
-                            <v-btn @click="stop()"
-                                class="generatorui-stop"
-                                icon small
-                                v-bind="attrs"
-                                v-on="on"
-                                style="z-index:2"
-                            >
-                                <v-icon style="margin-right: 5px;">mdi-stop-circle-outline</v-icon>
-                            </v-btn>
-                        </template>
-                        <span>Stop</span>
-                    </v-tooltip>
-                </div>
-                <div v-else style="text-align: right; position: absolute; right: 20px; top: 10px;">
-                    <!-- <v-tooltip  bottom>
-                        <template v-slot:activator="{ on, attrs }">
-                            <v-btn @click="generate(test)"
-                                icon small
-                                v-bind="attrs"
-                                v-on="on"
-                                style="margin-right: 10px; z-index:2"
-                            >
-                                <v-icon style="margin-right: 5px;">mdi-refresh</v-icon>
-                            </v-btn>
-                        </template>
-                        <span>reCreate model use to json</span>
-                    </v-tooltip> -->
-                    <v-tooltip  bottom>
-                        <template v-slot:activator="{ on, attrs }">
-                            <v-btn @click="reGenerate(input['userStory'])"
-                                icon small
-                                v-bind="attrs"
-                                v-on="on"
-                                style="margin-right: 5px; z-index:2"
-                                class="gs-es-auto-modling-btn"
-                            >
-                                <v-icon>mdi-refresh</v-icon>
-                            </v-btn>
-                        </template>
-                        <span>Try again</span>
-                    </v-tooltip>
-                    <!-- <v-tooltip  bottom>
-                        <template v-slot:activator="{ on, attrs }">
-                            <v-btn @click="continueGenerator()"
-                                icon small
-                                v-bind="attrs"
-                                v-on="on"
-                                style="margin-right: 10px; z-index:2"
-                            >
-                                <v-icon style="margin-right: 5px;">mdi-refresh</v-icon>
-                            </v-btn>
-                        </template>
-                        <span>Continue</span>
-                    </v-tooltip> -->
-                    <v-tooltip bottom>
-                        <template v-slot:activator="{ on, attrs }">
-                            <v-btn v-if="generatorStep === 'aggregate' || generatorName === 'CJMGenerator' || generatorName === 'BMGenerator' || generatorName === 'UserStoryMapGenerator'"
-                                @click="finishModelCreation()"
-                                small
-                                v-bind="attrs"
-                                v-on="on"
-                                class="gs-es-auto-modling-btn"
-                                style="padding:0px 5px; margin-right:10px;"
-                                color="primary"
-                            >
-                                <div v-if="generatorName === 'CJMGenerator' || generatorName === 'BMGenerator' || generatorName === 'UserStoryMapGenerator'">
-                                    <span><Icon style="float:left; margin-right:3px;" icon="ri:check-fill" width="16" height="16"/>complete</span>
-                                </div>
-                                <div v-else>
-                                    <span>CONTINUE<v-icon>mdi-arrow-right</v-icon></span>
-                                </div>
-                            </v-btn>
-                        </template>
-                        <span>Auto modeling completed</span>
-                    </v-tooltip>
-
-                    <slot name="buttons"></slot>
-                </div>
-
-                <v-tabs v-model="userPanel">
-                    <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;">Input</v-tab>
-                    <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;">Output</v-tab>
-                    <!-- <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;">TEST</v-tab> -->
-                </v-tabs>
-
-                <v-expansion-panels v-model="autoModelDialog">
-                    <v-expansion-panel style="padding:0px;">
-                        <v-expansion-panel-header disable-icon-rotate style="position:absolute;">
-                            <template v-slot:actions>
-                                <v-tooltip bottom>
-                                    <template v-slot:activator="{ on, attrs }">
-                                        <v-btn @click="isExpanded = !isExpanded"
-                                            icon small
-                                            v-bind="attrs"
-                                            v-on="on"
-                                            style="position:absolute; top:-38px; right:0px; z-index:2"
-                                        >
-                                            <v-icon>mdi-unfold-more-horizontal</v-icon>
-                                        </v-btn>
-                                    </template>
-                                    <span>Panel folding/unfolding</span>
-                                </v-tooltip>
-=======
                     <div v-if="generationStopped" style="text-align: right; position: absolute; right: 30px; top: 25px;">
                         <v-tooltip bottom>
                             <template v-slot:activator="{ on, attrs }">
@@ -126,7 +19,6 @@
                                 >
                                     <v-icon style="margin-right: 5px;">mdi-stop-circle-outline</v-icon>
                                 </v-btn>
->>>>>>> 10bb41fce34dfdbc5063b86d1f2d0808450b5bb6
                             </template>
                             <span>Stop</span>
                         </v-tooltip>
