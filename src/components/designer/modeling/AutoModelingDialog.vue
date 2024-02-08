@@ -30,7 +30,7 @@
             </v-card-text>
         </v-card>
 
-        <v-col class="shrink" :style="openChatUI ? 'height:3000px;':''">
+        <v-col class="shrink" :style="openChatUI ? 'height:10000px;':''">
             <v-expand-x-transition>
                 <v-card
                     v-show="openChatUI"
@@ -102,7 +102,7 @@
                                             </v-card>
                                         </v-col>
                                         <v-col style="text-align: center;">
-                                            <v-card :style="genType == 'BM2' ? 'border: solid darkturquoise;':'background-color: white;'">
+                                            <v-card :style="genType == 'BM2' ? 'border: solid darkturquoise;':'background-color: white;'" class="auto-bm">
                                                 <div @click="checkLogin('BM2')" style="cursor: pointer;">
                                                     <v-avatar
                                                         class="ma-3"
@@ -122,7 +122,7 @@
                                             </v-card>
                                         </v-col>
                                         <v-col style="text-align: center;">
-                                            <v-card :style="genType == 'USM' ? 'border: solid darkturquoise;':'background-color: white;'">
+                                            <v-card :style="genType == 'USM' ? 'border: solid darkturquoise;':'background-color: white;'" class="auto-usm">
                                                 <div @click="checkLogin('USM')" style="cursor: pointer;">
                                                     <v-avatar
                                                         class="ma-3"
@@ -142,7 +142,7 @@
                                             </v-card>
                                         </v-col>
                                         <v-col style="text-align: center;">
-                                            <v-card :style="genType == 'ES2' ? 'border: solid darkturquoise;':'background-color: white;'">
+                                            <v-card :style="genType == 'ES2' ? 'border: solid darkturquoise;':'background-color: white;'" class="auto-es">
                                                 <v-chip class="gs-stable-chip" x-small
                                                     style="position: absolute;
                                                     right: 5px;
@@ -168,7 +168,7 @@
                                             </v-card>
                                         </v-col>
                                         <v-col style="text-align: center;">
-                                            <v-card :style="genType == 'UI' ? 'border: solid darkturquoise;':'background-color: white;'">
+                                            <v-card :style="genType == 'UI' ? 'border: solid darkturquoise;':'background-color: white;'" class="auto-ui">
                                                 <div @click="checkLogin('UI')" style="cursor: pointer;">
                                                     <v-avatar
                                                         class="ma-3"

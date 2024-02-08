@@ -589,7 +589,7 @@
                 </v-layout>
             </hsc-window>
         </hsc-window-style-metal>
-        <GeneratorUI v-if="projectId" ref="generatorUI" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
+        <GeneratorUI v-if="projectId" ref="generatorUI" @createModel="createModel" :defaultInputData="defaultGeneratorUiInputData" @clearModelValue="clearModelValue"></GeneratorUI>
     </div>
 </template>
 
@@ -628,6 +628,13 @@
         },
         data() {
             return {
+                defaultGeneratorUiInputData: {
+                    "businessModel": {},
+                    "generator": "UserStoryMapGenerator",
+                    "painpointAnalysis": {},
+                    "personas": [],
+                    "userStory": ""
+                },
                 fab: false,
 
                 //db permission

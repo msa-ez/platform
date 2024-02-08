@@ -185,6 +185,7 @@
                                 <v-row>
                                     <v-col cols="12">
                                         <v-img @click.native="moveToModel(item.type)"
+                                            class="cp-create-model-img"
                                             :src="item.image"
                                             style="height:150px; margin:10px 0px; cursor:pointer;"
                                         ></v-img>
@@ -652,7 +653,7 @@
             </v-stepper>
         </v-alert>
 
-        <div v-if="showMain" class="d-flex flex-row mt-sm-8 mt-5 overflow-hidden">
+        <div v-if="showMain" class="d-flex flex-row mt-sm-8 mt-5 overflow-hidden main-page-slider-group-box">
             <div class="main-page-slider-group">
                 <img src="/static/image/main/mainSlide.png" />
             </div>
@@ -2136,6 +2137,12 @@
 
 </script>
 <style>
+    .main-page-slider-group-box {
+        opacity: 0.2;
+    }
+    .main-page-slider-group-box:hover {
+        opacity: 0.8;
+    }
     .main-page-slider-group {
         animation: mainSlide 35s linear infinite;
     }
