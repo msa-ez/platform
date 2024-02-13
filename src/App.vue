@@ -81,7 +81,9 @@
             <v-tooltip v-if="inCourse && !showNewButton" bottom>
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn style="margin-right:10px;" v-bind="attrs" v-on="on" @click="addNewClass()"
-                         icon large>
+                        icon large
+                        color="black"
+                    >
                         <v-icon>mdi-file-plus</v-icon>
                     </v-btn>
                 </template>
@@ -651,31 +653,6 @@
                 </v-stepper-header>
             </v-stepper>
         </v-alert>
-
-        <div v-if="showMain" class="d-flex flex-row mt-sm-8 mt-5 overflow-hidden main-page-slider-group-box">
-            <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSlide.png" />
-            </div>
-            <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSlide.png" />
-            </div>
-            <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSlide.png" />
-            </div>
-            <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSlide.png" />
-            </div>
-            <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSlide.png" />
-            </div>
-        </div>
-        
-        <v-footer v-if="showFooter"
-            padless
-            style="background-color: transparent;"
-        >
-            <ProvisionIndication style="margin:0; padding:0px; width:100%;"></ProvisionIndication>
-        </v-footer>
     </v-app>
 </template>
 
@@ -697,7 +674,6 @@
     import SubscriptionItemTemplate from "./components/payment/SubscriptionItemTemplate";
     const fs = require('fs');
     import Draggable from 'vue-draggable';
-    import ProvisionIndication from './components/payment/ProvisionIndication.vue'
 
     export default {
         name: 'App',
@@ -905,7 +881,6 @@
 
         }),
         components: {
-            ProvisionIndication,
             SubscriptionItemTemplate,
             PodEvents,
             ParticipantIcons,
@@ -921,14 +896,6 @@
         // beforeMount(){
         // },
         computed: {
-            showMain() {
-                const path = this.$route.path;
-                return path === '/';
-            },
-            showFooter() {
-                const path = this.$route.path;
-                return path === '/courses' || path === '/' || path === '/myPage';
-            },
             isForeign() {
                 if (window.countryCode == 'ko') {
                     return false
@@ -2136,24 +2103,6 @@
 
 </script>
 <style>
-    .main-page-slider-group-box {
-        opacity: 0.2;
-    }
-    .main-page-slider-group-box:hover {
-        opacity: 0.8;
-    }
-    .main-page-slider-group {
-        animation: mainSlide 35s linear infinite;
-    }
-
-    @keyframes mainSlide {
-        0% {
-            transform: translate3d(0, 0, 0);
-        }
-        100% {
-            transform: translate3d(-100%, 0, 0);
-        }
-    }
     .making-col {
         padding:20px;
     }

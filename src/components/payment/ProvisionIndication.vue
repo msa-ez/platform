@@ -1,26 +1,7 @@
 <template>
-    <div style="padding-top:10px;">
+    <div>
         <v-divider></v-divider>
-        <!-- pc 환경 -->
-        <!-- <v-row class="footer-is-web" style="margin:0px; padding:10px;">
-            <div style="font-size: 13px; padding:10px 10px 0px 10px;">
-                <div v-if="!isForeign">
-                    {{$t('company.name')}} <br/>
-                    {{$t('word.address')}} : {{$t('company.address')}}, {{$t('word.number')}} : {{$t('company.number')}}<br/>
-                    {{$t('word.ceo')}}  : {{$t('company.ceo')}},  {{$t('word.registrationNumber')}} : {{$t('company.registrationNumber')}}<br/>
-                    {{$t('info.refundComment')}} / {{$t('word.refundUser')}} : {{$t('company.refundUser')}}  ({{$t('company.refundNumber')}})<br/>
-                </div>
-                <div> Copyright © uEngine All Rights Reserved </div>
-            </div>
-            <v-row style="margin:0px;">
-                <v-spacer></v-spacer>
-                <v-btn text @click="provision()"> {{$t('word.terms')}}</v-btn>
-                <v-btn text @click="provision()"> {{$t('word.privacy')}}</v-btn>
-            </v-row>
-        </v-row> -->
-
-        <!-- 모바일 -->
-        <div style="text-align: center;">
+        <div style="text-align: center; padding-bottom:10px;">
             <v-col>
                 <div style="font-size: 13px; padding:0px; opacity: 0.8;">
                     <div v-if="!isForeign">

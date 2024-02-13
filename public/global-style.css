@@ -2,6 +2,31 @@
     font-family: 'Apple SD Gothic Neo','Malgun Gothic',arial,sans-serif !important;
 } */
 
+
+/* 메인페이지 슬라이드 관련 시작 */
+
+.main-page-slider-group-box {
+    opacity: 0.2;
+}
+.main-page-slider-group-box:hover {
+    opacity: 0.8;
+}
+.main-page-slider-group {
+    animation: mainSlide 35s linear infinite;
+}
+
+@keyframes mainSlide {
+    0% {
+        transform: translate3d(0, 0, 0);
+    }
+    100% {
+        transform: translate3d(-100%, 0, 0);
+    }
+}
+
+
+/* 메인페이지 슬라이드 관련 끝 */
+
 .gs-es-auto-modling-btn {
     z-index:2;
     margin-right:5px;
