@@ -282,24 +282,24 @@
                     this.refreshImg()
                 }, 200)
             },
-            "STATUS_COMPLETE":function(newVal) {
-                if (newVal  && this.canvas.isServerModel) {
-                    // onMoving Event (Only Server)
-                    this.validate()
-                    this.onMoveAction();
-                }
-            },
-            "value.elementView": {
-                deep: true,
-                handler: function (newVal, oldVal) {
-                    var me = this
-                    if (!me.canvas.isServerModel) {
-                        // onMoving Event ( Only Local)
-                        me.validate()
-                        me.onMoveAction();
-                    }
-                }
-            },
+            // "STATUS_COMPLETE":function(newVal) {
+            //     if (newVal  && this.canvas.isServerModel) {
+            //         // onMoving Event (Only Server)
+            //         this.validate()
+            //         this.onMoveAction();
+            //     }
+            // },
+            // "value.elementView": {
+            //     deep: true,
+            //     handler: function (newVal, oldVal) {
+            //         var me = this
+            //         if (!me.canvas.isServerModel) {
+            //             // onMoving Event ( Only Local)
+            //             me.validate()
+            //             me.onMoveAction();
+            //         }
+            //     }
+            // },
             "value.name": function (newVal, oldVal) {
                 this.namePanel = newVal;
                 this.onChangedElementName(newVal, oldVal);

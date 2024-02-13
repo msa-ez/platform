@@ -227,12 +227,10 @@
         },
         data() {
             return {
-                //schedule
-                sortScheduleId: null,
-                queueScheduleId: null,
+                // associatedProject mirror 
+                associatedProjectInformation: null,
                 isLoadedInitMirror: false,
                 isLoadedMirrorQueue: false,
-                projectInformation: null,
                 mirrorValue: {
                     'elements': {},
                     'relations': {},
@@ -242,8 +240,13 @@
                     'toppingPlatformsConf': {},
                     'scm': {}
                 },
-                git: null,
                 mirrorQueueCount: 0,
+                
+                //schedule
+                sortScheduleId: null,
+                queueScheduleId: null,
+                
+                git: null,
                 showLoginCard: false,
                 //Version
                 versionLists: null,
@@ -809,23 +812,9 @@
             "initLoad":function(newVal){
                 if(newVal){
                     this.afterLoad();
-                    this.syncMirrorElements();
                 }
             },
-            "isLoadedInitMirror": function (newVal) {
-                var me = this;
-                if (newVal && me.initLoad) {
-                    // changed MirrorValue and init definition load
-                    me.syncMirrorElements();
-                }
-            },
-            "isLoadedMirrorQueue": function (newVal) {
-                var me = this;
-                if (newVal && me.isLoadedInitMirror) {
-                    // changed MirrorValue and init definition load
-                    me.syncMirrorElements();
-                }
-            },
+        
             // "mouseEvents": {
             //     deep: true,
             //     handler: _.debounce(function (newVal, oldVal) {
@@ -3466,8 +3455,8 @@
                 if(!associatedProjectId) return
 
                 me.watch(`db://definitions/${associatedProjectId}/information`, function (information) {
-                    let old = JSON.parse(JSON.stringify(me.projectInformation));
-                    me.projectInformation = information ? information : null
+                    let old = JSON.parse(JSON.stringify(me.associatedProjectInformation));
+                    me.associatedProjectInformation = information ? information : null
                     me.watchDeletedModel(old);
                 })
             },
@@ -3496,27 +3485,29 @@
                          CONDITION2: if includes "definitionId", includes modelLists
                         */
 
-                        // if(origin /*&& modelLists.includes(origin.definitionId)*/ ) {
-                        if(origin && (!Object.keys(origin).includes('definitionId') || modelLists.includes(origin.definitionId) ) ) {
-                            // connection -> Sync
-                            if(mirror.elementView)
-                                me.value.elements[mirror.elementView.id] = me.overrideMirrorValue(mirror, origin);
-                            else if(mirror.id)
-                                me.value.elements[mirror.id] = me.overrideMirrorValue(mirror, origin);
-                            else
-                                console.log("mirror element is corrupt: doesn't have elementView")
-                                
-                        } else if(origin && !modelLists.includes(origin.definitionId)){
-                            // disconnect -> origin definition remove.
-                            me.$set(disconnectDiff.elements, origin.id, [origin,null])
-                        } else if(!origin && mirror.definitionId && modelLists.includes(mirror.definitionId)){
-                            // connection -> user remove.
-                            me.$refs[`${mirror.id}`]? me.$refs[`${mirror.id}`][0].onRemoveShape() : null;
-                            // delete me.value.elements[mirror.id];
-                            me.value.elements[mirror.id] = null;
-                        } else if(!origin && mirror.mirrorElement){
-                            // reConnection -> relink
-                            let reOrigin = Object.values(me.mirrorValue.elements)
+                        if(origin){
+                            // Exist Origin Element.
+                            if(!modelLists.includes(origin.definitionId)){
+                                // Disconnetion Model && Disconnection Element && Exist Element.
+                                me.$set(disconnectDiff.elements, origin.id, [origin,null])
+                            } else {
+                                // Connetion Model && Connection Element && Exist Element.
+                                if(mirror.elementView)
+                                    me.value.elements[mirror.elementView.id] = me.overrideMirrorValue(mirror, origin);
+                                else if(mirror.id)
+                                    me.value.elements[mirror.id] = me.overrideMirrorValue(mirror, origin);
+                                else
+                                    console.log("mirror element is corrupt: doesn't have elementView")
+                            }
+                        } else {
+                            // Removed Origin Element.
+                            if(mirror.definitionId && modelLists.includes(mirror.definitionId)) {
+                                // Connetion Model && Connection Element && Removed Element.
+                                me.$refs[`${mirror.id}`]? me.$refs[`${mirror.id}`][0].onRemoveShape() : null;
+                                me.value.elements[mirror.id] = null;
+                            } else if (mirror.mirrorElement){
+                                // Connetion Model && Disconnection Element
+                                let reOrigin = Object.values(me.mirrorValue.elements)
                                 .find(ele =>
                                     me.validateElementFormat(ele)
                                     && ele._type == mirror._type  // equals type.
@@ -3525,9 +3516,10 @@
                                     && ele.elementView.id != mirror.id // myself x
                                     && !ele.mirrorElement // connected element x
                                 )
-                            if(reOrigin) {
-                                mirror.mirrorElement = reOrigin.elementView.id
-                                me.changedByMe = true;
+                                if(reOrigin) {
+                                    mirror.mirrorElement = reOrigin.elementView.id
+                                    me.changedByMe = true;
+                                }
                             }
                         }
                     });
@@ -4367,7 +4359,7 @@
 
                             // COMMON QUEUE
                             if(me.projectSendable) {
-                                options.definitionId = me.information.associatedProject
+                                options.associatedProject = me.information.associatedProject
                                 await me.pushChangedValueQueue(diff, options)
                             }
                         }
@@ -4470,7 +4462,7 @@
                 var me = this
                 let definitionId = me.projectId
                 if(!options) options={}
-                if(options.definitionId) definitionId = options.definitionId
+                if(options.associatedProject) definitionId = options.associatedProject
 
                 // console.log('Sever Queue] ADD')
                 return me.pushObject(`db://definitions/${definitionId}/queue`, {
@@ -4484,7 +4476,7 @@
                 var me = this
                 let definitionId = me.projectId
                 if(!options) options={}
-                if(options.definitionId) definitionId = options.definitionId
+                if(options.associatedProject) definitionId = options.associatedProject
 
                 // console.log('Sever Queue] Remove')
                 return me.pushObject(`db://definitions/${definitionId}/queue`, {
@@ -4498,7 +4490,7 @@
                 var me = this
                 let definitionId = me.projectId
                 if(!options) options={}
-                if(options.definitionId) definitionId = options.definitionId
+                if(options.associatedProject) definitionId = options.associatedProject
 
                 let obj = {
                     action: element.relationView ? 'relationMove' : 'elementMove',
@@ -4523,7 +4515,7 @@
                 var me = this
                 let definitionId = me.projectId
                 if(!options) options={}
-                if(options.definitionId) definitionId = options.definitionId
+                if(options.associatedProject) definitionId = options.associatedProject
 
                 // console.log('Sever Queue] Change')
                 return await me.pushObject(`db://definitions/${definitionId}/queue`, {

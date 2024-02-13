@@ -114,6 +114,10 @@
                     //STATUS_COMPLETE_elementDelete
                     me.STATUS_COMPLETE = obj.STATUS_COMPLETE
                 } else if ( obj.action == 'elementMove' ) {
+                    if(!me.canvas.isServerModel || (me.canvas.isServerModel && obj.STATUS_COMPLETE) ){
+                        me.validate()
+                        me.onMoveAction();
+                    }
                     me.STATUS_COMPLETE = obj.STATUS_COMPLETE
                     me.movingElement = obj.movingElement
                 } else if ( obj.action == 'valueModify' ) {
@@ -129,10 +133,12 @@
                         me.STATUS_COMPLETE = obj.STATUS_COMPLETE
                     })
                 } else if ( obj.action =='relationMove' ) {
-                    me.$nextTick(function () {
-                        me.STATUS_COMPLETE = obj.STATUS_COMPLETE
-                        me.movingElement = obj.movingElement
-                    })
+                    if(!me.canvas.isServerModel || (me.canvas.isServerModel && obj.STATUS_COMPLETE) ){
+                        me.validate()
+                        me.onMoveAction();
+                    }
+                    me.STATUS_COMPLETE = obj.STATUS_COMPLETE
+                    me.movingElement = obj.movingElement
                 } else if (obj.action == 'userPanelOpen' || obj.action == 'userSelectedOn' || obj.action == 'userMovedOn') {
                     if(!me.newEditUserImg) {
                         me.newEditUserImg = []
@@ -219,6 +225,8 @@
                 throw new Error('setElementCanvas() must be implement')
             },
             removeAction(){},
+            validate() { return; },
+            onMoveAction() { return; },
             exceptionError(message, options){
                 var me = this
                 var msg = message ? message : '[Element] Exception Error.'

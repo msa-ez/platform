@@ -14,7 +14,7 @@ export default class CJMGenerator extends JsonAIGenerator{
 please generate a Customer Journey Map :
 
 for service: 
-    ${this.client.input.title}
+    ${JSON.stringify(this.client.input.title)}
 for persona:
     ${this.client.input.persona}
     ${this.client.input.personaDescription}
