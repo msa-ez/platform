@@ -799,11 +799,6 @@
                     </div>
                 </div>
             </div>
-            <!-- <div style="width: 100%;" v-if=" !(isPaidLab && myId) ">
-                <v-footer padless>
-                    <ProvisionIndication divider></ProvisionIndication>
-                </v-footer>
-            </div> -->
         </v-row>
         <v-row v-else>
             <v-col>
