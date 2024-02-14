@@ -394,6 +394,7 @@
                         window.localStorage.setItem("picture", user.picture)
                         window.localStorage.setItem("accessToken", token)
                         window.localStorage.setItem("uid", uid)
+                        window.localStorage.setItem('providerUid', user.id)
                         window.localStorage.setItem("loginType", "google")
                         if (user.email && user.email.includes('@uengine.org')) {
                             window.localStorage.setItem("authorized", 'admin');
@@ -486,6 +487,7 @@
                         var userEmail = result.user.providerData[0].email
                         var userProfile = result.additionalUserInfo.profile.avatar_url;
                         var state = result.operationType;
+                        var providerUid = result.user.providerData[0].uid
 
                         window.localStorage.setItem("author", userEmail)
                         window.localStorage.setItem("userName", userName)
@@ -495,6 +497,7 @@
                         window.localStorage.setItem("gitAccessToken", token)
                         window.localStorage.setItem("gitToken", token)
                         window.localStorage.setItem("uid", uid)
+                        window.localStorage.setItem('providerUid', providerUid)
                         window.localStorage.setItem("loginType", "github")
                         window.localStorage.setItem("gitUserName", userName)
                         window.localStorage.setItem("gitOrgName", userName)
