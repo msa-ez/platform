@@ -369,7 +369,7 @@
                 <v-list style="width:310px;">
                     <v-list-item-group>
                         <div style="font-size: small; cursor:default; display: table-cell; padding-left:16px;">
-                            <div v-if="isLogin">{{userInfo.email}}</div>
+                            <div v-if="isLogin">{{userInfo.email}} ({{userInfo.providerUid}})</div>
                             <div v-else-if="isGuestLogin">(GUEST) {{userInfo.email}}</div>
                         </div>
                         <v-divider style="margin-top: 5px;"></v-divider>
@@ -975,6 +975,7 @@
             var me = this
 
             Vue.prototype.$app = me
+
             me.$EventBus.$on('open-new-making-dialog', function () {
                 me.makingDialog = true
             })
@@ -1116,7 +1117,7 @@
             var me = this
             if (me.isLogin) {
                 var convertEmail = me.userInfo.email.replace(/\./gi, '_')
-                me.watch_off(`db://enrolledUsers/${convertEmail}/purchaseHistory`)
+                // me.watch_off(`db://enrolledUsers/${convertEmail}/purchaseHistory`)
                 // firebase.database().ref(`enrolledUsers/${convertEmail}/purchaseHistory`).off();
             }
             window.localStorage.removeItem("accessToken");
@@ -1659,34 +1660,27 @@
             setColor(index) {
                 this.selectedItem = index;
             },
-            moveToModel(type) {
+            async moveToModel(type) {
                 var me = this
+                if(!me.userInfo.providerUid) await await me.loginUser()
+               
                 me.makingDialog = false
                 try {
                     if (!type) type = me.mode
-
+                    let path = me.userInfo.providerUid ? `/${me.userInfo.providerUid}` : ''
+                
                     if (type == 'es') {
-                        me.$router.push({path: `storming/${me.dbuid()}`});
+                        path = `${path}/storming`
                     } else if (type == 'k8s') {
-                        me.$router.push({path: `kubernetes/${me.dbuid()}`});
+                        path = `${path}/kubernetes`
                     } else if (type == 'bm') {
-                        me.$router.push({path: `business-model-canvas/${me.dbuid()}`});
-                    } else if (type == 'sticky') {
-                        me.$router.push({path: `sticky/${me.dbuid()}`});
-                    } else if (type == 'bpmn') {
-                        me.$router.push({path: `bpmn/${me.dbuid()}`});
-                    } else if (type == 'uml') {
-                        me.$router.push({path: `uml/${me.dbuid()}`});
-                    } else if (type == 'project'){
-                        me.$router.push({path: `project/${me.dbuid()}`});
-                    }else if (type == 'cjm') {
-                        me.$router.push({path: `cjm/${me.dbuid()}`});
-                    }else if (type == 'userStoryMap') {
-                        me.$router.push({path: `userStoryMap/${me.dbuid()}`});
+                        path = `${path}/business-model-canvas`
                     } else {
-                        me.$router.push({path: `storming/${me.dbuid()}`});
-                    }
+                        path = `${path}/${type}`
+                    } 
+                    path = `${path}/${me.dbuid()}`
 
+                    me.$router.push({path: path});
                 } catch (e) {
                     alert('Error-NewProject', e)
                 }

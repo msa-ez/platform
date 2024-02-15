@@ -42,10 +42,10 @@
                             :error-messages="condition.error && condition.error['projectId']"
                     ></v-text-field>
                     <v-text-field
-                            v-if="condition.action == 'fork' || condition.type == 'project'"
-                            :disabled="condition.type == 'project' ? false : true"
+                            v-if="condition.type == 'project'"
+                            :disabled="false"
                             v-model="condition.projectName"
-                            :label="condition.type == 'project' ? 'Project Name' : 'Project Name(Origin)'"
+                            :label="'Project Name'"
                     ></v-text-field>
                     <v-text-field
                             v-if="condition.action == 'fork'"
