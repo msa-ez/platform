@@ -33,9 +33,9 @@
                         'fill-r': 1,
                         'fill-cx': .1,
                         'fill-cy': .1,
-                        'stroke-width': 0,
-                        'stroke': '#5FC08B',
-                        'fill': '#5FC08B',
+                        'stroke-width': 10,
+                        'stroke': '#45d8c1',
+                        'fill': '#45d8c1',
                         'fill-opacity': 1,
                         'r': '1',
                     }"
