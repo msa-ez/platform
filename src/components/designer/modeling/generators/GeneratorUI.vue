@@ -121,6 +121,7 @@
                                         <template v-slot:activator="{ on, attrs }">
                                             <v-btn @click="isExpanded = !isExpanded"
                                                 icon small
+                                                class="cp-panel-folding"
                                                 v-bind="attrs"
                                                 v-on="on"
                                                 style="position:absolute; top:-38px; right:0px; z-index:2"
