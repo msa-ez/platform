@@ -916,7 +916,7 @@
                                                     <v-btn
                                                             text
                                                             v-else
-                                                            class="mobile-btn"
+                                                            class="mobile-btn cp-es-save-btn"
                                                             @click.native="saveComposition('save')"
                                                             v-on="on"
                                                             small
@@ -949,7 +949,7 @@
                                                         <v-btn
                                                                 text
                                                                 dark
-                                                                class="mobile-btn"
+                                                                class="mobile-btn cp-es-share-btn"
                                                                 v-on="on"
                                                                 @click="openInviteUsers()"
                                                                 small
@@ -1033,7 +1033,7 @@
                                                         <v-btn
                                                             color="primary"
                                                             text
-                                                            class="mobile-btn"
+                                                            class="mobile-btn cp-es-code-viewer-btn"
                                                             @click="openCodeViewer()"
                                                             v-on="on"
                                                             small

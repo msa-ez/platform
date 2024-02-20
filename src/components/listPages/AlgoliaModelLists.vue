@@ -51,7 +51,7 @@
                                 <v-list-item-title style="margin:5px 0px 0px 10px; font-weight: 700;">
                                     <div style="display: flex;">
                                         <Icon icon="material-symbols:home-storage" width="28" height="28" style="margin-right:3px;" />
-                                        <div style="margin-top:5px;">{{$t('mainNav.Storage')}}</div>
+                                        <div class="cp-storage" style="margin-top:5px;">{{$t('mainNav.Storage')}}</div>
                                     </div>
                                 </v-list-item-title>
                             </template>

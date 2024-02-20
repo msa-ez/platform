@@ -7,17 +7,20 @@ describe('Modeling Test', () => {
   beforeEach(() => {
     cy.session('mySession', () => {
       cy.login()
+      cy.wait(20000);
     })
   })
+
   
-  it('visit page and log in.', () => {
+  
+  it('Modeling Test.', () => {
     cy.visit('https://www.msaez.io:8081/#/')
     
-    // cy.get('.v-avatar').click()
+    cy.get('.v-avatar').click()
     
-    // cy.get('.cp-github-login').click()
+    cy.get('.cp-github-login').click()
     
-    // cy.wait(9000);
+    cy.wait(9000);
 
     cy.wait(4000);
 
@@ -31,6 +34,7 @@ describe('Modeling Test', () => {
 
     cy.get('.cp-panel-folding').click();
     cy.wait(500);
+    
 
     // Event
     cy.get('.cp-sticker').eq(0).trigger('mousedown', { which: 1 }) 
@@ -41,7 +45,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').type('OrderPlaced')
-    cy.get('.v-btn__content').eq(7).click({force: true})
+    cy.get('.v-btn__content').eq(6).click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -59,7 +63,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').type('OrderCanceled')
-    cy.get('.v-btn__content').eq(7).click({force: true})
+    cy.get('.v-btn__content').eq(6).click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -77,7 +81,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').type('DeliveryStarted')
-    cy.get('.v-btn__content').eq(7).click({force: true})
+    cy.get('.v-btn__content').eq(6).click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -95,7 +99,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').type('DeliveryCanceled')
-    cy.get('.v-btn__content').eq(7).click({force: true})
+    cy.get('.v-btn__content').eq(6).click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -113,7 +117,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').type('order')
-    cy.get('.v-btn__content').eq(7).click({force: true})
+    cy.get('.v-btn__content').eq(6).click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -131,7 +135,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').type('cancel')
-    cy.get('.v-btn__content').eq(7).click({force: true})
+    cy.get('.v-btn__content').eq(6).click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -150,7 +154,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').type('start delivery')
-    cy.get('.v-btn__content').eq(7).click({force: true})
+    cy.get('.v-btn__content').eq(6).click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -167,7 +171,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').type('cancel delivery')
-    cy.get('.v-btn__content').eq(7).click({force: true})
+    cy.get('.v-btn__content').eq(6).click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -186,7 +190,7 @@ describe('Modeling Test', () => {
     // cy.wait(500);
 
     // cy.get('#elementName').type('customer')
-    // cy.get('.v-btn__content').eq(7).click({force: true})
+    // cy.get('.v-btn__content').eq(6).click({force: true})
 
     // cy.get('body').trigger('mousedown', { which: 1 }) 
     // cy.wait(500);
@@ -204,7 +208,7 @@ describe('Modeling Test', () => {
     // cy.wait(500);
 
     // cy.get('#elementName').type('customer')
-    // cy.get('.v-btn__content').eq(7).click({force: true})
+    // cy.get('.v-btn__content').eq(6).click({force: true})
 
     // cy.get('body').trigger('mousedown', { which: 1 }) 
     // cy.wait(500);
@@ -229,7 +233,7 @@ describe('Modeling Test', () => {
     // cy.get('.mr-2').eq(4).click();
     // cy.wait(500);
     // cy.get('.cp-save-button').click();    
-    cy.get('.v-btn__content').eq(7).click({force: true})
+    cy.get('.v-btn__content').eq(6).click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -254,7 +258,7 @@ describe('Modeling Test', () => {
     // cy.get('.mr-2').eq(4).click();
     // cy.wait(500);
     // cy.get('.cp-save-button').click();    
-    cy.get('.v-btn__content').eq(7).click({force: true})
+    cy.get('.v-btn__content').eq(6).click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -273,7 +277,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').clear().type('order')
-    cy.get('.v-btn__content').eq(7).click({force: true})
+    cy.get('.v-btn__content').eq(6).click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -290,7 +294,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').clear().type('delivery')
-    cy.get('.v-btn__content').eq(7).click({force: true})
+    cy.get('.v-btn__content').eq(6).click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -328,30 +332,21 @@ describe('Modeling Test', () => {
     cy.clickAt(715, 415);
     cy.wait(2000);
 
-    // -------------
-    // const yourText = '음식 배달 앱';
-    // cy.get('.auto-modeling-text').type(`${yourText}{enter}`);
+    cy.get('.cp-es-save-btn').click();
+    // 테스트때마다 변경필요.
+    cy.contains('label', '* Definition ID(Unique ID)').next('input').clear({force:true}).type('modeling-test21');
+    cy.wait(1000);
+    cy.get('.cp-es-dialog-save').click();
+    cy.wait(8000);
 
-    // // cjm
-    // cy.get('.auto-cjm').click()
-    // cy.wait(8000);
-    // cy.get('.ms-2').eq(0).click();
-    // cy.get('.cjm-create-btn').click()
-    // cy.wait(20000);
+    cy.get('.cp-panel-folding').click();
+    cy.wait(1000);
 
-    // bm
-    // cy.get('.auto-bm').click()
-    // cy.wait(30000);
-
-    // // usm
-    // cy.get('.auto-usm').click()
-    // cy.wait(30000);
-
-    // es
-    // cy.get('.auto-es').click()
-    // cy.wait(15000);
-    // cy.get('.auto-modeling-btn').click()
-    
+    cy.get('.cp-es-share-btn').click();
+    cy.contains('label', 'User to invite').next('input').type('rbtn110@gmail.com{enter}');
+    cy.wait(1000);
+    cy.get('.cp-es-apply-btn').click();
+    cy.wait(5000);
   })
 })
 

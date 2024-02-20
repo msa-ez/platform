@@ -74,6 +74,7 @@
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on: tooltip }">
                                         <v-btn :disabled="!isGeneratorDone"
+                                            class="cp-git-btn"
                                             style="font-size: 16px;
                                                 margin-right: 5px;
                                                 margin-top: 1px;
@@ -216,7 +217,7 @@
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
                             <div>
-                                <v-btn v-on="on" class="code-preview-btn"
+                                <v-btn v-on="on" class="code-preview-btn cp-download-btn"
                                         icon fab @click="downloadArchive()"
                                 >
                                     <slot name="downloadArchive">
