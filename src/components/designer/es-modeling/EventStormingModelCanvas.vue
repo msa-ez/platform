@@ -1312,10 +1312,12 @@
                             :projectId="projectId"
                             ref="generatorUI"
                             @createModel="createModel"
+                            @modificateModel="modificateModel"
                             @clearModelValue="clearModelValue"
                             @showContinueBtn="showContinue = true"
                             :generatorStep="generatorStep"
                             :defaultInputData="defaultGeneratorUiInputData"
+                            :modelValue="value"
                     >
                         <v-tooltip v-if="showContinue" slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
@@ -1342,9 +1344,11 @@
                             :generatorParameter="generatorParameter"
                             ref="aggregateGeneratorUI"
                             @createModel="createModel"
+                            @modificateModel="modificateModel"
                             @onGenerationFinished="onGenerationFinished"
                             @clearModelValue="clearModelValue"
                             :generatorStep="generatorStep"
+                            :modelValue="value"
                     >
                         <!-- <v-tooltip slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
@@ -3220,6 +3224,13 @@
                 });
 
                 return attachedRelations;
+            },
+            modificateModel(model){
+                var me = this;
+                if(model){
+                    me.value.elements[model.id] = model
+                    me.changedByMe = true
+                }
             },
             addAppendedProperties(object1, object2) {
                 if (typeof object1 !== "object" || typeof object2 !== "object") {
