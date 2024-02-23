@@ -161,7 +161,7 @@
 
                                     <v-tab-item>
                                         <v-card flat>
-                                            <v-card-text id="scroll_messageList" style="height: 100%; max-height: 800px; overflow-y: scroll;">
+                                            <v-card-text id="scroll_messageList" style="height: 100%; max-height: 75vh; overflow-y: scroll;">
                                                 <v-col cols="12">
                                                     <div v-for="message in chatList" :key="message">
                                                         <v-row v-if="message.type == 'prompt'" style="justify-content: right; margin-bottom: 20px;">
@@ -209,7 +209,7 @@
                                                     append-icon="mdi-send"
                                                     :disabled="selectedElement.length === 0"
                                                     @click:append="generate()"
-                                                    @keypress.enter="debouncedGenerate()"
+                                                    @keypress.enter="generate()"
                                                 >
                                                 </v-text-field>                                     
                                             </v-card>
@@ -477,13 +477,6 @@
                     this.showGenerateBtn = false
                 }
             },
-
-            debouncedGenerate(){
-                _.debounce(function () {
-                    this.generate()
-                }, 5000)
-            },
-
             switchGenerator(mode){
                 if(mode){
                     if(mode=='chat'){
