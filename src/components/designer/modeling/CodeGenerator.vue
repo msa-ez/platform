@@ -160,7 +160,7 @@
 
                     <v-tooltip bottom v-if="editableTemplate">
                         <template v-slot:activator="{ on, attrs }">
-                            <v-btn v-on="on" class="code-preview-btn"
+                            <v-btn v-on="on" class="code-preview-btn cp-edit-template-btn"
                                     icon fab @click="openTemplateEditor()"
                                     :color="editTemplateMode ? 'primary':''"
                             >
@@ -696,7 +696,7 @@
                                                         dense
                                                         style="text-overflow: clip !important;"
                                                         :style="editTemplateMode ? 'max-height: 70%;':''"
-                                                        class="gs-v-treeview-width"
+                                                        class="gs-v-treeview-width "
                                                 >
                                                     <template v-slot:prepend="{ item, open }">
                                                         <v-icon v-if="isChangedCode(item)"
@@ -705,7 +705,7 @@
                                                                 style="position: absolute; z-index:9999; font-size: 1px;"
                                                         >fiber_manual_record
                                                         </v-icon>
-                                                        <div v-if="isNotFolderIcon">
+                                                        <div class="cp-code" v-if="isNotFolderIcon">
                                                             <v-icon size="22" :style="templatePathStyle(item)">
                                                                 {{ icon[item.file] ? icon[item.file] : 'mdi-folder'}}
                                                             </v-icon>

@@ -334,7 +334,7 @@ describe('Modeling Test', () => {
 
     cy.get('.cp-es-save-btn').click();
     // 테스트때마다 변경필요.
-    cy.contains('label', '* Definition ID(Unique ID)').next('input').clear({force:true}).type('modeling-test21');
+    cy.contains('label', '* Definition ID(Unique ID)').next('input').clear({force:true}).type('modeling-test22');
     cy.wait(1000);
     cy.get('.cp-es-dialog-save').click();
     cy.wait(8000);

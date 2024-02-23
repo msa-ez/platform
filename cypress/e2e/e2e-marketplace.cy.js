@@ -40,7 +40,7 @@ Cypress.on('uncaught:exception', (err, runnable) => {
       cy.get('.cp-git-btn').click();
       cy.wait(1000);
 
-      cy.get('.v-treeview-node__root').eq(3).click({force: true});
+      cy.get('.v-treeview-node__root').eq(1).click({force: true});
       cy.wait(1000);
       cy.get('.cp-explain-project-text').type('파일에 대해 설명해줘{enter}')
       cy.wait(20000);
@@ -51,8 +51,7 @@ Cypress.on('uncaught:exception', (err, runnable) => {
       cy.wait(1000);
       cy.get('.cp-explain-code').click();
       cy.wait(20000);
-      cy.get('.cp-explain-code-text').type('ports는 어떻게 설정되어 있어?{enter}')
-      cy.wait(20000);
+      cy.get('.cp-explain-code-close').click();
     })
   })
   
