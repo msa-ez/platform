@@ -651,6 +651,7 @@
             me.params = me.$route.params
             me.paramKeys = Object.keys(me.params)
             me.modelCanvasChannel = new BroadcastChannel('model-canvas')
+         
 
             me.$EventBus.$emit('showNewButton', false)
             //set userInfol
@@ -1712,14 +1713,19 @@
             },
             async validateStorageCondition(item, action){
                 var me = this
-                if(!item.error) item.error = {};
-
+                item.error = {};
+                
                 // get Project
                 let originProjectId = me.projectId
                 let convertProjectId = item.projectId ? item.projectId : originProjectId
                 if(action == 'fork') convertProjectId = item.projectId ? item.projectId : me.dbuid();                
                 convertProjectId = convertProjectId.replaceAll(' ','-');
-
+                if(action == 'save' || action == 'fork'){
+                    if(me.userInfo.providerUid && ((action == 'fork' && me.params.providerUid) || (action == 'save')) ){
+                        convertProjectId = `${me.userInfo.providerUid}_${me.canvasType}_${convertProjectId}`
+                    }
+                }
+               
                 if( convertProjectId.includes('/') ) item.error['projectId'] = 'ProjectId must be non-empty strings and can\'t contain  "/"'
                 
                 if( item.version == 'latest') item.error['version'] = 'The version name cannot be specified as "latest".'
@@ -1802,7 +1808,7 @@
                         var originProjectId = me.projectId;
                         var projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
                         let associatedProject = me.storageCondition.associatedProject
-                        
+                                
                         // set tag
                         if(me.value.scm.org && me.value.scm.repo){
                             me.value.scm.tag = me.storageCondition.version;
@@ -1865,13 +1871,16 @@
                 try {
                     var check = await me.validateStorageCondition(me.storageCondition, 'save');
                     if(check){
-                        var originProjectId =  me.projectId
+                        var originProjectId = me.projectId
                         var settingProjectId = me.storageCondition.projectId.replaceAll(' ','-').trim();
                         var projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
                         let associatedProject = me.storageCondition.associatedProject
-
                         me.projectName = me.storageCondition.projectName
 
+                        if(me.userInfo.providerUid){
+                            settingProjectId = `${me.userInfo.providerUid}_${me.canvasType}_${settingProjectId}`
+                        }
+ 
                         if(me.value.scm.org && me.value.scm.repo){
                             me.value.scm.tag = me.storageCondition.version;
                         }
@@ -1973,8 +1982,6 @@
                             location = 'kubernetes'
                         } else if (me.canvasType == 'bm') {
                             location = 'business-model-canvas'
-                        } else if (me.canvasType == 'bpmn') {
-                            location = 'bpmn'
                         } else {
                             location = me.canvasType
                         }
@@ -1982,9 +1989,14 @@
                         if (me.isClazzModeling) {
                             me.updateClassModelingId(settingProjectId);
                         } else {
-                            // me.moveModelUrl(settingProjectId);
-                            me.$router.push({path: `/${location}/${settingProjectId}`});
-                            me.$emit('forceUpdateKey')
+                            let path = me.userInfo.providerUid ? `/${me.userInfo.providerUid}/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}` : `/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}`
+                            me.$router.push({path: path});
+
+                            setTimeout(() => {
+                                me.$emit('forceUpdateKey');
+                            }, 500);
+                        
+                            // me.$emit('forceUpdateKey');
                         }
 
                         me.watchInformation()
@@ -2002,7 +2014,7 @@
                         me.$EventBus.$emit('progressValue', false);
                     }
                 } catch (e) {
-                    me.alertInfo.text = 'SAVE-ERROR' + e
+                    me.alertInfo.text = 'SAVE-ERROR: ' + e
                     me.alertInfo.show = true
                 }
 
@@ -2034,8 +2046,13 @@
                     var check = await me.validateStorageCondition(me.storageCondition, 'fork');
                     if(check){
                         var originProjectId =  me.projectId
-                        if( !me.storageCondition.projectId ) me.storageCondition.projectId = me.dbuid();
                         var settingProjectId = me.storageCondition.projectId.replaceAll(' ','-').trim();
+                        if( !me.storageCondition.projectId ) me.storageCondition.projectId = me.dbuid();
+                       
+                        if(me.userInfo.providerUid && me.params.providerUid){
+                            settingProjectId = `${me.userInfo.providerUid}_${me.canvasType}_${settingProjectId}`
+                        }
+
                         var projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
                         var copyValue = JSON.parse(JSON.stringify(me.value));
 
@@ -2122,9 +2139,11 @@
                                         location = me.canvasType
                                     }
 
-                                    // me.moveModelUrl(settingProjectId);
-                                    me.$router.push({path: `/${location}/${settingProjectId}`});
-                                    me.$emit('forceUpdateKey')
+                                    let path = me.userInfo.providerUid && me.params.providerUid ? `/${me.userInfo.providerUid}/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}` : `/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}`
+                                    me.$router.push({path: path});
+                                    setTimeout(() => {
+                                        me.$emit('forceUpdateKey');
+                                    }, 500);
                                 }
                                 me.storageDialogCancel()
                             })
@@ -2241,18 +2260,24 @@
             async loadDefinition() {
                 var me = this
                 var loadedDefinition = null
-
                 var modelUrl = me.isClazzModeling ? me.projectId : me.params.projectId
 
                 if(modelUrl.includes(':')){
+                    // storming/618f299b6ce2c53313430a21be0bb094:v0.0.1 
+                    // 54785805/storming/618f299b6ce2c53313430a21be0bb094:v0.0.1
                     me.projectId = modelUrl.split(':')[0]
                     me.projectVersion = modelUrl.split(':')[1]
                     me.projectVersion = me.projectVersion.replaceAll('.','-')
-                }else{
+                } else {
+                    // storming/618f299b6ce2c53313430a21be0bb094
+                    // 54785805/storming/618f299b6ce2c53313430a21be0bb094
                     me.projectId = modelUrl
                 }
-
                 if(window && window.document) window.document.title = me.projectId
+
+                if(me.params.providerUid && me.userInfo.providerUid){
+                    me.projectId = `${me.params.providerUid}_${me.canvasType}_${me.projectId}`
+                } 
 
                 // rtc
                 me.rtcRoomId = `modelRtc_${me.projectId}`

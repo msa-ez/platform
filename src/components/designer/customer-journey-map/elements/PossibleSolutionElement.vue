@@ -32,9 +32,9 @@
                         'fill-r': 1,
                         'fill-cx': .1,
                         'fill-cy': .1,
-                        'stroke-width': 0,
-                        'stroke': '#ED73B6',
-                        'fill': '#ED73B6',
+                        'stroke-width': 10,
+                        'stroke': '#817ffc',
+                        'fill': '#817ffc',
                         'fill-opacity': 1,
                         'r': '1',
                     }"

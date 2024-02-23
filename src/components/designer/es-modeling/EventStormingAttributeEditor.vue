@@ -52,7 +52,7 @@
                                         {{element.className}}
                                     </div>
                                     <v-select
-                                            class="mr-2 mt-0 pt-0"
+                                            class="mr-2 mt-0 pt-0 cp-select-box"
                                             v-else-if="attributeEdit && value.indexOf(element) == attributeEditIndex "
                                             v-model="element.className" 
                                             :items="entityTypeList"
@@ -74,7 +74,7 @@
                                     <v-icon
                                         v-if="attributeEdit && value.indexOf(element) == attributeEditIndex "
                                         small
-                                        class="mr-2"
+                                        class="mr-2 cp-save-button"
                                         @click="modifyAttributeItem(element)"
                                         :disabled="isReadOnly"
                                     >

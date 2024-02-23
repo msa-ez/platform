@@ -70,12 +70,13 @@
                             window.$acebase.auth.signInWithToken(window.localStorage.getItem("accessToken"))
                                 .then(result => {
                                     var obj = {
-                                        name: result.user.username,
-                                        email: result.user.email,
+                                        name: result.user.username ? result.user.username : result.user.displayName,
+                                        email: result.user.email ? result.user.email : result.user.settings.github_login,
                                         uid: result.user.uid,
-                                        profile: result.user.picture,
+                                        profile: result.user.picture ? result.user.picture : result.user.settings.github_avatar_url,
                                         authorized: null,
                                         accessToken: result.accessToken,
+                                        providerUid: result.user.settings.github_id
                                     }
                                     resolve(obj)
                                 })

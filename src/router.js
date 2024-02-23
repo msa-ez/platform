@@ -23,16 +23,13 @@ const StickyModel = () => import(/* webpackChunkName: "StickyModel" */ "./compon
 const UserStoryMap = () => import(/* webpackChunkName: "UserStoryMap" */ "./components/designer/user-story-map/UserStoryMap");
 const UMLClassModel = () => import(/* webpackChunkName: "UMLClassModel" */ "./components/designer/class-modeling/UMLClassModel");
 const BpmnModel = () => import(/* webpackChunkName: "BpmnModel" */ "./components/designer/bpmnModeling/BpmnModel");
-
+const Project = () => import(/* webpackChunkName: "ProjectModel" */ "./components/designer/project-modeling/ProjectModel");
 
 const StartElectron = () =>
   import(/* webpackChunkName: "startelectron" */ "./components/labs/StartElectron");
 const LabPortal = () =>
   import(/* webpackChunkName: "LabPortal" */ "./components/labs/LabPortal");
-const Project = () =>
-  import(
-    /* webpackChunkName: "EventStorming" */ "./components/designer/project-modeling/ProjectModel"
-  );
+
 const ReplayPortal = () =>
   import(
     /* webpackChunkName: "ReplayPortal" */ "./components/designer/modeling/ReplayPortal"
@@ -121,41 +118,77 @@ var options = {
       name: "EventStormingListPages",
       component: LabPortal, //ListPages
     },
-    {
-      path: "/storming/:projectId",
-      name: "EventStormingModel",
-      component: EventStormingModel, // EventStormingModelCanvas  EventStorming
-    },
-    {
-      path: "/uml-class/:aggregateId",
-      name: "UMLClassCanvas",
-      component: UMLClassModel,
-    },
-    {
-      // path: '/replay/:projectId/:snapshotKey/:queueKey',
-      path: "/replay/:projectId/:queueKey",
-      name: "ReplayPortal",
-      component: ReplayPortal,
-    },
+    // BusinessModel
     {
       path: "/business-model-canvas/:projectId",
       name: "BusinessModel",
       component: BusinessModel,
     },
     {
-      path: "/IdeLoadingPage",
-      name: "IdeLoadingPage",
-      component: IdeLoadingPage,
+      path: "/:providerUid/business-model-canvas/:projectId",
+      name: "BusinessModel",
+      component: BusinessModel,
     },
+    // EventStormingModel
+    {
+      path: "/storming/:projectId",
+      name: "EventStormingModel",
+      component: EventStormingModel,
+    },
+    {
+      path: "/:providerUid/storming/:projectId",
+      name: "EventStormingModel",
+      component: EventStormingModel, 
+    },
+    // ContextMappingModel
+    {
+      path: "/cm/:projectId",
+      name: "ContextMappingModel",
+      component: ContextMappingModel,
+    },
+    {
+      path: "/:providerUid/cm/:projectId",
+      name: "ContextMappingModel",
+      component: ContextMappingModel,
+    },
+    // CustomerJourneyMap
+    {
+      path: "/cjm/:projectId",
+      name: "CustomerJourneyMap",
+      component: CustomerJourneyMap,
+    },
+    {
+      path: "/:providerUid/cjm/:projectId",
+      name: "CustomerJourneyMap",
+      component: CustomerJourneyMap,
+    },
+    // StickyModel
+    {
+      path: "/sticky/:projectId",
+      name: "StickyModel",
+      component: StickyModel,
+    },
+    {
+      path: "/:providerUid/sticky/:projectId",
+      name: "StickyModel",
+      component: StickyModel,
+    },
+    // KubernetesModel
     {
       path: "/kubernetes/:projectId",
       name: "KubernetesModel",
       component: KubernetesModel,
     },
     {
-      path: "/sticky/:projectId",
-      name: "StickyModel",
-      component: StickyModel,
+      path: "/:providerUid/kubernetes/:projectId",
+      name: "KubernetesModel",
+      component: KubernetesModel,
+    },
+    // BpmnModel
+    {
+      path: "/bpmn",
+      name: "BpmnProcessDesigner",
+      component: BpmnProcessDesigner,
     },
     {
       path: "/bpmn/:projectId",
@@ -163,40 +196,72 @@ var options = {
       component: BpmnModel,
     },
     {
+      path: "/:providerUid/bpmn/:projectId",
+      name: "BpmnModel",
+      component: BpmnModel,
+    },
+    // UMLClassModel
+    {
       path: "/uml/:projectId",
       name: "ClassModelCanvas",
       component: UMLClassModel,
     },
+    {
+      path: "/:providerUid/uml/:projectId",
+      name: "ClassModelCanvas",
+      component: UMLClassModel,
+    },
+    {
+      path: "/uml-class/:aggregateId",
+      name: "UMLClassCanvas",
+      component: UMLClassModel,
+    },
+    {
+      path: "/:providerUid/uml-class/:aggregateId",
+      name: "UMLClassCanvas",
+      component: UMLClassModel,
+    },
+    // ProjectModel
     {
       path: "/project/:projectId",
       name: "ProjectModel",
       component: Project,
     },
     {
-      path: "/cm/:projectId",
-      name: "ContextMappingModel",
-      component: ContextMappingModel,
+      path: "/:providerUid/project/:projectId",
+      name: "ProjectModel",
+      component: Project,
+    },
+    // UserStoryMap
+    {
+      path: "/userStoryMap/:projectId",
+      name: "UserStoryMap",
+      component: UserStoryMap,
     },
     {
-      path: "/cjm/:projectId",
-      name: "CustomerJourneyMap",
-      component: CustomerJourneyMap,
+      path: "/:providerUid/userStoryMap/:projectId",
+      name: "UserStoryMap",
+      component: UserStoryMap,
+    },
+
+    ////////////////////////////////////
+    {
+      // path: '/replay/:projectId/:snapshotKey/:queueKey',
+      path: "/replay/:projectId/:queueKey",
+      name: "ReplayPortal",
+      component: ReplayPortal,
+    },
+   
+    {
+      path: "/IdeLoadingPage",
+      name: "IdeLoadingPage",
+      component: IdeLoadingPage,
     },
     {
       path: "/courses",
       name: "classList",
       component: ClazzListPage,
     },
-    {
-      path: "/userStoryMap/:projectId",
-      name: "UserStoryMap",
-      component: UserStoryMap,
-    },
-    // {
-    //     path: "/courses/labAdminTest",
-    //     name: "labAdminTest",
-    //     component: labAdminTest,
-    // },
     {
         path: "/manager",
         name: "ManagePurchaseItemListPage",
@@ -207,15 +272,10 @@ var options = {
         name: "PersonalInfo",
         component: PersonalInfo,
     },
-    // {
-    //     path: '/courses/admin',
-    //     name: 'adminClazzList',
-    //     component: AdminClazzListPage
-    // },
     {
-        path: "/courses/:courseId/:classId",
-        name: "ClassRounge",
-        component: ClassRounge,
+      path: "/courses/:courseId/:classId",
+      name: "ClassRounge",
+      component: ClassRounge,
     },
     {
         path: "/courses/:courseId/:classId/:labId/class-room",
@@ -252,11 +312,7 @@ var options = {
         name: "LoginPage",
         component: LoginPage,
     },
-    {
-        path: "/bpmn",
-        name: "BpmnProcessDesigner",
-        component: BpmnProcessDesigner,
-    },
+
     {
         path: "/myPage",
         name: "MyPage",
@@ -292,6 +348,18 @@ var options = {
         name: "Result",
         component: ModelingResult
     }
+      
+    // {
+    //     path: "/courses/labAdminTest",
+    //     name: "labAdminTest",
+    //     component: labAdminTest,
+    // },
+    // {
+    //     path: '/courses/admin',
+    //     name: 'adminClazzList',
+    //     component: AdminClazzListPage
+    // },
+    
     ]
 }
 export default new Router(options);

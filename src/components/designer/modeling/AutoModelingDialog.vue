@@ -236,9 +236,6 @@
                 </v-btn>
             </template>
         </v-snackbar>
-
-
-
     </div>
 </template>
 <script src="./speechRecognition.js"></script>

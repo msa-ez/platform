@@ -81,7 +81,9 @@
             <v-tooltip v-if="inCourse && !showNewButton" bottom>
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn style="margin-right:10px;" v-bind="attrs" v-on="on" @click="addNewClass()"
-                         icon large>
+                        icon large
+                        color="black"
+                    >
                         <v-icon>mdi-file-plus</v-icon>
                     </v-btn>
                 </template>
@@ -367,7 +369,7 @@
                 <v-list style="width:310px;">
                     <v-list-item-group>
                         <div style="font-size: small; cursor:default; display: table-cell; padding-left:16px;">
-                            <div v-if="isLogin">{{userInfo.email}}</div>
+                            <div v-if="isLogin">{{userInfo.email}} ({{userInfo.providerUid}})</div>
                             <div v-else-if="isGuestLogin">(GUEST) {{userInfo.email}}</div>
                         </div>
                         <v-divider style="margin-top: 5px;"></v-divider>
@@ -652,31 +654,6 @@
                 </v-stepper-header>
             </v-stepper>
         </v-alert>
-
-        <div v-if="showMain" class="d-flex flex-row mt-sm-8 mt-5 overflow-hidden main-page-slider-group-box">
-            <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSlide.png" />
-            </div>
-            <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSlide.png" />
-            </div>
-            <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSlide.png" />
-            </div>
-            <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSlide.png" />
-            </div>
-            <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSlide.png" />
-            </div>
-        </div>
-        
-        <v-footer v-if="showFooter"
-            padless
-            style="background-color: transparent;"
-        >
-            <ProvisionIndication style="margin:0; padding:0px; width:100%;"></ProvisionIndication>
-        </v-footer>
     </v-app>
 </template>
 
@@ -698,7 +675,6 @@
     import SubscriptionItemTemplate from "./components/payment/SubscriptionItemTemplate";
     const fs = require('fs');
     import Draggable from 'vue-draggable';
-    import ProvisionIndication from './components/payment/ProvisionIndication.vue'
 
     export default {
         name: 'App',
@@ -906,7 +882,6 @@
 
         }),
         components: {
-            ProvisionIndication,
             SubscriptionItemTemplate,
             PodEvents,
             ParticipantIcons,
@@ -922,14 +897,6 @@
         // beforeMount(){
         // },
         computed: {
-            showMain() {
-                const path = this.$route.path;
-                return path === '/';
-            },
-            showFooter() {
-                const path = this.$route.path;
-                return path === '/courses' || path === '/' || path === '/myPage';
-            },
             isForeign() {
                 if (window.countryCode == 'ko') {
                     return false
@@ -1008,6 +975,7 @@
             var me = this
 
             Vue.prototype.$app = me
+
             me.$EventBus.$on('open-new-making-dialog', function () {
                 me.makingDialog = true
             })
@@ -1149,7 +1117,7 @@
             var me = this
             if (me.isLogin) {
                 var convertEmail = me.userInfo.email.replace(/\./gi, '_')
-                me.watch_off(`db://enrolledUsers/${convertEmail}/purchaseHistory`)
+                // me.watch_off(`db://enrolledUsers/${convertEmail}/purchaseHistory`)
                 // firebase.database().ref(`enrolledUsers/${convertEmail}/purchaseHistory`).off();
             }
             window.localStorage.removeItem("accessToken");
@@ -1692,34 +1660,27 @@
             setColor(index) {
                 this.selectedItem = index;
             },
-            moveToModel(type) {
+            async moveToModel(type) {
                 var me = this
+                if(!me.userInfo.providerUid) await await me.loginUser()
+               
                 me.makingDialog = false
                 try {
                     if (!type) type = me.mode
-
+                    let path = me.userInfo.providerUid ? `/${me.userInfo.providerUid}` : ''
+                
                     if (type == 'es') {
-                        me.$router.push({path: `storming/${me.dbuid()}`});
+                        path = `${path}/storming`
                     } else if (type == 'k8s') {
-                        me.$router.push({path: `kubernetes/${me.dbuid()}`});
+                        path = `${path}/kubernetes`
                     } else if (type == 'bm') {
-                        me.$router.push({path: `business-model-canvas/${me.dbuid()}`});
-                    } else if (type == 'sticky') {
-                        me.$router.push({path: `sticky/${me.dbuid()}`});
-                    } else if (type == 'bpmn') {
-                        me.$router.push({path: `bpmn/${me.dbuid()}`});
-                    } else if (type == 'uml') {
-                        me.$router.push({path: `uml/${me.dbuid()}`});
-                    } else if (type == 'project'){
-                        me.$router.push({path: `project/${me.dbuid()}`});
-                    }else if (type == 'cjm') {
-                        me.$router.push({path: `cjm/${me.dbuid()}`});
-                    }else if (type == 'userStoryMap') {
-                        me.$router.push({path: `userStoryMap/${me.dbuid()}`});
+                        path = `${path}/business-model-canvas`
                     } else {
-                        me.$router.push({path: `storming/${me.dbuid()}`});
-                    }
+                        path = `${path}/${type}`
+                    } 
+                    path = `${path}/${me.dbuid()}`
 
+                    me.$router.push({path: path});
                 } catch (e) {
                     alert('Error-NewProject', e)
                 }
@@ -2137,24 +2098,6 @@
 
 </script>
 <style>
-    .main-page-slider-group-box {
-        opacity: 0.2;
-    }
-    .main-page-slider-group-box:hover {
-        opacity: 0.8;
-    }
-    .main-page-slider-group {
-        animation: mainSlide 35s linear infinite;
-    }
-
-    @keyframes mainSlide {
-        0% {
-            transform: translate3d(0, 0, 0);
-        }
-        100% {
-            transform: translate3d(-100%, 0, 0);
-        }
-    }
     .making-col {
         padding:20px;
     }

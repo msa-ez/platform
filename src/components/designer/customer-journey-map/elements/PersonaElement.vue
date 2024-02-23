@@ -32,7 +32,7 @@
                         'fill-r': 1,
                         'fill-cx': .1,
                         'fill-cy': .1,
-                        'stroke-width': 0,
+                        'stroke-width': 10,
                         'stroke': '#F8D454',
                         'fill': '#F8D454',
                         'fill-opacity': 1,

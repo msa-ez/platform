@@ -13,7 +13,6 @@ authorized_keys
 pusher
 *.db
 *.idx
-public/static/env.txt
 
 # Log files
 npm-debug.log*
@@ -36,8 +35,8 @@ yarn-error.log*
 package-lock.json
 #Electron-builder output
 /dist_electron
-public/static/env.txt
+
+cypress.config.js
 
 
-# Ignore Cypress e2e test file
-cypress/e2e/e2e-spec.cy.js
+

@@ -206,11 +206,14 @@ class AIGenerator {
                                 me.client.onModelCreated(model);
                             } 
                             // else {
-                            if(me.client.onGenerationFinished)
-                                if(me.client.input.associatedProject) model.associatedProject = me.client.input.associatedProject
-                                if(me.client.input.persona) model.persona = me.client.input.persona
+                            if(me.client.onGenerationFinished){
+                                if(me.client.input){
+                                    if(me.client.input.associatedProject) model.associatedProject = me.client.input.associatedProject
+                                    if(me.client.input.persona) model.persona = me.client.input.persona
+                                }
                                 me.client.onGenerationFinished(model)
                                 resolve(model); 
+                            }
                             // }
                             // if (xhr.status === 0){
                                 //     me.client.onGenerationFinished()

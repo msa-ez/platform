@@ -41,6 +41,7 @@
                         window.localStorage.setItem("picture", res.avatar_url)
                         window.localStorage.setItem("accessToken", result.accessToken)
                         window.localStorage.setItem("uid", result.user.uid)
+                        window.localStorage.setItem("providerUid", res.id)
                         if (result.user.email && result.user.email.includes('@uengine.org')) {
                             window.localStorage.setItem("authorized", 'admin');
                         } else {

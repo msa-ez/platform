@@ -19,6 +19,7 @@
                     profile: null,
                     email: null,
                     uid: null,
+                    providerUid: null,
                     savedCoin: 0,
                     savedToolTime: 0,
                     consultingTime: 0,
@@ -407,6 +408,7 @@
                     this.userInfo.profile = localStorage.getItem('picture')
                     this.userInfo.email = localStorage.getItem('email')
                     this.userInfo.uid = localStorage.getItem('uid')
+                    this.userInfo.providerUid = localStorage.getItem('providerUid')
                     this.userInfo.authorized = localStorage.getItem('authorized')
                     this.accessToken = localStorage.getItem('accessToken')
                 } else if (user) {
@@ -414,6 +416,7 @@
                     this.userInfo.profile = user.profile
                     this.userInfo.email = user.email
                     this.userInfo.uid = user.uid
+                    this.userInfo.providerUid = user.providerUid
                     this.userInfo.authorized = localStorage.getItem('authorized')
                     this.accessToken = user.accessToken
                 } else {
@@ -421,10 +424,10 @@
                     this.userInfo.profile = localStorage.getItem('picture')
                     this.userInfo.email = localStorage.getItem('email')
                     this.userInfo.uid = localStorage.getItem('uid')
+                    this.userInfo.providerUid = localStorage.getItem('providerUid')
                     this.userInfo.authorized = localStorage.getItem('authorized')
                     this.accessToken = localStorage.getItem('accessToken')
                 }
-
             },
             async signUp(path, userInfo) {
                 return await this._signUp(path, userInfo)
@@ -437,6 +440,7 @@
                 this.userInfo.profile = null
                 this.userInfo.email = null
                 this.userInfo.uid = null
+                this.userInfo.providerUid = null
                 this.userInfo.authorized = null
                 this.accessToken = null
                 this.userInfo.savedCoin = 0
