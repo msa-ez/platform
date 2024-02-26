@@ -134,7 +134,7 @@
                                     </v-tooltip>
                                 </template>
                             </v-expansion-panel-header>
-                            <v-expansion-panel-content class="auto-modeling-dialog">
+                            <v-expansion-panel-content class="auto-modeling-dialog" >
                                 <v-tabs-items v-model="userPanel">
                                     <v-tab-item>
                                         <v-card flat>
@@ -266,6 +266,8 @@
                     this.input.userStory = this.generatorComponent.createPrompt();
                     this.input.selectedElement = {}
                     this.input.modificationMessage = ""
+                    this.autoModelDialog = null
+                    this.isExpanded = true
                 }
             }
         },
