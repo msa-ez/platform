@@ -201,7 +201,7 @@
                                             </v-card-text>
                                             <v-card style="text-align: -webkit-center; height: 65px;">
                                                 <v-text-field
-                                                    v-model="input.modificationMessage"
+                                                    v-model="chatMessage"
                                                     class="prompt_field"
                                                     style="width: 492px; background-color: #FFFFFF; color: white;"
                                                     outlined
@@ -266,8 +266,12 @@
                     this.input.userStory = this.generatorComponent.createPrompt();
                     this.input.selectedElement = {}
                     this.input.modificationMessage = ""
+<<<<<<< HEAD
                     this.autoModelDialog = null
                     this.isExpanded = true
+=======
+                    this.chatMessage = ""
+>>>>>>> b03815c135d48486f02ed4b51d4d9839559eca8c
                 }
             }
         },
@@ -306,6 +310,7 @@
                 openAiMessageList: [],
                 chatList: [],
                 selectedElement: [],
+                chatMessage: "",
                 
             }
         },
@@ -436,12 +441,14 @@
                 this.result = '';
                 
                 if(this.generatorName === "ModelModificationGenerator"){
+                    this.input.modificationMessage = this.chatMessage
                     if(this.input.modificationMessage=="") return;
                     var message = {
                         text: this.input.modificationMessage,
                         type: "prompt"
                     }
                     this.chatList.push(message);
+                    this.chatMessage = ""
                     this.generatorComponent.generate();
                 }else{
                     this.$emit("clearModelValue")
@@ -486,6 +493,7 @@
                         this.openAiMessageList = []
                         this.chatList.push(this.dummyMessage)
                         this.input.modificationMessage = ""
+                        this.chatMessage = ""
 
                         this.generatorComponent = new ModelModificationGenerator(this);
                         this.generatorName = "ModelModificationGenerator"
@@ -531,9 +539,6 @@
                 this.publishModelChanges(model)
                 
                 // JSON Modification finished
-                this.$nextTick(() => {
-                    this.input.modificationMessage = ""
-                });
                 if(this.generatorName === "ModelModificationGenerator"){
                     var response = {
                         text: this.result,
