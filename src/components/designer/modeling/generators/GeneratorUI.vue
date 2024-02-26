@@ -266,12 +266,9 @@
                     this.input.userStory = this.generatorComponent.createPrompt();
                     this.input.selectedElement = {}
                     this.input.modificationMessage = ""
-<<<<<<< HEAD
                     this.autoModelDialog = null
                     this.isExpanded = true
-=======
                     this.chatMessage = ""
->>>>>>> b03815c135d48486f02ed4b51d4d9839559eca8c
                 }
             }
         },
