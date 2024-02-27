@@ -3208,7 +3208,9 @@
             },
             async checkLeaderExist(child) {
                 var me = this
-                var lastKey
+                if(Object.keys(me.value.elements).length == 0) return; // Wrong data.
+
+                var lastKey = ''
 
                 var option = {
                     sort: 'desc',
