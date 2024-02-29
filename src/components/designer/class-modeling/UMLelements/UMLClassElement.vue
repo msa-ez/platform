@@ -114,7 +114,7 @@
                         // editElement: me.value.elementView.id
                         editElement: me.value.elementView ? me.value.elementView.id : me.value.relationView.id
                     }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
+                    // me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
                 }
             },
             movedOldActivity() {
@@ -129,7 +129,7 @@
                         // editElement: me.value.elementView.id
                         editElement: me.value.elementView ? me.value.elementView.id : me.value.relationView.id
                     }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
+                    // me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
                 }
             },
             delayedMove(dx, dy, dw, dh, du, dlw, dl, dr) {
@@ -253,8 +253,8 @@
                                 timeStamp: Date.now(),
                                 item: JSON.stringify(me.value)
                             }
-                            if (me.params.projectId)
-                                me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
+                            if (me.canvas.projectId)
+                                me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, obj)
                         }
                     } else {
                         console.log('local:onRemoveShape, kubernetes')

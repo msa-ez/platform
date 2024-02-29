@@ -181,7 +181,7 @@
                         timeStamp: Date.now(),
                         editElement: me.value.elementView.id
                     }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
+                    // me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
                 }
             },
             movedOldActivity() {
@@ -195,7 +195,7 @@
                         timeStamp: Date.now(),
                         editElement: me.value.elementView.id
                     }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
+                    // me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
                 }
             },
             selectedStayActivity() {
@@ -209,7 +209,7 @@
                         timeStamp: Date.now(),
                         editElement: me.value.elementView.id
                     }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
+                    // me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
                 }
             },
             deSelectedStayActivity() {
@@ -223,7 +223,7 @@
                         timeStamp: Date.now(),
                         editElement: me.value.elementView.id
                     }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
+                    // me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
                 }
 
             },
@@ -237,7 +237,7 @@
                 var originW = me.value.elementView.width
                 var originH = me.value.elementView.height
 
-                if (me.canvas.isCustomMoveExist && me.params.projectId) {
+                if (me.canvas.isCustomMoveExist && me.canvas.projectId) {
                     me.movingElement = false
                     me.canvas.modelChanged = true
                     var types = me.value._type.split('.')
@@ -306,7 +306,7 @@
                             after: JSON.stringify({x: offsetX, y: offsetY, width: offsetW, height: offsetH}),
                             timeStamp: Date.now(),
                         }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, pushObj)
+                    me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, pushObj)
                 }
             },
             delayedRelationMove(vertices) {
@@ -315,7 +315,7 @@
                 var newVertices = []
                 var offsetVertices
 
-                if (me.canvas.isCustomMoveExist && me.params.projectId) {
+                if (me.canvas.isCustomMoveExist && me.canvas.projectId) {
                     me.movingElement = false
                     me.canvas.modelChanged = true
 
@@ -333,7 +333,7 @@
                             after: offsetVertices,
                             timeStamp: Date.now(),
                         }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, pushObj)
+                    me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, pushObj)
                 }
             },
             getComponentByClassName: function (className) {
