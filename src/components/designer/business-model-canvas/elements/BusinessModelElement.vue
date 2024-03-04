@@ -123,7 +123,7 @@
                         timeStamp: Date.now(),
                         editElement: me.value.elementView.id
                     }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
+                    me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, obj)
                 }
             },
             movedOldActivity() {
@@ -137,7 +137,7 @@
                         timeStamp: Date.now(),
                         editElement: me.value.elementView.id
                     }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
+                    me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, obj)
                 }
             },
             selectedStayActivity() {
@@ -151,7 +151,7 @@
                         timeStamp: Date.now(),
                         editElement: me.value.elementView.id
                     }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
+                    me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, obj)
                 }
             },
             deSelectedStayActivity() {
@@ -165,7 +165,7 @@
                         timeStamp: Date.now(),
                         editElement: me.value.elementView.id
                     }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
+                    me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, obj)
                 }
 
             },
