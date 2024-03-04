@@ -380,21 +380,35 @@
                     alert(`[Error] ModelElement - delayedRelationMove: ${e}`)
                 }
             },
-            onRemoveShape(model) {
+            onRemoveShape(element) {
                 var me = this
-                try {
-                    // if ( me.isCustomMoveExist ) {
-                    //     // 변화 인지
-                    //     me.modelCanvasComponent.modelChanged = true
-                    //     me.removeShapeQueue()
-                    // } else {
-                    //     me.removeShapeLocal()
-                    // }
-                    me.canvas.removeElementAction(me.value)
-                    me.validate()
-                } catch (e) {
-                    alert(`[Error] ModelElement-onRemoveShape: ${e}`)
-                }
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.canvas.removeElementAction(me.value)
+                        me.validate()
+
+                        if(!element) return;
+                        // selected Element Remove
+                        if (me.value.elementView && element && element.id === me.value.elementView.id) {
+                            Object.values(me.canvas.value.elements).forEach((element) => {
+                                if(!me.canvas.validateElementFormat(element)) return;
+                                if (element && element.elementView.id !== me.value.elementView.id) {
+                                    let component = me.canvas.$refs[element.elementView.id];
+                                    if (component) {
+                                        component = component[0];
+                                        if (component.selected) {
+                                            component.onRemoveShape();
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    },
+                    onFail(e){
+                        console.log(`[Error] ModelElement-onRemoveShape: ${e}`)
+                    }
+                })
             },
             getComponent(componentName) {
                 let component = null

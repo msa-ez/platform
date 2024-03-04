@@ -2737,6 +2737,13 @@
             },
         },
         methods: {
+            isUserInteractionActive(){
+                var me = this
+                if(me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.isHexagonal && !me.isReadOnlyModel){
+                    return true
+                }
+                return false
+            },
             async receiveAssociatedProject(associatedProjectId){
                 var me = this
                 let startKey = '';
@@ -3019,7 +3026,11 @@
                         // return;
                     }
                     me.changeValueAction(diff);
-                    me.publishScreenShot();
+
+                    clearTimeout(me.valueChangedTimer);
+                    me.valueChangedTimer = setTimeout(async function () {
+                        await me.saveLocalScreenshot()
+                    },1000)
                 }
                 if (diff) {
                     me.publishChangedEvent(newVal, diff);
@@ -4557,6 +4568,7 @@
 
                 return me.pushObject(`db://definitions/${definitionId}/queue`, obj)
             },
+
             receiveAppendedQueue(element, queue, options){
                 var me = this
                 if(!options) options = {}

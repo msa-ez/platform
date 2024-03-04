@@ -221,59 +221,59 @@
                     alert(`[Error] ModelElement - delayedRelationMove: ${e}`)
                 }
             },
-            onRemoveShape(model) {
-                var me = this
-                var id = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
-                var location = me.value.elementView ? model.$parent.canvas.value.elements : model.$parent.canvas.value.relations
+            // onRemoveShape(model) {
+            //     var me = this
+            //     var id = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
+            //     var location = me.value.elementView ? model.$parent.canvas.value.elements : model.$parent.canvas.value.relations
 
-                if (location && id) {
-                    location[id] = null
-                }
+            //     if (location && id) {
+            //         location[id] = null
+            //     }
                 
-                if (me.value.relationView) {
-                    var obj = {
-                        action: 'delete',
-                        element: me.value
-                    }
-                    me.$EventBus.$emit(`${me.value.relationView.id}`, obj)
-                }
+            //     if (me.value.relationView) {
+            //         var obj = {
+            //             action: 'delete',
+            //             element: me.value
+            //         }
+            //         me.$EventBus.$emit(`${me.value.relationView.id}`, obj)
+            //     }
 
-                try {
-                    if (me.canvas.isCustomMoveExist
-                        && me.canvas.isServerModel
-                        && me.canvas.isQueueModel) {
-                        if (me.value) {
-                            // me.STATUS_COMPLETE = false
-                            // me.canvas.value.elements[me.value.elementView.id] = null;
+            //     try {
+            //         if (me.canvas.isCustomMoveExist
+            //             && me.canvas.isServerModel
+            //             && me.canvas.isQueueModel) {
+            //             if (me.value) {
+            //                 // me.STATUS_COMPLETE = false
+            //                 // me.canvas.value.elements[me.value.elementView.id] = null;
 
-                            var action = me.value.elementView ? 'elementDelete' : 'relationDelete'
-                            var obj = {
-                                action: action,
-                                editUid: me.getEditUid,
-                                timeStamp: Date.now(),
-                                item: JSON.stringify(me.value)
-                            }
-                            if (me.canvas.projectId)
-                                me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, obj)
-                        }
-                    } else {
-                        console.log('local:onRemoveShape, kubernetes')
-                        var id = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
-                        var location = me.value.elementView ? model.$parent.canvas.value.elements : model.$parent.canvas.value.relations
+            //                 var action = me.value.elementView ? 'elementDelete' : 'relationDelete'
+            //                 var obj = {
+            //                     action: action,
+            //                     editUid: me.getEditUid,
+            //                     timeStamp: Date.now(),
+            //                     item: JSON.stringify(me.value)
+            //                 }
+            //                 if (me.canvas.projectId)
+            //                     me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, obj)
+            //             }
+            //         } else {
+            //             console.log('local:onRemoveShape, kubernetes')
+            //             var id = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
+            //             var location = me.value.elementView ? model.$parent.canvas.value.elements : model.$parent.canvas.value.relations
 
-                        if (location && id)
-                            location[id] = null
+            //             if (location && id)
+            //                 location[id] = null
 
-                        if(me.initLoad){
-                            me.changedTemplateCode = true
-                        }
+            //             if(me.initLoad){
+            //                 me.changedTemplateCode = true
+            //             }
 
-                    }
-                    me.validate()
-                } catch (e) {
-                    alert('Error-onRemove: ', e)
-                }
-            },
+            //         }
+            //         me.validate()
+            //     } catch (e) {
+            //         alert('Error-onRemove: ', e)
+            //     }
+            // },
             getComponent(componentName) {
                 let component = null
                 let parent = this.$parent

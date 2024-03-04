@@ -18,7 +18,7 @@
                 v-on:selectShape="selectedActivity"
                 v-on:deSelectShape="deSelectedActivity"
                 v-on:dblclick="openPanel"
-                v-on:removeShape="onRemoveShape(value)"
+                v-on:removeShape="onRemoveShape"
                 :image.sync="refreshedImg"
                 :_style="{stroke:'black',
                         'vertical-align': 'top',

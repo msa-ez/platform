@@ -914,20 +914,42 @@
                 alert("You need to re-login because session is expired")
                 this.showLoginCard = true
             },
-            publishScreenShot(){
+            async saveLocalScreenshot(){
                 var me = this
-                if( !me.isServerModel ){
-                    clearTimeout(me.valueChangedTimer);
-                    me.valueChangedTimer = setTimeout(async function () {
-                        let image = await me.screenshot();
-                        await me.putString(`localstorage://image_${me.projectId}`, image);
+                if(!me.initLoad) return;
+                let base64Img = await me.screenshot();
+                await me.putString(`localstorage://image_${me.projectId}`, base64Img);
 
-                        me.modelCanvasChannel.postMessage({
-                            event: "ScreenShot",
-                            model: me.projectId,
-                            image: image,
-                        });
-                    },1000)
+                me.modelCanvasChannel.postMessage({
+                    event: "ScreenShot",
+                    model: me.projectId,
+                    image: base64Img,
+                });
+            },
+            async saveServerScreenshot(){
+                var me = this
+                if(!me.initLoad) return;
+                if(!me.isServerModel) return;
+                let base64Img = await me.screenshot();
+                await me.putString(`storage://definitions/${me.projectId}/information/image`, base64Img);
+                if(me.information.associatedProject){
+                    await me.putString(`storage://definitions/${me.information.associatedProject}/information/image`, base64Img);
+                }
+                
+                me.modelCanvasChannel.postMessage({
+                    event: "ScreenShot",
+                    model: me.projectId,
+                    image: base64Img,
+                });
+            },
+            async publishScreenShot(){
+                var me = this
+                if( !me.initLoad ) return;
+
+                if( me.isServerModel){
+                    await me.saveServerScreenshot()
+                } else {
+                    await me.saveLocalScreenshot()
                 }
             },
             onChangedValue(oldVal, newVal){
@@ -935,6 +957,11 @@
                 var diff = jsondiffpatch.diff(oldVal, newVal);
                 if(me.initLoad && diff){
                     me.changeValueAction(diff);
+
+                    clearTimeout(me.valueChangedTimer);
+                    me.valueChangedTimer = setTimeout(async function () {
+                        await me.saveLocalScreenshot()
+                    },1000)
                 }
             },
             async executeBeforeDestroy(){
@@ -964,22 +991,7 @@
 
                 window.removeEventListener('resize', this.onResize);
 
-                if( me.initLoad ) {
-                    let base64Img = await me.screenshot();
-                    console.log("****************")
-                    console.log(me.projectId)
-                    console.log("****************")
-                    if(me.isServerModel){
-                        // save image in cloud storage
-                        await me.putString(`storage://definitions/${me.projectId}/information/image`, base64Img);
-                        if(me.information.associatedProject){
-                            await me.putString(`storage://definitions/${me.information.associatedProject}/information/image`, base64Img);
-                        }
-                    } else {
-                        await me.putString(`localstorage://image_${me.projectId}`, base64Img);
-                    }
-                }
-
+                await me.publishScreenShot()
                 if( me.isServerModel  && !me.isReadOnlyModel ) {
                     // server && permission O
                     if( me.initLoad && me.modelChanged ){
@@ -4337,6 +4349,7 @@
             removeElementAction(element, value, options){
                 var me = this
                 if(!options) options = {}
+                if(!value) value = me.value
                 let id = element.relationView ? element.relationView.id : element.elementView.id
 
                 me.$EventBus.$emit(id, {
@@ -4347,7 +4360,7 @@
                 if(me.isServerModel && me.isQueueModel){
                     me.pushRemovedQueue(element, options)
                 } else {
-                    me.removeElement(element, me.value, options)
+                    me.removeElement(element, value, options)
                 }
             },
             moveElementAction(element, oldVal, newVal, value, options){
@@ -4437,17 +4450,22 @@
             },
             removeElement(element, value, options){
                 var me = this
-                if(!value) value = me.value
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!value) value = me.value
 
-                let id = element.relationView ? element.relationView.id : element.elementView.id
-                let valueObj = element.relationView ? value.relations : value.elements
-                if(!valueObj[id]) return;
+                        let id = element.relationView ? element.relationView.id : element.elementView.id
+                        let valueObj = element.relationView ? value.relations : value.elements
+                        if(!valueObj[id]) return;
 
-                valueObj[id] = null
+                        valueObj[id] = null
 
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationDelete' : 'elementDelete',
-                    STATUS_COMPLETE: true
+                        me.$EventBus.$emit(id, {
+                            action: element.relationView ? 'relationDelete' : 'elementDelete',
+                            STATUS_COMPLETE: true
+                        })
+                    }
                 })
             },
             moveElement(element, newVal, value, options){
@@ -4501,16 +4519,21 @@
             },
             pushRemovedQueue(element, options){
                 var me = this
-                let definitionId = me.projectId
-                if(!options) options={}
-                if(options.associatedProject) definitionId = options.associatedProject
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let definitionId = me.projectId
+                        if(!options) options={}
+                        if(options.associatedProject) definitionId = options.associatedProject
 
-                // console.log('Sever Queue] Remove')
-                return me.pushObject(`db://definitions/${definitionId}/queue`, {
-                    action: element.relationView ? 'relationDelete' : 'elementDelete',
-                    editUid: me.userInfo.uid,
-                    timeStamp: Date.now(),
-                    item: JSON.stringify(element)
+                        // console.log('Sever Queue] Remove')
+                        return me.pushObject(`db://definitions/${definitionId}/queue`, {
+                            action: element.relationView ? 'relationDelete' : 'elementDelete',
+                            editUid: me.userInfo.uid,
+                            timeStamp: Date.now(),
+                            item: JSON.stringify(element)
+                        })
+                    }
                 })
             },
             pushMovedQueue(element, oldVal, newVal, options){
@@ -4551,6 +4574,74 @@
                     timeStamp: Date.now(),
                     item: JSON.stringify(diff)
                 })
+            },
+            async pushUserMovementActivatedQueue(element){
+                var me = this
+                if(!me.isUserInteractionActive()) return;
+                if(!element) return;
+                if(element.relationView ) return; // exception relation
+                return; // temp 
+                await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                    action: 'userMovedOn',
+                    editUid: me.userInfo.uid,
+                    name: me.userInfo.name,
+                    picture: me.userInfo.profile,
+                    timeStamp: Date.now(),
+                    editElement: element.elementView.id
+                })
+            },
+            async pushUserMovementDeactivatedQueue(element){
+                var me = this
+                if(!me.isUserInteractionActive()) return;
+                if(!element) return;
+                if(element.relationView ) return; // exception relation
+                return; // temp 
+                await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                    action: 'userMovedOff',
+                    editUid: me.userInfo.uid,
+                    name: me.userInfo.name,
+                    picture: me.userInfo.profile,
+                    timeStamp: Date.now(),
+                    editElement: element.elementView.id
+                })
+            },
+            async pushUserSelectionActivatedQueue(element){
+                var me = this
+                if(!me.isUserInteractionActive()) return;
+                if(!element) return;
+                if(element.relationView ) return; // exception relation
+                return; // temp 
+                await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                    action: 'userSelectedOn',
+                    editUid: me.userInfo.uid,
+                    name: me.userInfo.name,
+                    picture: me.userInfo.profile,
+                    timeStamp: Date.now(),
+                    editElement: element.elementView.id
+                })
+            },
+            async pushUserSelectionDeactivatedQueue(element){
+                var me = this
+                if(!me.isUserInteractionActive()) return;
+                if(!element) return;
+                if(element.relationView ) return; // exception relation
+                return; // temp 
+                await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                    action: 'userSelectedOff',
+                    editUid: me.userInfo.uid,
+                    name: me.userInfo.name,
+                    picture: me.userInfo.profile,
+                    timeStamp: Date.now(),
+                    editElement: element.elementView.id
+                })
+            },
+            isUserInteractionActive(){
+                // user의 마우스 클릭, 이동 파악 하는 조건.
+                var me = this
+                if(me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.isReadOnlyModel){
+                    return true
+                }
+                return false
             },
             //////// Receive QUEUE ////////
             receiveAppendedQueue(element, queue, options){

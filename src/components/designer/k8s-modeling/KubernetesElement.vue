@@ -585,29 +585,46 @@
                 }
                 return component
             },
-            onRemoveShape: function (value) {
+            onRemoveShape(element){
                 var me = this
-                var obj = {
-                    action: 'delete',
-                    element: value
-                }
-                if (me.value.relationView) {
-                    me.$EventBus.$emit(`${me.value.relationView.id}`, obj)
-                    me.deleteAnnotations(obj.element)
-                } else {
-                    me.$EventBus.$emit(`${me.value.elementView.id}`, obj)
-                }
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        // Custom Remove Action
+                        let id = me.value.relationView ? me.value.relationView.id : me.value.elementView.id
+                        me.$EventBus.$emit(id, {
+                            action: 'delete',
+                            element: me.value
+                        })
+                        if (me.value.relationView) {
+                            me.deleteAnnotations(obj.element)
+                        } 
+                        /////////////////////////////////////////
+                        
+                        me.canvas.removeElementAction(me.value)
+                        me.validate()
 
-                try {
-                    if ( me.canvas.isCustomMoveExist ) {
-                        me.removeShapeQueue()
-                    } else {
-                        me.removeShapeLocal()
+                        if(!element) return;
+                        // selected Element Remove
+                        if (me.value.elementView && element && element.id === me.value.elementView.id) {
+                            Object.values(me.canvas.value.elements).forEach((element) => {
+                                if(!me.canvas.validateElementFormat(element)) return;
+                                if (element && element.elementView.id !== me.value.elementView.id) {
+                                    let component = me.canvas.$refs[element.elementView.id];
+                                    if (component) {
+                                        component = component[0];
+                                        if (component.selected) {
+                                            component.onRemoveShape();
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    },
+                    onFail(e){
+                        console.log(`[Error] ModelElement-onRemoveShape: ${e}`)
                     }
-                    me.validate()
-                } catch (e) {
-                    alert(`[Error] ModelElement-onRemoveShape: ${e}`)
-                }
+                })
                 // console.log("============== Storage Location Search Test 1-2 (Delete Btn) ============= ")
             },
             deleteRelation: function (relationId) {
