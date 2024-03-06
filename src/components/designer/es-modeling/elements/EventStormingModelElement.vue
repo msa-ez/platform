@@ -687,7 +687,6 @@
                         tmp.elementView.x = tmp.elementView.x + Math.floor(Math.random() * 101);
                         tmp.elementView.y = tmp.elementView.y + Math.floor(Math.random() * 101);
 
-                        // me.canvas.addElements(me.canvas.value, tmp);
                         me.canvas.appendElement(tmp);
                     }
                 }

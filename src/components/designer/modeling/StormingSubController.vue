@@ -212,9 +212,7 @@
                             tmp.id = me.canvas.uuid();
                             tmp.elementView.id = tmp.id;
 
-                            // me.canvas.addElements(me.canvas.value, tmp);
                             me.canvas.appendElement(tmp);
-
                             elementIds.push(tmp.id);
                         })
                     }

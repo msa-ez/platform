@@ -3412,67 +3412,6 @@
                     }
                 }
             },
-            addElements(element, child){
-                /*
-                 !!!  REMOVE !!!!
-                 changedMethod: appendElement
-                */
-                var me = this
-                me.$set(me.value.elements, element.elementView.id, element);
-
-                me.$nextTick(function () {
-                    me.$EventBus.$emit(`${element.elementView.id}`, {
-                        action: 'elementPush',
-                        STATUS_COMPLETE: true
-                    })
-                });
-            },
-            deleteElements(element, child){
-                /*
-                   !!!  REMOVE !!!!
-                   changedMethod: removeElement
-               */
-                var me = this
-                me.value.elements[element.elementView.id] = null;
-                // delete me.value.elements[element.elementView.id];
-
-                me.$nextTick(function () {
-                    me.$EventBus.$emit(`${element.elementView.id}`, {
-                        action: 'elementDelete',
-                        STATUS_COMPLETE: true
-                    })
-                });
-            },
-            addRelations(relation, child){
-                /*
-                   !!!  REMOVE !!!!
-                   changedMethod: appendElement
-               */
-                var me = this
-                me.$set(me.value.relations, relation.relationView.id, relation);
-
-                me.$nextTick(function () {
-                    me.$EventBus.$emit(`${relation.relationView.id}`, {
-                        action: 'relationPush',
-                        STATUS_COMPLETE: true
-                    })
-                });
-            },
-            deleteRelations(relation, child){
-                /*
-                  !!!  REMOVE !!!!
-                  changedMethod: removeElement
-              */
-                var me = this
-                me.value.relations[relation.relationView.id] = null;
-
-                me.$nextTick(function () {
-                    me.$EventBus.$emit(`${relation.relationView.id}`, {
-                        action: 'relationDelete',
-                        STATUS_COMPLETE: true
-                    })
-                });
-            },
             async receiveValue() {
                 var me = this
                 await me.watch(`db://definitions/${me.projectId}/value`, function (callback) {
@@ -4701,49 +4640,6 @@
                 }
                 me.$emit('forceUpdateKey')
             },
-            addElementPush(values, element) {
-                /*
-                  !!!  REMOVE !!!!
-                  changedMethod: addElementAction(element, value)
-                */
-                var me = this
-                var value = values ? values : me.value
-                var location = element.elementView ? value.elements : value.relations
-                var eleId = element.elementView ? element.elementView.id : element.relationView.id
-
-                // if (me.storageExist) {
-                if (me.isServerModel && me.isQueueModel ) {
-                    //server
-                    me.modelChanged = true
-                    var action = element.relationView ? 'relationPush' : 'elementPush'
-                    if (!Object.keys(location).includes(eleId)) {
-
-                        //STATUS_COMPLETE
-                        me.$set(location, eleId, element)
-                        me.$nextTick(function () {
-                            me.$EventBus.$emit(`${eleId}`, {action: action, STATUS_COMPLETE: false})
-                        })
-                        var postObj = {
-                            action: action,
-                            editUid: me.userInfo.uid,
-                            timeStamp: Date.now(),
-                            item: JSON.stringify(element)
-                        }
-                        me.pushObject(`db://definitions/${me.projectId}/queue`, postObj)
-                        console.log('added:server')
-                    }
-
-                } else {
-                    if (!Object.keys(location).includes(eleId)) {
-                        me.$set(location, eleId, element)
-                        if (me.initLoad) me.changedTemplateCode = true
-
-                        console.log('added:localstorage,kubernetes')
-                    }
-                }
-
-            },
-
         }
     }
 
