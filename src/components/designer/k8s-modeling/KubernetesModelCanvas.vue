@@ -4527,7 +4527,6 @@
                 }
             },
             addElement: function (componentInfo, object, isOpened) {
-                this.enableHistoryAdd = true;
                 var me = this;
                 var additionalData = {};
                 var vueComponent = me.getComponentByName(componentInfo.component);
@@ -4598,30 +4597,16 @@
 
                 }
 
-
-
-                // var location = element.elementView ? me.value.elements : me.value.relations
-                // var eleId = element.elementView ? element.elementView.id : element.relationView.id
-                // if (componentInfo.component == "namespace") {
-                //     // location.unshift()
-                // }
-                // me.$set(location, eleId, element)
-
-                if(me.embedded){
-                    if (!me.value.k8sValue) {
-                        me.value.k8sValue = {'elements': {}, 'relations': {}}
-                    }
-                    me.addElementPush(me.value.k8sValue, element)
-                }else{
-                    me.addElementPush(me.value, element)
+                if (me.embedded){
+                    if(!me.value.k8sValue)  me.value.k8sValue = {'elements': {}, 'relations': {}} 
+                    me.addElementAction(element, me.value.k8sValue)
+                    // me.addElementPush(me.value.k8sValue, element)
+                } else{
+                    // me.addElementPush(me.value, element)
+                    me.addElementAction(element, me.value)
                 }
-
-                //auto openPanel
-                // me.autoOpenPanel = isOpened
-
                 //추천 element 리턴
                 return element
-
             },
             definedCrdDialog() {
                 var me = this

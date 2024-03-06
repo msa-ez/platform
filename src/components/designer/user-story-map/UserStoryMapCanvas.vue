@@ -882,7 +882,6 @@
                 });
             },
             addElement: function (componentInfo, bounded) {
-                this.enableHistoryAdd = true;
                 var me = this;
                 var vueComponent = me.getComponentByName(componentInfo.component);
                 var element;
@@ -948,7 +947,8 @@
                     );
                 }
 
-                me.addElementPush(me.value, element)
+                // me.addElementPush(me.value, element)
+                me.addElementAction(element)
             },
             async purchaseItemDialogSubmit(result) {
                 var me = this

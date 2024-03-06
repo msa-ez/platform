@@ -837,8 +837,8 @@
              * @param {Object} shapeInfo (shapeId,x,y,width,height,label)
              **/
             addComponenet: function (componentInfo, newTracingTag, originalData) {
-                this.enableHistoryAdd = true;
                 var me = this;
+                me.enableHistoryAdd = true;
                 var additionalData = {};
 
                 //릴레이션 추가인 경우

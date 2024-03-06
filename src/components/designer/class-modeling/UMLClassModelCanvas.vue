@@ -519,18 +519,17 @@
                 code: '',
                 active: [],
                 canvas: null,
-                items: [],
-                enableHistoryAdd: false,
-                undoing: false,
-                undoed: false,
-                tmpValue: [],
-                noPushUndo: false,
+                // items: [],
+                // undoing: false,
+                // undoed: false,
+                // tmpValue: [],
+                // noPushUndo: false,
 
                 //undo Redo
-                undoRedoArray: [],
-                undoRedoIndex: 0,
-                currentIndex: 0,
-                undoIndex: 0,
+                // undoRedoArray: [],
+                // undoRedoIndex: 0,
+                // currentIndex: 0,
+                // undoIndex: 0,
 
                 // imageBase: 'https://raw.githubusercontent.com/kimsanghoon1/k8s-UI/master/public/static/image/symbol/',
                 imageBase: `${ window.location.protocol + "//" + window.location.host}/static/image/symbol/`,
@@ -1534,41 +1533,37 @@
                     // this.syncOthers();
                 }
             },
-            undoRedo: function (cmd) {
-                var me = this
-                if (!me.drawer) {
-                    if (cmd == 'redo') {
-                        if (me.undoRedoIndex < me.undoRedoArray.length - 1) {
-                            me.undoRedoIndex = me.undoRedoIndex + 1
-                            me.value = JSON.parse(JSON.stringify(me.undoRedoArray[me.undoRedoIndex]));
-                        } else {
-                            me.text = "Last element"
-                            me.snackbar = true
-                            me.timeout = 500
-                        }
-                    } else if (cmd == 'undo') {
-                        if (me.undoRedoIndex > 0) {
-                            me.undoRedoIndex = me.undoRedoIndex - 1
-                            me.value = JSON.parse(JSON.stringify(me.undoRedoArray[me.undoRedoIndex]));
-                        } else {
-                            me.text = "Last Element"
-                            me.snackbar = true
-                            me.timeout = 500
-                        }
-                    }
-                }
+            // undoRedo: function (cmd) {
+            //     var me = this
+            //     if (!me.drawer) {
+            //         if (cmd == 'redo') {
+            //             if (me.undoRedoIndex < me.undoRedoArray.length - 1) {
+            //                 me.undoRedoIndex = me.undoRedoIndex + 1
+            //                 me.value = JSON.parse(JSON.stringify(me.undoRedoArray[me.undoRedoIndex]));
+            //             } else {
+            //                 me.text = "Last element"
+            //                 me.snackbar = true
+            //                 me.timeout = 500
+            //             }
+            //         } else if (cmd == 'undo') {
+            //             if (me.undoRedoIndex > 0) {
+            //                 me.undoRedoIndex = me.undoRedoIndex - 1
+            //                 me.value = JSON.parse(JSON.stringify(me.undoRedoArray[me.undoRedoIndex]));
+            //             } else {
+            //                 me.text = "Last Element"
+            //                 me.snackbar = true
+            //                 me.timeout = 500
+            //             }
+            //         }
+            //     }
 
-            },
+            // },
             addElement: function (componentInfo, isAggRoot) {
-                this.enableHistoryAdd = true;
                 var me = this;
-                var vueComponent = me.getComponentByName(componentInfo.component);
-                var element;
-
-                if (!vueComponent) {
-                    return
-                }
-
+                let vueComponent = me.getComponentByName(componentInfo.component);
+                if (!vueComponent) return
+                
+                let element;
                 if (componentInfo.component == 'uml-class-relation') {
                     if(componentInfo.targetElement.isInterface) {
                         vueComponent = me.getComponentByName('uml-realization-relation')
@@ -1621,42 +1616,36 @@
                     );
                 }
 
-                if (componentInfo.name) {
-                    element.name = componentInfo.name
-                }
+                if (componentInfo.name) element.name = componentInfo.name
+                if(!me.embedded && !me.value) me.value = { 'elements': {}, 'relations': {} }
                 
-                if(!me.embedded) {
-                    if (me.value == null) {
-                        me.value = { 'elements': {}, 'relations': {} }
-                    }
-                }
-                
-                if(!isAggRoot) {
-                    me.addElementPush(me.value, element)
+                me.addElementAction(element)
 
-                    // new UndoRedo
-                    if (me.undoRedoIndex != me.currentIndex) {
-                        //undoRedo 했을때
-                        //삭제후
-                        me.undoRedoArray.splice(me.undoRedoIndex + 1, me.currentIndex - me.undoRedoIndex);
-                        me.undoRedoIndex = me.undoRedoIndex + 1
-                        me.currentIndex = me.undoRedoIndex
-                    } else {
-                        me.undoRedoIndex = me.undoRedoIndex + 1
-                    }
-                    me.undoRedoArray.push(JSON.parse(JSON.stringify(me.value)));
-                    me.currentIndex = me.undoRedoArray.length - 1
-                } else {
-                    var location = element.elementView ? me.value.elements : me.value.relations
-                    var eleId = element.elementView ? element.elementView.id : element.relationView.id
+                // if(!isAggRoot) {
+                //     me.addElementPush(me.value, element)
 
-                    if (!Object.keys(location).includes(eleId)) {
-                        me.$set(location, eleId, element)
-                    }
-                }
+                //     // new UndoRedo
+                //     if (me.undoRedoIndex != me.currentIndex) {
+                //         //undoRedo 했을때
+                //         //삭제후
+                //         me.undoRedoArray.splice(me.undoRedoIndex + 1, me.currentIndex - me.undoRedoIndex);
+                //         me.undoRedoIndex = me.undoRedoIndex + 1
+                //         me.currentIndex = me.undoRedoIndex
+                //     } else {
+                //         me.undoRedoIndex = me.undoRedoIndex + 1
+                //     }
+                //     me.undoRedoArray.push(JSON.parse(JSON.stringify(me.value)));
+                //     me.currentIndex = me.undoRedoArray.length - 1
+                // } else {
+                //     var location = element.elementView ? me.value.elements : me.value.relations
+                //     var eleId = element.elementView ? element.elementView.id : element.relationView.id
+
+                //     if (!Object.keys(location).includes(eleId)) {
+                //         me.$set(location, eleId, element)
+                //     }
+                // }
 
                 return element;
-                // this.syncOthers(element);
             },
             getComponentByName: function (name) {
                 var componentByName;

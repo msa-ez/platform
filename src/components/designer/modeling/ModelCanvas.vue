@@ -2052,122 +2052,121 @@
             },
             async forkModel() {
                 var me = this
-
-                try {
-                    me.$EventBus.$emit('progressValue', true);
-                    var check = await me.validateStorageCondition(me.storageCondition, 'fork');
-                    if(check){
-                        var originProjectId =  me.projectId
-                        var settingProjectId = me.storageCondition.projectId.replaceAll(' ','-').trim();
-                        if( !me.storageCondition.projectId ) me.storageCondition.projectId = me.dbuid();
-                       
-                        if(me.userInfo.providerUid && me.params.providerUid){
-                            settingProjectId = `${me.userInfo.providerUid}_${me.canvasType}_${settingProjectId}`
-                        }
-
-                        var projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
-                        var copyValue = JSON.parse(JSON.stringify(me.value));
-
-                        // 현재 모델의 org, repo 를 저장?
-                        copyValue.scm.forkedOrg = copyValue.scm.org;
-                        copyValue.scm.forkedRepo = copyValue.scm.repo;
-                        copyValue.scm.forkedTag = copyValue.scm.tag;
-                        copyValue.scm.org = null;
-                        copyValue.scm.repo = null;
-                        copyValue.scm.tag = null;
-
-                        let img = await me.$refs['modeler-image-generator'].save(me.projectName, me.canvas);
-
-                        if (!me.isServerModel) {
-                            me.storageDialogCancel()
-                            alert('준비중 입니다.')
-                        } else {
-                            await me.putString(`storage://definitions/${settingProjectId}/information/image`, img);
-
-                            var userInfoObj = {
-                                uid: me.userInfo.uid,
-                                name: me.userInfo.name,
-                                picture: me.userInfo.profile
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.$EventBus.$emit('progressValue', true);
+                        var check = await me.validateStorageCondition(me.storageCondition, 'fork');
+                        if(check){
+                            var originProjectId =  me.projectId
+                            var settingProjectId = me.storageCondition.projectId.replaceAll(' ','-').trim();
+                            if( !me.storageCondition.projectId ) me.storageCondition.projectId = me.dbuid();
+                        
+                            if(me.userInfo.providerUid && me.params.providerUid){
+                                settingProjectId = `${me.userInfo.providerUid}_${me.canvasType}_${settingProjectId}`
                             }
 
-                            var informationObj = {
-                                author: me.userInfo.uid,
-                                authorEmail: me.userInfo.email,
-                                forkOrigin: originProjectId,
-                                lastVersionName: projectVersion,
-                                comment: me.storageCondition ? me.storageCondition.comment : '',
-                                createdTimeStamp: Date.now(),
-                                lastModifiedTimeStamp: Date.now(),
-                                // img: img,
-                                lastModifiedUser: null,
-                                lastModifiedEmail: null,
-                                projectName: me.storageCondition ? me.storageCondition.editProjectName : me.projectName,
-                                type: me.information.type,
-                            }
+                            var projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
+                            var copyValue = JSON.parse(JSON.stringify(me.value));
 
+                            // 현재 모델의 org, repo 를 저장?
+                            copyValue.scm.forkedOrg = copyValue.scm.org;
+                            copyValue.scm.forkedRepo = copyValue.scm.repo;
+                            copyValue.scm.forkedTag = copyValue.scm.tag;
+                            copyValue.scm.org = null;
+                            copyValue.scm.repo = null;
+                            copyValue.scm.tag = null;
 
-                            // var versionValueObj ={
-                            //     value: JSON.stringify(copyValue),
-                            // }
-                            let valueUrl = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(copyValue));
-                            let imagURL = await me.putString(`storage://definitions/${originProjectId}/versionLists/${projectVersion}/image`, img);
+                            let img = await me.$refs['modeler-image-generator'].save(me.projectName, me.canvas);
 
-                            console.log(settingProjectId, originProjectId)
-                            var versionInfoObj = {
-                                saveUser: me.userInfo.uid,
-                                saveUserEmail: me.userInfo.email,
-                                saveUserName: me.userInfo.name,
-                                projectName: me.storageCondition.editProjectName,
-                                img: imagURL,
-                                timeStamp: Date.now(),
-                                comment: me.storageCondition.comment,
-                                valueUrl: valueUrl
-                            }
-                            var snapshotObj = {
-                                lastSnapshotKey: '',
-                                snapshot: JSON.stringify(copyValue),
-                                snapshotImg: imagURL,
-                                timeStamp: Date.now()
-                            }
-
-
-                            var putProjectObj = {
-                                projectId: settingProjectId,
-                                forkOrigin: originProjectId,
-                            }
-                            let forked = await me.setForkData(settingProjectId, snapshotObj, informationObj, userInfoObj, putProjectObj, projectVersion, versionInfoObj)
-                            .then(function () {
-                                if(me.isClazzModeling){
-                                    me.updateClassModelingId(settingProjectId);
-                                }else{
-                                    var location = null;
-                                    if( me.canvasType == 'es' ) {
-                                        location = 'storming'
-                                    } else if (me.canvasType == 'k8s') {
-                                        location = 'kubernetes'
-                                    } else if (me.canvasType == 'bm') {
-                                        location = 'business-model-canvas'
-                                    } else {
-                                        location = me.canvasType
-                                    }
-
-                                    let path = me.userInfo.providerUid && me.params.providerUid ? `/${me.userInfo.providerUid}/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}` : `/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}`
-                                    me.$router.push({path: path});
-                                    setTimeout(() => {
-                                        me.$emit('forceUpdateKey');
-                                    }, 500);
-                                }
+                            if (!me.isServerModel) {
                                 me.storageDialogCancel()
-                            })
-                        }
+                                alert('준비중 입니다.')
+                            } else {
+                                await me.putString(`storage://definitions/${settingProjectId}/information/image`, img);
 
-                    } else {
-                        this.storageCondition.loading = false
+                                var userInfoObj = {
+                                    uid: me.userInfo.uid,
+                                    name: me.userInfo.name,
+                                    picture: me.userInfo.profile
+                                }
+
+                                var informationObj = {
+                                    author: me.userInfo.uid,
+                                    authorEmail: me.userInfo.email,
+                                    forkOrigin: originProjectId,
+                                    lastVersionName: projectVersion,
+                                    comment: me.storageCondition ? me.storageCondition.comment : '',
+                                    createdTimeStamp: Date.now(),
+                                    lastModifiedTimeStamp: Date.now(),
+                                    // img: img,
+                                    lastModifiedUser: null,
+                                    lastModifiedEmail: null,
+                                    projectName: me.storageCondition ? me.storageCondition.editProjectName : me.projectName,
+                                    type: me.information.type,
+                                }
+
+
+                                // var versionValueObj ={
+                                //     value: JSON.stringify(copyValue),
+                                // }
+                                let valueUrl = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(copyValue));
+                                let imagURL = await me.putString(`storage://definitions/${originProjectId}/versionLists/${projectVersion}/image`, img);
+
+                                console.log(settingProjectId, originProjectId)
+                                var versionInfoObj = {
+                                    saveUser: me.userInfo.uid,
+                                    saveUserEmail: me.userInfo.email,
+                                    saveUserName: me.userInfo.name,
+                                    projectName: me.storageCondition.editProjectName,
+                                    img: imagURL,
+                                    timeStamp: Date.now(),
+                                    comment: me.storageCondition.comment,
+                                    valueUrl: valueUrl
+                                }
+                                var snapshotObj = {
+                                    lastSnapshotKey: '',
+                                    snapshot: JSON.stringify(copyValue),
+                                    snapshotImg: imagURL,
+                                    timeStamp: Date.now()
+                                }
+
+
+                                var putProjectObj = {
+                                    projectId: settingProjectId,
+                                    forkOrigin: originProjectId,
+                                }
+                                let forked = await me.setForkData(settingProjectId, snapshotObj, informationObj, userInfoObj, putProjectObj, projectVersion, versionInfoObj)
+                                .then(function () {
+                                    if(me.isClazzModeling){
+                                        me.updateClassModelingId(settingProjectId);
+                                    }else{
+                                        var location = null;
+                                        if( me.canvasType == 'es' ) {
+                                            location = 'storming'
+                                        } else if (me.canvasType == 'k8s') {
+                                            location = 'kubernetes'
+                                        } else if (me.canvasType == 'bm') {
+                                            location = 'business-model-canvas'
+                                        } else {
+                                            location = me.canvasType
+                                        }
+
+                                        let path = me.userInfo.providerUid && me.params.providerUid ? `/${me.userInfo.providerUid}/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}` : `/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}`
+                                        me.$router.push({path: path});
+                                        setTimeout(() => {
+                                            me.$emit('forceUpdateKey');
+                                        }, 500);
+                                    }
+                                    me.storageDialogCancel()
+                                })
+                            }
+
+                        } else {
+                            this.storageCondition.loading = false
+                        }
                     }
-                } catch (e) {
-                    me.alertInfo.text = 'FORK-ERROR' + e
-                    me.alertInfo.show = true
-                }
+                })
             },
             watchInformation(){
                 var me = this
@@ -3259,7 +3258,6 @@
                 var me = this
 
                 var action = child.childValue.action ? child.childValue.action : child.childValue.state
-
                 if (state == 'undo') {
                     if (action == 'redo') {
                         child = JSON.parse(child.childValue.item)
@@ -3886,120 +3884,127 @@
             },
             undo() {
                 var me = this
-
-                if (me.isQueueModel) {
-                    if (me.isServerModel) {
-                        me.firebaseUndo()
-                    } else {
-                        me.localUndo()
-                    }
+                if(me.isServerModel && me.isQueueModel){
+                    me.firebaseUndo()
                 } else {
                     me.localUndo()
                 }
-
             },
             redo() {
                 var me = this
-                if (me.isQueueModel) {
-                    if (me.isServerModel) {
-                        me.firebaseRedo()
-                    } else {
-                        me.localRedo()
-                    }
+                if (me.isServerModel && me.isQueueModel) {
+                    me.firebaseRedo()
                 } else {
                     me.localRedo()
                 }
             },
             localUndo() {
                 var me = this
-                var undoElement
-                if (me.undoRedoArray.length > 0) {
-                    me.undoRedoIndex = me.undoRedoIndex - 1
-                    undoElement = me.undoRedoArray[me.undoRedoIndex] ? JSON.parse(me.undoRedoArray[me.undoRedoIndex]) : null
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let undoElement
+                        if (me.undoRedoArray.length > 0) {
+                            me.undoRedoIndex = me.undoRedoIndex - 1
+                            undoElement = me.undoRedoArray[me.undoRedoIndex] ? JSON.parse(me.undoRedoArray[me.undoRedoIndex]) : null
 
-                    if (!undoElement) {
-                        me.undoRedoIndex = 0
-                        return
-                    }
+                            if (!undoElement) {
+                                me.undoRedoIndex = 0
+                                return
+                            }
 
-                    var type = Object.keys(undoElement)[0]
-                    var diff = undoElement[type]
-                    var id = Object.keys(undoElement[type])[0]
-                    var value = Object.values(diff)
-                    me.changedByUndoRedo = true
+                            var type = Object.keys(undoElement)[0]
+                            var diff = undoElement[type]
+                            var id = Object.keys(undoElement[type])[0]
+                            var value = Object.values(diff)
+                            me.changedByUndoRedo = true
 
 
-                    if (Array.isArray(value[0])) {
-                        if (value[0].length == 1) {
-                            me.value[type][id] = null
-                        } else if (value[0].length == 2) {
-                            me.$set(me.value[type], id, value[0][0])
+                            if (Array.isArray(value[0])) {
+                                if (value[0].length == 1) {
+                                    me.value[type][id] = null
+                                } else if (value[0].length == 2) {
+                                    me.$set(me.value[type], id, value[0][0])
+                                }
+                            } else if (typeof value == 'object') {
+                                jsondiffpatch.patch(me.value[type], jsondiffpatch.reverse(diff));
+                            }
                         }
-                    } else if (typeof value == 'object') {
-                        jsondiffpatch.patch(me.value[type], jsondiffpatch.reverse(diff));
                     }
-                }
+                })
+
             },
             localRedo() {
                 var me = this
-                var redoElement
-                if (me.undoRedoArray.length > 0) {
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let redoElement
+                        if (me.undoRedoArray.length > 0) {
 
-                    redoElement = me.undoRedoArray[me.undoRedoIndex] ? JSON.parse(me.undoRedoArray[me.undoRedoIndex]) : null
-                    me.undoRedoIndex = me.undoRedoIndex + 1
+                            redoElement = me.undoRedoArray[me.undoRedoIndex] ? JSON.parse(me.undoRedoArray[me.undoRedoIndex]) : null
+                            me.undoRedoIndex = me.undoRedoIndex + 1
 
-                    if (!redoElement) {
-                        me.undoRedoIndex = me.undoRedoArray.length
-                        return
+                            if (!redoElement) {
+                                me.undoRedoIndex = me.undoRedoArray.length
+                                return
+                            }
+
+                            var type = Object.keys(redoElement)[0]
+                            var diff = redoElement[type]
+                            var id = Object.keys(redoElement[type])[0]
+                            var value = Object.values(diff)
+                            me.changedByUndoRedo = true
+
+                            if (Array.isArray(value[0])) {
+                                if (value[0].length == 1) {
+                                    me.$set(me.value[type], id, value[0][0])
+                                } else if (value[0].length == 2) {
+                                    me.value[type][id] = null
+                                }
+                            } else if (typeof value == 'object') {
+                                jsondiffpatch.patch(me.value[type], diff);
+                            }
+                        }      
                     }
-
-                    var type = Object.keys(redoElement)[0]
-                    var diff = redoElement[type]
-                    var id = Object.keys(redoElement[type])[0]
-                    var value = Object.values(diff)
-                    me.changedByUndoRedo = true
-
-                    if (Array.isArray(value[0])) {
-                        if (value[0].length == 1) {
-                            me.$set(me.value[type], id, value[0][0])
-                        } else if (value[0].length == 2) {
-                            me.value[type][id] = null
-                        }
-                    } else if (typeof value == 'object') {
-                        jsondiffpatch.patch(me.value[type], diff);
-                    }
-
-                }
-
+                })
             },
             localUndoRedoStorage(diff) {
                 var me = this
-                if (me.changedByUndoRedo) {
-                    me.changedByUndoRedo = false
-                } else {
-
-                    var lastIndex = me.undoRedoArray.length
-                    if (lastIndex != me.undoRedoIndex) {
-                        me.undoRedoArray.splice(me.undoRedoIndex, lastIndex - me.undoRedoIndex)
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if (me.changedByUndoRedo) {
+                            me.changedByUndoRedo = false
+                        } else {
+                            var lastIndex = me.undoRedoArray.length
+                            if (lastIndex != me.undoRedoIndex) {
+                                me.undoRedoArray.splice(me.undoRedoIndex, lastIndex - me.undoRedoIndex)
+                            }
+                            me.undoRedoArray.push(JSON.stringify(diff))
+                            me.undoRedoIndex = me.undoRedoIndex + 1
+                        }      
                     }
-                    me.undoRedoArray.push(JSON.stringify(diff))
-                    me.undoRedoIndex = me.undoRedoIndex + 1
-
-                }
+                })
             },
             async firebaseUndo() {
                 var me = this
-                me.overlayText = 'Undoing'
-                me.undoDisable = true
-                var keySnap = await me.getLastQueue()
-                if(keySnap){
-                    var currentKey = keySnap[0].key
-                    var prevValue = await me.getUndoTarget(currentKey)
-                    if (prevValue) {
-                        me.undoRedoDraw(prevValue, 'undo')
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.overlayText = 'Undoing'
+                        me.undoDisable = true
+                        var keySnap = await me.getLastQueue()
+                        if(keySnap){
+                            var currentKey = keySnap[0].key
+                            var prevValue = await me.getUndoTarget(currentKey)
+                            if (prevValue) {
+                                me.undoRedoDraw(prevValue, 'undo')
+                            }
+                        }
+                        me.overlayText = null
                     }
-                }
-                me.overlayText = null
+                })
             },
             getUndoTarget(currentKey) {
                 var me = this
@@ -4047,17 +4052,22 @@
             },
             async firebaseRedo() {
                 var me = this
-                me.overlayText = 'Redoing'
-                me.redoDisable = true
-                var keySnap = await me.getLastQueue()
-                if(keySnap){
-                    var currentKey = keySnap[0].key
-                    var prevValue = await me.getRedoTarget(currentKey)
-                    if (prevValue) {
-                        me.undoRedoDraw(prevValue, 'redo')
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.overlayText = 'Redoing'
+                        me.redoDisable = true
+                        var keySnap = await me.getLastQueue()
+                        if(keySnap){
+                            var currentKey = keySnap[0].key
+                            var prevValue = await me.getRedoTarget(currentKey)
+                            if (prevValue) {
+                                me.undoRedoDraw(prevValue, 'redo')
+                            }
+                        }
+                        me.overlayText = null
                     }
-                }
-                me.overlayText = null
+                })
             },
             async getRedoTarget(nextKey) {
                 var me = this
@@ -4118,101 +4128,90 @@
             },
             validateRelation(fromId, toId) {
                 var me = this
-                try {
-                    var relations = me.value.relations
-                    if (relations) {
-                        var index = Object.values(relations).findIndex(relation => relation && relation.from == fromId && relation.to == toId)
-                        if (index == -1) {
-                            return true
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        var relations = me.value.relations
+                        if (relations) {
+                            var index = Object.values(relations).findIndex(relation => relation && relation.from == fromId && relation.to == toId)
+                            if (index == -1) {
+                                return true
+                            }
                         }
+                        return false
+                    },
+                    onFail(e){
+                        return true
                     }
-                    return false
-                } catch (e) {
-                    return true
-                }
+                })
             },
             onConnectShape: function (edge, from, to) {
-
                 var me = this;
-                //존재하는 릴레이션인 경우 (뷰 ��포넌트), 데이터 매핑에 의해 자동으로 from, to 가 변경되어있기 때문에 따로 로직은 필요없음.
-                //=> 바뀌어야 함.
-                //신규 릴레이션인 경우에는 릴레이션 생성
-                var edgeElement, originalData;
-                var isComponent = false;
-                if (edge.shape) {
-                    edgeElement = edge;
-                } else {
-                    isComponent = true;
-                    edgeElement = edge.element;
-                }
-                // console.log(from, to)
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let edgeElement = edge.shape ? edge : edge.element
+                        if (edgeElement && from && to) {
+                            let vertices = '[' + edgeElement.shape.geom.vertices.toString() + ']';
+                            let componentInfo = {
+                                component: 'class-relation',
+                                sourceElement: from.$parent,
+                                targetElement: to.$parent,
+                                vertices: vertices,
+                                isFilled: true,
+                                isRelation: true,
+                                relationView: {
+                                    style: JSON.stringify({}),
+                                    value: vertices,
+                                }
+                            }
+                            from.$parent.value.elementView.id = from.id;
+                            to.$parent.value.elementView.id = to.id;
 
-                if (edgeElement && from && to) {
-                    var vertices = '[' + edgeElement.shape.geom.vertices.toString() + ']';
-                    var componentInfo = {
-                        component: 'class-relation',
-                        sourceElement: from.$parent,
-                        targetElement: to.$parent,
-                        vertices: vertices,
-                        isFilled: true,
-                        isRelation: true,
-                        relationView: {
-                            style: JSON.stringify({}),
-                            value: vertices,
+                            // OG: 셀의 데이터를 및 콘텐트를 삭제한다. 기능 ????? 
+                            me.canvas.removeShape(edgeElement, true);
+                        
+                            if (me.validateRelation(from.id, to.id)) {
+                                me.addElement(componentInfo);
+                            }
                         }
                     }
-
-                    from.$parent.value.elementView.id = from.id;
-                    to.$parent.value.elementView.id = to.id;
-
-                    if (isComponent) {
-                        me.canvas.removeShape(edgeElement, true);
-                        //this.removeComponentByOpenGraphComponentId(edgeElement.id);
-                        //기존 컴포넌트가 있는 경우 originalData 와 함께 생성
-                        // this.addElement(componentInfo)
-                    } else {
-                        me.canvas.removeShape(edgeElement, true);
-                        //기존 컴포넌트가 없는 경우 신규 생성
-                        // this.addElement(componentInfo);
-                    }
-                    // this.syncOthers();
-
-                    if (me.validateRelation(from.id, to.id)) {
-                        me.addElement(componentInfo);
-                    }
-
-                }
+                })
             },
             addElement: function (componentInfo, bounded) {
-                this.enableHistoryAdd = true;
                 var me = this;
-                var additionalData = {};
-                var vueComponent = me.getComponentByName(componentInfo.component);
-                var element;
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let vueComponent = me.getComponentByName(componentInfo.component);
+                        if(!vueComponent) return;
 
-                if (componentInfo.isRelation && componentInfo.component.includes('relation')) {
-                    /* make Relation */
-                    element = vueComponent.computed.createNew(
-                        this.uuid(),
-                        componentInfo.sourceElement.value,
-                        componentInfo.targetElement.value,
-                        componentInfo.vertices,
-                    );
+                        let element = null
+                        if (componentInfo.isRelation && componentInfo.component.includes('relation')) {
+                            /* make Relation */
+                            element = vueComponent.computed.createNew(
+                                this.uuid(),
+                                componentInfo.sourceElement.value,
+                                componentInfo.targetElement.value,
+                                componentInfo.vertices,
+                            );
 
-                } else {
-                    /* make Element */
-                    element = vueComponent.computed.createNew(
-                        this.uuid(),
-                        componentInfo.x,
-                        componentInfo.y,
-                        componentInfo.width,
-                        componentInfo.height,
-                        componentInfo.description,
-                        componentInfo.label
-                    );
-                }
+                        } else {
+                            /* make Element */
+                            element = vueComponent.computed.createNew(
+                                this.uuid(),
+                                componentInfo.x,
+                                componentInfo.y,
+                                componentInfo.width,
+                                componentInfo.height,
+                                componentInfo.description,
+                                componentInfo.label
+                            );
+                        }
 
-                me.addElementAction(element)
+                        if(element) me.addElementAction(element)
+                    } 
+                })
             },
 
             uuid: function () {
@@ -4325,43 +4324,51 @@
             ///////// ACTION ////////
             addElementAction(element, value, options){
                 var me = this
-                if(!options) options = {}
-                if(!value) value = me.value
-                let valueObj = element.relationView ? value.relations : value.elements
-                let id = element.relationView ? element.relationView.id : element.elementView.id
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        if(!value) value = me.value
+                        let valueObj = element.relationView ? value.relations : value.elements
+                        let id = element.relationView ? element.relationView.id : element.elementView.id
 
-                // duplication
-                if(Object.keys(valueObj).includes(id)) return;
+                        // duplication
+                        if(Object.keys(valueObj).includes(id)) return;
 
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationPush' : 'elementPush',
-                    STATUS_COMPLETE: false
+                        me.$EventBus.$emit(id, {
+                            action: element.relationView ? 'relationPush' : 'elementPush',
+                            STATUS_COMPLETE: false
+                        })
+
+                        // First append
+                        me.appendElement(element, value, options)
+                        if(me.isServerModel && me.isQueueModel){
+                            me.pushAppendedQueue(element, options)
+                        }
+                    }
                 })
-
-                // First append
-                me.appendElement(element, value, options)
-
-                if(me.isServerModel && me.isQueueModel){
-                    // server
-                    me.pushAppendedQueue(element, options)
-                }
             },
             removeElementAction(element, value, options){
                 var me = this
-                if(!options) options = {}
-                if(!value) value = me.value
-                let id = element.relationView ? element.relationView.id : element.elementView.id
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        if(!value) value = me.value
+                        let id = element.relationView ? element.relationView.id : element.elementView.id
 
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationDelete' : 'elementDelete',
-                    STATUS_COMPLETE: false
+                        me.$EventBus.$emit(id, {
+                            action: element.relationView ? 'relationDelete' : 'elementDelete',
+                            STATUS_COMPLETE: false
+                        })
+
+                        if(me.isServerModel && me.isQueueModel){
+                            me.pushRemovedQueue(element, options)
+                        } else {
+                            me.removeElement(element, value, options)
+                        }
+                    }
                 })
-
-                if(me.isServerModel && me.isQueueModel){
-                    me.pushRemovedQueue(element, options)
-                } else {
-                    me.removeElement(element, value, options)
-                }
             },
             moveElementAction(element, oldVal, newVal, value, options){
                 var me = this
@@ -4435,17 +4442,22 @@
             //////// Execute ////////
             appendElement(element, value, options){
                 var me = this
-                if(!value) value = me.value
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!value) value = me.value
 
-                let id = element.relationView ? element.relationView.id : element.elementView.id
-                let valueObj = element.relationView ? value.relations : value.elements
-                if(valueObj[id]) return;
+                        let id = element.relationView ? element.relationView.id : element.elementView.id
+                        let valueObj = element.relationView ? value.relations : value.elements
+                        if(valueObj[id]) return;
 
-                me.$set(valueObj, id, element)
+                        me.$set(valueObj, id, element)
 
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationPush' : 'elementPush',
-                    STATUS_COMPLETE: true
+                        me.$EventBus.$emit(id, {
+                            action: element.relationView ? 'relationPush' : 'elementPush',
+                            STATUS_COMPLETE: true
+                        })
+                    }
                 })
             },
             removeElement(element, value, options){
@@ -4505,16 +4517,21 @@
             //////// Push QUEUE ////////
             pushAppendedQueue(element, options){
                 var me = this
-                let definitionId = me.projectId
-                if(!options) options={}
-                if(options.associatedProject) definitionId = options.associatedProject
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let definitionId = me.projectId
+                        if(!options) options={}
+                        if(options.associatedProject) definitionId = options.associatedProject
 
-                // console.log('Sever Queue] ADD')
-                return me.pushObject(`db://definitions/${definitionId}/queue`, {
-                    action: element.relationView ? 'relationPush' : 'elementPush',
-                    editUid: me.userInfo.uid,
-                    timeStamp: Date.now(),
-                    item: JSON.stringify(element),
+                        // console.log('Sever Queue] ADD')
+                        return me.pushObject(`db://definitions/${definitionId}/queue`, {
+                            action: element.relationView ? 'relationPush' : 'elementPush',
+                            editUid: me.userInfo.uid,
+                            timeStamp: Date.now(),
+                            item: JSON.stringify(element),
+                        })
+                    }
                 })
             },
             pushRemovedQueue(element, options){

@@ -1951,46 +1951,29 @@
                 additionalData.elementView.parent = me.canvas.getParent(dividedLane).id;
 
                 // me.value.roles.push(additionalData);
-                me.addElementPush(me.value, additionalData)
+                // me.addElementPush(me.value, additionalData)
+                me.addElementAction(additionalData)
             },
             /**
              * 도형이 연결되었을 경우.
              **/
             onConnectShape: function (edge, from, to) {
                 var me = this;
-                //존재하는 릴레이션인 경우 (뷰 컴포넌트), 데이터 매핑에 의해 자동으로 from, to 가 변경되어있기 때문에 따로 로직은 필요없음.
-                //=> 바뀌어야 함.
-                //신규 릴레이션인 경우에는 릴레이션 생성
-                var edgeElement, originalData;
-                var isComponent = false;
-                if (edge.shape) {
-                    edgeElement = edge;
-                }
-                //  else {
-                //     isComponent = true;
-                //     edgeElement = edge.element;
-                //     originalData = this.getActAndRelByOpengraphId(edgeElement.id);
-                // }
 
+                let edgeElement = edge.shape ? edge : edge.element
                 if (edgeElement && from && to) {
                     var vertices = '[' + edgeElement.shape.geom.vertices.toString() + ']';
                     var componentInfo = {
+                        isRelation: true,
                         component: "bpmn-relation",
                         from: from.$parent.value,
                         to: to.$parent.value,
                         vertices: vertices
                     }
-
-                    // if (isComponent) {
-                    //     me.canvas.removeShape(edgeElement, true);
-                    //     this.removeComponentByOpenGraphComponentId(edgeElement.elementView.id);
-                    //     //기존 컴포넌트가 있는 경우 originalData 와 함께 생성
-                    //     this.addElement(componentInfo, null, JSON.parse(JSON.stringify(originalData)));
-                    // } else {
+                    // OG: 셀의 데이터를 및 콘텐트를 삭제한다. 기능 ?????
                     me.canvas.removeShape(edgeElement, true);
-                    //기존 컴포넌트가 없는 경우 신규 생성
-                    this.addElement(componentInfo);
-                    // }
+
+                    me.addElement(componentInfo);
                 }
             },
             /**
@@ -2021,8 +2004,8 @@
              * @param {Object} shapeInfo (shapeId,x,y,width,height,label)
              **/
             addElement: function (componentInfo, newTracingTag, originalData) {
-                this.enableHistoryAdd = true;
                 var me = this;
+                me.enableHistoryAdd = true;
                 var additionalData = {};
 
                 //릴레이션 추가인 경우
@@ -2103,7 +2086,9 @@
                         this.uuid()
                     );
                 }
-                this.addElementPush(me.value, additionalData)
+                // this.addElementPush(me.value, additionalData)
+
+                me.addElementAction(additionalData)
 
                 return additionalData
             },
@@ -2400,6 +2385,7 @@
                         // relation
                         vertices = [[startEventElement.elementView.x, startEventElement.elementView.y], [cmdTaskElement.elementView.x, cmdTaskElement.elementView.y]]
                         edgeInfo = {
+                            isRelation: true,
                             component: 'bpmn-relation',
                             from: startEventElement,
                             to: cmdTaskElement,
@@ -2436,6 +2422,7 @@
                             // relation
                             vertices = [[cmdTaskElement.elementView.x, cmdTaskElement.elementView.y], [commandEventElement.elementView.x, commandEventElement.elementView.y]]
                             edgeInfo = {
+                                isRelation: true,
                                 component: 'bpmn-relation',
                                 from: cmdTaskElement,
                                 to: commandEventElement,
@@ -2480,6 +2467,7 @@
                                     }
                                     vertices = [[event.elementView.x, event.elementView.y], [policyEventInfo.x, policyEventInfo.y]]
                                     edgeInfo = {
+                                        isRelation: true,
                                         component: 'bpmn-relation',
                                         from: event,
                                         vertices: JSON.stringify(vertices),
@@ -2529,6 +2517,7 @@
                                     // relation
                                     vertices = [[event.elementView.x, event.elementView.y], [cmdTaskInfo.x, cmdTaskInfo.y]]
                                     edgeInfo = {
+                                        isRelation: true,
                                         component: 'bpmn-relation',
                                         from: event,
                                         vertices: JSON.stringify(vertices),
@@ -2575,6 +2564,7 @@
                                     // relation
                                     vertices = [[task.elementView.x, task.elementView.y], [commnadEventInfo.x, commnadEventInfo.y]]
                                     edgeInfo = {
+                                        isRelation: true,
                                         component: 'bpmn-relation',
                                         from: task,
                                         vertices: JSON.stringify(vertices),

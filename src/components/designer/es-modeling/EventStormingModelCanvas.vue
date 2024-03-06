@@ -4351,8 +4351,6 @@
                 return false;
             },
             addElement: function (componentInfo, bounded) {
-                // console.log("추가");
-                this.enableHistoryAdd = true;
                 var me = this;
                 var additionalData = {};
                 var vueComponent = me.getComponentByName(componentInfo.component);

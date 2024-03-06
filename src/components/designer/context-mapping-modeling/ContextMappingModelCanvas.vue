@@ -1111,7 +1111,7 @@
           Vue.use(ContextMappingModeling);
           me.track();
         } catch (e) {
-          alert("Error: Context Mapping Created().", e);
+          alert(`Error: Context Mapping Created(): ${e}`);
         }
     },
     watch: {
