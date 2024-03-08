@@ -51,7 +51,6 @@
                 params: null,
                 fullPath: null,
                 paramKeys: null,
-                modelCanvasComponent: null,
                 canvas: null
             }
         },

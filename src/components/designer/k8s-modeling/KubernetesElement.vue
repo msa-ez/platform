@@ -118,7 +118,6 @@
 
                 //tmp Vari
                 namePanel: '',
-                modelCanvasComponent: null,
                 filterConnectionTypes: null,
 
                 messageRef: {},
@@ -390,7 +389,6 @@
         methods: {
             setElementCanvas(){
                 var me = this
-                me.modelCanvasComponent = me.getComponent('kubernetes-model-canvas');
                 me.canvas = me.getComponent('kubernetes-model-canvas');
             },
             mergeDeep(target, sources) {

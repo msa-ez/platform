@@ -24,13 +24,11 @@
         },
         created() {
             var me = this
-            me.modelCanvasComponent = me.getComponent('kubernetes-model-canvas')
             me.canvas = me.getComponent('kubernetes-model-canvas')
         },
         computed: {},
         data: function () {
             return {
-                modelCanvasComponent: null,
                 canvas: null
             }
         },

@@ -127,7 +127,6 @@
         methods: {
             setElementCanvas(){
                 var me = this
-                me.modelCanvasComponent = me.getComponent('sticky-model-canvas');
                 me.canvas = me.getComponent('sticky-model-canvas');
             },
             selectedActivity: function () {

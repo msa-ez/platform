@@ -37,8 +37,6 @@
                 // ??
                 messageRef: {},
                 EndProgressing: false,
-                // remove.
-                modelCanvasComponent: null,
             }
         },
         created: function () {

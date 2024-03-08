@@ -76,7 +76,6 @@
         methods: {
             setElementCanvas(){
                 var me = this
-                me.modelCanvasComponent = me.getComponent('business-model-canvas');
                 me.canvas = getParent(me.$parent, "business-model-canvas");
             },
             selectedActivity: function () {

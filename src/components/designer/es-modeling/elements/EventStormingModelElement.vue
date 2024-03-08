@@ -395,11 +395,7 @@
                     } else {
                         me.canvas = me.getComponent('event-storming-model-canvas')
                     }
-                } finally {
-                    // 추후 제거. canvas 일치.
-                    me.modelCanvasComponent = me.canvas
-                }
-
+                } 
             },
             setMirrorElementId(){
                 var me = this

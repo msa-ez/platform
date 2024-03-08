@@ -31,7 +31,6 @@
         },
         data: function () {
             return {
-                modelCanvasComponent: null,
                 namePanel: '',
             };
         },
@@ -56,7 +55,7 @@
         },
         created: function () {
             var me = this;
-            // me.modelCanvasComponent = me.getComponent('uml-class-model-canvas');
+            // me.canvas = me.getComponent('uml-class-model-canvas');
             // me.canvas = me.getComponent('uml-class-model-canvas');
 
             // Init Common panel-value Setting
@@ -69,7 +68,6 @@
         methods: {
             setElementCanvas(){
                 var me = this;
-                me.modelCanvasComponent = me.getComponent('uml-class-model-canvas');
                 me.canvas = me.getComponent('uml-class-model-canvas');
             },
             closePanel() {

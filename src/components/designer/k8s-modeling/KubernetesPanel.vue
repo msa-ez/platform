@@ -25,7 +25,6 @@
         },
         data: function () {
             return {
-                modelCanvasComponent: null,
                 openValidationLists:false,
                 validationLevelIcon:
                     {
@@ -47,7 +46,6 @@
         methods: {
             setElementCanvas(){
                 var me = this
-                me.modelCanvasComponent = me.getComponent('kubernetes-model-canvas')
                 me.canvas = me.getComponent('kubernetes-model-canvas')
             },
             closePanel() {

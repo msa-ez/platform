@@ -104,7 +104,6 @@
         methods: {
             setElementCanvas(){
                 var me = this
-                me.modelCanvasComponent = me.getComponent('bpmn-modeling-canvas');
                 me.canvas = me.getComponent('bpmn-modeling-canvas');
             },
             selectedActivity: function () {

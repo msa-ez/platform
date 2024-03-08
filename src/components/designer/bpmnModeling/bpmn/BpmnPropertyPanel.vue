@@ -27,7 +27,6 @@
         computed: {},
         data() {
             return {
-                modelCanvasComponent: null,
                 namePanel: '',
             }
         },
@@ -70,7 +69,6 @@
         methods: {
             setElementCanvas(){
                 var me = this
-                me.modelCanvasComponent = me.$parent.getComponent('bpmn-modeling-canvas')
                 me.canvas = me.$parent.getComponent('bpmn-modeling-canvas')
             },
             closePanel() {

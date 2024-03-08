@@ -21,7 +21,6 @@
         },
         data: function () {
             return {
-                modelCanvasComponent:null,
                 parentCanvas: null,
             }
         },
@@ -40,7 +39,6 @@
         methods:{
             setElementCanvas(){
                 var me = this;
-                me.modelCanvasComponent = me.getComponent('uml-class-model-canvas')
                 me.canvas = me.getComponent('uml-class-model-canvas')
             },
             closePanel(){

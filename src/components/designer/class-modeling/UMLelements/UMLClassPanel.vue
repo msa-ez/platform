@@ -542,7 +542,7 @@
                             if(!me.canvas.embedded) {
                                 me.canvas.changedByMe = true
                             } else {
-                                // var aggElement = me.modelCanvasComponent.aggregateRootList[0];
+                                // var aggElement = me.canvas.aggregateRootList[0];
                                 var aggElement = me.canvas.aggregateRootList[0];
                                 if (aggElement) {
                                     if(me.value.parentId && me.value.isAggregateRoot) {

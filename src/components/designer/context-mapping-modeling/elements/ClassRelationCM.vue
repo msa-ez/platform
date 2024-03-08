@@ -144,7 +144,6 @@ export default {
     setElementCanvas(){
       var me = this
       me.canvas = getParent(me.$parent, "context-mapping-model-canvas");
-      me.modelCanvasComponent = me.canvas
     },
     validate(executeRelateToValidate, panelValue) {
       // var me = this;

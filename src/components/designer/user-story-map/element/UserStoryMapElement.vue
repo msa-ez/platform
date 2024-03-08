@@ -128,7 +128,6 @@
         methods: {
             setElementCanvas(){
                 var me = this
-                me.modelCanvasComponent = me.getComponent('user-story-map-canvas');
                 me.canvas = me.getComponent('user-story-map-canvas');
             },
             selectedActivity: function () {
