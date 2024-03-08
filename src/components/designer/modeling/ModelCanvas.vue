@@ -642,62 +642,67 @@
         },
         created: async function () {
             var me = this
-            console.log("created");
-            if (me.embedded) {
-                return
-            }
-            // URL
-            me.fullPath = me.$route.fullPath.split('/')
-            me.params = me.$route.params
-            me.paramKeys = Object.keys(me.params)
-            me.modelCanvasChannel = new BroadcastChannel('model-canvas')
-         
-
-            me.$EventBus.$emit('showNewButton', false)
-            //set userInfol
-            await me.loginUser()
-            window.io = io
-            me.app = this.getComponent('App')
-            let git;
-
-            this.git = new GitAPI();
-            if (me.isMobile) {
-                me.sliderLocationScale = 0.7
-            }
-            //initialize if never initialized before
-            if (!me.value || !me.value.relations) {
-                me.value = {}
-                me.value.relations = {}
-            }
-            if (!me.value || !me.value.elements) {
-                me.value.elements = {};
-            }
-
-            await me.loadDefinition()
-
-            if(me.information.associatedProject){
-                me.receiveAssociatedProject(me.information.associatedProject);
-            }
-
-            if( !me.isDisable && ((me.isServerModel && !me.isAutoForkModel) || me.projectVersion) ){
-                me.watchInformation();
-                me.onEventHandler();
-            }
-
-            if (me.isServerModel) {
-                if (me.isQueueModel) {
-                    if (me.isDisable || me.projectVersion){
-                        me.initLoad = true
-                        me.$EventBus.$emit('progressValue', false)
-                    }else {
-                        me.receiveQueue()
+            me.$app.try({
+                context: me,
+                async action(me){
+                    console.log("created");
+                    if (me.embedded) {
+                        return
                     }
-                } else {
-                    me.receiveValue()
-                    me.initLoad = true
-                    me.$EventBus.$emit('progressValue', false)
+                    window.io = io
+                    me.app = me.getComponent('App')
+                    me.git = new GitAPI();
+                    // URL
+                    me.fullPath = me.$route.fullPath.split('/')
+                    me.params = me.$route.params
+                    me.paramKeys = Object.keys(me.params)
+                    me.modelCanvasChannel = new BroadcastChannel('model-canvas')
+                    me.setCanvasType()
+                    me.track()
+
+                    me.$EventBus.$emit('showNewButton', false)
+                    //set userInfol
+                    await me.loginUser()
+                
+                    if (me.isMobile) {
+                        me.sliderLocationScale = 0.7
+                    }
+                    //initialize if never initialized before
+                    if (!me.value || !me.value.relations) {
+                        me.value = {}
+                        me.value.relations = {}
+                    }
+                    if (!me.value || !me.value.elements) {
+                        me.value.elements = {};
+                    }
+
+                    await me.loadDefinition()
+
+                    if(me.information.associatedProject){
+                        me.receiveAssociatedProject(me.information.associatedProject);
+                    }
+
+                    if( !me.isDisable && ((me.isServerModel && !me.isAutoForkModel) || me.projectVersion) ){
+                        me.watchInformation();
+                        me.onEventHandler();
+                    }
+
+                    if (me.isServerModel) {
+                        if (me.isQueueModel) {
+                            if (me.isDisable || me.projectVersion){
+                                me.initLoad = true
+                                me.$EventBus.$emit('progressValue', false)
+                            }else {
+                                me.receiveQueue()
+                            }
+                        } else {
+                            me.receiveValue()
+                            me.initLoad = true
+                            me.$EventBus.$emit('progressValue', false)
+                        }
+                    }
                 }
-            }
+            })
         },
         mounted: function () {
             var me = this
@@ -885,6 +890,26 @@
 
         },
         methods: {
+            setCanvasType(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        // Vue.use(ModelingIndex.js),
+                        // me.canvasType = 'modelingType'
+                        throw new Error('setCanvasType() must be implement')
+                    }
+                }) 
+            },
+            getComponentByClassName(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        throw new Error('getComponentByClassName() must be implement')
+                    }
+                }) 
+            },
             handleBeforeUnload(event) {        
                 // reload || close tab
                 console.log('reload')
@@ -916,31 +941,41 @@
             },
             async saveLocalScreenshot(){
                 var me = this
-                if(!me.initLoad) return;
-                let base64Img = await me.screenshot();
-                await me.putString(`localstorage://image_${me.projectId}`, base64Img);
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.initLoad) return;
+                        let base64Img = await me.screenshot();
+                        await me.putString(`localstorage://image_${me.projectId}`, base64Img);
 
-                me.modelCanvasChannel.postMessage({
-                    event: "ScreenShot",
-                    model: me.projectId,
-                    image: base64Img,
-                });
+                        me.modelCanvasChannel.postMessage({
+                            event: "ScreenShot",
+                            model: me.projectId,
+                            image: base64Img,
+                        });
+                    }
+                })
             },
             async saveServerScreenshot(){
                 var me = this
-                if(!me.initLoad) return;
-                if(!me.isServerModel) return;
-                let base64Img = await me.screenshot();
-                await me.putString(`storage://definitions/${me.projectId}/information/image`, base64Img);
-                if(me.information.associatedProject){
-                    await me.putString(`storage://definitions/${me.information.associatedProject}/information/image`, base64Img);
-                }
-                
-                me.modelCanvasChannel.postMessage({
-                    event: "ScreenShot",
-                    model: me.projectId,
-                    image: base64Img,
-                });
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.initLoad) return;
+                        if(!me.isServerModel) return;
+                        let base64Img = await me.screenshot();
+                        await me.putString(`storage://definitions/${me.projectId}/information/image`, base64Img);
+                        if(me.information.associatedProject){
+                            await me.putString(`storage://definitions/${me.information.associatedProject}/information/image`, base64Img);
+                        }
+                        
+                        me.modelCanvasChannel.postMessage({
+                            event: "ScreenShot",
+                            model: me.projectId,
+                            image: base64Img,
+                        });
+                    }
+                })
             },
             async publishScreenShot(){
                 var me = this
@@ -952,77 +987,69 @@
                     await me.saveLocalScreenshot()
                 }
             },
-            onChangedValue(oldVal, newVal){
+            executeBeforeDestroy(){
                 var me = this
-                var diff = jsondiffpatch.diff(oldVal, newVal);
-                if(me.initLoad && diff){
-                    me.changeValueAction(diff);
-
-                    clearTimeout(me.valueChangedTimer);
-                    me.valueChangedTimer = setTimeout(async function () {
-                        await me.saveLocalScreenshot()
-                    },1000)
-                }
-            },
-            async executeBeforeDestroy(){
-                var me = this
-
-                //embedded
-                if (me.embedded) {
-                    return
-                }
-                if(window && window.document) window.document.title = 'MSA Easy'
-                localStorage.removeItem('projectId')
-
-                me.$EventBus.$emit('isMounted-ModelCanvas', 'false');
-                me.$EventBus.$emit('participant', []);
-
-                if(window.opener) {
-                    window.opener = null;
-                }
-
-                if (me.rtcLogin){
-                    me.onLeave()
-                }
-
-                if (me.sortScheduleId) {
-                    clearTimeout(me.sortScheduleId)
-                }
-
-                window.removeEventListener('resize', this.onResize);
-
-                await me.publishScreenShot()
-                if( me.isServerModel  && !me.isReadOnlyModel ) {
-                    // server && permission O
-                    if( me.initLoad && me.modelChanged ){
-                        var putObj = {
-                            lastModifiedTimeStamp: Date.now(),
-                            lastModifiedUser: me.userInfo.uid,
-                            lastModifiedEmail: me.userInfo.email,
-                            projectName: me.projectName,
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        //embedded
+                        if (me.embedded) {
+                            return
                         }
-                        await me.putObject(`db://definitions/${me.projectId}/information`, putObj)
-                    }
+                        if(window && window.document) window.document.title = 'MSA Easy'
+                        localStorage.removeItem('projectId')
 
-                } else if( !me.isServerModel ) {
-                    // local
-                    if( me.initLoad && me.modelChanged ){
-                        var lists = localStorage.getItem('localLists')
-                        if (lists) {
-                            lists = JSON.parse(lists)
-                            var index = lists.findIndex(list => list.projectId == me.projectId)
-                            if (index != -1) {
-                                if (localStorage.getItem(me.projectId)) {
-                                    lists[index].projectName = me.projectName;
-                                    lists[index].lastModifiedTimeStamp = Date.now();
-                                } else {
-                                    lists.splice(index, 1);
+                        me.$EventBus.$emit('isMounted-ModelCanvas', 'false');
+                        me.$EventBus.$emit('participant', []);
+
+                        if(window.opener) {
+                            window.opener = null;
+                        }
+
+                        if (me.rtcLogin){
+                            me.onLeave()
+                        }
+
+                        if (me.sortScheduleId) {
+                            clearTimeout(me.sortScheduleId)
+                        }
+
+                        window.removeEventListener('resize', this.onResize);
+
+                        await me.publishScreenShot()
+                        if( me.isServerModel  && !me.isReadOnlyModel ) {
+                            // server && permission O
+                            if( me.initLoad && me.modelChanged ){
+                                var putObj = {
+                                    lastModifiedTimeStamp: Date.now(),
+                                    lastModifiedUser: me.userInfo.uid,
+                                    lastModifiedEmail: me.userInfo.email,
+                                    projectName: me.projectName,
                                 }
-                                await me.putObject(`localstorage://localLists`, lists)
+                                await me.putObject(`db://definitions/${me.projectId}/information`, putObj)
+                            }
+
+                        } else if( !me.isServerModel ) {
+                            // local
+                            if( me.initLoad && me.modelChanged ){
+                                var lists = localStorage.getItem('localLists')
+                                if (lists) {
+                                    lists = JSON.parse(lists)
+                                    var index = lists.findIndex(list => list.projectId == me.projectId)
+                                    if (index != -1) {
+                                        if (localStorage.getItem(me.projectId)) {
+                                            lists[index].projectName = me.projectName;
+                                            lists[index].lastModifiedTimeStamp = Date.now();
+                                        } else {
+                                            lists.splice(index, 1);
+                                        }
+                                        await me.putObject(`localstorage://localLists`, lists)
+                                    }
+                                }
                             }
                         }
                     }
-                }
+                })
             },
             async screenshot( canvasInfo ){
                 var me = this
@@ -1152,25 +1179,6 @@
                     console.error(`Update information Exception: ${e}`);
                 }
 
-            },
-            exceptionError(message, options){
-                var me = this
-                var msg = message ? message : '[Model] Exception Error.'
-                var showSnackbar = options && (options.show == false) ?  false : true
-
-                if(showSnackbar){
-                    me.snackbar.show         = true
-                    me.snackbar.text         = msg
-                    me.snackbar.color        = options && options.color    ? options.color : 'primary'
-                    me.snackbar.mode         = options && options.mode     ? options.mode : 'multi-line'
-                    me.snackbar.timeout      = options && options.timeout  ? options.timeout : 2000
-                    me.snackbar.bottom       = options && options.bottom   ? options.bottom : false
-                    me.snackbar.top          = !me.snackbar.bottom
-                    me.snackbar.centered     = options && options.centered ? options.centered : false
-                    me.snackbar.closeBtn     = options && options.closeBtn ? options.closeBtn : false
-                }
-
-                console.error(`Model Exception: ${msg}`);
             },
             clearChangedPathListsBucket(){
                 this.changedPathListsBucket = []
@@ -3352,16 +3360,12 @@
 
                         if (ignore || child.childKey != me.prevKey) {
                             if(!child.isMirrorQueue) me.prevKey = child.childKey
-
-                            if (me.validateRelation(item.from, item.to)) {
-
-                                if (!item._type.endsWith('Relation')) {
-                                    item.author = child.childValue.editUid
-                                }
-                                me.receiveAppendedQueue(item, child)
-
-                                if (me.initLoad) me.changedTemplateCode = true
+                            if (!item._type.endsWith('Relation')) {
+                                item.author = child.childValue.editUid
                             }
+                            me.receiveAppendedQueue(item, child)
+
+                            if (me.initLoad) me.changedTemplateCode = true
                         } else {
                             console.log('reduplication Relation Push')
                         }
@@ -3636,81 +3640,6 @@
 
                 return diff
             },
-            async modifiedElement(diff, options) {
-                /*
-                    !!!  REMOVE !!!!
-                    changedMethod: changeValueAction
-                */
-                var me = this
-                if(!options) options = {}
-                let forcePush = options.forcePush
-                // console.log("수정");
-                // if (me.storageExist) {
-
-                if (me.isServerModel) {
-                    // server
-                    if ((me.changedByMe || forcePush) && me.isQueueModel) {
-                        // 서버o, 랩 x, 큐 o
-                        // me.changedByMe = false;
-
-                        if(!forcePush){
-                            diff = me.removeMoveDiff(diff);
-                        }
-                        if ( !me.isReadOnlyModel && diff) {
-                            var postObj = {
-                                action: 'valueModify',
-                                editUid: me.userInfo.uid,
-                                timeStamp: Date.now(),
-                                item: JSON.stringify(diff)
-                            }
-                            var key = await me.pushObject(`db://definitions/${me.projectId}/queue`, postObj)
-                            me.changedByMeKeys.push(key)
-
-                            // COMMON QUEUE
-                            if( me.projectSendable ) {
-                                me.pushObject(`db://definitions/${me.information.associatedProject}/queue`, postObj)
-                            }
-                        }
-                        me.changedByMe = false
-                        me.modelChanged = true
-                        console.log('=== Push ModifiedElement ===')
-                    } else if ( !me.isQueueModel && !me.isReadOnlyModel ) {
-                        // 서버o, 랩 x, 큐 x
-                        // var putValue = {
-                        //     value: JSON.stringify(me.value)
-                        // }
-                        // me.putObject(`db://definitions/${me.projectId}/versionLists/${versionName}/versionValue`, putValue)
-                        await me.putString(`storage://definitions/${me.projectId}/value`, JSON.stringify(me.value));
-                        me.localUndoRedoStorage(diff)
-                    } else if (me.$isElectron) {
-                        // var putValue = {
-                        //     value: JSON.stringify(me.value)
-                        // }
-                        // me.putObject(`db://definitions/${me.projectId}/versionLists/${versionName}/versionValue`, putValue)
-                        await me.putString(`storage://definitions/${me.projectId}/value`, JSON.stringify(me.value));
-                        me.localUndoRedoStorage(diff)
-                    }
-
-                } else {
-                    // 서버x, 랩x, 큐x
-                    var proId = me.projectId
-                    var lists = await me.getObject(`localstorage://localLists`)
-                    if (lists) {
-                        var index = lists.findIndex(list => list.projectId == me.projectId)
-
-                        if (index != -1) {
-                            lists[index].lastModifiedTimeStamp = Date.now()
-                            if (me.initLoad) me.changedTemplateCode = true
-                        }
-                    }
-                    me.putObject(`localstorage://localLists`, lists)
-                    // local 저장 
-                    me.putObject(`localstorage://${proId}`, me.value)
-                    me.localUndoRedoStorage(diff)
-                }
-
-            },
-
             bindEvents: function (opengraph) {
                 var me = this;
                 var el = me.$el;
@@ -4034,94 +3963,7 @@
                     }
                 })
             },
-            validateRelation(fromId, toId) {
-                var me = this
-                me.$app.try({
-                    context: me,
-                    async action(me){
-                        var relations = me.value.relations
-                        if (relations) {
-                            var index = Object.values(relations).findIndex(relation => relation && relation.from == fromId && relation.to == toId)
-                            if (index == -1) {
-                                return true
-                            }
-                        }
-                        return false
-                    },
-                    onFail(e){
-                        return true
-                    }
-                })
-            },
-            onConnectShape: function (edge, from, to) {
-                var me = this;
-                me.$app.try({
-                    context: me,
-                    async action(me){
-                        let edgeElement = edge.shape ? edge : edge.element
-                        if (edgeElement && from && to) {
-                            let vertices = '[' + edgeElement.shape.geom.vertices.toString() + ']';
-                            let componentInfo = {
-                                component: 'class-relation',
-                                sourceElement: from.$parent,
-                                targetElement: to.$parent,
-                                vertices: vertices,
-                                isFilled: true,
-                                isRelation: true,
-                                relationView: {
-                                    style: JSON.stringify({}),
-                                    value: vertices,
-                                }
-                            }
-                            from.$parent.value.elementView.id = from.id;
-                            to.$parent.value.elementView.id = to.id;
-
-                            // OG: 셀의 데이터를 및 콘텐트를 삭제한다. 기능 ????? 
-                            me.canvas.removeShape(edgeElement, true);
-                        
-                            if (me.validateRelation(from.id, to.id)) {
-                                me.addElement(componentInfo);
-                            }
-                        }
-                    }
-                })
-            },
-            addElement: function (componentInfo, bounded) {
-                var me = this;
-                me.$app.try({
-                    context: me,
-                    async action(me){
-                        let vueComponent = me.getComponentByName(componentInfo.component);
-                        if(!vueComponent) return;
-
-                        let element = null
-                        if (componentInfo.isRelation && componentInfo.component.includes('relation')) {
-                            /* make Relation */
-                            element = vueComponent.computed.createNew(
-                                this.uuid(),
-                                componentInfo.sourceElement.value,
-                                componentInfo.targetElement.value,
-                                componentInfo.vertices,
-                            );
-
-                        } else {
-                            /* make Element */
-                            element = vueComponent.computed.createNew(
-                                this.uuid(),
-                                componentInfo.x,
-                                componentInfo.y,
-                                componentInfo.width,
-                                componentInfo.height,
-                                componentInfo.description,
-                                componentInfo.label
-                            );
-                        }
-
-                        if(element) me.addElementAction(element)
-                    } 
-                })
-            },
-
+            
             uuid: function () {
                 function s4() {
                     return Math.floor((1 + Math.random()) * 0x10000)
@@ -4228,7 +4070,100 @@
                 const generator = new PowerPointGenerator(me.projectName);
                 generator.createPowerPoint(modelData);
             },
+            /** 
+             * element 추가.
+             **/
+            addElement: function (componentInfo, bounded) {
+                var me = this;
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let vueComponent = me.getComponentByName(componentInfo.component);
+                        if(!vueComponent) return;
 
+                        let element = null
+                        if (componentInfo.isRelation && componentInfo.component.includes('relation')) {
+                            /* make Relation */
+                            element = vueComponent.computed.createNew(
+                                this.uuid(),
+                                componentInfo.sourceElement.value,
+                                componentInfo.targetElement.value,
+                                componentInfo.vertices,
+                            );
+
+                        } else {
+                            /* make Element */
+                            element = vueComponent.computed.createNew(
+                                this.uuid(),
+                                componentInfo.x,
+                                componentInfo.y,
+                                componentInfo.width,
+                                componentInfo.height,
+                                componentInfo.description,
+                                componentInfo.label
+                            );
+                        }
+
+                        if(element) me.addElementAction(element)
+                    } 
+                })
+            },
+             /** 
+             *  relation 추가.
+             **/
+            onConnectShape: function (edge, from, to) {
+                var me = this;
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let edgeElement = edge.shape ? edge : edge.element
+                        if (edgeElement && from && to) {
+                            let vertices = '[' + edgeElement.shape.geom.vertices.toString() + ']';
+                            let componentInfo = {
+                                component: 'class-relation',
+                                sourceElement: from.$parent,
+                                targetElement: to.$parent,
+                                vertices: vertices,
+                                isFilled: true,
+                                isRelation: true,
+                                relationView: {
+                                    style: JSON.stringify({}),
+                                    value: vertices,
+                                }
+                            }
+                            from.$parent.value.elementView.id = from.id;
+                            to.$parent.value.elementView.id = to.id;
+
+                            // OG: 셀의 데이터를 및 콘텐트를 삭제한다. 기능 ????? 
+                            me.canvas.removeShape(edgeElement, true);
+                        
+                            me.addElement(componentInfo);
+
+                        }
+                    }
+                })
+            },
+             /** 
+             *  Watch > onChangedValue
+             *  Value 변화 인지.
+             **/
+            onChangedValue(oldVal, newVal){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let diff = jsondiffpatch.diff(oldVal, newVal);
+                        if(me.initLoad && diff){
+                            me.changeValueAction(diff);
+
+                            clearTimeout(me.valueChangedTimer);
+                            me.valueChangedTimer = setTimeout(async function () {
+                                await me.saveLocalScreenshot()
+                            },1000)
+                        }
+                    }
+                })
+            },
             ///////// ACTION ////////
              /** 
              *  addElement > addElementAction
@@ -4245,7 +4180,7 @@
                         let elementId = element.relationView ? element.relationView.id : element.elementView.id
 
                         // duplication
-                        if(Object.keys(valueObj).includes(id)) return;
+                        if(Object.keys(valueObj).includes(elementId)) return;
 
                         // First Excution
                         me.appendElement(element, value, options)
@@ -4326,54 +4261,57 @@
              **/
             async changeValueAction(diff, value, options){
                 var me = this
-                if(!options) options = {}
-                let forcePush = options.forcePush
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        if(!value) value = me.value
+                        let forcePush = options.forcePush
 
-                if (me.isServerModel) {
-                    // server
-                    if ((me.changedByMe || forcePush) && me.isQueueModel) {
-                        // 서버o, 랩 x, 큐 o
-                        if(!forcePush){
-                            diff = me.removeMoveDiff(diff);
-                        }
-                        if (!me.isReadOnlyModel && diff) {
-                            let queueKey = await me.pushChangedValueQueue(diff, options)
-                            me.changedByMeKeys.push(queueKey)
+                        if (me.isServerModel) {
+                            // server
+                            if ((me.changedByMe || forcePush) && me.isQueueModel) {
+                                // 서버o, 랩 x, 큐 o
+                                if(!forcePush){
+                                    diff = me.removeMoveDiff(diff);
+                                }
+                                if (!me.isReadOnlyModel && diff) {
+                                    let queueKey = await me.pushChangedValueQueue(diff, options)
+                                    me.changedByMeKeys.push(queueKey)
 
-                            // COMMON QUEUE
-                            if(me.projectSendable) {
-                                options.associatedProject = me.information.associatedProject
-                                await me.pushChangedValueQueue(diff, options)
+                                    // COMMON QUEUE
+                                    if(me.projectSendable) {
+                                        options.associatedProject = me.information.associatedProject
+                                        await me.pushChangedValueQueue(diff, options)
+                                    }
+                                }
+                                me.changedByMe = false
+                                me.modelChanged = true
+                            } else if ( !me.isQueueModel && !me.isReadOnlyModel ) {
+                                // 서버o, 랩 x, 큐 x
+                                await me.putString(`db://definitions/${me.projectId}/value`, JSON.stringify(value));
+                                me.localUndoRedoStorage(diff)
+                            } else if (me.$isElectron) {
+                                await me.putString(`db://definitions/${me.projectId}/value`, JSON.stringify(value));
+                                me.localUndoRedoStorage(diff)
                             }
-                        }
-                        me.changedByMe = false
-                        me.modelChanged = true
-                    } else if ( !me.isQueueModel && !me.isReadOnlyModel ) {
-                        // 서버o, 랩 x, 큐 x
-                        await me.putString(`db://definitions/${me.projectId}/value`, JSON.stringify(me.value));
-                        me.localUndoRedoStorage(diff)
-                    } else if (me.$isElectron) {
-                        await me.putString(`db://definitions/${me.projectId}/value`, JSON.stringify(me.value));
-                        me.localUndoRedoStorage(diff)
-                    }
+                        } else {
+                            // 서버x, 랩x, 큐x
+                            var lists = await me.getObject(`localstorage://localLists`)
+                            if (lists) {
+                                var index = lists.findIndex(list => list.projectId == me.projectId)
 
-                } else {
-                    // 서버x, 랩x, 큐x
-                    var lists = await me.getObject(`localstorage://localLists`)
-                    if (lists) {
-                        var index = lists.findIndex(list => list.projectId == me.projectId)
-
-                        if (index != -1) {
-                            lists[index].lastModifiedTimeStamp = Date.now()
-                            if (me.initLoad) me.changedTemplateCode = true
+                                if (index != -1) {
+                                    lists[index].lastModifiedTimeStamp = Date.now()
+                                    if (me.initLoad) me.changedTemplateCode = true
+                                }
+                            }
+                            me.putObject(`localstorage://localLists`, lists)
+                            me.putObject(`localstorage://${me.projectId}`, me.value)
+                            me.localUndoRedoStorage(diff)
                         }
                     }
-                    me.putObject(`localstorage://localLists`, lists)
-                    // local 저장
-                    me.putObject(`localstorage://${me.projectId}`, me.value)
-                    me.localUndoRedoStorage(diff)
-                }
-
+                })
             },
             //////// Execute ////////
              /** 

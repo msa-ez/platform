@@ -130,6 +130,7 @@
             },
             selectedStayActivity() {
                 var me = this
+                return;
                 if (me.isLogin && me.canvas.isServerModel && !me.canvas.isClazzModeling && !me.canvas.isReadOnlyModel) {
                     var obj = {
                         action: 'userSelectedOn',
@@ -144,6 +145,7 @@
             },
             deSelectedStayActivity() {
                 var me = this
+                return;
                 if (me.isLogin && me.canvas.isServerModel && !me.canvas.isClazzModeling && !me.canvas.isReadOnlyModel) {
                     var obj = {
                         action: 'userSelectedOff',

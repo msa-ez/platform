@@ -40,8 +40,19 @@
                         'r': '1',
                     }"
             ></geometry-rect>
-        </geometry-element>
 
+            <sub-elements>
+                <image-element
+                        v-for="(index) in newEditUserImg.length" :key="index"
+                        v-bind:image="newEditUserImg[index-1].picture"
+                        :sub-width="'24px'"
+                        :sub-height="'24px'"
+                        :sub-right="(10*(index-1))+'px'"
+                        :sub-bottom="value.elementView.height"
+                ></image-element>
+            </sub-elements>
+        </geometry-element>
+       
         <sticky-model-panel
                 v-if="propertyPanel"
                 v-model="value"

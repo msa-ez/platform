@@ -24,7 +24,7 @@
                 me.setUserInfo()
                 var className = me.value ? me.value._type : null
                 if (className) {
-                    var componentName = me.getComponentByClassName(className).name
+                    var componentName = me.canvas.getComponentByClassName(className).name
                     var component
                     me.canvas.elementTypes.forEach(function (elements) {
                         component = elements.find(x => x.component == componentName)
@@ -92,6 +92,7 @@
             },
             selectedStayActivity() {
                 var me = this
+                return;
                 if (me.isLogin && me.canvas.isServerModel && !me.isClazzModeling && !me.canvas.isReadOnlyModel) {
                     var obj = {
                         action: 'userSelectedOn',
@@ -106,6 +107,7 @@
             },
             deSelectedStayActivity() {
                 var me = this
+                return;
                 if (me.isLogin && me.canvas.isServerModel && !me.isClazzModeling && !me.canvas.isReadOnlyModel) {
                     var obj = {
                         action: 'userSelectedOff',
@@ -118,15 +120,6 @@
                     me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, obj)
                 }
 
-            },
-            getComponentByClassName: function (className) {
-                var componentByClassName;
-                $.each(window.Vue.bussinessModelingComponents, function (i, component) {
-                    if (component.default.computed && component.default.computed.className && component.default.computed.className() == className) {
-                        componentByClassName = component.default;
-                    }
-                });
-                return componentByClassName;
             },
         }
     }

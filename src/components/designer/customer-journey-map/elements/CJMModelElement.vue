@@ -36,7 +36,7 @@
 
 
                 if (className) {
-                    var componentName = me.getComponentByClassName(className).name
+                    var componentName = me.canvas.getComponentByClassName(className).name
                     var component = me.canvas.elementTypes.find(x => x.component == componentName)
                     if (component) {
                         me.img = component.src
@@ -62,7 +62,7 @@
             },
             isEditElement() {
                 if (this.canvas) {
-                    if(this.canvas.readOnly) return false; // Don't edit
+                    if(this.canvas.isReadOnlyModel) return false; // Don't edit
 
                     if(!this.canvas.isServerModel) return true // local
                     if(this.canvas.isOwnModel) return true; // own model
@@ -139,16 +139,6 @@
                         this.staySelected = false
                     }
                 }
-            },
-            getComponentByClassName: function (className) {
-                var componentByClassName;
-
-                $.each(window.Vue.customerJourneyMapComponents, function (i, component) {
-                    if (component.default.computed && component.default.computed.className && component.default.computed.className() == className) {
-                        componentByClassName = component.default;
-                    }
-                });
-                return componentByClassName;
             },
         }
     }

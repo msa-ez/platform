@@ -33,7 +33,7 @@
                 }
 
                 if (className) {
-                    var componentName = me.getComponentByClassName(className).name
+                    var componentName = me.canvas.getComponentByClassName(className).name
                     var component = me.canvas.elementTypes.find(x => x.component == componentName)
                     if (component) {
                         me.img = component.src
@@ -53,31 +53,6 @@
             },
             elementAuthor() {
                 return this.value.author
-            },
-            isEditElement() {
-                if (this.canvas) {
-                    if (this.canvas.readOnly) {
-                        return false
-                    } else {
-                        if (this.canvas.information && this.canvas.information.author) {
-                            if (localStorage.getItem('uid') == this.canvas.information.author) {
-                                //project author
-                                return true
-                            } else {
-                                if (this.elementAuthor) {
-                                    return this.elementAuthor == localStorage.getItem('uid')
-                                } else {
-                                    if (this.canvas.information.author == this.userInfo.uid) {
-                                        return true
-                                    } else {
-                                        return false
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                return true
             },
         },
         watch: {
@@ -148,6 +123,7 @@
             },
             selectedStayActivity() {
                 var me = this
+                return;
                 if (me.isLogin && me.canvas.isServerModel && !me.canvas.isClazzModeling && !me.canvas.isReadOnlyModel) {
                     var obj = {
                         action: 'userSelectedOn',
@@ -162,6 +138,7 @@
             },
             deSelectedStayActivity() {
                 var me = this
+                return;
                 if (me.isLogin && me.canvas.isServerModel && !me.canvas.isClazzModeling && !me.canvas.isReadOnlyModel) {
                     var obj = {
                         action: 'userSelectedOff',
@@ -174,18 +151,6 @@
                     // me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
                 }
 
-            },
-           
-            getComponentByClassName: function (className) {
-                var componentByClassName;
-
-                // $.each(window.Vue.eventStormingModelingComponents, function (i, component) {
-                $.each(window.Vue.stickyModelingComponents, function (i, component) {
-                    if (component.default.computed && component.default.computed.className && component.default.computed.className() == className) {
-                        componentByClassName = component.default;
-                    }
-                });
-                return componentByClassName;
             },
         }
     }

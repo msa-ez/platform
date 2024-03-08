@@ -1103,17 +1103,6 @@
         ],
       };
     },
-    created: async function () {
-        var me = this;
-
-        try {
-          me.canvasType = "cm";
-          Vue.use(ContextMappingModeling);
-          me.track();
-        } catch (e) {
-          alert(`Error: Context Mapping Created(): ${e}`);
-        }
-    },
     watch: {
         "initLoad":function(newVal){
           if(newVal){
@@ -1136,12 +1125,10 @@
         },
     },
     methods: {
-      // modelListOfassociatedProject(){
-      //     if( this.associatedProjectInformation && this.associatedProjectInformation.contextMapping ) {
-      //         return this.associatedProjectInformation.contextMapping.modelList
-      //     }
-      //     return []
-      // },
+      setCanvasType(){
+          Vue.use(ContextMappingModeling);
+          this.canvasType = 'cm'
+      },
       async saveModel(){
         // override
         var me = this

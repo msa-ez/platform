@@ -816,10 +816,7 @@
         created() {
             var me = this;
             try{
-                Vue.use(BpmnVue);
-                this.canvasType = 'bpmn'
                 me.isQueueModel = true
-                me.track()
                 me.value = {
                     _type: 'org.uengine.kernel.ProcessDefinition',
                     elements: {},
@@ -1050,6 +1047,10 @@
             },
         },
         methods: {
+            setCanvasType(){
+                Vue.use(BpmnVue);
+                this.canvasType = 'bpmn'
+            },
             changeMultiple: function () {
                 if (this.dragPageMovable == false && this.active == false) {
                     this.dragPageMovable = true;

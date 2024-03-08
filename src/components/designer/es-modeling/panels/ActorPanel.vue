@@ -66,9 +66,7 @@
 
             }
         },
-        created(){
-            this.panelInit()
-        },
+        created(){ },
         methods:{
             panelInit(){
                 var me = this

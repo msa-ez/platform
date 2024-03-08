@@ -194,7 +194,6 @@
         },
         created: function () {
             var me = this
-            me.panelOpenAction()
 
             if(me.value._type == 'CJMLineElement') {
                 me.colorList.push('#000000')

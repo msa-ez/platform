@@ -125,9 +125,7 @@
         computed: {
 
         },
-        created: function () {
-            this.panelInit()
-        },
+        created: function () { },
         data() {
             return {
                 // AggregateRulePanelStatus: false,
@@ -183,11 +181,6 @@
         },
         watch: {},
         methods: {
-            // executeBeforeDestroy() {
-            //     var me = this
-            //     this.$EventBus.$emit('addAttribute')
-            //     me.$super(EventStormingModelPanel).executeBeforeDestroy()
-            // },
             panelInit(){
                 var me = this
                 // Element

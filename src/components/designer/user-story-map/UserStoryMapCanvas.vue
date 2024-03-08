@@ -727,22 +727,12 @@
         },
         created: function () {
             var me = this
-            try {
-                Vue.use(UserStoryMap);
-                me.canvasType = 'userStoryMap'
-                if (this.$isElectron) {
-                    me.isQueueModel = false
-                } else {
-                    me.isQueueModel = true
-                }
-                me.track()
-            } catch (e) {
-                alert('Error: userStoryMapCanvas Created().', e)
+            if (me.$isElectron) {
+                me.isQueueModel = false
+            } else {
+                me.isQueueModel = true
             }
         },
-        mounted: function () {
-        }
-        ,
         watch: {
             value: {
                 deep: true,
@@ -772,6 +762,10 @@
             }, 0),
         },
         methods: {
+            setCanvasType(){
+                Vue.use(UserStoryMap);
+                this.canvasType = 'userStoryMap'
+            },
             clearModelValue(){
                 var me = this
                 me.value.elements = {}

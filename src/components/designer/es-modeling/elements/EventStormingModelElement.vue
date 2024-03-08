@@ -195,7 +195,7 @@
                             if (me.newEditUserImg && me.newEditUserImg.length > 0) {
 
                                 //project author
-                                if( me.canvas.information.author == me.getEditUid){
+                                if( me.canvas.information.author == me.canvas.userInfo.uid){
                                     return true
                                 }
                                 // another user check author editing
@@ -209,20 +209,7 @@
                                     return true
                                 }
 
-
-                                var editable = true
-                                me.newEditUserImg.some(function(user, index){
-                                    if(user.uid == me.getEditUid){
-                                        return true
-                                    }
-                                    // edit condition
-                                    if( user.action == 'userPanelOpen' ){
-                                        editable = false
-                                        return true
-                                    }
-                                })
-
-                                return editable
+                                return !me.newEditUserImg.some(user => user.uid == me.canvas.userInfo.uid || user.action == 'userPanelOpen');
                             }
                         }
                     }
@@ -471,7 +458,7 @@
             setInitElement(){
                 var me = this
                 if ( me.value ) {
-                    let component = me.canvas.elementTypes.find(x => x.component == me.getComponentByClassName(me.value._type).name)
+                    let component = me.canvas.elementTypes.find(x => x.component == me.canvas.getComponentByClassName(me.value._type).name)
                     me.image = component ? component.src : me.image
 
                     // init panel value.
@@ -750,17 +737,6 @@
                 var me = this;
 
                 return isAttached(otherElement, me.value)
-            },
-            getComponentByClassName: function (className) {
-                var componentByClassName;
-
-                // $.each(window.Vue.eventStormingModelingComponents, function (i, component) {
-                $.each(window.Vue.eventStormingModelingComponents, function (i, component) {
-                    if (component.default.computed && component.default.computed.className && component.default.computed.className() == className) {
-                        componentByClassName = component.default;
-                    }
-                });
-                return componentByClassName;
             },
             getDuplicatedField(val) {
                 var seen = {};

@@ -41,11 +41,16 @@
         },
         created: function () {
             var me = this
-            me.fullPath = this.$route.fullPath.split('/')
-            me.params = this.$route.params
-            me.paramKeys = Object.keys(me.params)
+            me.$app.try({
+                context: me,
+                async action(me){
+                    me.fullPath = me.$route.fullPath.split('/')
+                    me.params = me.$route.params
+                    me.paramKeys = Object.keys(me.params)
 
-            me.setElementCanvas()
+                    me.setElementCanvas()
+                }
+            })
             // me.messageRef = firebase.database().ref(`/${me.$route.params.author}/${me.$route.params.projectName}`);
         },
         beforeDestroy() {
@@ -72,9 +77,6 @@
                 this.refreshImg()
             },
             "alertImage": function () {
-                this.refreshImg()
-            },
-            "newEditUserImg": function () {
                 this.refreshImg()
             },
             "value.rotateStatus": function () {
@@ -131,21 +133,14 @@
                     me.STATUS_COMPLETE = obj.STATUS_COMPLETE
                     me.movingElement = obj.movingElement
                 } else if (obj.action == 'userPanelOpen' || obj.action == 'userSelectedOn' || obj.action == 'userMovedOn') {
-                    if(!me.newEditUserImg) {
-                        me.newEditUserImg = []
+                    me.newEditUserImg = me.newEditUserImg || [];
+                    if (!me.newEditUserImg.some(user => user.uid === obj.uid)) {
+                        me.newEditUserImg.push(obj);
                     }
-                    if (me.newEditUserImg.findIndex(user => user.uid == obj.uid) == -1) {
-                        me.newEditUserImg.push(obj)
-                    }
-
+                    me.refreshImg()
                 } else if (obj.action == 'userPanelClose' || obj.action == 'userSelectedOff' || obj.action == 'userMovedOff') {
-                    if (me.newEditUserImg.length > 0) {
-                        me.newEditUserImg.forEach(function (user, idx) {
-                            if (user.uid == obj.uid) {
-                                me.newEditUserImg.splice(idx, 1)
-                            }
-                        })
-                    }
+                    me.newEditUserImg = me.newEditUserImg.filter(user => user.uid !== obj.uid);
+                    me.refreshImg()
                 }
             })
 
@@ -186,6 +181,9 @@
             deletable(){
                 return !this.canvas.isReadOnlyModel && !this.movingElement
             },
+            connectable(){
+                return !this.canvas.isReadOnlyModel && !this.movingElement
+            },
             filteredElementValidationResults(){
                 var me = this
                 var levelSort = ['error','warning','info']
@@ -201,12 +199,6 @@
                     me.refreshImg()
                 }
             },
-            getEditUid(){
-                if( localStorage.getItem('uid') ){
-                    return localStorage.getItem('uid')
-                }
-                return null
-            },
             storage() {
                 if (this.canvas) {
                     return this.canvas.storage
@@ -219,22 +211,47 @@
                     return this.canvas.isClazzModeling
                 return false
             },
+            isEditElement() {
+
+                // const { canvas } = this;
+                // if (!canvas || canvas.isReadOnlyModel) return false;
+                // const isAuthor = canvas.userInfo.uid === canvas.information?.author;
+                // const isElementAuthor = this.elementAuthor ? this.elementAuthor === canvas.userInfo.uid : isAuthor;
+                // return isAuthor || isElementAuthor;
+                
+                var me = this
+                if (me.canvas) {
+                    if (me.canvas.isReadOnlyModel) {
+                        return false
+                    } else {
+                        if (me.canvas.information && me.canvas.information.author) {
+                            if (me.canvas.userInfo.uid == me.canvas.information.author) {
+                                //project author
+                                return true
+                            } else {
+                                if (me.elementAuthor) {
+                                    return me.elementAuthor == me.canvas.userInfo.uid
+                                } else {
+                                    if (me.canvas.information.author == me.canvas.userInfo.uid) {
+                                        return true
+                                    } else {
+                                        return false
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return true
+            },
         },
         methods: {
             setElementCanvas(){
                 throw new Error('setElementCanvas() must be implement')
             },
-            executeElementBeforeDestroy(){},
+            executeElementBeforeDestroy(){ return },
             validate() { return; },
             onMoveAction() { return; },
-            exceptionError(message, options){
-                var me = this
-                var msg = message ? message : '[Element] Exception Error.'
-                if(me.canvas){
-                    me.canvas.exceptionError(msg,options)
-                }
-                console.error(`[Element] Exception: ${msg}`);
-            },
             openPanel() {
                 // var openPanelStatus = false
                 // if(this.canvas.isServerModel && this.canvas.isQueueModel) {

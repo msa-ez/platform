@@ -245,9 +245,6 @@
             left(){
                 this.$emit('left')
             },
-            closePanel() {
-                this.$emit('close')
-            },
             openExampleDialog(rule){
                 var me = this
 

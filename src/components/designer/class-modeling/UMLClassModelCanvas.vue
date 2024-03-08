@@ -518,7 +518,6 @@
                 },
                 code: '',
                 active: [],
-                canvas: null,
                 // items: [],
                 // undoing: false,
                 // undoed: false,
@@ -779,40 +778,32 @@
         },
         created() {
             var me = this
-            try {
-                Vue.use(ClassModeling);
-
-                if(me.embedded) {
-                    if(me.aggregateRootList.length > 0) {
-                        if (this.aggregateRootList[0].mirrorElement) {
-                            me.readOnly = true;
-                        }
-                        me.addAggregateRootClass(me.aggregateRootList);
+            if(me.embedded) {
+                if(me.aggregateRootList.length > 0) {
+                    if (me.aggregateRootList[0].mirrorElement) {
+                        me.readOnly = true;
                     }
-
-                    me.initLoad = true
-
-                    me.$nextTick(() => {
-                        localStorage.removeItem('umlClass')
-                        localStorage.removeItem('aggregateRoots')
-                        localStorage.removeItem('umlClass_'+me.aggregateId)
-                        localStorage.removeItem('aggregateRoots_'+me.aggregateId)
-                    })
-
-                } else {
-                    me.canvasType = 'uml';
-                    me.isQueueModel = true;
-                    me.track();
+                    me.addAggregateRootClass(me.aggregateRootList);
                 }
-            } catch (e) {
-                console.log('Error: UMLModelCanvas Created().', e)
+
+                me.initLoad = true
+
+                me.$nextTick(() => {
+                    localStorage.removeItem('umlClass')
+                    localStorage.removeItem('aggregateRoots')
+                    localStorage.removeItem('umlClass_'+me.aggregateId)
+                    localStorage.removeItem('aggregateRoots_'+me.aggregateId)
+                })
+
+            } else {
+                me.isQueueModel = true;
             }
         },
         mounted: function() {
             var me = this
-            this.userId = v4();
+            me.userId = v4();
 
-            window.addEventListener("wheel", this.handScroll);
+            window.addEventListener("wheel", me.handScroll);
 
             // const channel = me.pusher.subscribe('paint');
             // // channel.bind('draw', function(data) {
@@ -860,11 +851,14 @@
             // });
         },
         methods: {
+            setCanvasType(){
+                Vue.use(ClassModeling);
+                this.canvasType = 'uml'
+            },
             onChangedValue(oldVal, newVal){
                 var me = this
 
                 clearTimeout(me.valueChangedTimer);
-
                 me.valueChangedTimer = setTimeout(function () {
                     var diff = jsondiffpatch.diff(oldVal, newVal);
                     if (!me.embedded && me.initLoad && diff) {

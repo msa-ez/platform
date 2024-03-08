@@ -358,19 +358,11 @@
         mixins: [ModelCanvas],
         created: function () {
             var me = this
-            try {
-                Vue.use(BusinessModeling);
-                me.canvasType = 'bm'
-                me.isQueueModel = true
+            me.isQueueModel = true
 
-                if (localStorage.getItem(me.$route.params.projectId + '-Project-Name')) {
-                    me.projectName = localStorage.getItem(me.$route.params.projectId + '-Project-Name')
-                    localStorage.removeItem(me.$route.params.projectId + '-Project-Name')
-                }
-
-                me.track()
-            } catch (e) {
-                alert('Error: BusinessModelCanvas Created().', e)
+            if (localStorage.getItem(me.$route.params.projectId + '-Project-Name')) {
+                me.projectName = localStorage.getItem(me.$route.params.projectId + '-Project-Name')
+                localStorage.removeItem(me.$route.params.projectId + '-Project-Name')
             }
         },
         computed: {
@@ -378,19 +370,11 @@
                 return this.readOnly
             },
         },
-        watch: {
-            // copyValue: {
-            //     deep: true,
-            //     handler: function (newVal, oldVal) {
-            //         var me = this
-            //         var delta = jsondiffpatch.diff(oldVal, newVal);
-            //         if (me.initLoad && delta) {
-            //             me.modifiedElement(delta)
-            //         }
-            //     }
-            // },
-        },
         methods: {
+            setCanvasType(){
+                Vue.use(BusinessModeling);
+                this.canvasType = 'bm'
+            },
             moveModelUrl(modelId){
                 this.$router.push({path: `/business-model-canvas/${modelId}`});
             },
@@ -411,14 +395,6 @@
 
                 index = index == -1 ? 0 : index;
                 await me.setString(`db://definitions/${associatedProject}/information/businessModel/modelList/${index}`, newId);
-            },
-            onChangedValue(oldVal, newVal){
-                var me = this
-                var diff = jsondiffpatch.diff(oldVal, newVal);
-                if(me.initLoad && diff){
-                    me.changeValueAction(diff);
-                    me.publishScreenShot();
-                }
             },
             openEventStorming(val){
                 var me = this

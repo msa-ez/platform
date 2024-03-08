@@ -214,9 +214,7 @@
         beforeDestroy() {
 
         },
-        created: function () {
-            this.panelInit()
-        },
+        created: function () { },
         watch: {
             "value.controllerInfo":{
                 deep: true,

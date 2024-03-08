@@ -56,61 +56,21 @@
         },
         created() {
             var me = this
-            try{
-                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Check Model.
-                me.params = this.$route.params
-                me.paramKeys = Object.keys(me.params)
-                me.fullPath = this.$route.fullPath.split('/')
+            me.$app.try({
+                context: me,
+                async action(me){
+                    me.params = me.$route.params
+                    me.paramKeys = Object.keys(me.params)
+                    me.fullPath = me.$route.fullPath.split('/')
+                    me.setElementCanvas();
+                    me.value = JSON.parse(JSON.stringify(me._value))
 
-
-                me.user.uid = localStorage.getItem('uid')
-                me.user.name = localStorage.getItem('userName')
-                me.user.email = localStorage.getItem('email')
-                me.user.picture = localStorage.getItem('picture')
-                me.user.accessToken = localStorage.getItem('accessToken')
-
-                me.setElementCanvas();
-                me.value = JSON.parse(JSON.stringify(me._value))
-
-                // console.log('ModelPanel - Created')
-                // me.copyValue = JSON.parse(JSON.stringify(me.value))
-                // me.elementId = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
-
-
-
-            }catch (e) {
-                console.log(e)
-            }
-
+                    me.panelInit()
+                },
+            })
         },
         beforeDestroy() {
             this.executeBeforeDestroy()
-        },
-        watch:{
-            // "isReadOnly": _.debounce(
-            //     function (newVal, oldVal) {
-            //         // edit Mode false -> true 일시 동기화.
-            //         // 500ms 이유: 값 세팅이 300ms.
-            //         if(!newVal && oldVal){
-            //             var diff = jsondiffpatch.diff(this.value, this._value)
-            //             if(diff){
-            //                 jsondiffpatch.patch(this.value, diff)
-            //             }
-            //         }
-            //     }, 500
-            // ),
-            // "isReadOnlyModeling": _.debounce(
-            //     function (newVal, oldVal) {
-            //         // edit Mode false -> true 일시 동기화.
-            //         // 500ms 이유: 값 세팅이 300ms.
-            //         if(!newVal && oldVal){
-            //             var diff = jsondiffpatch.diff(this.value, this._value)
-            //             if(diff){
-            //                 jsondiffpatch.patch(this.value, diff)
-            //             }
-            //         }
-            //     }, 500
-            // ),
         },
         computed: {
             fixedDefalutStroage() {
@@ -123,55 +83,141 @@
             },
         },
         methods: {
+            /**
+             * Canvas 설정 
+             **/
             setElementCanvas(){
                 throw new Error('setElementCanvas() must be implement')
             },
-            exceptionError(message, options){
-                var me = this
-                var msg = message ? message : '[Panel] Exception Error.'
-                if(me.canvas){
-                    me.canvas.exceptionError(msg,options)
-                }
-                console.error(`Panel Exception: ${msg}`);
-            },
+            /**
+             * Btn Click Event: Close Panel
+             **/
             closePanel(){
                 this.$emit('close')
             },
-            panelOpenAction(editUser){
+              /**
+             * Create() > panelInit
+             **/
+            panelInit(){
                 var me = this
-                if ( me.canvas.isServerModel && me.canvas.isQueueModel && !me.canvas.isReadOnlyModel && !me.isClazzModeling ) {
-                    me.panelOpenQueue(editUser);
-                }
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.openPanelAction()
+                    }
+                })
             },
-            panelCloseAction(editUser){
+             /**
+             * BeforeEvent: Close Panel
+             **/
+            executeBeforeDestroy(){
                 var me = this
-                if ( me.canvas.isServerModel && me.canvas.isQueueModel && !me.canvas.isReadOnlyModel && !me.isClazzModeling ) {
-                    me.panelCloseQueue(editUser);
-                }
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        /*
+                            _value : 기존 값.
+                            value  : Panel 사용되는 값,
+                        */
+                        var diff = jsondiffpatch.diff(me._value, me.value)
+                        if (diff) {
+                            if (!me.readOnly) {
+                                me.canvas.changedByMe = true
+                                Object.keys(me.value).forEach(function (itemKey) {
+                                    if( me.canvas.isCustomMoveExist ){
+                                        if(!(itemKey == 'elementView' || itemKey == 'relationView')){
+                                            // Exception: 위치정보
+                                            me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]))
+                                        }
+                                    } else {
+                                        me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]))
+                                    }
+
+                                })
+                                me.$emit('_value-change', me.value)
+                            }
+                        }
+                        me.closePanelAction()
+                    }
+                })
             },
-            panelOpenQueue(editUser) {
+            /**
+             * panelInit > openPanelAction
+             * Panel open Action
+             **/
+            openPanelAction(){
                 var me = this
-                var obj = {
-                    action: 'userPanelOpen',
-                    editUid: editUser ? editUser.uid : me.user.uid,
-                    name:editUser ? editUser.name :me.user.name,
-                    picture: editUser ? editUser.picture : me.user.picture,
-                    timeStamp: Date.now(),
-                    editElement: me.value.elementView.id
-                }
-                me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, obj);
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.canvas.isUserInteractionActive()) return;
+                        me.pushOpenPanelQueue()
+                    },
+                    onFail(){
+                        console.log(`[Error] Open PanelAction: ${e}`)
+                    }
+                })
             },
-            panelCloseQueue(editUser) {
+            /**
+             * executeBeforeDestroy > closePanelAction
+             * Panel Close
+             **/
+            closePanelAction(){
                 var me = this
-                var obj = {
-                    action: 'userPanelClose',
-                    editUid: editUser ? editUser.uid : me.user.uid,
-                    name: editUser ? editUser.name :me.user.name,
-                    picture: editUser ? editUser.picture : me.user.picture,
-                    timeStamp: Date.now(),
-                    editElement: me.value.elementView.id
-                }
-                me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, obj)
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.canvas.isUserInteractionActive()) return;
+                        me.pushClosePanelQueue()
+                    },
+                    onFail(){
+                        console.log(`[Error] Close PanelAction: ${e}`)
+                    }
+                })
+
+            },
+             /**
+             * Panel Open Queue
+             **/
+            pushOpenPanelQueue(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.value.elementView) return;
+                        me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, {
+                            action: 'userPanelOpen',
+                            editUid: me.canvas.userInfo.uid,
+                            name: me.canvas.userInfo.name,
+                            picture: me.canvas.userInfo.profile,
+                            timeStamp: Date.now(),
+                            editElement: me.value.elementView.id
+                        });
+                    },
+                    onFail(){
+                        console.log(`[Error] Push Open PanelQueue: ${e}`)
+                    }
+                })
+            },
+             /**
+             * Panel Close Queue
+             **/
+            pushClosePanelQueue(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.value.elementView) return;
+                        me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, {
+                            action: 'userPanelClose',
+                            editUid: me.canvas.userInfo.uid,
+                            name: me.canvas.userInfo.name,
+                            picture: me.canvas.userInfo.profile,
+                            timeStamp: Date.now(),
+                            editElement: me.value.elementView.id
+                        });
+                    }
+                })
             },
             getComponent(componentName) {
                 let component = null
@@ -192,41 +238,9 @@
                     }
                 });
                 return componentByName;
-            },
-            executeBeforeDestroy(){
-                var me = this
-                try{
-                    /*
-                        _value : 기존 값.
-                        value  : Panel 사용되는 값,
-                    */
-                    var diff = jsondiffpatch.diff(me._value, me.value)
-                    if (diff) {
-                        if (!me.readOnly) {
-                            me.canvas.changedByMe = true
-                            Object.keys(me.value).forEach(function (itemKey) {
-                                if( me.canvas.isCustomMoveExist ){
-                                    if(!(itemKey == 'elementView' || itemKey == 'relationView')){
-                                        // Exception: 위치정보
-                                        me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]))
-                                    }
-                                } else {
-                                    me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]))
-                                }
-
-                            })
-                            me.$emit('_value-change', me.value)
-                            // me.value.__ob__.dep.notify();
-                        }
-                    }
-
-                    me.panelCloseQueue()
-                }catch (e) {
-                    alert('[Error] ModelPanel Sync: ', e)
-                }
             }
-        },
-
+       
+        }
     }
 </script>
 

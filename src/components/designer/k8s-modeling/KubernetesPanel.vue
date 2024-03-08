@@ -34,22 +34,11 @@
                     },
             }
         },
-        created: function () {
-            var me = this;
-            if(!me.canvas.embedded) {
-                me.panelInit()
-            }
-        },
-        beforeDestroy() {
-            this.executeBeforeDestroy()
-        },
+        created: function () { },
         methods: {
             setElementCanvas(){
                 var me = this
                 me.canvas = me.getComponent('kubernetes-model-canvas')
-            },
-            closePanel() {
-                this.$emit('close')
             },
             desDocOpen() {
             },
@@ -58,40 +47,12 @@
                     var me = this
                 
                     if ( !me.canvas.embedded ) {
-                        me.panelOpenAction()
+                        me.openPanelAction()
                     }
                 } catch (e) {
                     console.log('[Error] Kubernetes Panel Init: ', e)
                 }
 
-            },
-            executeBeforeDestroy(){
-                var me = this
-                try{
-                    /*
-                        _value : 기존 값.
-                        value  : Panel 사용되는 값,
-                    */
-                    var diff = jsondiffpatch.diff(me._value, me.value)
-                    if (diff) {
-                        if (!me.readOnly) {
-                            me.canvas.changedByMe = true;
-
-                            // all sync
-                            Object.keys(me.value).forEach(function (itemKey) {
-                                if(!(itemKey == 'elementView' || itemKey == 'relationView')) {
-                                    // Exception: 위치정보
-                                    me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]));
-                                }
-                            })
-
-                            // re setting 값을 emit
-                            me.$emit('_value-change', me._value);
-                        }
-                    }
-                }catch (e) {
-                    alert('[Error] Kubernetes Model Panel Sync: ', e)
-                }
             },
         }
     }

@@ -530,41 +530,43 @@
         methods:{
             executeBeforeDestroy() {
                 var me = this
-                try {
-                    /*
-                        _value : 기존 값.
-                        value  : Panel 사용되는 값,
-                    */
-                    var diff = jsondiffpatch.diff(me._value, me.value)
-                    if (diff) {
-                        console.log('UMLClassPanel - executeBeforeDestroy')
-                        if (!me.canvas.isReadOnlyModel) {
-                            if(!me.canvas.embedded) {
-                                me.canvas.changedByMe = true
-                            } else {
-                                // var aggElement = me.canvas.aggregateRootList[0];
-                                var aggElement = me.canvas.aggregateRootList[0];
-                                if (aggElement) {
-                                    if(me.value.parentId && me.value.isAggregateRoot) {
-                                        me.$set(aggElement.aggregateRoot, "fieldDescriptors", me.value.fieldDescriptors);
-                                        me.$set(aggElement.aggregateRoot, "operations", me.value.operations);
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        /*
+                            _value : 기존 값.
+                            value  : Panel 사용되는 값,
+                        */
+                        var diff = jsondiffpatch.diff(me._value, me.value)
+                        if (diff) {
+                            console.log('UMLClassPanel - executeBeforeDestroy')
+                            if (!me.canvas.isReadOnlyModel) {
+                                if(!me.canvas.embedded) {
+                                    me.canvas.changedByMe = true
+                                } else {
+                                    // var aggElement = me.canvas.aggregateRootList[0];
+                                    var aggElement = me.canvas.aggregateRootList[0];
+                                    if (aggElement) {
+                                        if(me.value.parentId && me.value.isAggregateRoot) {
+                                            me.$set(aggElement.aggregateRoot, "fieldDescriptors", me.value.fieldDescriptors);
+                                            me.$set(aggElement.aggregateRoot, "operations", me.value.operations);
+                                        }
                                     }
                                 }
+                                // all sync
+                                Object.keys(me.value).forEach(function (itemKey) {
+                                    if(!(itemKey == 'elementView' || itemKey == 'relationView')){
+                                        // Exception: 위치정보
+                                        me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]))
+                                    }
+                                })
+                                // re setting 값을 emit
+                                me.$emit('_value-change', me._value)
                             }
-                            // all sync
-                            Object.keys(me.value).forEach(function (itemKey) {
-                                if(!(itemKey == 'elementView' || itemKey == 'relationView')){
-                                    // Exception: 위치정보
-                                    me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]))
-                                }
-                            })
-                            // re setting 값을 emit
-                            me.$emit('_value-change', me._value)
                         }
+                        me.closePanelAction()
                     }
-                } catch (e) {
-                    alert('[Error] UMLClassPanel Sync: ', e)
-                }
+                })
             },
             UMLOperationADD() {
                 var me = this

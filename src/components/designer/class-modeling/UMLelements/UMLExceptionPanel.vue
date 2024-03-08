@@ -66,10 +66,7 @@
         },
         computed: {
         },
-        created() {
-            var me = this;
-            me.panelInit()
-        },
+        created() { },
         methods:{
             panelInit(){
                 var me = this
@@ -92,7 +89,7 @@
 
                 // Common
                 if ( !me.canvas.embedded ) {
-                    me.panelOpenAction()
+                    me.openPanelAction()
                 }
             },
         },

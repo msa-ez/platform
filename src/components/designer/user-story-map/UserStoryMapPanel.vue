@@ -235,9 +235,6 @@
         },
         created: function () {
             var me = this
-
-            me.panelOpenAction()
-
             if(me.value._type == 'UserStoryMapLineElement') {
                 me.colorList.push('#000000')
                 me.colorList.push('#9E9E9E')

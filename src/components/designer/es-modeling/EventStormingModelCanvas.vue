@@ -2588,12 +2588,9 @@
                         };
                     }
 
-                    Vue.use(EventStormingModeling);
-                    me.canvasType = "es";
                     if (this.$isElectron) me.isQueueModel = false;
                     else me.isQueueModel = true;
                     me.clusterItems = [{ title: "Cluster" }];
-                    me.track();
 
                     // var getFilePathList = await axios.get(`https://gitlab.msastudy.io/api/v4/projects/48/repository/tree?ref=main&id=48&page=1&per_page=100&pagination=keyset&recursive=true`, {headers: {Authorization: 'Bearer _9zq7KJ29CfzjYjXP3Wb'}});
                     // console.log(getFilePathList)
@@ -2735,6 +2732,10 @@
             },
         },
         methods: {
+            setCanvasType(){
+                Vue.use(EventStormingModeling);
+                this.canvasType = 'es'
+            },
             isUserInteractionActive(){
                 var me = this
                 if(me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.isHexagonal && !me.isReadOnlyModel){
@@ -5092,13 +5093,7 @@
                     // } else {
                     me.canvas.removeShape(edgeElement, true);
                     //기존 컴포넌트가 없는 경우 신규 생성
-                    if (
-                        me.connectableType(
-                            componentInfo.sourceElement.value,
-                            componentInfo.targetElement.value
-                        ) &&
-                        me.validateRelation(from, to)
-                    ) {
+                    if ( me.connectableType( componentInfo.sourceElement.value, componentInfo.targetElement.value ) ) {
                         this.addElement(componentInfo);
                     }
 

@@ -64,9 +64,7 @@
                 openExample: false,
             }
         },
-        created() {
-            // this.setElementCanvas();
-        },
+        created() {},
         computed: {
             isOpenAPIPBC(){
                 if(!this.isPBCModel) return false
@@ -128,9 +126,6 @@
             },
 
         },
-        beforeDestroy() {
-
-        },
         watch: {
             value: {
                 deep:true,
@@ -161,12 +156,6 @@
             // }
         },
         methods: {
-            closeExampleDialog(){
-                this.openExample = false
-            },
-            openExampleDialog(){
-                this.openExample = true
-            },
             setElementCanvas(){
                 var me = this
                 me.canvas = getParent(me.$parent, "event-storming-model-canvas");
@@ -175,7 +164,7 @@
                 // load created : me.$options.name: actor-definition           / $parent.$options.name   : opengraph
                 // destroy name : me.$options.name: event-storming-model-panel / $parent.$options.name   : actor-definition
                 if (me.$route.path.includes('replay')) {
-                    this.$emit('update:widthStyle','width:500px; margin-right:17.5%;')
+                    me.$emit('update:widthStyle','width:500px; margin-right:17.5%;')
                 }
             },
             forceEditPanel(){
@@ -190,6 +179,12 @@
                 }catch (e) {
                     console.log(`Error] forceEditPanel : ${e}`)
                 }
+            },
+            closeExampleDialog(){
+                this.openExample = false
+            },
+            openExampleDialog(){
+                this.openExample = true
             },
             //<<<<<<<<<<<<<<<<<<<<<<<<<<< Panel Methods
             // stayOpenPanelCheck(){
@@ -232,58 +227,59 @@
             //         clearTimeout(getComponent.staySetTimeout)
             //     }
             // },
-            closePanel(){
-                this.$emit('close')
-            },
+            // override
             panelInit() {
                 try {
                     var me = this
                     // console.log('PANEL_INIT :: COMMON')
 
                     if ( !me.canvas.isHexagonal ) {
-                        me.panelOpenAction()
+                        me.openPanelAction()
                     }
                 } catch (e) {
                     console.log('[Error] ES Panel Init: ', e)
                 }
 
             },
+            // override
             executeBeforeDestroy() {
                 var me = this
-                try{
-                    /*
-                        _value : 기존 값.
-                        value  : Panel 사용되는 값,
-                    */
-                    var diff = jsondiffpatch.diff(me._value, me.value)
-                    if (diff && !(Object.keys(diff).includes('aggregate') && Object.keys(diff).length == 1)) {
-                        console.log('Panel - executeBeforeDestroy')
-                        if (!me.canvas.isReadOnlyModel) {
-                            me.canvas.changedByMe = true
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                         /*
+                            _value : 기존 값.
+                            value  : Panel 사용되는 값,
+                        */
+                        var diff = jsondiffpatch.diff(me._value, me.value)
+                        if (diff && !(Object.keys(diff).includes('aggregate') && Object.keys(diff).length == 1)) {
+                            console.log('Panel - executeBeforeDestroy')
+                            if (!me.canvas.isReadOnlyModel) {
+                                me.canvas.changedByMe = true
 
-                            // part sync
-                            me._value.oldName = JSON.parse(JSON.stringify(me._value.name))
+                                // part sync
+                                me._value.oldName = JSON.parse(JSON.stringify(me._value.name))
 
-                            // all sync
-                            Object.keys(me.value).forEach(function (itemKey) {
-                                if(itemKey == 'oldName'){
-                                    // Exception : part sync
-                                }else if(!(itemKey == 'elementView' || itemKey == 'relationView')){
-                                    // Exception: 위치정보
-                                    me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]))
-                                }
-                            })
-                            // re setting 값을 emit
-                            me.$emit('_value-change', me._value)
+                                // all sync
+                                Object.keys(me.value).forEach(function (itemKey) {
+                                    if(itemKey == 'oldName'){
+                                        // Exception : part sync
+                                    }else if(!(itemKey == 'elementView' || itemKey == 'relationView')){
+                                        // Exception: 위치정보
+                                        me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]))
+                                    }
+                                })
+                                // re setting 값을 emit
+                                me.$emit('_value-change', me._value)
+                            }
                         }
-                    }
 
-                    if ( !me.canvas.isHexagonal ) {
-                        me.panelCloseAction()
+                        me.closePanelAction()
+                    },
+                    onFail(e){
+                        console.log(`[Error] EventStormingPanel Sync: ${e}`)
                     }
-                }catch (e) {
-                    alert('[Error] EventStormingPanel Sync: ', e)
-                }
+                })
             },
             changedDescriptionPanel(newVal) {
                 var me = this

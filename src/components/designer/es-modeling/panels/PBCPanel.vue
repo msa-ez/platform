@@ -155,10 +155,7 @@
                 return null
             },
         },
-        created: function () {
-            var me = this
-            me.panelInit()
-        },
+        created: function () { },
         watch: {
             "selectVersion":function (newVal, oldVal) {
                 if(oldVal){

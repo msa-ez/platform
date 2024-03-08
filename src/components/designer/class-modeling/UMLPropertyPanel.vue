@@ -21,28 +21,18 @@
         },
         data: function () {
             return {
-                parentCanvas: null,
+
             }
         },
         computed: {
         },
         beforeDestroy() {
         },
-        created: function () {
-            var me = this
-            if(!me.canvas.embedded) {
-                me.panelInit()
-            } else {
-                me.parentCanvas = me.getComponent('event-storming-model-canvas')
-            }
-        },
+        created: function () { },
         methods:{
             setElementCanvas(){
                 var me = this;
                 me.canvas = me.getComponent('uml-class-model-canvas')
-            },
-            closePanel(){
-                this.$emit('close')
             },
             getComponent(componentName) {
                 let component = null
@@ -58,38 +48,39 @@
             panelInit(){
                 var me = this
                 // Element
-                
 
                 // Common
                 if ( !me.canvas.embedded ) {
-                    me.panelOpenAction()
+                    me.openPanelAction()
                 }
             },
             executeBeforeDestroy() {
                 var me = this
-                try {
-                    /*
-                        _value : 기존 값.
-                        value  : Panel 사용되는 값,
-                    */
-                    var diff = jsondiffpatch.diff(me._value, me.value)
-                    if (diff) {
-                        console.log('Panel - executeBeforeDestroy')
-                        if (!me.readOnly) {
-                            // all sync
-                            Object.keys(me.value).forEach(function (itemKey) {
-                                if(!(itemKey == 'elementView' || itemKey == 'relationView')){
-                                    // Exception: 위치정보
-                                    me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]))
-                                }
-                            })
-                            // re setting 값을 emit
-                            me.$emit('_value-change', me._value)
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        /*
+                            _value : 기존 값.
+                            value  : Panel 사용되는 값,
+                        */
+                        var diff = jsondiffpatch.diff(me._value, me.value)
+                        if (diff) {
+                            console.log('Panel - executeBeforeDestroy')
+                            if (!me.readOnly) {
+                                // all sync
+                                Object.keys(me.value).forEach(function (itemKey) {
+                                    if(!(itemKey == 'elementView' || itemKey == 'relationView')){
+                                        // Exception: 위치정보
+                                        me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]))
+                                    }
+                                })
+                                // re setting 값을 emit
+                                me.$emit('_value-change', me._value)
+                            }
                         }
+                        me.closePanelAction()
                     }
-                } catch (e) {
-                    alert('[Error] UMLClassPanel Sync: ', e)
-                }
+                })
             },
         },
     }

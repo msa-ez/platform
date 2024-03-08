@@ -766,8 +766,6 @@
         created: function () {
             var me = this
             try {
-                Vue.use(CustomerJourneyMapModeling);
-                me.canvasType = 'cjm'
                 if (this.$isElectron) {
                     me.isQueueModel = false
                 } else {
@@ -778,21 +776,11 @@
                 alert('Error: CustomerJourneyMap Created().', e)
             }
         },
-        watch: {
-            //     value: {
-            //         deep: true,
-            //         handler:
-            //             _.debounce(function (newVal, oldVal) {
-            //                 var me = this
-            //                 if (newVal) {
-            //                     // following is right way
-            //                     me.$emit("input", newVal);
-            //                     me.$emit("change", newVal, me.projectName);
-            //                 }
-            //             }, 1000)
-            //     },
-        },
         methods: {
+            setCanvasType(){
+                Vue.use(CustomerJourneyMapModeling);
+                this.canvasType = 'cjm'
+            },
             clearModelValue(){
                 var me = this
                 me.value.elements = {}
