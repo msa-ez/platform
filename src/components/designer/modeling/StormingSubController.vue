@@ -1,7 +1,7 @@
 <template>
     <div>
         <sub-controller
-                v-if="clone.rotate && !isHexagonalModeling"
+                v-if="clone.rotate && !isHexagonal"
                 :image="'rotate.png'"
                 @click.prevent.stop="rotate()"
         >
@@ -27,28 +27,28 @@
         >
         </sub-controller> -->
         <sub-controller
-                v-if="!isHexagonalModeling && selectedList"
+                v-if="!isHexagonal && selectedList"
                 :image="'content-cut.png'"
                 @click.prevent="cutElement"
         ></sub-controller>
         <sub-controller
-                v-if="!isHexagonalModeling && clipboard"
+                v-if="!isHexagonal && clipboard"
                 :image="'content-paste.png'"
                 @click.prevent="pasteElement"
         ></sub-controller>
         <sub-controller
-                v-if="!isHexagonalModeling"
+                v-if="!isHexagonal"
                 :image="'copy.png'"
                 @click.prevent.stop="copyPaste()"
         ></sub-controller>
 
-        <div v-if="isHexagonalModeling && type.endsWith('BoundedContext')">
+        <div v-if="isHexagonal && type.endsWith('BoundedContext')">
             <sub-controller
                     :image="'../event/aggregate.png'"
                     v-on:click="addAggregateElement"
             ></sub-controller>
         </div>
-        <div v-if="isHexagonalModeling && type.endsWith('Aggregate')">
+        <div v-if="isHexagonal && type.endsWith('Aggregate')">
             <sub-controller
                     :image="'../event/event.png'"
                     v-on:click="addEventElement"
@@ -97,7 +97,7 @@
                     return false;
                 }
             },
-            isHexagonalModeling: Boolean,
+            isHexagonal: Boolean,
             canvasType: String,
             isProjectConnecting: Boolean
         },
@@ -462,7 +462,7 @@
                     height: 100,
                     component: componentName
                 }
-                if (me.canvas && me.isHexagonalModeling) {
+                if (me.canvas && me.isHexagonal) {
                     targetElement = me.canvas.addElement(targetInfo);
 
                     if(!targetElement._type.includes("Aggregate")) {

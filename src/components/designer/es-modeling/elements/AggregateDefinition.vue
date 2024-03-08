@@ -155,7 +155,7 @@
                         :type="value._type"
                         :value="value"
                         :readOnly="canvas.isReadOnlyModel"
-                        :isHexagonalModeling="canvas.isHexagonal"
+                        :isHexagonal="canvas.isHexagonal"
                 ></storming-sub-controller>
 
                 <sub-controller
@@ -593,7 +593,7 @@
                     me.value.aggregateRoot.fieldDescriptors.splice(idx, 1);
                 }
             },
-            removeAction(){
+            executeElementBeforeDestroy(){
                 this.onMoveAction()
             },
             onMoveAction(executeRecursion){

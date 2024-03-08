@@ -16,7 +16,6 @@
             return {
                 namePanel: '',
                 descriptionPanel: '',
-                isMovedElement: false,
             }
         },
         created: function () {
@@ -74,31 +73,11 @@
             }, 2000),
 
         },
-        mounted: function () {
-            var me = this
-            me.$EventBus.$on('isMovedElement', function (id) {
-                if (me.value.elementView) {
-                    //only Element
-                    if (me.value.elementView.id == id) {
-                        me.isMovedElement = true
-                        me.movedNewActivity()
-                    } else {
-                        if (me.isMovedElement == true) {
-                            me.isMovedElement = false
-                            me.movedOldActivity()
-                        }
-                    }
-                }
-            })
-        },
         methods: {
             setElementCanvas(){
                 var me = this
                 me.modelCanvasComponent = me.getComponent('business-model-canvas');
                 me.canvas = getParent(me.$parent, "business-model-canvas");
-            },
-            onMoveShape: function () {
-                this.$EventBus.$emit('isMovedElement', this.value.elementView.id)
             },
             selectedActivity: function () {
                 if (this.value) {
@@ -110,34 +89,6 @@
                     this.propertyPanel = false
                     this.selected = false
                     this.staySelected = false
-                }
-            },
-            movedNewActivity() {
-                var me = this
-                if (me.isLogin && me.canvas.isServerModel && !me.isClazzModeling && !me.canvas.isReadOnlyModel) {
-                    var obj = {
-                        action: 'userMovedOn',
-                        editUid: me.userInfo.uid,
-                        name: me.userInfo.name,
-                        picture: me.userInfo.profile,
-                        timeStamp: Date.now(),
-                        editElement: me.value.elementView.id
-                    }
-                    me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, obj)
-                }
-            },
-            movedOldActivity() {
-                var me = this
-                if (me.isLogin && me.canvas.isServerModel && !me.isClazzModeling && !me.canvas.isReadOnlyModel) {
-                    var obj = {
-                        action: 'userMovedOff',
-                        editUid: me.userInfo.uid,
-                        name: me.userInfo.name,
-                        picture: me.userInfo.profile,
-                        timeStamp: Date.now(),
-                        editElement: me.value.elementView.id
-                    }
-                    me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, obj)
                 }
             },
             selectedStayActivity() {

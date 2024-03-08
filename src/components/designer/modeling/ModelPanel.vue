@@ -117,12 +117,6 @@
             fixedDefalutStroage() {
                 return 'db'
             },
-            isCustomMoveExist() {
-                if (this.canvas)
-                    return this.canvas.isCustomMoveExist
-
-                return false
-            },
             isClazzModeling() {
                 if (this.canvas)
                     return this.canvas.isClazzModeling
@@ -212,7 +206,7 @@
                         if (!me.readOnly) {
                             me.canvas.changedByMe = true
                             Object.keys(me.value).forEach(function (itemKey) {
-                                if( me.isCustomMoveExist ){
+                                if( me.canvas.isCustomMoveExist ){
                                     if(!(itemKey == 'elementView' || itemKey == 'relationView')){
                                         // Exception: 위치정보
                                         me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]))

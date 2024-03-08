@@ -1272,36 +1272,6 @@
                     console.log(`Error] Release MoveEvents : ${e}`)
                 }
             },
-            onMoveElementById(id, newValueStr) {
-                /*
-                     !!!  REMOVE !!!!
-                     changedMethod: moveElement
-                */
-                var me = this
-
-                if (me.value && me.value.elements && me.value.elements[id]) {
-                    var newValueObj = JSON.parse(newValueStr)
-                    // minus element
-                    newValueObj.x =  newValueObj.x < 0 ? Math.abs(newValueObj.x) : newValueObj.x
-                    newValueObj.y =  newValueObj.y < 0 ? Math.abs(newValueObj.y) : newValueObj.y
-                    me.value.elements[id].elementView.x = newValueObj.x
-                    me.value.elements[id].elementView.y = newValueObj.y
-                    me.value.elements[id].elementView.width = newValueObj.width
-                    me.value.elements[id].elementView.height = newValueObj.height
-                }
-            },
-            onMoveRelationById(id, newValueObj) {
-                /*
-                    !!!  REMOVE !!!!
-                    changedMethod: moveElement
-               */
-                var me = this
-
-                if (me.value && me.value.relations && me.value.relations[id]) {
-                    // minus relation
-                    me.value.relations[id].relationView.value = newValueObj.includes('-') ? newValueObj.replaceAll('-','') : newValueObj
-                }
-            },
             functionCluster(title) {
                 var me = this
                 if (title == 'Terminal') {
@@ -3610,7 +3580,6 @@
                             }
 
                             me.$EventBus.$emit(`${queue.editElement}`, obj)
-
                         } else {
                             clearTimeout(isWaitingQueue)
 
@@ -4261,6 +4230,10 @@
             },
 
             ///////// ACTION ////////
+             /** 
+             *  addElement > addElementAction
+             *  Element 추가 호출
+             **/
             addElementAction(element, value, options){
                 var me = this
                 me.$app.try({
@@ -4269,24 +4242,30 @@
                         if(!options) options = {}
                         if(!value) value = me.value
                         let valueObj = element.relationView ? value.relations : value.elements
-                        let id = element.relationView ? element.relationView.id : element.elementView.id
+                        let elementId = element.relationView ? element.relationView.id : element.elementView.id
 
                         // duplication
                         if(Object.keys(valueObj).includes(id)) return;
 
-                        me.$EventBus.$emit(id, {
-                            action: element.relationView ? 'relationPush' : 'elementPush',
-                            STATUS_COMPLETE: false
-                        })
-
-                        // First append
+                        // First Excution
                         me.appendElement(element, value, options)
                         if(me.isServerModel && me.isQueueModel){
                             me.pushAppendedQueue(element, options)
+                            me.$EventBus.$emit(elementId, {
+                                action: element.relationView ? 'relationPush' : 'elementPush',
+                                STATUS_COMPLETE: false
+                            })
                         }
+                    },
+                    onFail(e){
+                        console.log(`[Error] AddElement Action: ${e}`)
                     }
                 })
             },
+            /** 
+             *  onRemoveShape(Element.vue) > removeElementAction
+             *  Element 삭제 호출
+             **/
             removeElementAction(element, value, options){
                 var me = this
                 me.$app.try({
@@ -4294,38 +4273,52 @@
                     async action(me){
                         if(!options) options = {}
                         if(!value) value = me.value
-                        let id = element.relationView ? element.relationView.id : element.elementView.id
+                        let elementId = element.relationView ? element.relationView.id : element.elementView.id
 
-                        me.$EventBus.$emit(id, {
-                            action: element.relationView ? 'relationDelete' : 'elementDelete',
-                            STATUS_COMPLETE: false
-                        })
-
+                        // First Excution
+                        me.removeElement(element, value, options)
                         if(me.isServerModel && me.isQueueModel){
                             me.pushRemovedQueue(element, options)
-                        } else {
-                            me.removeElement(element, value, options)
+                            me.$EventBus.$emit(elementId, {
+                                action: element.relationView ? 'relationDelete' : 'elementDelete',
+                                STATUS_COMPLETE: false
+                            })
                         }
+                    },
+                    onFail(e){
+                        console.log(`[Error] RemoveElement Action: ${e}`)
                     }
                 })
             },
+             /** 
+             *  delayedMove[Element.vue] > moveElementAction
+             *  delayedRelationMove[Element.vue] > moveElementAction
+             *  Element 이동 호출
+             **/
             moveElementAction(element, oldVal, newVal, value, options){
                 var me = this
-                if(!options) options = {}
-                let id = element.relationView ? element.relationView.id : element.elementView.id
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        if(!value) value = me.value
+                        let elementId = element.relationView ? element.relationView.id : element.elementView.id
 
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationMove' : 'elementMove',
-                    STATUS_COMPLETE: false,
-                    movingElement: true
+                        // First Excution
+                        me.moveElement(element, newVal, value, options)
+                        if (me.isServerModel && me.isQueueModel) {
+                            me.pushMovedQueue(element, oldVal, newVal, options)
+                            me.$EventBus.$emit(elementId, {
+                                action: element.relationView ? 'relationMove' : 'elementMove',
+                                STATUS_COMPLETE: false,
+                                movingElement: true
+                            })
+                        }
+                    },
+                    onFail(e){
+                        console.log(`[Error] MoveElement Action: ${e}`)
+                    }
                 })
-
-                // First Move
-                me.moveElement(element, newVal, me.value, options)
-
-                if (me.isServerModel && me.isQueueModel) {
-                    me.pushMovedQueue(element, oldVal, newVal, options)
-                }
             },
             async changeValueAction(diff, value, options){
                 var me = this
@@ -4379,12 +4372,19 @@
 
             },
             //////// Execute ////////
+             /** 
+             * addElement > addElementAction > appendElement
+             * receivedQueueDrawElement > receiveAppendedQueue > appendElement
+             * Element 추가 실행.
+             **/
             appendElement(element, value, options){
                 var me = this
                 me.$app.try({
                     context: me,
                     async action(me){
+                        if(!element) return;
                         if(!value) value = me.value
+                        if(!options) options = {}
 
                         let id = element.relationView ? element.relationView.id : element.elementView.id
                         let valueObj = element.relationView ? value.relations : value.elements
@@ -4396,15 +4396,25 @@
                             action: element.relationView ? 'relationPush' : 'elementPush',
                             STATUS_COMPLETE: true
                         })
+                    },
+                    onFail(e){
+                        console.log(`[Error] Append Element: ${e}`)
                     }
                 })
             },
+             /** 
+             * onRemoveShape(Element.vue) > removeElementAction > removeElement
+             * receivedQueueDrawElement > receiveRemovedQueue > removeElement
+             * Element 삭제 실행
+             **/
             removeElement(element, value, options){
                 var me = this
                 me.$app.try({
                     context: me,
                     async action(me){
+                        if(!element) return;
                         if(!value) value = me.value
+                        if(!options) options = {}
 
                         let id = element.relationView ? element.relationView.id : element.elementView.id
                         let valueObj = element.relationView ? value.relations : value.elements
@@ -4416,35 +4426,53 @@
                             action: element.relationView ? 'relationDelete' : 'elementDelete',
                             STATUS_COMPLETE: true
                         })
+                    },
+                    onFail(e){
+                        console.log(`[Error] Remove Element: ${e}`)
                     }
                 })
             },
+             /** 
+             * delayedMove[Element.vue] > moveElementAction > moveElement
+             * delayedRelationMove[Element.vue] > moveElementAction > moveElement
+             * receivedQueueDrawElement > receiveMovedQueue > moveElement
+             * Element 이동 실행.
+             **/
             moveElement(element, newVal, value, options){
                 var me = this
-                if(!element) return;
-                if(!value) value = me.value
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!element) return;
+                        if(!value) value = me.value
+                        if(!options) options = {}
 
-                let id = element.relationView ? element.relationView.id : element.elementView.id
-                let valueObj = element.relationView ? value.relations : value.elements
-                if(!valueObj[id]) return;
+                        let id = element.relationView ? element.relationView.id : element.elementView.id
+                        let valueObj = element.relationView ? value.relations : value.elements
+                        if(!valueObj[id]) return;
 
-                if(element.relationView){
-                    valueObj[id].relationView.value =  newVal.replaceAll('-','')
-                } else {
-                    // null || minus
-                    if(!newVal.x || newVal.x < 0) newVal.x = 100
-                    if(!newVal.y || newVal.y < 0) newVal.y = 100
+                        if(element.relationView){
+                            valueObj[id].relationView.value =  newVal.replaceAll('-','')
+                        } else {
+                            // null || minus
+                            if(!newVal.x || newVal.x < 0) newVal.x = 100
+                            if(!newVal.y || newVal.y < 0) newVal.y = 100
 
-                    valueObj[id].elementView.x = newVal.x
-                    valueObj[id].elementView.y = newVal.y
-                    valueObj[id].elementView.width = newVal.width
-                    valueObj[id].elementView.height = newVal.height
-                }
+                            valueObj[id].elementView.x = newVal.x
+                            valueObj[id].elementView.y = newVal.y
+                            valueObj[id].elementView.width = newVal.width
+                            valueObj[id].elementView.height = newVal.height
+                        }
 
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationMove' : 'elementMove',
-                    STATUS_COMPLETE: true,
-                    movingElement: false
+                        me.$EventBus.$emit(id, {
+                            action: element.relationView ? 'relationMove' : 'elementMove',
+                            STATUS_COMPLETE: true,
+                            movingElement: false
+                        })  
+                    },
+                    onFail(e){
+                        console.log(`[Error] Move Element: ${e}`)
+                    }
                 })
             },
             patchValue(diff, value, options){
@@ -4454,6 +4482,10 @@
                 jsondiffpatch.patch(value, diff)
             },
             //////// Push QUEUE ////////
+             /** 
+             *  addElement > addElementAction > pushAppendedQueue
+             *  Element 추가 큐 발송.
+             **/
             pushAppendedQueue(element, options){
                 var me = this
                 me.$app.try({
@@ -4470,9 +4502,16 @@
                             timeStamp: Date.now(),
                             item: JSON.stringify(element),
                         })
+                    },
+                    onFail(e){
+                        console.log(`[Error] Push AppendedQueue: ${e}`)
                     }
                 })
             },
+            /** 
+             *  onRemoveShape(Element.vue) > removeElementAction > pushRemovedQueue
+             *  Element 삭제 큐 발송.
+             **/
             pushRemovedQueue(element, options){
                 var me = this
                 me.$app.try({
@@ -4489,33 +4528,48 @@
                             timeStamp: Date.now(),
                             item: JSON.stringify(element)
                         })
+                    },
+                    onFail(e){
+                        console.log(`[Error] Push RemovedQueue: ${e}`)
                     }
                 })
             },
+            /** 
+             *  delayedMove[Element.vue] > moveElementAction > pushMovedQueue
+             *  delayedRelationMove[Element.vue] > moveElementAction > pushMovedQueue
+             *  Element 이동 큐 발송.
+             **/
             pushMovedQueue(element, oldVal, newVal, options){
                 var me = this
-                let definitionId = me.projectId
-                if(!options) options={}
-                if(options.associatedProject) definitionId = options.associatedProject
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let definitionId = me.projectId
+                        if(!options) options={}
+                        if(options.associatedProject) definitionId = options.associatedProject
 
-                let obj = {
-                    action: element.relationView ? 'relationMove' : 'elementMove',
-                    editUid: me.userInfo.uid,
-                    before: element.relationView ? oldVal : JSON.stringify(oldVal),
-                    after: element.relationView ? newVal : JSON.stringify(newVal),
-                    timeStamp: Date.now()
-                }
+                        let obj = {
+                            action: element.relationView ? 'relationMove' : 'elementMove',
+                            editUid: me.userInfo.uid,
+                            before: element.relationView ? oldVal : JSON.stringify(oldVal),
+                            after: element.relationView ? newVal : JSON.stringify(newVal),
+                            timeStamp: Date.now()
+                        }
 
-                if(element.relationView) {
-                    obj.relationId = element.relationView.id
-                } else {
-                    var types = element._type.split('.')
-                    obj.elementType = types[types.length - 1]
-                    obj.elementId = element.elementView.id
-                    obj.elementName = element.name
-                }
-                // console.log('Sever Queue] Move')
-                return me.pushObject(`db://definitions/${definitionId}/queue`, obj)
+                        if(element.relationView) {
+                            obj.relationId = element.relationView.id
+                        } else {
+                            var types = element._type.split('.')
+                            obj.elementType = types[types.length - 1]
+                            obj.elementId = element.elementView.id
+                            obj.elementName = element.name
+                        }
+                        return me.pushObject(`db://definitions/${definitionId}/queue`, obj)
+                    },
+                    onFail(e){
+                        console.log(`[Error] Push MovedQueue: ${e}`)
+                    }
+                })
             },
             async pushChangedValueQueue(diff, options){
                 var me = this
@@ -4531,34 +4585,56 @@
                     item: JSON.stringify(diff)
                 })
             },
+            /** 
+             * EventBus:isMovedElement[Element.vue] > pushUserMovementActivatedQueue
+             * Hold Moved User
+             **/
             async pushUserMovementActivatedQueue(element){
                 var me = this
-                if(!me.isUserInteractionActive()) return;
-                if(!element) return;
-                if(element.relationView ) return; // exception relation
-                return; // temp 
-                await me.pushObject(`db://definitions/${me.projectId}/queue`, {
-                    action: 'userMovedOn',
-                    editUid: me.userInfo.uid,
-                    name: me.userInfo.name,
-                    picture: me.userInfo.profile,
-                    timeStamp: Date.now(),
-                    editElement: element.elementView.id
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;
+                        if(!element) return;
+                        if(element.relationView ) return; // exception relation
+                        await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                            action: 'userMovedOn',
+                            editUid: me.userInfo.uid,
+                            name: me.userInfo.name,
+                            picture: me.userInfo.profile,
+                            timeStamp: Date.now(),
+                            editElement: element.elementView.id
+                        })
+                    },
+                    onFail(e){
+                        console.log(`[Error] Push UserMovementActivatedQueue: ${e}`)
+                    }
                 })
             },
+            /** 
+             * EventBus:isMovedElement[Element.vue] >pushUserMovementDeactivatedQueue
+             * Release Moved User
+             **/
             async pushUserMovementDeactivatedQueue(element){
                 var me = this
-                if(!me.isUserInteractionActive()) return;
-                if(!element) return;
-                if(element.relationView ) return; // exception relation
-                return; // temp 
-                await me.pushObject(`db://definitions/${me.projectId}/queue`, {
-                    action: 'userMovedOff',
-                    editUid: me.userInfo.uid,
-                    name: me.userInfo.name,
-                    picture: me.userInfo.profile,
-                    timeStamp: Date.now(),
-                    editElement: element.elementView.id
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;
+                        if(!element) return;
+                        if(element.relationView ) return; // exception relation
+                        await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                            action: 'userMovedOff',
+                            editUid: me.userInfo.uid,
+                            name: me.userInfo.name,
+                            picture: me.userInfo.profile,
+                            timeStamp: Date.now(),
+                            editElement: element.elementView.id
+                        })
+                    },
+                    onFail(e){
+                        console.log(`[Error] Push UserMovementActivatedQueue: ${e}`)
+                    }
                 })
             },
             async pushUserSelectionActivatedQueue(element){
@@ -4600,14 +4676,26 @@
                 return false
             },
             //////// Receive QUEUE ////////
+            /** 
+             *  receivedQueueDrawElement > receiveAppendedQueue
+             *  Element 추가 큐 수신
+             **/
             receiveAppendedQueue(element, queue, options){
                 if(!options) options = {}
                 this.appendElement(element, this.value, options)
             },
+             /** 
+             *  receivedQueueDrawElement > receiveRemovedQueue
+             *  Element 삭제 큐 수신
+             **/
             receiveRemovedQueue(element, queue, options){
                 if(!options) options = {}
                 this.removeElement(element, this.value, options)
             },
+             /** 
+             *  receivedQueueDrawElement > receiveMovedQueue
+             *  Element 이동 큐 수신
+             **/
             receiveMovedQueue(id, newVal, queue, options){
                 var me = this
                 if(!options) options = {}

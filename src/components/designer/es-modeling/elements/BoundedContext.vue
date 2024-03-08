@@ -131,7 +131,7 @@
                     :type="value._type"
                     :value="value" 
                     :readOnly="canvas.isReadOnlyModel && !isMembers"
-                    :isHexagonalModeling="canvas.isHexagonal"
+                    :isHexagonal="canvas.isHexagonal"
             ></storming-sub-controller>
             
             <!-- <sub-controller
@@ -141,7 +141,7 @@
             ></sub-controller> -->
 
             <!-- <sub-controller
-                    v-if="!isHexagonalModeling"
+                    v-if="!isHexagonal"
                     :image="'class.png'"
                     @click.prevent.stop="openClassDiagram('java-parse')"
             ></sub-controller> -->

@@ -125,8 +125,6 @@
                 deploySuccess: false,
                 menuList: [],
 
-                isMovedElement: false,
-
                 ESE_NOT_NAME: 0,
                 validationCodeLists: {
                     0: {
@@ -380,21 +378,6 @@
                 me.refreshImg()
             }
 
-            me.$EventBus.$on('isMovedElement', function (id) {
-                if (me.value.elementView) {
-                    //only Element
-                    if (me.value.elementView.id == id) {
-                        me.isMovedElement = true
-                        me.movedNewActivity()
-                    } else {
-                        if (me.isMovedElement == true) {
-                            me.isMovedElement = false
-                            me.movedOldActivity()
-                        }
-                    }
-                }
-            })
-
         },
         beforeDestroy() {
             // if (this.value.elementView) {
@@ -409,39 +392,6 @@
                 var me = this
                 me.modelCanvasComponent = me.getComponent('kubernetes-model-canvas');
                 me.canvas = me.getComponent('kubernetes-model-canvas');
-            },
-            movedNewActivity() {
-                var me = this
-                if (me.canvas.isLogin && me.canvas.isServerModel && !me.canvas.isClazzModeling && !me.canvas.isReadOnlyModel) {
-                    var obj = {
-                        action: 'userMovedOn',
-                        editUid: me.userInfo.uid,
-                        name: me.userInfo.name,
-                        picture: me.userInfo.profile,
-                        timeStamp: Date.now(),
-                        // editElement: me.value.elementView.id
-                        editElement: me.value.elementView ? me.value.elementView.id : me.value.relationView.id
-                    }
-                    // me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
-                }
-            },
-            movedOldActivity() {
-                var me = this
-                if (me.canvas.isLogin && me.canvas.isServerModel && !me.canvas.isClazzModeling && !me.canvas.isReadOnlyModel) {
-                    var obj = {
-                        action: 'userMovedOff',
-                        editUid: me.userInfo.uid,
-                        name: me.userInfo.name,
-                        picture: me.userInfo.profile,
-                        timeStamp: Date.now(),
-                        // editElement: me.value.elementView.id
-                        editElement: me.value.elementView ? me.value.elementView.id : me.value.relationView.id
-                    }
-                    // me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
-                }
-            },
-            onMoveShape: function () {
-                this.$EventBus.$emit('isMovedElement', this.value.elementView.id)
             },
             mergeDeep(target, sources) {
                 // console.log(target)
@@ -585,6 +535,10 @@
                 }
                 return component
             },
+            /**
+             *  Extends ModelElement.
+             *  Element >  onRemoveShape 
+             **/
             onRemoveShape(element){
                 var me = this
                 me.$app.try({

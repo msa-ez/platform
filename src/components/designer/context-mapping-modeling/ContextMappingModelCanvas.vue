@@ -666,7 +666,7 @@
                           <div>
                             <v-btn
                                     class="gs-model-z-index-1"
-                                    v-if="isHexagonalModeling"
+                                    v-if="isHexagonal"
                                     text
                                     color="primary"
                                     style="margin-left: -20px; margin-top: 1px"
@@ -706,7 +706,7 @@
                         <template v-slot:activator="{ on }">
                           <div>
                             <v-btn
-                                    v-if="isHexagonalModeling"
+                                    v-if="isHexagonal"
                                     text
                                     color="primary"
                                     style="margin-left: -20px; margin-top: 1px"
@@ -842,8 +842,8 @@
                               v-on="on"
                               v-if="
                           !isReadOnlyModel &&
-                          (!isHexagonalModeling ||
-                            (isHexagonalModeling &&
+                          (!isHexagonal ||
+                            (isHexagonal &&
                               (item.component.includes('bounded-context') ||
                                 item.component.includes(
                                   'packaged-business-capabilities'
@@ -934,8 +934,8 @@
                               v-on="on"
                               v-if="
                           !isReadOnlyModel &&
-                          (!isHexagonalModeling ||
-                            (isHexagonalModeling &&
+                          (!isHexagonal ||
+                            (isHexagonal &&
                               (item.component.includes('bounded-context') ||
                                 item.component.includes(
                                   'packaged-business-capabilities'

@@ -89,8 +89,8 @@
 
             <sub-elements v-if="!canvas.isHexagonal">
                 <image-element
-                        v-for="(index) in editUserImg.length" :key="index"
-                        v-bind:image="editUserImg[index-1].picture"
+                        v-for="(index) in newEditUserImg.length" :key="index"
+                        v-bind:image="newEditUserImg[index-1].picture"
                         :sub-width="'24px'"
                         :sub-height="'24px'"
                         :sub-right="(10*(index-1))+'px'"
@@ -160,7 +160,7 @@
                         :type="value._type"
                         :value="value"
                         :readOnly="canvas.isReadOnlyModel"
-                        :isHexagonalModeling="canvas.isHexagonal"
+                        :isHexagonal="canvas.isHexagonal"
                 ></storming-sub-controller>
 
             </sub-elements>
@@ -209,12 +209,6 @@
     import Element from './EventStormingModelElement'
     import DomainEventDefinitionPanel from "../panels/DomainEventDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-
-
-    var changeCase = require('change-case');
-    var pluralize = require('pluralize');
-
-    var Mustache = require('mustache')
     var _ = require('lodash')
 
     export default {
@@ -355,11 +349,6 @@
                 referenceClassName: this.value.classReference,
 
             };
-        },
-        created: function () {
-            // this.image = `${window.location.protocol + "//" + window.location.host}/static/image/event/event.png`
-        },
-        mounted() {
         },
         watch: {
             "value.fieldDescriptors": {

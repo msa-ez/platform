@@ -27,7 +27,6 @@
                 _id: null,
                 drawer: false,
                 namePanel: '',
-                isMovedElement: false,
             }
         },
         computed: {
@@ -102,61 +101,11 @@
                 }, 200)
             },
         },
-        mounted: function () {
-            var me = this
-            me.$EventBus.$on('isMovedElement', function (id) {
-                if (me.value.elementView) {
-                    //only Element
-                    if (me.value.elementView.id == id) {
-                        me.isMovedElement = true
-                        me.movedNewActivity()
-                    } else {
-                        if (me.isMovedElement == true) {
-                            me.isMovedElement = false
-                            me.movedOldActivity()
-                        }
-                    }
-                }
-            })
-        },
         methods: {
             setElementCanvas(){
                 var me = this
                 me.modelCanvasComponent = me.getComponent('bpmn-modeling-canvas');
                 me.canvas = me.getComponent('bpmn-modeling-canvas');
-            },
-            onMoveShape: function () {
-                this.$EventBus.$emit('isMovedElement', this.value.elementView.id)
-            },
-            movedNewActivity() {
-                var me = this
-                if (me.isLogin && me.canvas.isServerModel && !me.canvas.isClazzModeling && !me.canvas.isReadOnlyModel) {
-                    // me.canvas.changedByMe = true
-                    var obj = {
-                        action: 'userMovedOn',
-                        editUid: me.userInfo.uid,
-                        name: me.userInfo.name,
-                        picture: me.userInfo.profile,
-                        timeStamp: Date.now(),
-                        editElement: me.value.elementView.id
-                    }
-                    // me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
-                }
-            },
-            movedOldActivity() {
-                var me = this
-                if (me.isLogin && me.canvas.isServerModel && !me.canvas.isClazzModeling && !me.canvas.isReadOnlyModel) {
-                    // me.canvas.changedByMe = true
-                    var obj = {
-                        action: 'userMovedOff',
-                        editUid: me.userInfo.uid,
-                        name: me.userInfo.name,
-                        picture: me.userInfo.profile,
-                        timeStamp: Date.now(),
-                        editElement: me.value.elementView.id
-                    }
-                    // me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
-                }
             },
             selectedActivity: function () {
                 if(this.value) {
