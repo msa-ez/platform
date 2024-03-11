@@ -268,24 +268,6 @@
                     this.refreshImg()
                 }, 200)
             },
-            // "STATUS_COMPLETE":function(newVal) {
-            //     if (newVal  && this.canvas.isServerModel) {
-            //         // onMoving Event (Only Server)
-            //         this.validate()
-            //         this.onMoveAction();
-            //     }
-            // },
-            // "value.elementView": {
-            //     deep: true,
-            //     handler: function (newVal, oldVal) {
-            //         var me = this
-            //         if (!me.canvas.isServerModel) {
-            //             // onMoving Event ( Only Local)
-            //             me.validate()
-            //             me.onMoveAction();
-            //         }
-            //     }
-            // },
             "value.name": function (newVal, oldVal) {
                 this.namePanel = newVal;
                 this.onChangedElementName(newVal, oldVal);
@@ -309,26 +291,6 @@
                         this.refreshImg()
                 }, 200)
             },
-            'staySelected': function (newVal, oldVal) {
-                if (newVal) {
-                    this.canvas.pushUserSelectionActivatedQueue(this.value)
-                } else {
-                    this.canvas.pushUserSelectionDeactivatedQueue(this.value)
-                }
-
-            },
-            'selected': _.debounce(function (newVal, oldVal) {
-                if (newVal) {
-                    if (this.propertyPanel) {
-                        this.staySelected = false
-                    } else {
-                        this.staySelected = true
-                    }
-                } else {
-                    this.staySelected = false
-                }
-
-            }, 2000),
             "filteredElementValidationResults": _.debounce(function () {
                 this.refreshImg()
             }, 200),
@@ -655,30 +617,22 @@
                     }
                 }
             },
-            selectedActivity: function () {
+            onActivitySelected(){
                 var me = this
-                if (this.value) {
-                    this.selected = true
-
+                if (me.value) {
                     // selected Template
                     var elementType = me.value._type ? me.value._type : null
                     var elementIds = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
                     me.$EventBus.$emit('selectedElementObj', {selected: true, id: elementIds, type: elementType})
                 }
-
             },
-            deSelectedActivity: function () {
+            onActivityDeselected(){
                 var me = this
-                if (this.value) {
-                    this.propertyPanel = false
-                    this.selected = false
-                    this.staySelected = false
-
+                if (me.value) {  
                     // deselected Template
                     let elementIds = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
                     me.$EventBus.$emit('selectedElementObj', {selected: false, id: elementIds})
                 }
-
             },
             onRotateShape: function (element, angle) {
                 // console.log('ES: onRotateShape: ', element,angle)

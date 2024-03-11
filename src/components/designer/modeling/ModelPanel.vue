@@ -150,7 +150,6 @@
                 me.$app.try({
                     context: me,
                     async action(me){
-                        if(!me.canvas.isUserInteractionActive()) return;
                         me.pushOpenPanelQueue()
                     },
                     onFail(){
@@ -167,7 +166,6 @@
                 me.$app.try({
                     context: me,
                     async action(me){
-                        if(!me.canvas.isUserInteractionActive()) return;
                         me.pushClosePanelQueue()
                     },
                     onFail(){
@@ -184,6 +182,7 @@
                 me.$app.try({
                     context: me,
                     async action(me){
+                        if(!me.canvas.isUserInteractionActive()) return;
                         if(!me.value.elementView) return;
                         me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, {
                             action: 'userPanelOpen',
@@ -207,6 +206,7 @@
                 me.$app.try({
                     context: me,
                     async action(me){
+                        if(!me.canvas.isUserInteractionActive()) return;
                         if(!me.value.elementView) return;
                         me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, {
                             action: 'userPanelClose',

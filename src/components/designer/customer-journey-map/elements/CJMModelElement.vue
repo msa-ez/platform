@@ -97,46 +97,19 @@
                         this.refreshImg()
                 }, 200)
             },
-            // 'staySelected': function (newVal, oldVal) {
-            //     if (newVal) {
-            //         this.selectedStayActivity()
-            //     } else {
-            //         this.deSelectedStayActivity()
-            //     }
-            //
-            // },
-            'selected': _.debounce(function (newVal, oldVal) {
-                if (newVal) {
-                    if (this.propertyPanel) {
-                        this.staySelected = false
-                    } else {
-                        this.staySelected = true
-                    }
-                } else {
-                    this.staySelected = false
-                }
-
-            }, 2000),
         },
         methods: {
             setElementCanvas(){
                 var me = this;
                 me.canvas = me.getComponent('customer-journey-map-canvas');
             },
-            selectedActivity: function () {
-                if (this.value) {
-                    this.selected = true
-                }
-            },
-            deSelectedActivity: function () {
+            onActivityDeselected(){
                 if (this.value) {
                     if (this.value._type == "CJMTextElement" && this.value.name.length == 0) {
                         this.propertyPanel = true
                         return
                     } else {
                         this.propertyPanel = false
-                        this.selected = false
-                        this.staySelected = false
                     }
                 }
             },

@@ -4552,18 +4552,10 @@
                 var me = this;
                 if(!options) options = {}
                 let value = queue.isMirrorQueue ? me.mirrorValue : me.value;
+                if(!diff) return
+                if(!value) return
 
-                try {
-                    me.patchValue(diff, value)
-                } catch (e) {
-                    console.log("Error when to diffpatch for queue " + queue.childKey, e, "\n- queue is", (queue.childValue.item ? JSON.parse(queue.childValue.item) : queue.childValue), "\n- model is", value.elements, value.relations)
-
-                    me.receiveErrorQueue(e, queue)
-                    // create default.
-                    // value = await me.checkedDiffValue(diff, value);
-                    // me.patchValue(diff, value)
-
-                }
+                me.applyPatchValue(diff, value, options);
             },
             checkedDiffValue(diff, value) {
                 var me = this;
@@ -4584,14 +4576,6 @@
                     });
                 }
                 return value;
-            },
-            isUserInteractionActive(){
-                // user의 마우스 클릭, 이동 파악 하는 조건.
-                var me = this
-                if (me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.canvas.isHexagonal && !me.canvas.isReadOnlyModel) {
-                    return true
-                }
-                return false
             },
             openModelingListsDialog(element) {
                 this.modelingPBCElement = element;

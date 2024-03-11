@@ -78,79 +78,22 @@
                         this.refreshImg()
                 }, 200)
             },
-            'staySelected': function (newVal, oldVal) {
-                if (newVal) {
-                    this.selectedStayActivity()
-                } else {
-                    this.deSelectedStayActivity()
-                }
-
-            },
-            'selected': _.debounce(function (newVal, oldVal) {
-                if (newVal) {
-                    if (this.propertyPanel) {
-                        this.staySelected = false
-                    } else {
-                        this.staySelected = true
-                    }
-                } else {
-                    this.staySelected = false
-                }
-
-            }, 2000),
         },
         methods: {
             setElementCanvas(){
                 var me = this
                 me.canvas = me.getComponent('sticky-model-canvas');
             },
-            selectedActivity: function () {
-                if (this.value) {
-                    this.selected = true
-                }
-            },
-            deSelectedActivity: function () {
+
+            onActivityDeselected(){
                 if (this.value) {
                     if (this.value._type == "StickyTextElement" && this.value.name.length == 0) {
                         this.propertyPanel = true
                         return
                     } else {
                         this.propertyPanel = false
-                        this.selected = false
-                        this.staySelected = false
                     }
                 }
-            },
-            selectedStayActivity() {
-                var me = this
-                return;
-                if (me.isLogin && me.canvas.isServerModel && !me.canvas.isClazzModeling && !me.canvas.isReadOnlyModel) {
-                    var obj = {
-                        action: 'userSelectedOn',
-                        editUid: me.userInfo.uid,
-                        name: me.userInfo.name,
-                        picture: me.userInfo.profile,
-                        timeStamp: Date.now(),
-                        editElement: me.value.elementView.id
-                    }
-                    // me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
-                }
-            },
-            deSelectedStayActivity() {
-                var me = this
-                return;
-                if (me.isLogin && me.canvas.isServerModel && !me.canvas.isClazzModeling && !me.canvas.isReadOnlyModel) {
-                    var obj = {
-                        action: 'userSelectedOff',
-                        editUid: me.userInfo.uid,
-                        name: me.userInfo.name,
-                        picture: me.userInfo.profile,
-                        timeStamp: Date.now(),
-                        editElement: me.value.elementView.id
-                    }
-                    // me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
-                }
-
             },
         }
     }

@@ -444,7 +444,7 @@
             }
         },
         beforeDestroy: function () {
-            this.executeBeforeDestroy();
+            this.executeBeforeDestroy()
         },
         computed: {
             projectSendable(){
@@ -759,18 +759,16 @@
                 }
             })
 
-            // 탭 닫기
-            window.addEventListener('unload', this.handleUnload);         
-            //새로고침 감지 
-            window.addEventListener('beforeunload', this.handleBeforeUnload);
+            // 탭 닫기 && 새로고침
+            window.addEventListener('unload', me.executeBeforeDestroy);         
             // key down
-            this.$nextTick(function () {
+            me.$nextTick(function () {
 
                 let startTime = Date.now()
 
-                if (this.canvas) this.canvas._CONFIG.FAST_LOADING = false;
+                if (me.canvas) me.canvas._CONFIG.FAST_LOADING = false;
 
-                if (this.$refs.opengraph) this.$refs.opengraph.printTimer(startTime, Date.now());
+                if (me.$refs.opengraph) me.$refs.opengraph.printTimer(startTime, Date.now());
 
                 $(document).keydown((evt) => {
                     var CkeyCode = 67;
@@ -779,10 +777,7 @@
                     var VkeyCode = 86;
                     var ZkeyCode = 90;
 
-                    if(evt.keyCode === 116 || (evt.metaKey && evt.keyCode === 82) || (evt.metaKey && evt.shiftKey && evt.keyCode === 82) ){
-                        //새로고침 감지 
-                        this.handleBeforeUnload();
-                    } else if (evt.keyCode == CkeyCode && (evt.metaKey || evt.ctrlKey)) {
+                    if (evt.keyCode == CkeyCode && (evt.metaKey || evt.ctrlKey)) {
                         me.copy();
                     } else if (evt.keyCode == VkeyCode && (evt.ctrlKey || evt.metaKey)) {
                         me.paste();
@@ -820,21 +815,6 @@
                     this.afterLoad();
                 }
             },
-        
-            // "mouseEvents": {
-            //     deep: true,
-            //     handler: _.debounce(function (newVal, oldVal) {
-            //         this.sendMoveEvents();
-            //     }, 300)
-            // },
-            // "mouseEvents.moves": {
-            //     deep: true,
-            //     handler: _.debounce(function (newVal, oldVal) {
-            //         if(newVal.length > 0){
-            //             this.sendMoveEvents();
-            //         }
-            //     }, 300)
-            // },
             "sliderLocationScale": function (newVal) {
                 // console.log(newVal)
             },
@@ -877,17 +857,21 @@
                     this.onChangedValue(oldVal, newVal)
                 }
             },
-            // "mirrorValue.elements": {
-            //     deep: true,
-            //     handler(newVal, oldVal){
-            //         Object.keys(newVal).forEach(key => {
-            //             if(!newVal[key]) 
-            //                 throw new Error("gotcha!")
-            //         }
-            //         )
-            //     }
-            // }
 
+            // "mouseEvents": {
+            //     deep: true,
+            //     handler: _.debounce(function (newVal, oldVal) {
+            //         this.sendMoveEvents();
+            //     }, 300)
+            // },
+            // "mouseEvents.moves": {
+            //     deep: true,
+            //     handler: _.debounce(function (newVal, oldVal) {
+            //         if(newVal.length > 0){
+            //             this.sendMoveEvents();
+            //         }
+            //     }, 300)
+            // },
         },
         methods: {
             setCanvasType(){
@@ -909,21 +893,6 @@
                         throw new Error('getComponentByClassName() must be implement')
                     }
                 }) 
-            },
-            handleBeforeUnload(event) {        
-                // reload || close tab
-                console.log('reload')
-                this.exitUser()
-                this.releaseMoveEvents();
-            },
-            async handleUnload(event) {
-                // // close tab
-                console.log('close tab')
-                await this.executeBeforeDestroy()
-                // this.saveComposition('save');
-                // console.log("Tab or browser is being closed");
-
-                // return false; // For some older browsers
             },
             overrideElements(elementValues){
               // use code core.
@@ -987,63 +956,56 @@
                     await me.saveLocalScreenshot()
                 }
             },
-            executeBeforeDestroy(){
+            executeBeforeDestroy(event){
                 var me = this
                 me.$app.try({
                     context: me,
                     async action(me){
                         //embedded
-                        if (me.embedded) {
-                            return
-                        }
-                        if(window && window.document) window.document.title = 'MSA Easy'
-                        localStorage.removeItem('projectId')
+                        if (me.embedded) return
+                        if(!event || (event && event.isTrusted)){
+                            if(window && window.document) window.document.title = 'MSA Easy'
+                            localStorage.removeItem('projectId')
 
-                        me.$EventBus.$emit('isMounted-ModelCanvas', 'false');
-                        me.$EventBus.$emit('participant', []);
+                            me.$EventBus.$emit('isMounted-ModelCanvas', 'false');
+                            me.$EventBus.$emit('participant', []);
 
-                        if(window.opener) {
-                            window.opener = null;
-                        }
+                            if (window.opener) window.opener = null;
+                            if (me.rtcLogin) me.onLeave()
+                            if (me.sortScheduleId) clearTimeout(me.sortScheduleId)
+                            window.removeEventListener('resize', this.onResize);
+                            me.leaveUserAtion()
+                            me.releaseMoveEvents();
 
-                        if (me.rtcLogin){
-                            me.onLeave()
-                        }
-
-                        if (me.sortScheduleId) {
-                            clearTimeout(me.sortScheduleId)
-                        }
-
-                        window.removeEventListener('resize', this.onResize);
-
-                        await me.publishScreenShot()
-                        if( me.isServerModel  && !me.isReadOnlyModel ) {
-                            // server && permission O
-                            if( me.initLoad && me.modelChanged ){
-                                var putObj = {
-                                    lastModifiedTimeStamp: Date.now(),
-                                    lastModifiedUser: me.userInfo.uid,
-                                    lastModifiedEmail: me.userInfo.email,
-                                    projectName: me.projectName,
+                            await me.publishScreenShot()
+                            if( me.isServerModel  && !me.isReadOnlyModel ) {
+                                // server && permission O
+                                if( me.initLoad && me.modelChanged ){
+                                    var putObj = {
+                                        lastModifiedTimeStamp: Date.now(),
+                                        lastModifiedUser: me.userInfo.uid,
+                                        lastModifiedEmail: me.userInfo.email,
+                                        projectName: me.projectName,
+                                    }
+                                    await me.putObject(`db://definitions/${me.projectId}/information`, putObj)
                                 }
-                                await me.putObject(`db://definitions/${me.projectId}/information`, putObj)
-                            }
 
-                        } else if( !me.isServerModel ) {
-                            // local
-                            if( me.initLoad && me.modelChanged ){
-                                var lists = localStorage.getItem('localLists')
-                                if (lists) {
-                                    lists = JSON.parse(lists)
-                                    var index = lists.findIndex(list => list.projectId == me.projectId)
-                                    if (index != -1) {
-                                        if (localStorage.getItem(me.projectId)) {
-                                            lists[index].projectName = me.projectName;
-                                            lists[index].lastModifiedTimeStamp = Date.now();
-                                        } else {
-                                            lists.splice(index, 1);
+                            } else if( !me.isServerModel ) {
+                                // local
+                                if( me.initLoad && me.modelChanged ){
+                                    var lists = localStorage.getItem('localLists')
+                                    if (lists) {
+                                        lists = JSON.parse(lists)
+                                        var index = lists.findIndex(list => list.projectId == me.projectId)
+                                        if (index != -1) {
+                                            if (localStorage.getItem(me.projectId)) {
+                                                lists[index].projectName = me.projectName;
+                                                lists[index].lastModifiedTimeStamp = Date.now();
+                                            } else {
+                                                lists.splice(index, 1);
+                                            }
+                                            await me.putObject(`localstorage://localLists`, lists)
                                         }
-                                        await me.putObject(`localstorage://localLists`, lists)
                                     }
                                 }
                             }
@@ -1324,33 +1286,6 @@
             onShareScreen() {
                 if (this.$refs)
                     this.img = this.$refs.webrtc.shareScreen();
-            },
-            enterUser() {
-                var me = this
-                if ( me.isServerModel && me.isQueueModel && me.isInitRender && !me.isReadOnlyModel && !me.isClazzModeling ) {
-                    var postObj = {
-                        action: 'userEntrance',
-                        picture: me.userInfo.profile,
-                        editUid: me.userInfo.uid,
-                        email: me.userInfo.email,
-                        userName: me.userInfo.name,
-                        timeStamp: Date.now(),
-                    }
-                    me.pushObject(`db://definitions/${me.projectId}/queue`, postObj)
-                }
-            },
-            exitUser() {
-                var me = this
-                if ( me.isLogin && me.isServerModel && me.isQueueModel && me.isInitRender && !me.isReadOnlyModel && !me.isClazzModeling  ) {
-                    var pushObj = {
-                        action: 'userExit',
-                        editUid: me.userInfo.uid,
-                        email: me.userInfo.email,
-                        userName: me.userInfo.name,
-                        timeStamp: Date.now(),
-                    }
-                    me.pushObject(`db://definitions/${me.projectId}/queue`, pushObj)
-                }
             },
             settingPermission(information, init) {
                 var me = this
@@ -2309,7 +2244,7 @@
                             me.forkInformation.forkLatest = forkLatest ? forkLatest : null
                             me.forkInformation.forkOrigin = information.forkOrigin ? information.forkOrigin : null
 
-                            await me.enterUser()
+                            await me.enterUserAction()
                             // me.specVersion = await me.getSpecVersion()
 
                             if (me.alertInfo.fnNum == 1) {
@@ -3528,15 +3463,13 @@
                     }
                 },waitingTime)
 
-
-                var options = {
+                let options = {
                     sort: null,
                     orderBy: null,
                     size: null,
                     startAt: me.lastSnapQueueKey,
                     endAt: null,
                 }
-
                 me.watch_added(`db://definitions/${me.projectId}/queue`, options, async function (queue) {
                     // console.log('watch_added:: ', queue)
                     // console.log('receiveQueue: ', queue.key, me.lastSanpQueueKey, queue.key > me.lastSnapQueueKey)
@@ -3546,44 +3479,8 @@
                     }
                     if (  queue && (me.lastSnapQueueKey ? queue.key > me.lastSnapQueueKey : true) ) {
                     // if (me.specVersion != '1.0' && queue && (me.lastSnapQueueKey ? queue.key > me.lastSnapQueueKey : true)) {
-                        if (queue.action == 'userEntrance') {
-
-                            var obj = {
-                                uid: queue.editUid,
-                                email: queue.email,
-                                userName: queue.userName,
-                                picture: queue.picture
-                            }
-                            if (me.participantLists.findIndex(user => user.uid == obj.uid) == -1) {
-                                me.participantLists.push(obj)
-                            }
-
-                        } else if (queue.action == 'userExit') {
-                            var obj = {
-                                uid: queue.editUid,
-                                email: queue.email,
-                                userName: queue.userName,
-                            }
-                            var findIndex = me.participantLists.findIndex(user => user.uid == obj.uid)
-                            if (findIndex != -1) {
-                                me.participantLists.splice(findIndex, 1)
-                            }
-
-                        } else if (queue.action == 'userPanelOpen' ||
-                            queue.action == 'userPanelClose' ||
-                            queue.action == 'userSelectedOn' ||
-                            queue.action == 'userSelectedOff' ||
-                            queue.action == 'userMovedOn' ||
-                            queue.action == 'userMovedOff') {
-
-                            var obj = {
-                                action: queue.action,
-                                uid: queue.editUid,
-                                picture: queue.picture,
-                                name: queue.name
-                            }
-
-                            me.$EventBus.$emit(`${queue.editElement}`, obj)
+                        if(queue.action.startsWith('user')){
+                            me.receiveUserInteractionQueue(queue)
                         } else {
                             clearTimeout(isWaitingQueue)
 
@@ -4070,6 +3967,7 @@
                 const generator = new PowerPointGenerator(me.projectName);
                 generator.createPowerPoint(modelData);
             },
+            ////////////////////////////////// Trigger ///////////////////////////////////
             /** 
              * element 추가.
              **/
@@ -4138,7 +4036,6 @@
                             me.canvas.removeShape(edgeElement, true);
                         
                             me.addElement(componentInfo);
-
                         }
                     }
                 })
@@ -4164,7 +4061,8 @@
                     }
                 })
             },
-            ///////// ACTION ////////
+            //////////////////////////////////////////////////////////////////////////////
+            /////////////////////////////// ACTION ///////////////////////////////////////
              /** 
              *  addElement > addElementAction
              *  Element 추가 호출
@@ -4313,7 +4211,8 @@
                     }
                 })
             },
-            //////// Execute ////////
+            //////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////// Edit Execute //////////////////////////////////
              /** 
              * addElement > addElementAction > appendElement
              * receivedQueueDrawElement > receiveAppendedQueue > appendElement
@@ -4417,13 +4316,19 @@
                     }
                 })
             },
-            patchValue(diff, value, options){
+            applyPatchValue(diff, value, options){
                 var me = this
-                if(!value) value = me.value
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!value) value = me.value
 
-                jsondiffpatch.patch(value, diff)
+                        jsondiffpatch.patch(value, diff)
+                    }
+                })
             },
-            //////// Push QUEUE ////////
+            //////////////////////////////////////////////////////////////////////////////
+            //////////////////////////////// Push Queue //////////////////////////////////
              /** 
              *  addElement > addElementAction > pushAppendedQueue
              *  Element 추가 큐 발송.
@@ -4527,9 +4432,84 @@
                     item: JSON.stringify(diff)
                 })
             },
+            //////////////////////////////////////////////////////////////////////////////
+            /////////////////////////////// USER /////////////////////////////////////////
+            isUserInteractionActive(){
+                // user의 마우스 클릭, 이동 파악 하는 조건.
+                var me = this
+                if(me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.isReadOnlyModel){
+                    return true
+                }
+                return false
+            },
+            /** 
+             * User 입장
+            **/
+            enterUserAction(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;
+                        me.pushEnteredUserQueue();
+                    }
+                })
+            },
+            /** 
+             * User 퇴장
+            **/
+            leaveUserAtion(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;   
+                        me.pushLeavedUserQueue()
+                    }
+                })
+            },
+            /** 
+             * User 입장 큐 발송 
+            **/
+            pushEnteredUserQueue(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;
+                        await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                            action: 'userEntrance',
+                            picture: me.userInfo.profile,
+                            editUid: me.userInfo.uid,
+                            email: me.userInfo.email,
+                            userName: me.userInfo.name,
+                            timeStamp: Date.now(),
+                        })
+                    }
+                })
+            },
+            /** 
+             * User 퇴장 큐 발송
+            **/
+            pushLeavedUserQueue(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;
+                        await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                            action: 'userExit',
+                            editUid: me.userInfo.uid,
+                            email: me.userInfo.email,
+                            userName: me.userInfo.name,
+                            timeStamp: Date.now(),
+                        })
+                    }
+                })
+            },
             /** 
              * EventBus:isMovedElement[Element.vue] > pushUserMovementActivatedQueue
-             * Hold Moved User
+             * User 마지막 움직임 큐 설정
              **/
             async pushUserMovementActivatedQueue(element){
                 var me = this
@@ -4547,15 +4527,12 @@
                             timeStamp: Date.now(),
                             editElement: element.elementView.id
                         })
-                    },
-                    onFail(e){
-                        console.log(`[Error] Push UserMovementActivatedQueue: ${e}`)
                     }
                 })
             },
             /** 
              * EventBus:isMovedElement[Element.vue] >pushUserMovementDeactivatedQueue
-             * Release Moved User
+             * User 마지막 움직임 큐 해제
              **/
             async pushUserMovementDeactivatedQueue(element){
                 var me = this
@@ -4573,68 +4550,74 @@
                             timeStamp: Date.now(),
                             editElement: element.elementView.id
                         })
-                    },
-                    onFail(e){
-                        console.log(`[Error] Push UserMovementActivatedQueue: ${e}`)
                     }
                 })
             },
-            async pushUserSelectionActivatedQueue(element){
+            /** 
+             * User 클릭 유지 큐 발송
+            **/
+            pushUserSelectionStayedQueue(element){
                 var me = this
-                if(!me.isUserInteractionActive()) return;
-                if(!element) return;
-                if(element.relationView ) return; // exception relation
-                return; // temp 
-                await me.pushObject(`db://definitions/${me.projectId}/queue`, {
-                    action: 'userSelectedOn',
-                    editUid: me.userInfo.uid,
-                    name: me.userInfo.name,
-                    picture: me.userInfo.profile,
-                    timeStamp: Date.now(),
-                    editElement: element.elementView.id
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;
+                        if(!element) return;
+                        if(element.relationView ) return; // exception relation
+                        await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                            action: 'userSelectedOn',
+                            editUid: me.userInfo.uid,
+                            name: me.userInfo.name,
+                            picture: me.userInfo.profile,
+                            timeStamp: Date.now(),
+                            editElement: element.elementView.id
+                        })
+                    }
                 })
             },
-            async pushUserSelectionDeactivatedQueue(element){
+            /** 
+             * User 클릭 해체 큐 발송
+            **/
+            pushUserSelectionReleasedQueue(element){
                 var me = this
-                if(!me.isUserInteractionActive()) return;
-                if(!element) return;
-                if(element.relationView ) return; // exception relation
-                return; // temp 
-                await me.pushObject(`db://definitions/${me.projectId}/queue`, {
-                    action: 'userSelectedOff',
-                    editUid: me.userInfo.uid,
-                    name: me.userInfo.name,
-                    picture: me.userInfo.profile,
-                    timeStamp: Date.now(),
-                    editElement: element.elementView.id
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;
+                        if(!element) return;
+                        if(element.relationView ) return; // exception relation
+                        await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                            action: 'userSelectedOff',
+                            editUid: me.userInfo.uid,
+                            name: me.userInfo.name,
+                            picture: me.userInfo.profile,
+                            timeStamp: Date.now(),
+                            editElement: element.elementView.id
+                        })
+                    }
                 })
             },
-            isUserInteractionActive(){
-                // user의 마우스 클릭, 이동 파악 하는 조건.
-                var me = this
-                if(me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.isReadOnlyModel){
-                    return true
-                }
-                return false
-            },
-            //////// Receive QUEUE ////////
+            //////////////////////////////////////////////////////////////////////////////
+            ///////////////////////// Receive QUEUE //////////////////////////////////////
             /** 
              *  receivedQueueDrawElement > receiveAppendedQueue
              *  Element 추가 큐 수신
              **/
             receiveAppendedQueue(element, queue, options){
+                var me = this
                 if(!options) options = {}
-                this.appendElement(element, this.value, options)
+                me.appendElement(element, me.value, options)
             },
              /** 
              *  receivedQueueDrawElement > receiveRemovedQueue
              *  Element 삭제 큐 수신
              **/
             receiveRemovedQueue(element, queue, options){
+                var me = this
                 if(!options) options = {}
-                this.removeElement(element, this.value, options)
+                me.removeElement(element, me.value, options)
             },
-             /** 
+            /** 
              *  receivedQueueDrawElement > receiveMovedQueue
              *  Element 이동 큐 수신
              **/
@@ -4646,9 +4629,48 @@
 
                 me.moveElement(element, newValue, me.value, options)
             },
+            /** 
+             *  receivedQueueDrawElement > receiveChangedValueQueue
+             *  Value 값의 변화 된값 (diff)를 patch.
+             **/
             receiveChangedValueQueue(diff, queue, options){
+                var me = this
                 if(!options) options = {}
-                this.patchValue(diff, this.value, options)
+                me.applyPatchValue(diff, me.value, options)
+            },
+            /** 
+             * receiveQueue > receiveUserInteractionQueue
+             * User의 이벤트 처리.
+             **/
+            receiveUserInteractionQueue(queue) {
+                var me = this;
+                if (!queue) return
+                if (!queue.editUid) return
+
+                switch (queue.action) {
+                    case 'userEntrance':
+                        if (me.participantLists.findIndex(user => user.uid == queue.editUid) == -1) {
+                            me.participantLists.push({
+                                uid: queue.editUid,
+                                email: queue.email,
+                                userName: queue.userName,
+                                picture: queue.picture
+                            });
+                        }
+                        break;
+                    case 'userExit':
+                        let index = me.participantLists.findIndex(user => user.uid == queue.editUid);
+                        if (index != -1) me.participantLists.splice(index, 1);
+                        break;
+                    default:
+                        me.$EventBus.$emit(`${queue.editElement}`, {
+                            action: queue.action,
+                            uid: queue.editUid,
+                            picture: queue.picture,
+                            name: queue.name
+                        });
+                        break;
+                }
             },
             receiveErrorQueue(error, queue){
                 var me = this
@@ -4670,6 +4692,7 @@
                 }
                 me.$emit('forceUpdateKey')
             },
+            //////////////////////////////////////////////////////////////////////////////
         }
     }
 
