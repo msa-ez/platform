@@ -1683,6 +1683,7 @@
                                         v-model="embeddedCanvasValue"
                                         :aggregateRootList="aggregateRootList"
                                         :esValue="value"
+                                        :projectId="projectId"
                                 ></uml-class-model-canvas>
                             </v-layout>
                             <v-layout
@@ -3237,8 +3238,8 @@
             },
             modificateModel(model){
                 var me = this;
-                if(model){
-                    me.value.elements[model.id] = model
+                if(model && model.updateElement){
+                    me.value.elements[model.updateElement.id] = model.updateElement
                     me.changedByMe = true
                 }
             },
