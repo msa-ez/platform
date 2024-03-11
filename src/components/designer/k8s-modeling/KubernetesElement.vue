@@ -431,7 +431,7 @@
             connected: function () {
                 // console.log(this.value)
             },
-
+            // override
             onActivitySelected(){
                 var me = this
                 if (me.value) {
@@ -440,6 +440,7 @@
                     me.$EventBus.$emit('selectedElementObj', {selected: true, id: me.getId, type: elementType, isEmbedded: me.isEmbedded})
                 }
             },
+            // override
             onActivityDeselected(){
                 var me = this
                 if (this.value) {

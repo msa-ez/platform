@@ -86,6 +86,7 @@
                 var me = this
                 me.canvas = me.getComponent('bpmn-modeling-canvas');
             },
+            // override
             onActivityDeselected(){
                 if(this.value) this.drawer = false;         
             },

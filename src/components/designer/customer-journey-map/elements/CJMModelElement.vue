@@ -103,6 +103,7 @@
                 var me = this;
                 me.canvas = me.getComponent('customer-journey-map-canvas');
             },
+            // override
             onActivityDeselected(){
                 if (this.value) {
                     if (this.value._type == "CJMTextElement" && this.value.name.length == 0) {

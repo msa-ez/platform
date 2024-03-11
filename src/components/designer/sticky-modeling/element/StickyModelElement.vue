@@ -84,7 +84,7 @@
                 var me = this
                 me.canvas = me.getComponent('sticky-model-canvas');
             },
-
+            // override
             onActivityDeselected(){
                 if (this.value) {
                     if (this.value._type == "StickyTextElement" && this.value.name.length == 0) {

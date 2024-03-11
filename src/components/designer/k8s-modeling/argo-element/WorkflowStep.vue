@@ -119,6 +119,7 @@
         watch: {
         },
         methods: {
+            // override
             onActivityDeselected(){
                 var me = this;
                 if (me.value) {

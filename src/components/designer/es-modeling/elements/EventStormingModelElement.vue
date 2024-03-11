@@ -617,6 +617,7 @@
                     }
                 }
             },
+            // override
             onActivitySelected(){
                 var me = this
                 if (me.value) {
@@ -626,6 +627,7 @@
                     me.$EventBus.$emit('selectedElementObj', {selected: true, id: elementIds, type: elementType})
                 }
             },
+            // override
             onActivityDeselected(){
                 var me = this
                 if (me.value) {  
