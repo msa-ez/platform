@@ -102,6 +102,31 @@
             onMoveShape: function () {
                 this.$EventBus.$emit('isMovedElement', this.value.elementView.id)
             },
+            selectedActivity: function () {
+                var me = this
+                if (this.value) {
+                    this.selected = true
+
+                    // selected Template
+                    var elementType = me.value._type ? me.value._type : null
+                    var elementIds = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
+                    me.$EventBus.$emit('selectedElementObj', {selected: true, id: elementIds, type: elementType})
+                }
+
+            },
+            deSelectedActivity: function () {
+                var me = this
+                if (this.value) {
+                    this.propertyPanel = false
+                    this.selected = false
+                    this.staySelected = false
+
+                    // deselected Template
+                    let elementIds = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
+                    me.$EventBus.$emit('selectedElementObj', {selected: false, id: elementIds})
+                }
+
+            },
             movedNewActivity() {
                 var me = this
                 if (me.canvas.isLogin && me.canvas.isServerModel && !me.canvas.isClazzModeling && !me.canvas.isReadOnlyModel) {

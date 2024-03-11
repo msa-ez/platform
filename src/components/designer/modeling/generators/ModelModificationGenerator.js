@@ -17,10 +17,12 @@ Please refer to the request below to create {modifications: [..]} to be used to 
 ${this.client.input.modificationMessage}
 
 {modifications: [..]} should be created like this:
-- In case of replace, only the information to be changed should be included, not the entire model.
-- In the case of add, it must contain only the information to be added and must follow the data structure at the same level and there needs to be only a path, no id needed.
+- In the case of replace, all information that can be modified upon request must be modified and included in the value, and there must be a json path and query that is closest to the information to be modified.
+- In the case of add, the value to be added must have the same structure as the object located in the same json path, and there must be no query.
 - In case of delete, no value is needed and only the id value and action must be included.
 - jsonPath does not include "entities".
+- name, namePascalCase, and nameCamelCase must be written in English and must be modified together to fit each format.
+- Class Name of must can be known java class or the Value object classes listed here: must be one of Address, Photo, User, Money, Email, Payment, Weather, File, Likes, Tags, Comment. use simple name reduce the package name if java class name.
 
 in this json format:
 
@@ -28,8 +30,8 @@ in this json format:
     "modifications": [
         {
             "jsonPath": "$.elements[?(@.id=='element id to be replaced or deleted')]", // action이 add인 경우는 id는 불필요.
-            "action": "replace" | "add" | "delete",
-            "value": {"element attributes to be replaced or added": "element values to be replaced or added"} // action이 delete인 경우는 불필요
+            "action": "replace" | "add" | "delete", // 요청을 고려하여 하나만 선택.
+            "value": {"element attributes to be replaced or added": "element values to be replaced or added"} // action이 delete인 경우는 불필요.
         }
     ]
 }
@@ -50,8 +52,10 @@ in this json format:
             let updateElement = JSON.parse(JSON.stringify(selectedElement))
             
             const modelValue = {
-                elements: [],
-                relations: []
+                add: [],
+                delete: [],
+                replace: [],
+                beforeReplace: []
             }
     
             function uuid() {
@@ -78,6 +82,9 @@ in this json format:
 
                     // jsonPath에서 필요한 키 추출
                     const keys = jsonPath.match(/(?<=\$\.).+?(?=\[|\]|$)/g);
+                    // if(jsonPath.match(/^\$\.(.+)\[(\d+)\]$/) && selectedElement._type.includes('uml')){
+                    //     keys = jsonPath.match(/^\$\.(.+)\[(\d+)\]$/);
+                    // }
 
                     // 추출된 키를 배열로 저장
                     const keysArray = keys[0].split('.');
@@ -102,12 +109,20 @@ in this json format:
                                 if(query[1] && query[2]){
                                     for(var i=0; i<currentObject.length; i++) {
                                         if(currentObject[i][query[1]] === query[2]) {
+                                            // if(selectedElement._type.includes('uml')){
+                                            //     modelValue.beforeReplace.push(selectedElement.fieldDescriptors.find(x => x[query[1]] == query[2]))
+                                            //     modelValue.replace.push(modifications[idx].value)
+                                            // }
                                             currentObject[i] = Object.assign(currentObject[i], modifications[idx].value)
                                         }
                                     }
                                 }
                             }else{
                                 if(currentObject){
+                                    // if(selectedElement._type.includes('uml')){
+                                    //     modelValue.beforeReplace.push(currentObject[keys[1]][keys[2]])
+                                    //     modelValue.replace.push(modifications[idx].value)
+                                    // }
                                     currentObject[keys[0]] = modifications[idx].value
                                 }
                             }
@@ -131,7 +146,21 @@ in this json format:
                             }
 
                             if(currentObject){
+                                // modifications이 생성되는 중간 과정에 push된 것을 지우고 다시 push
+                                if(Array.isArray(currentObject)){
+                                    var index = currentObject.findIndex((x) => x.name == modifications[idx].value.name || Object.keys(x).length === 0);
+                                    if(index !== -1){
+                                        currentObject.splice(index, 1);
+                                    }
+                                }
                                 currentObject.push(modifications[idx].value)
+                                if(selectedElement._type.includes('uml')){
+                                    const existingIndex = modelValue.add.findIndex(item => item.name === modifications[idx].value.name);
+                                    if (existingIndex !== -1) {
+                                        modelValue.add.splice(existingIndex, 1); // 기존 요소 삭제
+                                    }
+                                    modelValue.add.push(modifications[idx].value)
+                                }
                             }
                         }
                     }
@@ -156,6 +185,9 @@ in this json format:
                                 if(currentObject && query[1] && query[2]){
                                     for(var i = currentObject.length - 1; i >= 0; i--) {
                                         if(currentObject[i][query[1]] === query[2]) {
+                                            if(selectedElement._type.includes('uml')){
+                                                modelValue.delete.push(currentObject[i]);
+                                            }
                                             currentObject.splice(i, 1); 
                                         }
                                     }
@@ -167,12 +199,14 @@ in this json format:
                     console.log();
                 }
             }
-    
-            return updateElement;
+
+            modelValue["updateElement"] = updateElement
+            modelValue["selectedElement"] = selectedElement
+
+            return modelValue;
 
         } catch (error) {
             console.log(error)
-            return selectedElement;
         }
     }
 
