@@ -31,8 +31,6 @@
         },
         data: function () {
             return {
-                modelCanvasComponent: null,
-                isMovedElement: false,
                 namePanel: '',
             };
         },
@@ -57,7 +55,7 @@
         },
         created: function () {
             var me = this;
-            // me.modelCanvasComponent = me.getComponent('uml-class-model-canvas');
+            // me.canvas = me.getComponent('uml-class-model-canvas');
             // me.canvas = me.getComponent('uml-class-model-canvas');
 
             // Init Common panel-value Setting
@@ -67,30 +65,9 @@
                 me.namePanel = me.value.name;
             }
         },
-        mounted: function () {
-            var me = this;
-
-            me.$EventBus.$on('isMovedElement', function (id) {
-                if (me.value && me.value.elementView) {
-                    //only Element
-                    if (me.value.elementView.id == id || me.value.id == id) {
-                        me.isMovedElement = true
-                        me.movedNewActivity()
-                    } else {
-                        if (me.isMovedElement == true) {
-                            me.isMovedElement = false
-                            me.movedOldActivity()
-                        }
-                    }
-                }
-            })
-
-            me.refreshImg();
-        },
         methods: {
             setElementCanvas(){
                 var me = this;
-                me.modelCanvasComponent = me.getComponent('uml-class-model-canvas');
                 me.canvas = me.getComponent('uml-class-model-canvas');
             },
             closePanel() {
@@ -98,206 +75,6 @@
                 this.propertyPanel = false
                 if(this.value._type.endsWith('Class'))
                     this.refreshImg()
-            },
-            onMoveShape: function () {
-                this.$EventBus.$emit('isMovedElement', this.value.elementView.id)
-            },
-            selectedActivity: function () {
-                var me = this
-                if (this.value) {
-                    this.selected = true
-
-                    // selected Template
-                    var elementType = me.value._type ? me.value._type : null
-                    var elementIds = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
-                    me.$EventBus.$emit('selectedElementObj', {selected: true, id: elementIds, type: elementType})
-                }
-
-            },
-            deSelectedActivity: function () {
-                var me = this
-                if (this.value) {
-                    this.propertyPanel = false
-                    this.selected = false
-                    this.staySelected = false
-
-                    // deselected Template
-                    let elementIds = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
-                    me.$EventBus.$emit('selectedElementObj', {selected: false, id: elementIds})
-                }
-
-            },
-            movedNewActivity() {
-                var me = this
-                if (me.canvas.isLogin && me.canvas.isServerModel && !me.canvas.isClazzModeling && !me.canvas.isReadOnlyModel) {
-                    var obj = {
-                        action: 'userMovedOn',
-                        editUid: me.userInfo.uid,
-                        name: me.userInfo.name,
-                        picture: me.userInfo.profile,
-                        timeStamp: Date.now(),
-                        // editElement: me.value.elementView.id
-                        editElement: me.value.elementView ? me.value.elementView.id : me.value.relationView.id
-                    }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
-                }
-            },
-            movedOldActivity() {
-                var me = this
-                if (me.canvas.isLogin && me.canvas.isServerModel && !me.canvas.isClazzModeling && !me.canvas.isReadOnlyModel) {
-                    var obj = {
-                        action: 'userMovedOff',
-                        editUid: me.userInfo.uid,
-                        name: me.userInfo.name,
-                        picture: me.userInfo.profile,
-                        timeStamp: Date.now(),
-                        // editElement: me.value.elementView.id
-                        editElement: me.value.elementView ? me.value.elementView.id : me.value.relationView.id
-                    }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
-                }
-            },
-            delayedMove(dx, dy, dw, dh, du, dlw, dl, dr) {
-                var me = this
-                try{
-                    var offsetX, offsetY, offsetW, offsetH
-
-                    var originX = me.value.elementView.x
-                    var originY = me.value.elementView.y
-                    var originW = me.value.elementView.width
-                    var originH = me.value.elementView.height
-
-                    if (dx == null && dy == null) {
-                        // resize
-
-                        if (Math.abs(dl) <= Math.abs(dr)) {
-                            // 오른쪽으로 움직임
-                            if (dr >= 0) {
-                                offsetX = originX + (Math.abs(dl + dr) / 2.0)
-                            } else {
-                                offsetX = originX - (Math.abs(dl + dr) / 2.0)
-                            }
-
-
-                        } else if (Math.abs(dl) > Math.abs(dr)) {
-                            // 왼쪽 으로 움직임
-                            if (dl >= 0) {
-                                offsetX = originX - (Math.abs(dl + dr) / 2.0)
-                            } else {
-                                offsetX = originX + (Math.abs(dl + dr) / 2.0)
-                            }
-
-                        }
-
-                        if (Math.abs(dlw) <= Math.abs(du)) {
-                            //위로 움직임
-                            if (du >= 0) {
-                                offsetY = originY - (Math.abs(du + dlw) / 2.0)
-                            } else {
-                                offsetY = originY + (Math.abs(du + dlw) / 2.0)
-                            }
-
-                        } else if (Math.abs(dlw) > Math.abs(du)) {
-                            //아래로 움직임
-                            if (dlw >= 0) {
-                                offsetY = originY + (Math.abs(du + dlw) / 2.0)
-                            } else {
-                                offsetY = originY - (Math.abs(du + dlw) / 2.0)
-                            }
-
-                        }
-
-                        offsetW = dw
-                        offsetH = dh
-
-                    } else if (dw == null && dh == null) {
-                        //move
-                        offsetX = originX + dx
-                        offsetY = originY + dy
-                        offsetW = originW
-                        offsetH = originH
-                    } else {
-                        console.log('error Move & Resize')
-                    }
-
-                    var afterViewObj = {x: offsetX, y: offsetY, width: offsetW, height: offsetH}
-                    var beforeViewObj = {x: originX, y: originY, width: originW, height: originH}
-
-                    me.delayedMoveAction(beforeViewObj, afterViewObj)
-
-                }catch (e) {
-                    alert(`[Error] ModelElement-delayedMove: ${e}`)
-                }
-            },
-            delayedRelationMove(vertices) {
-                var me = this
-                try{
-                    var originVertices = JSON.parse(JSON.stringify(me.value.relationView.value))
-                    var newVertices = []
-                    var offsetVertices
-
-                    vertices.forEach(function (ver, index) {
-                        newVertices.push([ver.x, ver.y])
-                    })
-                    offsetVertices = JSON.stringify(newVertices)
-
-                    me.delayedRelationMoveAction(originVertices, offsetVertices)
-                }catch (e) {
-                    alert(`[Error] ModelElement - delayedRelationMove: ${e}`)
-                }
-            },
-            onRemoveShape(model) {
-                var me = this
-                var id = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
-                var location = me.value.elementView ? model.$parent.canvas.value.elements : model.$parent.canvas.value.relations
-
-                if (location && id) {
-                    location[id] = null
-                }
-                
-                if (me.value.relationView) {
-                    var obj = {
-                        action: 'delete',
-                        element: me.value
-                    }
-                    me.$EventBus.$emit(`${me.value.relationView.id}`, obj)
-                }
-
-                try {
-                    if (me.canvas.isCustomMoveExist
-                        && me.canvas.isServerModel
-                        && me.canvas.isQueueModel) {
-                        if (me.value) {
-                            // me.STATUS_COMPLETE = false
-                            // me.canvas.value.elements[me.value.elementView.id] = null;
-
-                            var action = me.value.elementView ? 'elementDelete' : 'relationDelete'
-                            var obj = {
-                                action: action,
-                                editUid: me.getEditUid,
-                                timeStamp: Date.now(),
-                                item: JSON.stringify(me.value)
-                            }
-                            if (me.params.projectId)
-                                me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
-                        }
-                    } else {
-                        console.log('local:onRemoveShape, kubernetes')
-                        var id = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
-                        var location = me.value.elementView ? model.$parent.canvas.value.elements : model.$parent.canvas.value.relations
-
-                        if (location && id)
-                            location[id] = null
-
-                        if(me.initLoad){
-                            me.changedTemplateCode = true
-                        }
-
-                    }
-                    me.validate()
-                } catch (e) {
-                    alert('Error-onRemove: ', e)
-                }
             },
             getComponent(componentName) {
                 let component = null

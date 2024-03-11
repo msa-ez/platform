@@ -130,9 +130,6 @@
             }
         },
         methods: {
-            closePanel() {
-                this.$emit('close')
-            },
             openDoc(desDoc) {
                 this.$emit('openDesDoc', desDoc)
             },

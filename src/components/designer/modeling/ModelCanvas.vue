@@ -642,62 +642,67 @@
         },
         created: async function () {
             var me = this
-            console.log("created");
-            if (me.embedded) {
-                return
-            }
-            // URL
-            me.fullPath = me.$route.fullPath.split('/')
-            me.params = me.$route.params
-            me.paramKeys = Object.keys(me.params)
-            me.modelCanvasChannel = new BroadcastChannel('model-canvas')
-         
-
-            me.$EventBus.$emit('showNewButton', false)
-            //set userInfol
-            await me.loginUser()
-            window.io = io
-            me.app = this.getComponent('App')
-            let git;
-
-            this.git = new GitAPI();
-            if (me.isMobile) {
-                me.sliderLocationScale = 0.7
-            }
-            //initialize if never initialized before
-            if (!me.value || !me.value.relations) {
-                me.value = {}
-                me.value.relations = {}
-            }
-            if (!me.value || !me.value.elements) {
-                me.value.elements = {};
-            }
-
-            await me.loadDefinition()
-
-            if(me.information.associatedProject){
-                me.receiveAssociatedProject(me.information.associatedProject);
-            }
-
-            if( !me.isDisable && ((me.isServerModel && !me.isAutoForkModel) || me.projectVersion) ){
-                me.watchInformation();
-                me.onEventHandler();
-            }
-
-            if (me.isServerModel) {
-                if (me.isQueueModel) {
-                    if (me.isDisable || me.projectVersion){
-                        me.initLoad = true
-                        me.$EventBus.$emit('progressValue', false)
-                    }else {
-                        me.receiveQueue()
+            me.$app.try({
+                context: me,
+                async action(me){
+                    console.log("created");
+                    if (me.embedded) {
+                        return
                     }
-                } else {
-                    me.receiveValue()
-                    me.initLoad = true
-                    me.$EventBus.$emit('progressValue', false)
+                    window.io = io
+                    me.app = me.getComponent('App')
+                    me.git = new GitAPI();
+                    // URL
+                    me.fullPath = me.$route.fullPath.split('/')
+                    me.params = me.$route.params
+                    me.paramKeys = Object.keys(me.params)
+                    me.modelCanvasChannel = new BroadcastChannel('model-canvas')
+                    me.setCanvasType()
+                    me.track()
+
+                    me.$EventBus.$emit('showNewButton', false)
+                    //set userInfol
+                    await me.loginUser()
+                
+                    if (me.isMobile) {
+                        me.sliderLocationScale = 0.7
+                    }
+                    //initialize if never initialized before
+                    if (!me.value || !me.value.relations) {
+                        me.value = {}
+                        me.value.relations = {}
+                    }
+                    if (!me.value || !me.value.elements) {
+                        me.value.elements = {};
+                    }
+
+                    await me.loadDefinition()
+
+                    if(me.information.associatedProject){
+                        me.receiveAssociatedProject(me.information.associatedProject);
+                    }
+
+                    if( !me.isDisable && ((me.isServerModel && !me.isAutoForkModel) || me.projectVersion) ){
+                        me.watchInformation();
+                        me.onEventHandler();
+                    }
+
+                    if (me.isServerModel) {
+                        if (me.isQueueModel) {
+                            if (me.isDisable || me.projectVersion){
+                                me.initLoad = true
+                                me.$EventBus.$emit('progressValue', false)
+                            }else {
+                                me.receiveQueue()
+                            }
+                        } else {
+                            me.receiveValue()
+                            me.initLoad = true
+                            me.$EventBus.$emit('progressValue', false)
+                        }
+                    }
                 }
-            }
+            })
         },
         mounted: function () {
             var me = this
@@ -885,6 +890,26 @@
 
         },
         methods: {
+            setCanvasType(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        // Vue.use(ModelingIndex.js),
+                        // me.canvasType = 'modelingType'
+                        throw new Error('setCanvasType() must be implement')
+                    }
+                }) 
+            },
+            getComponentByClassName(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        throw new Error('getComponentByClassName() must be implement')
+                    }
+                }) 
+            },
             handleBeforeUnload(event) {        
                 // reload || close tab
                 console.log('reload')
@@ -914,103 +939,117 @@
                 alert("You need to re-login because session is expired")
                 this.showLoginCard = true
             },
-            publishScreenShot(){
+            async saveLocalScreenshot(){
                 var me = this
-                if( !me.isServerModel ){
-                    clearTimeout(me.valueChangedTimer);
-                    me.valueChangedTimer = setTimeout(async function () {
-                        let image = await me.screenshot();
-                        await me.putString(`localstorage://image_${me.projectId}`, image);
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.initLoad) return;
+                        let base64Img = await me.screenshot();
+                        await me.putString(`localstorage://image_${me.projectId}`, base64Img);
 
                         me.modelCanvasChannel.postMessage({
                             event: "ScreenShot",
                             model: me.projectId,
-                            image: image,
+                            image: base64Img,
                         });
-                    },1000)
-                }
+                    }
+                })
             },
-            onChangedValue(oldVal, newVal){
+            async saveServerScreenshot(){
                 var me = this
-                var diff = jsondiffpatch.diff(oldVal, newVal);
-                if(me.initLoad && diff){
-                    me.changeValueAction(diff);
-                }
-            },
-            async executeBeforeDestroy(){
-                var me = this
-
-                //embedded
-                if (me.embedded) {
-                    return
-                }
-                if(window && window.document) window.document.title = 'MSA Easy'
-                localStorage.removeItem('projectId')
-
-                me.$EventBus.$emit('isMounted-ModelCanvas', 'false');
-                me.$EventBus.$emit('participant', []);
-
-                if(window.opener) {
-                    window.opener = null;
-                }
-
-                if (me.rtcLogin){
-                    me.onLeave()
-                }
-
-                if (me.sortScheduleId) {
-                    clearTimeout(me.sortScheduleId)
-                }
-
-                window.removeEventListener('resize', this.onResize);
-
-                if( me.initLoad ) {
-                    let base64Img = await me.screenshot();
-                    console.log("****************")
-                    console.log(me.projectId)
-                    console.log("****************")
-                    if(me.isServerModel){
-                        // save image in cloud storage
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.initLoad) return;
+                        if(!me.isServerModel) return;
+                        let base64Img = await me.screenshot();
                         await me.putString(`storage://definitions/${me.projectId}/information/image`, base64Img);
                         if(me.information.associatedProject){
                             await me.putString(`storage://definitions/${me.information.associatedProject}/information/image`, base64Img);
                         }
-                    } else {
-                        await me.putString(`localstorage://image_${me.projectId}`, base64Img);
+                        
+                        me.modelCanvasChannel.postMessage({
+                            event: "ScreenShot",
+                            model: me.projectId,
+                            image: base64Img,
+                        });
                     }
+                })
+            },
+            async publishScreenShot(){
+                var me = this
+                if( !me.initLoad ) return;
+
+                if( me.isServerModel){
+                    await me.saveServerScreenshot()
+                } else {
+                    await me.saveLocalScreenshot()
                 }
-
-                if( me.isServerModel  && !me.isReadOnlyModel ) {
-                    // server && permission O
-                    if( me.initLoad && me.modelChanged ){
-                        var putObj = {
-                            lastModifiedTimeStamp: Date.now(),
-                            lastModifiedUser: me.userInfo.uid,
-                            lastModifiedEmail: me.userInfo.email,
-                            projectName: me.projectName,
+            },
+            executeBeforeDestroy(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        //embedded
+                        if (me.embedded) {
+                            return
                         }
-                        await me.putObject(`db://definitions/${me.projectId}/information`, putObj)
-                    }
+                        if(window && window.document) window.document.title = 'MSA Easy'
+                        localStorage.removeItem('projectId')
 
-                } else if( !me.isServerModel ) {
-                    // local
-                    if( me.initLoad && me.modelChanged ){
-                        var lists = localStorage.getItem('localLists')
-                        if (lists) {
-                            lists = JSON.parse(lists)
-                            var index = lists.findIndex(list => list.projectId == me.projectId)
-                            if (index != -1) {
-                                if (localStorage.getItem(me.projectId)) {
-                                    lists[index].projectName = me.projectName;
-                                    lists[index].lastModifiedTimeStamp = Date.now();
-                                } else {
-                                    lists.splice(index, 1);
+                        me.$EventBus.$emit('isMounted-ModelCanvas', 'false');
+                        me.$EventBus.$emit('participant', []);
+
+                        if(window.opener) {
+                            window.opener = null;
+                        }
+
+                        if (me.rtcLogin){
+                            me.onLeave()
+                        }
+
+                        if (me.sortScheduleId) {
+                            clearTimeout(me.sortScheduleId)
+                        }
+
+                        window.removeEventListener('resize', this.onResize);
+
+                        await me.publishScreenShot()
+                        if( me.isServerModel  && !me.isReadOnlyModel ) {
+                            // server && permission O
+                            if( me.initLoad && me.modelChanged ){
+                                var putObj = {
+                                    lastModifiedTimeStamp: Date.now(),
+                                    lastModifiedUser: me.userInfo.uid,
+                                    lastModifiedEmail: me.userInfo.email,
+                                    projectName: me.projectName,
                                 }
-                                await me.putObject(`localstorage://localLists`, lists)
+                                await me.putObject(`db://definitions/${me.projectId}/information`, putObj)
+                            }
+
+                        } else if( !me.isServerModel ) {
+                            // local
+                            if( me.initLoad && me.modelChanged ){
+                                var lists = localStorage.getItem('localLists')
+                                if (lists) {
+                                    lists = JSON.parse(lists)
+                                    var index = lists.findIndex(list => list.projectId == me.projectId)
+                                    if (index != -1) {
+                                        if (localStorage.getItem(me.projectId)) {
+                                            lists[index].projectName = me.projectName;
+                                            lists[index].lastModifiedTimeStamp = Date.now();
+                                        } else {
+                                            lists.splice(index, 1);
+                                        }
+                                        await me.putObject(`localstorage://localLists`, lists)
+                                    }
+                                }
                             }
                         }
                     }
-                }
+                })
             },
             async screenshot( canvasInfo ){
                 var me = this
@@ -1141,25 +1180,6 @@
                 }
 
             },
-            exceptionError(message, options){
-                var me = this
-                var msg = message ? message : '[Model] Exception Error.'
-                var showSnackbar = options && (options.show == false) ?  false : true
-
-                if(showSnackbar){
-                    me.snackbar.show         = true
-                    me.snackbar.text         = msg
-                    me.snackbar.color        = options && options.color    ? options.color : 'primary'
-                    me.snackbar.mode         = options && options.mode     ? options.mode : 'multi-line'
-                    me.snackbar.timeout      = options && options.timeout  ? options.timeout : 2000
-                    me.snackbar.bottom       = options && options.bottom   ? options.bottom : false
-                    me.snackbar.top          = !me.snackbar.bottom
-                    me.snackbar.centered     = options && options.centered ? options.centered : false
-                    me.snackbar.closeBtn     = options && options.closeBtn ? options.closeBtn : false
-                }
-
-                console.error(`Model Exception: ${msg}`);
-            },
             clearChangedPathListsBucket(){
                 this.changedPathListsBucket = []
                 this.showChangedPathLists = false
@@ -1258,36 +1278,6 @@
                     }
                 } catch (e){
                     console.log(`Error] Release MoveEvents : ${e}`)
-                }
-            },
-            onMoveElementById(id, newValueStr) {
-                /*
-                     !!!  REMOVE !!!!
-                     changedMethod: moveElement
-                */
-                var me = this
-
-                if (me.value && me.value.elements && me.value.elements[id]) {
-                    var newValueObj = JSON.parse(newValueStr)
-                    // minus element
-                    newValueObj.x =  newValueObj.x < 0 ? Math.abs(newValueObj.x) : newValueObj.x
-                    newValueObj.y =  newValueObj.y < 0 ? Math.abs(newValueObj.y) : newValueObj.y
-                    me.value.elements[id].elementView.x = newValueObj.x
-                    me.value.elements[id].elementView.y = newValueObj.y
-                    me.value.elements[id].elementView.width = newValueObj.width
-                    me.value.elements[id].elementView.height = newValueObj.height
-                }
-            },
-            onMoveRelationById(id, newValueObj) {
-                /*
-                    !!!  REMOVE !!!!
-                    changedMethod: moveElement
-               */
-                var me = this
-
-                if (me.value && me.value.relations && me.value.relations[id]) {
-                    // minus relation
-                    me.value.relations[id].relationView.value = newValueObj.includes('-') ? newValueObj.replaceAll('-','') : newValueObj
                 }
             },
             functionCluster(title) {
@@ -2040,122 +2030,121 @@
             },
             async forkModel() {
                 var me = this
-
-                try {
-                    me.$EventBus.$emit('progressValue', true);
-                    var check = await me.validateStorageCondition(me.storageCondition, 'fork');
-                    if(check){
-                        var originProjectId =  me.projectId
-                        var settingProjectId = me.storageCondition.projectId.replaceAll(' ','-').trim();
-                        if( !me.storageCondition.projectId ) me.storageCondition.projectId = me.dbuid();
-                       
-                        if(me.userInfo.providerUid && me.params.providerUid){
-                            settingProjectId = `${me.userInfo.providerUid}_${me.canvasType}_${settingProjectId}`
-                        }
-
-                        var projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
-                        var copyValue = JSON.parse(JSON.stringify(me.value));
-
-                        // 현재 모델의 org, repo 를 저장?
-                        copyValue.scm.forkedOrg = copyValue.scm.org;
-                        copyValue.scm.forkedRepo = copyValue.scm.repo;
-                        copyValue.scm.forkedTag = copyValue.scm.tag;
-                        copyValue.scm.org = null;
-                        copyValue.scm.repo = null;
-                        copyValue.scm.tag = null;
-
-                        let img = await me.$refs['modeler-image-generator'].save(me.projectName, me.canvas);
-
-                        if (!me.isServerModel) {
-                            me.storageDialogCancel()
-                            alert('준비중 입니다.')
-                        } else {
-                            await me.putString(`storage://definitions/${settingProjectId}/information/image`, img);
-
-                            var userInfoObj = {
-                                uid: me.userInfo.uid,
-                                name: me.userInfo.name,
-                                picture: me.userInfo.profile
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.$EventBus.$emit('progressValue', true);
+                        var check = await me.validateStorageCondition(me.storageCondition, 'fork');
+                        if(check){
+                            var originProjectId =  me.projectId
+                            var settingProjectId = me.storageCondition.projectId.replaceAll(' ','-').trim();
+                            if( !me.storageCondition.projectId ) me.storageCondition.projectId = me.dbuid();
+                        
+                            if(me.userInfo.providerUid && me.params.providerUid){
+                                settingProjectId = `${me.userInfo.providerUid}_${me.canvasType}_${settingProjectId}`
                             }
 
-                            var informationObj = {
-                                author: me.userInfo.uid,
-                                authorEmail: me.userInfo.email,
-                                forkOrigin: originProjectId,
-                                lastVersionName: projectVersion,
-                                comment: me.storageCondition ? me.storageCondition.comment : '',
-                                createdTimeStamp: Date.now(),
-                                lastModifiedTimeStamp: Date.now(),
-                                // img: img,
-                                lastModifiedUser: null,
-                                lastModifiedEmail: null,
-                                projectName: me.storageCondition ? me.storageCondition.editProjectName : me.projectName,
-                                type: me.information.type,
-                            }
+                            var projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
+                            var copyValue = JSON.parse(JSON.stringify(me.value));
 
+                            // 현재 모델의 org, repo 를 저장?
+                            copyValue.scm.forkedOrg = copyValue.scm.org;
+                            copyValue.scm.forkedRepo = copyValue.scm.repo;
+                            copyValue.scm.forkedTag = copyValue.scm.tag;
+                            copyValue.scm.org = null;
+                            copyValue.scm.repo = null;
+                            copyValue.scm.tag = null;
 
-                            // var versionValueObj ={
-                            //     value: JSON.stringify(copyValue),
-                            // }
-                            let valueUrl = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(copyValue));
-                            let imagURL = await me.putString(`storage://definitions/${originProjectId}/versionLists/${projectVersion}/image`, img);
+                            let img = await me.$refs['modeler-image-generator'].save(me.projectName, me.canvas);
 
-                            console.log(settingProjectId, originProjectId)
-                            var versionInfoObj = {
-                                saveUser: me.userInfo.uid,
-                                saveUserEmail: me.userInfo.email,
-                                saveUserName: me.userInfo.name,
-                                projectName: me.storageCondition.editProjectName,
-                                img: imagURL,
-                                timeStamp: Date.now(),
-                                comment: me.storageCondition.comment,
-                                valueUrl: valueUrl
-                            }
-                            var snapshotObj = {
-                                lastSnapshotKey: '',
-                                snapshot: JSON.stringify(copyValue),
-                                snapshotImg: imagURL,
-                                timeStamp: Date.now()
-                            }
-
-
-                            var putProjectObj = {
-                                projectId: settingProjectId,
-                                forkOrigin: originProjectId,
-                            }
-                            let forked = await me.setForkData(settingProjectId, snapshotObj, informationObj, userInfoObj, putProjectObj, projectVersion, versionInfoObj)
-                            .then(function () {
-                                if(me.isClazzModeling){
-                                    me.updateClassModelingId(settingProjectId);
-                                }else{
-                                    var location = null;
-                                    if( me.canvasType == 'es' ) {
-                                        location = 'storming'
-                                    } else if (me.canvasType == 'k8s') {
-                                        location = 'kubernetes'
-                                    } else if (me.canvasType == 'bm') {
-                                        location = 'business-model-canvas'
-                                    } else {
-                                        location = me.canvasType
-                                    }
-
-                                    let path = me.userInfo.providerUid && me.params.providerUid ? `/${me.userInfo.providerUid}/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}` : `/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}`
-                                    me.$router.push({path: path});
-                                    setTimeout(() => {
-                                        me.$emit('forceUpdateKey');
-                                    }, 500);
-                                }
+                            if (!me.isServerModel) {
                                 me.storageDialogCancel()
-                            })
-                        }
+                                alert('준비중 입니다.')
+                            } else {
+                                await me.putString(`storage://definitions/${settingProjectId}/information/image`, img);
 
-                    } else {
-                        this.storageCondition.loading = false
+                                var userInfoObj = {
+                                    uid: me.userInfo.uid,
+                                    name: me.userInfo.name,
+                                    picture: me.userInfo.profile
+                                }
+
+                                var informationObj = {
+                                    author: me.userInfo.uid,
+                                    authorEmail: me.userInfo.email,
+                                    forkOrigin: originProjectId,
+                                    lastVersionName: projectVersion,
+                                    comment: me.storageCondition ? me.storageCondition.comment : '',
+                                    createdTimeStamp: Date.now(),
+                                    lastModifiedTimeStamp: Date.now(),
+                                    // img: img,
+                                    lastModifiedUser: null,
+                                    lastModifiedEmail: null,
+                                    projectName: me.storageCondition ? me.storageCondition.editProjectName : me.projectName,
+                                    type: me.information.type,
+                                }
+
+
+                                // var versionValueObj ={
+                                //     value: JSON.stringify(copyValue),
+                                // }
+                                let valueUrl = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(copyValue));
+                                let imagURL = await me.putString(`storage://definitions/${originProjectId}/versionLists/${projectVersion}/image`, img);
+
+                                console.log(settingProjectId, originProjectId)
+                                var versionInfoObj = {
+                                    saveUser: me.userInfo.uid,
+                                    saveUserEmail: me.userInfo.email,
+                                    saveUserName: me.userInfo.name,
+                                    projectName: me.storageCondition.editProjectName,
+                                    img: imagURL,
+                                    timeStamp: Date.now(),
+                                    comment: me.storageCondition.comment,
+                                    valueUrl: valueUrl
+                                }
+                                var snapshotObj = {
+                                    lastSnapshotKey: '',
+                                    snapshot: JSON.stringify(copyValue),
+                                    snapshotImg: imagURL,
+                                    timeStamp: Date.now()
+                                }
+
+
+                                var putProjectObj = {
+                                    projectId: settingProjectId,
+                                    forkOrigin: originProjectId,
+                                }
+                                let forked = await me.setForkData(settingProjectId, snapshotObj, informationObj, userInfoObj, putProjectObj, projectVersion, versionInfoObj)
+                                .then(function () {
+                                    if(me.isClazzModeling){
+                                        me.updateClassModelingId(settingProjectId);
+                                    }else{
+                                        var location = null;
+                                        if( me.canvasType == 'es' ) {
+                                            location = 'storming'
+                                        } else if (me.canvasType == 'k8s') {
+                                            location = 'kubernetes'
+                                        } else if (me.canvasType == 'bm') {
+                                            location = 'business-model-canvas'
+                                        } else {
+                                            location = me.canvasType
+                                        }
+
+                                        let path = me.userInfo.providerUid && me.params.providerUid ? `/${me.userInfo.providerUid}/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}` : `/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}`
+                                        me.$router.push({path: path});
+                                        setTimeout(() => {
+                                            me.$emit('forceUpdateKey');
+                                        }, 500);
+                                    }
+                                    me.storageDialogCancel()
+                                })
+                            }
+
+                        } else {
+                            this.storageCondition.loading = false
+                        }
                     }
-                } catch (e) {
-                    me.alertInfo.text = 'FORK-ERROR' + e
-                    me.alertInfo.show = true
-                }
+                })
             },
             watchInformation(){
                 var me = this
@@ -3208,7 +3197,9 @@
             },
             async checkLeaderExist(child) {
                 var me = this
-                var lastKey
+                if(Object.keys(me.value.elements).length == 0) return; // Wrong data.
+
+                var lastKey = ''
 
                 var option = {
                     sort: 'desc',
@@ -3245,7 +3236,6 @@
                 var me = this
 
                 var action = child.childValue.action ? child.childValue.action : child.childValue.state
-
                 if (state == 'undo') {
                     if (action == 'redo') {
                         child = JSON.parse(child.childValue.item)
@@ -3370,16 +3360,12 @@
 
                         if (ignore || child.childKey != me.prevKey) {
                             if(!child.isMirrorQueue) me.prevKey = child.childKey
-
-                            if (me.validateRelation(item.from, item.to)) {
-
-                                if (!item._type.endsWith('Relation')) {
-                                    item.author = child.childValue.editUid
-                                }
-                                me.receiveAppendedQueue(item, child)
-
-                                if (me.initLoad) me.changedTemplateCode = true
+                            if (!item._type.endsWith('Relation')) {
+                                item.author = child.childValue.editUid
                             }
+                            me.receiveAppendedQueue(item, child)
+
+                            if (me.initLoad) me.changedTemplateCode = true
                         } else {
                             console.log('reduplication Relation Push')
                         }
@@ -3399,67 +3385,6 @@
                         }
                     }
                 }
-            },
-            addElements(element, child){
-                /*
-                 !!!  REMOVE !!!!
-                 changedMethod: appendElement
-                */
-                var me = this
-                me.$set(me.value.elements, element.elementView.id, element);
-
-                me.$nextTick(function () {
-                    me.$EventBus.$emit(`${element.elementView.id}`, {
-                        action: 'elementPush',
-                        STATUS_COMPLETE: true
-                    })
-                });
-            },
-            deleteElements(element, child){
-                /*
-                   !!!  REMOVE !!!!
-                   changedMethod: removeElement
-               */
-                var me = this
-                me.value.elements[element.elementView.id] = null;
-                // delete me.value.elements[element.elementView.id];
-
-                me.$nextTick(function () {
-                    me.$EventBus.$emit(`${element.elementView.id}`, {
-                        action: 'elementDelete',
-                        STATUS_COMPLETE: true
-                    })
-                });
-            },
-            addRelations(relation, child){
-                /*
-                   !!!  REMOVE !!!!
-                   changedMethod: appendElement
-               */
-                var me = this
-                me.$set(me.value.relations, relation.relationView.id, relation);
-
-                me.$nextTick(function () {
-                    me.$EventBus.$emit(`${relation.relationView.id}`, {
-                        action: 'relationPush',
-                        STATUS_COMPLETE: true
-                    })
-                });
-            },
-            deleteRelations(relation, child){
-                /*
-                  !!!  REMOVE !!!!
-                  changedMethod: removeElement
-              */
-                var me = this
-                me.value.relations[relation.relationView.id] = null;
-
-                me.$nextTick(function () {
-                    me.$EventBus.$emit(`${relation.relationView.id}`, {
-                        action: 'relationDelete',
-                        STATUS_COMPLETE: true
-                    })
-                });
             },
             async receiveValue() {
                 var me = this
@@ -3659,7 +3584,6 @@
                             }
 
                             me.$EventBus.$emit(`${queue.editElement}`, obj)
-
                         } else {
                             clearTimeout(isWaitingQueue)
 
@@ -3716,81 +3640,6 @@
 
                 return diff
             },
-            async modifiedElement(diff, options) {
-                /*
-                    !!!  REMOVE !!!!
-                    changedMethod: changeValueAction
-                */
-                var me = this
-                if(!options) options = {}
-                let forcePush = options.forcePush
-                // console.log("수정");
-                // if (me.storageExist) {
-
-                if (me.isServerModel) {
-                    // server
-                    if ((me.changedByMe || forcePush) && me.isQueueModel) {
-                        // 서버o, 랩 x, 큐 o
-                        // me.changedByMe = false;
-
-                        if(!forcePush){
-                            diff = me.removeMoveDiff(diff);
-                        }
-                        if ( !me.isReadOnlyModel && diff) {
-                            var postObj = {
-                                action: 'valueModify',
-                                editUid: me.userInfo.uid,
-                                timeStamp: Date.now(),
-                                item: JSON.stringify(diff)
-                            }
-                            var key = await me.pushObject(`db://definitions/${me.projectId}/queue`, postObj)
-                            me.changedByMeKeys.push(key)
-
-                            // COMMON QUEUE
-                            if( me.projectSendable ) {
-                                me.pushObject(`db://definitions/${me.information.associatedProject}/queue`, postObj)
-                            }
-                        }
-                        me.changedByMe = false
-                        me.modelChanged = true
-                        console.log('=== Push ModifiedElement ===')
-                    } else if ( !me.isQueueModel && !me.isReadOnlyModel ) {
-                        // 서버o, 랩 x, 큐 x
-                        // var putValue = {
-                        //     value: JSON.stringify(me.value)
-                        // }
-                        // me.putObject(`db://definitions/${me.projectId}/versionLists/${versionName}/versionValue`, putValue)
-                        await me.putString(`storage://definitions/${me.projectId}/value`, JSON.stringify(me.value));
-                        me.localUndoRedoStorage(diff)
-                    } else if (me.$isElectron) {
-                        // var putValue = {
-                        //     value: JSON.stringify(me.value)
-                        // }
-                        // me.putObject(`db://definitions/${me.projectId}/versionLists/${versionName}/versionValue`, putValue)
-                        await me.putString(`storage://definitions/${me.projectId}/value`, JSON.stringify(me.value));
-                        me.localUndoRedoStorage(diff)
-                    }
-
-                } else {
-                    // 서버x, 랩x, 큐x
-                    var proId = me.projectId
-                    var lists = await me.getObject(`localstorage://localLists`)
-                    if (lists) {
-                        var index = lists.findIndex(list => list.projectId == me.projectId)
-
-                        if (index != -1) {
-                            lists[index].lastModifiedTimeStamp = Date.now()
-                            if (me.initLoad) me.changedTemplateCode = true
-                        }
-                    }
-                    me.putObject(`localstorage://localLists`, lists)
-                    // local 저장 
-                    me.putObject(`localstorage://${proId}`, me.value)
-                    me.localUndoRedoStorage(diff)
-                }
-
-            },
-
             bindEvents: function (opengraph) {
                 var me = this;
                 var el = me.$el;
@@ -3872,120 +3721,127 @@
             },
             undo() {
                 var me = this
-
-                if (me.isQueueModel) {
-                    if (me.isServerModel) {
-                        me.firebaseUndo()
-                    } else {
-                        me.localUndo()
-                    }
+                if(me.isServerModel && me.isQueueModel){
+                    me.firebaseUndo()
                 } else {
                     me.localUndo()
                 }
-
             },
             redo() {
                 var me = this
-                if (me.isQueueModel) {
-                    if (me.isServerModel) {
-                        me.firebaseRedo()
-                    } else {
-                        me.localRedo()
-                    }
+                if (me.isServerModel && me.isQueueModel) {
+                    me.firebaseRedo()
                 } else {
                     me.localRedo()
                 }
             },
             localUndo() {
                 var me = this
-                var undoElement
-                if (me.undoRedoArray.length > 0) {
-                    me.undoRedoIndex = me.undoRedoIndex - 1
-                    undoElement = me.undoRedoArray[me.undoRedoIndex] ? JSON.parse(me.undoRedoArray[me.undoRedoIndex]) : null
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let undoElement
+                        if (me.undoRedoArray.length > 0) {
+                            me.undoRedoIndex = me.undoRedoIndex - 1
+                            undoElement = me.undoRedoArray[me.undoRedoIndex] ? JSON.parse(me.undoRedoArray[me.undoRedoIndex]) : null
 
-                    if (!undoElement) {
-                        me.undoRedoIndex = 0
-                        return
-                    }
+                            if (!undoElement) {
+                                me.undoRedoIndex = 0
+                                return
+                            }
 
-                    var type = Object.keys(undoElement)[0]
-                    var diff = undoElement[type]
-                    var id = Object.keys(undoElement[type])[0]
-                    var value = Object.values(diff)
-                    me.changedByUndoRedo = true
+                            var type = Object.keys(undoElement)[0]
+                            var diff = undoElement[type]
+                            var id = Object.keys(undoElement[type])[0]
+                            var value = Object.values(diff)
+                            me.changedByUndoRedo = true
 
 
-                    if (Array.isArray(value[0])) {
-                        if (value[0].length == 1) {
-                            me.value[type][id] = null
-                        } else if (value[0].length == 2) {
-                            me.$set(me.value[type], id, value[0][0])
+                            if (Array.isArray(value[0])) {
+                                if (value[0].length == 1) {
+                                    me.value[type][id] = null
+                                } else if (value[0].length == 2) {
+                                    me.$set(me.value[type], id, value[0][0])
+                                }
+                            } else if (typeof value == 'object') {
+                                jsondiffpatch.patch(me.value[type], jsondiffpatch.reverse(diff));
+                            }
                         }
-                    } else if (typeof value == 'object') {
-                        jsondiffpatch.patch(me.value[type], jsondiffpatch.reverse(diff));
                     }
-                }
+                })
+
             },
             localRedo() {
                 var me = this
-                var redoElement
-                if (me.undoRedoArray.length > 0) {
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let redoElement
+                        if (me.undoRedoArray.length > 0) {
 
-                    redoElement = me.undoRedoArray[me.undoRedoIndex] ? JSON.parse(me.undoRedoArray[me.undoRedoIndex]) : null
-                    me.undoRedoIndex = me.undoRedoIndex + 1
+                            redoElement = me.undoRedoArray[me.undoRedoIndex] ? JSON.parse(me.undoRedoArray[me.undoRedoIndex]) : null
+                            me.undoRedoIndex = me.undoRedoIndex + 1
 
-                    if (!redoElement) {
-                        me.undoRedoIndex = me.undoRedoArray.length
-                        return
+                            if (!redoElement) {
+                                me.undoRedoIndex = me.undoRedoArray.length
+                                return
+                            }
+
+                            var type = Object.keys(redoElement)[0]
+                            var diff = redoElement[type]
+                            var id = Object.keys(redoElement[type])[0]
+                            var value = Object.values(diff)
+                            me.changedByUndoRedo = true
+
+                            if (Array.isArray(value[0])) {
+                                if (value[0].length == 1) {
+                                    me.$set(me.value[type], id, value[0][0])
+                                } else if (value[0].length == 2) {
+                                    me.value[type][id] = null
+                                }
+                            } else if (typeof value == 'object') {
+                                jsondiffpatch.patch(me.value[type], diff);
+                            }
+                        }      
                     }
-
-                    var type = Object.keys(redoElement)[0]
-                    var diff = redoElement[type]
-                    var id = Object.keys(redoElement[type])[0]
-                    var value = Object.values(diff)
-                    me.changedByUndoRedo = true
-
-                    if (Array.isArray(value[0])) {
-                        if (value[0].length == 1) {
-                            me.$set(me.value[type], id, value[0][0])
-                        } else if (value[0].length == 2) {
-                            me.value[type][id] = null
-                        }
-                    } else if (typeof value == 'object') {
-                        jsondiffpatch.patch(me.value[type], diff);
-                    }
-
-                }
-
+                })
             },
             localUndoRedoStorage(diff) {
                 var me = this
-                if (me.changedByUndoRedo) {
-                    me.changedByUndoRedo = false
-                } else {
-
-                    var lastIndex = me.undoRedoArray.length
-                    if (lastIndex != me.undoRedoIndex) {
-                        me.undoRedoArray.splice(me.undoRedoIndex, lastIndex - me.undoRedoIndex)
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if (me.changedByUndoRedo) {
+                            me.changedByUndoRedo = false
+                        } else {
+                            var lastIndex = me.undoRedoArray.length
+                            if (lastIndex != me.undoRedoIndex) {
+                                me.undoRedoArray.splice(me.undoRedoIndex, lastIndex - me.undoRedoIndex)
+                            }
+                            me.undoRedoArray.push(JSON.stringify(diff))
+                            me.undoRedoIndex = me.undoRedoIndex + 1
+                        }      
                     }
-                    me.undoRedoArray.push(JSON.stringify(diff))
-                    me.undoRedoIndex = me.undoRedoIndex + 1
-
-                }
+                })
             },
             async firebaseUndo() {
                 var me = this
-                me.overlayText = 'Undoing'
-                me.undoDisable = true
-                var keySnap = await me.getLastQueue()
-                if(keySnap){
-                    var currentKey = keySnap[0].key
-                    var prevValue = await me.getUndoTarget(currentKey)
-                    if (prevValue) {
-                        me.undoRedoDraw(prevValue, 'undo')
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.overlayText = 'Undoing'
+                        me.undoDisable = true
+                        var keySnap = await me.getLastQueue()
+                        if(keySnap){
+                            var currentKey = keySnap[0].key
+                            var prevValue = await me.getUndoTarget(currentKey)
+                            if (prevValue) {
+                                me.undoRedoDraw(prevValue, 'undo')
+                            }
+                        }
+                        me.overlayText = null
                     }
-                }
-                me.overlayText = null
+                })
             },
             getUndoTarget(currentKey) {
                 var me = this
@@ -4033,17 +3889,22 @@
             },
             async firebaseRedo() {
                 var me = this
-                me.overlayText = 'Redoing'
-                me.redoDisable = true
-                var keySnap = await me.getLastQueue()
-                if(keySnap){
-                    var currentKey = keySnap[0].key
-                    var prevValue = await me.getRedoTarget(currentKey)
-                    if (prevValue) {
-                        me.undoRedoDraw(prevValue, 'redo')
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.overlayText = 'Redoing'
+                        me.redoDisable = true
+                        var keySnap = await me.getLastQueue()
+                        if(keySnap){
+                            var currentKey = keySnap[0].key
+                            var prevValue = await me.getRedoTarget(currentKey)
+                            if (prevValue) {
+                                me.undoRedoDraw(prevValue, 'redo')
+                            }
+                        }
+                        me.overlayText = null
                     }
-                }
-                me.overlayText = null
+                })
             },
             async getRedoTarget(nextKey) {
                 var me = this
@@ -4102,105 +3963,7 @@
                     }
                 })
             },
-            validateRelation(fromId, toId) {
-                var me = this
-                try {
-                    var relations = me.value.relations
-                    if (relations) {
-                        var index = Object.values(relations).findIndex(relation => relation && relation.from == fromId && relation.to == toId)
-                        if (index == -1) {
-                            return true
-                        }
-                    }
-                    return false
-                } catch (e) {
-                    return true
-                }
-            },
-            onConnectShape: function (edge, from, to) {
-
-                var me = this;
-                //존재하는 릴레이션인 경우 (뷰 ��포넌트), 데이터 매핑에 의해 자동으로 from, to 가 변경되어있기 때문에 따로 로직은 필요없음.
-                //=> 바뀌어야 함.
-                //신규 릴레이션인 경우에는 릴레이션 생성
-                var edgeElement, originalData;
-                var isComponent = false;
-                if (edge.shape) {
-                    edgeElement = edge;
-                } else {
-                    isComponent = true;
-                    edgeElement = edge.element;
-                }
-                // console.log(from, to)
-
-                if (edgeElement && from && to) {
-                    var vertices = '[' + edgeElement.shape.geom.vertices.toString() + ']';
-                    var componentInfo = {
-                        component: 'class-relation',
-                        sourceElement: from.$parent,
-                        targetElement: to.$parent,
-                        vertices: vertices,
-                        isFilled: true,
-                        isRelation: true,
-                        relationView: {
-                            style: JSON.stringify({}),
-                            value: vertices,
-                        }
-                    }
-
-                    from.$parent.value.elementView.id = from.id;
-                    to.$parent.value.elementView.id = to.id;
-
-                    if (isComponent) {
-                        me.canvas.removeShape(edgeElement, true);
-                        //this.removeComponentByOpenGraphComponentId(edgeElement.id);
-                        //기존 컴포넌트가 있는 경우 originalData 와 함께 생성
-                        // this.addElement(componentInfo)
-                    } else {
-                        me.canvas.removeShape(edgeElement, true);
-                        //기존 컴포넌트가 없는 경우 신규 생성
-                        // this.addElement(componentInfo);
-                    }
-                    // this.syncOthers();
-
-                    if (me.validateRelation(from.id, to.id)) {
-                        me.addElement(componentInfo);
-                    }
-
-                }
-            },
-            addElement: function (componentInfo, bounded) {
-                this.enableHistoryAdd = true;
-                var me = this;
-                var additionalData = {};
-                var vueComponent = me.getComponentByName(componentInfo.component);
-                var element;
-
-                if (componentInfo.isRelation && componentInfo.component.includes('relation')) {
-                    /* make Relation */
-                    element = vueComponent.computed.createNew(
-                        this.uuid(),
-                        componentInfo.sourceElement.value,
-                        componentInfo.targetElement.value,
-                        componentInfo.vertices,
-                    );
-
-                } else {
-                    /* make Element */
-                    element = vueComponent.computed.createNew(
-                        this.uuid(),
-                        componentInfo.x,
-                        componentInfo.y,
-                        componentInfo.width,
-                        componentInfo.height,
-                        componentInfo.description,
-                        componentInfo.label
-                    );
-                }
-
-                me.addElementAction(element)
-            },
-
+            
             uuid: function () {
                 function s4() {
                     return Math.floor((1 + Math.random()) * 0x10000)
@@ -4307,173 +4070,351 @@
                 const generator = new PowerPointGenerator(me.projectName);
                 generator.createPowerPoint(modelData);
             },
+            /** 
+             * element 추가.
+             **/
+            addElement: function (componentInfo, bounded) {
+                var me = this;
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let vueComponent = me.getComponentByName(componentInfo.component);
+                        if(!vueComponent) return;
 
+                        let element = null
+                        if (componentInfo.isRelation && componentInfo.component.includes('relation')) {
+                            /* make Relation */
+                            element = vueComponent.computed.createNew(
+                                this.uuid(),
+                                componentInfo.sourceElement.value,
+                                componentInfo.targetElement.value,
+                                componentInfo.vertices,
+                            );
+
+                        } else {
+                            /* make Element */
+                            element = vueComponent.computed.createNew(
+                                this.uuid(),
+                                componentInfo.x,
+                                componentInfo.y,
+                                componentInfo.width,
+                                componentInfo.height,
+                                componentInfo.description,
+                                componentInfo.label
+                            );
+                        }
+
+                        if(element) me.addElementAction(element)
+                    } 
+                })
+            },
+             /** 
+             *  relation 추가.
+             **/
+            onConnectShape: function (edge, from, to) {
+                var me = this;
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let edgeElement = edge.shape ? edge : edge.element
+                        if (edgeElement && from && to) {
+                            let vertices = '[' + edgeElement.shape.geom.vertices.toString() + ']';
+                            let componentInfo = {
+                                component: 'class-relation',
+                                sourceElement: from.$parent,
+                                targetElement: to.$parent,
+                                vertices: vertices,
+                                isFilled: true,
+                                isRelation: true,
+                                relationView: {
+                                    style: JSON.stringify({}),
+                                    value: vertices,
+                                }
+                            }
+                            from.$parent.value.elementView.id = from.id;
+                            to.$parent.value.elementView.id = to.id;
+
+                            // OG: 셀의 데이터를 및 콘텐트를 삭제한다. 기능 ????? 
+                            me.canvas.removeShape(edgeElement, true);
+                        
+                            me.addElement(componentInfo);
+
+                        }
+                    }
+                })
+            },
+             /** 
+             *  Watch > onChangedValue
+             *  Value 변화 인지.
+             **/
+            onChangedValue(oldVal, newVal){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let diff = jsondiffpatch.diff(oldVal, newVal);
+                        if(me.initLoad && diff){
+                            me.changeValueAction(diff);
+
+                            clearTimeout(me.valueChangedTimer);
+                            me.valueChangedTimer = setTimeout(async function () {
+                                await me.saveLocalScreenshot()
+                            },1000)
+                        }
+                    }
+                })
+            },
             ///////// ACTION ////////
+             /** 
+             *  addElement > addElementAction
+             *  Element 추가 호출
+             **/
             addElementAction(element, value, options){
                 var me = this
-                if(!options) options = {}
-                if(!value) value = me.value
-                let valueObj = element.relationView ? value.relations : value.elements
-                let id = element.relationView ? element.relationView.id : element.elementView.id
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        if(!value) value = me.value
+                        let valueObj = element.relationView ? value.relations : value.elements
+                        let elementId = element.relationView ? element.relationView.id : element.elementView.id
 
-                // duplication
-                if(Object.keys(valueObj).includes(id)) return;
+                        // duplication
+                        if(Object.keys(valueObj).includes(elementId)) return;
 
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationPush' : 'elementPush',
-                    STATUS_COMPLETE: false
+                        // First Excution
+                        me.appendElement(element, value, options)
+                        if(me.isServerModel && me.isQueueModel){
+                            me.pushAppendedQueue(element, options)
+                            me.$EventBus.$emit(elementId, {
+                                action: element.relationView ? 'relationPush' : 'elementPush',
+                                STATUS_COMPLETE: false
+                            })
+                        }
+                    },
+                    onFail(e){
+                        console.log(`[Error] AddElement Action: ${e}`)
+                    }
                 })
-
-                // First append
-                me.appendElement(element, value, options)
-
-                if(me.isServerModel && me.isQueueModel){
-                    // server
-                    me.pushAppendedQueue(element, options)
-                }
             },
+            /** 
+             *  onRemoveShape(Element.vue) > removeElementAction
+             *  Element 삭제 호출
+             **/
             removeElementAction(element, value, options){
                 var me = this
-                if(!options) options = {}
-                let id = element.relationView ? element.relationView.id : element.elementView.id
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        if(!value) value = me.value
+                        let elementId = element.relationView ? element.relationView.id : element.elementView.id
 
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationDelete' : 'elementDelete',
-                    STATUS_COMPLETE: false
+                        // First Excution
+                        me.removeElement(element, value, options)
+                        if(me.isServerModel && me.isQueueModel){
+                            me.pushRemovedQueue(element, options)
+                            me.$EventBus.$emit(elementId, {
+                                action: element.relationView ? 'relationDelete' : 'elementDelete',
+                                STATUS_COMPLETE: false
+                            })
+                        }
+                    },
+                    onFail(e){
+                        console.log(`[Error] RemoveElement Action: ${e}`)
+                    }
                 })
-
-                if(me.isServerModel && me.isQueueModel){
-                    me.pushRemovedQueue(element, options)
-                } else {
-                    me.removeElement(element, me.value, options)
-                }
             },
+             /** 
+             *  delayedMove[Element.vue] > moveElementAction
+             *  delayedRelationMove[Element.vue] > moveElementAction
+             *  Element 이동 호출
+             **/
             moveElementAction(element, oldVal, newVal, value, options){
                 var me = this
-                if(!options) options = {}
-                let id = element.relationView ? element.relationView.id : element.elementView.id
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        if(!value) value = me.value
+                        let elementId = element.relationView ? element.relationView.id : element.elementView.id
 
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationMove' : 'elementMove',
-                    STATUS_COMPLETE: false,
-                    movingElement: true
+                        // First Excution
+                        me.moveElement(element, newVal, value, options)
+                        if (me.isServerModel && me.isQueueModel) {
+                            me.pushMovedQueue(element, oldVal, newVal, options)
+                            me.$EventBus.$emit(elementId, {
+                                action: element.relationView ? 'relationMove' : 'elementMove',
+                                STATUS_COMPLETE: false,
+                                movingElement: true
+                            })
+                        }
+                    },
+                    onFail(e){
+                        console.log(`[Error] MoveElement Action: ${e}`)
+                    }
                 })
-
-                // First Move
-                me.moveElement(element, newVal, me.value, options)
-
-                if (me.isServerModel && me.isQueueModel) {
-                    me.pushMovedQueue(element, oldVal, newVal, options)
-                }
             },
+            /** 
+             *  onChangedValue > changeValueAction
+             *  Value 변경 호출
+             **/
             async changeValueAction(diff, value, options){
                 var me = this
-                if(!options) options = {}
-                let forcePush = options.forcePush
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        if(!value) value = me.value
+                        let forcePush = options.forcePush
 
-                if (me.isServerModel) {
-                    // server
-                    if ((me.changedByMe || forcePush) && me.isQueueModel) {
-                        // 서버o, 랩 x, 큐 o
-                        if(!forcePush){
-                            diff = me.removeMoveDiff(diff);
-                        }
-                        if (!me.isReadOnlyModel && diff) {
-                            let queueKey = await me.pushChangedValueQueue(diff, options)
-                            me.changedByMeKeys.push(queueKey)
+                        if (me.isServerModel) {
+                            // server
+                            if ((me.changedByMe || forcePush) && me.isQueueModel) {
+                                // 서버o, 랩 x, 큐 o
+                                if(!forcePush){
+                                    diff = me.removeMoveDiff(diff);
+                                }
+                                if (!me.isReadOnlyModel && diff) {
+                                    let queueKey = await me.pushChangedValueQueue(diff, options)
+                                    me.changedByMeKeys.push(queueKey)
 
-                            // COMMON QUEUE
-                            if(me.projectSendable) {
-                                options.associatedProject = me.information.associatedProject
-                                await me.pushChangedValueQueue(diff, options)
+                                    // COMMON QUEUE
+                                    if(me.projectSendable) {
+                                        options.associatedProject = me.information.associatedProject
+                                        await me.pushChangedValueQueue(diff, options)
+                                    }
+                                }
+                                me.changedByMe = false
+                                me.modelChanged = true
+                            } else if ( !me.isQueueModel && !me.isReadOnlyModel ) {
+                                // 서버o, 랩 x, 큐 x
+                                await me.putString(`db://definitions/${me.projectId}/value`, JSON.stringify(value));
+                                me.localUndoRedoStorage(diff)
+                            } else if (me.$isElectron) {
+                                await me.putString(`db://definitions/${me.projectId}/value`, JSON.stringify(value));
+                                me.localUndoRedoStorage(diff)
                             }
-                        }
-                        me.changedByMe = false
-                        me.modelChanged = true
-                    } else if ( !me.isQueueModel && !me.isReadOnlyModel ) {
-                        // 서버o, 랩 x, 큐 x
-                        await me.putString(`db://definitions/${me.projectId}/value`, JSON.stringify(me.value));
-                        me.localUndoRedoStorage(diff)
-                    } else if (me.$isElectron) {
-                        await me.putString(`db://definitions/${me.projectId}/value`, JSON.stringify(me.value));
-                        me.localUndoRedoStorage(diff)
-                    }
+                        } else {
+                            // 서버x, 랩x, 큐x
+                            var lists = await me.getObject(`localstorage://localLists`)
+                            if (lists) {
+                                var index = lists.findIndex(list => list.projectId == me.projectId)
 
-                } else {
-                    // 서버x, 랩x, 큐x
-                    var lists = await me.getObject(`localstorage://localLists`)
-                    if (lists) {
-                        var index = lists.findIndex(list => list.projectId == me.projectId)
-
-                        if (index != -1) {
-                            lists[index].lastModifiedTimeStamp = Date.now()
-                            if (me.initLoad) me.changedTemplateCode = true
+                                if (index != -1) {
+                                    lists[index].lastModifiedTimeStamp = Date.now()
+                                    if (me.initLoad) me.changedTemplateCode = true
+                                }
+                            }
+                            me.putObject(`localstorage://localLists`, lists)
+                            me.putObject(`localstorage://${me.projectId}`, me.value)
+                            me.localUndoRedoStorage(diff)
                         }
                     }
-                    me.putObject(`localstorage://localLists`, lists)
-                    // local 저장
-                    me.putObject(`localstorage://${me.projectId}`, me.value)
-                    me.localUndoRedoStorage(diff)
-                }
-
+                })
             },
             //////// Execute ////////
+             /** 
+             * addElement > addElementAction > appendElement
+             * receivedQueueDrawElement > receiveAppendedQueue > appendElement
+             * Element 추가 실행.
+             **/
             appendElement(element, value, options){
                 var me = this
-                if(!value) value = me.value
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!element) return;
+                        if(!value) value = me.value
+                        if(!options) options = {}
 
-                let id = element.relationView ? element.relationView.id : element.elementView.id
-                let valueObj = element.relationView ? value.relations : value.elements
-                if(valueObj[id]) return;
+                        let id = element.relationView ? element.relationView.id : element.elementView.id
+                        let valueObj = element.relationView ? value.relations : value.elements
+                        if(valueObj[id]) return;
 
-                me.$set(valueObj, id, element)
+                        me.$set(valueObj, id, element)
 
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationPush' : 'elementPush',
-                    STATUS_COMPLETE: true
+                        me.$EventBus.$emit(id, {
+                            action: element.relationView ? 'relationPush' : 'elementPush',
+                            STATUS_COMPLETE: true
+                        })
+                    },
+                    onFail(e){
+                        console.log(`[Error] Append Element: ${e}`)
+                    }
                 })
             },
+             /** 
+             * onRemoveShape(Element.vue) > removeElementAction > removeElement
+             * receivedQueueDrawElement > receiveRemovedQueue > removeElement
+             * Element 삭제 실행
+             **/
             removeElement(element, value, options){
                 var me = this
-                if(!value) value = me.value
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!element) return;
+                        if(!value) value = me.value
+                        if(!options) options = {}
 
-                let id = element.relationView ? element.relationView.id : element.elementView.id
-                let valueObj = element.relationView ? value.relations : value.elements
-                if(!valueObj[id]) return;
+                        let id = element.relationView ? element.relationView.id : element.elementView.id
+                        let valueObj = element.relationView ? value.relations : value.elements
+                        if(!valueObj[id]) return;
 
-                valueObj[id] = null
+                        valueObj[id] = null
 
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationDelete' : 'elementDelete',
-                    STATUS_COMPLETE: true
+                        me.$EventBus.$emit(id, {
+                            action: element.relationView ? 'relationDelete' : 'elementDelete',
+                            STATUS_COMPLETE: true
+                        })
+                    },
+                    onFail(e){
+                        console.log(`[Error] Remove Element: ${e}`)
+                    }
                 })
             },
+             /** 
+             * delayedMove[Element.vue] > moveElementAction > moveElement
+             * delayedRelationMove[Element.vue] > moveElementAction > moveElement
+             * receivedQueueDrawElement > receiveMovedQueue > moveElement
+             * Element 이동 실행.
+             **/
             moveElement(element, newVal, value, options){
                 var me = this
-                if(!element) return;
-                if(!value) value = me.value
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!element) return;
+                        if(!value) value = me.value
+                        if(!options) options = {}
 
-                let id = element.relationView ? element.relationView.id : element.elementView.id
-                let valueObj = element.relationView ? value.relations : value.elements
-                if(!valueObj[id]) return;
+                        let id = element.relationView ? element.relationView.id : element.elementView.id
+                        let valueObj = element.relationView ? value.relations : value.elements
+                        if(!valueObj[id]) return;
 
-                if(element.relationView){
-                    valueObj[id].relationView.value =  newVal.replaceAll('-','')
-                } else {
-                    // null || minus
-                    if(!newVal.x || newVal.x < 0) newVal.x = 100
-                    if(!newVal.y || newVal.y < 0) newVal.y = 100
+                        if(element.relationView){
+                            valueObj[id].relationView.value =  newVal.replaceAll('-','')
+                        } else {
+                            // null || minus
+                            if(!newVal.x || newVal.x < 0) newVal.x = 100
+                            if(!newVal.y || newVal.y < 0) newVal.y = 100
 
-                    valueObj[id].elementView.x = newVal.x
-                    valueObj[id].elementView.y = newVal.y
-                    valueObj[id].elementView.width = newVal.width
-                    valueObj[id].elementView.height = newVal.height
-                }
+                            valueObj[id].elementView.x = newVal.x
+                            valueObj[id].elementView.y = newVal.y
+                            valueObj[id].elementView.width = newVal.width
+                            valueObj[id].elementView.height = newVal.height
+                        }
 
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationMove' : 'elementMove',
-                    STATUS_COMPLETE: true,
-                    movingElement: false
+                        me.$EventBus.$emit(id, {
+                            action: element.relationView ? 'relationMove' : 'elementMove',
+                            STATUS_COMPLETE: true,
+                            movingElement: false
+                        })  
+                    },
+                    onFail(e){
+                        console.log(`[Error] Move Element: ${e}`)
+                    }
                 })
             },
             patchValue(diff, value, options){
@@ -4483,58 +4424,94 @@
                 jsondiffpatch.patch(value, diff)
             },
             //////// Push QUEUE ////////
+             /** 
+             *  addElement > addElementAction > pushAppendedQueue
+             *  Element 추가 큐 발송.
+             **/
             pushAppendedQueue(element, options){
                 var me = this
-                let definitionId = me.projectId
-                if(!options) options={}
-                if(options.associatedProject) definitionId = options.associatedProject
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let definitionId = me.projectId
+                        if(!options) options={}
+                        if(options.associatedProject) definitionId = options.associatedProject
 
-                // console.log('Sever Queue] ADD')
-                return me.pushObject(`db://definitions/${definitionId}/queue`, {
-                    action: element.relationView ? 'relationPush' : 'elementPush',
-                    editUid: me.userInfo.uid,
-                    timeStamp: Date.now(),
-                    item: JSON.stringify(element),
+                        // console.log('Sever Queue] ADD')
+                        return me.pushObject(`db://definitions/${definitionId}/queue`, {
+                            action: element.relationView ? 'relationPush' : 'elementPush',
+                            editUid: me.userInfo.uid,
+                            timeStamp: Date.now(),
+                            item: JSON.stringify(element),
+                        })
+                    },
+                    onFail(e){
+                        console.log(`[Error] Push AppendedQueue: ${e}`)
+                    }
                 })
             },
+            /** 
+             *  onRemoveShape(Element.vue) > removeElementAction > pushRemovedQueue
+             *  Element 삭제 큐 발송.
+             **/
             pushRemovedQueue(element, options){
                 var me = this
-                let definitionId = me.projectId
-                if(!options) options={}
-                if(options.associatedProject) definitionId = options.associatedProject
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let definitionId = me.projectId
+                        if(!options) options={}
+                        if(options.associatedProject) definitionId = options.associatedProject
 
-                // console.log('Sever Queue] Remove')
-                return me.pushObject(`db://definitions/${definitionId}/queue`, {
-                    action: element.relationView ? 'relationDelete' : 'elementDelete',
-                    editUid: me.userInfo.uid,
-                    timeStamp: Date.now(),
-                    item: JSON.stringify(element)
+                        // console.log('Sever Queue] Remove')
+                        return me.pushObject(`db://definitions/${definitionId}/queue`, {
+                            action: element.relationView ? 'relationDelete' : 'elementDelete',
+                            editUid: me.userInfo.uid,
+                            timeStamp: Date.now(),
+                            item: JSON.stringify(element)
+                        })
+                    },
+                    onFail(e){
+                        console.log(`[Error] Push RemovedQueue: ${e}`)
+                    }
                 })
             },
+            /** 
+             *  delayedMove[Element.vue] > moveElementAction > pushMovedQueue
+             *  delayedRelationMove[Element.vue] > moveElementAction > pushMovedQueue
+             *  Element 이동 큐 발송.
+             **/
             pushMovedQueue(element, oldVal, newVal, options){
                 var me = this
-                let definitionId = me.projectId
-                if(!options) options={}
-                if(options.associatedProject) definitionId = options.associatedProject
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let definitionId = me.projectId
+                        if(!options) options={}
+                        if(options.associatedProject) definitionId = options.associatedProject
 
-                let obj = {
-                    action: element.relationView ? 'relationMove' : 'elementMove',
-                    editUid: me.userInfo.uid,
-                    before: element.relationView ? oldVal : JSON.stringify(oldVal),
-                    after: element.relationView ? newVal : JSON.stringify(newVal),
-                    timeStamp: Date.now()
-                }
+                        let obj = {
+                            action: element.relationView ? 'relationMove' : 'elementMove',
+                            editUid: me.userInfo.uid,
+                            before: element.relationView ? oldVal : JSON.stringify(oldVal),
+                            after: element.relationView ? newVal : JSON.stringify(newVal),
+                            timeStamp: Date.now()
+                        }
 
-                if(element.relationView) {
-                    obj.relationId = element.relationView.id
-                } else {
-                    var types = element._type.split('.')
-                    obj.elementType = types[types.length - 1]
-                    obj.elementId = element.elementView.id
-                    obj.elementName = element.name
-                }
-                // console.log('Sever Queue] Move')
-                return me.pushObject(`db://definitions/${definitionId}/queue`, obj)
+                        if(element.relationView) {
+                            obj.relationId = element.relationView.id
+                        } else {
+                            var types = element._type.split('.')
+                            obj.elementType = types[types.length - 1]
+                            obj.elementId = element.elementView.id
+                            obj.elementName = element.name
+                        }
+                        return me.pushObject(`db://definitions/${definitionId}/queue`, obj)
+                    },
+                    onFail(e){
+                        console.log(`[Error] Push MovedQueue: ${e}`)
+                    }
+                })
             },
             async pushChangedValueQueue(diff, options){
                 var me = this
@@ -4550,15 +4527,117 @@
                     item: JSON.stringify(diff)
                 })
             },
+            /** 
+             * EventBus:isMovedElement[Element.vue] > pushUserMovementActivatedQueue
+             * Hold Moved User
+             **/
+            async pushUserMovementActivatedQueue(element){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;
+                        if(!element) return;
+                        if(element.relationView ) return; // exception relation
+                        await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                            action: 'userMovedOn',
+                            editUid: me.userInfo.uid,
+                            name: me.userInfo.name,
+                            picture: me.userInfo.profile,
+                            timeStamp: Date.now(),
+                            editElement: element.elementView.id
+                        })
+                    },
+                    onFail(e){
+                        console.log(`[Error] Push UserMovementActivatedQueue: ${e}`)
+                    }
+                })
+            },
+            /** 
+             * EventBus:isMovedElement[Element.vue] >pushUserMovementDeactivatedQueue
+             * Release Moved User
+             **/
+            async pushUserMovementDeactivatedQueue(element){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;
+                        if(!element) return;
+                        if(element.relationView ) return; // exception relation
+                        await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                            action: 'userMovedOff',
+                            editUid: me.userInfo.uid,
+                            name: me.userInfo.name,
+                            picture: me.userInfo.profile,
+                            timeStamp: Date.now(),
+                            editElement: element.elementView.id
+                        })
+                    },
+                    onFail(e){
+                        console.log(`[Error] Push UserMovementActivatedQueue: ${e}`)
+                    }
+                })
+            },
+            async pushUserSelectionActivatedQueue(element){
+                var me = this
+                if(!me.isUserInteractionActive()) return;
+                if(!element) return;
+                if(element.relationView ) return; // exception relation
+                return; // temp 
+                await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                    action: 'userSelectedOn',
+                    editUid: me.userInfo.uid,
+                    name: me.userInfo.name,
+                    picture: me.userInfo.profile,
+                    timeStamp: Date.now(),
+                    editElement: element.elementView.id
+                })
+            },
+            async pushUserSelectionDeactivatedQueue(element){
+                var me = this
+                if(!me.isUserInteractionActive()) return;
+                if(!element) return;
+                if(element.relationView ) return; // exception relation
+                return; // temp 
+                await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                    action: 'userSelectedOff',
+                    editUid: me.userInfo.uid,
+                    name: me.userInfo.name,
+                    picture: me.userInfo.profile,
+                    timeStamp: Date.now(),
+                    editElement: element.elementView.id
+                })
+            },
+            isUserInteractionActive(){
+                // user의 마우스 클릭, 이동 파악 하는 조건.
+                var me = this
+                if(me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.isReadOnlyModel){
+                    return true
+                }
+                return false
+            },
             //////// Receive QUEUE ////////
+            /** 
+             *  receivedQueueDrawElement > receiveAppendedQueue
+             *  Element 추가 큐 수신
+             **/
             receiveAppendedQueue(element, queue, options){
                 if(!options) options = {}
                 this.appendElement(element, this.value, options)
             },
+             /** 
+             *  receivedQueueDrawElement > receiveRemovedQueue
+             *  Element 삭제 큐 수신
+             **/
             receiveRemovedQueue(element, queue, options){
                 if(!options) options = {}
                 this.removeElement(element, this.value, options)
             },
+             /** 
+             *  receivedQueueDrawElement > receiveMovedQueue
+             *  Element 이동 큐 수신
+             **/
             receiveMovedQueue(id, newVal, queue, options){
                 var me = this
                 if(!options) options = {}
@@ -4591,49 +4670,6 @@
                 }
                 me.$emit('forceUpdateKey')
             },
-            addElementPush(values, element) {
-                /*
-                  !!!  REMOVE !!!!
-                  changedMethod: addElementAction(element, value)
-                */
-                var me = this
-                var value = values ? values : me.value
-                var location = element.elementView ? value.elements : value.relations
-                var eleId = element.elementView ? element.elementView.id : element.relationView.id
-
-                // if (me.storageExist) {
-                if (me.isServerModel && me.isQueueModel ) {
-                    //server
-                    me.modelChanged = true
-                    var action = element.relationView ? 'relationPush' : 'elementPush'
-                    if (!Object.keys(location).includes(eleId)) {
-
-                        //STATUS_COMPLETE
-                        me.$set(location, eleId, element)
-                        me.$nextTick(function () {
-                            me.$EventBus.$emit(`${eleId}`, {action: action, STATUS_COMPLETE: false})
-                        })
-                        var postObj = {
-                            action: action,
-                            editUid: me.userInfo.uid,
-                            timeStamp: Date.now(),
-                            item: JSON.stringify(element)
-                        }
-                        me.pushObject(`db://definitions/${me.projectId}/queue`, postObj)
-                        console.log('added:server')
-                    }
-
-                } else {
-                    if (!Object.keys(location).includes(eleId)) {
-                        me.$set(location, eleId, element)
-                        if (me.initLoad) me.changedTemplateCode = true
-
-                        console.log('added:localstorage,kubernetes')
-                    }
-                }
-
-            },
-
         }
     }
 

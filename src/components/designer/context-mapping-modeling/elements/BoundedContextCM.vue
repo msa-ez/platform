@@ -74,7 +74,7 @@
         </image-element>
 
         <rectangle-element
-                v-if="innerAggregate"
+                v-if="innerAggregate.length > 0"
                 v-for="index in innerAggregate.length"
                 sub-width="90%"
                 sub-left="5%"
@@ -268,7 +268,6 @@
       setElementCanvas(){
         var me = this
         me.canvas = getParent(me.$parent, "context-mapping-model-canvas");
-        me.modelCanvasComponent = me.canvas
       },
       onChangedElementName(newVal, oldVal) {
         this.setMirrorElementId();

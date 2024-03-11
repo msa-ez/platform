@@ -167,9 +167,7 @@
                 return 'Line'
             },
         },
-        created: function () {
-            this.panelInit()
-        },
+        created: function () { },
         watch: {},
         methods: {
             panelInit(base){

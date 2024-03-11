@@ -126,7 +126,7 @@
                         :type="value._type" 
                         :value="value"
                         :readOnly="canvas.isReadOnlyModel"
-                        :isHexagonalModeling="canvas.isHexagonal"
+                        :isHexagonal="canvas.isHexagonal"
                 ></storming-sub-controller>
 
             </sub-elements>

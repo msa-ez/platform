@@ -111,18 +111,11 @@
             //     me.canvas.$refs[`${me.value.elementView.id}`][0].descriptionPanel = me.value.description
             // }, 500)
         },
-        created: function () {
-            // me.namePanel = me.value.name
-            this.panelOpenAction()
-
-        },
-        beforeDestroy() {
-
-        },
+        created: function () { },
+        beforeDestroy() { },
         methods:{
             setElementCanvas(){
                 var me = this
-                me.modelCanvasComponent = me.$parent.getComponent('business-model-canvas')
                 me.canvas = me.$parent.getComponent('business-model-canvas')
             },
             changedNamePanel(newVal){

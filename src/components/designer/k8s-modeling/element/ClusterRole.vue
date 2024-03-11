@@ -19,7 +19,7 @@
                 v-on:deSelectShape="deSelectedActivity"
                 v-on:dblclick="openPanel"
                 v-on:addedToGroup="onAddedToGroup"
-                v-on:removeShape="onRemoveShape(value)"
+                v-on:removeShape="onRemoveShape"
                 :label.sync="name"
                 :image.sync="refreshedImg"
                 :_style="{

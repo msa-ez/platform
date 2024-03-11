@@ -248,10 +248,7 @@
                 useSubtitle: false,
             }
         },
-        created () {
-            var me = this;
-            me.panelInit();
-        },
+        created () { },
         watch: {
             useSubtitle(newVal) {
                 if(!newVal) {

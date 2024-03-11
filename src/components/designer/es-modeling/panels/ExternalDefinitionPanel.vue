@@ -91,9 +91,7 @@
             return {
             }
         },
-        created: function () {
-            this.panelInit()
-        },
+        created: function () { },
         methods: {
             panelInit(){
                 var me = this

@@ -158,7 +158,7 @@
                         :type="value._type"
                         :value="value"
                         :readOnly="canvas.isReadOnlyModel"
-                        :isHexagonalModeling="canvas.isHexagonal"
+                        :isHexagonal="canvas.isHexagonal"
                 ></storming-sub-controller>
             </sub-elements>
         </geometry-element>
@@ -209,9 +209,6 @@
     import CommandDefinitionPanel from "../panels/CommandDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
     import isAttached from '../../../../utils/isAttached';
-
-    var changeCase = require('change-case');
-    var pluralize = require('pluralize');
     var _ = require('lodash')
 
     var Mustache = require('mustache')
@@ -366,11 +363,6 @@
 
                 entities: {},
             };
-        },
-        created: function () {
-            // this.image = `${window.location.protocol + "//" + window.location.host}/static/image/event/command.png`
-        },
-        mounted() {
         },
         watch: {
             "value.restRepositoryInfo.method": function (newVal) {

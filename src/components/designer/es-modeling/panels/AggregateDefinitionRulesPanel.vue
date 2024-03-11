@@ -175,7 +175,6 @@
 
                 rerenderRulePanelKey: 0,
                 updateRulePanel: 0,
-                modelCanvasComponent: null,
                 ruleRequired: value => !!value || 'Required.',
                 thenColumnDefs: [],
                 thenRowData: [],
@@ -205,7 +204,6 @@
         },
         created() {
             var me = this
-            me.modelCanvasComponent = me.getComponent('event-storming-model-canvas')
             me.canvas = me.getComponent('event-storming-model-canvas')
             if (!me.copyValue.aggregateRules) {
                 me.addAggregateRule()
@@ -246,9 +244,6 @@
             },  
             left(){
                 this.$emit('left')
-            },
-            closePanel() {
-                this.$emit('close')
             },
             openExampleDialog(rule){
                 var me = this

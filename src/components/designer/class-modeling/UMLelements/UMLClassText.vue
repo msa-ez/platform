@@ -158,9 +158,6 @@
             closePopup() {
                 this.editDialog = false;
             },
-            onMoveShape() {
-                this.refreshImg()
-            },
             /**
              * 자신이 그룹속으로 들어갔을 때의 이벤트
              * @param groupElement

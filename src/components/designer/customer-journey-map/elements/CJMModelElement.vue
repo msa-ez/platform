@@ -16,7 +16,6 @@
                 panelStyle: 'width:500px;',
                 namePanel: '',
                 descriptionPanel: '',
-                isMovedElement: false,
                 failed_image: location.pathname + ((location.pathname == '/' || location.pathname.lastIndexOf('/') > 0) ? '' : '/') + 'static/image/symbol/info-icon-red.png',
                 info_red_image: location.pathname + ((location.pathname == '/' || location.pathname.lastIndexOf('/') > 0) ? '' : '/') + 'static/image/symbol/close-icon-red.png',
                 info_white_image: location.pathname + ((location.pathname == '/' || location.pathname.lastIndexOf('/') > 0) ? '' : '/') + 'static/image/symbol/info-icon-white.png',
@@ -37,7 +36,7 @@
 
 
                 if (className) {
-                    var componentName = me.getComponentByClassName(className).name
+                    var componentName = me.canvas.getComponentByClassName(className).name
                     var component = me.canvas.elementTypes.find(x => x.component == componentName)
                     if (component) {
                         me.img = component.src
@@ -63,7 +62,7 @@
             },
             isEditElement() {
                 if (this.canvas) {
-                    if(this.canvas.readOnly) return false; // Don't edit
+                    if(this.canvas.isReadOnlyModel) return false; // Don't edit
 
                     if(!this.canvas.isServerModel) return true // local
                     if(this.canvas.isOwnModel) return true; // own model
@@ -119,32 +118,10 @@
 
             }, 2000),
         },
-        mounted() {
-            var me = this
-            me.$EventBus.$on('isMovedElement', function (id) {
-                if (me.value.elementView) {
-                    //only Element
-                    if (me.value.elementView.id == id) {
-                        me.isMovedElement = true
-                        // me.movedNewActivity()
-                    } else {
-                        if (me.isMovedElement == true) {
-                            me.isMovedElement = false
-                            // me.movedOldActivity()
-                        }
-                    }
-                }
-            })
-
-        },
         methods: {
             setElementCanvas(){
                 var me = this;
-                me.modelCanvasComponent = me.getComponent('customer-journey-map-canvas');
                 me.canvas = me.getComponent('customer-journey-map-canvas');
-            },
-            onMoveShape: function () {
-            //     this.$EventBus.$emit('isMovedElement', this.value.elementView.id)
             },
             selectedActivity: function () {
                 if (this.value) {
@@ -162,16 +139,6 @@
                         this.staySelected = false
                     }
                 }
-            },
-            getComponentByClassName: function (className) {
-                var componentByClassName;
-
-                $.each(window.Vue.customerJourneyMapComponents, function (i, component) {
-                    if (component.default.computed && component.default.computed.className && component.default.computed.className() == className) {
-                        componentByClassName = component.default;
-                    }
-                });
-                return componentByClassName;
             },
         }
     }

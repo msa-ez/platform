@@ -235,9 +235,7 @@
             },
 
         },
-        created: function () {
-            this.panelInit()
-        },
+        created: function () { },
         mounted(){
            this.setExplainer();
         },

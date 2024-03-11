@@ -194,7 +194,6 @@
         },
         created: function () {
             var me = this
-            me.panelOpenAction()
 
             if(me.value._type == 'CJMLineElement') {
                 me.colorList.push('#000000')
@@ -203,7 +202,6 @@
         },
         data: function () {
             return {
-                // modelCanvasComponent: null,
                 colorList: [ '#F1A746', '#5099F7', '#BB94BF', '#F8D454', '#ED73B6', '#5FC08B', '#8E24AA' ],
             }
         },

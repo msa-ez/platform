@@ -158,7 +158,6 @@
             setElementCanvas(){
                 var me = this
                 me.canvas = getParent(me.$parent, "context-mapping-model-canvas");
-                me.modelCanvasComponent = me.canvas
             },
             setExplainer(){},
             editCMPanel(){

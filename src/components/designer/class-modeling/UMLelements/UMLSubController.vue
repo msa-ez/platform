@@ -59,13 +59,11 @@
         },
         created() {
             var me = this
-            me.modelCanvasComponent = me.getComponent('uml-class-model-canvas')
             me.canvas = me.getComponent('uml-class-model-canvas')
         },
         computed: {},
         data: function () {
             return {
-                modelCanvasComponent: null,
                 canvas: null,
                 editDialog: false,
                 addType: '',
@@ -125,7 +123,7 @@
                     //     sourceValue: sourceValue,
                     //     relationType: relationType
                     // }
-                    // me.modelCanvasComponent.openClassNameDialog(targetInfo, cloneInfo);
+                    // me.canvas.openClassNameDialog(targetInfo, cloneInfo);
 
                     // make element
                     var targetValue = me.canvas.addElement(targetInfo, sourceValue.isAggregateRoot);

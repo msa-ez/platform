@@ -14,7 +14,7 @@
                 v-on:deSelectShape="deSelectedActivity"
                 v-on:click="clicked"
                 v-on:addToGroup="onAddToGroup"
-                v-on:removeShape="onRemoveShape(value)"
+                v-on:removeShape="onRemoveShape"
                 :label.sync="value.name"
                 :image.sync="refreshedImg"
                 :_style="{

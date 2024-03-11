@@ -747,22 +747,12 @@
         },
         created: function () {
             var me = this
-            try {
-                Vue.use(StickyModeling);
-                me.canvasType = 'sticky'
-                if (this.$isElectron) {
-                    me.isQueueModel = false
-                } else {
-                    me.isQueueModel = true
-                }
-                me.track()
-            } catch (e) {
-                alert('Error: StickyModelCanvas Created().', e)
+            if (me.$isElectron) {
+                me.isQueueModel = false
+            } else {
+                me.isQueueModel = true
             }
         },
-        mounted: function () {
-        }
-        ,
         watch: {
             value: {
                 deep: true,
@@ -792,6 +782,10 @@
             }, 0),
         },
         methods: {
+            setCanvasType(){
+                Vue.use(StickyModeling);
+                this.canvasType = 'sticky'
+            },
             bindEvents: function (opengraph) {
                 var me = this;
                 var el = me.$el;
@@ -846,7 +840,6 @@
                 });
             },
             addElement: function (componentInfo, bounded) {
-                this.enableHistoryAdd = true;
                 var me = this;
                 var vueComponent = me.getComponentByName(componentInfo.component);
                 var element;
@@ -910,7 +903,8 @@
                     );
                 }
 
-                me.addElementPush(me.value, element)
+                // me.addElementPush(me.value, element)
+                me.addElementAction(element)
             },
             async purchaseItemDialogSubmit(result) {
                 var me = this
@@ -986,7 +980,6 @@
             },
             getComponentByClassName: function (className) {
                 var componentByClassName;
-                var me = this
 
                 $.each(window.Vue.stickyModelingComponents, function (i, component) {
                     if (component.default.computed && component.default.computed.className && component.default.computed.className() == className) {

@@ -990,7 +990,7 @@
                                                     <div>
                                                         <v-btn
                                                             class="gs-model-z-index-1 mobile-btn"
-                                                            v-if="isHexagonalModeling"
+                                                            v-if="isHexagonal"
                                                             text
                                                             style="margin-top:2px;"
                                                             @click="generateModel()"
@@ -1155,7 +1155,7 @@
                                                     width="30px"
                                                     :src="item.src"
                                                     v-on="on"
-                                                    v-if="!isReadOnlyModel &&(!isHexagonalModeling || (isHexagonalModeling && (item.component.includes('bounded-context') ||item.component.includes('packaged-business-capabilities'))))"
+                                                    v-if="!isReadOnlyModel &&(!isHexagonal || (isHexagonal && (item.component.includes('bounded-context') ||item.component.includes('packaged-business-capabilities'))))"
                                             />
                                         </span>
                                     </template>
@@ -1249,8 +1249,8 @@
                                                     v-on="on"
                                                     v-if="
                                                     !isReadOnlyModel &&
-                                                    (!isHexagonalModeling ||
-                                                        (isHexagonalModeling &&
+                                                    (!isHexagonal ||
+                                                        (isHexagonal &&
                                                             (item.component.includes(
                                                                 'bounded-context'
                                                             ) ||
@@ -2501,9 +2501,6 @@
                 }
                 return false;
             },
-            isHexagonalModeling() {
-                return this.isHexagonal;
-            },
             getUserCoin() {
                 if (this.userInfo.savedCoin) {
                     return this.userInfo.savedCoin;
@@ -2581,27 +2578,25 @@
         created: async function () {
             var me = this;
 
-            if (localStorage.getItem("gitAccessToken")) {
-                me.gitAccessToken = localStorage.getItem("gitAccessToken");
-                me.githubHeaders = {
-                    Authorization: "token " + me.gitAccessToken,
-                    Accept: "application/vnd.github+json",
-                };
-            }
+            me.$app.try({
+                context: me,
+                async action(me){
+                    if (localStorage.getItem("gitAccessToken")) {
+                        me.gitAccessToken = localStorage.getItem("gitAccessToken");
+                        me.githubHeaders = {
+                            Authorization: "token " + me.gitAccessToken,
+                            Accept: "application/vnd.github+json",
+                        };
+                    }
 
-            try {
-                Vue.use(EventStormingModeling);
-                me.canvasType = "es";
-                if (this.$isElectron) me.isQueueModel = false;
-                else me.isQueueModel = true;
-                me.clusterItems = [{ title: "Cluster" }];
-                me.track();
+                    if (this.$isElectron) me.isQueueModel = false;
+                    else me.isQueueModel = true;
+                    me.clusterItems = [{ title: "Cluster" }];
 
-                // var getFilePathList = await axios.get(`https://gitlab.msastudy.io/api/v4/projects/48/repository/tree?ref=main&id=48&page=1&per_page=100&pagination=keyset&recursive=true`, {headers: {Authorization: 'Bearer _9zq7KJ29CfzjYjXP3Wb'}});
-                // console.log(getFilePathList)
-            } catch (e) {
-                alert("Error: EventStormingModelCanvas Created().", e);
-            }
+                    // var getFilePathList = await axios.get(`https://gitlab.msastudy.io/api/v4/projects/48/repository/tree?ref=main&id=48&page=1&per_page=100&pagination=keyset&recursive=true`, {headers: {Authorization: 'Bearer _9zq7KJ29CfzjYjXP3Wb'}});
+                    // console.log(getFilePathList)
+                }
+            })
         },
         mounted: function () {
             var me = this;
@@ -2738,6 +2733,17 @@
             },
         },
         methods: {
+            setCanvasType(){
+                Vue.use(EventStormingModeling);
+                this.canvasType = 'es'
+            },
+            isUserInteractionActive(){
+                var me = this
+                if(me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.isHexagonal && !me.isReadOnlyModel){
+                    return true
+                }
+                return false
+            },
             async receiveAssociatedProject(associatedProjectId){
                 var me = this
                 let startKey = '';
@@ -3020,7 +3026,11 @@
                         // return;
                     }
                     me.changeValueAction(diff);
-                    me.publishScreenShot();
+
+                    clearTimeout(me.valueChangedTimer);
+                    me.valueChangedTimer = setTimeout(async function () {
+                        await me.saveLocalScreenshot()
+                    },1000)
                 }
                 if (diff) {
                     me.publishChangedEvent(newVal, diff);
@@ -3515,51 +3525,6 @@
                 }
 
                 return value;
-            },
-            onMoveElementById(id, newValueStr, child) {
-                var me = this;
-
-                if (me.value && me.value.elements && me.value.elements[id]) {
-                    let isHexagonal =
-                        child.childValue && child.childValue.isHexagonal
-                            ? true
-                            : false;
-
-                    var newValueObj = JSON.parse(newValueStr);
-                    let modifiedView = null;
-                    if (isHexagonal) {
-                        modifiedView = me.value.elements[id].hexagonalView;
-                    } else {
-                        modifiedView = me.value.elements[id].elementView;
-                    }
-
-                    // var modifiedView = isHexagonal ? me.value.elements[id].hexagonalView : me.value.elements[id].elementView
-                    let dx = newValueObj.x - modifiedView.x;
-                    let dy = newValueObj.y - modifiedView.y;
-
-                    modifiedView.x = newValueObj.x;
-                    modifiedView.y = newValueObj.y;
-                    modifiedView.width = newValueObj.width;
-                    modifiedView.height = newValueObj.height;
-                }
-            },
-            onMoveRelationById(id, newValueObj, child) {
-                var me = this;
-                if (me.value && me.value.relations && me.value.relations[id]) {
-                    let isHexagonal =
-                        child.childValue && child.childValue.isHexagonal
-                            ? true
-                            : false;
-
-                    var modifiedView = me.value.relations[id].relationView;
-                    if (isHexagonal) {
-                        modifiedView = me.value.relations[id].hexagonalView;
-                    }
-
-                    if (me.value && me.value.relations && me.value.relations[id]) {
-                        modifiedView.value = newValueObj;
-                    }
-                }
             },
             alertError() {
                 var me = this;
@@ -4341,8 +4306,6 @@
                 return false;
             },
             addElement: function (componentInfo, bounded) {
-                // console.log("추가");
-                this.enableHistoryAdd = true;
                 var me = this;
                 var additionalData = {};
                 var vueComponent = me.getComponentByName(componentInfo.component);
@@ -4413,6 +4376,7 @@
 
                 return element;
             },
+            // override
             addElementAction(element, value, options){
                 var me = this
                 if(!options) options = {}
@@ -4422,12 +4386,6 @@
 
                 // duplication
                 if(Object.keys(valueObj).includes(id)) return;
-
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationPush' : 'elementPush',
-                    STATUS_COMPLETE: false
-                })
-
                 element = me.migrateQueue(element.relationView ? 'relationPush' : 'elementPush', element);
 
                 // First append
@@ -4435,7 +4393,6 @@
                 if(me.isServerModel && me.isQueueModel){
                     // server
                     me.modelChanged = true;
-
                     if(me.isHexagonal) element.isHexagonal = true
                     me.pushAppendedQueue(element, options)
 
@@ -4444,120 +4401,121 @@
                         options.associatedProject = me.information.associatedProject
                         me.pushAppendedQueue(element, options)
                     }
+                    me.$EventBus.$emit(id, {
+                        action: element.relationView ? 'relationPush' : 'elementPush',
+                        STATUS_COMPLETE: false
+                    })
                 }
             },
+            // override
             removeElementAction(element, value, options){
                 var me = this
-                if(!options) options = {}
-                let id = element.relationView ? element.relationView.id : element.elementView.id
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        if(!value) value = me.value
+                        let id = element.relationView ? element.relationView.id : element.elementView.id
 
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationDelete' : 'elementDelete',
-                    STATUS_COMPLETE: false
-                })
+                        me.removeElement(element, value, options)
+                        if(me.isServerModel && me.isQueueModel){
+                            if(me.isHexagonal) element.isHexagonal = true
+                            me.pushRemovedQueue(element, options)
 
-                if(me.isServerModel && me.isQueueModel){
-                    if(me.isHexagonal) element.isHexagonal = true
-                    me.pushRemovedQueue(element, options)
-
-                    if( me.projectSendable && !me.isHexagonal ) {
-                        options.associatedProject = me.information.associatedProject
-                        me.pushRemovedQueue(element, options)
+                            if( me.projectSendable && !me.isHexagonal ) {
+                                options.associatedProject = me.information.associatedProject
+                                me.pushRemovedQueue(element, options)
+                            }
+                            me.$EventBus.$emit(id, {
+                                action: element.relationView ? 'relationDelete' : 'elementDelete',
+                                STATUS_COMPLETE: false
+                            })
+                        }
                     }
-                } else {
-                    me.removeElement(element, value, options)
-                }
-            },
-            moveElementAction(element, oldVal, newVal, value, options){
-                var me = this
-                if(!options) options = {}
-                let id = element.relationView ? element.relationView.id : element.elementView.id
-
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationMove' : 'elementMove',
-                    STATUS_COMPLETE: false,
-                    movingElement: true
                 })
-                if(me.isHexagonal) options.isHexagonal = true
-
-                // First Move
-                me.moveElement(element, newVal, me.value, options)
-
-                if (me.isServerModel && me.isQueueModel) {
-                    me.pushMovedQueue(element, oldVal, newVal, options)
-                }
             },
+            // override
             moveElement(element, newVal, value, options){
                 var me = this
-                let isHexagonal = options.isHexagonal ? true : false
-                if(!element) return;
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!element) return;
+                        if(!value) value = me.value
+                        if(!options) options = {}
 
-                if(!value) value = me.value
-                let id = element.relationView ? element.relationView.id : element.elementView.id
-                let valueObj = element.relationView ? value.relations : value.elements
-                if(!valueObj[id]) return;
+                        let isHexagonal = options.isHexagonal ? true : false
+                        let id = element.relationView ? element.relationView.id : element.elementView.id
+                        let valueObj = element.relationView ? value.relations : value.elements
+                        if(!valueObj[id]) return;
 
-                if(element.relationView){
-                    // Relation
-                    if(isHexagonal){
-                        valueObj[id].hexagonalView.value = newVal.replaceAll('-','')
-                    } else {
-                        valueObj[id].relationView.value =  newVal.replaceAll('-','')
+                        if(element.relationView){
+                            // Relation
+                            if(isHexagonal){
+                                valueObj[id].hexagonalView.value = newVal.replaceAll('-','')
+                            } else {
+                                valueObj[id].relationView.value =  newVal.replaceAll('-','')
+                            }
+                        } else {
+                            // null || minus
+                            if(!newVal.x || newVal.x < 0) newVal.x = 100
+                            if(!newVal.y || newVal.y < 0) newVal.y = 100
+
+                            // Element
+                            if(isHexagonal){
+                                valueObj[id].hexagonalView.x = newVal.x
+                                valueObj[id].hexagonalView.y = newVal.y
+                                valueObj[id].hexagonalView.width = newVal.width;
+                                valueObj[id].hexagonalView.height = newVal.height
+                            } else {
+                                valueObj[id].elementView.x = newVal.x
+                                valueObj[id].elementView.y = newVal.y
+                                valueObj[id].elementView.width = newVal.width
+                                valueObj[id].elementView.height = newVal.height
+                            }
+                        }
+
+                        me.$EventBus.$emit(id, {
+                            action: element.relationView ? 'relationMove' : 'elementMove',
+                            STATUS_COMPLETE: true,
+                            movingElement: false
+                        })      
                     }
-                } else {
-                    // null || minus
-                    if(!newVal.x || newVal.x < 0) newVal.x = 100
-                    if(!newVal.y || newVal.y < 0) newVal.y = 100
-
-                    // Element
-                    if(isHexagonal){
-                        valueObj[id].hexagonalView.x = newVal.x
-                        valueObj[id].hexagonalView.y = newVal.y
-                        valueObj[id].hexagonalView.width = newVal.width;
-                        valueObj[id].hexagonalView.height = newVal.height
-                    } else {
-                        valueObj[id].elementView.x = newVal.x
-                        valueObj[id].elementView.y = newVal.y
-                        valueObj[id].elementView.width = newVal.width
-                        valueObj[id].elementView.height = newVal.height
-                    }
-                }
-
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationMove' : 'elementMove',
-                    STATUS_COMPLETE: true,
-                    movingElement: false
                 })
             },
+            // override
             pushMovedQueue(element, oldVal, newVal, options){
                 var me = this
-                if(!options) options = {}
-                let definitionId = me.projectId
-                if(options.associatedProject) definitionId = options.associatedProject
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        let definitionId = me.projectId
+                        if(options.associatedProject) definitionId = options.associatedProject
 
-                let obj = {
-                    action: element.relationView ? 'relationMove' : 'elementMove',
-                    editUid: me.userInfo.uid,
-                    before: element.relationView ? oldVal : JSON.stringify(oldVal),
-                    after: element.relationView ? newVal : JSON.stringify(newVal),
-                    timeStamp: Date.now()
-                }
+                        let obj = {
+                            action: element.relationView ? 'relationMove' : 'elementMove',
+                            editUid: me.userInfo.uid,
+                            before: element.relationView ? oldVal : JSON.stringify(oldVal),
+                            after: element.relationView ? newVal : JSON.stringify(newVal),
+                            timeStamp: Date.now()
+                        }
 
-                if(element.relationView) {
-                    obj.relationId = element.relationView.id
-                } else {
-                    var types = element._type.split('.')
-                    obj.elementType = types[types.length - 1]
-                    obj.elementId = element.elementView.id
-                    obj.elementName = element.name
-                }
-
-                if( options.isHexagonal ){
-                    obj.isHexagonal = true
-                }
-
-                return me.pushObject(`db://definitions/${definitionId}/queue`, obj)
+                        if(element.relationView) {
+                            obj.relationId = element.relationView.id
+                        } else {
+                            var types = element._type.split('.')
+                            obj.elementType = types[types.length - 1]
+                            obj.elementId = element.elementView.id
+                            obj.elementName = element.name
+                        }
+                        if( options.isHexagonal ) obj.isHexagonal = true
+                    
+                        return me.pushObject(`db://definitions/${definitionId}/queue`, obj)
+                    }
+                })
             },
+            // override
             receiveAppendedQueue(element, queue, options){
                 var me = this
                 if(!options) options = {}
@@ -4567,6 +4525,7 @@
                     me.appendElement(element, me.value, options)
                 }
             },
+            // override
             receiveRemovedQueue(element, queue, options){
                 var me = this
                 if(!options) options = {}
@@ -4576,6 +4535,7 @@
                     me.removeElement(element, me.value, options)
                 }
             },
+            // override
             receiveMovedQueue(id, newVal, queue, options){
                 var me = this
                 if(!options) options = {}
@@ -4625,6 +4585,14 @@
                     });
                 }
                 return value;
+            },
+            isUserInteractionActive(){
+                // user의 마우스 클릭, 이동 파악 하는 조건.
+                var me = this
+                if (me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.canvas.isHexagonal && !me.canvas.isReadOnlyModel) {
+                    return true
+                }
+                return false
             },
             openModelingListsDialog(element) {
                 this.modelingPBCElement = element;
@@ -5126,13 +5094,7 @@
                     // } else {
                     me.canvas.removeShape(edgeElement, true);
                     //기존 컴포넌트가 없는 경우 신규 생성
-                    if (
-                        me.connectableType(
-                            componentInfo.sourceElement.value,
-                            componentInfo.targetElement.value
-                        ) &&
-                        me.validateRelation(from, to)
-                    ) {
+                    if ( me.connectableType( componentInfo.sourceElement.value, componentInfo.targetElement.value ) ) {
                         this.addElement(componentInfo);
                     }
 

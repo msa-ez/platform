@@ -1914,9 +1914,7 @@
         created: function () {
             var me = this
             try {
-                Vue.use(KubeModeling);
                 if(!me.embedded) {
-                    me.canvasType = 'k8s';
                     me.isQueueModel = true;
                     me.clusterItems = [
                         {title: 'Terminal'},
@@ -1925,7 +1923,6 @@
                     ]
                     if (!me.readOnly)
                         me.isSearch = true
-                    me.track();
                 }
             } catch (e) {
                 console.log(e)
@@ -2123,20 +2120,6 @@
                 window.addEventListener("message", me.messageProcessing);
                 window.opener.postMessage({message: "kubernetesYaml"}, "*");
             }
-
-
-            // window.addEventListener("beforeunload", (event) => {
-            //     var delta = jsondiffpatch.diff(me.oldCopyValue, me.newCopyValue);
-            
-            //     if (me.initLoad && delta && !me.embedded) {
-            //         me.modifiedElement(delta)
-            //     } else if(delta && me.embedded) {
-            //         me.$emit('input', me.newCopyValue);
-            //     }
-
-            //     me.changedByMe = true
-            // });
-
         },
         watch: {
             argoServerInfo: {
@@ -2165,22 +2148,6 @@
                     }
                 }
             },
-            // "copyValue": {
-            //     deep: true,
-            //     handler: function (newVal, oldVal) {
-            //         var me = this
-            //
-            //         // // me.newCopyValue = newVal;
-            //         // // me.oldCopyValue = oldVal;
-            //         var delta = jsondiffpatch.diff(oldVal, newVal);
-            //         //
-            //         // me.changedByMe = true;
-            //         // me.modifiedElement(delta)
-            //         if (me.initLoad && delta) {
-            //             me.modifiedElement(delta)
-            //         }
-            //     }
-            // },
             "value.elements": {
                 deep: true,
                 handler: _.debounce(function (newVal) {
@@ -2220,6 +2187,10 @@
             },
         },
         methods: {
+            setCanvasType(){
+                Vue.use(KubeModeling);
+                this.canvasType = 'k8s'
+            },
             moveModelUrl(modelId){
                 this.$router.push({path: `/kubernetes/${modelId}`});
             },
@@ -4509,9 +4480,7 @@
                         //기존 컴포넌트가 없는 경우 신규 생성
                     }
 
-                    if (me.validateRelation(from.id, to.id)) {
-                        me.addElement(componentInfo);
-                    }
+                    me.addElement(componentInfo);
                 }
             },
             modifyRelation(element) {
@@ -4527,7 +4496,6 @@
                 }
             },
             addElement: function (componentInfo, object, isOpened) {
-                this.enableHistoryAdd = true;
                 var me = this;
                 var additionalData = {};
                 var vueComponent = me.getComponentByName(componentInfo.component);
@@ -4598,30 +4566,16 @@
 
                 }
 
-
-
-                // var location = element.elementView ? me.value.elements : me.value.relations
-                // var eleId = element.elementView ? element.elementView.id : element.relationView.id
-                // if (componentInfo.component == "namespace") {
-                //     // location.unshift()
-                // }
-                // me.$set(location, eleId, element)
-
-                if(me.embedded){
-                    if (!me.value.k8sValue) {
-                        me.value.k8sValue = {'elements': {}, 'relations': {}}
-                    }
-                    me.addElementPush(me.value.k8sValue, element)
-                }else{
-                    me.addElementPush(me.value, element)
+                if (me.embedded){
+                    if(!me.value.k8sValue)  me.value.k8sValue = {'elements': {}, 'relations': {}} 
+                    me.addElementAction(element, me.value.k8sValue)
+                    // me.addElementPush(me.value.k8sValue, element)
+                } else{
+                    // me.addElementPush(me.value, element)
+                    me.addElementAction(element, me.value)
                 }
-
-                //auto openPanel
-                // me.autoOpenPanel = isOpened
-
                 //추천 element 리턴
                 return element
-
             },
             definedCrdDialog() {
                 var me = this

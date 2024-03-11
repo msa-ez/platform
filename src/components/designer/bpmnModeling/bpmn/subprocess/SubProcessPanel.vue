@@ -11,7 +11,7 @@
                 <label>Array Variable for multiplicity</label>
                 <bpmn-variable-selector 
                         v-model="value" 
-                        :definition="modelCanvasComponent.value"
+                        :definition="canvas.value"
                 ></bpmn-variable-selector>
             </div>
             <div>
