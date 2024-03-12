@@ -431,29 +431,21 @@
             connected: function () {
                 // console.log(this.value)
             },
-
-            selectedActivity: function () {
+            // override
+            onActivitySelected(){
                 var me = this
-                if (this.value) {
-                    this.selected = true
-
+                if (me.value) {
                     // selected Template
                     var elementType = me.value._type ? me.value._type : null
                     me.$EventBus.$emit('selectedElementObj', {selected: true, id: me.getId, type: elementType, isEmbedded: me.isEmbedded})
                 }
-
             },
-            deSelectedActivity: function () {
+            // override
+            onActivityDeselected(){
                 var me = this
                 if (this.value) {
-                    this.propertyPanel = false
-                    this.selected = false
-                    this.staySelected = false
-
-                    // deselected Template
                     me.$EventBus.$emit('selectedElementObj', {selected: false, id: me.getId, isEmbedded: me.isEmbedded})
                 }
-
             },
             showProperty() {
                 if (this.selected)

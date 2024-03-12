@@ -95,6 +95,17 @@
                     }
                 }
             },
+            'staySelected': function (newVal, oldVal) {
+                if (newVal) {
+                    this.canvas.pushUserSelectionStayedQueue(this.value)
+                } else {
+                    this.canvas.pushUserSelectionReleasedQueue(this.value)
+                }
+
+            },
+            "selected": _.debounce(function (newVal) {
+                this.staySelected = newVal && !this.propertyPanel;
+            }, 2000),
 
         },
         mounted: function () {
@@ -253,31 +264,29 @@
             validate() { return; },
             onMoveAction() { return; },
             openPanel() {
-                // var openPanelStatus = false
-                // if(this.canvas.isServerModel && this.canvas.isQueueModel) {
-                //     if(this.EndProgressing || this.value.name == "" || this.value.name.includes('BoundedContext')) {
-                //         this.EndProgressing = true
-                //         openPanelStatus = true
-                //     }
-                // } else {
-                //     openPanelStatus = true
-                // }
-                // if(openPanelStatus) {
-                    if(this.propertyPanel) this.propertyPanel = false
-                    this.propertyPanel = true
-                    this.staySelected = false
-                // }
+                if(this.propertyPanel) this.propertyPanel = false
+                this.propertyPanel = true
+                this.staySelected = false
             },
             closePanel() {
                 if(!this.propertyPanel) this.propertyPanel = true
                 this.propertyPanel = false
+            },
+            selectedActivity: function () {
+                var me = this
+                if (me.value) {
+                    me.selected = true
+                    me.onActivitySelected()
+                }
             },
             deSelectedActivity: function () {
                 var me = this
 
                 if (me.value) {
                     me.selected = false
+                    me.staySelected = false
                     me.propertyPanel = false
+                    me.onActivityDeselected()
                 }
             },
             refreshImg() {
@@ -292,6 +301,18 @@
                 })
             },
             /**
+             * Shape 선택 설정 커스텀 이벤트
+             **/
+            onActivitySelected(){
+                return;
+            },
+            /**
+             * Shape 선택 해제 커스텀 이벤트
+            **/
+            onActivityDeselected(){
+                return;
+            },
+            /**
              * Element 회전
              **/
             onRotateElement(){
@@ -302,7 +323,7 @@
              **/
             onMoveShape() {
                 var me = this
-                if(me.canvas.isCustomMoveExist){
+                if(me.canvas.isUserInteractionActive()){
                     let elementId = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
                      me.$EventBus.$emit('isMovedElement', elementId)
                 }

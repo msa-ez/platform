@@ -119,17 +119,15 @@
         watch: {
         },
         methods: {
-            deSelectedActivity: function () {
+            // override
+            onActivityDeselected(){
                 var me = this;
                 if (me.value) {
-                    me.selected = false
                     me.openPanel = false
-                    
-                    var obj = {
+                    me.$EventBus.$emit(`${me.value.parentId}`, {
                         action: "closeProperty",
                         element: me.value
-                    };
-                    me.$EventBus.$emit(`${me.value.parentId}`, obj);
+                    });
                 }
             },
             beforeRemove(value) {
