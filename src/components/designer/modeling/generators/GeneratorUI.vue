@@ -344,7 +344,9 @@
 
                 if (selectedObj['selected']) {
                     me.selectedElement.push(selectedObj)
-                    me.input.selectedElement = JSON.parse(JSON.stringify(me.modelValue.elements[selectedObj.id]));
+                    if(me.modelValue){
+                        me.input.selectedElement = JSON.parse(JSON.stringify(me.modelValue.elements[selectedObj.id]));
+                    }
                 } else {
                     var fidx = me.selectedElement.findIndex(obj => obj.id == id)
                     if (fidx != -1) {

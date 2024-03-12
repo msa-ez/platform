@@ -797,6 +797,7 @@
         created() {
             var me = this
             if(me.embedded) {
+                me.setCanvasType();
                 if(me.aggregateRootList.length > 0) {
                     if (me.aggregateRootList[0].mirrorElement) {
                         me.readOnly = true;
@@ -1780,16 +1781,6 @@
                 var me = this
                 me.value.elements = {}
                 me.eleCnt = 0
-            },
-            getComponentByName: function (name) {
-                var componentByName;
-                $.each(window.Vue._components, function (i, component) {
-                    if (component.name == name) {
-                        // // console.log(component.default.name)
-                        componentByName = component;
-                    }
-                });
-                return componentByName;
             },
             getComponentByClassName: function (className) {
                 var componentByClassName;
