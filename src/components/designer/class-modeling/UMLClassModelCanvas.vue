@@ -800,6 +800,7 @@
         created() {
             var me = this
             if(me.embedded) {
+                me.setCanvasType();
                 if(me.aggregateRootList.length > 0) {
                     if (me.aggregateRootList[0].mirrorElement) {
                         me.readOnly = true;

@@ -1,6 +1,17 @@
 <template>
     <div v-if="modelCreationCompleted">
-        <v-row style="position:absolute; right:30px; top:75px;">
+        <v-btn 
+            v-if="!openGeneratorUI"
+            fab
+            large
+            primary
+            absolute
+            @click="openGeneratorUI=!openGeneratorUI"
+            style="bottom: 5%; right:5%;"
+        >
+            <v-icon color="primary">mdi-chat</v-icon>
+        </v-btn>
+        <v-row v-if="openGeneratorUI" style="position:absolute; right:30px; top:75px;">
             <v-card style="text-align: center; z-index: 2;" width="auto">
                 <v-card-text :style="(isExpanded && generationStopped) ? { width: '75px' } : isExpanded ? { width: '170px' } : { width: '450px' }" 
                     style="padding: 0px; ">
@@ -122,17 +133,17 @@
                                 <template v-slot:actions>
                                     <v-tooltip bottom>
                                         <template v-slot:activator="{ on, attrs }">
-                                            <v-btn @click="isExpanded = !isExpanded"
+                                            <v-btn @click="openGeneratorUI = !openGeneratorUI"
                                                 icon small
                                                 class="cp-panel-folding"
                                                 v-bind="attrs"
                                                 v-on="on"
                                                 style="position:absolute; top:-38px; right:0px; z-index:2"
                                             >
-                                                <v-icon>mdi-unfold-more-horizontal</v-icon>
+                                                <v-icon>mdi-close</v-icon>
                                             </v-btn>
                                         </template>
-                                        <span>Panel folding/unfolding</span>
+                                        <span>close Auto Generator</span>
                                     </v-tooltip>
                                 </template>
                             </v-expansion-panel-header>
@@ -269,8 +280,6 @@
                     this.input.userStory = this.generatorComponent.createPrompt();
                     this.input.selectedElement = {}
                     this.input.modificationMessage = ""
-                    this.autoModelDialog = null
-                    this.isExpanded = true
                     this.chatMessage = ""
                 }
             }
@@ -329,7 +338,7 @@
                 selectedElement: [],
                 chatMessage: "",
                 hasElements: false,
-                
+                openGeneratorUI: false,
             }
         },
         computed: {
@@ -344,7 +353,9 @@
 
                 if (selectedObj['selected']) {
                     me.selectedElement.push(selectedObj)
-                    me.input.selectedElement = JSON.parse(JSON.stringify(me.modelValue.elements[selectedObj.id]));
+                    if(me.modelValue){
+                        me.input.selectedElement = JSON.parse(JSON.stringify(me.modelValue.elements[selectedObj.id]));
+                    }
                 } else {
                     var fidx = me.selectedElement.findIndex(obj => obj.id == id)
                     if (fidx != -1) {
