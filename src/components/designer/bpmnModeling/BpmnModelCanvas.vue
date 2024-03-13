@@ -1923,7 +1923,7 @@
                     if (activity.relations && Object.values(activity.relations).length) {
                         $.each(Object.values(activity.relations), function (i, relation) {
                             bpmnComponent = me.getComponentByName('bpmn-relation');
-                            required = bpmnComponent.default.computed.createNew();
+                            required = bpmnComponent.computed.createNew();
                             for (var key in required) {
                                 if (!relation[key]) {
                                     relation[key] = required[key];
@@ -1958,7 +1958,7 @@
                 var boundary = dividedLane.shape.geom.getBoundary();
                 var bpmnComponent = me.getComponentByName('bpmn-role');
 
-                var additionalData = bpmnComponent.default.computed.createNew(
+                var additionalData = bpmnComponent.computed.createNew(
                     boundary.getCentroid().x,
                     boundary.getCentroid().y,
                     boundary.getWidth(),
@@ -2043,7 +2043,7 @@
                     var relationComponentTag = (fromPool == toPool || toPool == null ? "bpmn-relation" : "bpmn-message-flow")
 
                     var bpmnComponent = me.getComponentByName(relationComponentTag);
-                    additionalData = bpmnComponent.default.computed.createNew(
+                    additionalData = bpmnComponent.computed.createNew(
                         componentInfo.from,
                         componentInfo.to,
                         componentInfo.vertices,
@@ -2082,7 +2082,7 @@
                 } else if (componentInfo.component == 'bpmn-role') {    // 롤 추가인 경우
                     var bpmnComponent = me.getComponentByName('bpmn-role');
 
-                    additionalData = bpmnComponent.default.computed.createNew(
+                    additionalData = bpmnComponent.computed.createNew(
                         componentInfo.x,
                         componentInfo.y,
                         componentInfo.width,
@@ -2096,7 +2096,7 @@
                     }
                     // console.log('newTracingTag', newTracingTag);
 
-                    additionalData = bpmnComponent.default.computed.createNew(
+                    additionalData = bpmnComponent.computed.createNew(
                         newTracingTag,
                         componentInfo.x,
                         componentInfo.y,
