@@ -41,9 +41,9 @@
                             :dragPageMovable="dragPageMovable" :enableContextmenu="false" :enableRootContextmenu="false"
                             :enableHotkeyCtrlC="false" :enableHotkeyCtrlV="false"
                             :enableHotkeyDelete="false" :enableHotkeyCtrlZ="false" :enableHotkeyCtrlD="false"
-                            :enableHotkeyCtrlG="false" :slider="true" :movable="!getReadOnly" :resizable="!getReadOnly"
+                            :enableHotkeyCtrlG="false" :slider="true" :movable="!isReadOnlyModel" :resizable="!isReadOnlyModel"
                             :selectable="true"
-                            :connectable="!getReadOnly" v-if="value" v-on:canvasReady="bindEvents" :autoSliderUpdate="true"
+                            :connectable="!isReadOnlyModel" v-if="value" v-on:canvasReady="bindEvents" :autoSliderUpdate="true"
                             v-on:connectShape="onConnectShape" :imageBase="imageBase">
 
                         <!--background 9 perspectives-->
@@ -74,7 +74,7 @@
 
 
                     <slot name="undoRedo">
-                        <v-flex v-if="!getReadOnly">
+                        <v-flex v-if="!isReadOnlyModel">
                             <v-row class="gs-modeling-undo-redo">
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on }">
@@ -125,7 +125,7 @@
                                 </v-btn>
                                 <v-btn
                                         text
-                                        v-if="isOwnModel && !getReadOnly"
+                                        v-if="isOwnModel && !isReadOnlyModel"
                                         @click="openInviteUsers()"
                                         small
                                 >
@@ -162,7 +162,7 @@
                                         <v-col align="start" id="project-name">
                                             <v-text-field
                                                 style="z-index:2;"
-                                                :disabled="getReadOnly"
+                                                :disabled="isReadOnlyModel"
                                                 label="Project Name" v-model="projectName"
                                                 @click.native="unselectedAll"
                                             >
@@ -171,7 +171,7 @@
                                     </slot>
                                 </v-row>
                                 <div class="action-btn-box">
-                                    <v-row>
+                                    <v-row v-if="isOwnModel && isServerModel && !isReadOnlyModel">
                                         <v-col align="right">
                                             <v-btn class="action-btn" text color=primary @click="generateImplementationModel()">
                                                 <Icon icon="mdi:head-cog-outline"
@@ -183,18 +183,43 @@
                                             <v-btn class="action-btn" @click="storageDialogReady('save')"
                                                     text>
                                                 <v-icon>{{icon.save}}</v-icon>
-                                                save
+                                                SAVE
                                             </v-btn>
                                             <v-btn
+                                                    v-if="isOwnModel && isServerModel && !isReadOnlyModel"
                                                     text
-                                                    v-if="isOwnModel && isServerModel && !getReadOnly"
-                                                    dark
                                                     @click="openInviteUsers()"
                                             >
                                                 <v-icon>{{icon.share}}</v-icon>
                                                 SHARE
                                             </v-btn>
                                         </v-col>
+                                    </v-row>
+                                    <v-row v-else>
+                                        <v-btn
+                                            v-if="isReadOnlyModel"
+                                            class="gs-model-z-index-1 es-hide-fork-btn"
+                                            text
+                                            :color="joinRequestedText.show? 'primary': 'success'"
+                                            @click="requestInviteUser()"
+                                            style="margin-right: 5px; margin-top: 15px;">
+                                            <div v-if="joinRequestedText.show">
+                                                <v-icon>{{icon.join}}</v-icon>
+                                            </div>
+                                            {{joinRequestedText.text }}
+                                        </v-btn>
+                                        <v-btn
+                                            v-if="!isReadOnlyModel"
+                                            class="gs-model-z-index-1 es-hide-fork-btn"
+                                            text
+                                            :disabled="disableBtn"
+                                            @click="saveComposition('fork')"
+                                            style="margin-right: 5px; margin-top: 15px;">
+                                        <v-icon>{{ icon.fork }}</v-icon>
+                                        <div class="es-hide-fork">
+                                            FORK
+                                        </div>
+                                    </v-btn>
                                     </v-row>
                                 </div>
                             </v-row>
@@ -203,7 +228,7 @@
 
                     <slot name="palette">
                         <v-card class="business-model-canvas-sticker">
-                            <v-tooltip v-if="!getReadOnly" right v-for="(category, categoryIndex) in elementTypes"
+                            <v-tooltip v-if="!isReadOnlyModel" right v-for="(category, categoryIndex) in elementTypes"
                                     :key="categoryIndex">
 
                                 <template v-slot:activator="{ on }">
@@ -326,6 +351,10 @@
             @startCreateModel="openEventStorming"
         ></AutoModelingDialog>
         <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" :defaultInputData="defaultGeneratorUiInputData" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
+        <!-- Mouse Cursor -->
+        <div v-for="(otherMouseEvent, email) in filteredMouseEventHandlers" :key="email">
+            <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
+        </div>
     </div>
 </template>
 
@@ -338,6 +367,7 @@
     import ModelCanvasShareDialog from "../modeling/ModelCanvasShareDialog";
     import AutoModelingDialog from "../modeling/AutoModelingDialog";
     import GeneratorUI from "../modeling/generators/GeneratorUI";
+    import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
 
     var jsondiffpatch = require('jsondiffpatch').create({
         objectHash: function (obj, index) {
@@ -354,6 +384,7 @@
             'model-storage-dialog': ModelStorageDialog,
             AutoModelingDialog,
             GeneratorUI,
+            MouseCursorComponent
         },
         mixins: [ModelCanvas],
         created: function () {
@@ -364,11 +395,6 @@
                 me.projectName = localStorage.getItem(me.$route.params.projectId + '-Project-Name')
                 localStorage.removeItem(me.$route.params.projectId + '-Project-Name')
             }
-        },
-        computed: {
-            getReadOnly() {
-                return this.readOnly
-            },
         },
         methods: {
             setCanvasType(){

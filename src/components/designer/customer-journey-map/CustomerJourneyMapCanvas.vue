@@ -165,12 +165,11 @@
                                     <template v-slot:activator="{ on }">
 
                                         <v-btn
-                                                text
-                                                v-if="isReadOnlyModel"
-                                                :color="joinRequestedText.show ? 'primary' :'success'"
-                                                dark
-                                                @click="requestInviteUser()"
-                                                small
+                                            v-if="isReadOnlyModel"
+                                            text
+                                            :color="joinRequestedText.show ? 'primary' :'success'"
+                                            @click="requestInviteUser()"
+                                            small
                                         >
                                             <div v-if="joinRequestedText.show">
                                                 <v-icon>{{icon.join}}</v-icon>
@@ -217,7 +216,7 @@
 
                             <slot name="shareButton">
                                 <v-menu
-                                        v-if="isOwnModel && isServerModel && !isReadOnlyModel "
+                                        v-if="isOwnModel && isServerModel && !isReadOnlyModel"
                                         class="pa-2"
                                         offset-y
                                         open-on-hover
@@ -361,7 +360,6 @@
                                                     </v-btn>
                                                     <v-btn
                                                             :color="joinRequestedText.show ? 'primary' :'success'"
-                                                            :disabled="disableBtn"
                                                             @click="requestInviteUser()"
                                                             style="margin-right: 5px; margin-top: 15px;"
                                                             text
@@ -412,7 +410,7 @@
 
                                     <slot name="shareButton">
                                         <v-menu
-                                                v-if="isOwnModel && isServerModel && !isReadOnlyModel "
+                                                v-if="isOwnModel && isServerModel && !isReadOnlyModel"
                                                 offset-y
                                                 open-on-hover
                                                 left
@@ -422,7 +420,7 @@
                                                     <v-btn
                                                             text
                                                             style="margin-right: 5px; margin-top: 15px;"
-                                                            :disabled="!initLoad"
+                                                            :disabled="disableBtn"
                                                             v-on="on"
                                                             @click="openInviteUsers()"
                                                     >
@@ -615,6 +613,10 @@
                 </v-layout>
             </hsc-window>
         </hsc-window-style-metal>
+        <!-- Mouse Cursor -->
+        <div v-for="(otherMouseEvent, email) in filteredMouseEventHandlers" :key="email">
+            <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
+        </div>
     </div>
 </template>
 
@@ -626,6 +628,7 @@
     import ModelStorageDialog from "../modeling/ModelStorageDialog";
     import ModelCanvasShareDialog from "../modeling/ModelCanvasShareDialog";
     import GeneratorUI from "../modeling/generators/GeneratorUI";
+    import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
 
     import * as io from 'socket.io-client';
     import { mdiAbTesting } from '@mdi/js';
@@ -649,7 +652,8 @@
             GeneratorUI,
             'model-canvas-share-dialog': ModelCanvasShareDialog,
             'model-storage-dialog': ModelStorageDialog,
-            'dialog-purchase-item' : DialogPurchaseItem
+            'dialog-purchase-item' : DialogPurchaseItem,
+            MouseCursorComponent
         },
         data() {
             return {
@@ -849,59 +853,59 @@
                     await me.setString(`db://definitions/${associatedProject}/information/customerJourneyMap/personas/${personaIndex}/modelList/${personaModelIndex}`, newId);
                 }
             },
-            bindEvents: function (opengraph) {
-                var me = this;
-                var el = me.$el;
-                var canvasEl = $(opengraph.container);
-                if (!canvasEl || !canvasEl.length) {
-                    return;
-                }
+            // bindEvents: function (opengraph) {
+            //     var me = this;
+            //     var el = me.$el;
+            //     var canvasEl = $(opengraph.container);
+            //     if (!canvasEl || !canvasEl.length) {
+            //         return;
+            //     }
 
-                this.canvas = opengraph.canvas;
-                //아이콘 드래그 드랍 이벤트 등록
-                $(el).find('.draggable').draggable({
-                    start: function () {
-                        canvasEl.data('DRAG_SHAPE', {
-                            'component': $(this).attr('_component'),
-                            'width': $(this).attr('_width'),
-                            'height': $(this).attr('_height'),
-                            'description': $(this).attr('_description'),
-                            'src': $(this).children('img').attr('src'),
-                        });
-                    },
-                    helper: 'clone',
-                    appendTo: canvasEl
-                });
+            //     this.canvas = opengraph.canvas;
+            //     //아이콘 드래그 드랍 이벤트 등록
+            //     $(el).find('.draggable').draggable({
+            //         start: function () {
+            //             canvasEl.data('DRAG_SHAPE', {
+            //                 'component': $(this).attr('_component'),
+            //                 'width': $(this).attr('_width'),
+            //                 'height': $(this).attr('_height'),
+            //                 'description': $(this).attr('_description'),
+            //                 'src': $(this).children('img').attr('src'),
+            //             });
+            //         },
+            //         helper: 'clone',
+            //         appendTo: canvasEl
+            //     });
 
-                canvasEl.droppable({
-                    drop: function (event, ui) {
-                        var componentInfo = canvasEl.data('DRAG_SHAPE'),
-                            shape, element;
-                        if (componentInfo) {
-                            var dropX = event.pageX - canvasEl.offset().left + canvasEl[0].scrollLeft;
-                            var dropY = event.pageY - canvasEl.offset().top + canvasEl[0].scrollTop;
-                            var scale = opengraph.canvas._CONFIG.SLIDER[0].innerText / 100
+            //     canvasEl.droppable({
+            //         drop: function (event, ui) {
+            //             var componentInfo = canvasEl.data('DRAG_SHAPE'),
+            //                 shape, element;
+            //             if (componentInfo) {
+            //                 var dropX = event.pageX - canvasEl.offset().left + canvasEl[0].scrollLeft;
+            //                 var dropY = event.pageY - canvasEl.offset().top + canvasEl[0].scrollTop;
+            //                 var scale = opengraph.canvas._CONFIG.SLIDER[0].innerText / 100
 
-                            dropX = dropX / scale;
-                            dropY = dropY / scale;
+            //                 dropX = dropX / scale;
+            //                 dropY = dropY / scale;
 
-                            componentInfo = {
-                                component: componentInfo.component,
-                                x: dropX,
-                                y: dropY,
-                                width: parseInt(componentInfo.width, 10),
-                                height: parseInt(componentInfo.height, 10),
-                                description: componentInfo.description ? componentInfo.description : '',
-                                src: componentInfo.src ? componentInfo.src : '',
-                            }
+            //                 componentInfo = {
+            //                     component: componentInfo.component,
+            //                     x: dropX,
+            //                     y: dropY,
+            //                     width: parseInt(componentInfo.width, 10),
+            //                     height: parseInt(componentInfo.height, 10),
+            //                     description: componentInfo.description ? componentInfo.description : '',
+            //                     src: componentInfo.src ? componentInfo.src : '',
+            //                 }
 
 
-                            me.addElement(componentInfo);
-                        }
-                        canvasEl.removeData('DRAG_SHAPE');
-                    }
-                });
-            },
+            //                 me.addElement(componentInfo);
+            //             }
+            //             canvasEl.removeData('DRAG_SHAPE');
+            //         }
+            //     });
+            // },
             addElement: function (componentInfo) {
                 var me = this;
                 var vueComponent = me.getComponentByName(componentInfo.component);

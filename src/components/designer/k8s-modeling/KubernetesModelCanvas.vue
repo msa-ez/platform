@@ -304,6 +304,31 @@
                                                 </v-list-item>
                                             </v-list>
                                         </v-menu>
+                                        <v-menu
+                                            v-if="isReadOnlyModel"
+                                            offset-y
+                                            open-on-hover
+                                            left
+                                        >
+                                            <template v-slot:activator="{ on }">
+                                                <v-btn
+                                                    class="k8s-hide-code-btn"
+                                                    style="margin-right: 5px;margin-top: 15px;"
+                                                    v-on="on"
+                                                    :color="joinRequestedText.show ? 'primary': 'success'"
+                                                    @click="requestInviteUser()"
+                                                    text
+                                                >
+                                                    <div v-if="joinRequestedText.show" >
+                                                        <v-icon>{{icon.join}}</v-icon>
+                                                    </div>
+                                                    {{joinRequestedText.text }}
+                                                </v-btn>
+                                            </template>
+                                            <v-list></v-list>
+                                        </v-menu>
+
+                                        
                                     </div>
                                     <!-- 웹페이지 버튼들 끝 -->
                                 </v-row>
@@ -457,12 +482,13 @@
                                                     </v-list-item>
                                                 </v-list>
                                             </v-menu>
-                                            <v-menu v-if="!parents"
-                                                    style="margin: 0px !important;"
-                                                    open-on-hover offset-y>
+                                            <v-menu 
+                                                v-if="!parents"
+                                                style="margin: 0px !important;"
+                                                open-on-hover offset-y>
                                                 <template v-slot:activator="{ on }">
                                                     <v-btn
-                                                            v-if="readOnly"
+                                                            v-if="isReadOnlyModel"
                                                             style="margin-right: 5px; margin-top: 15px;"
                                                             @click="saveComposition('fork')"
                                                             small
@@ -497,7 +523,7 @@
 
 
                                             <v-menu
-                                                    v-if="isOwnModel && isServerModel && !isReadOnlyModel "
+                                                    v-if="isOwnModel && isServerModel && !isReadOnlyModel"
                                                     class="pa-2"
                                                     offset-y
                                                     open-on-hover
@@ -1293,8 +1319,11 @@
                 ></kube-code-generator>
             </template>
         </separate-panel-components>
+        <!-- Mouse Cursor -->
+        <div v-for="(otherMouseEvent, email) in filteredMouseEventHandlers" :key="email">
+            <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
+        </div>
     </div>
-
 </template>
 
 <script>
@@ -1314,6 +1343,7 @@
     import ModelCanvasShareDialog from "../modeling/ModelCanvasShareDialog";
     import SeparatePanelComponents from "../../SeparatePanelComponents";
     import CodeGenerator from "../modeling/CodeGenerator";
+    import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
 
 
     var _ = require('lodash');
@@ -1342,12 +1372,12 @@
             'model-canvas-share-dialog': ModelCanvasShareDialog,
             'text-reader': TextReader,
             'model-storage-dialog': ModelStorageDialog,
-            SeparatePanelComponents
+            SeparatePanelComponents,
+            MouseCursorComponent
         },
         mixins: [ModelCanvas],
         props: {
             boundedContextList: Array,
-            getReadOnly: Boolean,
             isReadOnlyModel: Boolean,
             specVersion: String
         },
@@ -5928,4 +5958,5 @@
             left:25px;
         }
     }
+    
 </style>

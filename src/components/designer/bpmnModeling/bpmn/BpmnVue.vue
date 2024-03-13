@@ -17,7 +17,7 @@
                 :width="1500"
                 :height="1000"
                 v-if="data.definition"
-                ref="bpmnOpengraph"
+                ref="opengraph"
                 v-on:canvasReady="bpmnReady"
                 v-on:userAction="onUserAction"
                 v-on:connectShape="onConnectShape"
@@ -213,7 +213,7 @@
                 // this.canvas.updateSlider();
 
                 //timer end
-                this.$refs.bpmnOpengraph.printTimer(startTime, new Date().getTime());
+                this.$refs.opengraph.printTimer(startTime, new Date().getTime());
 
                 this.$emit('update:loaded', true)
             });
@@ -960,7 +960,7 @@
              **/
             getComponentByName: function (name) {
                 var componentByName;
-                $.each(window.Vue.bpmnComponents, function (i, component) {
+                $.each(window.Vue._components, function (i, component) {
                     if (component.default.name == name) {
                         componentByName = component;
                     }

@@ -31,7 +31,6 @@
                     </bpmn-tree-list>
                 </v-list>
             </v-row> -->
-
             <opengraph
                     focus-canvas-on-select
                     wheelScalable
@@ -41,7 +40,8 @@
                     :enableHotkeyCtrlC="false"
                     :enableHotkeyCtrlV="false"
                     :enableHotkeyDelete="false"
-                    :slider="false"
+                    :sliderLocationScale="sliderLocationScale"
+                    :slider="true"
                     :movable="!monitor"
                     :resizable="!monitor"
                     :selectable="!monitor"
@@ -50,7 +50,7 @@
                     :imageBase="imageBase"
                     :height="100000"
                     v-if="value"
-                    ref="bpmnOpengraph"
+                    ref="opengraph"
                     v-on:canvasReady="bindEvents"
                     v-on:connectShape="onConnectShape"
                     v-on:divideLane="onDivideLane"
@@ -193,7 +193,7 @@
                             </v-list-item>
                         </v-list>
                     </v-menu>
-                    <div v-if="isOwnModel && isServerModel && !readOnly">
+                    <div v-if="isOwnModel && isServerModel && !isReadOnlyModel">
                         <v-btn text
                                 style="margin-right: 15px; margin-top: 15px;"
                                 color="primary"
@@ -207,7 +207,6 @@
                             >{{ requestCount }}</v-avatar>
                         </v-btn>
                     </div>
-
                     <div v-if="versions" style="margin-right: 10px;">
                         <v-select v-for="version in versions.slice().reverse()" 
                                 :key="version"
@@ -362,7 +361,22 @@
                                 >{{ requestCount }}</v-avatar>
                             </v-btn>
                         </div>
-
+                        <div v-if="isReadOnlyModel">
+                            <v-btn
+                                class="k8s-hide-code-btn"
+                                style="margin-right: 5px;margin-top: 15px;"
+                                v-on="on"
+                                :color="joinRequestedText.show ? 'primary': 'success'"
+                                @click="requestInviteUser()"
+                                text
+                            >
+                                <div v-if="joinRequestedText.show" >
+                                    <v-icon>{{icon.join}}</v-icon>
+                                </div>
+                                {{joinRequestedText.text }}
+                            </v-btn>
+                        </div>
+                        
                         <div v-if="versions" style="margin-right: 10px;">
                             <v-select v-for="version in versions.slice().reverse()" 
                                     :key="version"
@@ -542,8 +556,7 @@
                     <span>Redo</span>
                 </v-tooltip>
 
-            </v-card>
-
+            </v-card> 
         </v-layout>
 
         <bpmn-component-changer
@@ -648,8 +661,11 @@
                 @add="addInviteUser"
                 @remove="removeInviteUser"
         ></model-canvas-share-dialog>
-
         <modeler-image-generator ref="modeler-image-generator"></modeler-image-generator>
+        <!-- Mouse Cursor -->
+        <div v-for="(otherMouseEvent, email) in filteredMouseEventHandlers" :key="email">
+            <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
+        </div>
     </div>
 </template>
 <script>
@@ -658,6 +674,7 @@
     import BpmnObjectGrid from "./BpmnObjectGrid";
     import ModelStorageDialog from "../modeling/ModelStorageDialog";
     import ModelCanvasShareDialog from "../modeling/ModelCanvasShareDialog";
+    import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
     var jsondiffpatch = require('jsondiffpatch').create({
         objectHash: function (obj, index) {
             return '$$index:' + index;
@@ -671,6 +688,7 @@
             'bpmn-object-grid': BpmnObjectGrid,
             'model-storage-dialog': ModelStorageDialog,
             'model-canvas-share-dialog': ModelCanvasShareDialog,
+            MouseCursorComponent
         },
         props: {
             monitor: Boolean,
@@ -1064,53 +1082,53 @@
                     this.handsStyle = null;
                 }
             },
-            bindEvents: function (opengraph) {
-                //this.$el
-                var me = this;
-                var el = me.$el;
-                var canvasEl = $(opengraph.container);
-                if (!canvasEl || !canvasEl.length) {
-                    return;
-                }
-                this.canvas = opengraph.canvas;
-                //아이콘 드래그 드랍 이벤트 등록
-                $(el).find('.draggable').draggable({
-                    start: function () {
-                        canvasEl.data('DRAG_SHAPE', {
-                            'component': $(this).attr('_component'),
-                            'width': $(this).attr('_width'),
-                            'height': $(this).attr('_height')
-                        });
-                    },
-                    helper: 'clone',
-                    appendTo: canvasEl
-                });
+            // bindEvents: function (opengraph) {
+            //     //this.$el
+            //     var me = this;
+            //     var el = me.$el;
+            //     var canvasEl = $(opengraph.container);
+            //     if (!canvasEl || !canvasEl.length) {
+            //         return;
+            //     }
+            //     this.canvas = opengraph.canvas;
+            //     //아이콘 드래그 드랍 이벤트 등록
+            //     $(el).find('.draggable').draggable({
+            //         start: function () {
+            //             canvasEl.data('DRAG_SHAPE', {
+            //                 'component': $(this).attr('_component'),
+            //                 'width': $(this).attr('_width'),
+            //                 'height': $(this).attr('_height')
+            //             });
+            //         },
+            //         helper: 'clone',
+            //         appendTo: canvasEl
+            //     });
 
-                canvasEl.droppable({
-                    drop: function (event, ui) {
-                        var componentInfo = canvasEl.data('DRAG_SHAPE'), shape, element;
-                        if (componentInfo) {
-                            var dropX = event.pageX - canvasEl.offset().left + canvasEl[0].scrollLeft;
-                            var dropY = event.pageY - canvasEl.offset().top + canvasEl[0].scrollTop;
+            //     canvasEl.droppable({
+            //         drop: function (event, ui) {
+            //             var componentInfo = canvasEl.data('DRAG_SHAPE'), shape, element;
+            //             if (componentInfo) {
+            //                 var dropX = event.pageX - canvasEl.offset().left + canvasEl[0].scrollLeft;
+            //                 var dropY = event.pageY - canvasEl.offset().top + canvasEl[0].scrollTop;
 
-                            dropX = dropX / opengraph.scale;
-                            dropY = dropY / opengraph.scale;
+            //                 dropX = dropX / opengraph.scale;
+            //                 dropY = dropY / opengraph.scale;
 
-                            componentInfo = {
-                                component: componentInfo.component,
-                                x: dropX,
-                                y: dropY,
-                                width: parseInt(componentInfo.width, 10),
-                                height: parseInt(componentInfo.height, 10),
-                                label: ''
-                            }
+            //                 componentInfo = {
+            //                     component: componentInfo.component,
+            //                     x: dropX,
+            //                     y: dropY,
+            //                     width: parseInt(componentInfo.width, 10),
+            //                     height: parseInt(componentInfo.height, 10),
+            //                     label: ''
+            //                 }
 
-                            me.addElement(componentInfo);
-                        }
-                        canvasEl.removeData('DRAG_SHAPE');
-                    }
-                });
-            },
+            //                 me.addElement(componentInfo);
+            //             }
+            //             canvasEl.removeData('DRAG_SHAPE');
+            //         }
+            //     });
+            // },
             copy: function () {
                 var me = this;
                 me.copyActivity = [];
@@ -2107,19 +2125,6 @@
                 return componentByClassName;
             },
 
-            /**
-             * 컴포넌트 이름으로 Bpmn 컴포넌트를 가져온다.
-             **/
-            getComponentByName: function (name) {
-                var componentByName;
-                $.each(window.Vue.bpmnComponents, function (i, component) {
-                    if (component.default.name == name) {
-                        componentByName = component;
-                    }
-                });
-                return componentByName;
-            },
-
             undo: function () {
                 if (this.canUndo) {
                     this.canvas._CONFIG.FAST_LOADING = true;
@@ -2810,4 +2815,5 @@
             display:block;
         }
     }
+    
 </style>

@@ -1,8 +1,6 @@
 <template>
     <v-dialog v-model="showLoginCard"><Login :onlyGitLogin="true" @login="showLoginCard = false" /></v-dialog>
 </template>
-
-
 <script>
     import StorageBase from "./ModelStorageBase";
     import TenantAware from "../../labs/TenantAware"
@@ -428,16 +426,9 @@
                     onOff: false,
                     search: '',
                 },
-                // mouseEvents: {
-                //     moves:[],
-                //     totalTime: 0,
-                // },
-                // mouseEvents:{
-                //     clientX: 0,
-                //     clientY: 0,
-                // },
+                // mouse Event
                 mouseEventHandlers: {},
-                mouseEventCnt :0,
+                mouseEventCnt: 0,
                 valueChangedTimer: null,
                 modelCanvasChannel: null,
 
@@ -857,21 +848,6 @@
                     this.onChangedValue(oldVal, newVal)
                 }
             },
-
-            // "mouseEvents": {
-            //     deep: true,
-            //     handler: _.debounce(function (newVal, oldVal) {
-            //         this.sendMoveEvents();
-            //     }, 300)
-            // },
-            // "mouseEvents.moves": {
-            //     deep: true,
-            //     handler: _.debounce(function (newVal, oldVal) {
-            //         if(newVal.length > 0){
-            //             this.sendMoveEvents();
-            //         }
-            //     }, 300)
-            // },
         },
         methods: {
             setCanvasType(){
@@ -975,7 +951,7 @@
                             if (me.sortScheduleId) clearTimeout(me.sortScheduleId)
                             window.removeEventListener('resize', this.onResize);
                             me.leaveUserAtion()
-                            me.releaseMoveEvents();
+                           
 
                             await me.publishScreenShot()
                             if( me.isServerModel  && !me.isReadOnlyModel ) {
@@ -1010,6 +986,9 @@
                                 }
                             }
                         }
+
+                        me.releaseMoveEvents();
+                        me.releaseQueue()
                     }
                 })
             },
@@ -1170,76 +1149,6 @@
                 }else{
                     //local
                     alert('로컬 모델로 해당기능 준비중 입니다.')
-                }
-            },
-            onEventHandler(){
-                var me = this
-                try{
-                    let opengraph = me.$refs['opengraph']
-
-                    if ( opengraph && me.isLogin && me.isServerModel && !me.isClazzModeling && !me.isReadOnlyModel) {
-                       let canvasEl = $(opengraph.container);
-
-                       me.watch(`db://definitions/${me.projectId}/eventHandler`,function (callback) {
-                           if(callback ) {
-                               me.mouseEventHandlers = callback;
-
-                               for(let email in callback){
-                                   if( me.userInfo.email && me.userInfo.email.replace(/\./gi, '_') != email) {
-                                       const point = document.getElementById(email);
-                                       if (point) {
-                                           let scale = opengraph.canvas._CONFIG.SLIDER[0].innerText / 100
-                                           let offsetX = (callback[email].clientX * scale) - canvasEl[0].scrollLeft + canvasEl.offset().left
-                                           let offsetY = (callback[email].clientY * scale) - canvasEl[0].scrollTop + canvasEl.offset().top
-                                           point.style.left = `${offsetX}px`;
-                                           point.style.top = `${offsetY}px`;
-                                           point.style['background-color'] = callback[email].color;
-                                       }
-                                   }
-                               };
-                           }
-                       });
-                    }
-                } catch (e){
-                    console.log(`Error] onMoveMouse : ${e}`)
-                }
-            },
-            sendMoveEvents(x, y){
-                var me = this
-                try{
-                    if (me.isLogin && me.isServerModel && !me.isClazzModeling && !me.isReadOnlyModel) {
-                        let myEmail = me.userInfo && me.userInfo.email ? me.userInfo.email.replace(/\./gi, '_') : null;
-                        if(myEmail){
-
-                            if( !me.mouseEventHandlers[myEmail] || Object.keys(me.mouseEventHandlers).length > 1){
-                                let obj = {
-                                    clientX: x,
-                                    clientY: y,
-                                }
-
-                                if( !me.mouseEventHandlers[myEmail] ){
-                                    obj.color = '#' + Math.round(Math.random() * 0xffffff).toString(16);
-                                    obj.name = me.userInfo.name
-                                }
-
-
-                                me.putObject(`db://definitions/${me.projectId}/eventHandler/${me.userInfo.email.replace(/\./gi, '_')}`, obj)
-                            }
-                        }
-                    }
-                } catch (e){
-                    console.log(`Error] Send MoveEvents : ${e}`)
-                }
-            },
-            releaseMoveEvents(){
-                var me = this
-                try{
-                    if (me.isLogin && me.isServerModel && !me.isClazzModeling && !me.isReadOnlyModel) {
-                        me.watch_off(`db://definitions/${me.projectId}/eventHandler`);
-                        me.delete(`db://definitions/${me.projectId}/eventHandler/${me.userInfo.email.replace(/\./gi, '_')}`)
-                    }
-                } catch (e){
-                    console.log(`Error] Release MoveEvents : ${e}`)
                 }
             },
             functionCluster(title) {
@@ -3330,7 +3239,6 @@
             },
             releaseQueue(projectId){
                 var me = this
-
                 if(!projectId) return;
 
                 me.watch_off(`db://definitions/${projectId}/queue`)
@@ -3546,17 +3454,8 @@
                 }
                 this.canvas = opengraph.canvas;
 
-                opengraph.$el.addEventListener('mousemove',(e)=>{
-                    me.mouseEventCnt ++;
-                    // Event 발생 30회 마다 1회 push.
-                    if( me.mouseEventCnt % 30 == 1){
-                        me.mouseEventCnt = 1;
-                        let scale = opengraph.canvas._CONFIG.SLIDER[0].innerText / 100
-                        let offsetX = (e.clientX - canvasEl.offset().left + canvasEl[0].scrollLeft)/scale;
-                        let offsetY = (e.clientY- canvasEl.offset().top + canvasEl[0].scrollTop)/scale;
-                        me.sendMoveEvents(offsetX, offsetY);
-                    }
-                });
+                // 이벤트 리스너 설정을 위한 함수 호출
+                this.setupEventListeners(opengraph, canvasEl);
 
                 //아이콘 드래그 드랍 이벤트 등록
                 $(el).find('.draggable').draggable({
@@ -4451,7 +4350,7 @@
                     context: me,
                     async action(me){
                         if(!me.isUserInteractionActive()) return;
-                        me.pushEnteredUserQueue();
+                        await me.pushEnteredUserQueue();
                     }
                 })
             },
@@ -4464,7 +4363,7 @@
                     context: me,
                     async action(me){
                         if(!me.isUserInteractionActive()) return;   
-                        me.pushLeavedUserQueue()
+                        await me.pushLeavedUserQueue()
                     }
                 })
             },
@@ -4597,6 +4496,80 @@
                     }
                 })
             },
+             /** 
+             * 마우스 날파리 send
+             **/
+             sendMoveEvents(x, y){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;   
+                        let myEmail = me.userInfo && me.userInfo.email ? me.userInfo.email.replace(/\./gi, '_') : null;
+                        if(myEmail){
+                            if( !me.mouseEventHandlers[myEmail] || Object.keys(me.mouseEventHandlers).length > 1 ){
+                                let obj = {
+                                    clientX: x,
+                                    clientY: y,
+                                }
+                                if( !me.mouseEventHandlers[myEmail] ){
+                                    obj.color = '#' + Math.round(Math.random() * 0xffffff).toString(16);
+                                    obj.name = me.userInfo.name
+                                }
+                                me.putObject(`db://definitions/${me.projectId}/eventHandler/${me.userInfo.email.replace(/\./gi, '_')}`, obj)
+                            }
+                        }      
+                    }
+                })
+            },
+            /** 
+             * 마우스 날파리 연결
+             **/
+             onEventHandler(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let opengraph = me.$refs['opengraph']
+                        if (!opengraph) return;
+                        if (!me.isUserInteractionActive()) return;   
+                        let canvasEl = $(opengraph.container);
+
+                        me.watch(`db://definitions/${me.projectId}/eventHandler`,function (callback) {
+                            if(callback ) {
+                                me.mouseEventHandlers = callback;
+                                for(let email in callback){
+                                    if( me.userInfo.email && me.userInfo.email.replace(/\./gi, '_') != email) {
+                                        const point = document.getElementById(email);
+                                        if (point) {
+                                            let scale = opengraph.canvas._CONFIG.SLIDER[0].innerText / 100
+                                            let offsetX = (callback[email].clientX * scale) - canvasEl[0].scrollLeft + canvasEl.offset().left
+                                            let offsetY = (callback[email].clientY * scale) - canvasEl[0].scrollTop + canvasEl.offset().top
+                                            point.style.left = `${offsetX}px`;
+                                            point.style.top = `${offsetY}px`;
+                                            point.style['background-color'] = callback[email].color;
+                                        }
+                                    }
+                                };
+                            }
+                        });
+                    }
+                })
+            },
+             /** 
+             * 마우스 날파리 해제
+             **/
+            releaseMoveEvents(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;   
+                        me.watch_off(`db://definitions/${me.projectId}/eventHandler`);
+                        me.delete(`db://definitions/${me.projectId}/eventHandler/${me.userInfo.email.replace(/\./gi, '_')}`)          
+                    }
+                })
+            },
             //////////////////////////////////////////////////////////////////////////////
             ///////////////////////// Receive QUEUE //////////////////////////////////////
             /** 
@@ -4693,6 +4666,27 @@
                 me.$emit('forceUpdateKey')
             },
             //////////////////////////////////////////////////////////////////////////////
+            setupEventListeners: function (opengraph, canvasEl) {
+                var me = this;
+                if(!opengraph) return
+                if(!canvasEl) return
+                // 마우스 이동 이벤트 리스너 설정
+                opengraph.$el.addEventListener('mousemove', function (e) {
+                    me.handleMouseMove(e, opengraph, canvasEl);
+                });
+            },
+            // 실제 마우스 이벤트 처리 로직
+            handleMouseMove: function (e, opengraph, canvasEl) {
+                this.mouseEventCnt++;
+                // Event 발생 30회 마다 1회 push.
+                if (this.mouseEventCnt % 30 == 1) {
+                    this.mouseEventCnt = 1;
+                    let scale = opengraph.canvas._CONFIG.SLIDER[0].innerText / 100;
+                    let offsetX = (e.clientX - canvasEl.offset().left + canvasEl[0].scrollLeft) / scale;
+                    let offsetY = (e.clientY - canvasEl.offset().top + canvasEl[0].scrollTop) / scale;
+                    this.sendMoveEvents(offsetX, offsetY);
+                }
+            },
         }
     }
 
@@ -4875,7 +4869,6 @@
     .custom-menu li:hover {
         background-color: #DEF;
     }
-
     /*.moveable-line.moveable-rotation-line {*/
     /*    height: 40px;*/
     /*    width: 1px;*/
@@ -4930,5 +4923,42 @@
         }
     }
 
+    // .mouse-cursor {
+    //     // 마우스를 따라다니는 원 설정
+    //     position: absolute;
+    //     top: 0; // 초기 위치값을 설정해줍니다.
+    //     left: 0; // 초기 위치값을 설정해줍니다.
+    //     width: 10px; //원 가로사이즈
+    //     height: 10px; //원 세로사이즈
+    //     border-radius: 50%; // 원의 형태설정
+    //     background-color: #9bf50b; //원 컬러설정
+    //     transform: translate(
+    //                     -50%,
+    //                     -50%
+    //     ); // 원을 정가운데로 맞추기위해서 축을-50%이동해줍니다.
+    //     transition: all 300ms linear 0s; //soft
+    //     opacity: 50%;
+    //     z-index: 9999;
+    // }
+    // .mouse-cursor::after {
+    //     width: 40px;
+    //     height: 40px;
+    //     border: 15px solid rgba(var(--white-rbg-color), 0.2);
+    //     border-radius: 50%;
+    //     position: absolute;
+    //     top: -25px;
+    //     left: -25px;
+    //     animation: cursor-animate-2 550ms infinite alternate;
+    //     z-index: 9998; 
+    // }
+    // .mouse-cursor-name {
+    //     position: absolute;
+    //     top: 5px;
+    //     left: 10px;
+    //     width: max-content;
+    //     text-align: center;
+    //     color: #9bf50b;
+    //     z-index: 9999;
+    // }
 
 </style>
