@@ -85,14 +85,7 @@
             ></geometry-rect>
 
             <sub-elements v-if="!canvas.isHexagonal">
-                <image-element
-                        v-for="(index) in newEditUserImg.length" :key="index"
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="value.elementView.height"
-                ></image-element>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="elementCoordinate.height"></multi-user-status-indicator>
             </sub-elements>
 
             <sub-elements>
@@ -175,18 +168,15 @@
     import Element from './EventStormingModelElement'
     import PolicyDefinitionPanel from "../panels/PolicyDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-
-    var changeCase = require('change-case');
-    var pluralize = require('pluralize');
-
-    var Mustache = require('mustache')
+    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'policy-definition',
         components:{
             PolicyDefinitionPanel,
-            'storming-sub-controller' : StormingSubController
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+            'storming-sub-controller': StormingSubController
         },
         computed: {
             namePascalCase() {

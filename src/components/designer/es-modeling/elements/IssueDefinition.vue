@@ -58,15 +58,8 @@
             >
             </geometry-rect>
 
-            <sub-elements v-for="(index) in newEditUserImg.length">
-                <image-element
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="value.elementView.height"
-                >
-                </image-element>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="elementCoordinate.height"></multi-user-status-indicator>
             </sub-elements>
 
             <sub-elements>
@@ -137,14 +130,14 @@
     import Element from './EventStormingModelElement'
     import IssueDefinitionPanel from "../panels/IssueDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-    var changeCase = require('change-case');
-    var pluralize = require('pluralize');
+    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'issue-definition',
         components:{
             IssueDefinitionPanel,
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             'storming-sub-controller' : StormingSubController
         },
         computed: {

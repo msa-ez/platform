@@ -83,14 +83,7 @@
             </sub-elements>
 
             <sub-elements v-if="!canvas.isHexagonal" v-for="(index) in newEditUserImg.length">
-                <image-element
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="value.elementView.height"
-                >
-                </image-element>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="elementCoordinate.height"></multi-user-status-indicator>
             </sub-elements>
 
             <sub-elements>
@@ -197,11 +190,10 @@
     import AggregateDefinitionPanel from "../panels/AggregateDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
     import Generator from "../../modeling/generators/AggregateGenerator";
+    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
 
     var changeCase = require('change-case');
-    var pluralize = require('pluralize');
     var _ = require('lodash')
-
     var jsondiffpatch = require('jsondiffpatch').create({
         objectHash: function (obj, index) {
             return '$$index:' + index;
@@ -214,6 +206,7 @@
         props: {},
         components: {
             AggregateDefinitionPanel,
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             'storming-sub-controller' : StormingSubController
         },
         watch: {

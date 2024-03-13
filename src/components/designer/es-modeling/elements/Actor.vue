@@ -18,8 +18,6 @@
                 :customMoveActionExist="canvas.isCustomMoveExist"
                 v-on:customMoveAction="delayedMove"
                 v-on:moveShape="onMoveShape"
-
-
                 v-on:removeShape="onRemoveShape"
                 :image.sync="refreshedImg"
                 :label.sync="namePanel"
@@ -110,9 +108,6 @@
     import GeometryLine from "../../../opengraph/geometry/Line";
     import SubElements from "../../../opengraph/shape/SubElements";
     import StormingSubController from "../../modeling/StormingSubController";
-
-    var changeCase = require('change-case');
-    var pluralize = require('pluralize');
     var _ = require('lodash')
 
     export default {

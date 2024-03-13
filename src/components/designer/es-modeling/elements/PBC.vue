@@ -120,14 +120,7 @@
             </sub-elements>
 
             <sub-elements>
-                <image-element
-                        v-for="(index) in newEditUserImg.length" :key="index"
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="value.elementView.height"
-                ></image-element>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="elementCoordinate.height"></multi-user-status-indicator>
             </sub-elements>
 
             <sub-controller
@@ -162,19 +155,18 @@
     import GroupElement from "../../../opengraph/shape/GroupElement";
     import ImageElement from "../../../opengraph/shape/ImageElement";
     import SubElements from "../../../opengraph/shape/SubElements";
-    // import BoundedContext from './BoundedContext.vue';
     import PBCPanel from "../panels/PBCPanel";
     import StormingSubController from "../../modeling/StormingSubController";
+    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
 
     var _ = require('lodash')
-    var pluralize = require('pluralize');
-
     export default {
         components: {
             SubElements,
             ImageElement,
             GroupElement,
             PBCPanel,
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             'storming-sub-controller' : StormingSubController
         },
         mixins: [Element],

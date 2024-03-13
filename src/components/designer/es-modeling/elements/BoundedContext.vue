@@ -147,14 +147,7 @@
             ></sub-controller> -->
 
             <sub-elements v-if="!canvas.isHexagonal">
-                <image-element
-                        v-for="(index) in newEditUserImg.length" :key="index"
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="elementCoordinate.height"
-                ></image-element>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="elementCoordinate.height"></multi-user-status-indicator>
             </sub-elements>
 
         </group-element>
@@ -183,23 +176,18 @@
     import SubElements from "../../../opengraph/shape/SubElements";
     import BoundedContextPanel from "../panels/BoundedContextPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-
-
-    var changeCase = require('change-case');
-    var pluralize = require('pluralize');
-    var path = require('path');
-    var yamlpaser = require('js-yaml');
-    var _ = require('lodash')
-    import getParent from "../../../../utils/getParent";
+    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
     import isAttached from '../../../../utils/isAttached';
     import Generator from "../../modeling/generators/BoundedContextGenerator";
 
+    var _ = require('lodash')
     export default {
         components: {
             SubElements,
             ImageElement,
             GroupElement,
             BoundedContextPanel,
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             'storming-sub-controller' : StormingSubController
         },
         mixins: [Element],

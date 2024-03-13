@@ -10,7 +10,7 @@
 
 <script>
 export default {
-    name: 'mouse-cursor-Component',
+    name: 'mouse-cursor-component',
     props: {
         mouseEvent: Object,
         email: String

@@ -87,14 +87,7 @@
             ></geometry-rect>
 
             <sub-elements v-if="!canvas.isHexagonal">
-                <image-element
-                        v-for="(index) in newEditUserImg.length" :key="index"
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="value.elementView.height"
-                ></image-element>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="elementCoordinate.height"></multi-user-status-indicator>
             </sub-elements>
 
             <sub-elements>
@@ -209,9 +202,8 @@
     import CommandDefinitionPanel from "../panels/CommandDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
     import isAttached from '../../../../utils/isAttached';
+    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
     var _ = require('lodash')
-
-    var Mustache = require('mustache')
 
     export default {
         mixins: [Element],
@@ -219,6 +211,7 @@
         components:{
             SubElements,
             CommandDefinitionPanel,
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             'storming-sub-controller' : StormingSubController
         },
         computed: {

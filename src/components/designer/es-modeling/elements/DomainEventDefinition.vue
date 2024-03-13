@@ -88,14 +88,7 @@
             ></geometry-rect>
 
             <sub-elements v-if="!canvas.isHexagonal">
-                <image-element
-                        v-for="(index) in newEditUserImg.length" :key="index"
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="elementCoordinate.height"
-                ></image-element>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="elementCoordinate.height"></multi-user-status-indicator>
             </sub-elements>
 
             <sub-elements>
@@ -209,6 +202,7 @@
     import Element from './EventStormingModelElement'
     import DomainEventDefinitionPanel from "../panels/DomainEventDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
+    import MultiUserStatusIndicator from '../../modeling/MultiUserStatusIndicator.vue';
     var _ = require('lodash')
 
     export default {
@@ -216,7 +210,8 @@
         name: 'domain-event-definition',
         components:{
             DomainEventDefinitionPanel,
-            'storming-sub-controller' : StormingSubController
+            'storming-sub-controller' : StormingSubController,
+            'multi-user-status-indicator': MultiUserStatusIndicator
         },
         computed: {
             subjectTop() {
