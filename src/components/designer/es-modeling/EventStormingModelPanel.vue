@@ -251,6 +251,8 @@
                             _value : 기존 값.
                             value  : Panel 사용되는 값,
                         */
+                        if(!me.value) return;
+                        
                         var diff = jsondiffpatch.diff(me._value, me.value)
                         if (diff && !(Object.keys(diff).includes('aggregate') && Object.keys(diff).length == 1)) {
                             console.log('Panel - executeBeforeDestroy')

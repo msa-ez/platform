@@ -119,6 +119,8 @@
                             _value : 기존 값.
                             value  : Panel 사용되는 값,
                         */
+                        if(!me.value) return;
+                        
                         var diff = jsondiffpatch.diff(me._value, me.value)
                         if (diff) {
                             if (!me.readOnly) {
