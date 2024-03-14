@@ -670,6 +670,7 @@
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Key Partners",
                         "perspective": "key-partner",
+                        "icon": "static/image/symbol/icons-link.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "e8f5cd23-616c-b911-5bcd-a5bd1243df24",
@@ -677,12 +678,13 @@
                             "y": 400,
                             "width": 300,
                             "height": 600,
-                            "style": "{\"backgroundColor\": \"red\"}"
+                            "style": "{}"
                         },
                     }, {
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Key Activities",
                         "perspective": "key-activity",
+                        "icon": "static/image/symbol/check.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "d8deafd1-564b-19b7-1d0b-2ace2730f6cf",
@@ -696,6 +698,7 @@
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Key Resources",
                         "perspective": "key-resource",
+                        "icon": "static/image/symbol/business.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "462bb51c-8efb-6657-3b04-6c754876be40",
@@ -709,6 +712,7 @@
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Value Proposition",
                         "perspective": "value-proposition",
+                        "icon": "static/image/symbol/gift.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "2fde0b06-3c34-d5c1-d43c-36a52718a205",
@@ -722,6 +726,7 @@
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Customer Relationships",
                         "perspective": "customer-relationship",
+                        "icon": "static/image/symbol/heart.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "ecdf7402-a80d-1474-ec23-9363a74698af",
@@ -735,6 +740,7 @@
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Channels",
                         "perspective": "channel",
+                        "icon": "static/image/symbol/truck.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "d0183098-e987-3214-7f42-20dcf8a364c5",
@@ -748,6 +754,7 @@
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Customer Segments",
                         "perspective": "customer-segment",
+                        "icon": "static/image/symbol/customer-segment.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "84f0b913-207f-7229-cdb4-a536625138c2",
@@ -761,6 +768,7 @@
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Cost Structure",
                         "perspective": "cost-structure",
+                        "icon": "static/image/symbol/tag.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "5b350418-d0aa-37de-7185-2ba8613bfa25",
@@ -774,6 +782,7 @@
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Revenue Streams",
                         "perspective": "revenue-stream",
+                        "icon": "static/image/symbol/sack-dollar.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "636ae7aa-186a-0a54-00cf-bf221578aab4",
