@@ -32,16 +32,17 @@
         >
             <!--v-on:dblclick="$refs['dialog'].open()"-->
             <geometry-rect
-                    :_style="{
-          'fill-r': 1,
-          'fill-cx': .1,
-          'fill-cy': .1,
-          'stroke-width': 1.4,
-          'stroke': '#FFD071',
-          'fill': '#FFD071',
-          'fill-opacity': 1,
-          'r': '1'
-        }">
+                :_style="{
+                    'fill-r': 1,
+                    'fill-cx': .1,
+                    'fill-cy': .1,
+                    'stroke-width': 10,
+                    'stroke': '#FFD071',
+                    'fill': '#FFD071',
+                    'fill-opacity': 1,
+                    'r': '1'
+                }"
+            >
             </geometry-rect>
 
 

@@ -677,7 +677,7 @@
                             "y": 400,
                             "width": 300,
                             "height": 600,
-                            "style": "{}"
+                            "style": "{\"backgroundColor\": \"red\"}"
                         },
                     }, {
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
