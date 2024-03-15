@@ -38,6 +38,10 @@
             ></geometry-rect>
 
             <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
+
+            <sub-elements>
                 <image-element
                     v-bind:image="value.icon"
                     :sub-width="'20px'"
@@ -53,10 +57,7 @@
                         :elementId="value.elementView.id"
                 ></business-sub-controller>
             </sub-elements>
-
         </group-element>
-
-
     </div>
 </template>
 
@@ -64,13 +65,14 @@
     import BusinessModelElement from "./BusinessModelElement";
     import GroupElement from "../../../opengraph/shape/GroupElement";
     import ImageElement from "../../../opengraph/shape/ImageElement";
-
-    var changeCase = require('change-case');
-    var pluralize = require('pluralize');
-
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
-        components: {ImageElement, GroupElement},
+        components: {
+            ImageElement,
+            GroupElement,
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         mixins: [BusinessModelElement],
         name: 'business-model-perspective',
         props: {},

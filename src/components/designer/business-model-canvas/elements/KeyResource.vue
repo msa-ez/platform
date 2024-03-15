@@ -43,18 +43,9 @@
             >
             </geometry-rect>
 
-            <sub-elements v-for="(index) in newEditUserImg.length">
-                <image-element
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="value.elementView.height"
-                >
-                </image-element>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
             </sub-elements>
-
-
             <sub-elements>
                 <text-element
                         :sub-width="'100%'"
@@ -73,18 +64,19 @@
                 :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></business-model-panel>
-
-
     </div>
 </template>
 
 <script>
     import BusinessModelElement from "./BusinessModelElement";
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [BusinessModelElement],
         name: 'key-resource',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             className() {
                 return 'org.uengine.modeling.business.KeyResource'
@@ -119,12 +111,6 @@
                 reference: this.value.classReference != null,
                 referenceClassName: this.value.classReference,
             };
-        },
-        created: function () {
-        },
-        watch: {
-        },
-        methods: {
         }
     }
 </script>

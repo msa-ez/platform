@@ -11,10 +11,8 @@
                 :width.sync="value.elementView.width"
                 :height.sync="value.elementView.height"
                 :angle.sync="value.elementView.angle"
-
                 v-on:selectShape="selectedActivity"
                 v-on:deSelectShape="deSelectedActivity"
-
                 v-on:dblclick="openPanel"
                 v-on:rotateShape="onRotateShape"
                 v-on:addedToGroup="onAddedToGroup"
@@ -44,18 +42,9 @@
             </geometry-rect>
 
 
-            <sub-elements v-for="(index) in newEditUserImg.length">
-                <image-element
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="value.elementView.height"
-                >
-                </image-element>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
             </sub-elements>
-
-
             <sub-elements>
                 <text-element
                         :sub-width="'100%'"
@@ -67,7 +56,6 @@
             </sub-elements>
         </geometry-element>
 
-
         <business-model-panel
                 v-if="propertyPanel"
                 v-model="value"
@@ -75,18 +63,20 @@
                 :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></business-model-panel>
-
-
     </div>
 </template>
 
 <script>
     import BusinessModelElement from "./BusinessModelElement";
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [BusinessModelElement],
         name: 'revenue-stream',
         props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             className() {
                 return 'org.uengine.modeling.business.RevenueStream'
