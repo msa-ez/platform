@@ -11,16 +11,6 @@
             img: String,
             entities: Object,
         },
-        data: function () {
-            return {
-
-            }
-        },
-        computed: {
-        },
-        beforeDestroy() {
-        },
-        created: function () { },
         methods:{
             setElementCanvas(){
                 var me = this;

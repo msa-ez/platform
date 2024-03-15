@@ -38,6 +38,9 @@
             ></geometry-rect>
 
             <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
+            <sub-elements>
                 <rectangle-element
                         :sub-width="'100%'"
                         :sub-height="value.elementView.titleH"
@@ -111,13 +114,15 @@
 
 <script>
     import Element from './UMLClassElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     var changeCase = require('change-case');
-
     export default {
         mixins: [Element],
         name: 'enum-class-definition',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             imgSrc() {
                 return `${ window.location.protocol + "//" + window.location.host}/static/image/symbol/class_enum.png`

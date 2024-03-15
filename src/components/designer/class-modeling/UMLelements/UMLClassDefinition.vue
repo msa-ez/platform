@@ -41,6 +41,9 @@
                     }"
             ></geometry-rect>
 
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
             <!-- title -->
             <sub-elements>
                 <rectangle-element
@@ -181,14 +184,16 @@
 
 <script>
     import Element from './UMLClassElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     var changeCase = require('change-case');
     var pluralize = require('pluralize');
-
     export default {
         mixins: [Element],
         name: 'uml-class-definition',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             imgSrc() {
                 return `${window.location.protocol + "//" + window.location.host}/static/image/symbol/entity.png`

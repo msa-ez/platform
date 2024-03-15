@@ -20,8 +20,8 @@
                 <v-card outlined>
                     <v-card-text v-if="value._type.endsWith('Text')">
                         <v-text-field
-                                v-model="namePanel"
-                                :error="namePanel == ''"
+                                v-model="value.name"
+                                :error="value.name == ''"
                                 label="Name"
                                 autofocus
                                 :disabled="isReadOnly"

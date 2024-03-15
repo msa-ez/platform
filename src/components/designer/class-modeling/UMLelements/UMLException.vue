@@ -38,6 +38,9 @@
             ></geometry-rect>
 
             <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
+            <sub-elements>
                 <rectangle-element
                         :sub-width="'100%'"
                         :sub-height="titleH"
@@ -106,13 +109,15 @@
 
 <script>
     import Element from './UMLClassElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     var changeCase = require('change-case');
-
     export default {
         mixins: [Element],
         name: 'uml-exception-class',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             imgSrc() {
                 return `${ window.location.protocol + "//" + window.location.host}/static/image/symbol/class_exception.png`
@@ -157,8 +162,6 @@
                 titleH: 50,
             };
         },
-        created: function () {
-        },
         watch: {
             "name": {
                 deep: true,
@@ -171,10 +174,6 @@
                 }
             },
         },
-        mounted: function () {
-        },
-        methods: {
-        }
     }
 </script>
 

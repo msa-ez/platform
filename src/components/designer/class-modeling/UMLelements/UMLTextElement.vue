@@ -36,6 +36,9 @@
             </geometry-rect>
 
             <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
+            <sub-elements>
                 <text-element
                         :sub-width="'100%'"
                         :sub-top="0"
@@ -59,11 +62,14 @@
 
 <script>
     import Element from './UMLClassElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'uml-text-element',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             className() {
                 return 'org.uengine.modeling.model.Text'
@@ -108,8 +114,6 @@
             return {
                 fontSize: Math.floor(this.value.elementView.width * 0.5)
             };
-        },
-        created: function () {
         },
         watch: {
             "value.elementView.width": function(val) {

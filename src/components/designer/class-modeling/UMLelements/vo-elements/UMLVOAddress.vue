@@ -40,6 +40,10 @@
                     }"
             ></geometry-rect>
 
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
+
             <!-- title -->
             <sub-elements>
                 <rectangle-element
@@ -170,13 +174,15 @@
 
 <script>
     import UMLClass from '../UMLClassDefinition'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
+
     const VODefinitions = require("../../../modeling/generators/VODefinitions");
-
-
     export default {
         mixins: [UMLClass],
         name: 'uml-vo-class-address',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             imgSrc() {
                 return `${window.location.protocol + "//" + window.location.host}/static/image/symbol/class_value.png`
@@ -224,8 +230,6 @@
             return {
             };
         },
-        created: function () {
-        },
         watch: {
             'value.name'(){
                 this.value._type = 'org.uengine.uml.model.vo.Class';
@@ -236,10 +240,6 @@
             'value.operations'() {
                 this.value._type = 'org.uengine.uml.model.vo.Class';
             },
-        },
-        mounted: function () {
-        },
-        methods: {
         }
     }
 </script>
