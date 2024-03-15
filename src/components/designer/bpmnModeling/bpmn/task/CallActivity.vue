@@ -70,7 +70,7 @@
         mixins: [IBpmn],
         name: 'bpmn-call-activity',
         props: {},
-        component: {
+        components: {
             'multi-user-status-indicator': MultiUserStatusIndicator,
             'bpmn-task-panel': BpmnPropertyPanel
         },
