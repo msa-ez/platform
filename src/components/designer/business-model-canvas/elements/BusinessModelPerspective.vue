@@ -9,7 +9,6 @@
                 :y.sync="value.elementView.y"
                 :width.sync="value.elementView.width"
                 :height.sync="value.elementView.height"
-
                 v-on:selectShape="selectedActivity"
                 v-on:deSelectShape="deSelectedActivity"
                 v-on:click="clicked"
@@ -24,19 +23,30 @@
                 }"
         >
             <geometry-rect
-                    :_style="{
-                        'fill-r': 1,
-                        'fill-cx': .1,
-                        'fill-cy': .1,
-                        'stroke-width': 1.4,
-                        'stroke': '#000000',
-                        'fill-opacity': 1,
-                        'vertical-align': 'top',
-                        'font-weight': 'bold',
-                        'font-size': '16',
-                        'r': '1'
-                    }"
+                :_style="{
+                    'fill-r': 1,
+                    'fill-cx': .1,
+                    'fill-cy': .1,
+                    'stroke-width': 1.4,
+                    'text-anchor': 'start',
+                    'stroke': '#000000',
+                    'fill-opacity': 1,
+                    'vertical-align': 'top',
+                    'font-weight': 'bold',
+                    'font-size': '16',
+                    'r': '1'
+                }"
             ></geometry-rect>
+
+            <sub-elements>
+                <image-element
+                    v-bind:image="value.icon"
+                    :sub-width="'20px'"
+                    :sub-height="'20px'"
+                    :sub-top="'10px'"
+                    :sub-right="'10px'"
+            ></image-element>
+            </sub-elements>
 
             <sub-elements>
                 <business-sub-controller
