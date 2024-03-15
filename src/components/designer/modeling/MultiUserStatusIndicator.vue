@@ -12,8 +12,13 @@
 </template>
 
 <script>
+import ImageElement from '../../opengraph/shape/ImageElement.vue';
+
 export default {
     name: 'multi-user-status-indicator',
+    comments: {
+        'image-element': ImageElement
+    },
     props: {
         images: Array,
         elementHeight: Number

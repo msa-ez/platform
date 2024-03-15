@@ -16,6 +16,7 @@
                 :parentId.sync="value.elementView.parent"
                 :label.sync="namePanel"
                 :customMoveActionExist="canvas.isCustomMoveExist"
+                :image.sync="refreshedImg"
                 v-on:customMoveAction="delayedMove"
                 v-on:moveShape="onMoveShape"
                 v-on:dblclick="showProperty"
@@ -51,14 +52,8 @@
                 <bpmn-state-animation :status="status" :type="type"></bpmn-state-animation>
             </sub-elements>
 
-            <sub-elements v-for="(index) in newEditUserImg.length" :key="index">
-                <image-element
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="value.elementView.height"
-                ></image-element>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
             </sub-elements>
             
             <bpmn-sub-controller :type="type"></bpmn-sub-controller>
@@ -75,12 +70,14 @@
 <script>
     import IBpmn from '../../IBpmn'
     import BpmnPropertyPanel from './EndEventPanel'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
     
     export default {
         mixins: [IBpmn],
         name: 'bpmn-compensation-end-event',
         props: {},
-        component: {
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             'bpmn-end-event-panel': BpmnPropertyPanel
         },
         computed: {

@@ -34,14 +34,8 @@
                 <bpmn-state-animation :status="status" :type="type"></bpmn-state-animation>
             </sub-elements>
 
-            <sub-elements v-for="(index) in newEditUserImg.length" :key="index">
-                <image-element
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="value.elementView.height"
-                ></image-element>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
             </sub-elements>
 
             <bpmn-sub-controller :type="type"></bpmn-sub-controller>
@@ -60,12 +54,14 @@
     //이것은, 클래스 임포트인테 임포트 개념과 살짝 다른점이 믹신 이라고 하고, 상속 구조는 아니고, 공통 메소드 공유 개념이다.
     import IBpmn from '../../IBpmn'
     import BpmnPropertyPanel from './StartEventPanel'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [IBpmn],
         name: 'bpmn-start-event',
         props: {},
-        component: {
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             'bpmn-start-event-panel': BpmnPropertyPanel
         },
         computed: {

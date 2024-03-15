@@ -196,7 +196,6 @@
             mixins: [BpmnPropertyPanel],
             name: 'bpmn-task-panel',
             props: {
-                value: Object,
                 linkList: Array,
             },
             data() {

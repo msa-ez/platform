@@ -130,8 +130,8 @@
     import Element from './EventStormingModelElement'
     import IssueDefinitionPanel from "../panels/IssueDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
-
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
+    
     export default {
         mixins: [Element],
         name: 'issue-definition',

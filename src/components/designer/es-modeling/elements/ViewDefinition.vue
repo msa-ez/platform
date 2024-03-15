@@ -116,7 +116,7 @@
                 <storming-sub-controller
                         :type="value._type"
                         :value="value"
-                        :readOnly="isReadOnly"
+                        :readOnly="canvas.isReadOnlyModel"
                 ></storming-sub-controller>
             </sub-elements>
         </geometry-element>
@@ -143,8 +143,8 @@
     import ViewDefinitionPanel from "../panels/ViewDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
     import Generator from "../../modeling/generators/ReadModelGenerator";
-    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
-
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
+    
     export default {
         mixins: [Element],
         name: 'view-definition',

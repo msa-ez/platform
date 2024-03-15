@@ -106,8 +106,8 @@
     import Element from './EventStormingModelElement'
     import ExternalDefinitionPanel from "../panels/ExternalDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
-
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
+    
     export default {
         mixins: [Element],
         name: 'external-definition',

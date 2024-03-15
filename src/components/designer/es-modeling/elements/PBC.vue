@@ -157,9 +157,8 @@
     import SubElements from "../../../opengraph/shape/SubElements";
     import PBCPanel from "../panels/PBCPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
-
-    var _ = require('lodash')
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
+    
     export default {
         components: {
             SubElements,

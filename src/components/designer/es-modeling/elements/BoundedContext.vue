@@ -176,7 +176,7 @@
     import SubElements from "../../../opengraph/shape/SubElements";
     import BoundedContextPanel from "../panels/BoundedContextPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
     import isAttached from '../../../../utils/isAttached';
     import Generator from "../../modeling/generators/BoundedContextGenerator";
 

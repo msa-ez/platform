@@ -168,8 +168,8 @@
     import Element from './EventStormingModelElement'
     import PolicyDefinitionPanel from "../panels/PolicyDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
-
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
+    
     export default {
         mixins: [Element],
         name: 'policy-definition',

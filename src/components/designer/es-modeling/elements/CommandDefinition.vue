@@ -202,9 +202,9 @@
     import CommandDefinitionPanel from "../panels/CommandDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
     import isAttached from '../../../../utils/isAttached';
-    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
+    
     var _ = require('lodash')
-
     export default {
         mixins: [Element],
         name: 'command-definition',
