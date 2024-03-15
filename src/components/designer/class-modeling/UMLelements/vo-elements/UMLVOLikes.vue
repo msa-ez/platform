@@ -110,7 +110,7 @@
             </sub-elements>
 
             <uml-sub-controller
-                    v-if="!canvas.isReadOnlyModel"
+                    v-if="isEditElement"
                     :value="value" 
             ></uml-sub-controller>
         </group-element>
