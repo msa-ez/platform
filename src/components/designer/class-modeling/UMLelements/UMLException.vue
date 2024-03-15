@@ -99,7 +99,7 @@
                 v-model="value"
                 :titleName="'Exception Class'"
                 :img="imgSrc"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></uml-exception-panel>
     </div>

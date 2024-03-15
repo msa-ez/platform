@@ -27,14 +27,14 @@
                         <div style="color: skyblue" v-if="isShowError">Notice: {{showError}}</div>
                         <v-text-field
                                 v-model="value.name"
-                                :disabled="canvas.isReadOnlyModel"
+                                :disabled="isReadOnly"
                                 label="Name"
                                 autofocus
                         ></v-text-field>
                         <v-textarea
                                 v-model="value.description"
                                 label="Description"
-                                :disabled="canvas.isReadOnlyModel"
+                                :disabled="isReadOnly"
                         ></v-textarea>
                         <div class="my-5">
                             <v-label>Color</v-label>
@@ -65,7 +65,7 @@
                         <div style="color: skyblue" v-if="isShowError">Notice: {{showError}}</div>
                         <v-text-field
                                 v-model="value.name"
-                                :disabled="canvas.isReadOnlyModel"
+                                :disabled="isReadOnly"
                                 label="Name"
                                 autofocus
                         ></v-text-field>

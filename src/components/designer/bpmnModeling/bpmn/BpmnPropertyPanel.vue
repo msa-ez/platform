@@ -88,7 +88,7 @@
                         var diff = jsondiffpatch.diff(me._value, me.value)
                         if (diff && Object.keys(diff).length > 0) {
                             console.log('Panel - executeBeforeDestroy')
-                            if (!me.readOnly) {
+                            if (!me.isReadOnly) {
                                 me.canvas.changedByMe = true
 
                                 // part sync

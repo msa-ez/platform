@@ -72,7 +72,7 @@
                 v-if="propertyPanel"
                 v-model="value"
                 :image="image"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></business-model-panel>
 

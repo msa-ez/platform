@@ -104,7 +104,7 @@
                 v-model="value"
                 :titleName="'Enumeration'"
                 :img="imgSrc"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></uml-enum-panel>
     </div>

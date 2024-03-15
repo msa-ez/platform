@@ -23,7 +23,7 @@
                 v-if="propertyPanel"
                 v-model="value"
                 :titleName="'Rollout'"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></relation-panel>
     </div>

@@ -2,12 +2,12 @@
     <div>
         <v-text-field
                 label="Image"
-                :disabled="readOnly"
+                :disabled="isReadOnly"
                 v-model="value.spec.template.spec.containers[0].image"
         ></v-text-field>
         <kube-number-field
                 :label="'Target Port'"
-                :readOnly="readOnly"
+                :isReadOnly="isReadOnly"
                 v-model="value.spec.template.spec.containers[0].ports[0].containerPort"
         ></kube-number-field>
     </div>
@@ -19,7 +19,7 @@
         name: 'kube-template-field',
         props: {
             value: Object,
-            readOnly:{
+            isReadOnly:{
                 type:Boolean,
                 default:function () {
                     return false

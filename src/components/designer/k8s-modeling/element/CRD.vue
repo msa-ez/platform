@@ -72,7 +72,7 @@
                 v-model="value"
                 :img="value.icon"
                 :validationLists="filteredElementValidationResults"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         >
         </property-panel>

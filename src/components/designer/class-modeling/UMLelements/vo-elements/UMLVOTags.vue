@@ -124,7 +124,7 @@
                 <uml-class-text
                         v-model="value"
                         :type="'attribute'"
-                        :readOnly="canvas.isReadOnlyModel"
+                        :isReadOnly="!isEditElement"
                         :styles="{
                             'name': attr.name,
                             'index': index,
@@ -145,7 +145,7 @@
                 <uml-class-text
                         v-model="value"
                         :type="'operation'"
-                        :readOnly="canvas.isReadOnlyModel"
+                        :isReadOnly="!isEditElement"
                         :styles="{
                             'name': item.name,
                             'index': index,
@@ -166,7 +166,7 @@
                 v-model="value"
                 :entities="canvas.value"
                 :img="imgSrc"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></uml-class-panel>
     </div>

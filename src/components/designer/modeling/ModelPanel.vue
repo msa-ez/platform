@@ -2,7 +2,6 @@
 
 <script>
     import StorageBase from "./ModelStorageBase";
-    import getParent from '../../../utils/getParent'
     var jsondiffpatch = require('jsondiffpatch').create({
         objectHash: function (obj, index) {
             return '$$index:' + index;
@@ -24,7 +23,7 @@
                     return null;
                 }
             },
-            readOnly: {
+            isReadOnly: {
                 type: Boolean,
                 default: function () {
                     return false
@@ -123,7 +122,7 @@
                         
                         var diff = jsondiffpatch.diff(me._value, me.value)
                         if (diff) {
-                            if (!me.readOnly) {
+                            if (!me.isReadOnly) {
                                 me.canvas.changedByMe = true
                                 Object.keys(me.value).forEach(function (itemKey) {
                                     if( me.canvas.isCustomMoveExist ){

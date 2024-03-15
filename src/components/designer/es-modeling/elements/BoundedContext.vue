@@ -130,7 +130,7 @@
             <storming-sub-controller
                     :type="value._type"
                     :value="value" 
-                    :readOnly="canvas.isReadOnlyModel && !isMembers"
+                    :isReadOnly="!isEditElement && !isMembers"
                     :isHexagonal="canvas.isHexagonal"
             ></storming-sub-controller>
             
@@ -156,7 +156,7 @@
         <bounded-context-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"

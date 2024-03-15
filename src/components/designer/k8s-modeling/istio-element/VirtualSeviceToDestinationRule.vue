@@ -23,7 +23,7 @@
                 v-if="propertyPanel"
                 v-model="value"
                 :titleName="'VirtualService To DestinationRule'"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></relation-panel>
     </div>

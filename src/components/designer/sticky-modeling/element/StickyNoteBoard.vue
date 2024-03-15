@@ -56,7 +56,7 @@
         <sticky-model-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!(!canvas.isReadOnlyModel && isEditElement)"
+                :isReadOnly="!isEditElement"
                 :showError="showError"
                 :widthStyle="panelStyle"
                 @close="closePanel"

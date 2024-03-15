@@ -72,7 +72,7 @@
                 v-model="value"
                 :img="imgSrc"
                 @close="closePanel"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
         >
         </property-panel>
 

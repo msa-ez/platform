@@ -147,7 +147,7 @@
                 <storming-sub-controller
                         :type="value._type"
                         :value="value"
-                        :readOnly="canvas.isReadOnlyModel"
+                        :isReadOnly="!isEditElement"
                         :isHexagonal="canvas.isHexagonal"
                 ></storming-sub-controller>
 
@@ -170,7 +170,7 @@
         <aggregate-definition-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"

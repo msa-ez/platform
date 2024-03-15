@@ -164,7 +164,7 @@
                     >
                         <template v-slot:activator="{ on }">
                             <v-btn
-                                v-if="readOnly"
+                                v-if="isReadOnlyModel"
                                 style="margin-right: 5px; margin-top: 15px;"
                                 color="primary"
                                 @click="saveComposition('fork')"
@@ -315,7 +315,7 @@
                                     left>
                                 <template v-slot:activator="{ on }">
                                     <v-btn class="bpmn-btn"
-                                        v-if="readOnly"
+                                        v-if="isReadOnlyModel"
                                         style="margin-right: 5px; margin-top: 15px;"
                                         color="primary"
                                         @click="saveComposition('fork')"

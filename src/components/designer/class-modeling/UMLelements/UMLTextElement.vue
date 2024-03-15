@@ -52,7 +52,7 @@
                 v-model="value"
                 :titleName="'Line'"
                 :img="imgSrc"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></uml-text-line-panel>
     </div>

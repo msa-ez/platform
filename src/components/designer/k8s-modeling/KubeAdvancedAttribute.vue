@@ -11,7 +11,7 @@
                                 v-if="item.type == 'String'"
                                 :label="item.label"
                                 v-model="userDefinedAttrVal[item.key]"
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                                 @keyup="updateValue(item.key, userDefinedAttrVal[item.key], item.type)">
                             <template v-slot:append-outer>
                                 <v-icon small @click="deleteAttr(item)">mdi-delete-forever</v-icon>
@@ -22,7 +22,7 @@
                                 v-if="item.type == 'Number'"
                                 :label="item.label"
                                 type="number"
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                                 v-model="userDefinedAttrVal[item.key]"
                                 @keyup="updateValue(item.key, userDefinedAttrVal[item.key], item.type)"
                                 @click="updateValue(item.key, userDefinedAttrVal[item.key], item.type)">
@@ -34,7 +34,7 @@
                         <v-checkbox
                                 v-if="item.type == 'Boolean'"
                                 :label="item.label"
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                                 v-model="userDefinedAttrVal[item.key]"
                                 @change="updateValue(item.key, userDefinedAttrVal[item.key], item.type)">
                             <template v-slot:append-outer>
@@ -47,7 +47,7 @@
                             <v-text-field
                                     label="Key"
                                     v-model="definedKey"
-                                    :disabled="readOnly">
+                                    :disabled="isReadOnly">
                                 <template v-slot:append-outer>
                                     <v-icon small @click="deleteAttr(item)">mdi-delete-forever</v-icon>
                                 </template>
@@ -56,7 +56,7 @@
                                     dense
                                     label="Value"
                                     v-model="definedValue"
-                                    :disabled="readOnly"
+                                    :disabled="isReadOnly"
                                     @keydown.enter="updateValue(definedKey, definedValue, item.type, item); definedKey = ''; definedValue = '';"
                             ></v-text-field>
                         </div>
@@ -67,7 +67,7 @@
                         text
                         dark
                         color="primary"
-                        :disabled="readOnly"
+                        :disabled="isReadOnly"
                         v-on="on"
                         v-bind="attrs"
                         @click="attrDialog = true">
@@ -87,7 +87,7 @@
                     <v-autocomplete
                             filled
                             label="Select Attribute"
-                            :disabled="readOnly"
+                            :disabled="isReadOnly"
                             :items="attrList"
                             v-model="searchKey"
                     ></v-autocomplete>
@@ -122,8 +122,8 @@
 
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="red darken-1" text :disabled="readOnly" @click="attrDialog = false">Cancel</v-btn>
-                    <v-btn color="green darken-1" text  :disabled="readOnly" @click="addAttribute">ADD</v-btn>
+                    <v-btn color="red darken-1" text :disabled="isReadOnly" @click="attrDialog = false">Cancel</v-btn>
+                    <v-btn color="green darken-1" text  :disabled="isReadOnly" @click="addAttribute">ADD</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -139,7 +139,7 @@
         name: 'kube-attr-field',
         props: {
             value: Object,
-            readOnly: {
+            isReadOnly: {
                 type: Boolean,
                 default: function () {
                     return false

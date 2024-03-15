@@ -24,7 +24,7 @@
                                 :error="namePanel == ''"
                                 label="Name"
                                 autofocus
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                         ></v-text-field>
                     </v-card-text>
 
@@ -38,7 +38,7 @@
                                         depressed
                                         :color="color"
                                         @click="changeColor(color)"
-                                        :disabled="readOnly"
+                                        :disabled="isReadOnly"
                                 >
                                     <v-icon>mdi-check-bold</v-icon>
                                 </v-btn>
@@ -48,7 +48,7 @@
                                         depressed dark
                                         :color="color"
                                         @click="changeColor(color)"
-                                        :disabled="readOnly"
+                                        :disabled="isReadOnly"
                                 >
                                     <v-icon dark>mdi-check-bold</v-icon>
                                 </v-btn>
@@ -58,7 +58,7 @@
                                         depressed
                                         :color="color"
                                         @click="changeColor(color)"
-                                        :disabled="readOnly"
+                                        :disabled="isReadOnly"
                                 ></v-btn>
                             </div>
                         </div>
@@ -70,28 +70,28 @@
                                         color="#212121"
                                         style="width: 100px; height: 5px;"
                                         @click="resizedEdge(5)"
-                                        :disabled="readOnly"
+                                        :disabled="isReadOnly"
                                 ></v-btn>
                                 <v-btn class="mx-1 my-2"
                                         depressed tile
                                         color="#212121"
                                         style="width: 100px; height: 10px;"
                                         @click="resizedEdge(10)"
-                                        :disabled="readOnly"
+                                        :disabled="isReadOnly"
                                 ></v-btn>
                                 <v-btn class="mx-1 my-2"
                                         depressed tile
                                         color="#212121"
                                         style="width: 100px; height: 15px;"
                                         @click="resizedEdge(15)"
-                                        :disabled="readOnly"
+                                        :disabled="isReadOnly"
                                 ></v-btn>
                                 <v-btn class="mx-1 my-2"
                                         depressed tile
                                         color="#212121"
                                         style="width: 100px; height: 20px;"
                                         @click="resizedEdge(20)"
-                                        :disabled="readOnly"
+                                        :disabled="isReadOnly"
                                 ></v-btn>
                             </div>
                         </div>
@@ -102,25 +102,25 @@
                                         depressed text
                                         style="color:black;"
                                         @click="changeDashStyle('')"
-                                        :disabled="readOnly"
+                                        :disabled="isReadOnly"
                                 >Solid</v-btn>
                                 <v-btn  class="mx-1 my-2"
                                         depressed text
                                         style="color:black;"
                                         @click="changeDashStyle('.')"
-                                        :disabled="readOnly"
+                                        :disabled="isReadOnly"
                                 >Dotted</v-btn>
                                 <v-btn  class="mx-1 my-2"
                                         depressed text
                                         style="color:black;"
                                         @click="changeDashStyle('- ')"
-                                        :disabled="readOnly"
+                                        :disabled="isReadOnly"
                                 >Dashed</v-btn>
                                 <v-btn  class="mx-1 my-2"
                                         depressed text
                                         style="color:black;"
                                         @click="changeDashStyle('--')"
-                                        :disabled="readOnly"
+                                        :disabled="isReadOnly"
                                 >Long Dashed</v-btn>
                             </div>
                         </div>

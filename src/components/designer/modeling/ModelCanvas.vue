@@ -151,12 +151,6 @@
                 },
                 type: Boolean
             },
-            readOnly: {
-                type: Boolean,
-                default: function () {
-                    return false;
-                }
-            },
             disableModel: {
                 type: Boolean,
                 default: function () {

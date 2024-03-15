@@ -82,8 +82,12 @@
                         :sub-bottom="'5px'"
                 >
                 </image-element>
-                <storming-sub-controller :type="value._type" :value="value"
-                                         :readOnly="canvas.isReadOnlyModel"></storming-sub-controller>
+                <storming-sub-controller 
+                    :type="value._type" 
+                    :value="value"
+                    :isReadOnly="!isEditElement">
+                </storming-sub-controller>
+
                 <sub-controller
                     :image="'chatgpt.png'"
                     @click="openAutoModeling"
@@ -93,7 +97,7 @@
         <external-definition-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"

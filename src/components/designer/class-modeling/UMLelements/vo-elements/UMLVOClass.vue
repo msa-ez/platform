@@ -114,7 +114,7 @@
             </sub-elements>
 
             <uml-sub-controller 
-                    v-if="canvas.isEditable"
+                    v-if="isEditElement"
                     :value="value" 
             ></uml-sub-controller>
         </group-element>
@@ -124,7 +124,7 @@
                 <uml-class-text
                         v-model="value"
                         :type="'attribute'"
-                        :readOnly="!canvas.isEditable"
+                        :isReadOnly="!isEditElement"
                         :styles="{
                             'name': attr.name,
                             'index': index,
@@ -145,7 +145,7 @@
                 <uml-class-text
                         v-model="value"
                         :type="'operation'"
-                        :readOnly="!canvas.isEditable"
+                        :isReadOnly="!isEditElement"
                         :styles="{
                             'name': item.name,
                             'index': index,
@@ -166,7 +166,7 @@
                 v-model="value"
                 :entities="canvas.value"
                 :img="imgSrc"
-                :readOnly="!canvas.isEditable"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></uml-class-panel>
     </div>
