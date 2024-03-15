@@ -17,7 +17,6 @@
                 :customMoveActionExist="canvas.isCustomMoveExist"
                 v-on:customRelationMoveAction="delayedRelationMove"
                 v-on:removeShape="onRemoveShape"
-                :image.sync="refreshedImg"
         >
             <sub-elements>
                 <text-element

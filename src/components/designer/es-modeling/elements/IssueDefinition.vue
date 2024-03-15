@@ -21,7 +21,6 @@
                 v-on:rotateShape="onRotateShape"
                 v-on:addedToGroup="onAddedToGroup"
                 :label.sync="getDescriptionPanel ? '': namePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                 'text-anchor': 'start',
                 'label-angle':value.elementView.angle,

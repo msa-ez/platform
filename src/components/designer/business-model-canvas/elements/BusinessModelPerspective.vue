@@ -15,7 +15,6 @@
                 v-on:addToGroup="onAddToGroup"
                 v-on:removeShape="onRemoveShape"
                 :label.sync="value.name"
-                :image.sync="refreshedImg"
                 :_style="{
                     'vertical-align': 'top',
                     'font-weight': 'bold',

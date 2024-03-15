@@ -21,7 +21,6 @@
                 v-on:deSelectShape="deSelectedActivity"
                 v-on:addedToGroup="onAddedToGroup"
                 :label="canvas.isHexagonal ? '' : getNamePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                     'label-angle': canvas.isHexagonal ? 0 : value.elementView.angle,
                     'font-weight': 'bold','font-size': '16'

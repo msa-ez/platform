@@ -19,7 +19,6 @@
                 v-on:addedToGroup="onAddedToGroup"
                 v-on:dblclick="openPanel"
                 v-on:removeShape="onRemoveShape"
-                :image.sync="refreshedImg"
                 :_style="{
                     stroke:'black',
                     'vertical-align': 'top',

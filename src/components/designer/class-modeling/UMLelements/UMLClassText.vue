@@ -16,7 +16,6 @@
                 :x.sync="x"
                 :y.sync="y"
                 :width.sync="width"
-                :image.sync="refreshedImg"
                 :text.sync="label"
         ></text-element>
 
@@ -88,7 +87,6 @@
                 label: this.styles.label,
                 width: this.styles.width,
                 index: this.styles.index,
-                refreshedImg: '',
                 fontColor: '#000000',
 
                 // edit

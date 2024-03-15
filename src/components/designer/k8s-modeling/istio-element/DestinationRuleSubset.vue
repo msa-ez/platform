@@ -20,7 +20,6 @@
                 v-on:dblclick="showDRulePanel"
                 v-on:removeShape="beforeRemove(value); onRemoveShape(value)"
                 :label.sync="name"
-                :image.sync="refreshedImg"
                 :_style="{
                 'label-angle':value.elementView.angle,
                 'font-weight': 'bold','font-size': '16'

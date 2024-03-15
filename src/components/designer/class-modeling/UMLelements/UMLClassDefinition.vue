@@ -21,7 +21,6 @@
                 v-on:dblclick="openPanel"
                 v-on:addedToGroup="onAddedToGroup"
                 :label="!value.isVO && !value.isAggregateRoot && !value.isInterface ? namePanel : ''"
-                :image="refreshedImg"
                 :_style="{
                     'label-angle':value.elementView.angle,
                     'font-weight': 'bold', 'font-size': '14',
@@ -53,7 +52,6 @@
                             'fill': '#FFA400',
                             'fill-opacity': 1,
                         }"
-                        :image="refreshedImg"
                 ></rectangle-element>
                 <text-element
                         v-if="value.isAggregateRoot"
@@ -104,7 +102,6 @@
                             'fill': '#050038',
                             'fill-opacity': 1,
                         }"
-                        :image="refreshedImg"
                 ></rectangle-element>
             </sub-elements>
 
@@ -120,7 +117,6 @@
                             'fill-opacity': 1,
                             'z-index': -1
                         }"
-                        :image="refreshedImg"
                 ></rectangle-element>
             </sub-elements>
 

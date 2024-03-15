@@ -18,7 +18,6 @@
                 v-on:dblclick="openPanel"
                 v-on:selectShape="selectedActivity"
                 v-on:deSelectShape="deSelectedActivity"
-                :image.sync="refreshedImg"
                 :_style="{
                     'label-angle':value.elementView.angle,
                     'font-weight': 'bold', 

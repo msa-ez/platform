@@ -20,7 +20,6 @@
                 v-on:removeShape="onRemoveShape"
                 v-on:dblclick="openPanel"
                 v-on:addedToGroup="onAddedToGroup"
-                :image.sync="refreshedImg"
                 :_style="{
                     'label-angle':value.elementView.angle,
                     'font-weight': 'bold', 'font-size': '14',

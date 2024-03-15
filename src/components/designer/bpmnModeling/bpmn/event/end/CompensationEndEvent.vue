@@ -16,7 +16,6 @@
                 :parentId.sync="value.elementView.parent"
                 :label.sync="namePanel"
                 :customMoveActionExist="canvas.isCustomMoveExist"
-                :image.sync="refreshedImg"
                 v-on:customMoveAction="delayedMove"
                 v-on:moveShape="onMoveShape"
                 v-on:dblclick="showProperty"

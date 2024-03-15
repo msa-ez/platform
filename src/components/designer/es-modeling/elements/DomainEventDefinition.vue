@@ -22,7 +22,6 @@
                 v-on:rotateShape="onRotateShape"
                 v-on:addedToGroup="onAddedToGroup"
                 :label="getFieldDescriptors || canvas.isHexagonal ? '': getNamePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                 'label-angle':elementCoordinate.angle,
                 'font-weight': 'bold', 'font-size': '16',

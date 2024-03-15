@@ -21,7 +21,6 @@
                     'label-angle':value.elementView.angle,
                     'text-anchor': 'middle',
                 }"
-                :image.sync="refreshedImg"
         >
             <geometry-rect
                     v-if="!movingElement"

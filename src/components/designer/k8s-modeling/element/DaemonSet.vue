@@ -21,7 +21,6 @@
                 v-on:addedToGroup="onAddedToGroup"
                 v-on:removeShape="onRemoveShape"
                 :label.sync="name"
-                :image.sync="refreshedImg"
                 :_style="{
                     'label-angle':value.elementView.angle,
                     'font-weight': 'bold','font-size': '16'

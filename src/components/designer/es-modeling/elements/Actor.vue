@@ -19,7 +19,6 @@
                 v-on:customMoveAction="delayedMove"
                 v-on:moveShape="onMoveShape"
                 v-on:removeShape="onRemoveShape"
-                :image.sync="refreshedImg"
                 :label.sync="namePanel"
                 :_style="{
                 'label-angle':value.elementView.angle,
