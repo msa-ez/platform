@@ -22,7 +22,7 @@
                 v-if="propertyPanel"
                 v-model="value"
                 @close="closePanel"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 :titleName="'Ingress To Service'"
         ></relation-panel>
     </div>

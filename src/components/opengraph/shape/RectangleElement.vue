@@ -15,9 +15,8 @@
     data: function () {
       return {}
     },
-    watch: {},
-    mounted: function () {
-
+    updated() {
+      this.drawShape()
     },
     methods: {
       generateShape: function () {

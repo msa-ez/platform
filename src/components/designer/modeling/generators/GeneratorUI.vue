@@ -1,13 +1,11 @@
 <template>
     <div v-if="modelCreationCompleted">
-        <v-btn 
+        <v-btn class="generator-ui-btn"
             v-if="!openGeneratorUI"
             fab
-            large
             primary
-            absolute
+            fixed
             @click="openGeneratorUI=!openGeneratorUI"
-            style="bottom: 5%; right:5%;"
         >
             <!-- <v-icon color="primary">mdi-chat</v-icon> -->
             <Icon icon="arcticons:openai-chatgpt" width="35" height="35" />
@@ -607,12 +605,30 @@
     }
 </script>
 <style>
+.generator-ui-btn {
+    bottom:20px;
+    right:20px;
+}
 .expanded {
   width: 200px;
 }
 
 .collapsed {
   width: 450px; /* 원하는 가로 길이로 조정 */
+}
+@media only screen and (max-width: 1093px) {
+    .generator-ui-btn {
+        bottom:20px;
+        right:85px;
+    }
+}
+@media only screen and (max-width: 600px) {
+    .generator-ui-btn {
+        bottom:110px;
+        right:60px;
+        width:40px !important;
+        height:40px !important;
+    }
 }
 </style>
 

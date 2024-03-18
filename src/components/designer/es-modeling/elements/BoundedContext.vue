@@ -27,7 +27,6 @@
                 v-on:dblclick="openPanel"
                 v-on:addToGroup="onAddToGroup"
                 :label.sync="getNamePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                 'vertical-align': 'top',
                 'font-weight': 'bold',
@@ -130,7 +129,7 @@
             <storming-sub-controller
                     :type="value._type"
                     :value="value" 
-                    :readOnly="canvas.isReadOnlyModel && !isMembers"
+                    :isReadOnly="!isEditElement && !isMembers"
                     :isHexagonal="canvas.isHexagonal"
             ></storming-sub-controller>
             
@@ -147,14 +146,7 @@
             ></sub-controller> -->
 
             <sub-elements v-if="!canvas.isHexagonal">
-                <image-element
-                        v-for="(index) in newEditUserImg.length" :key="index"
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="elementCoordinate.height"
-                ></image-element>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="elementCoordinate.height"></multi-user-status-indicator>
             </sub-elements>
 
         </group-element>
@@ -163,7 +155,7 @@
         <bounded-context-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"
@@ -183,23 +175,18 @@
     import SubElements from "../../../opengraph/shape/SubElements";
     import BoundedContextPanel from "../panels/BoundedContextPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-
-
-    var changeCase = require('change-case');
-    var pluralize = require('pluralize');
-    var path = require('path');
-    var yamlpaser = require('js-yaml');
-    var _ = require('lodash')
-    import getParent from "../../../../utils/getParent";
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
     import isAttached from '../../../../utils/isAttached';
     import Generator from "../../modeling/generators/BoundedContextGenerator";
 
+    var _ = require('lodash')
     export default {
         components: {
             SubElements,
             ImageElement,
             GroupElement,
             BoundedContextPanel,
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             'storming-sub-controller' : StormingSubController
         },
         mixins: [Element],

@@ -3,18 +3,11 @@
 
 <script>
     import ModelPanel from "../modeling/ModelPanel";
-    var jsondiffpatch = require('jsondiffpatch').create({
-        objectHash: function (obj, index) {
-            return '$$index:' + index;
-        },
-    });
-
+   
     export default {
         mixins: [ModelPanel],
         name: 'kubernetes-panel',
         props: {
-            readOnly: Boolean,
-            // value: Object,
             img: String,
             validationLists:{
                 type: Array,

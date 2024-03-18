@@ -2,33 +2,15 @@
 
 <script>
     import ModelPanel from '../modeling/ModelPanel'
-    // import StorageBase from "../modeling/ModelStorageBase";
-    var jsondiffpatch = require('jsondiffpatch').create({
-        objectHash: function (obj, index) {
-            return '$$index:' + index;
-        },
-    });
 
     export default {
         mixins: [ModelPanel],
-        // mixins: [StorageBase],
         name: 'uml-property-panel',
         props: {
             // value: Object,
             img: String,
             entities: Object,
-            readOnly: Boolean,
         },
-        data: function () {
-            return {
-
-            }
-        },
-        computed: {
-        },
-        beforeDestroy() {
-        },
-        created: function () { },
         methods:{
             setElementCanvas(){
                 var me = this;
@@ -53,34 +35,6 @@
                 if ( !me.canvas.embedded ) {
                     me.openPanelAction()
                 }
-            },
-            executeBeforeDestroy() {
-                var me = this
-                me.$app.try({
-                    context: me,
-                    async action(me){
-                        /*
-                            _value : 기존 값.
-                            value  : Panel 사용되는 값,
-                        */
-                        var diff = jsondiffpatch.diff(me._value, me.value)
-                        if (diff) {
-                            console.log('Panel - executeBeforeDestroy')
-                            if (!me.readOnly) {
-                                // all sync
-                                Object.keys(me.value).forEach(function (itemKey) {
-                                    if(!(itemKey == 'elementView' || itemKey == 'relationView')){
-                                        // Exception: 위치정보
-                                        me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]))
-                                    }
-                                })
-                                // re setting 값을 emit
-                                me.$emit('_value-change', me._value)
-                            }
-                        }
-                        me.closePanelAction()
-                    }
-                })
             },
         },
     }

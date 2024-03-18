@@ -2,20 +2,23 @@ const BpmnVue = {
   install (Vue, opts = {}) {
 
     const files = require.context('.', true, /\.vue$/);
-    const BpmnComponents = {}
+    const components = {}
     files.keys().forEach((key) => {
       if (key === './index.js') {
         return;
       }
-      BpmnComponents[key.replace(/(\.\/|\.vue)/g, '')] = files(key);
+      components[key.replace(/(\.\/|\.vue)/g, '')] = files(key);
     });
-    for (var key in BpmnComponents) {
-      Vue.component(BpmnComponents[key].default.name, BpmnComponents[key].default);
+
+    if(Vue._components==null) Vue._components = {};
+
+    for (var key in components) {
+      Vue.component(components[key].default.name, components[key].default);
+      Vue._components[components[key].default.name] = components[key].default;
     }
 
     //bpmn 컴포넌트 검색용
-    Vue.bpmnComponents = BpmnComponents;
-
+    Vue.bpmnComponents = components;
     //bpmn 용 이벤트 버스
     Vue.bpmnBus = new Vue();
 

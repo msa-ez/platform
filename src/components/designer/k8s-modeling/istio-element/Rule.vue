@@ -27,7 +27,6 @@
                 }"
                 v-on:contextmenu.prevent.stop="handleClick($event)"
         >
-
             <geometry-rect
                     :_style="{
                         'fill-r': 1,
@@ -41,6 +40,9 @@
                         'z-index': '998'
                     }"
             ></geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-controller
                     :image="'terminal.png'"
@@ -63,7 +65,7 @@
                 v-if="propertyPanel"
                 v-model="value"
                 :img="imgSrc"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         >
         </property-panel>
@@ -80,11 +82,13 @@
 <script>
     import Element from "../KubernetesElement";
     import PropertyPanel from './RulePropertyPanel'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'rule',
         components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             "property-panel": PropertyPanel
         },
         props: {},

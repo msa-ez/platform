@@ -19,7 +19,6 @@
                 v-on:deSelectShape="deSelectedActivity"
                 v-on:dblclick="openPanel"
                 v-on:removeShape="onRemoveShape"
-                :image.sync="refreshedImg"
                 :_style="{stroke:'black',
                         'vertical-align': 'top',
                         'font-weight': 'bold',
@@ -29,6 +28,9 @@
                     :image="'terminal.png'"
                     @click.prevent.stop="handleClick($event)"
             ></sub-controller>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-elements>
                 <!--title-->
@@ -53,7 +55,7 @@
                 v-if="propertyPanel"
                 v-model="value"
                 :img="imgSrc"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
                 @setSteps="setSteps"
                 @setTasks="setTasks"
@@ -71,17 +73,13 @@
 <script>
     import Element from "../KubernetesElement";
     import PropertyPanel from './WorkflowPanel'
-
-    var jsondiffpatch = require('jsondiffpatch').create({
-        objectHash: function (obj, index) {
-            return '$$index:' + index;
-        },
-    });
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'workflow',
         components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             "property-panel": PropertyPanel
         },
         props: {},

@@ -23,7 +23,6 @@
                 v-on:rotateShape="onRotateShape"
                 v-on:addedToGroup="onAddedToGroup"
                 :label="getFieldDescriptors || canvas.isHexagonal ? '': getNamePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                 'label-angle':value.elementView.angle,
                 'font-weight': 'bold','font-size': '16'
@@ -87,14 +86,7 @@
             ></geometry-rect>
 
             <sub-elements v-if="!canvas.isHexagonal">
-                <image-element
-                        v-for="(index) in newEditUserImg.length" :key="index"
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="value.elementView.height"
-                ></image-element>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="elementCoordinate.height"></multi-user-status-indicator>
             </sub-elements>
 
             <sub-elements>
@@ -157,7 +149,7 @@
                         v-if="!isPBCModel"
                         :type="value._type"
                         :value="value"
-                        :readOnly="canvas.isReadOnlyModel"
+                        :isReadOnly="!isEditElement"
                         :isHexagonal="canvas.isHexagonal"
                 ></storming-sub-controller>
             </sub-elements>
@@ -191,7 +183,7 @@
         <command-definition-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"
@@ -209,16 +201,16 @@
     import CommandDefinitionPanel from "../panels/CommandDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
     import isAttached from '../../../../utils/isAttached';
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
+    
     var _ = require('lodash')
-
-    var Mustache = require('mustache')
-
     export default {
         mixins: [Element],
         name: 'command-definition',
         components:{
             SubElements,
             CommandDefinitionPanel,
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             'storming-sub-controller' : StormingSubController
         },
         computed: {

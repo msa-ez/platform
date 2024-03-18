@@ -27,8 +27,6 @@
                 }"
                 v-on:contextmenu.prevent.stop="handleClick($event)"
         >
-
-            <!--v-on:dblclick="$refs['dialog'].open()"-->
             <geometry-rect
                     :_style="{
                         'fill-r': 1,
@@ -42,6 +40,9 @@
                         'z-index': '998'
                     }"
             ></geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-controller
                     :image="'terminal.png'"
@@ -72,7 +73,7 @@
                 v-model="value"
                 :img="imgSrc"
                 @close="closePanel"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
         >
         </property-panel>
 
@@ -88,11 +89,13 @@
 <script>
     import Element from "../KubernetesElement";
     import PropertyPanel from './ServicePropertyPanel'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'knativeService',
         components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             "property-panel": PropertyPanel
         },
         props: {},

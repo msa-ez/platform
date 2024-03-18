@@ -3,9 +3,6 @@
 <script>
     import ModelPanel from "../modeling/ModelPanel";
     import getParent from "../../../utils/getParent";
-
-    import isAttached from '../../../utils/isAttached';
-
     var jsondiffpatch = require('jsondiffpatch').create({
         objectHash: function (obj, index) {
             return '$$index:' + index;
@@ -74,13 +71,6 @@
                 if(Object.keys(this.canvas.value.elements[this.value.pbcId].modelValue).length == 0) return true
 
                 return false;
-            },
-            isReadOnly(){
-                if(this.canvas.isReadOnlyModel) return true
-                if(this.readOnly) return true
-                if(this.isPBCModel) return true
-
-                return false
             },
             translateObj(){
                 return {'usedTranslate': this.usedTranslate , 'translateText': this.translateText}
@@ -251,10 +241,12 @@
                             _value : 기존 값.
                             value  : Panel 사용되는 값,
                         */
+                        if(!me.value) return;
+                        
                         var diff = jsondiffpatch.diff(me._value, me.value)
                         if (diff && !(Object.keys(diff).includes('aggregate') && Object.keys(diff).length == 1)) {
                             console.log('Panel - executeBeforeDestroy')
-                            if (!me.canvas.isReadOnlyModel) {
+                            if (!me.isReadOnly) {
                                 me.canvas.changedByMe = true
 
                                 // part sync

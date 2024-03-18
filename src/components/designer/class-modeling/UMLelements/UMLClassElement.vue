@@ -3,7 +3,6 @@
 
 <script>
     import Element from '../../modeling/ModelElement'
-    import isAttached from '../../../../utils/isAttached';
 
     export default {
         mixins: [Element],

@@ -19,7 +19,6 @@
       v-on:dblclick="openPanel"
       v-on:addToGroup="onAddToGroup"
       :label.sync="getNamePanel"
-      :image.sync="refreshedImg"
       :_style="{
         'vertical-align': 'top',
         'font-weight': 'bold',
@@ -92,7 +91,7 @@
       <storming-sub-controller
         :type="value._type"
         :value="value"
-        :readOnly="!canvas.isEditable && !isMembers"
+        :isReadOnly="!isEditElement && !isMembers"
         @createDefinition="createDefinition()"
         canvasType="cm"
         :isProjectConnecting="isProjectConnecting"
@@ -114,7 +113,7 @@
     <bounded-context-cm-panel
       v-if="propertyPanel"
       v-model="value"
-      :readOnly="!isEditElement"
+      :isReadOnly="!isEditElement"
       :newEditUserImg="newEditUserImg"
       :image="image"
       :validationLists="filteredElementValidationResults"

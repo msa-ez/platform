@@ -28,14 +28,14 @@
                         <div style="color: skyblue" v-if="isShowError">Notice: {{showError}}</div>
                         <v-text-field
                                 v-model="value.name"
-                                :disabled="canvas.isReadOnlyModel"
+                                :disabled="isReadOnly"
                                 label="Name"
                                 autofocus
                         ></v-text-field>
                         <v-textarea
                                 v-model="value.description"
                                 label="Description"
-                                :disabled="canvas.isReadOnlyModel"
+                                :disabled="isReadOnly"
                         ></v-textarea>
                     </v-card-text>
 
@@ -43,7 +43,7 @@
                         <div style="color: skyblue" v-if="isShowError">Notice: {{showError}}</div>
                         <v-text-field
                                 v-model="value.name"
-                                :disabled="canvas.isReadOnlyModel"
+                                :disabled="isReadOnly"
                                 label="Name"
                                 autofocus
                         ></v-text-field>
@@ -141,10 +141,9 @@
 <script>
     import ModelPanel from "../modeling/ModelPanel";
     import getParent from "../../../utils/getParent";
+    import draggable from 'vuedraggable'
 
     var _ = require('lodash')
-    import draggable from 'vuedraggable'
-    
     export default {
         name: 'cjm-model-panel',
         mixins: [ModelPanel],
@@ -189,12 +188,8 @@
                 return ''
             },
         },
-        beforeDestroy() {
-
-        },
         created: function () {
             var me = this
-
             if(me.value._type == 'CJMLineElement') {
                 me.colorList.push('#000000')
                 me.colorList.push('#9E9E9E')
@@ -204,8 +199,6 @@
             return {
                 colorList: [ '#F1A746', '#5099F7', '#BB94BF', '#F8D454', '#ED73B6', '#5FC08B', '#8E24AA' ],
             }
-        },
-        watch: {
         },
         methods: {
             setElementCanvas(){

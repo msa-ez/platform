@@ -708,45 +708,26 @@
                                                             open-on-hover
                                                             left
                                                     >
-                                                        <template
-                                                                v-slot:activator="{
-                                                                on,
-                                                            }"
-                                                        >
+                                                        <template v-slot:activator="{ on }">
                                                             <div>
                                                                 <v-btn
-                                                                        class="gs-model-z-index-1 es-hide-share-btn"
-                                                                        text
-                                                                        style="
-                                                                        margin-right: 5px;
-                                                                    "
-                                                                        :disabled="
-                                                                        !initLoad
-                                                                    "
-                                                                        v-on="on"
-                                                                        @click="openInviteUsers()"
+                                                                    class="gs-model-z-index-1 es-hide-share-btn"
+                                                                    text
+                                                                    style="margin-right: 5px;"
+                                                                    :disabled="!initLoad"
+                                                                    v-on="on"
+                                                                    @click="openInviteUsers()"
                                                                 >
-                                                                    <v-icon>{{
-                                                                        icon.share
-                                                                        }}</v-icon>
-                                                                    <div
-                                                                            class="es-hide-share"
-                                                                    >
-                                                                        SHARE
-                                                                    </div>
+                                                                    <v-icon>{{icon.share}}</v-icon>
+                                                                    <div class="es-hide-share"> SHARE </div>
                                                                     <v-avatar
-                                                                            v-if="
-                                                                            requestCount
-                                                                        "
+                                                                            v-if="requestCount"
                                                                             size="25"
                                                                             color="red"
                                                                             style="
-                                                                            margin-left: 2px;
-                                                                        "
+                                                                            margin-left: 2px;"
                                                                     >
-                                                                        {{
-                                                                        requestCount
-                                                                        }}
+                                                                        {{ requestCount }}
                                                                     </v-avatar>
                                                                 </v-btn>
                                                             </div>
@@ -937,7 +918,7 @@
                                                 </v-list>
                                             </v-menu>
                                             <v-menu
-                                                    v-if="isOwnModel && isServerModel && !isReadOnlyModel "
+                                                    v-if="isOwnModel && isServerModel && !isReadOnlyModel"
                                                     class="pa-2"
                                                     offset-y
                                                     open-on-hover
@@ -1694,7 +1675,6 @@
                                         :projectId="projectId"
                                         :projectName="projectName"
                                         :isOwnModel="isOwnModel"
-                                        :getReadOnly="isReadOnlyModel"
                                         :isReadOnlyModel="isReadOnlyModel"
                                         :modelingProjectId="projectId"
                                         :projectVersion="projectVersion"
@@ -1909,19 +1889,12 @@
                 @close="closeGitInfo()"
                 :git.sync="gitURLforModel"
         ></GitInformation>
-        <div v-for="(otherMouseEvent, index) in filteredMouseEventHandlers">
-            <div class="mouse-cursor" :id="index">
-                <div class="mouse-cursor-name">
-                    <v-chip
-                            small
-                            :color="otherMouseEvent.color"
-                            text-color="white"
-                    >
-                        {{ otherMouseEvent.name }}
-                    </v-chip>
-                </div>
-            </div>
+   
+        <!-- Mouse Cursor -->
+        <div v-for="(otherMouseEvent, email) in filteredMouseEventHandlers" :key="email">
+            <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
         </div>
+      
         <v-dialog v-model="showLoginCard"
         ><Login :onlyGitLogin="true" @login="showLoginCard = false"
         /></v-dialog>
@@ -1983,7 +1956,6 @@
     import { diffString, diff } from "json-diff";
     import IdeLoadingPage from "../../IdeLoadingPage";
     import GitInformation from "../../GitInformation";
-    import json2yaml from "json2yaml";
     import IDEResourceDialog from "../../IDEResourceDialog";
     import DialogPurchaseItem from "../../payment/DialogPurchaseItem";
     import { mdiAbTesting, mdiFolderEye } from "@mdi/js";
@@ -1993,14 +1965,15 @@
     import KubernetesModelCanvas from "../k8s-modeling/KubernetesModelCanvas";
     import UMLClassDiagram from "../class-modeling/UMLClassModelCanvas";
     import CodeGenerator from "../modeling/CodeGenerator";
-    // import EventStormingModelList from "./EventStormingModelList";
     import PBCModelList from "./PBCModelList";
     import UIWizardDialoger from "../modeling/generators/UIWizardDialoger";
-    import StorageBase from "../modeling/StorageBase";
     import Login from "../../oauth/Login";
-    // import EventStormingModelList from "../../listPages/AlgoliaModelLists";
-    // import ModelCodeGenerator from "../modeling/ModelCodeGenerator";
     import isAttached from "../../../utils/isAttached";
+    import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
+
+    const prettier = require("prettier");
+    const plugins = require("prettier-plugin-java");
+    const axios = require("axios");
 
     var JSZip = require("jszip");
     var yamlpaser = require("js-yaml");
@@ -2010,27 +1983,25 @@
     var ConfigIniParser = require("config-ini-parser").ConfigIniParser;
     var delimiter = "\r\n"; //or "\n" for *nux
     var _ = require("lodash");
-    const CodeGeneratorCore = require("../modeling/CodeGeneratorCore");
-
     var jsondiffpatch = require("jsondiffpatch").create({
         objectHash: function (obj, index) {
             return "$$index:" + index;
         },
     });
-
     var codeArraydiffpatch = require("jsondiffpatch").create({
         objectHash: function (obj, index) {
             console.log(obj);
             return obj.code;
         },
     });
-
-    const prettier = require("prettier");
-    const plugins = require("prettier-plugin-java");
-    const axios = require("axios");
-
     window.jp = require("jsonpath");
 
+    // const CodeGeneratorCore = require("../modeling/CodeGeneratorCore");
+    // import json2yaml from "json2yaml";
+    // import StorageBase from "../modeling/StorageBase";
+    // import EventStormingModelList from "./EventStormingModelList";
+    // import EventStormingModelList from "../../listPages/AlgoliaModelLists";
+    // import ModelCodeGenerator from "../modeling/ModelCodeGenerator";
     export default {
         name: "event-storming-model-canvas",
         mixins: [ModelCanvas],
@@ -2060,6 +2031,7 @@
             "uml-class-model-canvas": UMLClassDiagram,
             CodeGenerator,
             PBCModelList,
+            MouseCursorComponent
             // ModelCodeGenerator
         },
         props: {
@@ -7101,53 +7073,6 @@
             position: absolute !important;
             right: 120px !important;
         }
-    }
-
-    .mouse-cursor {
-        // 마우스를 따라다니는 원 설정
-
-        position: absolute;
-
-        top: 0; // 초기 위치값을 설정해줍니다.
-
-        left: 0; // 초기 위치값을 설정해줍니다.
-
-        width: 10px; //원 가로사이즈
-
-        height: 10px; //원 세로사이즈
-
-        border-radius: 50%; // 원의 형태설정
-
-        background-color: #9bf50b; //원 컬러설정
-
-        transform: translate(
-                        -50%,
-                        -50%
-        ); // 원을 정가운데로 맞추기위해서 축을-50%이동해줍니다.
-
-        transition: all 300ms linear 0s; //soft
-
-        opacity: 50%;
-    }
-
-    .mouse-cursor::after {
-        width: 40px;
-        height: 40px;
-        border: 15px solid rgba(var(--white-rbg-color), 0.2);
-        border-radius: 50%;
-        position: absolute;
-        top: -25px;
-        left: -25px;
-        animation: cursor-animate-2 550ms infinite alternate;
-    }
-
-    .mouse-cursor-name {
-        position: absolute;
-        top: 5px;
-        left: 10px;
-        width: max-content;
-        text-align: center;
-        color: #9bf50b;
     }
     .mobile-first-sticker-tools {
         display: none;

@@ -37,6 +37,9 @@
                         r: '1'
                     }"
             ></geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
             
             <sub-elements>
                 <!--title-->
@@ -53,11 +56,14 @@
 
 <script>
     import Element from "../KubernetesElement";
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'workflowDag',
-        components: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         props: {},
         computed: {
             imgSrc() {

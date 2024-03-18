@@ -26,7 +26,7 @@
                 v-model="value"
                 :titleName="'UML Class Relation'"
                 :img="imgSrc"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></uml-relation-panel>
     </div>

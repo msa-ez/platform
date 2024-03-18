@@ -2,7 +2,7 @@
     <kubernetes-common-panel
             v-model="value"
             :img="img"
-            :readOnly="readOnly"
+            :isReadOnly="isReadOnly"
             @openDesDoc="desDocOpen"
             @close="closePanel"
     >
@@ -19,32 +19,32 @@
         <template slot="edit-property">
             <v-text-field
                     label="Project"
-                    :disabled="readOnly"
+                    :disabled="isReadOnly"
                     v-model="value.object.spec.project"
             ></v-text-field>
             <v-text-field
                     label="Repository URL"
-                    :disabled="readOnly"
+                    :disabled="isReadOnly"
                     v-model="value.object.spec.source.repoURL"
             ></v-text-field>
             <v-text-field
                     label="Target Revision"
-                    :disabled="readOnly"
+                    :disabled="isReadOnly"
                     v-model="value.object.spec.source.targetRevision"
             ></v-text-field>
             <v-text-field
                     label="Path"
-                    :disabled="readOnly"
+                    :disabled="isReadOnly"
                     v-model="value.object.spec.source.path"
             ></v-text-field>
             <v-text-field
                     label="Destination Server"
-                    :disabled="readOnly"
+                    :disabled="isReadOnly"
                     v-model="value.object.spec.destination.server"
             ></v-text-field>
             <v-text-field
                     label="Destination Namespace"
-                    :disabled="readOnly"
+                    :disabled="isReadOnly"
                     v-model="value.object.spec.destination.namespace"
             ></v-text-field>
         </template>

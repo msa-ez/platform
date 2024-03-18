@@ -96,7 +96,7 @@
                                 <div>Java Parse</div>
                             </v-btn> -->
                             <!-- <v-btn
-                                    v-if="!getReadOnly"
+                                    v-if="!isReadOnlyModel"
                                     color="primary"
                                     text
                                     @click="openAutoModelingDialog()"
@@ -131,7 +131,7 @@
 
                                 <v-menu offset-y open-on-hover left style="margin-top:-20px;">
                                     <template v-slot:activator="{ on }">
-                                        <div v-if="getReadOnly">
+                                        <div v-if="isReadOnlyModel">
                                             <v-btn class="uml-btn"
                                                     text
                                                     color="primary"
@@ -186,7 +186,7 @@
                                     </v-list>
                                 </v-menu>
 
-                                <v-menu v-if="isOwnModel && isServerModel && !getReadOnly"
+                                <v-menu v-if="isOwnModel && isServerModel && !isReadOnlyModel"
                                         offset-y 
                                         open-on-hover 
                                         left>
@@ -206,7 +206,7 @@
                             </v-row>
                         </v-flex>
 
-                        <div v-if="embedded && getReadOnly">
+                        <div v-if="embedded && isReadOnlyModel">
                             <v-card class="tools" style="top:100px; text-align: center;">
                                 <span class="bpmn-icon-hand-tool" 
                                         v-bind:class="{ icons : !dragPageMovable, hands : dragPageMovable }"
@@ -436,6 +436,10 @@
                 </template>
             </separate-panel-components>
         </div>
+        <!-- Mouse Cursor -->
+        <div v-for="(otherMouseEvent, email) in filteredMouseEventHandlers" :key="email">
+            <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
+        </div>
     </div>
 </template>
 
@@ -458,6 +462,7 @@
     // import GeneratorUI from "../modeling/generators/GeneratorUI";
     import { digl } from '@crinkles/digl';
     import GeneratorUI from "../modeling/generators/GeneratorUI";
+    import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
 
     const jsonpath = require('jsonpath-plus');
     var JSZip = require('jszip');
@@ -480,7 +485,8 @@
             'model-storage-dialog': ModelStorageDialog,
             SeparatePanelComponents,
             CodeGenerator,
-            GeneratorUI
+            GeneratorUI,
+            MouseCursorComponent
             // GeneratorUI
         },
         props: {
@@ -783,9 +789,6 @@
                 get: function () {
                     return this.projectName
                 }
-            },
-            getReadOnly() {
-                return this.readOnly
             },
             disableBtn() {
                 if (this.isDisable || !this.initLoad) {
@@ -1566,6 +1569,10 @@
                     return;
                 }
                 this.canvas = opengraph.canvas;
+                
+                // 이벤트 리스너 설정을 위한 함수 호출
+                me.setupEventListeners(opengraph, canvasEl);
+
                 //아이콘 드래그 드랍 이벤트 등록
                 $(el).find('.draggable').draggable({
                     start: function () {

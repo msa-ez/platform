@@ -20,7 +20,6 @@
                 v-on:dblclick="showDRulePanel"
                 v-on:removeShape="beforeRemove(value); onRemoveShape(value)"
                 :label.sync="name"
-                :image.sync="refreshedImg"
                 :_style="{
                 'label-angle':value.elementView.angle,
                 'font-weight': 'bold','font-size': '16'
@@ -39,6 +38,9 @@
                         r: '1'
                     }"
             ></geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
             
             <sub-elements>
                 <!--title-->
@@ -62,11 +64,14 @@
 
 <script>
     import Element from "../KubernetesElement";
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'destinationRuleSubset',
-        components: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         props: {},
         computed: {
             imgSrc() {
