@@ -51,19 +51,9 @@
                     'r': '1',
                 }"
             ></geometry-polygon>
-
-            <!-- <geometry-rect
-                    :_style="{
-                        'fill-r': 1,
-                        'fill-cx': .1,
-                        'fill-cy': .1,
-                        'stroke-width': 10,
-                        'stroke': '#8E24AA',
-                        'fill': '#8E24AA',
-                        'fill-opacity': 1,
-                        'r': '1',
-                    }"
-            ></geometry-rect> -->
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-elements>
                 <text-element
@@ -101,11 +91,14 @@
 
 <script>
     import Element from './CJMModelElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'phase-element',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             subjectTop() {
                 return this.value.elementView.height / 2
@@ -192,8 +185,7 @@
                     if(me.$store) me.$store.dispatch('resize', obj)
                 }
             },
-        },
-        methods: {}
+        }
 
     }
 </script>

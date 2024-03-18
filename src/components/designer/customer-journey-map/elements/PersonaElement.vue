@@ -38,7 +38,10 @@
                         'r': '1',
                     }"
             ></geometry-rect>
-
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
+            
             <sub-elements>
                 <image-element
                         :image="userImage"
@@ -64,11 +67,14 @@
 
 <script>
     import Element from './CJMModelElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'persona-element',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             actorShortSide() {
                 if (this.value.elementView.width < this.value.elementView.height) {

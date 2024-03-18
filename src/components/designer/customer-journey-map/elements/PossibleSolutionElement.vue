@@ -38,6 +38,9 @@
                         'r': '1',
                     }"
             ></geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-elements>
                 <text-element
@@ -64,11 +67,14 @@
 
 <script>
     import Element from './CJMModelElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'possible-solution-element',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             defaultStyle() {
                 return {}
@@ -110,8 +116,6 @@
             return {
             };
         },
-        created: function () {
-        },
         watch: {
             "getDescription": {
                 deep: true,
@@ -149,9 +153,7 @@
                     if(me.$store) me.$store.dispatch('resize', obj)
                 }
             },
-        },
-        methods: {}
-
+        }
     }
 </script>
 

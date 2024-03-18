@@ -34,6 +34,9 @@
                     }"
             >
             </geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-elements>
                 <text-element
@@ -58,11 +61,14 @@
 
 <script>
     import Element from './CJMModelElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'cjm-text-element',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             className() {
                 return 'CJMTextElement'
