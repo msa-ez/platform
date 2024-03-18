@@ -42,6 +42,9 @@
                         'z-index': '998'
                     }"
             ></geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-controller
                     :image="'terminal.png'"
@@ -89,11 +92,13 @@
 <script>
     import Element from "../KubernetesElement";
     import PropertyPanel from './PersistentVolumePropertyPanel'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'persistentVolume',
         components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             "property-panel": PropertyPanel
         },
         props: {},

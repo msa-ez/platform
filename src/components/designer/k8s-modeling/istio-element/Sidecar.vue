@@ -27,8 +27,6 @@
                 }"
                 v-on:contextmenu.prevent.stop="handleClick($event)"
         >
-
-            <!--v-on:dblclick="$refs['dialog'].open()"-->
             <geometry-rect
                     :_style="{
                         'fill-r': 1,
@@ -41,6 +39,9 @@
                         r: '1'
                     }"
             ></geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-controller
                     :image="'terminal.png'"
@@ -79,11 +80,13 @@
 <script>
     import Element from "../KubernetesElement";
     import PropertyPanel from './SidecarPropertyPanel'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'sidecar',
         components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             "property-panel": PropertyPanel
         },
         props: {},

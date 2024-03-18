@@ -28,6 +28,9 @@
                     :image="'terminal.png'"
                     @click.prevent.stop="handleClick($event)"
             ></sub-controller>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-elements>
                 <!--title-->
@@ -70,17 +73,13 @@
 <script>
     import Element from "../KubernetesElement";
     import PropertyPanel from './WorkflowPanel'
-
-    var jsondiffpatch = require('jsondiffpatch').create({
-        objectHash: function (obj, index) {
-            return '$$index:' + index;
-        },
-    });
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'workflow',
         components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             "property-panel": PropertyPanel
         },
         props: {},

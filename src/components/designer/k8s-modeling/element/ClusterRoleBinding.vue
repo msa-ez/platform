@@ -41,6 +41,9 @@
                         'z-index': '998'
                     }"
             ></geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-controller
                     :image="'terminal.png'"
@@ -97,11 +100,13 @@
     import Element from "../KubernetesElement";
     import PropertyPanel from './ClusterRoleBindingPropertyPanel'
     import ImageElement from "../../../opengraph/shape/ImageElement";
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'clusterRoleBinding',
         components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             ImageElement,
             "property-panel": PropertyPanel
         },

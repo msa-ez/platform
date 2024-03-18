@@ -35,6 +35,9 @@
                         r: '1'
                     }"
             ></geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-elements>
                 <!--title-->
@@ -76,16 +79,17 @@
     import Element from "../KubernetesElement";
     import GroupElement from "../../../opengraph/shape/GroupElement";
     import ImageElement from "../../../opengraph/shape/ImageElement";
-
-    var changeCase = require('change-case');
-    var pluralize = require('pluralize');
-
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
-        components: {ImageElement, GroupElement,PropertyPanel},
-        mixins: [Element],
         name: 'namespace',
-        props: {},
+        mixins: [Element],
+        components: {
+            ImageElement,
+            GroupElement,
+            PropertyPanel,
+            'multi-user-status-indicator': MultiUserStatusIndicator
+        },
         computed: {
             defaultStyle() {
                 return {}

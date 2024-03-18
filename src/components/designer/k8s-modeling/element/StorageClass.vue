@@ -41,6 +41,9 @@
                         'z-index': '998'
                     }"
             ></geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-controller
                     :image="'terminal.png'"
@@ -89,13 +92,15 @@
     import Element from "../KubernetesElement";
     import PropertyPanel from './StorageClassPropertyPanel'
     import ImageElement from "../../../opengraph/shape/ImageElement";
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'storageClass',
         components: {
             ImageElement,
-            "property-panel": PropertyPanel
+            "property-panel": PropertyPanel,
+            'multi-user-status-indicator': MultiUserStatusIndicator
         },
         props: {},
         computed: {
