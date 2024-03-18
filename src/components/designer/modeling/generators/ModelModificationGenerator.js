@@ -138,7 +138,7 @@ in this json format:
                                         modelValue.replace.push(modifications[idx].value)
                                     }
 
-                                    if(currentObject[keys[0]]){
+                                    if(currentObject[keys[0]] || currentObject[keys[0]]==""){
                                         if(typeof currentObject[keys[0]] === 'object' && !Array.isArray(currentObject[keys[0]])) {
                                             currentObject[keys[0]] = Object.assign({}, currentObject[keys[0]], modifications[idx].value);
                                         } else {
