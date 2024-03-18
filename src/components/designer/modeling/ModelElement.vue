@@ -276,6 +276,7 @@
                 var me = this
                 if (me.value) {
                     me.selected = true
+                    me.$EventBus.$emit('selectedElement', {selected: true, id: me.value.elementView.id, value: me.value})
                     me.onActivitySelected()
                 }
             },
@@ -286,6 +287,7 @@
                     me.selected = false
                     me.staySelected = false
                     me.propertyPanel = false
+                    me.$EventBus.$emit('selectedElement', {selected: false, id: me.value.elementView.id})
                     me.onActivityDeselected()
                 }
             },

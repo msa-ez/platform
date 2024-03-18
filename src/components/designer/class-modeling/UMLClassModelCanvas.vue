@@ -1075,7 +1075,7 @@
                                         // });
                                     }
 
-                                    let aggregateRoot = Object.values(me.value.elements).find(element => element.isAggregateRoot === true)
+                                    let aggregateRoot = Object.values(me.value.elements).filter(element => element != null).find(element => element.isAggregateRoot === true)
 
                                     if (aggregateRoot !== undefined && fieldVo !== undefined) {
                                         var relationEl = {
@@ -1143,13 +1143,17 @@
                         }
 
                     })
-
-                    // Object.keys(model.updateElement).forEach(function(key) {
-                    //     me.$set(me.value.elements[model.selectedElement.id], key, model.updateElement[key]);
-                    // });
-                    // me.$set(me.value.elements, model.selectedElement.id, Object.assign({}, me.value.elements[model.selectedElement.id], model.updateElement))
-                    me.value.elements[model.selectedElement.id] = Object.assign(me.value.elements[model.selectedElement.id], model.updateElement)
-                    me.changedByMe = true
+                    
+                    if(model.updateElement){
+                        if(model.replace.length > 0){
+                            // 일부 key의 value가 바뀐 것을 me.value에 반영할 때, Vue instance 상에 직접 변화를 주기위한 별도 처리
+                            Vue.set(me.value.elements, model.selectedElement.id, model.updateElement)
+                        }else{
+                            me.value.elements[model.selectedElement.id] = Object.assign(me.value.elements[model.selectedElement.id], model.updateElement)
+                        }
+                        me.$EventBus.$emit('selectedElement', {selected: true, id: me.value.elements[model.selectedElement.id].elementView.id, value: me.value.elements[model.selectedElement.id]})
+                        me.changedByMe = true
+                    }
                 }
             },
             onGenerationFinished(){

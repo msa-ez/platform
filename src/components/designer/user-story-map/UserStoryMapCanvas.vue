@@ -589,7 +589,7 @@
                 </v-layout>
             </hsc-window>
         </hsc-window-style-metal>
-        <GeneratorUI v-if="projectId" ref="generatorUI" @createModel="createModel" :defaultInputData="defaultGeneratorUiInputData" @clearModelValue="clearModelValue"></GeneratorUI>
+        <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" :modelValue="value" @createModel="createModel" :defaultInputData="defaultGeneratorUiInputData" @clearModelValue="clearModelValue" @modificateModel="modificateModel"></GeneratorUI>
     </div>
 </template>
 
@@ -820,6 +820,13 @@
 //                    console.log(me.value.elements);
 
 //                    me.value.__ob__.dep.notify();
+                }
+            },
+            modificateModel(model){
+                var me = this;
+                if(model && model.updateElement){
+                    me.value.elements[model.selectedElement.elementView.id] = Object.assign(me.value.elements[model.selectedElement.elementView.id], model.updateElement)
+                    me.changedByMe = true
                 }
             },
             bindEvents: function (opengraph) {

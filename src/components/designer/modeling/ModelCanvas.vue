@@ -3983,7 +3983,7 @@
                         if (componentInfo.isRelation && componentInfo.component.includes('relation')) {
                             /* make Relation */
                             element = vueComponent.computed.createNew(
-                                this.uuid(),
+                                me.uuid(),
                                 componentInfo.sourceElement.value,
                                 componentInfo.targetElement.value,
                                 componentInfo.vertices,
@@ -3992,7 +3992,7 @@
                         } else {
                             /* make Element */
                             element = vueComponent.computed.createNew(
-                                this.uuid(),
+                                me.uuid(),
                                 componentInfo.x,
                                 componentInfo.y,
                                 componentInfo.width,

@@ -17,9 +17,11 @@ Please refer to the request below to create {modifications: [..]} to be used to 
 ${this.client.input.modificationMessage}
 
 {modifications: [..]} should be created like this:
-- In the case of replace, all information that can be modified upon request must be modified and included in the value, and there must be a json path and query that is closest to the information to be modified.
+- In the case of replace, all information that can be modified upon request must be modified and included in the value, and there must be a json path and query or index that is closest to the information to be modified.
 - In the case of add, the value to be added must have the same structure as the object located in the same json path, and there must be no query.
 - In case of delete, no value is needed and only the id value and action must be included.
+
+- The data pointed to by jsonPath in the current model must already exist.
 - jsonPath does not include "entities".
 - name, namePascalCase, and nameCamelCase must be written in English and must be modified together to fit each format.
 - Class Name of must can be known java class or the Value object classes listed here: must be one of Address, Photo, User, Money, Email, Payment, Weather, File, Likes, Tags, Comment. use simple name reduce the package name if java class name.
@@ -72,9 +74,14 @@ in this json format:
             if(modelData['modifications']){
                 let modifications = modelData['modifications']
                 for(var idx=0; idx< modifications.length; idx++){
-                    let jsonPath = modifications[idx].jsonPath;
-                    let parentPath = jsonPath.replace(/\[\?.*?\]|\[\d+\]/g, '')
+                    let parentPath = ""
+                    let jsonPath = ""
 
+                    if(modifications[idx].jsonPath){
+                        jsonPath = modifications[idx].jsonPath;
+                        parentPath = jsonPath.replace(/\[\?.*?\]|\[\d+\]/g, '')
+
+                    }
                     let match = jsonpath.JSONPath({ path: modifications[idx].jsonPath, json: selectedElement });
                     let parentMatch = jsonpath.JSONPath({ path: parentPath, json: selectedElement });
 
@@ -82,9 +89,11 @@ in this json format:
 
                     // jsonPath에서 필요한 키 추출
                     const keys = jsonPath.match(/(?<=\$\.).+?(?=\[|\]|$)/g);
-                    // if(jsonPath.match(/^\$\.(.+)\[(\d+)\]$/) && selectedElement._type.includes('uml')){
-                    //     keys = jsonPath.match(/^\$\.(.+)\[(\d+)\]$/);
-                    // }
+                    
+                    var matchIndex = ""
+                    if(jsonPath.match(/\[(\d+)\]/)){
+                        matchIndex = jsonPath.match(/\[(\d+)\]/)[1]
+                    }
 
                     // 추출된 키를 배열로 저장
                     const keysArray = keys[0].split('.');
@@ -109,21 +118,39 @@ in this json format:
                                 if(query[1] && query[2]){
                                     for(var i=0; i<currentObject.length; i++) {
                                         if(currentObject[i][query[1]] === query[2]) {
-                                            // if(selectedElement._type.includes('uml')){
-                                            //     modelValue.beforeReplace.push(selectedElement.fieldDescriptors.find(x => x[query[1]] == query[2]))
-                                            //     modelValue.replace.push(modifications[idx].value)
-                                            // }
-                                            currentObject[i] = Object.assign(currentObject[i], modifications[idx].value)
+                                            if(selectedElement._type.includes('uml')){
+                                                // modelValue.beforeReplace.push(selectedElement.fieldDescriptors.find(x => x[query[1]] == query[2]))
+                                                modelValue.replace.push(modifications[idx].value)
+                                            }
+
+                                            if(typeof currentObject[i] === 'object' && !Array.isArray(currentObject[i])) {
+                                                currentObject[i] = Object.assign({}, currentObject[i], modifications[idx].value);
+                                            } else {
+                                                currentObject[i] = modifications[idx].value;
+                                            }
                                         }
                                     }
                                 }
                             }else{
                                 if(currentObject){
-                                    // if(selectedElement._type.includes('uml')){
-                                    //     modelValue.beforeReplace.push(currentObject[keys[1]][keys[2]])
-                                    //     modelValue.replace.push(modifications[idx].value)
-                                    // }
-                                    currentObject[keys[0]] = modifications[idx].value
+                                    if(selectedElement._type.includes('uml')){
+                                        // modelValue.beforeReplace.push(currentObject[keys[1]][keys[2]])
+                                        modelValue.replace.push(modifications[idx].value)
+                                    }
+
+                                    if(currentObject[keys[0]]){
+                                        if(typeof currentObject[keys[0]] === 'object' && !Array.isArray(currentObject[keys[0]])) {
+                                            currentObject[keys[0]] = Object.assign({}, currentObject[keys[0]], modifications[idx].value);
+                                        } else {
+                                            currentObject[keys[0]] = modifications[idx].value;
+                                        }
+                                    }else{
+                                        if(typeof currentObject[matchIndex] === 'object' && !Array.isArray(currentObject[matchIndex])) {
+                                            currentObject[matchIndex] = Object.assign({}, currentObject[matchIndex], modifications[idx].value);
+                                        } else {
+                                            currentObject[matchIndex] = modifications[idx].value;
+                                        }
+                                    }
                                 }
                             }
                         }

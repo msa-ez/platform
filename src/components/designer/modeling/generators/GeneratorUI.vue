@@ -9,7 +9,8 @@
             @click="openGeneratorUI=!openGeneratorUI"
             style="bottom: 5%; right:5%;"
         >
-            <v-icon color="primary">mdi-chat</v-icon>
+            <!-- <v-icon color="primary">mdi-chat</v-icon> -->
+            <Icon icon="arcticons:openai-chatgpt" width="35" height="35" />
         </v-btn>
         <v-row v-if="openGeneratorUI" style="position:absolute; right:30px; top:75px;">
             <v-card style="text-align: center; z-index: 2;" width="auto">
@@ -348,13 +349,13 @@
         },
         mounted: async function () { 
             var me = this
-            me.$EventBus.$on('selectedElementObj', function (selectedObj) {
+            me.$EventBus.$on('selectedElement', function (selectedObj) {
                 var id = selectedObj.id
 
                 if (selectedObj['selected']) {
                     me.selectedElement.push(selectedObj)
                     if(me.modelValue){
-                        me.input.selectedElement = JSON.parse(JSON.stringify(me.modelValue.elements[selectedObj.id]));
+                        me.input.selectedElement = JSON.parse(JSON.stringify(selectedObj.value));
                     }
                 } else {
                     var fidx = me.selectedElement.findIndex(obj => obj.id == id)

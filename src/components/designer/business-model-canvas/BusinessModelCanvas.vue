@@ -325,7 +325,7 @@
             :projectId="projectId"
             @startCreateModel="openEventStorming"
         ></AutoModelingDialog>
-        <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" :defaultInputData="defaultGeneratorUiInputData" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
+        <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" :modelValue="value" :defaultInputData="defaultGeneratorUiInputData" @createModel="createModel" @clearModelValue="clearModelValue" @modificateModel="modificateModel"></GeneratorUI>
     </div>
 </template>
 
@@ -429,6 +429,13 @@
                             me.eleCnt++;
                         }
                     })
+                }
+            },
+            modificateModel(model){
+                var me = this;
+                if(model && model.updateElement){
+                    me.value.elements[model.selectedElement.elementView.id] = Object.assign(me.value.elements[model.selectedElement.elementView.id], model.updateElement)
+                    me.changedByMe = true
                 }
             },
             getComponentByClassName: function (className) {

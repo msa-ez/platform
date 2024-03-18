@@ -43,7 +43,7 @@
                 </v-card>
 
                 <v-card>
-                    <v-card-text>
+                    <!-- <v-card-text>
                         <span class="headline">Implementation</span>
 
                         <project-picker
@@ -51,7 +51,7 @@
                                 :search="namePanel"
                                 :readOnly="readOnly"
                         ></project-picker>
-                    </v-card-text>
+                    </v-card-text> -->
                 </v-card>
             </v-list>
         </v-navigation-drawer>
