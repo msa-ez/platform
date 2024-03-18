@@ -101,7 +101,7 @@
                     <div v-if="isMobile">
                         <v-speed-dial
                             v-model="fab"
-                            style="position:fixed; bottom:50px; right:50px;"
+                            class="business-mobile-speed-dial"
                         >
                             <template v-slot:activator>
                                 <v-btn
@@ -225,6 +225,10 @@
                             </v-row>
                         </v-flex>
                     </slot>
+
+                    <a href="https://www.strategyzer.com/" target="_blank"
+                        class="strategyzer-link"
+                    >strategyzer.com</a>
 
                     <slot name="palette">
                         <v-card class="business-model-canvas-sticker">
@@ -1936,6 +1940,21 @@
 
 
 <style>
+    .business-mobile-speed-dial {
+        position:fixed;
+        bottom:50px;
+        right:50px;
+    }
+    .strategyzer-link {
+        position: fixed;
+        left:20px;
+        top:65px;
+        color:black !important;
+        text-decoration: none;
+    }
+    .strategyzer-link:hover {
+        color:#1976D2 !important;
+    }
     .business-model-canvas-sticker {
         position: absolute;
         width: 48px;
@@ -1962,17 +1981,36 @@
         margin-right: 8px;
     }
 
-    @media only screen and (max-width: 1090px) {
+    @media only screen and (max-width: 1093px) {
         .action-btn-box {
             display:none;
+        }
+        .business-mobile-speed-dial {
+            bottom:20px;
+            right:13px;
+        }
+        .business-mobile-speed-dial .v-btn {
+            width:56px;
+            height:56px;
         }
     }
 
     @media only screen and (max-width: 600px) {
+        .business-mobile-speed-dial {
+            bottom:110px;
+            right:13px;
+        }
+        .business-mobile-speed-dial .v-btn {
+            width:40px;
+            height:40px;
+        }
         .business-model-canvas-top-menu {
             position: absolute;
             left:120px;
             top:5px;
+        }
+        .strategyzer-link {
+            left:35px;
         }
         .business-model-canvas-mobile-home-button {
             display: block;
