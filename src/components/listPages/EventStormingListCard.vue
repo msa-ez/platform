@@ -291,11 +291,13 @@
                         return {display: 'Context Mapping', color: '#f7d31e'}
                     } else if (me.copyInformation.type == 'cjm') {
                         return {display: 'Customer Journey Map', color: '#D81B60'}
+                    }else if (me.copyInformation.type == 'userStoryMap') {
+                        return {display: 'User Story Map', color: '#F39C12'}
                     } else {
                         return null
                     }
             },
-            openProject(){
+            openProject(){ 
                 var me = this
                 // if (me.copyInformation.type == 'project') {
                 //     me.$emit("openAutoModelingDialog", me.copyInformation.projectId)
