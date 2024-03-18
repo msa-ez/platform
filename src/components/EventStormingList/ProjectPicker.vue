@@ -6,7 +6,7 @@
         </v-chip>
 
         <EventStormingListPage
-                v-if="!readOnly"
+                v-if="!isReadOnly"
                 :buinessName="search"
                 searchType="es"
         >
@@ -35,7 +35,7 @@
         props: {
             search: String,
             value: Object,
-            readOnly: {
+            isReadOnly: {
                 type: Boolean,
                 default: function () {
                     return false

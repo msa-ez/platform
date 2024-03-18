@@ -22,7 +22,6 @@
                 v-on:rotateShape="onRotateShape"
                 v-on:addedToGroup="onAddedToGroup"
                 :label.sync="namePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                     'label-angle':value.elementView.angle,
                     'font-weight': 'bold',
@@ -88,7 +87,7 @@
                 <storming-sub-controller
                         :type="value._type"
                         :value="value"
-                        :readOnly="canvas.isReadOnlyModel"
+                        :isReadOnly="!isEditElement"
                 ></storming-sub-controller>
             </sub-elements>
         </geometry-element>
@@ -96,7 +95,7 @@
         <ui-definition-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"
@@ -110,8 +109,8 @@
     import Element from './EventStormingModelElement'
     import UIDefinitionPanel from "../panels/UIDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
- 
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
+    
     export default {
         mixins: [Element],
         name: 'ui-definition',

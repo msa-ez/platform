@@ -25,7 +25,6 @@
                 v-on:moveShape="onMoveShape"
 
                 :label.sync="namePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                 'label-angle':value.elementView.angle,
                 'font-weight': 'bold','font-size': '16'
@@ -46,15 +45,8 @@
             >
             </geometry-rect>
 
-            <sub-elements v-for="(index) in newEditUserImg.length">
-                <image-element
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="value.elementView.height"
-                >
-                </image-element>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
             </sub-elements>
 
             <sub-elements>
@@ -73,7 +65,7 @@
                 v-if="propertyPanel"
                 v-model="value"
                 :image="image"
-                :readOnly="!canvas.isEditable"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></business-model-panel>
 
@@ -83,10 +75,14 @@
 
 <script>
     import BusinessModelElement from "./BusinessModelElement";
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [BusinessModelElement],
         name: 'channel',
+        components:{
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         props: {},
         computed: {
             className() {

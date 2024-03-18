@@ -2,7 +2,7 @@
         <bpmn-common-panel
                 v-model="value"
                 :image="image"
-                :is-read-only="readOnly"
+                :is-read-only="isReadOnly"
                 :width-style="widthStyle"
                 @close="closePanel"
         >
@@ -196,7 +196,6 @@
             mixins: [BpmnPropertyPanel],
             name: 'bpmn-task-panel',
             props: {
-                value: Object,
                 linkList: Array,
             },
             data() {

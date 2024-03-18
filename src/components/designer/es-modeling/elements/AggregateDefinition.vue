@@ -28,7 +28,6 @@
                 v-on:rotateShape="onRotateShape"
                 v-on:addedToGroup="onAddedToGroup"
                 :label="getFieldDescriptors && !canvas.isHexagonal ? '': namePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                 'label-angle':value.elementView.angle,
                 'font-weight': 'bold', 'font-size': '16',
@@ -147,7 +146,7 @@
                 <storming-sub-controller
                         :type="value._type"
                         :value="value"
-                        :readOnly="canvas.isReadOnlyModel"
+                        :isReadOnly="!isEditElement"
                         :isHexagonal="canvas.isHexagonal"
                 ></storming-sub-controller>
 
@@ -170,7 +169,7 @@
         <aggregate-definition-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"
@@ -190,16 +189,10 @@
     import AggregateDefinitionPanel from "../panels/AggregateDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
     import Generator from "../../modeling/generators/AggregateGenerator";
-    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     var changeCase = require('change-case');
     var _ = require('lodash')
-    var jsondiffpatch = require('jsondiffpatch').create({
-        objectHash: function (obj, index) {
-            return '$$index:' + index;
-        },
-    });
-
     export default {
         mixins: [Element],
         name: 'aggregate-definition',

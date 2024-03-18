@@ -122,7 +122,7 @@
                                             style="margin-right: 5px; margin-top: 40px; max-width: 140px; z-index: 1;"
                                             label="Project Name"
                                             v-model="projectName"
-                                            :disabled="readOnly"
+                                            :disabled="isReadOnly"
                                             dense
                                     ></v-text-field>
                                     <!-- 웹페이지 버튼들 -->
@@ -231,7 +231,7 @@
                                             <template v-slot:activator="{ on }">
                                                 <v-btn class="k8s-hide-fork-btn"
                                                         text
-                                                        v-if="readOnly"
+                                                        v-if="isReadOnlyModel"
                                                         style="margin-right: 5px; margin-top: 15px;"
                                                         @click="saveComposition('fork')"
                                                 >

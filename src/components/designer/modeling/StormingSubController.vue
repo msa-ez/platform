@@ -91,7 +91,7 @@
             calleeDefinitionId: String,
             elementId: String,
             value: Object,
-            readOnly: {
+            isReadOnly: {
                 type: Boolean,
                 default: function () {
                     return false;
@@ -153,14 +153,9 @@
                 selectedElements: [],
             }
         },
-        watch: {
-            'readOnly': function (newVal) {
-                console.log(newVal)
-            }
-        },
         mounted: function () {
             var me = this
-            if (!me.readOnly)
+            if (!me.isReadOnly)
                 this.clone.rotate = true;
 
             if (this.type == "org.uengine.modeling.model.BoundedContext") {

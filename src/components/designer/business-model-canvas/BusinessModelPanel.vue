@@ -29,7 +29,7 @@
                                 label="Name"
                                 v-model="value.name"
                                 autofocus
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                         ></v-text-field>
                         <v-textarea
                                 v-if="value.description != null"
@@ -37,7 +37,7 @@
                                 name="input-7-4"
                                 label="description"
                                 v-model="value.description"
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                         ></v-textarea>
                     </v-card-text>
                 </v-card>
@@ -49,7 +49,7 @@
                         <project-picker
                                 v-model="value.dddModel"
                                 :search="namePanel"
-                                :readOnly="readOnly"
+                                :isReadOnly="isReadOnly"
                         ></project-picker>
                     </v-card-text>
                 </v-card>

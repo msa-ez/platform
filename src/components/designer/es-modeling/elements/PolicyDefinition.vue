@@ -21,7 +21,6 @@
                 v-on:deSelectShape="deSelectedActivity"
                 v-on:addedToGroup="onAddedToGroup"
                 :label="canvas.isHexagonal ? '' : getNamePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                     'label-angle': canvas.isHexagonal ? 0 : value.elementView.angle,
                     'font-weight': 'bold','font-size': '16'
@@ -118,7 +117,7 @@
                         v-if="!isPBCModel"
                         :type="value._type" 
                         :value="value"
-                        :readOnly="canvas.isReadOnlyModel"
+                        :isReadOnly="!isEditElement"
                         :isHexagonal="canvas.isHexagonal"
                 ></storming-sub-controller>
 
@@ -153,7 +152,7 @@
         <policy-definition-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"
@@ -168,8 +167,8 @@
     import Element from './EventStormingModelElement'
     import PolicyDefinitionPanel from "../panels/PolicyDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
-
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
+    
     export default {
         mixins: [Element],
         name: 'policy-definition',

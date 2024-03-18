@@ -18,7 +18,6 @@
                 v-on:dblclick="openPanel"
                 v-on:selectShape="selectedActivity"
                 v-on:deSelectShape="deSelectedActivity"
-                :image.sync="refreshedImg"
                 :label.sync="value.name"
                 :_style="{
                     'label-angle':value.elementView.angle,
@@ -65,7 +64,7 @@
         <user-story-map-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!(!canvas.isReadOnlyModel && isEditElement)"
+                :isReadOnly="!isEditElement"
                 :showError="showError"
                 :widthStyle="panelStyle"
                 @close="closePanel"

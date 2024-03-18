@@ -1,7 +1,7 @@
 <template>
     <div>
         <text-element
-                :movable="!readOnly"
+                :movable="!isReadOnly"
                 :selectable="isMovable"
                 :deletable="isDeletable"
                 v-on:moveShape="onMoveShape"
@@ -16,7 +16,6 @@
                 :x.sync="x"
                 :y.sync="y"
                 :width.sync="width"
-                :image.sync="refreshedImg"
                 :text.sync="label"
         ></text-element>
 
@@ -24,7 +23,7 @@
             <uml-class-popup
                     v-model="value"
                     :type="type"
-                    :readOnly="readOnly"
+                    :isReadOnly="!isEditElement"
                     :isNew="false"
                     :index="styles.index"
                     @close="closePopup"
@@ -43,23 +42,24 @@
             value: Object,
             type: String,
             styles: Object,
-            readOnly: Boolean,
+            isReadOnly: Boolean,
+
         },
         computed: {
             isDeletable() {
                 var me = this;
-                if (me.readOnly) {
+                if (me.isReadOnly) {
                     return false;
                 } else {
                     if(me.type == 'attribute') {
                         var field = me.$parent.value.fieldDescriptors[me.index];
-                        if(!me.readOnly && !field.isKey) {
+                        if(!me.isReadOnly && !field.isKey) {
                             return true
                         } else {
                             return false
                         }
                     } else {
-                        if(!me.readOnly) {
+                        if(!me.isReadOnly) {
                             return true
                         } else {
                             return false
@@ -69,7 +69,7 @@
             },
             isMovable() {
                 var me = this
-                if (me.readOnly) {
+                if (me.isReadOnly) {
                     return false;
                 } else {
                     if(me.type == 'item') {
@@ -87,7 +87,6 @@
                 label: this.styles.label,
                 width: this.styles.width,
                 index: this.styles.index,
-                refreshedImg: '',
                 fontColor: '#000000',
 
                 // edit
@@ -151,7 +150,7 @@
             },
             openEditDialog() {
                 var me = this
-                if(me.type != 'item' && !me.readOnly) {
+                if(me.type != 'item' && !me.isReadOnly) {
                     me.editDialog = true
                 }
             },

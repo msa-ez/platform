@@ -29,7 +29,6 @@
                 v-on:rotateShape="onRotateShape"
                 v-on:addedToGroup="onAddedToGroup"
                 :label="getFieldDescriptors ? '': getNamePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                 'label-angle':value.elementView.angle,
                 'font-weight': 'bold','font-size': '16'
@@ -116,7 +115,7 @@
                 <storming-sub-controller
                         :type="value._type"
                         :value="value"
-                        :readOnly="isReadOnly"
+                        :isReadOnly="!isEditElement"
                 ></storming-sub-controller>
             </sub-elements>
         </geometry-element>
@@ -124,7 +123,7 @@
         <view-definition-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"
@@ -143,8 +142,8 @@
     import ViewDefinitionPanel from "../panels/ViewDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
     import Generator from "../../modeling/generators/ReadModelGenerator";
-    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
-
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
+    
     export default {
         mixins: [Element],
         name: 'view-definition',

@@ -2,7 +2,7 @@
     <kubernetes-common-panel
             v-model="value"
             :img="img"
-            :readOnly="readOnly"
+            :isReadOnly="isReadOnly"
             @openDesDoc="desDocOpen"
             @close="closePanel"
     >
@@ -20,23 +20,23 @@
             <v-text-field
                     label="Host"
                     v-model="value.object.spec.host"
-                    :disabled="readOnly"
+                    :disabled="isReadOnly"
             ></v-text-field>
             <v-text-field
                     label="Port Name"
                     v-model="value.object.spec.port.name"
-                    :disabled="readOnly"
+                    :disabled="isReadOnly"
             ></v-text-field>
             <kube-number-field                                
                     :label="'Port Number'"
                     v-model="value.object.spec.port.number"
-                    :readOnly="readOnly"
+                    :isReadOnly="isReadOnly"
             ></kube-number-field>
             <v-select
                     label="Protocol"
                     :items="protocolList"
                     v-model="value.object.spec.port.protocol"
-                    :disabled="readOnly"
+                    :disabled="isReadOnly"
             ></v-select>
         </template>
     </kubernetes-common-panel>

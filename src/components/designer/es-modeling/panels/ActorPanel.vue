@@ -2,7 +2,7 @@
     <common-panel
             v-model="value"
             :image="image"
-            :is-read-only="canvas.isReadOnlyModel"
+            :is-read-only="isReadOnly"
             :width-style="widthStyle"
             :related-url="relatedUrl"
             :validation-lists="validationLists"
@@ -22,7 +22,7 @@
 
         <template slot="t-edit-user">
             <div
-                    v-if="newEditUserImg.length > 0 && canvas.isReadOnlyModel"
+                    v-if="newEditUserImg.length > 0 && isReadOnly"
                     style="text-align:center"
             >
                 <v-chip
@@ -49,11 +49,7 @@
 <script>
     import EventStormingModelPanel from "../EventStormingModelPanel";
     import CommonPanel from "./CommonPanel";
-    var jsondiffpatch = require('jsondiffpatch').create({
-        objectHash: function (obj, index) {
-            return '$$index:' + index;
-        },
-    });
+ 
     export default {
         name: 'actor-panel',
         mixins:[EventStormingModelPanel],

@@ -11,20 +11,15 @@
                 :width.sync="value.elementView.width"
                 :height.sync="value.elementView.height"
                 :angle.sync="value.elementView.angle"
-
                 v-on:selectShape="selectedActivity"
                 v-on:deSelectShape="deSelectedActivity"
-
                 v-on:dblclick="openPanel"
                 v-on:rotateShape="onRotateShape"
                 v-on:addedToGroup="onAddedToGroup"
                 :customMoveActionExist="canvas.isCustomMoveExist"
                 v-on:removeShape="onRemoveShape"
                 v-on:customMoveAction="delayedMove"
-
-
                 :label.sync="namePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                 'label-angle':value.elementView.angle,
                 'font-weight': 'bold','font-size': '16'
@@ -45,11 +40,11 @@
             >
             </geometry-rect>
 
-
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-elements>
-
-
                 <text-element
                         :sub-width="'100%'"
                         :sub-height="titleH"
@@ -65,21 +60,22 @@
                 v-if="propertyPanel"
                 v-model="value"
                 :image="image"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></business-model-panel>
-
-
     </div>
 </template>
 
 <script>
     import BusinessModelElement from "./BusinessModelElement";
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [BusinessModelElement],
         name: 'customer-relationship',
-        props: {},
+        components:{
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             className() {
                 return 'org.uengine.modeling.business.CustomerRelationship'
@@ -113,12 +109,6 @@
                 reference: this.value.classReference != null,
                 referenceClassName: this.value.classReference,
             };
-        },
-        created: function () {
-        },
-        watch: {
-        },
-        methods: {
         }
     }
 </script>

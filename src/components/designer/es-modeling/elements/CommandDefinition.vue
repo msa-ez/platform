@@ -23,7 +23,6 @@
                 v-on:rotateShape="onRotateShape"
                 v-on:addedToGroup="onAddedToGroup"
                 :label="getFieldDescriptors || canvas.isHexagonal ? '': getNamePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                 'label-angle':value.elementView.angle,
                 'font-weight': 'bold','font-size': '16'
@@ -150,7 +149,7 @@
                         v-if="!isPBCModel"
                         :type="value._type"
                         :value="value"
-                        :readOnly="canvas.isReadOnlyModel"
+                        :isReadOnly="!isEditElement"
                         :isHexagonal="canvas.isHexagonal"
                 ></storming-sub-controller>
             </sub-elements>
@@ -184,7 +183,7 @@
         <command-definition-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"
@@ -202,9 +201,9 @@
     import CommandDefinitionPanel from "../panels/CommandDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
     import isAttached from '../../../../utils/isAttached';
-    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
+    
     var _ = require('lodash')
-
     export default {
         mixins: [Element],
         name: 'command-definition',

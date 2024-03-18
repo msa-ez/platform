@@ -42,7 +42,7 @@
             <uml-class-popup
                     v-model="value"
                     :type="addType"
-                    :readOnly="canvas.readOnly"
+                    :isReadOnly="!isEditElement"
                     :isNew="true"
                     @close="closePopup"
             ></uml-class-popup>

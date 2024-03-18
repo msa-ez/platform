@@ -27,7 +27,6 @@
                 v-on:dblclick="openPanel"
                 v-on:addToGroup="onAddToGroup"
                 :label.sync="getNamePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                 'vertical-align': 'top',
                 'font-weight': 'bold',
@@ -130,7 +129,7 @@
             <storming-sub-controller
                     :type="value._type"
                     :value="value" 
-                    :readOnly="canvas.isReadOnlyModel && !isMembers"
+                    :isReadOnly="!isEditElement && !isMembers"
                     :isHexagonal="canvas.isHexagonal"
             ></storming-sub-controller>
             
@@ -156,7 +155,7 @@
         <bounded-context-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"
@@ -176,7 +175,7 @@
     import SubElements from "../../../opengraph/shape/SubElements";
     import BoundedContextPanel from "../panels/BoundedContextPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-    import MultiUserStatusIndicator from "../../modeling/MultiUserStatusIndicator.vue"
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
     import isAttached from '../../../../utils/isAttached';
     import Generator from "../../modeling/generators/BoundedContextGenerator";
 
