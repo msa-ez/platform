@@ -2,7 +2,7 @@
     <common-panel
             v-model="value"
             :image="image"
-            :is-read-only="canvas.isReadOnlyModel"
+            :is-read-only="isReadOnly"
             :width-style="widthStyle"
             :related-url="relatedUrl"
             :validation-lists="validationLists"
@@ -21,7 +21,7 @@
 
         <template slot="t-edit-user">
             <div
-                    v-if="newEditUserImg.length > 0 && canvas.isReadOnlyModel"
+                    v-if="newEditUserImg.length > 0 && isReadOnly"
                     style="text-align:center"
             >
                 <v-chip
@@ -64,7 +64,7 @@
                                     v-model="selectVersion"
                                     :items="versionNameLists"
                                     :auto-select-first="true"
-                                    :disabled="canvas.isReadOnlyModel"
+                                    :disabled="isReadOnly"
                                     :loading="loading"
                             ></v-autocomplete>
                         </div>
@@ -80,7 +80,7 @@
                             <v-autocomplete
                                     v-model="selectedReads"
                                     :items="value.views"
-                                    :disabled="canvas.isReadOnlyModel"
+                                    :disabled="isReadOnly"
                                     item-text="name"
                                     return-object
                                     multiple
@@ -92,7 +92,7 @@
                             <v-autocomplete
                                     v-model="selectedCommands"
                                     :items="value.commands"
-                                    :disabled="canvas.isReadOnlyModel"
+                                    :disabled="isReadOnly"
                                     item-text="name"
                                     return-object
                                     multiple
@@ -104,7 +104,7 @@
                             <v-autocomplete
                                     v-model="selectedEvents"
                                     :items="value.events"
-                                    :disabled="canvas.isReadOnlyModel"
+                                    :disabled="isReadOnly"
                                     item-text="name"
                                     return-object
                                     multiple
@@ -155,10 +155,7 @@
                 return null
             },
         },
-        created: function () {
-            var me = this
-            me.panelInit()
-        },
+        created: function () { },
         watch: {
             "selectVersion":function (newVal, oldVal) {
                 if(oldVal){

@@ -57,14 +57,14 @@
                                             label="Name"
                                             v-model="value.object.metadata.name"
                                             autofocus
-                                            :disabled="readOnly"
+                                            :disabled="isReadOnly"
                                     ></v-text-field>
 
                                     <slot name="edit-property"></slot>
                                     
                                     <kube-attr-field 
                                             v-model="value" 
-                                            :readOnly="readOnly"
+                                            :isReadOnly="isReadOnly"
                                     ></kube-attr-field>
                                 </v-card-text>
                             </v-card>
@@ -72,7 +72,7 @@
                         <v-flex>
                             <kube-yaml-editor
                                     v-model="value.object"
-                                    :readOnly="readOnly"
+                                    :isReadOnly="isReadOnly"
                             ></kube-yaml-editor>
                         </v-flex>
                     </v-layout>
@@ -88,7 +88,7 @@
     export default {
         name: 'kubernetes-common-panel',
         props: {
-            readOnly: Boolean,
+            isReadOnly: Boolean,
             value: Object,
             img: String,
             validationLists:{
@@ -130,9 +130,6 @@
             }
         },
         methods: {
-            closePanel() {
-                this.$emit('close')
-            },
             openDoc(desDoc) {
                 this.$emit('openDesDoc', desDoc)
             },

@@ -76,9 +76,6 @@
             return {
                 componentKey: 0,
                 loading: false,
-                user:{
-                    accessToken: null,
-                },
                 mainSeparatePanel:{
                     min:5,
                     max:95,
@@ -376,13 +373,13 @@
                     var relations = me.value.relations
                     if (relations) {
                         var index = Object.values(relations).findIndex(relation => relation && relation.from == fromId && relation.to == toId)
-                        if (index == -1) {
-                            return true
+                        if (index != -1) {
+                            return false
                         }
                     }
-                    return false
-                } catch (e) {
                     return true
+                } catch (e) {
+                    return false
                 }
             },
             showDialog(){
@@ -943,7 +940,6 @@
                 var me = this
 
                 try {
-                    me.user.accessToken = localStorage.getItem('gitAccessToken')
                     me.openSeparatePanel();
                 } catch (e) {
                     console.error(e)

@@ -14,7 +14,7 @@
                 v-on:dblclick="openPanel"
                 v-on:selectShape="selectedActivity"
                 v-on:deSelectShape="deSelectedActivity"
-                v-on:removeShape="onRemoveShape(value)"
+                v-on:removeShape="onRemoveShape"
                 :customMoveActionExist="canvas.isCustomMoveExist"
                 v-on:customRelationMoveAction="delayedRelationMove"
         ></edge-element>
@@ -23,7 +23,7 @@
                 v-if="propertyPanel"
                 v-model="value"
                 :titleName="'VirtualService To DestinationRule'"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></relation-panel>
     </div>

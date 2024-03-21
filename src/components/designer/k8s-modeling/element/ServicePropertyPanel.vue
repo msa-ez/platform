@@ -2,7 +2,7 @@
    <kubernetes-common-panel
             v-model="value"
             :img="img"
-            :readOnly="canvas.isReadOnlyModel"
+            :isReadOnly="isReadOnly"
             :validation-lists="validationLists"
             @openDesDoc="desDocOpen"
             @close="closePanel"
@@ -51,27 +51,27 @@
                                     label="Name"
                                     v-model="value.object.metadata.name"
                                     autofocus
-                                    :disabled="canvas.isReadOnlyModel"
+                                    :disabled="isReadOnly"
                             ></v-text-field>
                             <v-text-field
                                     label="App Name"
-                                    :disabled="canvas.isReadOnlyModel"
+                                    :disabled="isReadOnly"
                                     v-model="value.object.spec.selector.app"
                             ></v-text-field>
                             <kube-number-field
                                     :label="'Port'"
-                                    :readOnly="canvas.isReadOnlyModel"
+                                    :isReadOnly="isReadOnly"
                                     v-model="value.object.spec.ports[0].port"
                             ></kube-number-field>
                             <kube-number-field
                                     :label="'Target Port'"
-                                    :readOnly="canvas.isReadOnlyModel"
+                                    :isReadOnly="isReadOnly"
                                     v-model="value.object.spec.ports[0].targetPort"
                             ></kube-number-field>
                             <v-select
                                     label="Type"
                                     v-model="value.object.spec.type"
-                                    :disabled="canvas.isReadOnlyModel"
+                                    :disabled="isReadOnly"
                                     :items="typeList">
                                 <template v-slot:append-outer>
                                     <v-icon small @click="desDocOpen('#publishing-services-service-types')">
@@ -81,7 +81,7 @@
                             </v-select>
                             <kube-attr-field 
                                     v-model="value" 
-                                    :readOnly="canvas.isReadOnlyModel"
+                                    :isReadOnly="isReadOnly"
                             ></kube-attr-field>
                         </v-card-text>
                     </v-card>
@@ -89,7 +89,7 @@
                 <v-flex>
                     <kube-yaml-editor
                             v-model="value.object"
-                            :readOnly="canvas.isReadOnlyModel"
+                            :isReadOnly="isReadOnly"
                     ></kube-yaml-editor>
                 </v-flex>
             </v-layout>

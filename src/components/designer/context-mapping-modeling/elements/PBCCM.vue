@@ -19,7 +19,6 @@
       v-on:dblclick="openPanel"
       v-on:addToGroup="onAddToGroup"
       :label.sync="namePanel"
-      :image.sync="refreshedImg"
       :_style="{
         'vertical-align': 'top',
         'font-weight': 'bold',
@@ -98,7 +97,7 @@
     <pbc-cm-panel
       v-if="propertyPanel"
       v-model="value"
-      :readOnly="!isEditElement"
+      :isReadOnly="!isEditElement"
       :newEditUserImg="newEditUserImg"
       :image="image"
       :validationLists="filteredElementValidationResults"
@@ -196,7 +195,6 @@
       setElementCanvas(){
         var me = this
         me.canvas = getParent(me.$parent, "context-mapping-model-canvas");
-        me.modelCanvasComponent = me.canvas
       },
       onMoveAction() {},
       validate(executeRelateToValidate, panelValue) {

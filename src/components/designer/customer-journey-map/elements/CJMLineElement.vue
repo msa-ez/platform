@@ -26,7 +26,7 @@
         <cjm-model-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></cjm-model-panel>
     </div>

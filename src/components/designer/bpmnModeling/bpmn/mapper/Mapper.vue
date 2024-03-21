@@ -354,7 +354,7 @@
             },
             getComponentByName: function (name) {
                 var componentByName;
-                $.each(window.Vue.bpmnComponents, function (i, component) {
+                $.each(window.Vue._components, function (i, component) {
                     if (component.default.name == name) {
                         componentByName = component;
                     }

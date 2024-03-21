@@ -708,45 +708,26 @@
                                                             open-on-hover
                                                             left
                                                     >
-                                                        <template
-                                                                v-slot:activator="{
-                                                                on,
-                                                            }"
-                                                        >
+                                                        <template v-slot:activator="{ on }">
                                                             <div>
                                                                 <v-btn
-                                                                        class="gs-model-z-index-1 es-hide-share-btn"
-                                                                        text
-                                                                        style="
-                                                                        margin-right: 5px;
-                                                                    "
-                                                                        :disabled="
-                                                                        !initLoad
-                                                                    "
-                                                                        v-on="on"
-                                                                        @click="openInviteUsers()"
+                                                                    class="gs-model-z-index-1 es-hide-share-btn"
+                                                                    text
+                                                                    style="margin-right: 5px;"
+                                                                    :disabled="!initLoad"
+                                                                    v-on="on"
+                                                                    @click="openInviteUsers()"
                                                                 >
-                                                                    <v-icon>{{
-                                                                        icon.share
-                                                                        }}</v-icon>
-                                                                    <div
-                                                                            class="es-hide-share"
-                                                                    >
-                                                                        SHARE
-                                                                    </div>
+                                                                    <v-icon>{{icon.share}}</v-icon>
+                                                                    <div class="es-hide-share"> SHARE </div>
                                                                     <v-avatar
-                                                                            v-if="
-                                                                            requestCount
-                                                                        "
+                                                                            v-if="requestCount"
                                                                             size="25"
                                                                             color="red"
                                                                             style="
-                                                                            margin-left: 2px;
-                                                                        "
+                                                                            margin-left: 2px;"
                                                                     >
-                                                                        {{
-                                                                        requestCount
-                                                                        }}
+                                                                        {{ requestCount }}
                                                                     </v-avatar>
                                                                 </v-btn>
                                                             </div>
@@ -937,7 +918,7 @@
                                                 </v-list>
                                             </v-menu>
                                             <v-menu
-                                                    v-if="isOwnModel && isServerModel && !isReadOnlyModel "
+                                                    v-if="isOwnModel && isServerModel && !isReadOnlyModel"
                                                     class="pa-2"
                                                     offset-y
                                                     open-on-hover
@@ -990,7 +971,7 @@
                                                     <div>
                                                         <v-btn
                                                             class="gs-model-z-index-1 mobile-btn"
-                                                            v-if="isHexagonalModeling"
+                                                            v-if="isHexagonal"
                                                             text
                                                             style="margin-top:2px;"
                                                             @click="generateModel()"
@@ -1155,7 +1136,7 @@
                                                     width="30px"
                                                     :src="item.src"
                                                     v-on="on"
-                                                    v-if="!isReadOnlyModel &&(!isHexagonalModeling || (isHexagonalModeling && (item.component.includes('bounded-context') ||item.component.includes('packaged-business-capabilities'))))"
+                                                    v-if="!isReadOnlyModel &&(!isHexagonal || (isHexagonal && (item.component.includes('bounded-context') ||item.component.includes('packaged-business-capabilities'))))"
                                             />
                                         </span>
                                     </template>
@@ -1249,8 +1230,8 @@
                                                     v-on="on"
                                                     v-if="
                                                     !isReadOnlyModel &&
-                                                    (!isHexagonalModeling ||
-                                                        (isHexagonalModeling &&
+                                                    (!isHexagonal ||
+                                                        (isHexagonal &&
                                                             (item.component.includes(
                                                                 'bounded-context'
                                                             ) ||
@@ -1683,6 +1664,7 @@
                                         v-model="embeddedCanvasValue"
                                         :aggregateRootList="aggregateRootList"
                                         :esValue="value"
+                                        :projectId="projectId"
                                 ></uml-class-model-canvas>
                             </v-layout>
                             <v-layout
@@ -1693,7 +1675,6 @@
                                         :projectId="projectId"
                                         :projectName="projectName"
                                         :isOwnModel="isOwnModel"
-                                        :getReadOnly="isReadOnlyModel"
                                         :isReadOnlyModel="isReadOnlyModel"
                                         :modelingProjectId="projectId"
                                         :projectVersion="projectVersion"
@@ -1908,19 +1889,12 @@
                 @close="closeGitInfo()"
                 :git.sync="gitURLforModel"
         ></GitInformation>
-        <div v-for="(otherMouseEvent, index) in filteredMouseEventHandlers">
-            <div class="mouse-cursor" :id="index">
-                <div class="mouse-cursor-name">
-                    <v-chip
-                            small
-                            :color="otherMouseEvent.color"
-                            text-color="white"
-                    >
-                        {{ otherMouseEvent.name }}
-                    </v-chip>
-                </div>
-            </div>
+   
+        <!-- Mouse Cursor -->
+        <div v-for="(otherMouseEvent, email) in filteredMouseEventHandlers" :key="email">
+            <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
         </div>
+      
         <v-dialog v-model="showLoginCard"
         ><Login :onlyGitLogin="true" @login="showLoginCard = false"
         /></v-dialog>
@@ -1982,7 +1956,6 @@
     import { diffString, diff } from "json-diff";
     import IdeLoadingPage from "../../IdeLoadingPage";
     import GitInformation from "../../GitInformation";
-    import json2yaml from "json2yaml";
     import IDEResourceDialog from "../../IDEResourceDialog";
     import DialogPurchaseItem from "../../payment/DialogPurchaseItem";
     import { mdiAbTesting, mdiFolderEye } from "@mdi/js";
@@ -1992,14 +1965,15 @@
     import KubernetesModelCanvas from "../k8s-modeling/KubernetesModelCanvas";
     import UMLClassDiagram from "../class-modeling/UMLClassModelCanvas";
     import CodeGenerator from "../modeling/CodeGenerator";
-    // import EventStormingModelList from "./EventStormingModelList";
     import PBCModelList from "./PBCModelList";
     import UIWizardDialoger from "../modeling/generators/UIWizardDialoger";
-    import StorageBase from "../modeling/StorageBase";
     import Login from "../../oauth/Login";
-    // import EventStormingModelList from "../../listPages/AlgoliaModelLists";
-    // import ModelCodeGenerator from "../modeling/ModelCodeGenerator";
     import isAttached from "../../../utils/isAttached";
+    import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
+
+    const prettier = require("prettier");
+    const plugins = require("prettier-plugin-java");
+    const axios = require("axios");
 
     var JSZip = require("jszip");
     var yamlpaser = require("js-yaml");
@@ -2009,27 +1983,25 @@
     var ConfigIniParser = require("config-ini-parser").ConfigIniParser;
     var delimiter = "\r\n"; //or "\n" for *nux
     var _ = require("lodash");
-    const CodeGeneratorCore = require("../modeling/CodeGeneratorCore");
-
     var jsondiffpatch = require("jsondiffpatch").create({
         objectHash: function (obj, index) {
             return "$$index:" + index;
         },
     });
-
     var codeArraydiffpatch = require("jsondiffpatch").create({
         objectHash: function (obj, index) {
             console.log(obj);
             return obj.code;
         },
     });
-
-    const prettier = require("prettier");
-    const plugins = require("prettier-plugin-java");
-    const axios = require("axios");
-
     window.jp = require("jsonpath");
 
+    // const CodeGeneratorCore = require("../modeling/CodeGeneratorCore");
+    // import json2yaml from "json2yaml";
+    // import StorageBase from "../modeling/StorageBase";
+    // import EventStormingModelList from "./EventStormingModelList";
+    // import EventStormingModelList from "../../listPages/AlgoliaModelLists";
+    // import ModelCodeGenerator from "../modeling/ModelCodeGenerator";
     export default {
         name: "event-storming-model-canvas",
         mixins: [ModelCanvas],
@@ -2059,6 +2031,7 @@
             "uml-class-model-canvas": UMLClassDiagram,
             CodeGenerator,
             PBCModelList,
+            MouseCursorComponent
             // ModelCodeGenerator
         },
         props: {
@@ -2500,9 +2473,6 @@
                 }
                 return false;
             },
-            isHexagonalModeling() {
-                return this.isHexagonal;
-            },
             getUserCoin() {
                 if (this.userInfo.savedCoin) {
                     return this.userInfo.savedCoin;
@@ -2580,27 +2550,25 @@
         created: async function () {
             var me = this;
 
-            if (localStorage.getItem("gitAccessToken")) {
-                me.gitAccessToken = localStorage.getItem("gitAccessToken");
-                me.githubHeaders = {
-                    Authorization: "token " + me.gitAccessToken,
-                    Accept: "application/vnd.github+json",
-                };
-            }
+            me.$app.try({
+                context: me,
+                async action(me){
+                    if (localStorage.getItem("gitAccessToken")) {
+                        me.gitAccessToken = localStorage.getItem("gitAccessToken");
+                        me.githubHeaders = {
+                            Authorization: "token " + me.gitAccessToken,
+                            Accept: "application/vnd.github+json",
+                        };
+                    }
 
-            try {
-                Vue.use(EventStormingModeling);
-                me.canvasType = "es";
-                if (this.$isElectron) me.isQueueModel = false;
-                else me.isQueueModel = true;
-                me.clusterItems = [{ title: "Cluster" }];
-                me.track();
+                    if (this.$isElectron) me.isQueueModel = false;
+                    else me.isQueueModel = true;
+                    me.clusterItems = [{ title: "Cluster" }];
 
-                // var getFilePathList = await axios.get(`https://gitlab.msastudy.io/api/v4/projects/48/repository/tree?ref=main&id=48&page=1&per_page=100&pagination=keyset&recursive=true`, {headers: {Authorization: 'Bearer _9zq7KJ29CfzjYjXP3Wb'}});
-                // console.log(getFilePathList)
-            } catch (e) {
-                alert("Error: EventStormingModelCanvas Created().", e);
-            }
+                    // var getFilePathList = await axios.get(`https://gitlab.msastudy.io/api/v4/projects/48/repository/tree?ref=main&id=48&page=1&per_page=100&pagination=keyset&recursive=true`, {headers: {Authorization: 'Bearer _9zq7KJ29CfzjYjXP3Wb'}});
+                    // console.log(getFilePathList)
+                }
+            })
         },
         mounted: function () {
             var me = this;
@@ -2737,6 +2705,17 @@
             },
         },
         methods: {
+            setCanvasType(){
+                Vue.use(EventStormingModeling);
+                this.canvasType = 'es'
+            },
+            isUserInteractionActive(){
+                var me = this
+                if(me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.isHexagonal && !me.isReadOnlyModel){
+                    return true
+                }
+                return false
+            },
             async receiveAssociatedProject(associatedProjectId){
                 var me = this
                 let startKey = '';
@@ -3019,7 +2998,11 @@
                         // return;
                     }
                     me.changeValueAction(diff);
-                    me.publishScreenShot();
+
+                    clearTimeout(me.valueChangedTimer);
+                    me.valueChangedTimer = setTimeout(async function () {
+                        await me.saveLocalScreenshot()
+                    },1000)
                 }
                 if (diff) {
                     me.publishChangedEvent(newVal, diff);
@@ -3227,8 +3210,8 @@
             },
             modificateModel(model){
                 var me = this;
-                if(model){
-                    me.value.elements[model.id] = model
+                if(model && model.updateElement){
+                    me.value.elements[model.updateElement.id] = model.updateElement
                     me.changedByMe = true
                 }
             },
@@ -3514,51 +3497,6 @@
                 }
 
                 return value;
-            },
-            onMoveElementById(id, newValueStr, child) {
-                var me = this;
-
-                if (me.value && me.value.elements && me.value.elements[id]) {
-                    let isHexagonal =
-                        child.childValue && child.childValue.isHexagonal
-                            ? true
-                            : false;
-
-                    var newValueObj = JSON.parse(newValueStr);
-                    let modifiedView = null;
-                    if (isHexagonal) {
-                        modifiedView = me.value.elements[id].hexagonalView;
-                    } else {
-                        modifiedView = me.value.elements[id].elementView;
-                    }
-
-                    // var modifiedView = isHexagonal ? me.value.elements[id].hexagonalView : me.value.elements[id].elementView
-                    let dx = newValueObj.x - modifiedView.x;
-                    let dy = newValueObj.y - modifiedView.y;
-
-                    modifiedView.x = newValueObj.x;
-                    modifiedView.y = newValueObj.y;
-                    modifiedView.width = newValueObj.width;
-                    modifiedView.height = newValueObj.height;
-                }
-            },
-            onMoveRelationById(id, newValueObj, child) {
-                var me = this;
-                if (me.value && me.value.relations && me.value.relations[id]) {
-                    let isHexagonal =
-                        child.childValue && child.childValue.isHexagonal
-                            ? true
-                            : false;
-
-                    var modifiedView = me.value.relations[id].relationView;
-                    if (isHexagonal) {
-                        modifiedView = me.value.relations[id].hexagonalView;
-                    }
-
-                    if (me.value && me.value.relations && me.value.relations[id]) {
-                        modifiedView.value = newValueObj;
-                    }
-                }
             },
             alertError() {
                 var me = this;
@@ -4340,8 +4278,6 @@
                 return false;
             },
             addElement: function (componentInfo, bounded) {
-                // console.log("추가");
-                this.enableHistoryAdd = true;
                 var me = this;
                 var additionalData = {};
                 var vueComponent = me.getComponentByName(componentInfo.component);
@@ -4412,6 +4348,7 @@
 
                 return element;
             },
+            // override
             addElementAction(element, value, options){
                 var me = this
                 if(!options) options = {}
@@ -4421,12 +4358,6 @@
 
                 // duplication
                 if(Object.keys(valueObj).includes(id)) return;
-
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationPush' : 'elementPush',
-                    STATUS_COMPLETE: false
-                })
-
                 element = me.migrateQueue(element.relationView ? 'relationPush' : 'elementPush', element);
 
                 // First append
@@ -4434,7 +4365,6 @@
                 if(me.isServerModel && me.isQueueModel){
                     // server
                     me.modelChanged = true;
-
                     if(me.isHexagonal) element.isHexagonal = true
                     me.pushAppendedQueue(element, options)
 
@@ -4443,120 +4373,121 @@
                         options.associatedProject = me.information.associatedProject
                         me.pushAppendedQueue(element, options)
                     }
+                    me.$EventBus.$emit(id, {
+                        action: element.relationView ? 'relationPush' : 'elementPush',
+                        STATUS_COMPLETE: false
+                    })
                 }
             },
+            // override
             removeElementAction(element, value, options){
                 var me = this
-                if(!options) options = {}
-                let id = element.relationView ? element.relationView.id : element.elementView.id
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        if(!value) value = me.value
+                        let id = element.relationView ? element.relationView.id : element.elementView.id
 
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationDelete' : 'elementDelete',
-                    STATUS_COMPLETE: false
-                })
+                        me.removeElement(element, value, options)
+                        if(me.isServerModel && me.isQueueModel){
+                            if(me.isHexagonal) element.isHexagonal = true
+                            me.pushRemovedQueue(element, options)
 
-                if(me.isServerModel && me.isQueueModel){
-                    if(me.isHexagonal) element.isHexagonal = true
-                    me.pushRemovedQueue(element, options)
-
-                    if( me.projectSendable && !me.isHexagonal ) {
-                        options.associatedProject = me.information.associatedProject
-                        me.pushRemovedQueue(element, options)
+                            if( me.projectSendable && !me.isHexagonal ) {
+                                options.associatedProject = me.information.associatedProject
+                                me.pushRemovedQueue(element, options)
+                            }
+                            me.$EventBus.$emit(id, {
+                                action: element.relationView ? 'relationDelete' : 'elementDelete',
+                                STATUS_COMPLETE: false
+                            })
+                        }
                     }
-                } else {
-                    me.removeElement(element, value, options)
-                }
-            },
-            moveElementAction(element, oldVal, newVal, value, options){
-                var me = this
-                if(!options) options = {}
-                let id = element.relationView ? element.relationView.id : element.elementView.id
-
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationMove' : 'elementMove',
-                    STATUS_COMPLETE: false,
-                    movingElement: true
                 })
-                if(me.isHexagonal) options.isHexagonal = true
-
-                // First Move
-                me.moveElement(element, newVal, me.value, options)
-
-                if (me.isServerModel && me.isQueueModel) {
-                    me.pushMovedQueue(element, oldVal, newVal, options)
-                }
             },
+            // override
             moveElement(element, newVal, value, options){
                 var me = this
-                let isHexagonal = options.isHexagonal ? true : false
-                if(!element) return;
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!element) return;
+                        if(!value) value = me.value
+                        if(!options) options = {}
 
-                if(!value) value = me.value
-                let id = element.relationView ? element.relationView.id : element.elementView.id
-                let valueObj = element.relationView ? value.relations : value.elements
-                if(!valueObj[id]) return;
+                        let isHexagonal = options.isHexagonal ? true : false
+                        let id = element.relationView ? element.relationView.id : element.elementView.id
+                        let valueObj = element.relationView ? value.relations : value.elements
+                        if(!valueObj[id]) return;
 
-                if(element.relationView){
-                    // Relation
-                    if(isHexagonal){
-                        valueObj[id].hexagonalView.value = newVal.replaceAll('-','')
-                    } else {
-                        valueObj[id].relationView.value =  newVal.replaceAll('-','')
+                        if(element.relationView){
+                            // Relation
+                            if(isHexagonal){
+                                valueObj[id].hexagonalView.value = newVal.replaceAll('-','')
+                            } else {
+                                valueObj[id].relationView.value =  newVal.replaceAll('-','')
+                            }
+                        } else {
+                            // null || minus
+                            if(!newVal.x || newVal.x < 0) newVal.x = 100
+                            if(!newVal.y || newVal.y < 0) newVal.y = 100
+
+                            // Element
+                            if(isHexagonal){
+                                valueObj[id].hexagonalView.x = newVal.x
+                                valueObj[id].hexagonalView.y = newVal.y
+                                valueObj[id].hexagonalView.width = newVal.width;
+                                valueObj[id].hexagonalView.height = newVal.height
+                            } else {
+                                valueObj[id].elementView.x = newVal.x
+                                valueObj[id].elementView.y = newVal.y
+                                valueObj[id].elementView.width = newVal.width
+                                valueObj[id].elementView.height = newVal.height
+                            }
+                        }
+
+                        me.$EventBus.$emit(id, {
+                            action: element.relationView ? 'relationMove' : 'elementMove',
+                            STATUS_COMPLETE: true,
+                            movingElement: false
+                        })      
                     }
-                } else {
-                    // null || minus
-                    if(!newVal.x || newVal.x < 0) newVal.x = 100
-                    if(!newVal.y || newVal.y < 0) newVal.y = 100
-
-                    // Element
-                    if(isHexagonal){
-                        valueObj[id].hexagonalView.x = newVal.x
-                        valueObj[id].hexagonalView.y = newVal.y
-                        valueObj[id].hexagonalView.width = newVal.width;
-                        valueObj[id].hexagonalView.height = newVal.height
-                    } else {
-                        valueObj[id].elementView.x = newVal.x
-                        valueObj[id].elementView.y = newVal.y
-                        valueObj[id].elementView.width = newVal.width
-                        valueObj[id].elementView.height = newVal.height
-                    }
-                }
-
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationMove' : 'elementMove',
-                    STATUS_COMPLETE: true,
-                    movingElement: false
                 })
             },
+            // override
             pushMovedQueue(element, oldVal, newVal, options){
                 var me = this
-                if(!options) options = {}
-                let definitionId = me.projectId
-                if(options.associatedProject) definitionId = options.associatedProject
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        let definitionId = me.projectId
+                        if(options.associatedProject) definitionId = options.associatedProject
 
-                let obj = {
-                    action: element.relationView ? 'relationMove' : 'elementMove',
-                    editUid: me.userInfo.uid,
-                    before: element.relationView ? oldVal : JSON.stringify(oldVal),
-                    after: element.relationView ? newVal : JSON.stringify(newVal),
-                    timeStamp: Date.now()
-                }
+                        let obj = {
+                            action: element.relationView ? 'relationMove' : 'elementMove',
+                            editUid: me.userInfo.uid,
+                            before: element.relationView ? oldVal : JSON.stringify(oldVal),
+                            after: element.relationView ? newVal : JSON.stringify(newVal),
+                            timeStamp: Date.now()
+                        }
 
-                if(element.relationView) {
-                    obj.relationId = element.relationView.id
-                } else {
-                    var types = element._type.split('.')
-                    obj.elementType = types[types.length - 1]
-                    obj.elementId = element.elementView.id
-                    obj.elementName = element.name
-                }
-
-                if( options.isHexagonal ){
-                    obj.isHexagonal = true
-                }
-
-                return me.pushObject(`db://definitions/${definitionId}/queue`, obj)
+                        if(element.relationView) {
+                            obj.relationId = element.relationView.id
+                        } else {
+                            var types = element._type.split('.')
+                            obj.elementType = types[types.length - 1]
+                            obj.elementId = element.elementView.id
+                            obj.elementName = element.name
+                        }
+                        if( options.isHexagonal ) obj.isHexagonal = true
+                    
+                        return me.pushObject(`db://definitions/${definitionId}/queue`, obj)
+                    }
+                })
             },
+            // override
             receiveAppendedQueue(element, queue, options){
                 var me = this
                 if(!options) options = {}
@@ -4566,6 +4497,7 @@
                     me.appendElement(element, me.value, options)
                 }
             },
+            // override
             receiveRemovedQueue(element, queue, options){
                 var me = this
                 if(!options) options = {}
@@ -4575,6 +4507,7 @@
                     me.removeElement(element, me.value, options)
                 }
             },
+            // override
             receiveMovedQueue(id, newVal, queue, options){
                 var me = this
                 if(!options) options = {}
@@ -4592,18 +4525,10 @@
                 var me = this;
                 if(!options) options = {}
                 let value = queue.isMirrorQueue ? me.mirrorValue : me.value;
+                if(!diff) return
+                if(!value) return
 
-                try {
-                    me.patchValue(diff, value)
-                } catch (e) {
-                    console.log("Error when to diffpatch for queue " + queue.childKey, e, "\n- queue is", (queue.childValue.item ? JSON.parse(queue.childValue.item) : queue.childValue), "\n- model is", value.elements, value.relations)
-
-                    me.receiveErrorQueue(e, queue)
-                    // create default.
-                    // value = await me.checkedDiffValue(diff, value);
-                    // me.patchValue(diff, value)
-
-                }
+                me.applyPatchValue(diff, value, options);
             },
             checkedDiffValue(diff, value) {
                 var me = this;
@@ -5125,13 +5050,7 @@
                     // } else {
                     me.canvas.removeShape(edgeElement, true);
                     //기존 컴포넌트가 없는 경우 신규 생성
-                    if (
-                        me.connectableType(
-                            componentInfo.sourceElement.value,
-                            componentInfo.targetElement.value
-                        ) &&
-                        me.validateRelation(from, to)
-                    ) {
+                    if ( me.connectableType( componentInfo.sourceElement.value, componentInfo.targetElement.value ) ) {
                         this.addElement(componentInfo);
                     }
 
@@ -7154,53 +7073,6 @@
             position: absolute !important;
             right: 120px !important;
         }
-    }
-
-    .mouse-cursor {
-        // 마우스를 따라다니는 원 설정
-
-        position: absolute;
-
-        top: 0; // 초기 위치값을 설정해줍니다.
-
-        left: 0; // 초기 위치값을 설정해줍니다.
-
-        width: 10px; //원 가로사이즈
-
-        height: 10px; //원 세로사이즈
-
-        border-radius: 50%; // 원의 형태설정
-
-        background-color: #9bf50b; //원 컬러설정
-
-        transform: translate(
-                        -50%,
-                        -50%
-        ); // 원을 정가운데로 맞추기위해서 축을-50%이동해줍니다.
-
-        transition: all 300ms linear 0s; //soft
-
-        opacity: 50%;
-    }
-
-    .mouse-cursor::after {
-        width: 40px;
-        height: 40px;
-        border: 15px solid rgba(var(--white-rbg-color), 0.2);
-        border-radius: 50%;
-        position: absolute;
-        top: -25px;
-        left: -25px;
-        animation: cursor-animate-2 550ms infinite alternate;
-    }
-
-    .mouse-cursor-name {
-        position: absolute;
-        top: 5px;
-        left: 10px;
-        width: max-content;
-        text-align: center;
-        color: #9bf50b;
     }
     .mobile-first-sticker-tools {
         display: none;

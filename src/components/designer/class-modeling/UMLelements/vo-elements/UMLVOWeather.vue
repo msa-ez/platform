@@ -21,7 +21,6 @@
                 v-on:dblclick="openPanel"
                 v-on:addedToGroup="onAddedToGroup"
                 :label="!value.isVO && !value.isAggregateRoot ? namePanel : ''"
-                :image="refreshedImg"
                 :_style="{
                     'label-angle':value.elementView.angle,
                     'font-weight': 'bold', 'font-size': '14',
@@ -41,6 +40,9 @@
                     }"
             ></geometry-rect>
 
+            <sub-elements>
+                 <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
             <!-- title -->
             <sub-elements>
                 <rectangle-element
@@ -51,7 +53,6 @@
                             'fill': '#FFA400',
                             'fill-opacity': 1,
                         }"
-                        :image="refreshedImg"
                 ></rectangle-element>
                 <text-element
                         v-if="value.isAggregateRoot"
@@ -93,7 +94,6 @@
                             'fill': '#050038',
                             'fill-opacity': 1,
                         }"
-                        :image="refreshedImg"
                 ></rectangle-element>
             </sub-elements>
 
@@ -109,12 +109,11 @@
                             'fill-opacity': 1,
                             'z-index': -1
                         }"
-                        :image="refreshedImg"
                 ></rectangle-element>
             </sub-elements>
 
             <uml-sub-controller
-                    v-if="!canvas.isReadOnlyModel"
+                    v-if="isEditElement"
                     :value="value" 
             ></uml-sub-controller>
         </group-element>
@@ -124,7 +123,7 @@
                 <uml-class-text
                         v-model="value"
                         :type="'attribute'"
-                        :readOnly="canvas.isReadOnlyModel"
+                        :isReadOnly="!isEditElement"
                         :styles="{
                             'name': attr.name,
                             'index': index,
@@ -145,7 +144,7 @@
                 <uml-class-text
                         v-model="value"
                         :type="'operation'"
-                        :readOnly="canvas.isReadOnlyModel"
+                        :isReadOnly="!isEditElement"
                         :styles="{
                             'name': item.name,
                             'index': index,
@@ -166,7 +165,7 @@
                 v-model="value"
                 :entities="canvas.value"
                 :img="imgSrc"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></uml-class-panel>
     </div>
@@ -174,12 +173,15 @@
 
 <script>
     import UMLClass from '../UMLClassDefinition'
-    const VODefinitions = require("../../../modeling/generators/VODefinitions");
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
+    const VODefinitions = require("../../../modeling/generators/VODefinitions");
     export default {
         mixins: [UMLClass],
         name: 'uml-vo-class-weather',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             imgSrc() {
                 return `${window.location.protocol + "//" + window.location.host}/static/image/symbol/class_value.png`

@@ -666,7 +666,7 @@
                           <div>
                             <v-btn
                                     class="gs-model-z-index-1"
-                                    v-if="isHexagonalModeling"
+                                    v-if="isHexagonal"
                                     text
                                     color="primary"
                                     style="margin-left: -20px; margin-top: 1px"
@@ -706,7 +706,7 @@
                         <template v-slot:activator="{ on }">
                           <div>
                             <v-btn
-                                    v-if="isHexagonalModeling"
+                                    v-if="isHexagonal"
                                     text
                                     color="primary"
                                     style="margin-left: -20px; margin-top: 1px"
@@ -842,8 +842,8 @@
                               v-on="on"
                               v-if="
                           !isReadOnlyModel &&
-                          (!isHexagonalModeling ||
-                            (isHexagonalModeling &&
+                          (!isHexagonal ||
+                            (isHexagonal &&
                               (item.component.includes('bounded-context') ||
                                 item.component.includes(
                                   'packaged-business-capabilities'
@@ -934,8 +934,8 @@
                               v-on="on"
                               v-if="
                           !isReadOnlyModel &&
-                          (!isHexagonalModeling ||
-                            (isHexagonalModeling &&
+                          (!isHexagonal ||
+                            (isHexagonal &&
                               (item.component.includes('bounded-context') ||
                                 item.component.includes(
                                   'packaged-business-capabilities'
@@ -1103,17 +1103,6 @@
         ],
       };
     },
-    created: async function () {
-        var me = this;
-
-        try {
-          me.canvasType = "cm";
-          Vue.use(ContextMappingModeling);
-          me.track();
-        } catch (e) {
-          alert("Error: Context Mapping Created().", e);
-        }
-    },
     watch: {
         "initLoad":function(newVal){
           if(newVal){
@@ -1136,12 +1125,10 @@
         },
     },
     methods: {
-      // modelListOfassociatedProject(){
-      //     if( this.associatedProjectInformation && this.associatedProjectInformation.contextMapping ) {
-      //         return this.associatedProjectInformation.contextMapping.modelList
-      //     }
-      //     return []
-      // },
+      setCanvasType(){
+          Vue.use(ContextMappingModeling);
+          this.canvasType = 'cm'
+      },
       async saveModel(){
         // override
         var me = this

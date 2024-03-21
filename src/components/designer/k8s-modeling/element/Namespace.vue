@@ -18,8 +18,7 @@
                 v-on:deSelectShape="deSelectedActivity"
                 v-on:dblclick="openPanel"
                 v-on:addToGroup="onAddToGroup"
-                v-on:removeShape="onRemoveShape(value)"
-                :image.sync="refreshedImg"
+                v-on:removeShape="onRemoveShape"
                 :_style="{
                     'vertical-align': 'top',
                     'font-weight': 'bold',
@@ -36,6 +35,9 @@
                         r: '1'
                     }"
             ></geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-elements>
                 <!--title-->
@@ -58,7 +60,7 @@
                 v-model="value"
                 :img="imgSrc"
                 :validationLists="filteredElementValidationResults"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></property-panel>
 
@@ -77,16 +79,17 @@
     import Element from "../KubernetesElement";
     import GroupElement from "../../../opengraph/shape/GroupElement";
     import ImageElement from "../../../opengraph/shape/ImageElement";
-
-    var changeCase = require('change-case');
-    var pluralize = require('pluralize');
-
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
-        components: {ImageElement, GroupElement,PropertyPanel},
-        mixins: [Element],
         name: 'namespace',
-        props: {},
+        mixins: [Element],
+        components: {
+            ImageElement,
+            GroupElement,
+            PropertyPanel,
+            'multi-user-status-indicator': MultiUserStatusIndicator
+        },
         computed: {
             defaultStyle() {
                 return {}

@@ -37,6 +37,9 @@
                         r: '1'
                     }"
             ></geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
             
             <sub-elements>
                 <!--title-->
@@ -53,11 +56,14 @@
 
 <script>
     import Element from "../KubernetesElement";
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'workflowStep',
-        components: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         props: {},
         computed: {
             imgSrc() {
@@ -119,17 +125,15 @@
         watch: {
         },
         methods: {
-            deSelectedActivity: function () {
+            // override
+            onActivityDeselected(){
                 var me = this;
                 if (me.value) {
-                    me.selected = false
                     me.openPanel = false
-                    
-                    var obj = {
+                    me.$EventBus.$emit(`${me.value.parentId}`, {
                         action: "closeProperty",
                         element: me.value
-                    };
-                    me.$EventBus.$emit(`${me.value.parentId}`, obj);
+                    });
                 }
             },
             beforeRemove(value) {

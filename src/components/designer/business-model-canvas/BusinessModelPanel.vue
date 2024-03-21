@@ -29,7 +29,7 @@
                                 label="Name"
                                 v-model="value.name"
                                 autofocus
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                         ></v-text-field>
                         <v-textarea
                                 v-if="value.description != null"
@@ -37,21 +37,21 @@
                                 name="input-7-4"
                                 label="description"
                                 v-model="value.description"
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                         ></v-textarea>
                     </v-card-text>
                 </v-card>
 
                 <v-card>
-                    <v-card-text>
+                    <!-- <v-card-text>
                         <span class="headline">Implementation</span>
 
                         <project-picker
                                 v-model="value.dddModel"
                                 :search="namePanel"
-                                :readOnly="readOnly"
+                                :isReadOnly="isReadOnly"
                         ></project-picker>
-                    </v-card-text>
+                    </v-card-text> -->
                 </v-card>
             </v-list>
         </v-navigation-drawer>
@@ -111,18 +111,11 @@
             //     me.canvas.$refs[`${me.value.elementView.id}`][0].descriptionPanel = me.value.description
             // }, 500)
         },
-        created: function () {
-            // me.namePanel = me.value.name
-            this.panelOpenAction()
-
-        },
-        beforeDestroy() {
-
-        },
+        created: function () { },
+        beforeDestroy() { },
         methods:{
             setElementCanvas(){
                 var me = this
-                me.modelCanvasComponent = me.$parent.getComponent('business-model-canvas')
                 me.canvas = me.$parent.getComponent('business-model-canvas')
             },
             changedNamePanel(newVal){

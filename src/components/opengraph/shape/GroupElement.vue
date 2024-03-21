@@ -11,16 +11,13 @@
     mixins: [OpengraphElement],
     name: 'group-element',
     props: {},
-    computed: {},
     data: function () {
       return {}
     },
-    watch: {},
-    mounted: function () {
-
+    updated() {
+       this.drawShape()
     },
     methods: {
-
       generateShape: function () {
         var me = this;
         var shape = new OG.shape.GroupShape();

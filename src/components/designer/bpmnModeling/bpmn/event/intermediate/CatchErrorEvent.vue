@@ -24,67 +24,61 @@
                 v-on:redrawShape="closeComponentChanger"
                 v-on:addedToGroup="onAddedToGroup"
           >
-              <geometry-circle
-                      :center="[50,50]"
-                      :radius="50"
-              ></geometry-circle>
-              
-              <geometry-circle
-                      :center="[50,50]"
-                      :radius="44"
-              ></geometry-circle>
-              
-              <sub-elements>
-                  <bpmn-state-animation :status="status" :type="type"></bpmn-state-animation>
+            <geometry-circle
+                    :center="[50,50]"
+                    :radius="50"
+            ></geometry-circle>
+            
+            <geometry-circle
+                    :center="[50,50]"
+                    :radius="44"
+            ></geometry-circle>
+            
+            <sub-elements>
+                <bpmn-state-animation :status="status" :type="type"></bpmn-state-animation>
+            
+                <!-- 오른쪽 짧은 선 -->
+                <geometry-line
+                        :from="[76,30]"
+                        :to="[61,63]"
+                ></geometry-line>
+
+                <!-- 오른쪽 긴 선 -->
+                <geometry-line
+                        :from="[76,30]"
+                        :to="[61,81]"
+                ></geometry-line>
+
+                <!-- 왼쪽 잛은 선-->
+                <geometry-line
+                        :from="[24,70]"
+                        :to="[39,37]"
+                ></geometry-line>
+
+                <!-- 왼쪽 긴 선-->
+                <geometry-line
+                        :from="[24,70]"
+                        :to="[39,19]"
+                ></geometry-line>
+
+                <!-- 위 -->
+                <geometry-line
+                        :from="[39,19]"
+                        :to="[61,63]"
+                ></geometry-line>
                 
-                  <!-- 오른쪽 짧은 선 -->
-                  <geometry-line
-                          :from="[76,30]"
-                          :to="[61,63]"
-                  ></geometry-line>
+                <!-- 아래 -->
+                <geometry-line
+                        :from="[61,81]"
+                        :to="[39,37]"
+                ></geometry-line>
+            </sub-elements>
 
-                  <!-- 오른쪽 긴 선 -->
-                  <geometry-line
-                          :from="[76,30]"
-                          :to="[61,81]"
-                  ></geometry-line>
-
-                  <!-- 왼쪽 잛은 선-->
-                  <geometry-line
-                          :from="[24,70]"
-                          :to="[39,37]"
-                  ></geometry-line>
-
-                  <!-- 왼쪽 긴 선-->
-                  <geometry-line
-                          :from="[24,70]"
-                          :to="[39,19]"
-                  ></geometry-line>
-
-                  <!-- 위 -->
-                  <geometry-line
-                          :from="[39,19]"
-                          :to="[61,63]"
-                  ></geometry-line>
-                  
-                  <!-- 아래 -->
-                  <geometry-line
-                          :from="[61,81]"
-                          :to="[39,37]"
-                  ></geometry-line>
-              </sub-elements>
-
-              <sub-elements v-for="(index) in newEditUserImg.length" :key="index">
-                <image-element
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="value.elementView.height"
-                ></image-element>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
             </sub-elements>
               
-              <bpmn-sub-controller :type="type"></bpmn-sub-controller>
+            <bpmn-sub-controller :type="type"></bpmn-sub-controller>
         </geometry-element>
 
         <bpmn-intermediate-event-panel
@@ -98,13 +92,15 @@
 <script>
     import IBpmn from '../../IBpmn'
     import BpmnPropertyPanel from './IntermediateEventPanel'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [IBpmn],
         name: 'bpmn-error-catch-event',
         props: {},
-        component: {
-            'bpmn-intermediate-event-panel': BpmnPropertyPanel
+        components: {
+            'bpmn-intermediate-event-panel': BpmnPropertyPanel,
+            'multi-user-status-indicator': MultiUserStatusIndicator
         },
         computed: {
             defaultStyle(){

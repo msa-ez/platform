@@ -2,7 +2,7 @@
     <kubernetes-common-panel
             v-model="value"
             :img="img"
-            :readOnly="canvas.isReadOnlyModel"
+            :isReadOnly="isReadOnly"
             :validation-lists="validationLists"
             @openDesDoc="desDocOpen"
             @close="closePanel"
@@ -37,7 +37,7 @@
                                         :data="status"
                                         :options="{
                                                 rootObjectKey: 'status',
-                                                readOnly: canvas.isReadOnlyModel
+                                                readOnly: isReadOnly
                                             }"
                                 ></tree-view>
                             </v-card-text>
@@ -52,22 +52,22 @@
                                         label="Name"
                                         v-model="value.object.metadata.name"
                                         autofocus
-                                        :disabled="canvas.isReadOnlyModel"
+                                        :disabled="isReadOnly"
                                 ></v-text-field>
                                 <kube-number-field
                                         :desDoc="'#replicas'"
                                         @openDesDoc="desDocOpen"
                                         :label="'Replicas'"
                                         v-model="value.object.spec.replicas"
-                                        :readOnly="canvas.isReadOnlyModel"
+                                        :isReadOnly="isReadOnly"
                                 ></kube-number-field>
                                 <kube-template-field
                                         v-model="value.object"
-                                        :readOnly="canvas.isReadOnlyModel"
+                                        :isReadOnly="isReadOnly"
                                 ></kube-template-field>
                                 <kube-attr-field 
                                         v-model="value" 
-                                        :readOnly="canvas.isReadOnlyModel"
+                                        :isReadOnly="isReadOnly"
                                 ></kube-attr-field>
                             </v-card-text>
                         </v-card>
@@ -75,7 +75,7 @@
                     <v-flex>
                         <kube-yaml-editor
                                 v-model="value.object"
-                                :readOnly="canvas.isReadOnlyModel"
+                                :isReadOnly="isReadOnly"
                         ></kube-yaml-editor>
                     </v-flex>
                 </v-layout>

@@ -11,7 +11,7 @@
                 :label="value.name"
                 v-on:selectShape="selectedActivity"
                 v-on:deSelectShape="deSelectedActivity"
-                v-on:removeShape="onRemoveShape()"
+                v-on:removeShape="onRemoveShape"
         >
         </edge-element>
     </div>

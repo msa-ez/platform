@@ -2,7 +2,7 @@
     <common-panel
             v-model="value"
             :image="image"
-            :is-read-only="canvas.isReadOnlyModel"
+            :is-read-only="isReadOnly"
             :width-style="widthStyle"
             :related-url="relatedUrl"
             :validation-lists="validationLists"
@@ -20,7 +20,7 @@
 
         <template slot="t-edit-user">
             <div
-                    v-if="newEditUserImg.length > 0 && canvas.isReadOnlyModel"
+                    v-if="newEditUserImg.length > 0 && isReadOnly"
                     style="text-align:center"
             >
                 <v-chip
@@ -68,9 +68,7 @@
 
             }
         },
-        created: function () {
-            this.panelInit()
-        },
+        created: function () { },
         methods: {
             panelInit(){
                 var me = this

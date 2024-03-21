@@ -149,9 +149,7 @@
                 relatedAggregate: null,
             }
         },
-        created: function () {
-            this.panelInit()
-        },
+        created: function () { },
         beforeDestroy(){
 
         },

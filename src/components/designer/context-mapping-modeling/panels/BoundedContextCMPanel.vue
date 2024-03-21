@@ -2,7 +2,7 @@
     <common-panel
             v-model="value"
             :image="image"
-            :is-read-only="!cmEditable"
+            :is-read-only="isReadOnly"
             :width-style="widthStyle"
             :related-url="relatedUrl"
             :validation-lists="validationLists"
@@ -22,7 +22,7 @@
         </template>
 
         <template slot="md-title-side">
-            <v-btn v-if="!cmEditable" @click="editCMPanel()" color="primary" small style="margin-left: 10px; margin-bottom: 5px;">Edit</v-btn>
+            <v-btn v-if="isReadOnly" @click="editCMPanel()" color="primary" small style="margin-left: 10px; margin-bottom: 5px;">Edit</v-btn>
         </template>
 
         <template slot="t-edit-user">
@@ -31,7 +31,7 @@
 
         <template slot="generateWithAi">
             <div><span>
-                <div v-if="!cmEditable">
+                <div v-if="isReadOnly">
                     <v-btn v-if="value.description && generateDone" class="auto-modeling-btn" color="primary" @click="generate()"><v-icon>mdi-auto-fix</v-icon>(RE)Generate Inside</v-btn>
                     <v-btn v-if="value.description && !generateDone" class="auto-modeling-btn" color="primary" @click="stop()"><v-icon>mdi-auto-fix</v-icon>Stop Generation</v-btn>
                     <v-btn v-if="!value.description" class="auto-modeling-btn" text @click="explain()"><v-icon>mdi-auto-fix</v-icon>Generate description</v-btn>
@@ -43,14 +43,14 @@
             <div>
                 <span class="panel-title" style="margin-left:15px;">Read/Write Authority</span>
                 <v-card flat>
-                    <v-card-text v-if="!cmEditable">
+                    <v-card-text v-if="isReadOnly">
                         <v-autocomplete
                                 v-if="selectedTemplateLists"
                                 v-model="value.preferredPlatform"
                                 :items="selectedTemplateLists"
                                 item-text="display"
                                 item-value="template"
-                                :disabled="!cmEditable"
+                                :disabled="isReadOnly"
                                 label="Preferred Platform"
                         ></v-autocomplete>
 
@@ -63,7 +63,7 @@
                                 label="Select"
                                 item-text="userName"
                                 return-object
-                                :disabled="!cmEditable"
+                                :disabled="isReadOnly"
                                 :multiple="true"
                         >
                             <template v-slot:selection="data">
@@ -90,7 +90,7 @@
                     </v-card-text>
                 </v-card>
 
-                <v-card flat v-if="!cmEditable && value.members">
+                <v-card flat v-if="isReadOnly && value.members">
                     <v-card-text>
                         <div>
                             <v-data-table
@@ -145,20 +145,12 @@
 
             }
         },
-        computed: {
-            cmEditable(){
-                return !this.readOnly
-            },
-
-        },
         created: function () {
         },
-        mounted(){},
         methods: {
             setElementCanvas(){
                 var me = this
                 me.canvas = getParent(me.$parent, "context-mapping-model-canvas");
-                me.modelCanvasComponent = me.canvas
             },
             setExplainer(){},
             editCMPanel(){

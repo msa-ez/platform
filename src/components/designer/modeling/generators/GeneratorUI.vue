@@ -1,6 +1,16 @@
 <template>
     <div v-if="modelCreationCompleted">
-        <v-row style="position:absolute; right:30px; top:75px;">
+        <v-btn class="generator-ui-btn"
+            v-if="!openGeneratorUI"
+            fab
+            primary
+            fixed
+            @click="openGeneratorUI=!openGeneratorUI"
+        >
+            <!-- <v-icon color="primary">mdi-chat</v-icon> -->
+            <Icon icon="arcticons:openai-chatgpt" width="35" height="35" />
+        </v-btn>
+        <v-row v-if="openGeneratorUI" style="position:absolute; right:30px; top:75px;">
             <v-card style="text-align: center; z-index: 2;" width="auto">
                 <v-card-text :style="(isExpanded && generationStopped) ? { width: '75px' } : isExpanded ? { width: '170px' } : { width: '450px' }" 
                     style="padding: 0px; ">
@@ -40,6 +50,7 @@
                         <v-tooltip  bottom>
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn @click="reGenerate(input['userStory'])"
+                                    v-if="!hasElements"
                                     icon small
                                     v-bind="attrs"
                                     v-on="on"
@@ -88,6 +99,7 @@
                         <v-tooltip bottom v-else-if="showGenerateBtn">
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn
+                                    v-if="!hasElements"
                                     @click="generate()"
                                     small
                                     v-bind="attrs"
@@ -108,9 +120,9 @@
                     </div>
 
                     <v-tabs v-model="userPanel">
-                        <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Input</v-tab>
-                        <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Output</v-tab>
-                        <v-tab :disabled="selectedElement.length===0" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('chat')">Chat</v-tab>
+                        <v-tab :disabled="hasElements" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Input</v-tab>
+                        <v-tab :disabled="hasElements" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Output</v-tab>
+                        <v-tab v-if="hasElements" :disabled="selectedElement.length===0" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('chat')">Chat</v-tab>
                         <!-- <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;">TEST</v-tab> -->
                     </v-tabs>
 
@@ -120,23 +132,23 @@
                                 <template v-slot:actions>
                                     <v-tooltip bottom>
                                         <template v-slot:activator="{ on, attrs }">
-                                            <v-btn @click="isExpanded = !isExpanded"
+                                            <v-btn @click="openGeneratorUI = !openGeneratorUI"
                                                 icon small
                                                 class="cp-panel-folding"
                                                 v-bind="attrs"
                                                 v-on="on"
                                                 style="position:absolute; top:-38px; right:0px; z-index:2"
                                             >
-                                                <v-icon>mdi-unfold-more-horizontal</v-icon>
+                                                <v-icon>mdi-close</v-icon>
                                             </v-btn>
                                         </template>
-                                        <span>Panel folding/unfolding</span>
+                                        <span>close Auto Generator</span>
                                     </v-tooltip>
                                 </template>
                             </v-expansion-panel-header>
                             <v-expansion-panel-content class="auto-modeling-dialog" >
                                 <v-tabs-items v-model="userPanel">
-                                    <v-tab-item>
+                                    <v-tab-item :disabled="hasElements">
                                         <v-card flat>
                                             <v-textarea v-if="input"
                                                 v-model="input.userStory"
@@ -147,7 +159,7 @@
                                         </v-card>
                                     </v-tab-item>
 
-                                    <v-tab-item>
+                                    <v-tab-item :disabled="hasElements">
                                         <v-card flat>
                                             <v-textarea
                                                 v-model="displayResult"
@@ -159,7 +171,7 @@
                                         </v-card>
                                     </v-tab-item>
 
-                                    <v-tab-item>
+                                    <v-tab-item v-if="hasElements">
                                         <v-card flat>
                                             <v-card-text id="scroll_messageList" style="height: 100%; max-height: 75vh; overflow-y: scroll;">
                                                 <v-col cols="12">
@@ -235,6 +247,7 @@
     import BMGenerator from './BMGenerator.js'
     import UserStoryMapGenerator from './UserStoryMapGenerator.js'
     import ModelModificationGenerator from './ModelModificationGenerator.js'
+    import AggregateMemberGenerator from './AggregateMemberGenerator.js'
     import Usage from '../../../../utils/Usage'
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
@@ -266,8 +279,6 @@
                     this.input.userStory = this.generatorComponent.createPrompt();
                     this.input.selectedElement = {}
                     this.input.modificationMessage = ""
-                    this.autoModelDialog = null
-                    this.isExpanded = true
                     this.chatMessage = ""
                 }
             }
@@ -279,7 +290,24 @@
                         this.scrollToBottom();
                     }
                 });
-            }
+            },
+            modelValue: {
+                deep: true,
+                handler(newValue, oldValue) {
+                    if (newValue && newValue.elements) {
+                        const elements = newValue.elements;
+                        const keys = Object.keys(elements);
+                        this.hasElements = false;
+    
+                        for (const key of keys) {
+                            if (elements[key] !== null) {
+                                this.hasElements = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            },
         },
 
         data() {
@@ -308,7 +336,8 @@
                 chatList: [],
                 selectedElement: [],
                 chatMessage: "",
-                
+                hasElements: false,
+                openGeneratorUI: false,
             }
         },
         computed: {
@@ -318,12 +347,14 @@
         },
         mounted: async function () { 
             var me = this
-            me.$EventBus.$on('selectedElementObj', function (selectedObj) {
+            me.$EventBus.$on('selectedElement', function (selectedObj) {
                 var id = selectedObj.id
 
                 if (selectedObj['selected']) {
                     me.selectedElement.push(selectedObj)
-                    me.input.selectedElement = me.modelValue.elements[me.selectedElement[0].id];
+                    if(me.modelValue){
+                        me.input.selectedElement = JSON.parse(JSON.stringify(selectedObj.value));
+                    }
                 } else {
                     var fidx = me.selectedElement.findIndex(obj => obj.id == id)
                     if (fidx != -1) {
@@ -333,6 +364,12 @@
                 }
 
             });
+
+            if(me.$attrs.embedded) {
+                this.hasElements = true;
+                this.switchGenerator('chat');
+                this.userPanel = 2;
+            }
         },
         updated() {
             this.$nextTick(() => {
@@ -377,6 +414,7 @@
                         case "UMLGenerator": this.generatorComponent = new UMLGenerator(this); break;
                         case "BMGenerator": this.generatorComponent = new BMGenerator(this); break;
                         case "UserStoryMapGenerator": this.generatorComponent = new UserStoryMapGenerator(this); break;
+                        case "AggregateMemberGenerator": this.generatorComponent = new AggregateMemberGenerator(this); break;
 
                     }
 
@@ -448,7 +486,8 @@
                     this.chatMessage = ""
                     this.generatorComponent.generate();
                 }else{
-                    this.$emit("clearModelValue")
+                        this.$emit("clearModelValue")
+                        this.userPanel = 1
 
                     if(!this.isAutoGen || this.generatorStep === 'aggregate'){
                         let generateOption = {
@@ -566,12 +605,30 @@
     }
 </script>
 <style>
+.generator-ui-btn {
+    bottom:20px;
+    right:20px;
+}
 .expanded {
   width: 200px;
 }
 
 .collapsed {
   width: 450px; /* 원하는 가로 길이로 조정 */
+}
+@media only screen and (max-width: 1093px) {
+    .generator-ui-btn {
+        bottom:20px;
+        right:85px;
+    }
+}
+@media only screen and (max-width: 600px) {
+    .generator-ui-btn {
+        bottom:110px;
+        right:60px;
+        width:40px !important;
+        height:40px !important;
+    }
 }
 </style>
 

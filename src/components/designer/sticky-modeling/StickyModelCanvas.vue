@@ -50,10 +50,10 @@
                     :enableHotkeyCtrlD="false"
                     :enableHotkeyCtrlG="false" 
                     :slider="true"
-                    :movable="!getReadOnly"
-                    :resizable="!getReadOnly"
+                    :movable="!isReadOnlyModel"
+                    :resizable="!isReadOnlyModel"
                     :selectable="true"
-                    :connectable="!getReadOnly"
+                    :connectable="!isReadOnlyModel"
                     v-if="value"
                     :autoSliderUpdate="true"
                     :imageBase="imageBase"
@@ -85,7 +85,7 @@
 
 
             <v-layout row>
-                <v-flex v-if="!getReadOnly">
+                <v-flex v-if="!isReadOnlyModel">
                     <v-row class="gs-modeling-undo-redo" style="margin-top:24px;">
                         <v-tooltip bottom>
                             <template v-slot:activator="{ on }">
@@ -140,7 +140,7 @@
 
                                         <v-btn
                                                 text
-                                                v-if="getReadOnly"
+                                                v-if="isReadOnlyModel"
                                                 :color="joinRequestedText.show ? 'primary' :'success'"
                                                 dark
                                                 @click="requestInviteUser()"
@@ -154,7 +154,7 @@
 
                                         <v-btn
                                                 text
-                                                v-if="getReadOnly"
+                                                v-if="isReadOnlyModel"
                                                 dark
                                                 @click="saveComposition('fork')"
                                                 small
@@ -190,7 +190,7 @@
 
                             <slot name="shareButton">
                                 <v-menu
-                                        v-if="isOwnModel && isServerModel && !getReadOnly "
+                                        v-if="isOwnModel && isServerModel && !isReadOnlyModel"
                                         class="pa-2"
                                         offset-y
                                         open-on-hover
@@ -278,7 +278,7 @@
                                     >
                                         <v-text-field
                                                 v-model="projectName"
-                                                :disabled="getReadOnly || (fullPath && fullPath.includes('replay'))"
+                                                :disabled="isReadOnlyModel || (fullPath && fullPath.includes('replay'))"
                                                 :color="projectNameColor"
                                                 :error-messages="projectNameHint"
                                                 label="Project Name" 
@@ -321,7 +321,7 @@
                                                 left
                                         >
                                             <template v-slot:activator="{ on }">
-                                                <div v-if="getReadOnly">
+                                                <div v-if="isReadOnlyModel">
                                                     <v-btn
                                                             text
                                                             color="primary"
@@ -384,7 +384,7 @@
                                     </slot>
                                     <slot name="shareButton">
                                         <v-menu
-                                                v-if="isOwnModel && isServerModel&& !getReadOnly "
+                                                v-if="isOwnModel && isServerModel && !isReadOnlyModel"
                                                 offset-y
                                                 open-on-hover
                                                 left
@@ -465,7 +465,7 @@
                                 :_width="item.width"
                                 :_height="item.height"
                         >
-                            <img v-if="!getReadOnly"
+                            <img v-if="!isReadOnlyModel"
                                     height="30px" 
                                     width="30px" 
                                     :src="item.src" 
@@ -586,6 +586,10 @@
                 </v-layout>
             </hsc-window>
         </hsc-window-style-metal>
+        <!-- Mouse Cursor -->
+        <div v-for="(otherMouseEvent, email) in filteredMouseEventHandlers" :key="email">
+            <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
+        </div>
     </div>
 </template>
 
@@ -597,6 +601,7 @@
     import ModelStorageDialog from "../modeling/ModelStorageDialog";
     import ModelCanvasShareDialog from "../modeling/ModelCanvasShareDialog";
     import GeneratorUI from "../modeling/generators/GeneratorUI";
+    import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
 
     import * as io from 'socket.io-client';
     import { mdiAbTesting } from '@mdi/js';
@@ -620,7 +625,8 @@
             GeneratorUI,
             'model-canvas-share-dialog': ModelCanvasShareDialog,
             'model-storage-dialog': ModelStorageDialog,
-            'dialog-purchase-item' : DialogPurchaseItem
+            'dialog-purchase-item' : DialogPurchaseItem,
+            MouseCursorComponent
         },
         data() {
             return {
@@ -735,9 +741,6 @@
             }
         },
         computed: {
-            getReadOnly() {
-                return this.readOnly
-            },
             disableBtn() {
                 if (this.isDisable || !this.initLoad) {
                     return true
@@ -747,22 +750,12 @@
         },
         created: function () {
             var me = this
-            try {
-                Vue.use(StickyModeling);
-                me.canvasType = 'sticky'
-                if (this.$isElectron) {
-                    me.isQueueModel = false
-                } else {
-                    me.isQueueModel = true
-                }
-                me.track()
-            } catch (e) {
-                alert('Error: StickyModelCanvas Created().', e)
+            if (me.$isElectron) {
+                me.isQueueModel = false
+            } else {
+                me.isQueueModel = true
             }
         },
-        mounted: function () {
-        }
-        ,
         watch: {
             value: {
                 deep: true,
@@ -792,61 +785,64 @@
             }, 0),
         },
         methods: {
-            bindEvents: function (opengraph) {
-                var me = this;
-                var el = me.$el;
-                var canvasEl = $(opengraph.container);
-                if (!canvasEl || !canvasEl.length) {
-                    return;
-                }
-
-                this.canvas = opengraph.canvas;
-                //아이콘 드래그 드랍 이벤트 등록
-                $(el).find('.draggable').draggable({
-                    start: function () {
-                        canvasEl.data('DRAG_SHAPE', {
-                            'component': $(this).attr('_component'),
-                            'width': $(this).attr('_width'),
-                            'height': $(this).attr('_height'),
-                            'description': $(this).attr('_description'),
-                            'src': $(this).children('img').attr('src'),
-                        });
-                    },
-                    helper: 'clone',
-                    appendTo: canvasEl
-                });
-
-                canvasEl.droppable({
-                    drop: function (event, ui) {
-                        var componentInfo = canvasEl.data('DRAG_SHAPE'),
-                            shape, element;
-                        if (componentInfo) {
-                            var dropX = event.pageX - canvasEl.offset().left + canvasEl[0].scrollLeft;
-                            var dropY = event.pageY - canvasEl.offset().top + canvasEl[0].scrollTop;
-                            var scale = opengraph.canvas._CONFIG.SLIDER[0].innerText / 100
-
-                            dropX = dropX / scale;
-                            dropY = dropY / scale;
-
-                            componentInfo = {
-                                component: componentInfo.component,
-                                x: dropX,
-                                y: dropY,
-                                width: parseInt(componentInfo.width, 10),
-                                height: parseInt(componentInfo.height, 10),
-                                description: componentInfo.description ? componentInfo.description : '',
-                                src: componentInfo.src ? componentInfo.src : '',
-                            }
-
-
-                            me.addElement(componentInfo);
-                        }
-                        canvasEl.removeData('DRAG_SHAPE');
-                    }
-                });
+            setCanvasType(){
+                Vue.use(StickyModeling);
+                this.canvasType = 'sticky'
             },
+            // bindEvents: function (opengraph) {
+            //     var me = this;
+            //     var el = me.$el;
+            //     var canvasEl = $(opengraph.container);
+            //     if (!canvasEl || !canvasEl.length) {
+            //         return;
+            //     }
+
+            //     this.canvas = opengraph.canvas;
+            //     //아이콘 드래그 드랍 이벤트 등록
+            //     $(el).find('.draggable').draggable({
+            //         start: function () {
+            //             canvasEl.data('DRAG_SHAPE', {
+            //                 'component': $(this).attr('_component'),
+            //                 'width': $(this).attr('_width'),
+            //                 'height': $(this).attr('_height'),
+            //                 'description': $(this).attr('_description'),
+            //                 'src': $(this).children('img').attr('src'),
+            //             });
+            //         },
+            //         helper: 'clone',
+            //         appendTo: canvasEl
+            //     });
+
+            //     canvasEl.droppable({
+            //         drop: function (event, ui) {
+            //             var componentInfo = canvasEl.data('DRAG_SHAPE'),
+            //                 shape, element;
+            //             if (componentInfo) {
+            //                 var dropX = event.pageX - canvasEl.offset().left + canvasEl[0].scrollLeft;
+            //                 var dropY = event.pageY - canvasEl.offset().top + canvasEl[0].scrollTop;
+            //                 var scale = opengraph.canvas._CONFIG.SLIDER[0].innerText / 100
+
+            //                 dropX = dropX / scale;
+            //                 dropY = dropY / scale;
+
+            //                 componentInfo = {
+            //                     component: componentInfo.component,
+            //                     x: dropX,
+            //                     y: dropY,
+            //                     width: parseInt(componentInfo.width, 10),
+            //                     height: parseInt(componentInfo.height, 10),
+            //                     description: componentInfo.description ? componentInfo.description : '',
+            //                     src: componentInfo.src ? componentInfo.src : '',
+            //                 }
+
+
+            //                 me.addElement(componentInfo);
+            //             }
+            //             canvasEl.removeData('DRAG_SHAPE');
+            //         }
+            //     });
+            // },
             addElement: function (componentInfo, bounded) {
-                this.enableHistoryAdd = true;
                 var me = this;
                 var vueComponent = me.getComponentByName(componentInfo.component);
                 var element;
@@ -910,7 +906,8 @@
                     );
                 }
 
-                me.addElementPush(me.value, element)
+                // me.addElementPush(me.value, element)
+                me.addElementAction(element)
             },
             async purchaseItemDialogSubmit(result) {
                 var me = this
@@ -986,7 +983,6 @@
             },
             getComponentByClassName: function (className) {
                 var componentByClassName;
-                var me = this
 
                 $.each(window.Vue.stickyModelingComponents, function (i, component) {
                     if (component.default.computed && component.default.computed.className && component.default.computed.className() == className) {

@@ -1,438 +1,445 @@
 <template xmlns:v-on="http://www.w3.org/1999/xhtml">
     <div class="canvas-panel" :class="{ 'embedded' : embedded }">
-        <separate-panel-components
-            :min="mainSeparatePanel.min"
-            :max="mainSeparatePanel.max"
-            :triggerLength="5"
-            :paneLengthPercent.sync="mainSeparatePanel.current"
-            @close="closeSeparatePanel()"
-            :inBoundSeparatePanel="false"
-        >
-            <template v-slot:one>
-                <v-layout right>
-                    <opengraph ref="opengraph" 
-                            focus-canvas-on-select wheelScalable 
-                            :labelEditable="true" :dragPageMovable="dragPageMovable" 
-                            :enableContextmenu="false" :enableRootContextmenu="false"
-                            :enableHotkeyCtrlC="false" :enableHotkeyCtrlV="false"
-                            :enableHotkeyDelete="false" :enableHotkeyCtrlZ="false" 
-                            :enableHotkeyCtrlD="false" :enableHotkeyCtrlG="false" 
-                            :slider="true" :movable="true" :resizable="true" 
-                            :selectable="true" :connectable="true" :autoSliderUpdate="true"
-                            v-if="value" 
-                            v-on:canvasReady="bindEvents" 
-                            v-on:connectShape="onConnectShape" 
-                            :imageBase="imageBase">
-                        <!--엘리먼트-->
-                        <div v-for="elementId in Object.keys(value.elements)" :key="elementId">
-                            <component 
-                                    v-if="elementId && value.elements[elementId] != null"
-                                    :is="getComponentByClassName(value.elements[elementId]._type)"
-                                    :value.sync="value.elements[elementId]"
-                                    :ref="elementId"
-                            ></component>
-                        </div>
-                        <!-- Relation -->
-                        <div v-for="relationId in Object.keys(value.relations)" :key="relationId">
-                            <component 
-                                    v-if="relationId && value.relations[relationId] != null"
-                                    :is="getComponentByClassName(value.relations[relationId]._type)"
-                                    :value.sync="value.relations[relationId]"
-                                    :ref="relationId"
-                            ></component>
-                        </div>
-                    </opengraph>
+        <div :key="eleCnt">
+            <separate-panel-components
+                :min="mainSeparatePanel.min"
+                :max="mainSeparatePanel.max"
+                :triggerLength="5"
+                :paneLengthPercent.sync="mainSeparatePanel.current"
+                @close="closeSeparatePanel()"
+                :inBoundSeparatePanel="false"
+            >
+                <template v-slot:one>
+                    <v-layout right>
+                        <opengraph ref="opengraph" 
+                                focus-canvas-on-select wheelScalable 
+                                :labelEditable="true" :dragPageMovable="dragPageMovable" 
+                                :enableContextmenu="false" :enableRootContextmenu="false"
+                                :enableHotkeyCtrlC="false" :enableHotkeyCtrlV="false"
+                                :enableHotkeyDelete="false" :enableHotkeyCtrlZ="false" 
+                                :enableHotkeyCtrlD="false" :enableHotkeyCtrlG="false" 
+                                :slider="true" :movable="true" :resizable="true" 
+                                :selectable="true" :connectable="true" :autoSliderUpdate="true"
+                                v-if="value" 
+                                v-on:canvasReady="bindEvents" 
+                                v-on:connectShape="onConnectShape" 
+                                :imageBase="imageBase">
+                            <!--엘리먼트-->
+                            <div v-for="elementId in Object.keys(value.elements)" :key="elementId">
+                                <component 
+                                        v-if="elementId && value.elements[elementId] != null"
+                                        :is="getComponentByClassName(value.elements[elementId]._type)"
+                                        :value.sync="value.elements[elementId]"
+                                        :ref="elementId"
+                                ></component>
+                            </div>
+                            <!-- Relation -->
+                            <div v-for="relationId in Object.keys(value.relations)" :key="relationId">
+                                <component 
+                                        v-if="relationId && value.relations[relationId] != null"
+                                        :is="getComponentByClassName(value.relations[relationId]._type)"
+                                        :value.sync="value.relations[relationId]"
+                                        :ref="relationId"
+                                ></component>
+                            </div>
+                        </opengraph>
 
-                    <div v-if="!embedded">
-                        <v-row class="gs-modeling-undo-redo">
-                            <v-tooltip bottom>
-                                <template v-slot:activator="{ on }">
-                                    <v-btn class="gs-model-z-index-2 gs-undo-opacity-hover"
-                                            :disabled="checkUndo" 
-                                            text
-                                            small
-                                            right 
-                                            @click.native="undo()"
-                                            v-on="on"
-                                    >
-                                        <v-icon medium>mdi-undo</v-icon>
-                                    </v-btn>
-                                </template>
-                                <span>Undo</span>
-                            </v-tooltip>
-                            <v-tooltip bottom>
-                                <template v-slot:activator="{ on }">
-                                    <v-btn class="gs-model-z-index-2 gs-undo-opacity-hover"
-                                            :disabled="checkRedo"
-                                            text
-                                            small
-                                            right 
-                                            @click.native="redo()"
-                                            v-on="on"
-                                    >
-                                        <v-icon medium>mdi-redo</v-icon>
-                                    </v-btn>
-                                </template>
-                                <span>Redo</span>
-                            </v-tooltip>
-                        </v-row>
-                    </div>
-
-                    <!-- <div v-if="embedded"  -->
-                    <div 
-                            class="d-flex justify-end"
-                            style="position: absolute; top: 22px; right: 70px;"
-                            :style="embedded ? '':'z-index: 1'"
-                    >
-                        <!-- <v-btn
-                            style="position: absolute; top:26px; right: 130px;"
-                            color="orange"
-                            @click="openCommandViewer()"
-                            small
-                            text
-                        >
-                            <v-icon>mdi-code-greater-than</v-icon>
-                            <div>Java Parse</div>
-                        </v-btn> -->
-                        <v-btn
-                                v-if="!getReadOnly"
-                                color="primary"
-                                text
-                                @click="openAutoModelingDialog()"
-                                style="margin-right:5px;"
-                        >
-                            <Icon icon="arcticons:openai-chatgpt" style="margin-right:5px; stroke-width: 3px;" width="24" height="24"/>
-                            <div>Chat</div>
-                        </v-btn>
-                        <v-btn
-                                color="primary"
-                                @click="openCommandViewer()"
-                        >
-                            <v-icon>mdi-code-greater-than</v-icon>
-                            <div>code</div>
-                        </v-btn>
-                    </div>
-
-                    <v-flex v-if="!embedded" style="justify:end; align:start;">
-                        <v-row class="gs-model-z-index-1" style="position: absolute; left: 50%; transform: translate(-50%, 0%); margin-top:20px;">
-                            <v-text-field
-                                style="margin-right: 5px; max-width: 80px"
-                                label="Project Name"
-                                v-model="projectName"
-                            ></v-text-field>
-
-                            <text-reader 
-                                :importType="'json'" 
-                                @load="value = $event" 
-                                style="display: inline-block;"
-                                :fileName.sync="projectName"
-                            ></text-reader>
-
-                            <v-menu offset-y open-on-hover left style="margin-top:-20px;">
-                                <template v-slot:activator="{ on }">
-                                    <div v-if="getReadOnly">
-                                        <v-btn class="uml-btn"
+                        <div v-if="!embedded">
+                            <v-row class="gs-modeling-undo-redo">
+                                <v-tooltip bottom>
+                                    <template v-slot:activator="{ on }">
+                                        <v-btn class="gs-model-z-index-2 gs-undo-opacity-hover"
+                                                :disabled="checkUndo" 
                                                 text
-                                                color="primary"
+                                                small
+                                                right 
+                                                @click.native="undo()"
+                                                v-on="on"
+                                        >
+                                            <v-icon medium>mdi-undo</v-icon>
+                                        </v-btn>
+                                    </template>
+                                    <span>Undo</span>
+                                </v-tooltip>
+                                <v-tooltip bottom>
+                                    <template v-slot:activator="{ on }">
+                                        <v-btn class="gs-model-z-index-2 gs-undo-opacity-hover"
+                                                :disabled="checkRedo"
+                                                text
+                                                small
+                                                right 
+                                                @click.native="redo()"
+                                                v-on="on"
+                                        >
+                                            <v-icon medium>mdi-redo</v-icon>
+                                        </v-btn>
+                                    </template>
+                                    <span>Redo</span>
+                                </v-tooltip>
+                            </v-row>
+                        </div>
+
+                        <!-- <div v-if="embedded"  -->
+                        <div 
+                                class="d-flex justify-end"
+                                style="position: absolute; top: 22px; right: 70px;"
+                                :style="embedded ? '':'z-index: 1'"
+                        >
+                            <!-- <v-btn
+                                style="position: absolute; top:26px; right: 130px;"
+                                color="orange"
+                                @click="openCommandViewer()"
+                                small
+                                text
+                            >
+                                <v-icon>mdi-code-greater-than</v-icon>
+                                <div>Java Parse</div>
+                            </v-btn> -->
+                            <!-- <v-btn
+                                    v-if="!isReadOnlyModel"
+                                    color="primary"
+                                    text
+                                    @click="openAutoModelingDialog()"
+                                    style="margin-right:5px;"
+                            >
+                                <Icon icon="arcticons:openai-chatgpt" style="margin-right:5px; stroke-width: 3px;" width="24" height="24"/>
+                                <div>Chat</div>
+                            </v-btn> -->
+                            <v-btn
+                                    color="primary"
+                                    @click="openCommandViewer()"
+                            >
+                                <v-icon>mdi-code-greater-than</v-icon>
+                                <div>code</div>
+                            </v-btn>
+                        </div>
+
+                        <v-flex v-if="!embedded" style="justify:end; align:start;">
+                            <v-row class="gs-model-z-index-1" style="position: absolute; left: 50%; transform: translate(-50%, 0%); margin-top:20px;">
+                                <v-text-field
+                                    style="margin-right: 5px; max-width: 80px"
+                                    label="Project Name"
+                                    v-model="projectName"
+                                ></v-text-field>
+
+                                <text-reader 
+                                    :importType="'json'" 
+                                    @load="value = $event" 
+                                    style="display: inline-block;"
+                                    :fileName.sync="projectName"
+                                ></text-reader>
+
+                                <v-menu offset-y open-on-hover left style="margin-top:-20px;">
+                                    <template v-slot:activator="{ on }">
+                                        <div v-if="isReadOnlyModel">
+                                            <v-btn class="uml-btn"
+                                                    text
+                                                    color="primary"
+                                                    :disabled="disableBtn"
+                                                    @click="saveComposition('fork')"
+                                            >
+                                                <v-icon>{{icon.fork}}</v-icon>
+                                                <div class="uml-btn-text">FORK</div>
+                                            </v-btn>
+                                            <v-btn class="uml-btn"
+                                                    :color="joinRequestedText.show ? 'primary' :'success'"
+                                                    :disabled="disableBtn"
+                                                    @click="requestInviteUser()"
+                                                    text
+                                                    style="margin-right: 5px;"
+                                            >
+                                                <div v-if="joinRequestedText.show">
+                                                    <v-icon>{{icon.join}}</v-icon>
+                                                </div>
+                                                <div class="uml-btn-text">{{ joinRequestedText.text }}</div>
+                                            </v-btn>
+                                        </div>
+                                        <div v-else>
+                                            <v-btn class="uml-btn"
+                                                v-if="isOwnModel || isClazzModeling"
+                                                color="primary" text
+                                                v-on="on"
+                                                :disabled="disableBtn"
+                                                @click="saveComposition('save')"
+                                            >
+                                                <v-icon>{{ icon.save }}</v-icon>
+                                                <div class="uml-btn-text">SAVE</div>
+                                            </v-btn>
+                                            <v-btn class="uml-btn"
+                                                v-else
+                                                color="primary" text
                                                 :disabled="disableBtn"
                                                 @click="saveComposition('fork')"
-                                        >
-                                            <v-icon>{{icon.fork}}</v-icon>
-                                            <div class="uml-btn-text">FORK</div>
-                                        </v-btn>
+                                            >
+                                                <v-icon>{{icon.fork}}</v-icon>
+                                                <div class="uml-btn-text">FORK</div>
+                                            </v-btn>
+                                        </div>                                
+                                    </template>
+                                    <v-list>
+                                        <v-list-item 
+                                                v-for="(item, index) in saveItems"
+                                                :key="index"
+                                                @click="functionSelect(item.title, index)">
+                                            <v-list-item-title>{{ item.title }}</v-list-item-title>
+                                        </v-list-item>
+                                    </v-list>
+                                </v-menu>
+
+                                <v-menu v-if="isOwnModel && isServerModel && !isReadOnlyModel"
+                                        offset-y 
+                                        open-on-hover 
+                                        left>
+                                    <template v-slot:activator="{ on }">
                                         <v-btn class="uml-btn"
-                                                :color="joinRequestedText.show ? 'primary' :'success'"
-                                                :disabled="disableBtn"
-                                                @click="requestInviteUser()"
-                                                text
-                                                style="margin-right: 5px;"
-                                        >
-                                            <div v-if="joinRequestedText.show">
-                                                <v-icon>{{icon.join}}</v-icon>
-                                            </div>
-                                            <div class="uml-btn-text">{{ joinRequestedText.text }}</div>
-                                        </v-btn>
-                                    </div>
-                                    <div v-else>
-                                        <v-btn class="uml-btn"
-                                            v-if="isOwnModel || isClazzModeling"
-                                            color="primary" text
+                                            text
                                             v-on="on"
-                                            :disabled="disableBtn"
-                                            @click="saveComposition('save')"
+                                            @click="openInviteUsers()"
+                                            style="margin-right: 5px;"
+                                            :disabled="!initLoad"
                                         >
-                                            <v-icon>{{ icon.save }}</v-icon>
-                                            <div class="uml-btn-text">SAVE</div>
+                                            <v-icon>{{ icon.share }}</v-icon>
+                                            <div class="uml-btn-text">SHARE</div>
                                         </v-btn>
-                                        <v-btn class="uml-btn"
-                                            v-else
-                                            color="primary" text
-                                            :disabled="disableBtn"
-                                            @click="saveComposition('fork')"
-                                        >
-                                            <v-icon>{{icon.fork}}</v-icon>
-                                            <div class="uml-btn-text">FORK</div>
-                                        </v-btn>
-                                    </div>                                
-                                </template>
-                                <v-list>
-                                    <v-list-item 
-                                            v-for="(item, index) in saveItems"
-                                            :key="index"
-                                            @click="functionSelect(item.title, index)">
-                                        <v-list-item-title>{{ item.title }}</v-list-item-title>
-                                    </v-list-item>
-                                </v-list>
-                            </v-menu>
+                                    </template>
+                                </v-menu>
+                            </v-row>
+                        </v-flex>
 
-                            <v-menu v-if="isOwnModel && isServerModel && !getReadOnly"
-                                    offset-y 
-                                    open-on-hover 
-                                    left>
-                                <template v-slot:activator="{ on }">
-                                    <v-btn class="uml-btn"
-                                        text
-                                        v-on="on"
-                                        @click="openInviteUsers()"
-                                        style="margin-right: 5px;"
-                                        :disabled="!initLoad"
-                                    >
-                                        <v-icon>{{ icon.share }}</v-icon>
-                                        <div class="uml-btn-text">SHARE</div>
-                                    </v-btn>
-                                </template>
-                            </v-menu>
-                        </v-row>
-                    </v-flex>
+                        <div v-if="embedded && isReadOnlyModel">
+                            <v-card class="tools" style="top:100px; text-align: center;">
+                                <span class="bpmn-icon-hand-tool" 
+                                        v-bind:class="{ icons : !dragPageMovable, hands : dragPageMovable }"
+                                        _width="30"
+                                        _height="30" 
+                                        v-on:click="toggleGrip">
+                                </span>
+                            </v-card>
+                        </div>
 
-                    <div v-if="embedded && getReadOnly">
-                        <v-card class="tools" style="top:100px; text-align: center;">
+                        <v-card v-else class="tools" style="top:100px; text-align: center;">
                             <span class="bpmn-icon-hand-tool" 
                                     v-bind:class="{ icons : !dragPageMovable, hands : dragPageMovable }"
                                     _width="30"
                                     _height="30" 
                                     v-on:click="toggleGrip">
+                                <v-tooltip md-direction="right">Hands</v-tooltip>
                             </span>
-                        </v-card>
-                    </div>
-
-                    <v-card v-else class="tools" style="top:100px; text-align: center;">
-                        <span class="bpmn-icon-hand-tool" 
-                                v-bind:class="{ icons : !dragPageMovable, hands : dragPageMovable }"
-                                _width="30"
-                                _height="30" 
-                                v-on:click="toggleGrip">
-                            <v-tooltip md-direction="right">Hands</v-tooltip>
-                        </span>
-                        <v-tooltip right v-for="(category, categoryIndex) in elementTypes" :key="categoryIndex">
-                            <template v-slot:activator="{ on }">
-                                <span
-                                    @mouseover="changeCategory(categoryIndex)"
-                                    class="icons draggable"
-                                    align="center"
-                                    :_component="category[0].component"
-                                    :_width="category[0].width"
-                                    :_height="category[0].height"
-                                    :_description="category[0].description"
-                                    :_label="category[0].label"
-                                >
-                                    <img height="30px" width="30px" :src="category[0].src" v-on="on">
-                                </span>
-                            </template>
-                            <span>{{ category[0].label }}</span>
-                        </v-tooltip>
-                    </v-card>
-
-                    <div v-for="(category, categoryIndex) in elementTypes" :key="categoryIndex">
-                        <div v-if="selectedCategoryIndex == categoryIndex">
-                            <v-tooltip right v-for="(item, key) in category" :key="key">
-                                <template v-slot:activator="{ on }" v-if="key>0">
+                            <v-tooltip right v-for="(category, categoryIndex) in elementTypes" :key="categoryIndex">
+                                <template v-slot:activator="{ on }">
                                     <span
-                                            class="draggable"
-                                            align="center"
-                                            :_component="item.component"
-                                            :_width="item.width"
-                                            :_height="item.height"
-                                            :_description="item.description"
-                                            :_label="item.label"
-                                            @click="item.x = 500 + Math.floor(Math.random()*200); item.y=280 + Math.floor(Math.random()*150); addElement(item);"
-                                            :style="toolStyle(key, categoryIndex, category.length)"
+                                        @mouseover="changeCategory(categoryIndex)"
+                                        class="icons draggable"
+                                        align="center"
+                                        :_component="category[0].component"
+                                        :_width="category[0].width"
+                                        :_height="category[0].height"
+                                        :_description="category[0].description"
+                                        :_label="category[0].label"
                                     >
-                                        <img valign="middle"
-                                                style="vertical-align:middle; border: 2 solid grey; -webkit-box-shadow: 5px 5px 20px 0px rgba(0,0,0,0.75); -moz-box-shadow: 5px 5px 20px 0px rgba(0,0,0,0.40); box-shadow: 5px 5px 20px 0px rgba(0,0,0,0.40);"
-                                                onmouseover="this.height=this.height*1.5;this.width=this.width*1.5;this.left=this.left-this.width*0.5;this.right=this.right-this.width*0.5;"
-                                                onmouseout="this.height=this.height/1.5;this.width=this.width/1.5;this.left=this.left+this.width*0.5;this.right=this.right+this.width*0.5;"
-                                                height="40px" width="40px" :src="item.src" v-on="on" border=2
-                                        >
-                                            <v-chip v-on="on">{{ item.label }}</v-chip>
+                                        <img height="30px" width="30px" :src="category[0].src" v-on="on">
                                     </span>
                                 </template>
-                                <v-card
-                                        class="mx-auto"
-                                        max-width="400"
-                                        max-height="400"
-                                        outlined
-                                >
-                                    <v-list-item three-line>
-                                        <v-list-item-content>
-                                            <div class="overline mb-4">{{ category[0].label }}</div>
-                                            <v-list-item-title class="headline mb-1">{{ item.label }}</v-list-item-title>
-                                            <v-list-item-subtitle>{{ item.description }}</v-list-item-subtitle>
-                                        </v-list-item-content>
-                                        <v-list-item-avatar
-                                                tile
-                                                size="80"
-                                                color="white"
-                                        >
-                                            <v-img :src="item.src"></v-img>
-                                        </v-list-item-avatar>
-                                    </v-list-item>
-                                </v-card>
+                                <span>{{ category[0].label }}</span>
                             </v-tooltip>
-                        </div>
-                    </div>
-
-                    <v-card v-if="showAutoModelingDialog" style="position: absolute; top: 100px; right: 25px; width: 500px;">
-                        <v-system-bar style="justify-content: right;"><v-btn icon @click="closeAutoModelingDialog()"><v-icon small style="margin-right: -15px;">mdi-close</v-icon></v-btn></v-system-bar>
-                        <v-card-text id="scroll_messageList" style="max-height: 70vh; overflow-y: scroll;">
-                            <v-col cols="12">
-                                <div v-for="message in chatList" :key="message">
-                                    <v-row v-if="message.type == 'prompt'" style="justify-content: right; margin-bottom: 20px;">
-                                        <v-card style="display:inline-block; width: 350px; text-align: left;">
-                                            <v-card-text class="auto-modeling-message">
-                                                {{ message.text }}
-                                            </v-card-text>
-                                        </v-card>
-                                    </v-row>
-                                    <v-row v-else-if="message.type == 'response'" style="margin-bottom: 20px;">
-                                        <v-card style="display:inline-block; background-color: #DAF5FF; width: 400px; overflow-x: scroll; text-align: left;">
-                                            <v-card-text class="auto-modeling-message">
-                                                <pre style="font-size: small;">{{ message.text }}</pre>
-                                            </v-card-text>
-                                        </v-card>
-                                    </v-row>
-                                    <!-- <v-textarea
-                                        v-else-if="message.type == 'response'"
-                                        v-model="message.text"
-                                        solo
-                                        class="auto-modeling-dialog-textarea"
-                                        style="font-size: small; padding-top:0px; width: 350px;"
-                                    >
-                                    </v-textarea> -->
-                                </div>                                    
-                            </v-col>
-                            <div>
-                                <!-- <v-btn v-if="generationStopped"
-                                    @click="validateDuplicateChatPrompt(promptList[promptList.length -1], 'retry')"
-                                    style="z-index:999; margin-top: 15px; color: black;" text>
-                                        <v-icon>mdi-refresh</v-icon>Regenerate Response
-                                </v-btn>
-                                <v-btn v-else @click="stopExplainCode()" style="z-index:999; margin-top: 15px; color: black;" text>
-                                    <v-icon>mdi-stop-circle-outline</v-icon>Stop generating
-                                </v-btn> -->
-                            </div>
-                        </v-card-text>
-                        <v-card style="text-align: -webkit-center; height: 65px;">
-                            <v-text-field
-                                v-model="input.instruction"
-                                class="prompt_field"
-                                style="width: 492px; background-color: #FFFFFF; color: white;"
-                                outlined
-                                autofocus
-                                append-icon="mdi-send"
-                                @click:append="generate()"
-                                @keypress.enter="debouncedGenerate()"
-                            >
-                            </v-text-field>                                     
                         </v-card>
-                    </v-card>
-                </v-layout>
 
-                <v-dialog v-model="classNameDialog" max-width="500">
-                    <v-card>
-                        <v-card-title class="headline">Class Name Definition</v-card-title>
-                        <v-card-text>
-                            <v-text-field
-                                    label="Class Name"
+                        <div v-for="(category, categoryIndex) in elementTypes" :key="categoryIndex">
+                            <div v-if="selectedCategoryIndex == categoryIndex">
+                                <v-tooltip right v-for="(item, key) in category" :key="key">
+                                    <template v-slot:activator="{ on }" v-if="key>0">
+                                        <span
+                                                class="draggable"
+                                                align="center"
+                                                :_component="item.component"
+                                                :_width="item.width"
+                                                :_height="item.height"
+                                                :_description="item.description"
+                                                :_label="item.label"
+                                                @click="item.x = 500 + Math.floor(Math.random()*200); item.y=280 + Math.floor(Math.random()*150); addElement(item);"
+                                                :style="toolStyle(key, categoryIndex, category.length)"
+                                        >
+                                            <img valign="middle"
+                                                    style="vertical-align:middle; border: 2 solid grey; -webkit-box-shadow: 5px 5px 20px 0px rgba(0,0,0,0.75); -moz-box-shadow: 5px 5px 20px 0px rgba(0,0,0,0.40); box-shadow: 5px 5px 20px 0px rgba(0,0,0,0.40);"
+                                                    onmouseover="this.height=this.height*1.5;this.width=this.width*1.5;this.left=this.left-this.width*0.5;this.right=this.right-this.width*0.5;"
+                                                    onmouseout="this.height=this.height/1.5;this.width=this.width/1.5;this.left=this.left+this.width*0.5;this.right=this.right+this.width*0.5;"
+                                                    height="40px" width="40px" :src="item.src" v-on="on" border=2
+                                            >
+                                                <v-chip v-on="on">{{ item.label }}</v-chip>
+                                        </span>
+                                    </template>
+                                    <v-card
+                                            class="mx-auto"
+                                            max-width="400"
+                                            max-height="400"
+                                            outlined
+                                    >
+                                        <v-list-item three-line>
+                                            <v-list-item-content>
+                                                <div class="overline mb-4">{{ category[0].label }}</div>
+                                                <v-list-item-title class="headline mb-1">{{ item.label }}</v-list-item-title>
+                                                <v-list-item-subtitle>{{ item.description }}</v-list-item-subtitle>
+                                            </v-list-item-content>
+                                            <v-list-item-avatar
+                                                    tile
+                                                    size="80"
+                                                    color="white"
+                                            >
+                                                <v-img :src="item.src"></v-img>
+                                            </v-list-item-avatar>
+                                        </v-list-item>
+                                    </v-card>
+                                </v-tooltip>
+                            </div>
+                        </div>
+
+                        <v-card v-if="showAutoModelingDialog" style="position: absolute; top: 100px; right: 25px; width: 500px;">
+                            <v-system-bar style="justify-content: right;"><v-btn icon @click="closeAutoModelingDialog()"><v-icon small style="margin-right: -15px;">mdi-close</v-icon></v-btn></v-system-bar>
+                            <v-card-text id="scroll_messageList" style="max-height: 70vh; overflow-y: scroll;">
+                                <v-col cols="12">
+                                    <div v-for="message in chatList" :key="message">
+                                        <v-row v-if="message.type == 'prompt'" style="justify-content: right; margin-bottom: 20px;">
+                                            <v-card style="display:inline-block; width: 350px; text-align: left;">
+                                                <v-card-text class="auto-modeling-message">
+                                                    {{ message.text }}
+                                                </v-card-text>
+                                            </v-card>
+                                        </v-row>
+                                        <v-row v-else-if="message.type == 'response'" style="margin-bottom: 20px;">
+                                            <v-card style="display:inline-block; background-color: #DAF5FF; width: 400px; overflow-x: scroll; text-align: left;">
+                                                <v-card-text class="auto-modeling-message">
+                                                    <pre style="font-size: small;">{{ message.text }}</pre>
+                                                </v-card-text>
+                                            </v-card>
+                                        </v-row>
+                                        <!-- <v-textarea
+                                            v-else-if="message.type == 'response'"
+                                            v-model="message.text"
+                                            solo
+                                            class="auto-modeling-dialog-textarea"
+                                            style="font-size: small; padding-top:0px; width: 350px;"
+                                        >
+                                        </v-textarea> -->
+                                    </div>                                    
+                                </v-col>
+                                <div>
+                                    <!-- <v-btn v-if="generationStopped"
+                                        @click="validateDuplicateChatPrompt(promptList[promptList.length -1], 'retry')"
+                                        style="z-index:999; margin-top: 15px; color: black;" text>
+                                            <v-icon>mdi-refresh</v-icon>Regenerate Response
+                                    </v-btn>
+                                    <v-btn v-else @click="stopExplainCode()" style="z-index:999; margin-top: 15px; color: black;" text>
+                                        <v-icon>mdi-stop-circle-outline</v-icon>Stop generating
+                                    </v-btn> -->
+                                </div>
+                            </v-card-text>
+                            <v-card style="text-align: -webkit-center; height: 65px;">
+                                <v-text-field
+                                    v-model="input.instruction"
+                                    class="prompt_field"
+                                    style="width: 492px; background-color: #FFFFFF; color: white;"
+                                    outlined
                                     autofocus
-                                    v-model="newClassCompInfo.name"
-                            ></v-text-field>
-                        </v-card-text>
-                        <v-card-actions>
-                            <v-spacer></v-spacer>
-                            <v-btn color="green darken-1" text
-                                    @click="addClassElement"
-                            >
-                                Add
-                            </v-btn>
-                            <v-btn color="red darken-1" text 
-                                    @click.native="classNameDialog = false"
-                            >
-                                Close
-                            </v-btn>
-                        </v-card-actions>
-                    </v-card>
-                </v-dialog>
+                                    append-icon="mdi-send"
+                                    @click:append="generate()"
+                                    @keypress.enter="debouncedGenerate()"
+                                >
+                                </v-text-field>                                     
+                            </v-card>
+                        </v-card>
+                    </v-layout>
 
-                <model-storage-dialog
-                        :condition="storageCondition"
-                        :showDialog="showStorageDialog"
-                        @save="saveModel"
-                        @fork="forkModel"
-                        @backup="backupModel"
-                        @close="storageDialogCancel"
-                ></model-storage-dialog>
+                    <v-dialog v-model="classNameDialog" max-width="500">
+                        <v-card>
+                            <v-card-title class="headline">Class Name Definition</v-card-title>
+                            <v-card-text>
+                                <v-text-field
+                                        label="Class Name"
+                                        autofocus
+                                        v-model="newClassCompInfo.name"
+                                ></v-text-field>
+                            </v-card-text>
+                            <v-card-actions>
+                                <v-spacer></v-spacer>
+                                <v-btn color="green darken-1" text
+                                        @click="addClassElement"
+                                >
+                                    Add
+                                </v-btn>
+                                <v-btn color="red darken-1" text 
+                                        @click.native="classNameDialog = false"
+                                >
+                                    Close
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
 
-                <v-dialog v-model="forkAlertDialog" max-width="290">
-                    <v-card>
-                        <v-card-title class="headline">Fork
-                            <v-icon>{{icon.fork}}</v-icon>
-                        </v-card-title>
-                        <v-card-text> 권한이 없어서 수정 할 수 없습니다. Fork를 하여 사용해 주세요.</v-card-text>
-                        <v-card-actions>
-                            <v-spacer></v-spacer>
-                            <v-btn color="green darken-1" text @click="saveComposition('fork')">Fork</v-btn>
-                            <v-btn color="red darken-1" text @click.native="forkAlertDialog = false">Close</v-btn>
-                        </v-card-actions>
-                    </v-card>
-                </v-dialog>
+                    <model-storage-dialog
+                            :condition="storageCondition"
+                            :showDialog="showStorageDialog"
+                            @save="saveModel"
+                            @fork="forkModel"
+                            @backup="backupModel"
+                            @close="storageDialogCancel"
+                    ></model-storage-dialog>
 
-                <model-canvas-share-dialog
-                        v-model="inviteLists"
-                        :showDialog="inviteDialog"
-                        :checkPublic="showPublicModel"
-                        :canvas="canvas"
-                        canvasComponentName="uml-class-model-canvas"
-                        @all="invitePublic"
-                        @apply="applyInviteUsers"
-                        @close="closeInviteUsers"
-                        @add="addInviteUser"
-                        @remove="removeInviteUser"
-                ></model-canvas-share-dialog>
+                    <v-dialog v-model="forkAlertDialog" max-width="290">
+                        <v-card>
+                            <v-card-title class="headline">Fork
+                                <v-icon>{{icon.fork}}</v-icon>
+                            </v-card-title>
+                            <v-card-text> 권한이 없어서 수정 할 수 없습니다. Fork를 하여 사용해 주세요.</v-card-text>
+                            <v-card-actions>
+                                <v-spacer></v-spacer>
+                                <v-btn color="green darken-1" text @click="saveComposition('fork')">Fork</v-btn>
+                                <v-btn color="red darken-1" text @click.native="forkAlertDialog = false">Close</v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
 
-                <modeler-image-generator ref="modeler-image-generator"></modeler-image-generator>
-            </template>
-            <template v-slot:two>
-                <!-- v-if="embedded" -->
-                <CodeGenerator
-                    v-model="codeGenValue"
-                    :isOwnModel="isOwnModel"
-                    :isServerModel="isServerModel"
-                    :projectInformation="information"
-                    :projectName="projectName"
-                    :modelInitLoad="initLoad"
-                    :modelingProjectId="projectId"
-                    :asyncCodeForValue="false"
-                    :callCodeForValue="changedTemplateCode"
-                    :oldTreeHashLists.sync="oldTreeHashLists"
-                    :newTreeHashLists.sync="newTreeHashLists"
-                    :projectVersion="projectVersion"
-                    @changedByMe="settingChangedByMe"
-                    canvas-name="uml-class-model-canvas"
-                ></CodeGenerator>
-                    <!-- @java-reverse="javaReverse" -->
-            </template>
-        </separate-panel-components>
+                    <model-canvas-share-dialog
+                            v-model="inviteLists"
+                            :showDialog="inviteDialog"
+                            :checkPublic="showPublicModel"
+                            :canvas="canvas"
+                            canvasComponentName="uml-class-model-canvas"
+                            @all="invitePublic"
+                            @apply="applyInviteUsers"
+                            @close="closeInviteUsers"
+                            @add="addInviteUser"
+                            @remove="removeInviteUser"
+                    ></model-canvas-share-dialog>
+
+                    <modeler-image-generator ref="modeler-image-generator"></modeler-image-generator>
+                    <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" :modelValue="value" :embedded="embedded" :defaultInputData="defaultGeneratorUiInputData" @createModel="createModel" @clearModelValue="clearModelValue" @modificateModel="modificateModel"></GeneratorUI>
+                </template>
+                <template v-slot:two>
+                    <!-- v-if="embedded" -->
+                    <CodeGenerator
+                        v-model="codeGenValue"
+                        :isOwnModel="isOwnModel"
+                        :isServerModel="isServerModel"
+                        :projectInformation="information"
+                        :projectName="projectName"
+                        :modelInitLoad="initLoad"
+                        :modelingProjectId="projectId"
+                        :asyncCodeForValue="false"
+                        :callCodeForValue="changedTemplateCode"
+                        :oldTreeHashLists.sync="oldTreeHashLists"
+                        :newTreeHashLists.sync="newTreeHashLists"
+                        :projectVersion="projectVersion"
+                        @changedByMe="settingChangedByMe"
+                        canvas-name="uml-class-model-canvas"
+                    ></CodeGenerator>
+                        <!-- @java-reverse="javaReverse" -->
+                </template>
+            </separate-panel-components>
+        </div>
+        <!-- Mouse Cursor -->
+        <div v-for="(otherMouseEvent, email) in filteredMouseEventHandlers" :key="email">
+            <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
+        </div>
     </div>
 </template>
 
@@ -454,7 +461,10 @@
     import Generator from '../modeling/generators/AggregateMemberGenerator.js'
     // import GeneratorUI from "../modeling/generators/GeneratorUI";
     import { digl } from '@crinkles/digl';
+    import GeneratorUI from "../modeling/generators/GeneratorUI";
+    import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
 
+    const jsonpath = require('jsonpath-plus');
     var JSZip = require('jszip');
 
     var jsondiffpatch = require('jsondiffpatch').create({
@@ -475,14 +485,28 @@
             'model-storage-dialog': ModelStorageDialog,
             SeparatePanelComponents,
             CodeGenerator,
+            GeneratorUI,
+            MouseCursorComponent
             // GeneratorUI
         },
         props: {
-            aggregateRootList: Array,
+            aggregateRootList: {
+                type: Array,
+                default: () => [],
+            },
             esValue: Object,
         },
         data() {
             return {
+                defaultGeneratorUiInputData: {
+                    generator: "AggregateMemberGenerator",
+                    instruction: "생성할 서비스명",
+                    aggregateRoot: {
+                        name: null,
+                        fieldDescriptors: ""
+                    }
+                },
+                eleCnt: 0,
                 codeGenValue: null,
                 autoScroll: true,
                 dummyMessage: {
@@ -518,19 +542,17 @@
                 },
                 code: '',
                 active: [],
-                canvas: null,
-                items: [],
-                enableHistoryAdd: false,
-                undoing: false,
-                undoed: false,
-                tmpValue: [],
-                noPushUndo: false,
+                // items: [],
+                // undoing: false,
+                // undoed: false,
+                // tmpValue: [],
+                // noPushUndo: false,
 
                 //undo Redo
-                undoRedoArray: [],
-                undoRedoIndex: 0,
-                currentIndex: 0,
-                undoIndex: 0,
+                // undoRedoArray: [],
+                // undoRedoIndex: 0,
+                // currentIndex: 0,
+                // undoIndex: 0,
 
                 // imageBase: 'https://raw.githubusercontent.com/kimsanghoon1/k8s-UI/master/public/static/image/symbol/',
                 imageBase: `${ window.location.protocol + "//" + window.location.host}/static/image/symbol/`,
@@ -768,9 +790,6 @@
                     return this.projectName
                 }
             },
-            getReadOnly() {
-                return this.readOnly
-            },
             disableBtn() {
                 if (this.isDisable || !this.initLoad) {
                     return true
@@ -780,40 +799,33 @@
         },
         created() {
             var me = this
-            try {
-                Vue.use(ClassModeling);
-
-                if(me.embedded) {
-                    if(me.aggregateRootList.length > 0) {
-                        if (this.aggregateRootList[0].mirrorElement) {
-                            me.readOnly = true;
-                        }
-                        me.addAggregateRootClass(me.aggregateRootList);
+            if(me.embedded) {
+                me.setCanvasType();
+                if(me.aggregateRootList.length > 0) {
+                    if (me.aggregateRootList[0].mirrorElement) {
+                        me.readOnly = true;
                     }
-
-                    me.initLoad = true
-
-                    me.$nextTick(() => {
-                        localStorage.removeItem('umlClass')
-                        localStorage.removeItem('aggregateRoots')
-                        localStorage.removeItem('umlClass_'+me.aggregateId)
-                        localStorage.removeItem('aggregateRoots_'+me.aggregateId)
-                    })
-
-                } else {
-                    me.canvasType = 'uml';
-                    me.isQueueModel = true;
-                    me.track();
+                    me.addAggregateRootClass(me.aggregateRootList);
                 }
-            } catch (e) {
-                console.log('Error: UMLModelCanvas Created().', e)
+
+                me.initLoad = true
+
+                me.$nextTick(() => {
+                    localStorage.removeItem('umlClass')
+                    localStorage.removeItem('aggregateRoots')
+                    localStorage.removeItem('umlClass_'+me.aggregateId)
+                    localStorage.removeItem('aggregateRoots_'+me.aggregateId)
+                })
+
+            } else {
+                me.isQueueModel = true;
             }
         },
         mounted: function() {
             var me = this
-            this.userId = v4();
+            me.userId = v4();
 
-            window.addEventListener("wheel", this.handScroll);
+            window.addEventListener("wheel", me.handScroll);
 
             // const channel = me.pusher.subscribe('paint');
             // // channel.bind('draw', function(data) {
@@ -861,11 +873,14 @@
             // });
         },
         methods: {
+            setCanvasType(){
+                Vue.use(ClassModeling);
+                this.canvasType = 'uml'
+            },
             onChangedValue(oldVal, newVal){
                 var me = this
 
                 clearTimeout(me.valueChangedTimer);
-
                 me.valueChangedTimer = setTimeout(function () {
                     var diff = jsondiffpatch.diff(oldVal, newVal);
                     if (!me.embedded && me.initLoad && diff) {
@@ -914,7 +929,18 @@
                 var me = this;
                 let aggRoot = null;
                 me.value.relations = {};
+                me.value.elements = {};
+
+                
                 if(modelObj && modelObj.elements && modelObj.elements.length > 0) {
+                    for(var i=0; i<modelObj.elements.length; i++){
+                        if(modelObj.elements[i].isAggregateRoot){
+                            me.aggregateRootList.push(modelObj.elements[i])
+                            me.value.elements[modelObj.elements[i].elementView.id] = modelObj.elements[i]
+                            break
+                        }
+                    }
+
                     modelObj.elements.forEach((entity) => {
                         let isExist = false
                         Object.keys(me.value.elements).forEach((key) => {
@@ -1022,6 +1048,116 @@
                     me.alignClassElement()
                 })
                 
+            },
+            modificateModel(model){
+                var me = this;
+                if(model){
+                    Object.keys(model).forEach(function (key){
+                        if(key=="add"){
+                            model["add"].forEach(function (field) {
+                                if(!(field.className=='Integer' || field.className=='String' || field.className=='Boolean' || field.className=='Float' || 
+                                    field.className=='Double' || field.className=='Long' || field.className=='Date')){
+                                    
+                                    let fieldVo = Object.values(me.value.elements).filter(element => element != null).find(element => element.name === field.className)
+                                    if(!fieldVo){
+                                        var componentInfo = {
+                                            'component': 'uml-vo-class-'+field.className.toLowerCase(),
+                                            'label': field.className,
+                                            'width': '100',
+                                            'height': '100',
+                                            'src': `${ window.location.protocol + "//" + window.location.host}/static/image/symbol/class_value.png`,
+                                            'isVO': true,
+                                            'description': field.className,
+                                            'x': 500 + Math.floor(Math.random()*200),
+                                            'y': 280 + Math.floor(Math.random()*150)
+                                        }
+                                        
+                                        fieldVo = me.addElement(componentInfo)
+                                        // me.$nextTick(() => {
+                                        //     fieldVo = Object.values(me.value.elements).filter(element => element != null).find(element => element.name === field.className)
+                                        // });
+                                    }
+
+                                    let aggregateRoot = Object.values(me.value.elements).filter(element => element != null).find(element => element.isAggregateRoot === true)
+
+                                    if (aggregateRoot !== undefined && fieldVo !== undefined) {
+                                        var relationEl = {
+                                            from: aggregateRoot.elementView.id,
+                                            to: fieldVo.elementView.id,
+                                            _type: "org.uengine.uml.model.Relation",
+                                            fromLabel: "",
+                                            name: fieldVo.nameCamelCase,
+                                            relationType: "Association",
+                                            relationView: {
+                                                id: me.uuid(),
+                                                from: aggregateRoot.elementView.id,
+                                                to: fieldVo.elementView.id,
+                                            },
+                                            selected: false,
+                                            sourceElement: aggregateRoot,
+                                            sourceMultiplicity: "1",
+                                            targetElement: fieldVo,
+                                            targetMultiplicity: "1",
+                                            toLabel: ""
+                                        }
+                                        
+                                        me.$set(me.value.relations, relationEl.relationView.id, relationEl)
+                                    }
+                                }  
+                            })
+
+                        }else if(key=="beforeReplace"){
+                            // for(var i=0; i<model["beforeReplace"].length; i++){
+                            //     if(model["beforeReplace"][i].isVO){ // Entity 일때만
+                            //         Object.keys(me.value.elements).forEach(function (ele){
+                            //             if(me.value.elements[ele]){
+                            //                 if(me.value.elements[ele].elementView.id == model["beforeReplace"][i].classId){ // 바뀔 field에 해당하는 entitiy를 value에서 get
+                            //                     Object.keys(me.value.elements[ele]).forEach(props => { // entity에 해당하는 elements의 field를 replace
+                            //                         if (model["replace"][i].hasOwnProperty(props) && props!="_type") {
+                            //                             me.value.elements[ele][props] = model["replace"][i][props];
+                            //                         }
+                            //                     });
+                            //                 }
+                            //             }
+                            //         })
+                            //     }
+                            // }
+
+                        }else if(key=="delete"){
+                            for(var i=0; i<model["delete"].length; i++){
+                                if(model["delete"][i].isVO){
+                                    // Object.keys(me.value.elements).forEach(function (ele){
+                                    //     if(me.value.elements[ele]){
+                                    //         if(me.value.elements[ele].name.toLowerCase() == model["delete"][i].name.toLowerCase()){
+                                    //             me.value.elements[ele] = null
+                                    //         }
+                                    //     }
+                                    // })
+
+                                    Object.keys(me.value.relations).forEach(function (rel){
+                                        if(me.value.relations[rel]){
+                                            if(me.value.relations[rel].to == model["delete"][i].classId){
+                                                me.value.relations[rel] = null
+                                            }
+                                        }
+                                    })
+                                }
+                            }
+                        }
+
+                    })
+                    
+                    if(model.updateElement){
+                        if(model.replace.length > 0){
+                            // 일부 key의 value가 바뀐 것을 me.value에 반영할 때, Vue instance 상에 직접 변화를 주기위한 별도 처리
+                            Vue.set(me.value.elements, model.selectedElement.id, model.updateElement)
+                        }else{
+                            me.value.elements[model.selectedElement.id] = Object.assign(me.value.elements[model.selectedElement.id], model.updateElement)
+                        }
+                        me.$EventBus.$emit('selectedElement', {selected: true, id: me.value.elements[model.selectedElement.id].elementView.id, value: me.value.elements[model.selectedElement.id]})
+                        me.changedByMe = true
+                    }
+                }
             },
             onGenerationFinished(){
                 this.done = true;
@@ -1433,6 +1569,10 @@
                     return;
                 }
                 this.canvas = opengraph.canvas;
+                
+                // 이벤트 리스너 설정을 위한 함수 호출
+                me.setupEventListeners(opengraph, canvasEl);
+
                 //아이콘 드래그 드랍 이벤트 등록
                 $(el).find('.draggable').draggable({
                     start: function () {
@@ -1534,41 +1674,37 @@
                     // this.syncOthers();
                 }
             },
-            undoRedo: function (cmd) {
-                var me = this
-                if (!me.drawer) {
-                    if (cmd == 'redo') {
-                        if (me.undoRedoIndex < me.undoRedoArray.length - 1) {
-                            me.undoRedoIndex = me.undoRedoIndex + 1
-                            me.value = JSON.parse(JSON.stringify(me.undoRedoArray[me.undoRedoIndex]));
-                        } else {
-                            me.text = "Last element"
-                            me.snackbar = true
-                            me.timeout = 500
-                        }
-                    } else if (cmd == 'undo') {
-                        if (me.undoRedoIndex > 0) {
-                            me.undoRedoIndex = me.undoRedoIndex - 1
-                            me.value = JSON.parse(JSON.stringify(me.undoRedoArray[me.undoRedoIndex]));
-                        } else {
-                            me.text = "Last Element"
-                            me.snackbar = true
-                            me.timeout = 500
-                        }
-                    }
-                }
+            // undoRedo: function (cmd) {
+            //     var me = this
+            //     if (!me.drawer) {
+            //         if (cmd == 'redo') {
+            //             if (me.undoRedoIndex < me.undoRedoArray.length - 1) {
+            //                 me.undoRedoIndex = me.undoRedoIndex + 1
+            //                 me.value = JSON.parse(JSON.stringify(me.undoRedoArray[me.undoRedoIndex]));
+            //             } else {
+            //                 me.text = "Last element"
+            //                 me.snackbar = true
+            //                 me.timeout = 500
+            //             }
+            //         } else if (cmd == 'undo') {
+            //             if (me.undoRedoIndex > 0) {
+            //                 me.undoRedoIndex = me.undoRedoIndex - 1
+            //                 me.value = JSON.parse(JSON.stringify(me.undoRedoArray[me.undoRedoIndex]));
+            //             } else {
+            //                 me.text = "Last Element"
+            //                 me.snackbar = true
+            //                 me.timeout = 500
+            //             }
+            //         }
+            //     }
 
-            },
+            // },
             addElement: function (componentInfo, isAggRoot) {
-                this.enableHistoryAdd = true;
                 var me = this;
-                var vueComponent = me.getComponentByName(componentInfo.component);
-                var element;
-
-                if (!vueComponent) {
-                    return
-                }
-
+                let vueComponent = me.getComponentByName(componentInfo.component);
+                if (!vueComponent) return
+                
+                let element;
                 if (componentInfo.component == 'uml-class-relation') {
                     if(componentInfo.targetElement.isInterface) {
                         vueComponent = me.getComponentByName('uml-realization-relation')
@@ -1621,52 +1757,41 @@
                     );
                 }
 
-                if (componentInfo.name) {
-                    element.name = componentInfo.name
-                }
+                if (componentInfo.name) element.name = componentInfo.name
+                if(!me.embedded && !me.value) me.value = { 'elements': {}, 'relations': {} }
                 
-                if(!me.embedded) {
-                    if (me.value == null) {
-                        me.value = { 'elements': {}, 'relations': {} }
-                    }
-                }
-                
-                if(!isAggRoot) {
-                    me.addElementPush(me.value, element)
+                me.addElementAction(element)
 
-                    // new UndoRedo
-                    if (me.undoRedoIndex != me.currentIndex) {
-                        //undoRedo 했을때
-                        //삭제후
-                        me.undoRedoArray.splice(me.undoRedoIndex + 1, me.currentIndex - me.undoRedoIndex);
-                        me.undoRedoIndex = me.undoRedoIndex + 1
-                        me.currentIndex = me.undoRedoIndex
-                    } else {
-                        me.undoRedoIndex = me.undoRedoIndex + 1
-                    }
-                    me.undoRedoArray.push(JSON.parse(JSON.stringify(me.value)));
-                    me.currentIndex = me.undoRedoArray.length - 1
-                } else {
-                    var location = element.elementView ? me.value.elements : me.value.relations
-                    var eleId = element.elementView ? element.elementView.id : element.relationView.id
+                // if(!isAggRoot) {
+                //     me.addElementPush(me.value, element)
 
-                    if (!Object.keys(location).includes(eleId)) {
-                        me.$set(location, eleId, element)
-                    }
-                }
+                //     // new UndoRedo
+                //     if (me.undoRedoIndex != me.currentIndex) {
+                //         //undoRedo 했을때
+                //         //삭제후
+                //         me.undoRedoArray.splice(me.undoRedoIndex + 1, me.currentIndex - me.undoRedoIndex);
+                //         me.undoRedoIndex = me.undoRedoIndex + 1
+                //         me.currentIndex = me.undoRedoIndex
+                //     } else {
+                //         me.undoRedoIndex = me.undoRedoIndex + 1
+                //     }
+                //     me.undoRedoArray.push(JSON.parse(JSON.stringify(me.value)));
+                //     me.currentIndex = me.undoRedoArray.length - 1
+                // } else {
+                //     var location = element.elementView ? me.value.elements : me.value.relations
+                //     var eleId = element.elementView ? element.elementView.id : element.relationView.id
+
+                //     if (!Object.keys(location).includes(eleId)) {
+                //         me.$set(location, eleId, element)
+                //     }
+                // }
 
                 return element;
-                // this.syncOthers(element);
             },
-            getComponentByName: function (name) {
-                var componentByName;
-                $.each(window.Vue._components, function (i, component) {
-                    if (component.name == name) {
-                        // // console.log(component.default.name)
-                        componentByName = component;
-                    }
-                });
-                return componentByName;
+            clearModelValue(){
+                var me = this
+                me.value.elements = {}
+                me.eleCnt = 0
             },
             getComponentByClassName: function (className) {
                 var componentByClassName;

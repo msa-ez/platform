@@ -13,7 +13,7 @@
                 v-on:dblclick="openPanel"
                 v-on:selectShape="selectedActivity"
                 v-on:deSelectShape="deSelectedActivity"
-                v-on:removeShape="onRemoveShape(value)"
+                v-on:removeShape="onRemoveShape"
                 :customMoveActionExist="canvas.isCustomMoveExist"
                 v-on:customRelationMoveAction="delayedRelationMove"
         ></edge-element>
@@ -22,7 +22,7 @@
                 v-if="propertyPanel"
                 v-model="value"
                 @close="closePanel"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 :titleName="'Ingress To Service'"
         ></relation-panel>
     </div>

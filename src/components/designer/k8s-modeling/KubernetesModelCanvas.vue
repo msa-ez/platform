@@ -122,7 +122,7 @@
                                             style="margin-right: 5px; margin-top: 40px; max-width: 140px; z-index: 1;"
                                             label="Project Name"
                                             v-model="projectName"
-                                            :disabled="readOnly"
+                                            :disabled="isReadOnly"
                                             dense
                                     ></v-text-field>
                                     <!-- 웹페이지 버튼들 -->
@@ -231,7 +231,7 @@
                                             <template v-slot:activator="{ on }">
                                                 <v-btn class="k8s-hide-fork-btn"
                                                         text
-                                                        v-if="readOnly"
+                                                        v-if="isReadOnlyModel"
                                                         style="margin-right: 5px; margin-top: 15px;"
                                                         @click="saveComposition('fork')"
                                                 >
@@ -304,6 +304,31 @@
                                                 </v-list-item>
                                             </v-list>
                                         </v-menu>
+                                        <v-menu
+                                            v-if="isReadOnlyModel"
+                                            offset-y
+                                            open-on-hover
+                                            left
+                                        >
+                                            <template v-slot:activator="{ on }">
+                                                <v-btn
+                                                    class="k8s-hide-code-btn"
+                                                    style="margin-right: 5px;margin-top: 15px;"
+                                                    v-on="on"
+                                                    :color="joinRequestedText.show ? 'primary': 'success'"
+                                                    @click="requestInviteUser()"
+                                                    text
+                                                >
+                                                    <div v-if="joinRequestedText.show" >
+                                                        <v-icon>{{icon.join}}</v-icon>
+                                                    </div>
+                                                    {{joinRequestedText.text }}
+                                                </v-btn>
+                                            </template>
+                                            <v-list></v-list>
+                                        </v-menu>
+
+                                        
                                     </div>
                                     <!-- 웹페이지 버튼들 끝 -->
                                 </v-row>
@@ -457,12 +482,13 @@
                                                     </v-list-item>
                                                 </v-list>
                                             </v-menu>
-                                            <v-menu v-if="!parents"
-                                                    style="margin: 0px !important;"
-                                                    open-on-hover offset-y>
+                                            <v-menu 
+                                                v-if="!parents"
+                                                style="margin: 0px !important;"
+                                                open-on-hover offset-y>
                                                 <template v-slot:activator="{ on }">
                                                     <v-btn
-                                                            v-if="readOnly"
+                                                            v-if="isReadOnlyModel"
                                                             style="margin-right: 5px; margin-top: 15px;"
                                                             @click="saveComposition('fork')"
                                                             small
@@ -497,7 +523,7 @@
 
 
                                             <v-menu
-                                                    v-if="isOwnModel && isServerModel && !isReadOnlyModel "
+                                                    v-if="isOwnModel && isServerModel && !isReadOnlyModel"
                                                     class="pa-2"
                                                     offset-y
                                                     open-on-hover
@@ -1293,8 +1319,11 @@
                 ></kube-code-generator>
             </template>
         </separate-panel-components>
+        <!-- Mouse Cursor -->
+        <div v-for="(otherMouseEvent, email) in filteredMouseEventHandlers" :key="email">
+            <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
+        </div>
     </div>
-
 </template>
 
 <script>
@@ -1314,6 +1343,7 @@
     import ModelCanvasShareDialog from "../modeling/ModelCanvasShareDialog";
     import SeparatePanelComponents from "../../SeparatePanelComponents";
     import CodeGenerator from "../modeling/CodeGenerator";
+    import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
 
 
     var _ = require('lodash');
@@ -1342,12 +1372,12 @@
             'model-canvas-share-dialog': ModelCanvasShareDialog,
             'text-reader': TextReader,
             'model-storage-dialog': ModelStorageDialog,
-            SeparatePanelComponents
+            SeparatePanelComponents,
+            MouseCursorComponent
         },
         mixins: [ModelCanvas],
         props: {
             boundedContextList: Array,
-            getReadOnly: Boolean,
             isReadOnlyModel: Boolean,
             specVersion: String
         },
@@ -1914,9 +1944,7 @@
         created: function () {
             var me = this
             try {
-                Vue.use(KubeModeling);
                 if(!me.embedded) {
-                    me.canvasType = 'k8s';
                     me.isQueueModel = true;
                     me.clusterItems = [
                         {title: 'Terminal'},
@@ -1925,7 +1953,6 @@
                     ]
                     if (!me.readOnly)
                         me.isSearch = true
-                    me.track();
                 }
             } catch (e) {
                 console.log(e)
@@ -2123,20 +2150,6 @@
                 window.addEventListener("message", me.messageProcessing);
                 window.opener.postMessage({message: "kubernetesYaml"}, "*");
             }
-
-
-            // window.addEventListener("beforeunload", (event) => {
-            //     var delta = jsondiffpatch.diff(me.oldCopyValue, me.newCopyValue);
-            
-            //     if (me.initLoad && delta && !me.embedded) {
-            //         me.modifiedElement(delta)
-            //     } else if(delta && me.embedded) {
-            //         me.$emit('input', me.newCopyValue);
-            //     }
-
-            //     me.changedByMe = true
-            // });
-
         },
         watch: {
             argoServerInfo: {
@@ -2165,22 +2178,6 @@
                     }
                 }
             },
-            // "copyValue": {
-            //     deep: true,
-            //     handler: function (newVal, oldVal) {
-            //         var me = this
-            //
-            //         // // me.newCopyValue = newVal;
-            //         // // me.oldCopyValue = oldVal;
-            //         var delta = jsondiffpatch.diff(oldVal, newVal);
-            //         //
-            //         // me.changedByMe = true;
-            //         // me.modifiedElement(delta)
-            //         if (me.initLoad && delta) {
-            //             me.modifiedElement(delta)
-            //         }
-            //     }
-            // },
             "value.elements": {
                 deep: true,
                 handler: _.debounce(function (newVal) {
@@ -2220,6 +2217,10 @@
             },
         },
         methods: {
+            setCanvasType(){
+                Vue.use(KubeModeling);
+                this.canvasType = 'k8s'
+            },
             moveModelUrl(modelId){
                 this.$router.push({path: `/kubernetes/${modelId}`});
             },
@@ -4509,9 +4510,7 @@
                         //기존 컴포넌트가 없는 경우 신규 생성
                     }
 
-                    if (me.validateRelation(from.id, to.id)) {
-                        me.addElement(componentInfo);
-                    }
+                    me.addElement(componentInfo);
                 }
             },
             modifyRelation(element) {
@@ -4527,7 +4526,6 @@
                 }
             },
             addElement: function (componentInfo, object, isOpened) {
-                this.enableHistoryAdd = true;
                 var me = this;
                 var additionalData = {};
                 var vueComponent = me.getComponentByName(componentInfo.component);
@@ -4598,30 +4596,16 @@
 
                 }
 
-
-
-                // var location = element.elementView ? me.value.elements : me.value.relations
-                // var eleId = element.elementView ? element.elementView.id : element.relationView.id
-                // if (componentInfo.component == "namespace") {
-                //     // location.unshift()
-                // }
-                // me.$set(location, eleId, element)
-
-                if(me.embedded){
-                    if (!me.value.k8sValue) {
-                        me.value.k8sValue = {'elements': {}, 'relations': {}}
-                    }
-                    me.addElementPush(me.value.k8sValue, element)
-                }else{
-                    me.addElementPush(me.value, element)
+                if (me.embedded){
+                    if(!me.value.k8sValue)  me.value.k8sValue = {'elements': {}, 'relations': {}} 
+                    me.addElementAction(element, me.value.k8sValue)
+                    // me.addElementPush(me.value.k8sValue, element)
+                } else{
+                    // me.addElementPush(me.value, element)
+                    me.addElementAction(element, me.value)
                 }
-
-                //auto openPanel
-                // me.autoOpenPanel = isOpened
-
                 //추천 element 리턴
                 return element
-
             },
             definedCrdDialog() {
                 var me = this
@@ -5974,4 +5958,5 @@
             left:25px;
         }
     }
+    
 </style>

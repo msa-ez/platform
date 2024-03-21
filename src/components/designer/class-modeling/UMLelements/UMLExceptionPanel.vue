@@ -24,20 +24,20 @@
                                 label="Class Name"
                                 required
                                 autofocus
-                                :disabled="!canvas.isEditable"
+                                :disabled="isReadOnly"
                         ></v-text-field>
 
                         <v-text-field 
                                 v-model="value.message" 
                                 label="Message"
-                                :disabled="!canvas.isEditable"
+                                :disabled="isReadOnly"
                         ></v-text-field>
 
                         <v-select
                                 v-model="value.httpStatus"
                                 :items="codeList"
                                 label="HttpStatus"
-                                :disabled="!canvas.isEditable"
+                                :disabled="isReadOnly"
                         ></v-select>
                     </v-card-text>
                 </v-card>
@@ -66,10 +66,7 @@
         },
         computed: {
         },
-        created() {
-            var me = this;
-            me.panelInit()
-        },
+        created() { },
         methods:{
             panelInit(){
                 var me = this
@@ -92,7 +89,7 @@
 
                 // Common
                 if ( !me.canvas.embedded ) {
-                    me.panelOpenAction()
+                    me.openPanelAction()
                 }
             },
         },

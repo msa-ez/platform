@@ -3,7 +3,7 @@
     <common-panel
             v-model="value"
             :image="image"
-            :is-read-only="canvas.isReadOnlyModel"
+            :is-read-only="isReadOnly"
             :width-style="widthStyle"
             :related-url="relatedUrl"
             :validation-lists="validationLists"
@@ -22,7 +22,7 @@
 
         <template slot="t-edit-user">
             <div
-                    v-if="newEditUserImg.length > 0 && canvas.isReadOnlyModel"
+                    v-if="newEditUserImg.length > 0 && isReadOnly"
                     style="text-align:center"
             >
                 <v-chip
@@ -53,7 +53,7 @@
                         <v-text-field
                                 v-model="value.controllerInfo.apiPath"
                                 outlined
-                                :disabled="canvas.isReadOnlyModel"
+                                :disabled="isReadOnly"
                                 hint="맨 처음 '/' 제외한 apiPath를 작성해주세요. (Default '/')"
                         ></v-text-field>
                     </v-card-text>
@@ -65,7 +65,7 @@
                                 v-model="value.controllerInfo.method"
                                 :items="restfulList"
                                 style="margin-left: 10px; margin-right: 10px;"
-                                :disabled="canvas.isReadOnlyModel"
+                                :disabled="isReadOnly"
                                 label="Method" persistent-hint>
                         </v-autocomplete>
                     </v-card-text>
@@ -91,9 +91,7 @@
             return {
             }
         },
-        created: function () {
-            this.panelInit()
-        },
+        created: function () { },
         methods: {
             panelInit(){
                 var me = this
