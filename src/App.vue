@@ -386,23 +386,7 @@
             </v-menu>
 
         </v-app-bar>
-        <div v-if= "showMemo" ref="draggable" @mousedown="dragStart" @mousemove="dragging" @mouseup="dragStop" style="position: absolute; top: 0; left: -400px; width: 500px;" >      
-            <v-card style="margin: 55px 100px 0 1000px; width: 500px; position: absolute; top: 220px; left: 380px; z-index: 9;">
-                    <ckeditor v-model="editorData" :config="editorConfig"></ckeditor>
-                    <v-tooltip bottom>
-                        <template v-slot:activator="{ on, attrs }">
-                            <v-btn fill="none" 
-                                style="margin-left:5px; position: absolute; top: 0px; left: 450px; clo" 
-                                v-bind="attrs" v-on="on"
-                                color="gray" icon large
-                                @click="showMemo = false">
-                                <v-icon>mdi-close</v-icon>
-                            </v-btn>
-                        </template>
-                        <span>닫기</span>
-                    </v-tooltip>
-            </v-card>
-        </div>
+        
         <course-navigator v-if="courseNavi && $route.path.includes('eventstorming')"
                           :value.sync="naviObject"></course-navigator>
         <v-content :style="headerFloating == true ? 'margin-top:-64px;':'margin-top:0px;'">
@@ -767,7 +751,6 @@
                 {key: 'manager', display: `loginList.purchaseList`},
                 {key: 'getCoin', display: `loginList.CoinsCoupons`},
                 {key: 'payQuestion', display: `loginList.inquiry`},
-                {key: 'showMemo', display: `메모장 사용하기`},
                 {key: 'logout', display: `loginList.logout`}
             ],
             loginText: 'Login',
@@ -870,7 +853,6 @@
                     ],
                 
             },
-            showMemo: false,
             isDragging: false,
             startX: 0,
             startY: 0,
@@ -1846,9 +1828,7 @@
                             window.ipcRenderer.send("closeView");
                         }
                     } else if (key == 'payQuestion') {
-                        alert("'help@uengine.org' 으로 메일 문의 바랍니다. ")
-                    } else if(key == 'showMemo'){
-                        me.openMemo()
+                        alert("'help@uengine.org' 으로 메일 문의 바랍니다. ") 
                     } else {
                         console.log("app")
                         if (me.isLogin) {
@@ -2054,20 +2034,6 @@
                     window.open("https://github.com/msa-ez/msa-ez.github.io/issues", "_blank")
                 } else {
                     window.open("https://github.com/msa-ez/msa-ez.github.io/issues", "_blank")
-                }
-            },
-            async openMemo() {
-                var me = this;
-                var convertEmail = localStorage.getItem("email").replace(/\./gi, '_')
-                me.editorData = await me.getString('db://labs/' + me.getTenantId().split('.')[0] + '/' + me.courseId + '/classes/' + me.classId + '/memo/' + convertEmail , me.editorData);
-                me.showMemo = !me.showMemo
-            },
-            async saveMemo(){
-                var me = this; 
-                var convertEmail = localStorage.getItem("email").replace(/\./gi, '_')
-                await me.setString('db://labs/' + me.getTenantId().split('.')[0] + '/' + me.courseId + '/classes/' + me.classId + '/memo/' + convertEmail , me.editorData);
-                if(!me.editorData){
-                    await me.setString('db://labs/' + me.getTenantId().split('.')[0] + '/' + me.courseId + '/classes/' + me.classId + '/memo/' + convertEmail , me.editorData + '메모할 내용을 입력해주세요.');
                 }
             },
             dragStart(event) {
