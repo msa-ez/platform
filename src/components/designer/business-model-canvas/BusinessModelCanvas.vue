@@ -354,15 +354,11 @@
             :projectId="projectId"
             @startCreateModel="openEventStorming"
         ></AutoModelingDialog>
-<<<<<<< HEAD
         <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" :modelValue="value" :defaultInputData="defaultGeneratorUiInputData" @createModel="createModel" @clearModelValue="clearModelValue" @modificateModel="modificateModel"></GeneratorUI>
-=======
-        <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" :defaultInputData="defaultGeneratorUiInputData" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
         <!-- Mouse Cursor -->
         <div v-for="(otherMouseEvent, email) in filteredMouseEventHandlers" :key="email">
             <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
         </div>
->>>>>>> a268a83fec19952c476c0f9c3608a7730d8e02b7
     </div>
 </template>
 

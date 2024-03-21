@@ -272,6 +272,7 @@
         created(){
             if(this.createGenerator()){
                 if(this.isAutoGen){
+                    this.openGeneratorUI = true
                     this.generate();
                 } else {
                     this.generationStopped = false
