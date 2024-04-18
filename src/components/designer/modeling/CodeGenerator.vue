@@ -5098,6 +5098,15 @@ jobs:
                     return '{'+exp+'}';
                 })
 
+                window.$HandleBars.registerHelper('parseToYaml', function (obejct) {
+                    try {
+                        var yaml = json2yaml.stringify(obejct);
+                        return yaml;
+                    } catch(e){
+                        console.log(e)
+                    }
+                })
+
             },
             reverse(item, path) {
                 var me = this

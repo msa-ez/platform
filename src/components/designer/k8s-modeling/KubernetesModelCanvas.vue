@@ -1953,6 +1953,8 @@
                     ]
                     if (!me.readOnly)
                         me.isSearch = true
+                }else{
+                    me.setCanvasType();
                 }
             } catch (e) {
                 console.log(e)
