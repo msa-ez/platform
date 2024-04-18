@@ -50,7 +50,17 @@
                         <v-tooltip  bottom>
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn @click="reGenerate(input['userStory'])"
-                                    v-if="!hasElements"
+                                    v-if="!hasElements && generatorName==='BMGenerator' "
+                                    icon small
+                                    v-bind="attrs"
+                                    v-on="on"
+                                    style="margin-right: 5px; z-index:2"
+                                    class="gs-es-auto-modling-btn"
+                                >
+                                    <v-icon>mdi-refresh</v-icon>
+                                </v-btn>
+                                <v-btn @click="reGenerate(input['userStory'])"
+                                    v-else
                                     icon small
                                     v-bind="attrs"
                                     v-on="on"
@@ -272,6 +282,7 @@
         created(){
             if(this.createGenerator()){
                 if(this.isAutoGen){
+                    this.openGeneratorUI = true
                     this.generate();
                 } else {
                     this.generationStopped = false
