@@ -10,7 +10,7 @@
                             label="Type"
                             class="ml-2"
                             style="width: 80px;"
-                            :disabled="readOnly"
+                            :disabled="isReadOnly"
                     ></v-select>
                     <v-text-field
                             v-model="tmpField.name"
@@ -25,19 +25,19 @@
                             v-model="tmpField.isKey"
                             label="Key"
                             class="mr-8"
-                            :disabled="readOnly"
+                            :disabled="isReadOnly"
                     ></v-checkbox>
                     <v-checkbox
                             v-model="tmpField.isList"
                             label="List"
                             class="mr-8"
-                            :disabled="readOnly"
+                            :disabled="isReadOnly"
                     ></v-checkbox>
                     <v-checkbox
                             v-model="tmpField.isName"
                             label="Name"
                             class="mr-8"
-                            :disabled="readOnly"
+                            :disabled="isReadOnly"
                     ></v-checkbox>
                     <v-checkbox
                             v-model="tmpField.isLob"
@@ -53,7 +53,7 @@
                             class="mx-2"
                             label="Return Type"
                             style="width: 80px;"
-                            :disabled="readOnly"
+                            :disabled="isReadOnly"
                     ></v-select>
                     <v-text-field
                             v-model="tmpMethod.name"
@@ -69,7 +69,7 @@
                                     v-bind="attrs"
                                     v-on="on"
                                     style="margin-top: 10px;"
-                                    :disabled="readOnly"
+                                    :disabled="isReadOnly"
                                     @click="AddParam"
                                     class="mr-2"
                             >
@@ -87,20 +87,20 @@
                                 label="Parameter Type"
                                 class="mx-2"
                                 style="width: 80px;"
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                         ></v-select>
                         <v-text-field
                                 v-model="param.name"
                                 label="Parameter Name"
                                 class="mr-2"
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                         ></v-text-field>
                         <v-btn  color="primary"
                                 dark small fab icon
                                 style="margin-top: 10px;"
                                 @click="tmpMethod.parameters.splice(idx, 1)"
                                 class="mr-2"
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                         >
                             <v-icon>mdi-minus</v-icon>
                         </v-btn>
@@ -127,7 +127,7 @@
         name: 'uml-class-popup',
         props: {
             value: Object,
-            readOnly: Boolean,
+            isReadOnly: Boolean,
             type: String,
             isNew: Boolean,
             index: Number,

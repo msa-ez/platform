@@ -257,7 +257,7 @@
                                                 <span style="font-weight:700; font-size:14px;">Update from model code</span>
                                                 <v-text-field
                                                         id="copy-gitMerge-command"
-                                                        label="Update from model code"
+                                                        label="To update the code, enter following command in your IDE:"
                                                         :value="gitMergeCommand"
                                                         prepend-inner-icon="mdi-chevron-right"
                                                         solo
@@ -302,7 +302,7 @@
                                                 <span style="font-weight:700; font-size:14px;">2. Update</span>
                                                 <v-text-field
                                                         id="copy-gitMerge-command"
-                                                        label="Update from model code"
+                                                        label="To update the code, enter following command in your IDE:"
                                                         :value="gitMergeCommand"
                                                         prepend-inner-icon="mdi-chevron-right"
                                                         solo
@@ -540,16 +540,16 @@
 <script>
     // import SIGenerator from './modeling/generators/SIGenerator'
     // import getParent from '../../utils/getParent'
-    import labBase from "../labs/LabStorageBase"
-    import Login from "../oauth/Login";
-    import LoginByGitlab from "../oauth/LoginByGitlab";
-    const axios = require('axios');
-    import CodeGeneratorCore from './modeling/CodeGeneratorCore';
-    const _ = require('lodash');
-    import Gitlab from "../../utils/Gitlab";
     import GitAPI from "../../utils/GitAPI";
-    import Github from "../../utils/Github";
-    import Usage from "../../utils/Usage";
+import Github from "../../utils/Github";
+import Gitlab from "../../utils/Gitlab";
+import Usage from "../../utils/Usage";
+import labBase from "../labs/LabStorageBase";
+import Login from "../oauth/Login";
+import LoginByGitlab from "../oauth/LoginByGitlab";
+import CodeGeneratorCore from './modeling/CodeGeneratorCore';
+    const axios = require('axios');
+    const _ = require('lodash');
 
     export default {
         name: 'gitAPIMenu',

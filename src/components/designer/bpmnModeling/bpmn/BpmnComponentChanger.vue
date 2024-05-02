@@ -382,7 +382,8 @@
                 //     this.$set(this.bpmnVue.value.elements, newActivity.elementView.id, newActivity)
                 // }
                 // let canvas = this.getComponent('bpmn-model-canvas')
-                this.bpmnVue.addElementPush(null, newActivity);
+                // this.bpmnVue.addElementPush(null, newActivity);
+                this.bpmnVue.addElementAction(newActivity);
 
                 // this.$nextTick(function () {
                 //     //오픈그래프 컴포넌트 중 from, to 인 것을 redraw 시킨다.

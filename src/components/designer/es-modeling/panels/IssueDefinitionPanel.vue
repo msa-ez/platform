@@ -2,7 +2,7 @@
     <common-panel
             v-model="value"
             :image="image"
-            :is-read-only="canvas.isReadOnlyModel"
+            :is-read-only="isReadOnly"
             :width-style="widthStyle"
             :related-url="relatedUrl"
             :validation-lists="validationLists"
@@ -18,7 +18,7 @@
 
         <template slot="t-edit-user">
             <div
-                    v-if="newEditUserImg.length > 0 && canvas.isReadOnlyModel"
+                    v-if="newEditUserImg.length > 0 && isReadOnly"
                     style="text-align:center"
             >
                 <v-chip
@@ -46,10 +46,9 @@
 <script>
     import CommonPanel from "./CommonPanel";
     import EventStormingModelPanel from "../EventStormingModelPanel";
+
     // Translate
     var googleTranslate = require('google-translate')(process.env.VUE_APP_TRANSLATE_KEY);
-    var changeCase = require('change-case');
-
     export default {
         mixins: [EventStormingModelPanel],
         name: 'issue-panel',
@@ -60,9 +59,7 @@
             return {
             }
         },
-        created: function () {
-            this.panelInit()
-        },
+        created: function () { },
         methods: {
             panelInit(){
                 var me = this

@@ -1,8 +1,18 @@
 <template>
     <div v-if="modelCreationCompleted">
-        <v-row style="position:absolute; right:30px; top:75px;">
+        <v-btn class="generator-ui-btn"
+            v-if="!openGeneratorUI"
+            fab
+            primary
+            fixed
+            @click="openGeneratorUI=!openGeneratorUI"
+        >
+            <!-- <v-icon color="primary">mdi-chat</v-icon> -->
+            <Icon icon="arcticons:openai-chatgpt" width="35" height="35" />
+        </v-btn>
+        <v-row v-if="openGeneratorUI" style="position:absolute; right:30px; top:75px;">
             <v-card style="text-align: center; z-index: 2;" width="auto">
-                <v-card-text :style="(isExpanded && generationStopped) ? { width: '75px' } : isExpanded ? { width: '170px' } : { width: '400px' }" 
+                <v-card-text :style="(isExpanded && generationStopped) ? { width: '75px' } : isExpanded ? { width: '170px' } : { width: '450px' }" 
                     style="padding: 0px; ">
                     <v-progress-linear  :indeterminate="generationStopped" v-if="generationStopped"
                         style="margin-top: 10px; pointer-events: none;"
@@ -40,6 +50,17 @@
                         <v-tooltip  bottom>
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn @click="reGenerate(input['userStory'])"
+                                    v-if="!hasElements && generatorName==='BMGenerator' "
+                                    icon small
+                                    v-bind="attrs"
+                                    v-on="on"
+                                    style="margin-right: 5px; z-index:2"
+                                    class="gs-es-auto-modling-btn"
+                                >
+                                    <v-icon>mdi-refresh</v-icon>
+                                </v-btn>
+                                <v-btn @click="reGenerate(input['userStory'])"
+                                    v-else
                                     icon small
                                     v-bind="attrs"
                                     v-on="on"
@@ -88,6 +109,7 @@
                         <v-tooltip bottom v-else-if="showGenerateBtn">
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn
+                                    v-if="!hasElements"
                                     @click="generate()"
                                     small
                                     v-bind="attrs"
@@ -108,8 +130,9 @@
                     </div>
 
                     <v-tabs v-model="userPanel">
-                        <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;">Input</v-tab>
-                        <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;">Output</v-tab>
+                        <v-tab :disabled="hasElements" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Input</v-tab>
+                        <v-tab :disabled="hasElements" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Output</v-tab>
+                        <v-tab v-if="hasElements" :disabled="selectedElement.length===0" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('chat')">Chat</v-tab>
                         <!-- <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;">TEST</v-tab> -->
                     </v-tabs>
 
@@ -119,22 +142,23 @@
                                 <template v-slot:actions>
                                     <v-tooltip bottom>
                                         <template v-slot:activator="{ on, attrs }">
-                                            <v-btn @click="isExpanded = !isExpanded"
+                                            <v-btn @click="openGeneratorUI = !openGeneratorUI"
                                                 icon small
+                                                class="cp-panel-folding"
                                                 v-bind="attrs"
                                                 v-on="on"
                                                 style="position:absolute; top:-38px; right:0px; z-index:2"
                                             >
-                                                <v-icon>mdi-unfold-more-horizontal</v-icon>
+                                                <v-icon>mdi-close</v-icon>
                                             </v-btn>
                                         </template>
-                                        <span>Panel folding/unfolding</span>
+                                        <span>close Auto Generator</span>
                                     </v-tooltip>
                                 </template>
                             </v-expansion-panel-header>
-                            <v-expansion-panel-content class="auto-modeling-dialog">
+                            <v-expansion-panel-content class="auto-modeling-dialog" >
                                 <v-tabs-items v-model="userPanel">
-                                    <v-tab-item>
+                                    <v-tab-item :disabled="hasElements">
                                         <v-card flat>
                                             <v-textarea v-if="input"
                                                 v-model="input.userStory"
@@ -145,7 +169,7 @@
                                         </v-card>
                                     </v-tab-item>
 
-                                    <v-tab-item>
+                                    <v-tab-item :disabled="hasElements">
                                         <v-card flat>
                                             <v-textarea
                                                 v-model="displayResult"
@@ -156,17 +180,63 @@
                                             </v-textarea>
                                         </v-card>
                                     </v-tab-item>
-                                    <!-- <v-tab-item>
+
+                                    <v-tab-item v-if="hasElements">
                                         <v-card flat>
-                                            <v-textarea
-                                                v-model="test"
-                                                @scroll="handleScroll" id="scroll-text"
-                                                class="auto-modeling-dialog-textarea"
-                                                style="font-size: small; padding-top:0px; height: 100%;"
-                                            >
-                                            </v-textarea>
+                                            <v-card-text id="scroll_messageList" style="height: 100%; max-height: 75vh; overflow-y: scroll;">
+                                                <v-col cols="12">
+                                                    <div v-for="message in chatList" :key="message">
+                                                        <v-row v-if="message.type == 'prompt'" style="justify-content: right; margin-bottom: 20px;">
+                                                            <v-card style="display:inline-block; width: 350px; text-align: left;">
+                                                                <v-card-text class="auto-modeling-message">
+                                                                    {{ message.text }}
+                                                                </v-card-text>
+                                                            </v-card>
+                                                        </v-row>
+                                                        <v-row v-else-if="message.type == 'response'" style="margin-bottom: 20px;">
+                                                            <v-card style="display:inline-block; background-color: #DAF5FF; width: 400px; max-height: 500px; overflow-x: scroll; text-align: left;">
+                                                                <v-card-text class="auto-modeling-message">
+                                                                    <pre style="font-size: small;">{{ message.text }}</pre>
+                                                                </v-card-text>
+                                                            </v-card>
+                                                        </v-row>
+                                                        <!-- <v-textarea
+                                                            v-else-if="message.type == 'response'"
+                                                            v-model="message.text"
+                                                            solo
+                                                            class="auto-modeling-dialog-textarea"
+                                                            style="font-size: small; padding-top:0px; width: 350px;"
+                                                        >
+                                                        </v-textarea> -->
+                                                    </div>                                    
+                                                </v-col>
+                                                <div>
+                                                    <!-- <v-btn v-if="generationStopped"
+                                                        @click="validateDuplicateChatPrompt(promptList[promptList.length -1], 'retry')"
+                                                        style="z-index:999; margin-top: 15px; color: black;" text>
+                                                            <v-icon>mdi-refresh</v-icon>Regenerate Response
+                                                    </v-btn>
+                                                    <v-btn v-else @click="stopExplainCode()" style="z-index:999; margin-top: 15px; color: black;" text>
+                                                        <v-icon>mdi-stop-circle-outline</v-icon>Stop generating
+                                                    </v-btn> -->
+                                                </div>
+                                            </v-card-text>
+                                            <v-card style="text-align: -webkit-center; height: 65px;">
+                                                <v-text-field
+                                                    v-model="chatMessage"
+                                                    class="prompt_field"
+                                                    style="width: 492px; background-color: #FFFFFF; color: white;"
+                                                    outlined
+                                                    autofocus
+                                                    append-icon="mdi-send"
+                                                    :disabled="selectedElement.length === 0"
+                                                    @click:append="generate()"
+                                                    @keypress.enter="generate()"
+                                                >
+                                                </v-text-field>                                     
+                                            </v-card>
                                         </v-card>
-                                    </v-tab-item> -->
+                                    </v-tab-item>
                                 </v-tabs-items>
                             </v-expansion-panel-content>
                         </v-expansion-panel>
@@ -186,6 +256,8 @@
     import UMLGenerator from './UMLGenerator.js'
     import BMGenerator from './BMGenerator.js'
     import UserStoryMapGenerator from './UserStoryMapGenerator.js'
+    import ModelModificationGenerator from './ModelModificationGenerator.js'
+    import AggregateMemberGenerator from './AggregateMemberGenerator.js'
     import Usage from '../../../../utils/Usage'
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
@@ -203,17 +275,22 @@
             generatorParameter: Object,
             modelerValue: Object,
             generatorStep: String,
-            defaultInputData: Object
+            defaultInputData: Object,
+            modelValue: Object,
         },
 
         created(){
             if(this.createGenerator()){
                 if(this.isAutoGen){
+                    this.openGeneratorUI = true
                     this.generate();
                 } else {
                     this.generationStopped = false
                     this.input = this.defaultInputData
                     this.input.userStory = this.generatorComponent.createPrompt();
+                    this.input.selectedElement = {}
+                    this.input.modificationMessage = ""
+                    this.chatMessage = ""
                 }
             }
         },
@@ -224,7 +301,24 @@
                         this.scrollToBottom();
                     }
                 });
-            }
+            },
+            modelValue: {
+                deep: true,
+                handler(newValue, oldValue) {
+                    if (newValue && newValue.elements) {
+                        const elements = newValue.elements;
+                        const keys = Object.keys(elements);
+                        this.hasElements = false;
+    
+                        for (const key of keys) {
+                            if (elements[key] !== null) {
+                                this.hasElements = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            },
         },
 
         data() {
@@ -245,12 +339,47 @@
                 isExpanded: false,
                 modelCreationCompleted: true,
                 associatedProject: null,
-                
+                dummyMessage: {
+                    text: "What do you want to create?",
+                    type: 'response'
+                },
+                openAiMessageList: [],
+                chatList: [],
+                selectedElement: [],
+                chatMessage: "",
+                hasElements: false,
+                openGeneratorUI: false,
             }
         },
         computed: {
             displayResult() {
                 return (this.savedResult != '' && !this.generationStopped) ? this.savedResult : this.result;
+            }
+        },
+        mounted: async function () { 
+            var me = this
+            me.$EventBus.$on('selectedElement', function (selectedObj) {
+                var id = selectedObj.id
+
+                if (selectedObj['selected']) {
+                    me.selectedElement.push(selectedObj)
+                    if(me.modelValue){
+                        me.input.selectedElement = JSON.parse(JSON.stringify(selectedObj.value));
+                    }
+                } else {
+                    var fidx = me.selectedElement.findIndex(obj => obj.id == id)
+                    if (fidx != -1) {
+                        me.selectedElement.splice(fidx, 1);
+                    }
+                    me.input.selectedElement = {}
+                }
+
+            });
+
+            if(me.$attrs.embedded) {
+                this.hasElements = true;
+                this.switchGenerator('chat');
+                this.userPanel = 2;
             }
         },
         updated() {
@@ -296,6 +425,7 @@
                         case "UMLGenerator": this.generatorComponent = new UMLGenerator(this); break;
                         case "BMGenerator": this.generatorComponent = new BMGenerator(this); break;
                         case "UserStoryMapGenerator": this.generatorComponent = new UserStoryMapGenerator(this); break;
+                        case "AggregateMemberGenerator": this.generatorComponent = new AggregateMemberGenerator(this); break;
 
                     }
 
@@ -355,36 +485,68 @@
                     this.input = changedInput;
 
                 this.result = '';
-                this.$emit("clearModelValue")
-                if(!this.isAutoGen || this.generatorStep === 'aggregate'){
-                    let generateOption = {
-                        "messages": [],
-                        "action": "skipCreatePrompt"
+                
+                if(this.generatorName === "ModelModificationGenerator"){
+                    this.input.modificationMessage = this.chatMessage
+                    if(this.input.modificationMessage=="") return;
+                    var message = {
+                        text: this.input.modificationMessage,
+                        type: "prompt"
                     }
-                    if(this.generatorStep === 'aggregate'){
-                        const removalStrings = [
-                            "Please create an event storming model in json for following service: ",
-                            "The result must be in JSON format and the name of events must be in \"Adjectivalized Object\" that means In this structure, the object, which is used in verb form, is transformed into an adjective and comes first, followed by the past tense verb.\n        for example, \"OrderPlaced\", \"PaymentCompleted\", \"JobDone\". not \"Placed Order\", \"Complete Payment\", \"Do Job\".\n        Event Names must be less than 3 words.\n        : \n        \n        {\n            \"serviceName\": \"Service Name\",\n            \"actors\": [\"Actor Name\"],\n            \"events\": [\n\n                {\n                    \"actor\": \"Actor Name\",\n                    \"name\": \"Event Name\", // must be in Past tense. i.e. Order Placed (p.p.).  Less than 3 words.\n                    \"undefinedName\": \"name in undefined\", // must be in Past tense. i.e. 택시 호출됨. (p.p.).\n                }\n            ]\n        \n        }\n "
-                        ];
-
-                        removalStrings.forEach(str => {
-                            this.input.userStory = this.input.userStory.replace(str, '');
-                        });
-                        this.input.userStory = this.generatorComponent.createPrompt();
-                    }
-                    generateOption.messages.push({
-                        role: 'user',
-                        content: this.input.userStory
-                    })
-
-                    this.generatorComponent.generate(generateOption);
-                } else {
+                    this.chatList.push(message);
+                    this.chatMessage = ""
                     this.generatorComponent.generate();
+                }else{
+                        this.$emit("clearModelValue")
+                        this.userPanel = 1
+
+                    if(!this.isAutoGen || this.generatorStep === 'aggregate'){
+                        let generateOption = {
+                            "messages": [],
+                            "action": "skipCreatePrompt"
+                        }
+                        if(this.generatorStep === 'aggregate'){
+                            const removalStrings = [
+                                "Please create an event storming model in json for following service: ",
+                                "The result must be in JSON format and the name of events must be in \"Adjectivalized Object\" that means In this structure, the object, which is used in verb form, is transformed into an adjective and comes first, followed by the past tense verb.\n        for example, \"OrderPlaced\", \"PaymentCompleted\", \"JobDone\". not \"Placed Order\", \"Complete Payment\", \"Do Job\".\n        Event Names must be less than 3 words.\n        : \n        \n        {\n            \"serviceName\": \"Service Name\",\n            \"actors\": [\"Actor Name\"],\n            \"events\": [\n\n                {\n                    \"actor\": \"Actor Name\",\n                    \"name\": \"Event Name\", // must be in Past tense. i.e. Order Placed (p.p.).  Less than 3 words.\n                    \"undefinedName\": \"name in undefined\", // must be in Past tense. i.e. 택시 호출됨. (p.p.).\n                }\n            ]\n        \n        }\n "
+                            ];
+    
+                            removalStrings.forEach(str => {
+                                this.input.userStory = this.input.userStory.replace(str, '');
+                            });
+                            this.input.userStory = this.generatorComponent.createPrompt();
+                        }
+                        generateOption.messages.push({
+                            role: 'user',
+                            content: this.input.userStory
+                        })
+    
+                        this.generatorComponent.generate(generateOption);
+                    } else {
+                        this.generatorComponent.generate();
+                    }
                 }
+
                 this.generationStopped = true;
                 if(this.generatorName == 'EventOnlyESGenerator'){
                     this.$emit("showContinueBtn")
                     this.showGenerateBtn = false
+                }
+            },
+            switchGenerator(mode){
+                if(mode){
+                    if(mode=='chat'){
+                        this.chatList = []
+                        this.openAiMessageList = []
+                        this.chatList.push(this.dummyMessage)
+                        this.input.modificationMessage = ""
+                        this.chatMessage = ""
+
+                        this.generatorComponent = new ModelModificationGenerator(this);
+                        this.generatorName = "ModelModificationGenerator"
+                    }
+                }else{
+                    this.createGenerator();
                 }
             },
 
@@ -411,18 +573,31 @@
             },
 
             onModelCreated(model){
-                this.$emit("createModel", model)
+                if(this.generatorName === "ModelModificationGenerator"){
+                    this.$emit("modificateModel", model)
+                } else{
+                    this.$emit("createModel", model)
+                }
             },
 
             onGenerationFinished(model){
                 this.generationStopped = false;
-                this.savedResult = this.result;
                 this.$emit("onGenerationFinished")
-
-                
                 this.publishModelChanges(model)
-                this.input['userStory'] = this.generatorComponent.previousMessages[0].content
-                this.userPanel = 1
+                
+                // JSON Modification finished
+                if(this.generatorName === "ModelModificationGenerator"){
+                    var response = {
+                        text: this.result,
+                        type: 'response'
+                    }
+                    this.chatList.push(response);
+                }else{
+                    this.savedResult = this.result;
+                    this.input['userStory'] = this.generatorComponent.previousMessages[0].content
+                    this.userPanel = 1
+                }
+
                 this.generationCompleted = true
 
             },
@@ -441,12 +616,30 @@
     }
 </script>
 <style>
+.generator-ui-btn {
+    bottom:20px;
+    right:20px;
+}
 .expanded {
   width: 200px;
 }
 
 .collapsed {
   width: 450px; /* 원하는 가로 길이로 조정 */
+}
+@media only screen and (max-width: 1093px) {
+    .generator-ui-btn {
+        bottom:20px;
+        right:85px;
+    }
+}
+@media only screen and (max-width: 600px) {
+    .generator-ui-btn {
+        bottom:110px;
+        right:60px;
+        width:40px !important;
+        height:40px !important;
+    }
 }
 </style>
 

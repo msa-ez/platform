@@ -23,39 +23,39 @@
                                 v-model="value.name"
                                 label="Class Name"
                                 autofocus
-                                :disabled="canvas.isReadOnlyModel"
+                                :disabled="isReadOnly"
                         ></v-text-field>
                         <v-text-field
                                 v-model="value.displayName"
                                 label="Display Name"
-                                :disabled="canvas.isReadOnlyModel"
+                                :disabled="isReadOnly"
                         ></v-text-field>
 
                         <v-radio-group label="Class Type" v-model="classType">
                             <v-radio
                                     label="Aggregate Root"
                                     value="AggregateRoot"
-                                    :disabled="canvas.isReadOnlyModel"
+                                    :disabled="isReadOnly"
                             ></v-radio>
                             <v-radio
                                     label="General Class"
                                     value="Class"
-                                    :disabled="canvas.isReadOnlyModel"
+                                    :disabled="isReadOnly"
                             ></v-radio>
                             <v-radio
                                     label="Value Object"
                                     value="ValueObject"
-                                    :disabled="canvas.isReadOnlyModel"
+                                    :disabled="isReadOnly"
                             ></v-radio>
                             <v-radio
                                     label="Abstract"
                                     value="Abstract"
-                                    :disabled="canvas.isReadOnlyModel"
+                                    :disabled="isReadOnly"
                             ></v-radio>
                             <v-radio
                                     label="Interface"
                                     value="Interface"
-                                    :disabled="canvas.isReadOnlyModel"
+                                    :disabled="isReadOnly"
                             ></v-radio>
                         </v-radio-group>
 
@@ -63,7 +63,7 @@
                                 v-if="value.isVO"
                                 v-model="value.referenceClass"
                                 label="Reference Aggregate Root"
-                                :disabled="canvas.isReadOnlyModel"
+                                :disabled="isReadOnly"
                         ></v-text-field>
                     </v-card-text>
                 </v-card>
@@ -75,7 +75,7 @@
                                 :entities="entities"
                                 :type="value._type"
                                 :elementId="value.elementView.id"
-                                :isReadOnly="canvas.isReadOnlyModel"
+                                :isReadOnly="isReadOnly"
                         ></event-storming-attribute>
                     </v-card-text>
                 </v-card>
@@ -107,7 +107,7 @@
                                                             item-text="text" 
                                                             item-value="value"
                                                             item-disabled="disabled"
-                                                            :disabled="canvas.isReadOnlyModel"
+                                                            :disabled="isReadOnly"
                                                     ></v-select>
                                                 </v-col>
                                                 <v-col cols="7">
@@ -118,7 +118,7 @@
                                                             v-else-if="operationEdit && value.operations.indexOf(operation) == operationEditIndex "
                                                             v-model="operation.name" 
                                                             required
-                                                            :disabled="canvas.isReadOnlyModel"
+                                                            :disabled="isReadOnly"
                                                     ></v-text-field>
                                                 </v-col>
                                                 <v-col cols="2">
@@ -126,7 +126,7 @@
                                                             x-small icon
                                                             class="mr-1"
                                                             @click="UMLOperationModify(operation)"
-                                                            :disabled="canvas.isReadOnlyModel"
+                                                            :disabled="isReadOnly"
                                                     >
                                                         <v-icon>save</v-icon>
                                                     </v-btn>
@@ -134,13 +134,13 @@
                                                             x-small icon
                                                             class="mr-2"
                                                             @click="UMLOperationEdit(operation)"
-                                                            :disabled="canvas.isReadOnlyModel"
+                                                            :disabled="isReadOnly"
                                                     >
                                                         <v-icon>edit</v-icon>
                                                     </v-btn>
                                                     <v-btn  x-small icon
                                                             @click="UMLOperationDelete(operation)"
-                                                            :disabled="canvas.isReadOnlyModel"
+                                                            :disabled="isReadOnly"
                                                     >
                                                         <v-icon>delete</v-icon>
                                                     </v-btn>
@@ -148,7 +148,7 @@
                                                             x-small icon
                                                             class="ml-1"
                                                             @click="AddParam"
-                                                            :disabled="canvas.isReadOnlyModel"
+                                                            :disabled="isReadOnly"
                                                     >
                                                         <v-icon>mdi-plus</v-icon>
                                                     </v-btn>
@@ -184,7 +184,7 @@
                                                 v-model="operationReturnType" 
                                                 :items="returnTypeList" 
                                                 label="Return Type"
-                                                :disabled="canvas.isReadOnlyModel"
+                                                :disabled="isReadOnly"
                                         ></v-select>
                                         <v-text-field 
                                                 style="margin-right: 10px;"
@@ -192,7 +192,7 @@
                                                 label="Name"
                                                 required
                                                 v-on:keyup.enter="UMLOperationADD"
-                                                :disabled="canvas.isReadOnlyModel"
+                                                :disabled="isReadOnly"
                                         ></v-text-field>
                                         <v-tooltip top>
                                             <template v-slot:activator="{ on, attrs }">
@@ -202,7 +202,7 @@
                                                         v-on="on"
                                                         style="margin-top: 15px;"
                                                         @click="AddParam"
-                                                        :disabled="canvas.isReadOnlyModel"
+                                                        :disabled="isReadOnly"
                                                 >
                                                     <v-icon>mdi-plus</v-icon>
                                                 </v-btn>
@@ -216,18 +216,18 @@
                                                 v-model="param.type"
                                                 :items="returnTypeList" 
                                                 label="Parameter Type"
-                                                :disabled="canvas.isReadOnlyModel"
+                                                :disabled="isReadOnly"
                                         ></v-select>
                                         <v-text-field 
                                                 style="margin-right: 10px;"
                                                 v-model="param.name"
                                                 label="Parameter Name"
-                                                :disabled="canvas.isReadOnlyModel"
+                                                :disabled="isReadOnly"
                                         ></v-text-field>
                                         <v-btn  style="margin-top: 15px;"
                                                 icon small 
                                                 @click="DeleteParam(idx)"
-                                                :disabled="canvas.isReadOnlyModel"
+                                                :disabled="isReadOnly"
                                         >
                                             <v-icon>delete</v-icon>
                                         </v-btn>
@@ -238,12 +238,12 @@
                                             color="info" 
                                             depressed text
                                             @click="operationsDialog = true;"
-                                            :disabled="canvas.isReadOnlyModel"
+                                            :disabled="isReadOnly"
                                     >Override</v-btn>
                                     <v-btn  depressed text
                                             style="color:#1E88E5;"
                                             @click="UMLOperationADD"
-                                            :disabled="canvas.isReadOnlyModel"
+                                            :disabled="isReadOnly"
                                     >Add Operation</v-btn>
                                 </v-row>
                             </v-col>
@@ -401,7 +401,7 @@
                 return {
                     animation: 200,
                     group: "description",
-                    disabled: this.readOnly,
+                    disabled: this.isReadOnly,
                     ghostClass: "ghost"
                 };
             },
@@ -530,41 +530,44 @@
         methods:{
             executeBeforeDestroy() {
                 var me = this
-                try {
-                    /*
-                        _value : 기존 값.
-                        value  : Panel 사용되는 값,
-                    */
-                    var diff = jsondiffpatch.diff(me._value, me.value)
-                    if (diff) {
-                        console.log('UMLClassPanel - executeBeforeDestroy')
-                        if (!me.canvas.isReadOnlyModel) {
-                            if(!me.canvas.embedded) {
-                                me.canvas.changedByMe = true
-                            } else {
-                                // var aggElement = me.modelCanvasComponent.aggregateRootList[0];
-                                var aggElement = me.canvas.aggregateRootList[0];
-                                if (aggElement) {
-                                    if(me.value.parentId && me.value.isAggregateRoot) {
-                                        me.$set(aggElement.aggregateRoot, "fieldDescriptors", me.value.fieldDescriptors);
-                                        me.$set(aggElement.aggregateRoot, "operations", me.value.operations);
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        /*
+                            _value : 기존 값.
+                            value  : Panel 사용되는 값,
+                        */
+                        if(!me.value) return;
+                        var diff = jsondiffpatch.diff(me._value, me.value)
+                        if (diff) {
+                            console.log('UMLClassPanel - executeBeforeDestroy')
+                            if (!me.isReadOnly) {
+                                if(!me.canvas.embedded) {
+                                    me.canvas.changedByMe = true
+                                } else {
+                                    // var aggElement = me.canvas.aggregateRootList[0];
+                                    var aggElement = me.canvas.aggregateRootList[0];
+                                    if (aggElement) {
+                                        if(me.value.parentId && me.value.isAggregateRoot) {
+                                            me.$set(aggElement.aggregateRoot, "fieldDescriptors", me.value.fieldDescriptors);
+                                            me.$set(aggElement.aggregateRoot, "operations", me.value.operations);
+                                        }
                                     }
                                 }
+                                // all sync
+                                Object.keys(me.value).forEach(function (itemKey) {
+                                    if(!(itemKey == 'elementView' || itemKey == 'relationView')){
+                                        // Exception: 위치정보
+                                        me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]))
+                                    }
+                                })
+                                // re setting 값을 emit
+                                me.$emit('_value-change', me._value)
                             }
-                            // all sync
-                            Object.keys(me.value).forEach(function (itemKey) {
-                                if(!(itemKey == 'elementView' || itemKey == 'relationView')){
-                                    // Exception: 위치정보
-                                    me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]))
-                                }
-                            })
-                            // re setting 값을 emit
-                            me.$emit('_value-change', me._value)
                         }
+                        me.closePanelAction()
                     }
-                } catch (e) {
-                    alert('[Error] UMLClassPanel Sync: ', e)
-                }
+                })
             },
             UMLOperationADD() {
                 var me = this

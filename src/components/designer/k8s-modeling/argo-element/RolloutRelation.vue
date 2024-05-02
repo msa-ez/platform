@@ -14,7 +14,7 @@
                 v-on:dblclick="openPanel"
                 v-on:selectShape="selectedActivity"
                 v-on:deSelectShape="deSelectedActivity"
-                v-on:removeShape="onRemoveShape(value)"
+                v-on:removeShape="onRemoveShape"
                 :customMoveActionExist="canvas.isCustomMoveExist"
                 v-on:customRelationMoveAction="delayedRelationMove"
         ></edge-element>
@@ -23,7 +23,7 @@
                 v-if="propertyPanel"
                 v-model="value"
                 :titleName="'Rollout'"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></relation-panel>
     </div>
@@ -32,12 +32,14 @@
 <script>
     import Relation from '../RelationAbstract'
     import Panel from './RolloutRelationPanel'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Relation],
         name: 'RolloutRelation',
         props: {},
         components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             'relation-panel': Panel,
         },
         created: function () {

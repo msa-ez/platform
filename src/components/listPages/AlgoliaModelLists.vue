@@ -1,551 +1,544 @@
 <template>
-    <v-container style="max-width: 1500px;">
-        <slot name="body">
-            <div>
-                <div class="main-nav-tabs-box">
-                    <v-tabs class="main-nav-tabs" background-color="transparent" show-arrows color="none">
-                        <v-tab to="/"
-                            class="main-nav-tab main-nav-tab-home"
-                        >
-                            <v-icon style="margin-top:10px;">mdi-home</v-icon>
-                        </v-tab>
-                        <v-tab @click="wikiOpen('introduction')"
-                            class="main-nav-tab"
-                        >{{$t('mainNav.introduction')}}
-                        </v-tab>
-                        <v-tab @click="wikiOpen('company')"
-                            class="main-nav-tab"
-                        >{{$t('mainNav.company')}}
-                        </v-tab>
-                        <v-tab @click="wikiOpen('pricing')"
-                            class="main-nav-tab"
-                        >{{$t('mainNav.pricing')}}
-                        </v-tab>
-                        <v-tab @click="wikiOpen('partnership')"
-                            class="main-nav-tab"
-                        >{{$t('mainNav.partnership')}}
-                        </v-tab>
-                        <v-tab @click="learnNavDialog = true"
-                            class="main-nav-tab"
-                        >{{$t('mainNav.learn')}}
-                        </v-tab>
-                        <v-tab @click="openMakingDialog()"
-                            class="main-nav-tab main-nav-tab-display"
-                        >{{$t('making.title')}}
-                        </v-tab>
-                        <v-icon @click="searchOpen = !searchOpen"
-                            class="main-nav-tab"
-                        >mdi-magnify
-                        </v-icon>
-                    </v-tabs>
-                </div>
-                <v-hover v-slot="{ hover }">
-                    <v-list-group class="nav-storage-list"
-                        :value="hover"
-                        style="background-color:white; position:fixed; top:7px; z-index:1; width:100px;"
-                        :style="isLogin ? 'right:85px;' : 'right:70px;'"
-                        :append-icon="null"
-                    >
-                        <template v-slot:activator>
-                            <v-list-item-title style="margin:5px 0px 0px 10px; font-weight: 700;">
-                                <div style="display: flex;">
-                                    <Icon icon="material-symbols:home-storage" width="28" height="28" style="margin-right:3px;" />
-                                    <div style="margin-top:5px;">{{$t('mainNav.Storage')}}</div>
-                                </div>
-                            </v-list-item-title>
-                        </template>
-                    
-                        <v-list-item
-                            v-for="(tabObj, tabIndex) in filterTabLists"
-                            v-if="tabObj.id !== 'home' && tabObj.show"
-                            :key="tabObj.id"
-                            link
-                            @click="tabId = tabObj.id"
-                        >
-                            <v-list-item-title style="margin-top:-4px;">{{ tabObj.display }}</v-list-item-title>
-                            <v-avatar v-if="tabIndex > 0 && tabObj.totalCount != null" color="green lighten-5" size="30"
-                                    style="font-size:10px;">
-                                {{ tabObj.totalCount == null ? '...' : (tabObj.totalCount == 0 ? '0' : tabObj.totalCount) }}
-                            </v-avatar>
-                        </v-list-item>
-                    </v-list-group>
-                </v-hover>
-
-                <v-dialog v-model="learnNavDialog"
-                    max-width="90%"
-                >
-                    <v-card style="padding:10px; height:85vh; overflow:auto;">
-                        <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('mainNav.learn')}}</div>
-                        <v-row
-                            style="margin:0px;"
-                        >
-                            <!-- 튜토리얼, 모델링 예제 -->
-                            <v-col v-for="(item,index) in navSubCards"
-                                :key="index"
-                                lg="4"
-                                md="4"
-                                sm="6"
-                                xs="12"
+    <div>
+        <v-container style="max-width: 1500px;">
+            <slot name="body">
+                <div>
+                    <div class="main-nav-tabs-box">
+                        <v-tabs class="main-nav-tabs" background-color="transparent" show-arrows color="none">
+                            <v-tab to="/"
+                                class="main-nav-tab main-nav-tab-home"
                             >
-                                <v-card style="height:100%;"
-                                    outlined
-                                    @click="wikiOpen('business')"
+                                <v-icon style="margin-top:10px;">mdi-home</v-icon>
+                            </v-tab>
+                            <v-tab @click="wikiOpen('introduction')"
+                                class="main-nav-tab"
+                            >{{$t('mainNav.introduction')}}
+                            </v-tab>
+                            <v-tab @click="wikiOpen('company')"
+                                class="main-nav-tab"
+                            >{{$t('mainNav.company')}}
+                            </v-tab>
+                            <v-tab @click="wikiOpen('pricing')"
+                                class="main-nav-tab"
+                            >{{$t('mainNav.pricing')}}
+                            </v-tab>
+                            <v-tab @click="wikiOpen('partnership')"
+                                class="main-nav-tab"
+                            >{{$t('mainNav.partnership')}}
+                            </v-tab>
+                            <v-tab @click="learnNavDialog = true"
+                                class="main-nav-tab"
+                            >{{$t('mainNav.learn')}}
+                            </v-tab>
+                            <v-tab @click="openMakingDialog()"
+                                class="main-nav-tab main-nav-tab-display"
+                            >{{$t('making.title')}}
+                            </v-tab>
+                            <v-icon @click="searchOpen = !searchOpen"
+                                class="main-nav-tab"
+                            >mdi-magnify
+                            </v-icon>
+                        </v-tabs>
+                    </div>
+                    <v-hover v-slot="{ hover }">
+                        <v-list-group class="nav-storage-list"
+                            :value="hover"
+                            style="background-color:white; position:fixed; top:7px; z-index:1; width:100px;"
+                            :style="isLogin ? 'right:85px;' : 'right:70px;'"
+                            :append-icon="null"
+                        >
+                            <template v-slot:activator>
+                                <v-list-item-title style="margin:5px 0px 0px 10px; font-weight: 700;">
+                                    <div style="display: flex;">
+                                        <Icon icon="material-symbols:home-storage" width="28" height="28" style="margin-right:3px;" />
+                                        <div class="cp-storage" style="margin-top:5px;">{{$t('mainNav.Storage')}}</div>
+                                    </div>
+                                </v-list-item-title>
+                            </template>
+                        
+                            <v-list-item
+                                v-for="(tabObj, tabIndex) in filterTabLists"
+                                v-if="tabObj.id !== 'home' && tabObj.show"
+                                :key="tabObj.id"
+                                link
+                                @click="tabId = tabObj.id"
+                            >
+                                <v-list-item-title style="margin-top:-4px;">{{ tabObj.display }}</v-list-item-title>
+                                <v-avatar v-if="tabIndex > 0 && tabObj.totalCount != null" color="green lighten-5" size="30"
+                                        style="font-size:10px;">
+                                    {{ tabObj.totalCount == null ? '...' : (tabObj.totalCount == 0 ? '0' : tabObj.totalCount) }}
+                                </v-avatar>
+                            </v-list-item>
+                        </v-list-group>
+                    </v-hover>
+
+                    <v-dialog v-model="learnNavDialog"
+                        max-width="90%"
+                    >
+                        <v-card style="padding:10px; height:85vh; overflow:auto;">
+                            <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('mainNav.learn')}}</div>
+                            <v-row
+                                style="margin:0px;"
+                            >
+                                <!-- 튜토리얼, 모델링 예제 -->
+                                <v-col v-for="(item,index) in navSubCards"
+                                    :key="index"
+                                    lg="4"
+                                    md="4"
+                                    sm="6"
+                                    xs="12"
                                 >
-                                    <v-card-title class="justify-center">{{ $t(item.title) }}</v-card-title>
-                                    <v-img 
-                                        :src="item.image"
-                                        style="cursor: pointer; height:200px;"
+                                    <v-card style="height:100%;"
+                                        outlined
+                                        @click="wikiOpen('business')"
                                     >
-                                    </v-img>
-                                    <v-card-subtitle style="margin-bottom:20px;">{{ $t(item.subtitle) }}</v-card-subtitle>
-                                </v-card>
-                                <!-- 튜토리얼 다이얼로그-->
-                                <!-- <v-dialog v-model="item.dialog"
-                                    v-if="item.dialogType === 'tutorial'"
-                                >
-                                    <v-card style="padding:10px; height:85vh; overflow:auto;">
-                                        <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('mainNavSubCard.tutorial')}}</div>
-                                        <v-row class="title-page-card-box-row">
-                                            <v-col
-                                                v-for="(card, index) in navLearnTutorialCards"
-                                                :key="index"
-                                                lg="2"
-                                                md="3"
-                                                sm="4"
-                                                xs="12"
-                                            >
-                                                <v-card @click="moveToPages(card.page)"
-                                                    class="mx-auto"
-                                                    outlined
-                                                    style="padding:15px; height:100%;"
+                                        <v-card-title class="justify-center">{{ $t(item.title) }}</v-card-title>
+                                        <v-img 
+                                            :src="item.image"
+                                            style="cursor: pointer; height:200px;"
+                                        >
+                                        </v-img>
+                                        <v-card-subtitle style="margin-bottom:20px;">{{ $t(item.subtitle) }}</v-card-subtitle>
+                                    </v-card>
+                                    <!-- 튜토리얼 다이얼로그-->
+                                    <!-- <v-dialog v-model="item.dialog"
+                                        v-if="item.dialogType === 'tutorial'"
+                                    >
+                                        <v-card style="padding:10px; height:85vh; overflow:auto;">
+                                            <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('mainNavSubCard.tutorial')}}</div>
+                                            <v-row class="title-page-card-box-row">
+                                                <v-col
+                                                    v-for="(card, index) in navLearnTutorialCards"
+                                                    :key="index"
+                                                    lg="2"
+                                                    md="3"
+                                                    sm="4"
+                                                    xs="12"
                                                 >
-                                                    <v-chip
-                                                        :color="card.color"
-                                                        style="width: auto; height: 20px; font-size: 12px; margin-bottom:5px; font-weight:bold; z-index: 200;"
-                                                        small
+                                                    <v-card @click="moveToPages(card.page)"
+                                                        class="mx-auto"
                                                         outlined
-                                                    >{{$t(card.chip)}}
-                                                    </v-chip>
+                                                        style="padding:15px; height:100%;"
+                                                    >
+                                                        <v-chip
+                                                            :color="card.color"
+                                                            style="width: auto; height: 20px; font-size: 12px; margin-bottom:5px; font-weight:bold; z-index: 200;"
+                                                            small
+                                                            outlined
+                                                        >{{$t(card.chip)}}
+                                                        </v-chip>
+                                                        <div style="font-weight: 500; font-size:18px; color:black;">
+                                                            {{$t(card.title)}}
+                                                        </div>
+                                                        <v-row>
+                                                            <v-col cols="12">
+                                                                <v-img :src="card.imageUrl"></v-img>
+                                                            </v-col>
+                                                        </v-row>
+                                                        <div style="font-size:14px; margin-top:10px; color:#757575;">{{$t(card.subtitle)}}</div>
+                                                    </v-card>
+                                                </v-col>
+                                            </v-row>
+                                        </v-card>
+                                    </v-dialog> -->
+                                    <!-- 모델링 예제 다이얼로그 -->
+                                    <!-- <v-dialog v-model="item.dialog"
+                                        v-if="item.dialogType === 'examples'"
+                                    >
+                                        <v-card style="padding:10px; height:85vh; overflow:auto;">
+                                            <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('mainNavSubCard.examples')}}</div>
+                                            <v-row class="title-page-card-box-row">
+                                                <v-col
+                                                    v-for="(card, index) in navLearnExamplesCards"
+                                                    :key="index"
+                                                    lg="2"
+                                                    md="3"
+                                                    sm="4"
+                                                    xs="12"
+                                                >
+                                                    <v-card @click="moveToPages(card.page)"
+                                                        class="mx-auto"
+                                                        outlined
+                                                        style="padding:15px; height:100%;"
+                                                    >
                                                     <div style="font-weight: 500; font-size:18px; color:black;">
                                                         {{$t(card.title)}}
                                                     </div>
                                                     <v-row>
                                                         <v-col cols="12">
-                                                            <v-img :src="card.imageUrl"></v-img>
+                                                            <v-img
+                                                                :src="card.imageUrl"
+                                                                style="height:110px; margin:10px 0px; cursor:pointer;"
+                                                            ></v-img>
                                                         </v-col>
                                                     </v-row>
-                                                    <div style="font-size:14px; margin-top:10px; color:#757575;">{{$t(card.subtitle)}}</div>
-                                                </v-card>
-                                            </v-col>
-                                        </v-row>
-                                    </v-card>
-                                </v-dialog> -->
-                                <!-- 모델링 예제 다이얼로그 -->
-                                <!-- <v-dialog v-model="item.dialog"
-                                    v-if="item.dialogType === 'examples'"
+                                                    </v-card>
+                                                </v-col>
+                                            </v-row>
+                                        </v-card>
+                                    </v-dialog> -->
+                                </v-col>
+                                <!-- 아카데미 -->
+                                <v-col
+                                    lg="4"
+                                    md="4"
+                                    sm="6"
+                                    xs="12"
                                 >
-                                    <v-card style="padding:10px; height:85vh; overflow:auto;">
-                                        <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('mainNavSubCard.examples')}}</div>
-                                        <v-row class="title-page-card-box-row">
-                                            <v-col
-                                                v-for="(card, index) in navLearnExamplesCards"
+                                    <v-card style="height:100%;"
+                                        outlined
+                                        @click="navigateTo('/courses')"
+                                    >
+                                        <v-card-title class="justify-center">{{ $t('mainNavSubCard.Academy') }}</v-card-title>
+                                        <v-img 
+                                            src="/static/image/main/mainSubLectures.png"
+                                            style="cursor: pointer; height:200px;"
+                                        >
+                                        </v-img>
+                                        <v-card-subtitle style="margin-bottom:20px;">{{  }}</v-card-subtitle>
+                                    </v-card>
+                                </v-col>
+                                <!-- 교육신청 -->
+                                <v-col
+                                    lg="4"
+                                    md="4"
+                                    sm="6"
+                                    xs="12"
+                                >
+                                    <v-card style="height:100%;"
+                                        outlined
+                                        @click="navigateTo('https://www.msaschool.io/operation/education/curriculum/')"
+                                    >
+                                        <v-card-title class="justify-center">{{ $t('mainNavSubCard.training') }}</v-card-title>
+                                        <v-img 
+                                            src="/static/image/main/mainSubTraining.png"
+                                            style="cursor: pointer; height:200px;"
+                                        >
+                                        </v-img>
+                                        <v-card-subtitle style="margin-bottom:20px;">{{  }}</v-card-subtitle>
+                                    </v-card>
+                                </v-col>
+                            </v-row>
+                        </v-card>
+                    </v-dialog>
+
+                    <v-alert
+                            v-if="searchOpen"
+                            elevation="2"
+                            style="position:fixed; top:50px; z-index:2; height:70px; width:40%; left: 50%; transform: translate(-50%, 0%);"
+                    >
+                        <div>
+                            <v-row style="align-items: baseline;">
+                                <v-menu offset-y>
+                                    <template v-slot:activator="{ on, attrs }">
+                                        <v-chip
+                                                :color="selectedMode.color"
+                                                dark
+                                                style="margin-right: 10px;"
+                                                v-bind="attrs"
+                                                v-on="on"
+                                        >
+                                            {{selectedMode.type}}
+                                        </v-chip>
+                                    </template>
+                                    <v-list>
+                                        <v-list-item
+                                                v-for="(item, index) in listMode"
                                                 :key="index"
-                                                lg="2"
-                                                md="3"
-                                                sm="4"
-                                                xs="12"
-                                            >
-                                                <v-card @click="moveToPages(card.page)"
-                                                    class="mx-auto"
-                                                    outlined
-                                                    style="padding:15px; height:100%;"
-                                                >
-                                                <div style="font-weight: 500; font-size:18px; color:black;">
-                                                    {{$t(card.title)}}
-                                                </div>
-                                                <v-row>
-                                                    <v-col cols="12">
-                                                        <v-img
-                                                            :src="card.imageUrl"
-                                                            style="height:110px; margin:10px 0px; cursor:pointer;"
-                                                        ></v-img>
-                                                    </v-col>
-                                                </v-row>
-                                                </v-card>
-                                            </v-col>
-                                        </v-row>
-                                    </v-card>
-                                </v-dialog> -->
-                            </v-col>
-                            <!-- 아카데미 -->
-                            <v-col
-                                lg="4"
-                                md="4"
-                                sm="6"
-                                xs="12"
-                            >
-                                <v-card style="height:100%;"
-                                    outlined
-                                    @click="navigateTo('/courses')"
-                                >
-                                    <v-card-title class="justify-center">{{ $t('mainNavSubCard.Academy') }}</v-card-title>
-                                    <v-img 
-                                        src="/static/image/main/mainSubLectures.png"
-                                        style="cursor: pointer; height:200px;"
-                                    >
-                                    </v-img>
-                                    <v-card-subtitle style="margin-bottom:20px;">{{  }}</v-card-subtitle>
-                                </v-card>
-                            </v-col>
-                            <!-- 교육신청 -->
-                            <v-col
-                                lg="4"
-                                md="4"
-                                sm="6"
-                                xs="12"
-                            >
-                                <v-card style="height:100%;"
-                                    outlined
-                                    @click="navigateTo('https://www.msaschool.io/operation/education/curriculum/')"
-                                >
-                                    <v-card-title class="justify-center">{{ $t('mainNavSubCard.training') }}</v-card-title>
-                                    <v-img 
-                                        src="/static/image/main/mainSubTraining.png"
-                                        style="cursor: pointer; height:200px;"
-                                    >
-                                    </v-img>
-                                    <v-card-subtitle style="margin-bottom:20px;">{{  }}</v-card-subtitle>
-                                </v-card>
-                            </v-col>
-                        </v-row>
-                    </v-card>
-                </v-dialog>
-
-                <v-alert
-                        v-if="searchOpen"
-                        elevation="2"
-                        style="position:fixed; top:50px; z-index:2; height:70px; width:40%; left: 50%; transform: translate(-50%, 0%);"
-                >
-                    <div>
-                        <v-row style="align-items: baseline;">
-                            <v-menu offset-y>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <v-chip
-                                            :color="selectedMode.color"
-                                            dark
-                                            style="margin-right: 10px;"
-                                            v-bind="attrs"
-                                            v-on="on"
-                                    >
-                                        {{selectedMode.type}}
-                                    </v-chip>
-                                </template>
-                                <v-list>
-                                    <v-list-item
-                                            v-for="(item, index) in listMode"
-                                            :key="index"
-                                            @click="selectMode(item)"
-                                    >
-                                        <v-list-item-title>{{ item.display }}</v-list-item-title>
-                                    </v-list-item>
-                                </v-list>
-                            </v-menu>
-                            <v-text-field
-                                    v-model="searchObj.name"
-                                    outlined
-                                    class="gs-main-search"
-                                    :label="searchObj.name ? filterListsCount : 'Search for name'"
-                                    autofocus
-                                    hide-details
-                                    dense
-                            ></v-text-field>
-                            <v-icon @click="searchClose(true)" style="width:26px; height:26px; margin-top: 13px;">mdi-close</v-icon>
-                        </v-row>
-                        <v-row>
-                            <v-btn @click="searchClose()" block text style="height: 25px"> <v-icon>mdi-chevron-up</v-icon> </v-btn>
-                        </v-row>
-                    </div>
-                </v-alert>
-
-                <v-tabs-items v-model="selectedTabIndex">
-                    <v-tab-item v-if="selectedTabIndex == -1" :value="selectedTabIndex">
-                        <!-- SEARCH -->
-                        <v-row style="margin-top:0px;">
-                            <v-col v-if="showLoading || (filteredList == undefined && typeof filteredList == 'undefined')"
-                                   style="height: 100%;">
-                                <v-row>
-                                    <v-col
-                                            v-for="idx in 9"
-                                            cols="6"
-                                            md="4"
-                                    >
-                                        <v-card
-                                                outlined
-                                                class="mx-auto"
-                                                style="width: 500px; height: 400px; justify-content: center"
-                                                align="center"
+                                                @click="selectMode(item)"
                                         >
-                                            <v-skeleton-loader
-                                                    ref="skeleton"
-                                                    type="card"
-                                                    class="mx-auto"
-                                            >
-                                            </v-skeleton-loader>
-                                        </v-card>
-                                    </v-col>
-                                </v-row>
-                            </v-col>
-                            <v-col v-else-if="filteredList == null && typeof filteredList == 'object' "
-                                   style="height: 590px;">
-                                No Items
-                            </v-col>
-                            <v-col
-                                    v-else
-                                    v-for="(project,index) in filteredList"
-                                    :key="project.projectId"
-                                    xl="4"
-                                    lg="4"
-                                    md="6"
-                                    sm="12"
-                            >
-                                <EventStormingListCard
-                                        :information="project"
-                                        @delete="deleteProjectItem"
-                                        @openAutoModelingDialog=openAutoModelingDialog
-                                >
-                                    <template slot="chips">
-                                        <slot name="chips"></slot>
-                                    </template>
-                                    <template slot="action" slot-scope="project">
-                                        <slot name="action" :project="project"></slot>
-                                    </template>
-                                </EventStormingListCard>
-                            </v-col>
-                        </v-row>
-                    </v-tab-item>
-
-                    <v-tab-item v-else-if="selectedTabIndex == 0" :value="selectedTabIndex">
-                        <!-- HOME -->
-                        <div class="gs-main-page-top-box">
-                            <transition name="fade" mode="out-in">
-                                <div v-for="item in mainTexts" :key="item.id" v-if="currentTextId === item.id">
-                                    <v-row justify="start" align="center">
-                                        <v-col cols="2"></v-col>
-                                        <v-col cols="6" class="gs-main-page-text-box">
-                                            <div style="display: flex; justify-content: flex-start;">
-                                                <div style="text-align: left;">
-                                                    <div class="gs-main-page-top-title" style="white-space: pre-wrap;">{{$t(item.title)}}</div>
-                                                    <div class="gs-main-page-sub-title">
-                                                        <div v-for="content in item.content" :key="content">{{$t(content)}}<br></div>
-                                                    </div>
-                                                    <a :href="item.goToUrl" target="_blank" style="text-decoration: none; color: inherit;">
-                                                        <v-btn color="primary"
-                                                            text
-                                                            style="margin-top:5px;
-                                                            font-size:18px;
-                                                            font-weight:700;
-                                                            padding: 0px;"
-                                                        >{{$t('main.goToUrlText')}}</v-btn>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </v-col>
-                                        <v-col cols="4" class="gs-main-page-img-box">
-                                            <v-img :src="item.imageUrl"/>
-                                        </v-col>
-                                        <v-col cols="2"></v-col>
-                                    </v-row>
-                                </div>
-                            </transition>
+                                            <v-list-item-title>{{ item.display }}</v-list-item-title>
+                                        </v-list-item>
+                                    </v-list>
+                                </v-menu>
+                                <v-text-field
+                                        v-model="searchObj.name"
+                                        outlined
+                                        class="gs-main-search"
+                                        :label="searchObj.name ? filterListsCount : 'Search for name'"
+                                        autofocus
+                                        hide-details
+                                        dense
+                                ></v-text-field>
+                                <v-icon @click="searchClose(true)" style="width:26px; height:26px; margin-top: 13px;">mdi-close</v-icon>
+                            </v-row>
+                            <v-row>
+                                <v-btn @click="searchClose()" block text style="height: 25px"> <v-icon>mdi-chevron-up</v-icon> </v-btn>
+                            </v-row>
                         </div>
-                        <div class="gs-main-page-top-box-mobile">
-                            <transition name="fade" mode="out-in">
-                                <div v-for="item in mainTexts" :key="item.id" v-if="currentTextId === item.id">
+                    </v-alert>
+
+                    <v-tabs-items v-model="selectedTabIndex">
+                        <v-tab-item v-if="selectedTabIndex == -1" :value="selectedTabIndex">
+                            <!-- SEARCH -->
+                            <v-row style="margin-top:0px;">
+                                <v-col v-if="showLoading || (filteredList == undefined && typeof filteredList == 'undefined')"
+                                    style="height: 100%;">
                                     <v-row>
-                                        <v-col cols="3.5"></v-col>
-                                        <v-col cols="5" class="gs-main-page-img-box-mobile">
-                                            <v-img :src="item.imageUrl"/>
+                                        <v-col
+                                                v-for="idx in 9"
+                                                cols="6"
+                                                md="4"
+                                        >
+                                            <v-card
+                                                    outlined
+                                                    class="mx-auto"
+                                                    style="width: 500px; height: 400px; justify-content: center"
+                                                    align="center"
+                                            >
+                                                <v-skeleton-loader
+                                                        ref="skeleton"
+                                                        type="card"
+                                                        class="mx-auto"
+                                                >
+                                                </v-skeleton-loader>
+                                            </v-card>
                                         </v-col>
-                                        <v-col cols="3.5"></v-col>
                                     </v-row>
-                                    <div style="text-align: center;">
-                                        <div class="gs-main-page-top-title-mobile" style="white-space: pre-wrap;">{{$t(item.title)}}</div>
-                                        <div class="gs-main-page-sub-title-mobile">
-                                            <div v-for="content in item.content" :key="content">{{$t(content)}}<br></div>
-                                        </div>
-                                        <a :href="item.goToUrl" target="_blank" style="text-decoration: none; color: inherit;">
-                                            <v-btn color="primary" style="margin-top:10px;">{{$t('main.goToUrlText')}}</v-btn>
-                                        </a>
+                                </v-col>
+                                <v-col v-else-if="filteredList == null && typeof filteredList == 'object' "
+                                    style="height: 590px;">
+                                    No Items
+                                </v-col>
+                                <v-col
+                                        v-else
+                                        v-for="(project,index) in filteredList"
+                                        :key="project.projectId"
+                                        xl="4"
+                                        lg="4"
+                                        md="6"
+                                        sm="12"
+                                >
+                                    <EventStormingListCard
+                                            :information="project"
+                                            @delete="deleteProjectItem"
+                                            @openAutoModelingDialog=openAutoModelingDialog
+                                    >
+                                        <template slot="chips">
+                                            <slot name="chips"></slot>
+                                        </template>
+                                        <template slot="action" slot-scope="project">
+                                            <slot name="action" :project="project"></slot>
+                                        </template>
+                                    </EventStormingListCard>
+                                </v-col>
+                            </v-row>
+                        </v-tab-item>
+
+                        <v-tab-item v-else-if="selectedTabIndex == 0" :value="selectedTabIndex">
+                            <!-- HOME -->
+                            <div class="gs-main-page-top-box">
+                                <transition name="fade" mode="out-in">
+                                    <div v-for="item in mainTexts" :key="item.id" v-if="currentTextId === item.id">
+                                        <v-row justify="start" align="center">
+                                            <v-col cols="2"></v-col>
+                                            <v-col cols="6" class="gs-main-page-text-box">
+                                                <div style="display: flex; justify-content: flex-start;">
+                                                    <div style="text-align: left;">
+                                                        <div class="gs-main-page-top-title" style="white-space: pre-wrap;">{{$t(item.title)}}</div>
+                                                        <div class="gs-main-page-sub-title">
+                                                            <div v-for="content in item.content" :key="content">{{$t(content)}}<br></div>
+                                                        </div>
+                                                        <a :href="item.goToUrl" target="_blank" style="text-decoration: none; color: inherit;">
+                                                            <v-btn color="primary"
+                                                                text
+                                                                style="margin-top:5px;
+                                                                font-size:18px;
+                                                                font-weight:700;
+                                                                padding: 0px;"
+                                                            >{{$t('main.goToUrlText')}}</v-btn>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </v-col>
+                                            <v-col cols="4" class="gs-main-page-img-box">
+                                                <v-img :src="item.imageUrl"/>
+                                            </v-col>
+                                            <v-col cols="2"></v-col>
+                                        </v-row>
                                     </div>
-                                </div>
-                            </transition>
+                                </transition>
+                            </div>
+                            <div class="gs-main-page-top-box-mobile">
+                                <transition name="fade" mode="out-in">
+                                    <div v-for="item in mainTexts" :key="item.id" v-if="currentTextId === item.id">
+                                        <v-row>
+                                            <v-col cols="3.5"></v-col>
+                                            <v-col cols="5" class="gs-main-page-img-box-mobile">
+                                                <v-img :src="item.imageUrl"/>
+                                            </v-col>
+                                            <v-col cols="3.5"></v-col>
+                                        </v-row>
+                                        <div style="text-align: center;">
+                                            <div class="gs-main-page-top-title-mobile" style="white-space: pre-wrap;">{{$t(item.title)}}</div>
+                                            <div class="gs-main-page-sub-title-mobile">
+                                                <div v-for="content in item.content" :key="content">{{$t(content)}}<br></div>
+                                            </div>
+                                            <a :href="item.goToUrl" target="_blank" style="text-decoration: none; color: inherit;">
+                                                <v-btn color="primary" style="margin-top:10px;">{{$t('main.goToUrlText')}}</v-btn>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </transition>
+                            </div>
+                            <AutoModelingDialog
+                                mode="es"
+                                :showDialog="false"
+                                :showChat="true"
+                            ></AutoModelingDialog>
+                        <div style="margin-top:30px;">
+                            <carousel :perPageCustom="[[0, 1], [576, 2], [768, 3], [992, 4], [1200, 5]]">
+                                <slide v-for="(logo, index) in logos" :key="index">
+                                    <img :src="logo.url" :alt="logo.alt">
+                                </slide>
+                            </carousel>
                         </div>
-                        <AutoModelingDialog
-                            mode="es"
-                            :showDialog="false"
-                            :showChat="true"
-                        ></AutoModelingDialog>
-                    <div style="margin-top:30px;">
-                        <carousel :perPageCustom="[[0, 1], [576, 2], [768, 3], [992, 4], [1200, 5]]">
-                            <slide v-for="(logo, index) in logos" :key="index">
-                                <img :src="logo.url" :alt="logo.alt">
-                            </slide>
-                        </carousel>
-                    </div>
-                    </v-tab-item>
-                    <v-tab-item v-else-if="0 < selectedTabIndex && selectedTabIndex < 4" :value="selectedTabIndex" :key="selectedTabIndex">
-                        <!-- MINE, SHARE,PUBLIC -->
-                        <v-row style="margin-top:0px;">
-                            <v-col v-if="showLoading || (filteredList == undefined && typeof filteredList == 'undefined')"
-                                   style="height: 100%;">
-                                <v-row>
-                                    <v-col
-                                            v-for="idx in 9"
-                                            cols="6"
-                                            md="4"
-                                    >
-                                        <v-card
-                                                outlined
-                                                class="mx-auto"
-                                                style="width: 500px; height: 400px; justify-content: center"
-                                                align="center"
+                        </v-tab-item>
+                        <v-tab-item v-else-if="0 < selectedTabIndex && selectedTabIndex < 4" :value="selectedTabIndex" :key="selectedTabIndex">
+                            <!-- MINE, SHARE,PUBLIC -->
+                            <v-row style="margin-top:0px;">
+                                <v-col v-if="showLoading || (filteredList == undefined && typeof filteredList == 'undefined')"
+                                    style="height: 100%;">
+                                    <v-row>
+                                        <v-col
+                                                v-for="idx in 9"
+                                                cols="6"
+                                                md="4"
                                         >
-                                            <v-skeleton-loader
-                                                    ref="skeleton"
-                                                    type="card"
+                                            <v-card
+                                                    outlined
                                                     class="mx-auto"
+                                                    style="width: 500px; height: 400px; justify-content: center"
+                                                    align="center"
                                             >
-                                            </v-skeleton-loader>
-                                        </v-card>
-                                    </v-col>
-                                </v-row>
-                            </v-col>
-                            <v-col v-else-if="filteredList == null && typeof filteredList == 'object' "
-                                   style="height: 590px;">
-                                No Items
-                            </v-col>
-                            <v-col
-                                    v-else
-                                    v-for="(project,index) in filteredList"
-                                    :key="project.projectId"
-                                    xl="4"
-                                    lg="4"
-                                    md="6"
-                                    sm="12"
-                            >
-                                <EventStormingListCard
-                                        :information="project"
-                                        @delete="deleteProjectItem"
-                                        @openAutoModelingDialog=openAutoModelingDialog
+                                                <v-skeleton-loader
+                                                        ref="skeleton"
+                                                        type="card"
+                                                        class="mx-auto"
+                                                >
+                                                </v-skeleton-loader>
+                                            </v-card>
+                                        </v-col>
+                                    </v-row>
+                                </v-col>
+                                <v-col v-else-if="filteredList == null && typeof filteredList == 'object' "
+                                    style="height: 590px;">
+                                    No Items
+                                </v-col>
+                                <v-col
+                                        v-else
+                                        v-for="(project,index) in filteredList"
+                                        :key="project.projectId"
+                                        xl="4"
+                                        lg="4"
+                                        md="6"
+                                        sm="12"
                                 >
-                                    <template slot="chips">
-                                        <slot name="chips"></slot>
-                                    </template>
-                                    <template slot="action" slot-scope="project">
-                                        <slot name="action" :project="project"></slot>
-                                    </template>
-                                </EventStormingListCard>
-                            </v-col>
-                        </v-row>
-                    </v-tab-item>
-                    <v-tab-item v-else-if="selectedTabIndex == 4" :value="selectedTabIndex">
-                        <!-- LOCAL -->
-                        <v-row style="margin-top:0px;">
-                            <v-col v-if="(showLoading && filteredList && filteredList.length < 10) || filteredList == undefined && typeof filteredList == 'undefined'"
-                                   style="height: 100%;">
-                                <v-row>
-                                    <v-col
-                                            v-for="idx in 9"
-                                            cols="6"
-                                            md="4"
+                                    <EventStormingListCard
+                                            :information="project"
+                                            @delete="deleteProjectItem"
+                                            @openAutoModelingDialog=openAutoModelingDialog
                                     >
-                                        <v-card
-                                                outlined
-                                                class="mx-auto"
-                                                style="width: 500px; height: 400px; justify-content: center"
-                                                align="center"
+                                        <template slot="chips">
+                                            <slot name="chips"></slot>
+                                        </template>
+                                        <template slot="action" slot-scope="project">
+                                            <slot name="action" :project="project"></slot>
+                                        </template>
+                                    </EventStormingListCard>
+                                </v-col>
+                            </v-row>
+                        </v-tab-item>
+                        <v-tab-item v-else-if="selectedTabIndex == 4" :value="selectedTabIndex">
+                            <!-- LOCAL -->
+                            <v-row style="margin-top:0px;">
+                                <v-col v-if="(showLoading && filteredList && filteredList.length < 10) || filteredList == undefined && typeof filteredList == 'undefined'"
+                                    style="height: 100%;">
+                                    <v-row>
+                                        <v-col
+                                                v-for="idx in 9"
+                                                cols="6"
+                                                md="4"
                                         >
-                                            <v-skeleton-loader
-                                                    ref="skeleton"
-                                                    type="card"
+                                            <v-card
+                                                    outlined
                                                     class="mx-auto"
+                                                    style="width: 500px; height: 400px; justify-content: center"
+                                                    align="center"
                                             >
-                                            </v-skeleton-loader>
-                                        </v-card>
-                                    </v-col>
-                                </v-row>
-                            </v-col>
-                            <v-col v-else-if="filteredList == null && typeof filteredList == 'object' "
-                                   style="height: 590px;">
-                                No Items
-                            </v-col>
-                            <v-col
-                                    v-else
-                                    v-for="(project,index) in filteredList"
-                                    :key="project.projectId"
-                                    xl="4"
-                                    lg="4"
-                                    md="6"
-                                    sm="12"
-                            >
-                                <EventStormingListCard
-                                        :information="project"
-                                        @delete="deleteProjectItem"
-                                        @openAutoModelingDialog=openAutoModelingDialog
+                                                <v-skeleton-loader
+                                                        ref="skeleton"
+                                                        type="card"
+                                                        class="mx-auto"
+                                                >
+                                                </v-skeleton-loader>
+                                            </v-card>
+                                        </v-col>
+                                    </v-row>
+                                </v-col>
+                                <v-col v-else-if="filteredList == null && typeof filteredList == 'object' "
+                                    style="height: 590px;">
+                                    No Items
+                                </v-col>
+                                <v-col
+                                        v-else
+                                        v-for="(project,index) in filteredList"
+                                        :key="project.projectId"
+                                        xl="4"
+                                        lg="4"
+                                        md="6"
+                                        sm="12"
                                 >
-                                    <template slot="chips">
-                                        <slot name="chips"></slot>
-                                    </template>
-                                    <template slot="action" slot-scope="project">
-                                        <slot name="action" :project="project"></slot>
-                                    </template>
-                                </EventStormingListCard>
-                            </v-col>
-                        </v-row>
-                    </v-tab-item>
-                </v-tabs-items>
-                <div style="text-align-last: center;" v-if="selectedTabIndex != 0 ">
-                    <div v-if="showLoadingForMorePage" class="ticontainer" style="margin-left: 50%; margin-top: 30px;">
-                        <div class="tiblock">
-                            <div class="tidot"></div>
-                            <div class="tidot"></div>
-                            <div class="tidot"></div>
+                                    <EventStormingListCard
+                                            :information="project"
+                                            @delete="deleteProjectItem"
+                                            @openAutoModelingDialog=openAutoModelingDialog
+                                    >
+                                        <template slot="chips">
+                                            <slot name="chips"></slot>
+                                        </template>
+                                        <template slot="action" slot-scope="project">
+                                            <slot name="action" :project="project"></slot>
+                                        </template>
+                                    </EventStormingListCard>
+                                </v-col>
+                            </v-row>
+                        </v-tab-item>
+                    </v-tabs-items>
+                    <div style="text-align-last: center;" v-if="selectedTabIndex != 0 ">
+                        <div v-if="showLoadingForMorePage" class="ticontainer" style="margin-left: 50%; margin-top: 30px;">
+                            <div class="tiblock">
+                                <div class="tidot"></div>
+                                <div class="tidot"></div>
+                                <div class="tidot"></div>
+                            </div>
                         </div>
-                    </div>
-                    <div v-if="!showLoading && !showMoreButton" block text style="padding:10px 0 10px 0;">마지막 페이지</div>
-                    <v-row v-else-if="showLoading && showMoreButton">
-                        <v-col
-                                v-for="idx in 9"
-                                cols="6"
-                                md="4"
-                        >
-                            <v-card
-                                    outlined
-                                    class="mx-auto"
-                                    style="width: 500px; height: 400px; justify-content: center;"
-                                    align="center"
+                        <div v-if="!showLoading && !showMoreButton" block text style="padding:10px 0 10px 0;">마지막 페이지</div>
+                        <v-row v-else-if="showLoading && showMoreButton">
+                            <v-col
+                                    v-for="idx in 9"
+                                    cols="6"
+                                    md="4"
                             >
-                                <v-skeleton-loader
-                                        ref="skeleton"
-                                        type="card"
+                                <v-card
+                                        outlined
                                         class="mx-auto"
+                                        style="width: 500px; height: 400px; justify-content: center;"
+                                        align="center"
                                 >
-                                </v-skeleton-loader>
-                            </v-card>
-                        </v-col>
-                    </v-row>
+                                    <v-skeleton-loader
+                                            ref="skeleton"
+                                            type="card"
+                                            class="mx-auto"
+                                    >
+                                    </v-skeleton-loader>
+                                </v-card>
+                            </v-col>
+                        </v-row>
+                    </div>
                 </div>
-            </div>
-        </slot>
-
-        <!-- <slot name="footer">
-            <div>
-                <v-footer padless>
-                    <ProvisionIndication divider></ProvisionIndication>
-                </v-footer>
-            </div>
-        </slot> -->
-
+            </slot>
+        </v-container>
 
         <v-dialog v-model="deleteDialog" v-if="deleteItem" persistent max-width="470">
             <v-card>
@@ -564,7 +557,33 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
-    </v-container>
+
+        <!-- 메인페이지 슬라이드 -->
+        <div v-if="selectedTabIndex == 0" class="d-flex flex-row mt-sm-8 mt-5 overflow-hidden main-page-slider-group-box">
+            <div class="main-page-slider-group">
+                <img src="/static/image/main/mainSlide.png" />
+            </div>
+            <div class="main-page-slider-group">
+                <img src="/static/image/main/mainSlide.png" />
+            </div>
+            <div class="main-page-slider-group">
+                <img src="/static/image/main/mainSlide.png" />
+            </div>
+            <div class="main-page-slider-group">
+                <img src="/static/image/main/mainSlide.png" />
+            </div>
+            <div class="main-page-slider-group">
+                <img src="/static/image/main/mainSlide.png" />
+            </div>
+        </div>
+        
+        <v-footer
+            padless
+            style="background-color: transparent;"
+        >
+            <ProvisionIndication style="margin:0; padding:0px; width:100%;"></ProvisionIndication>
+        </v-footer>
+    </div>
 </template>
 
 <script>
@@ -573,6 +592,7 @@
     import 'instantsearch.css/themes/satellite-min.css';
     import AutoModelingDialog from '../designer/modeling/AutoModelingDialog.vue';
     import { Carousel, Slide } from 'vue-carousel';
+    import ProvisionIndication from '../../components/payment/ProvisionIndication.vue'
     // import VueCookies from "vue-cookies";
     var _ = require('lodash');
 
@@ -586,6 +606,7 @@
             AutoModelingDialog,
             Carousel,
             Slide,
+            ProvisionIndication
         },
         data() {
             return {

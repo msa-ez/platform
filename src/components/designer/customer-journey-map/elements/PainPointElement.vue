@@ -18,7 +18,6 @@
                 v-on:dblclick="openPanel"
                 v-on:selectShape="selectedActivity"
                 v-on:deSelectShape="deSelectedActivity"
-                :image.sync="refreshedImg"
                 :label.sync="value.name"
                 :_style="{
                     'label-angle':value.elementView.angle,
@@ -33,13 +32,16 @@
                         'fill-r': 1,
                         'fill-cx': .1,
                         'fill-cy': .1,
-                        'stroke-width': 0,
-                        'stroke': '#F1A746',
-                        'fill': '#F1A746',
+                        'stroke-width': 10,
+                        'stroke': '#93bffe',
+                        'fill': '#93bffe',
                         'fill-opacity': 1,
                         'r': '1',
                     }"
             ></geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-elements>
                 <text-element
@@ -55,7 +57,7 @@
         <cjm-model-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :showError="showError"
                 :widthStyle="panelStyle"
                 @close="closePanel"
@@ -66,11 +68,14 @@
 
 <script>
     import Element from './CJMModelElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'pain-point-element',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             defaultStyle() {
                 return {}

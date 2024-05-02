@@ -2,7 +2,7 @@
     <common-panel
             v-model="value"
             :image="image"
-            :is-read-only="!canvas.isEditable"
+            :is-read-only="isReadOnly"
             :width-style="widthStyle"
             :related-url="relatedUrl"
             :validation-lists="validationLists"
@@ -21,7 +21,7 @@
 
         <template slot="t-edit-user">
             <div
-                    v-if="newEditUserImg.length > 0 && !canvas.isEditable"
+                    v-if="newEditUserImg.length > 0 && isReadOnly"
                     style="text-align:center"
             >
                 <v-chip
@@ -64,7 +64,7 @@
                                     v-model="selectVersion"
                                     :items="versionNameLists"
                                     :auto-select-first="true"
-                                    :disabled="!canvas.isEditable"
+                                    :disabled="isReadOnly"
                                     :loading="loading"
                             ></v-autocomplete>
                         </div>
@@ -104,7 +104,6 @@
             setElementCanvas(){
                 var me = this
                 me.canvas = getParent(me.$parent, "context-mapping-model-canvas");
-                me.modelCanvasComponent = me.canvas
             },
         }
     }

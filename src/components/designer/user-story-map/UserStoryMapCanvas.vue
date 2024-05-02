@@ -50,10 +50,10 @@
                     :enableHotkeyCtrlD="false"
                     :enableHotkeyCtrlG="false" 
                     :slider="true"
-                    :movable="!getReadOnly"
-                    :resizable="!getReadOnly"
+                    :movable="!isReadOnlyModel"
+                    :resizable="!isReadOnlyModel"
                     :selectable="true"
-                    :connectable="!getReadOnly"
+                    :connectable="!isReadOnlyModel"
                     v-if="value"
                     :autoSliderUpdate="true"
                     :imageBase="imageBase"
@@ -85,7 +85,7 @@
 
 
             <v-layout row>
-                <v-flex v-if="!getReadOnly">
+                <v-flex v-if="!isReadOnlyModel">
                     <v-row class="gs-modeling-undo-redo" style="margin-top:24px;">
                         <v-tooltip bottom>
                             <template v-slot:activator="{ on }">
@@ -140,7 +140,7 @@
 
                                         <v-btn
                                                 text
-                                                v-if="getReadOnly"
+                                                v-if="isReadOnlyModel"
                                                 :color="joinRequestedText.show ? 'primary' :'success'"
                                                 @click="requestInviteUser()"
                                                 small
@@ -153,7 +153,7 @@
 
                                         <v-btn
                                                 text
-                                                v-if="getReadOnly"
+                                                v-if="isReadOnlyModel"
                                                 color="primary"
                                                 @click="saveComposition('fork')"
                                                 small
@@ -188,7 +188,7 @@
 
                             <slot name="shareButton">
                                 <v-menu
-                                        v-if="isOwnModel && isServerModel && !getReadOnly "
+                                        v-if="isOwnModel && isServerModel && !isReadOnlyModel"
                                         class="pa-2"
                                         offset-y
                                         open-on-hover
@@ -278,7 +278,7 @@
                                     >
                                         <v-text-field
                                                 v-model="projectName"
-                                                :disabled="getReadOnly || (fullPath && fullPath.includes('replay'))"
+                                                :disabled="isReadOnlyModel || (fullPath && fullPath.includes('replay'))"
                                                 :color="projectNameColor"
                                                 :error-messages="projectNameHint"
                                                 label="Project Name" 
@@ -322,7 +322,7 @@
                                                 left
                                         >
                                             <template v-slot:activator="{ on }">
-                                                <div v-if="getReadOnly">
+                                                <div v-if="isReadOnlyModel">
                                                     <v-btn
                                                             text
                                                             color="primary"
@@ -335,7 +335,6 @@
                                                     </v-btn>
                                                     <v-btn
                                                             :color="joinRequestedText.show ? 'primary' :'success'"
-                                                            :disabled="disableBtn"
                                                             @click="requestInviteUser()"
                                                             style="margin-right: 5px; margin-top: 15px;"
                                                             text
@@ -386,7 +385,7 @@
 
                                     <slot name="shareButton">
                                         <v-menu
-                                                v-if="isOwnModel && isServerModel&& !getReadOnly "
+                                                v-if="isOwnModel && isServerModel && !isReadOnlyModel"
                                                 offset-y
                                                 open-on-hover
                                                 left
@@ -468,7 +467,7 @@
                                 :_width="item.width"
                                 :_height="item.height"
                         >
-                            <img v-if="!getReadOnly"
+                            <img v-if="!isReadOnlyModel"
                                     height="30px" 
                                     width="30px" 
                                     :src="item.src" 
@@ -589,7 +588,11 @@
                 </v-layout>
             </hsc-window>
         </hsc-window-style-metal>
-        <GeneratorUI v-if="projectId" ref="generatorUI" @createModel="createModel" :defaultInputData="defaultGeneratorUiInputData" @clearModelValue="clearModelValue"></GeneratorUI>
+        <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" :modelValue="value" @createModel="createModel" :defaultInputData="defaultGeneratorUiInputData" @clearModelValue="clearModelValue" @modificateModel="modificateModel"></GeneratorUI>
+        <!-- Mouse Cursor -->
+        <div v-for="(otherMouseEvent, email) in filteredMouseEventHandlers" :key="email">
+            <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
+        </div>
     </div>
 </template>
 
@@ -601,6 +604,7 @@
     import ModelStorageDialog from "../modeling/ModelStorageDialog";
     import ModelCanvasShareDialog from "../modeling/ModelCanvasShareDialog";
     import GeneratorUI from "../modeling/generators/GeneratorUI";
+    import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
 
     import * as io from 'socket.io-client';
     import { mdiAbTesting } from '@mdi/js';
@@ -624,7 +628,8 @@
             GeneratorUI,
             'model-canvas-share-dialog': ModelCanvasShareDialog,
             'model-storage-dialog': ModelStorageDialog,
-            'dialog-purchase-item' : DialogPurchaseItem
+            'dialog-purchase-item' : DialogPurchaseItem,
+            MouseCursorComponent
         },
         data() {
             return {
@@ -715,9 +720,6 @@
             }
         },
         computed: {
-            getReadOnly() {
-                return this.readOnly
-            },
             disableBtn() {
                 if (this.isDisable || !this.initLoad) {
                     return true
@@ -727,22 +729,12 @@
         },
         created: function () {
             var me = this
-            try {
-                Vue.use(UserStoryMap);
-                me.canvasType = 'userStoryMap'
-                if (this.$isElectron) {
-                    me.isQueueModel = false
-                } else {
-                    me.isQueueModel = true
-                }
-                me.track()
-            } catch (e) {
-                alert('Error: userStoryMapCanvas Created().', e)
+            if (me.$isElectron) {
+                me.isQueueModel = false
+            } else {
+                me.isQueueModel = true
             }
         },
-        mounted: function () {
-        }
-        ,
         watch: {
             value: {
                 deep: true,
@@ -772,6 +764,10 @@
             }, 0),
         },
         methods: {
+            setCanvasType(){
+                Vue.use(UserStoryMap);
+                this.canvasType = 'userStoryMap'
+            },
             clearModelValue(){
                 var me = this
                 me.value.elements = {}
@@ -828,6 +824,13 @@
 //                    me.value.__ob__.dep.notify();
                 }
             },
+            modificateModel(model){
+                var me = this;
+                if(model && model.updateElement){
+                    me.value.elements[model.selectedElement.elementView.id] = Object.assign(me.value.elements[model.selectedElement.elementView.id], model.updateElement)
+                    me.changedByMe = true
+                }
+            },
             bindEvents: function (opengraph) {
                 var me = this;
                 var el = me.$el;
@@ -837,6 +840,7 @@
                 }
 
                 this.canvas = opengraph.canvas;
+                this.setupEventListeners(opengraph, canvasEl);
                 //아이콘 드래그 드랍 이벤트 등록
                 $(el).find('.draggable').draggable({
                     start: function () {
@@ -882,7 +886,6 @@
                 });
             },
             addElement: function (componentInfo, bounded) {
-                this.enableHistoryAdd = true;
                 var me = this;
                 var vueComponent = me.getComponentByName(componentInfo.component);
                 var element;
@@ -948,7 +951,8 @@
                     );
                 }
 
-                me.addElementPush(me.value, element)
+                // me.addElementPush(me.value, element)
+                me.addElementAction(element)
             },
             async purchaseItemDialogSubmit(result) {
                 var me = this

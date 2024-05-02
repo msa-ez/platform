@@ -18,7 +18,6 @@
                 v-on:dblclick="openPanel"
                 v-on:selectShape="selectedActivity"
                 v-on:deSelectShape="deSelectedActivity"
-                :image.sync="refreshedImg"
                 :label.sync="value.name"
                 :_style="{
                     'label-angle':value.elementView.angle,
@@ -40,12 +39,16 @@
                         'r': '1',
                     }"
             ></geometry-rect>
-        </geometry-element>
 
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
+        </geometry-element>
+       
         <sticky-model-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!(!canvas.isReadOnlyModel && isEditElement)"
+                :isReadOnly="!isEditElement"
                 :showError="showError"
                 :widthStyle="panelStyle"
                 @close="closePanel"
@@ -56,11 +59,14 @@
 
 <script>
     import Element from './StickyModelElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'stickyNoteBoard',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             defaultStyle() {
                 return {}
@@ -99,8 +105,6 @@
             return {
                 fontColor: this.value.color == '#F8D454' ? '#000000' : '#FAFAFA'
             };
-        },
-        created: function () {
         },
         watch: {
             "getDescription": {
@@ -148,8 +152,6 @@
                 }
             },
         },
-        methods: {}
-
     }
 </script>
 

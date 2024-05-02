@@ -18,7 +18,6 @@
                 v-on:dblclick="openPanel"
                 v-on:selectShape="selectedActivity"
                 v-on:deSelectShape="deSelectedActivity"
-                :image.sync="refreshedImg"
                 :label.sync="value.name"
                 :_style="{
                     'label-angle':value.elementView.angle,
@@ -40,6 +39,9 @@
                         'r': '1',
                     }"
             ></geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-elements>
                 <!--title-->
@@ -65,7 +67,7 @@
         <user-story-map-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!(!canvas.isReadOnlyModel && isEditElement)"
+                :isReadOnly="!isEditElement"
                 :showError="showError"
                 :widthStyle="panelStyle"
                 @close="closePanel"
@@ -76,11 +78,14 @@
 
 <script>
     import Element from './UserStoryMapElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'persona',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             actorShortSide() {
                 if (this.value.elementView.width < this.value.elementView.height) {
@@ -170,8 +175,6 @@
                 fontColor: this.value.color == '#F8D454' ? '#000000' : '#FAFAFA'
             };
         },
-        created: function () {
-        },
         watch: {
             "getDescription": {
                 deep: true,
@@ -217,9 +220,7 @@
                     me.$store.dispatch('resize', obj)
                 }
             },
-        },
-        methods: {}
-
+        }
     }
 </script>
 

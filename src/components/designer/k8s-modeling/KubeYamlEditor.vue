@@ -12,7 +12,7 @@
                     label="Auto format"
             ></v-checkbox>
         </div>
-        <v-card :disabled="readOnly">
+        <v-card :disabled="isReadOnly">
             <MonacoEditor 
                     v-if="!isJson && autoFormat"
                     v-model="yamlText"
@@ -52,7 +52,7 @@
         props: {
             value: Object,
             commandView: Boolean,
-            readOnly: {
+            isReadOnly: {
                 type: Boolean,
                 default: function () {
                     return false

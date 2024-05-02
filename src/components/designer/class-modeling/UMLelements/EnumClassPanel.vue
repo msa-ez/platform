@@ -24,14 +24,14 @@
                                 label="Name"
                                 required
                                 autofocus
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                         ></v-text-field>
 
                         <span class="headline">Items</span>
                         <v-checkbox
                                 v-model="value.useKeyValue" 
                                 label="Use Key & Value"
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                         ></v-checkbox>
                         <v-layout flat>
                             <v-col>
@@ -50,7 +50,7 @@
                                                     <v-text-field class="mr-2 mt-0 pt-0"
                                                             v-else-if="itemEdit && value.items.indexOf(item) == itemEditIndex "
                                                             v-model="item.key" 
-                                                            :disabled="readOnly"
+                                                            :disabled="isReadOnly"
                                                     ></v-text-field>
                                                 </v-col>
                                                 <v-col :cols="value.useKeyValue ? '5' : '10'">
@@ -60,7 +60,7 @@
                                                     <v-text-field class="mr-2 mt-0 pt-0"
                                                             v-else-if="itemEdit && value.items.indexOf(item) == itemEditIndex "
                                                             v-model="item.value" 
-                                                            :disabled="readOnly"
+                                                            :disabled="isReadOnly"
                                                     ></v-text-field>
                                                 </v-col>
                                                 
@@ -69,7 +69,7 @@
                                                             x-small icon
                                                             class="mr-2"
                                                             @click="modifyItem(item)"
-                                                            :disabled="readOnly"
+                                                            :disabled="isReadOnly"
                                                     >
                                                         <v-icon>save</v-icon>
                                                     </v-btn>
@@ -77,13 +77,13 @@
                                                             x-small icon
                                                             class="mr-2"
                                                             @click="editItem(item)"
-                                                            :disabled="readOnly"
+                                                            :disabled="isReadOnly"
                                                     >
                                                         <v-icon>edit</v-icon>
                                                     </v-btn>
                                                     <v-btn  x-small icon
                                                             @click="deleteItem(item)"
-                                                            :disabled="readOnly"
+                                                            :disabled="isReadOnly"
                                                     >
                                                         <v-icon>delete</v-icon>
                                                     </v-btn>
@@ -98,14 +98,14 @@
                                             v-if="value.useKeyValue"
                                             v-model="itemKey" 
                                             label="Key"
-                                            :disabled="readOnly"
+                                            :disabled="isReadOnly"
                                     ></v-text-field>
                                     <v-text-field 
                                             v-model="itemValue" 
                                             label="Value"
                                             v-on:keyup.enter="addItem"
                                             required
-                                            :disabled="readOnly"
+                                            :disabled="isReadOnly"
                                     ></v-text-field>
                                 </v-row>
 
@@ -113,7 +113,7 @@
                                     <v-btn  depressed text
                                             style="color:#1E88E5;"
                                             @click="addItem"
-                                            :disabled="readOnly"
+                                            :disabled="isReadOnly"
                                     >Add Item</v-btn>
                                 </v-row>
                             </v-col>
@@ -157,7 +157,7 @@
                 return {
                     animation: 200,
                     group: "description",
-                    disabled: this.readOnly,
+                    disabled: this.isReadOnly,
                     ghostClass: "ghost"
                 };
             },

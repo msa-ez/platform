@@ -35,8 +35,9 @@ class StorageBase {
             let currentUserInfo = await this._currentUser();
             if(!currentUserInfo) return null;
             
-            const uid        = currentUserInfo.uid // xxxdkdjf
+            const uid        = currentUserInfo.uid //db uid.
             const providerId = currentUserInfo.providerData[0].providerId // github.com , google.com
+            const providerUid = currentUserInfo.providerData[0].uid // provider uid.
             const email      = currentUserInfo.providerData[0].email // xxx@xxx.xx
             const name       = currentUserInfo.providerData[0].displayName // hongil
             const profile    = currentUserInfo.photoURL // https://ddd.png
@@ -45,6 +46,7 @@ class StorageBase {
             
             return {
                 uid: uid,
+                providerUid: providerUid,
                 name: name ? name : email,
                 email: email,
                 profile: profile,

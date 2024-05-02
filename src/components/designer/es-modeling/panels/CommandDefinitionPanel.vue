@@ -184,7 +184,7 @@
                 return this.restfulList.slice(1)
             },
             getControllerList(){
-                return this.restfulList.slice(1,3).reverse()
+                return this.restfulList.filter(method => method !== 'PATCH');
             },
             elementPrefix(){
                 var me = this
@@ -214,9 +214,7 @@
         beforeDestroy() {
 
         },
-        created: function () {
-            this.panelInit()
-        },
+        created: function () { },
         watch: {
             "value.controllerInfo":{
                 deep: true,
@@ -367,8 +365,13 @@
                         // Controller -> Extend Verb
                         if(me.value.controllerInfo.method == 'POST'){
                             me.commandExample = `http POST localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))} ${fieldDescriptorsName}`
-                        }else{
+                        }else if(me.value.controllerInfo.method == 'PUT'){
                             me.commandExample = `http PUT localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))}/1/${me.value.controllerInfo.apiPath} ${descriptorName}="{value}"`
+                        }else if(me.value.controllerInfo.method == 'DELETE'){
+                            me.commandExample = `http DELETE localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))}/1/${me.value.controllerInfo.apiPath} ${descriptorName}="{value}"`
+                        }else if(me.value.controllerInfo.method == 'GET'){
+                            me.commandExample = `http GET localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))}/1/${me.value.controllerInfo.apiPath} ${descriptorName}="{value}"`
+
                         }
                         me.setApiPath()
                     }

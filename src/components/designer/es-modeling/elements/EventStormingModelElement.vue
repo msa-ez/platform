@@ -38,7 +38,6 @@
                 staySetTimeout: null,
 
                 rotateStatus: false,
-                isMovedElement: false,
                 attachedBoundedContext: null,
                 attachedBoundedContextId: null,
                 attachedAggregate: null,
@@ -132,7 +131,7 @@
                 return this.canvas.isEditable && !this.movingElement && this.isEditElement
             },
             elementCoordinate(){
-                if(this.isHexagonalModeling){
+                if(this.canvas.isHexagonal){
                     this.value.hexagonalView.angle = 0
                     return this.value.hexagonalView
                 }
@@ -196,7 +195,7 @@
                             if (me.newEditUserImg && me.newEditUserImg.length > 0) {
 
                                 //project author
-                                if( me.canvas.information.author == me.getEditUid){
+                                if( me.canvas.information.author == me.canvas.userInfo.uid){
                                     return true
                                 }
                                 // another user check author editing
@@ -210,20 +209,7 @@
                                     return true
                                 }
 
-
-                                var editable = true
-                                me.newEditUserImg.some(function(user, index){
-                                    if(user.uid == me.getEditUid){
-                                        return true
-                                    }
-                                    // edit condition
-                                    if( user.action == 'userPanelOpen' ){
-                                        editable = false
-                                        return true
-                                    }
-                                })
-
-                                return editable
+                                return !me.newEditUserImg.some(user => user.uid == me.canvas.userInfo.uid || user.action == 'userPanelOpen');
                             }
                         }
                     }
@@ -282,24 +268,6 @@
                     this.refreshImg()
                 }, 200)
             },
-            "STATUS_COMPLETE":function(newVal) {
-                if (newVal  && this.canvas.isServerModel) {
-                    // onMoving Event (Only Server)
-                    this.validate()
-                    this.onMoveAction();
-                }
-            },
-            "value.elementView": {
-                deep: true,
-                handler: function (newVal, oldVal) {
-                    var me = this
-                    if (!me.canvas.isServerModel) {
-                        // onMoving Event ( Only Local)
-                        me.validate()
-                        me.onMoveAction();
-                    }
-                }
-            },
             "value.name": function (newVal, oldVal) {
                 this.namePanel = newVal;
                 this.onChangedElementName(newVal, oldVal);
@@ -323,48 +291,12 @@
                         this.refreshImg()
                 }, 200)
             },
-            'staySelected': function (newVal, oldVal) {
-                if (newVal) {
-                    this.selectedStayActivity()
-                } else {
-                    this.deSelectedStayActivity()
-                }
-
-            },
-            'selected': _.debounce(function (newVal, oldVal) {
-                if (newVal) {
-                    if (this.propertyPanel) {
-                        this.staySelected = false
-                    } else {
-                        this.staySelected = true
-                    }
-                } else {
-                    this.staySelected = false
-                }
-
-            }, 2000),
             "filteredElementValidationResults": _.debounce(function () {
                 this.refreshImg()
             }, 200),
         },
         mounted() {
             var me = this
-            // Recovery!!!
-            me.$EventBus.$on('isMovedElement', function (id) {
-                if (me.value.elementView) {
-                    //only Element
-                    if (me.value.elementView.id == id) {
-                        me.isMovedElement = true
-                        me.movedNewActivity()
-                    } else {
-                        if (me.isMovedElement == true) {
-                            me.isMovedElement = false
-                            me.movedOldActivity()
-                        }
-                    }
-                }
-            });
-
             me.$ModelingBus.$on("clearOld", function () {
                 if(me.initLoad)
                     me.value.oldName = undefined
@@ -412,11 +344,7 @@
                     } else {
                         me.canvas = me.getComponent('event-storming-model-canvas')
                     }
-                } finally {
-                    // 추후 제거. canvas 일치.
-                    me.modelCanvasComponent = me.canvas
-                }
-
+                } 
             },
             setMirrorElementId(){
                 var me = this
@@ -492,7 +420,7 @@
             setInitElement(){
                 var me = this
                 if ( me.value ) {
-                    let component = me.canvas.elementTypes.find(x => x.component == me.getComponentByClassName(me.value._type).name)
+                    let component = me.canvas.elementTypes.find(x => x.component == me.canvas.getComponentByClassName(me.value._type).name)
                     me.image = component ? component.src : me.image
 
                     // init panel value.
@@ -520,35 +448,25 @@
                 });
                 return isFound;
             },
-            onRemoveShape(value) {
-                var me = this
-                try {
-                    me.canvas.removeElementAction(me.value)
-
-                    me.validate();
-
-                    // selected Element Remove
-                    if (me.value.elementView && value && value.id === me.value.elementView.id) {
-                        Object.values(me.canvas.value.elements).forEach((element) => {
-                            if(!me.canvas.validateElementFormat(element)) return;
-                            if (element && element.elementView.id !== me.value.elementView.id) {
-                                let component = me.canvas.$refs[element.elementView.id];
-                                if (component) {
-                                    component = component[0];
-                                    if (component.selected) {
-                                        component.onRemoveShape();
-                                    }
-                                }
-                            }
-                        });
+            onRotateElement(){
+                if (this.value.elementView) {
+                    var positionX = this.value.elementView.x / 1000
+                    var positionY = this.value.elementView.y / 1000
+                    $(`#${this.value.elementView.id}`).css('transform-origin', `${positionX}% ${positionY}%`);
+                    if (this.value.rotateStatus) {
+                        $(`#${this.value.elementView.id}`).css('transform', `rotate(-30deg)`);
+                        this.value.rotateStatus = true
+                    } else if (this.value.rotateStatus == false) {
+                        $(`#${this.value.elementView.id}`).css('transform-origin', `${positionX}% ${positionY}%`);
+                        $(`#${this.value.elementView.id}`).css('transform', `rotate(0deg)`);
+                        this.value.rotateStatus = false
                     }
-                } catch (e) {
-                    alert(`[Error] ModelElement-onRemoveShape: ${e}`)
                 }
             },
             delayedMove(dx, dy, dw, dh, du, dlw, dl, dr) {
                 var me = this
                 try{
+                    let options = null
                     var offsetX, offsetY, offsetW, offsetH
 
                     var originX = 0;
@@ -557,6 +475,8 @@
                     var originH = 0;
 
                     if ( me.canvas.isHexagonal ){
+                        if(!options) options = {}
+                        options.isHexagonal = true
                         originX = me.value.hexagonalView.x
                         originY = me.value.hexagonalView.y
                         originW = me.value.hexagonalView.width
@@ -625,15 +545,24 @@
                     var afterViewObj = {x: offsetX, y: offsetY, width: offsetW, height: offsetH}
                     var beforeViewObj = {x: originX, y: originY, width: originW, height: originH}
 
-                    me.canvas.moveElementAction(me.value, beforeViewObj, afterViewObj)
+                    me.canvas.moveElementAction(me.value, beforeViewObj, afterViewObj, null, options)
                 }catch (e) {
                     alert(`[Error] ModelElement-delayedMove: ${e}`)
                 }
             },
+            // override
             delayedRelationMove(vertices) {
                 var me = this
                 try{
-                    var getVertices = me.canvas.isHexagonal ? me.value.hexagonalView.value : me.value.relationView.value
+                    let options = null
+                    let getVertices = []
+                    if (me.canvas.isHexagonal) {
+                        if(!options) options = {}
+                        options.isHexagonal = true
+                        getVertices = me.value.hexagonalView.value
+                    } else {
+                        getVertices = me.value.relationView.value
+                    }
 
                     var originVertices = JSON.parse(JSON.stringify(getVertices))
                     var newVertices = []
@@ -644,7 +573,7 @@
                     })
                     offsetVertices = JSON.stringify(newVertices)
 
-                    me.canvas.moveElementAction(me.value, originVertices, offsetVertices)
+                    me.canvas.moveElementAction(me.value, originVertices, offsetVertices, null, options)
                 }catch (e) {
                     alert(`[Error] ModelElement - delayedRelationMove: ${e}`)
                 }
@@ -684,139 +613,33 @@
                         tmp.elementView.x = tmp.elementView.x + Math.floor(Math.random() * 101);
                         tmp.elementView.y = tmp.elementView.y + Math.floor(Math.random() * 101);
 
-                        // me.canvas.addElements(me.canvas.value, tmp);
                         me.canvas.appendElement(tmp);
                     }
                 }
             },
-            onMoveShape: function () {
-                // console.log('onMoveShape in ES')
-                // this.$EventBus.$emit('isMovedElement', this.value.elementView.id);
-            },
-            selectedActivity: function () {
+            // override
+            onActivitySelected(){
                 var me = this
-                if (this.value) {
-                    this.selected = true
-
+                if (me.value) {
                     // selected Template
                     var elementType = me.value._type ? me.value._type : null
                     var elementIds = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
                     me.$EventBus.$emit('selectedElementObj', {selected: true, id: elementIds, type: elementType})
                 }
-
             },
-            deSelectedActivity: function () {
+            // override
+            onActivityDeselected(){
                 var me = this
-                if (this.value) {
-                    this.propertyPanel = false
-                    this.selected = false
-                    this.staySelected = false
-
+                if (me.value) {  
                     // deselected Template
                     let elementIds = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
                     me.$EventBus.$emit('selectedElementObj', {selected: false, id: elementIds})
                 }
-
-            },
-            movedNewActivity() {
-                var me = this
-                try {
-                    if (me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.canvas.isHexagonal && !me.canvas.isReadOnlyModel ) {
-                        var obj = {
-                            action: 'userMovedOn',
-                            editUid: me.userInfo.uid,
-                            name: me.userInfo.name,
-                            picture: me.userInfo.profile,
-                            timeStamp: Date.now(),
-                            editElement: me.value.elementView.id
-                        }
-                        // me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, obj)
-                    }
-                } catch (e) {
-                    alert(`[Error] ESModelElement-movedNewActivity: ${e}`)
-                }
-            },
-            movedOldActivity() {
-                var me = this
-
-                try {
-                    if (me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.canvas.isHexagonal && !me.canvas.isReadOnlyModel) {
-                        var obj = {
-                            action: 'userMovedOff',
-                            editUid: me.userInfo.uid,
-                            name: me.userInfo.name,
-                            picture: me.userInfo.profile,
-                            timeStamp: Date.now(),
-                            editElement: me.value.elementView.id
-                        }
-                        // me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, obj)
-                    }
-                } catch (e) {
-                    alert(`[Error] ESModelElement-movedOldActivity: ${e}`)
-                }
-            },
-            selectedStayActivity() {
-                var me = this
-
-                try {
-                    if (me.isLogin
-                        && me.canvas.isCustomMoveExist
-                        && !me.canvas.isClazzModeling
-                        && !me.canvas.isHexagonal
-                        && !me.canvas.isReadOnlyModel ) {
-
-                        if( me.value.relationView ) return;
-                        var obj = {
-                            action: 'userSelectedOn',
-                            editUid: me.userInfo.uid,
-                            name: me.userInfo.name,
-                            picture: me.userInfo.profile,
-                            timeStamp: Date.now(),
-                            editElement: me.value.elementView.id
-                        }
-                        me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, obj)
-                    }
-                } catch (e) {
-                    alert(`[Error] ESModelElement-selectedStayActivity: ${e}`)
-                }
-
-
-                // me.$EventBus.$emit('selectedElementObj', { selected: true, id : elementIds, type: elementType })
-            },
-            deSelectedStayActivity() {
-                var me = this
-                try {
-                    if (me.isLogin
-                        && me.canvas.isCustomMoveExist
-                        && !me.canvas.isClazzModeling
-                        && !me.canvas.isHexagonal
-                        && !me.canvas.isReadOnlyModel) {
-
-                        // var elementIds = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
-                        // elementIds = elementIds ? JSON.parse(JSON.stringify(elementIds)) : JSON.parse(JSON.stringify(me.elementId))
-
-                        if( me.value.relationView ) return;
-                        var obj = {
-                            action: 'userSelectedOff',
-                            editUid: me.userInfo.uid,
-                            name: me.userInfo.name,
-                            picture: me.userInfo.profile,
-                            timeStamp: Date.now(),
-                            editElement: me.value.elementView.id
-                        }
-                        me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, obj)
-                    }
-                } catch (e) {
-                    alert(`[Error] ESModelElement-deSelectedStayActivity: ${e}`)
-                }
-
-                // me.$EventBus.$emit('selectedElementObj',{ selected: false, id : elementIds })
             },
             onRotateShape: function (element, angle) {
                 // console.log('ES: onRotateShape: ', element,angle)
                 // this.value.elementView.angle = angle
             },
-            removeAction(){},
             onMoveAction(){
                 var me = this
                 if( me.value.mirrorElement ) return;
@@ -870,146 +693,6 @@
                 var me = this;
 
                 return isAttached(otherElement, me.value)
-            },
-            delayedMoveAction(beforeViewObj, afterViewObj) {
-                /*
-                    !!!  REMOVE !!!!
-                    changedMethod: moveElementAction
-                */
-                var me = this
-
-                if (me.isCustomMoveExist) {
-                    me.movingElement = false;
-                    me.STATUS_COMPLETE = false;
-
-                    // FIRST UI Then Queue push
-                    me.onMoveElement(afterViewObj, false)
-
-                    me.delayedMoveQueue(beforeViewObj, afterViewObj)
-                    me.$EventBus.$emit('isMovedElement', me.value.elementView.id );
-
-                }
-            },
-            delayedRelationMoveAction(originVertices, offsetVertices) {
-                /*
-                !!!  REMOVE !!!!
-                changedMethod: canvas.moveElementAction
-                */
-                var me = this
-
-                if (me.isCustomMoveExist) {
-                    me.movingElement = false
-                    me.STATUS_COMPLETE = false;
-
-                    // FIRST UI Then Queue push
-                    me.onMoveRelation(offsetVertices, false)
-
-                    // relation Queue
-                    me.delayedRelationMoveQueue(originVertices, offsetVertices)
-                }
-            },
-            onMoveElement(newObj,STATUS_COMPLETE){
-                /*
-                    !!!  REMOVE !!!!
-                    changedMethod: moveElement
-                */
-                var me = this
-
-                try{
-
-                    if(me.canvas.isHexagonal) {
-                        me.value.hexagonalView.x = newObj.x;
-                        me.value.hexagonalView.y = newObj.y;
-                        me.value.hexagonalView.width = newObj.width;
-                        me.value.hexagonalView.height = newObj.height
-                    } else {
-                        me.value.elementView.x = newObj.x;
-                        me.value.elementView.y = newObj.y;
-                        me.value.elementView.width = newObj.width;
-                        me.value.elementView.height = newObj.height;
-                    }
-
-                    me.movingElement = true;
-                }catch (e) {
-                    alert(`[Error] ModelElement-onMove Element: ${e}`)
-                }
-            },
-            onMoveRelation(newObj,STATUS_COMPLETE){
-                /*
-                  !!!  REMOVE !!!!
-                  changedMethod: moveElement
-                */
-                var me = this
-
-                try{
-                    if(me.canvas.isHexagonal){
-                        me.value.hexagonalView.value = newObj
-                    } else {
-                        me.value.relationView.value = newObj
-                    }
-                    me.movingElement = true;
-                }catch (e) {
-                    alert(`[Error] ModelElement-onMoveRelation: ${e}`)
-                }
-            },
-            delayedMoveQueue(beforeViewObj , afterViewObj){
-                /*
-                 !!!  REMOVE !!!!
-                 changedMethod: pushMovedQueue
-                */
-                var me = this
-                try{
-                    var types = me.value._type.split('.')
-                    var pushObj =
-                        {
-                            action: 'elementMove',
-                            elementType: types[types.length - 1],
-                            elementName: me.value.name,
-                            editUid: me.getEditUid,
-                            elementId: me.value.elementView.id,
-                            before: JSON.stringify(beforeViewObj),
-                            after: JSON.stringify(afterViewObj),
-                            timeStamp: Date.now(),
-                        }
-
-                    if( me.canvas.isHexagonal ){
-                        pushObj.isHexagonal = true
-                    }
-                    me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, pushObj)
-                }catch (e) {
-                    alert(`[Error] ModelElement-DelayedMoveQueue PUSH: ${e}`)
-                }
-            },
-            delayedRelationMoveQueue(originVertices , offsetVertices){
-                var me = this
-                try {
-                    var pushObj =
-                        {
-                            action: 'relationMove',
-                            editUid: me.getEditUid,
-                            relationId: me.value.relationView.id,
-                            before: originVertices,
-                            after: offsetVertices,
-                            timeStamp: Date.now(),
-                        }
-                    if(me.canvas.isHexagonal){
-                        pushObj.isHexagonal = true
-                    }
-                    me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, pushObj)
-                }catch (e) {
-                    alert(`[Error] ModelElement-DelayedRelationMoveQueue: ${e}`)
-                }
-            },
-            getComponentByClassName: function (className) {
-                var componentByClassName;
-
-                // $.each(window.Vue.eventStormingModelingComponents, function (i, component) {
-                $.each(window.Vue.eventStormingModelingComponents, function (i, component) {
-                    if (component.default.computed && component.default.computed.className && component.default.computed.className() == className) {
-                        componentByClassName = component.default;
-                    }
-                });
-                return componentByClassName;
             },
             getDuplicatedField(val) {
                 var seen = {};

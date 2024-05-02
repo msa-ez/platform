@@ -11,7 +11,7 @@
             <v-card-text
                 id="scroll-target"
             >
-                <v-btn v-if="!editMode" @click="explain()"
+                <v-btn class="cp-explain-code" v-if="!editMode" @click="explain()"
                     small style="position:absolute; top:70px; right:15px; z-index: 999;" text
                 >
                     Explain code<v-icon x-small>mdi-send</v-icon>
@@ -53,7 +53,7 @@
                                 >
                                 </vue-markdown>
                                 <div style="z-index:1001; position: absolute; right: 0px; top: -8px;">
-                                    <v-btn v-if="explainedResult !=''" @click="closeExplainCode()" style="z-index:999; color: black;" icon><v-icon>mdi-close</v-icon></v-btn>
+                                    <v-btn class="cp-explain-code-close" v-if="explainedResult !=''" @click="closeExplainCode()" style="z-index:999; color: black;" icon><v-icon>mdi-close</v-icon></v-btn>
                                 </div>
                                 <div style="position: absolute; z-index:1001; top:-23px; right: 25px; display: flex; justify-content: center; align-items: center;">
                                     <v-btn v-if="generationStopped"
@@ -70,7 +70,7 @@
                                     style="width:100%; background-color: #FFFFFF; color: white;"
                                     solo
                                     outlined
-                                    class="question-box"
+                                    class="question-box cp-explain-code-text"
                                     append-icon="mdi-send"
                                     @click:append="removeDuplicateChatPrompt"
                                     @keydown.enter="removeDuplicateChatPrompt"
@@ -104,7 +104,7 @@
                                 >
                                 </vue-markdown>
                                 <div style="position: fixed;  z-index:1001;  position: absolute; right: 10px; top: 80px">
-                                    <v-btn v-if="showGpt" @click="closeExplainCode()" style="z-index:999; color: black;" icon><v-icon>mdi-close</v-icon></v-btn>
+                                    <v-btn class="cp-explain-project-close" v-if="showGpt" @click="closeExplainCode()" style="z-index:999; color: black;" icon><v-icon>mdi-close</v-icon></v-btn>
                                 </div>
                                 <div v-if="explainedResult !=''" style="position: absolute; z-index:1001; top:65px; right: 35px; z-index:1001; display: flex; justify-content: center; align-items: center; ">
                                     <v-btn v-if="generationStopped"
@@ -117,6 +117,7 @@
                                     </v-btn>
                                 </div>
                                 <div style="display: flex; align-items: center;">
+                                    <!-- explainProject -->
                                     <v-text-field
                                         v-model="chatPrompt"
                                         ref="input"
@@ -124,7 +125,7 @@
                                         solo
                                         outlined
                                         autofocus
-                                        class="question-box"
+                                        class="question-box cp-explain-project-text"
                                         append-icon="mdi-send"
                                         @click:append="removeDuplicateChatPrompt"
                                         @keydown.enter="removeDuplicateChatPrompt"
@@ -552,7 +553,7 @@
                 let prompt
                 this.explainError = ''
                 this.generationStopped = false;
-                
+
                 let codeGenerator = getParent(me.$parent, "code-generator")
                 let collectedCodes = codeGenerator.getSelectedFilesDeeply()
                 
@@ -583,6 +584,7 @@
                     }
                 }
                 me.generator = new AIGenerator(this, {prompt: prompt});
+                
                 //me.generator.model = "gpt-4-32k" //payment issue
                 me.generator.generate();
             },

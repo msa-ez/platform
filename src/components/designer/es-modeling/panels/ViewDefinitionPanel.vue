@@ -276,9 +276,7 @@
             // },
 
         },
-        created: function () {
-            this.panelInit()
-        },
+        created: function () { },
         mounted(){
             var me = this;
             me.$EventBus.$on("onModelCreated", function (model) {

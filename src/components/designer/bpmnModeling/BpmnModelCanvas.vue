@@ -31,7 +31,6 @@
                     </bpmn-tree-list>
                 </v-list>
             </v-row> -->
-
             <opengraph
                     focus-canvas-on-select
                     wheelScalable
@@ -41,7 +40,8 @@
                     :enableHotkeyCtrlC="false"
                     :enableHotkeyCtrlV="false"
                     :enableHotkeyDelete="false"
-                    :slider="false"
+                    :sliderLocationScale="sliderLocationScale"
+                    :slider="true"
                     :movable="!monitor"
                     :resizable="!monitor"
                     :selectable="!monitor"
@@ -50,7 +50,7 @@
                     :imageBase="imageBase"
                     :height="100000"
                     v-if="value"
-                    ref="bpmnOpengraph"
+                    ref="opengraph"
                     v-on:canvasReady="bindEvents"
                     v-on:connectShape="onConnectShape"
                     v-on:divideLane="onDivideLane"
@@ -164,7 +164,7 @@
                     >
                         <template v-slot:activator="{ on }">
                             <v-btn
-                                v-if="readOnly"
+                                v-if="isReadOnlyModel"
                                 style="margin-right: 5px; margin-top: 15px;"
                                 color="primary"
                                 @click="saveComposition('fork')"
@@ -193,7 +193,7 @@
                             </v-list-item>
                         </v-list>
                     </v-menu>
-                    <div v-if="isOwnModel && isServerModel && !readOnly">
+                    <div v-if="isOwnModel && isServerModel && !isReadOnlyModel">
                         <v-btn text
                                 style="margin-right: 15px; margin-top: 15px;"
                                 color="primary"
@@ -207,7 +207,6 @@
                             >{{ requestCount }}</v-avatar>
                         </v-btn>
                     </div>
-
                     <div v-if="versions" style="margin-right: 10px;">
                         <v-select v-for="version in versions.slice().reverse()" 
                                 :key="version"
@@ -316,7 +315,7 @@
                                     left>
                                 <template v-slot:activator="{ on }">
                                     <v-btn class="bpmn-btn"
-                                        v-if="readOnly"
+                                        v-if="isReadOnlyModel"
                                         style="margin-right: 5px; margin-top: 15px;"
                                         color="primary"
                                         @click="saveComposition('fork')"
@@ -362,7 +361,22 @@
                                 >{{ requestCount }}</v-avatar>
                             </v-btn>
                         </div>
-
+                        <div v-if="isReadOnlyModel">
+                            <v-btn
+                                class="k8s-hide-code-btn"
+                                style="margin-right: 5px;margin-top: 15px;"
+                                v-on="on"
+                                :color="joinRequestedText.show ? 'primary': 'success'"
+                                @click="requestInviteUser()"
+                                text
+                            >
+                                <div v-if="joinRequestedText.show" >
+                                    <v-icon>{{icon.join}}</v-icon>
+                                </div>
+                                {{joinRequestedText.text }}
+                            </v-btn>
+                        </div>
+                        
                         <div v-if="versions" style="margin-right: 10px;">
                             <v-select v-for="version in versions.slice().reverse()" 
                                     :key="version"
@@ -542,8 +556,7 @@
                     <span>Redo</span>
                 </v-tooltip>
 
-            </v-card>
-
+            </v-card> 
         </v-layout>
 
         <bpmn-component-changer
@@ -648,8 +661,11 @@
                 @add="addInviteUser"
                 @remove="removeInviteUser"
         ></model-canvas-share-dialog>
-
         <modeler-image-generator ref="modeler-image-generator"></modeler-image-generator>
+        <!-- Mouse Cursor -->
+        <div v-for="(otherMouseEvent, email) in filteredMouseEventHandlers" :key="email">
+            <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
+        </div>
     </div>
 </template>
 <script>
@@ -658,6 +674,7 @@
     import BpmnObjectGrid from "./BpmnObjectGrid";
     import ModelStorageDialog from "../modeling/ModelStorageDialog";
     import ModelCanvasShareDialog from "../modeling/ModelCanvasShareDialog";
+    import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
     var jsondiffpatch = require('jsondiffpatch').create({
         objectHash: function (obj, index) {
             return '$$index:' + index;
@@ -671,6 +688,7 @@
             'bpmn-object-grid': BpmnObjectGrid,
             'model-storage-dialog': ModelStorageDialog,
             'model-canvas-share-dialog': ModelCanvasShareDialog,
+            MouseCursorComponent
         },
         props: {
             monitor: Boolean,
@@ -816,10 +834,7 @@
         created() {
             var me = this;
             try{
-                Vue.use(BpmnVue);
-                this.canvasType = 'bpmn'
                 me.isQueueModel = true
-                me.track()
                 me.value = {
                     _type: 'org.uengine.kernel.ProcessDefinition',
                     elements: {},
@@ -1050,6 +1065,10 @@
             },
         },
         methods: {
+            setCanvasType(){
+                Vue.use(BpmnVue);
+                this.canvasType = 'bpmn'
+            },
             changeMultiple: function () {
                 if (this.dragPageMovable == false && this.active == false) {
                     this.dragPageMovable = true;
@@ -1063,53 +1082,53 @@
                     this.handsStyle = null;
                 }
             },
-            bindEvents: function (opengraph) {
-                //this.$el
-                var me = this;
-                var el = me.$el;
-                var canvasEl = $(opengraph.container);
-                if (!canvasEl || !canvasEl.length) {
-                    return;
-                }
-                this.canvas = opengraph.canvas;
-                //아이콘 드래그 드랍 이벤트 등록
-                $(el).find('.draggable').draggable({
-                    start: function () {
-                        canvasEl.data('DRAG_SHAPE', {
-                            'component': $(this).attr('_component'),
-                            'width': $(this).attr('_width'),
-                            'height': $(this).attr('_height')
-                        });
-                    },
-                    helper: 'clone',
-                    appendTo: canvasEl
-                });
+            // bindEvents: function (opengraph) {
+            //     //this.$el
+            //     var me = this;
+            //     var el = me.$el;
+            //     var canvasEl = $(opengraph.container);
+            //     if (!canvasEl || !canvasEl.length) {
+            //         return;
+            //     }
+            //     this.canvas = opengraph.canvas;
+            //     //아이콘 드래그 드랍 이벤트 등록
+            //     $(el).find('.draggable').draggable({
+            //         start: function () {
+            //             canvasEl.data('DRAG_SHAPE', {
+            //                 'component': $(this).attr('_component'),
+            //                 'width': $(this).attr('_width'),
+            //                 'height': $(this).attr('_height')
+            //             });
+            //         },
+            //         helper: 'clone',
+            //         appendTo: canvasEl
+            //     });
 
-                canvasEl.droppable({
-                    drop: function (event, ui) {
-                        var componentInfo = canvasEl.data('DRAG_SHAPE'), shape, element;
-                        if (componentInfo) {
-                            var dropX = event.pageX - canvasEl.offset().left + canvasEl[0].scrollLeft;
-                            var dropY = event.pageY - canvasEl.offset().top + canvasEl[0].scrollTop;
+            //     canvasEl.droppable({
+            //         drop: function (event, ui) {
+            //             var componentInfo = canvasEl.data('DRAG_SHAPE'), shape, element;
+            //             if (componentInfo) {
+            //                 var dropX = event.pageX - canvasEl.offset().left + canvasEl[0].scrollLeft;
+            //                 var dropY = event.pageY - canvasEl.offset().top + canvasEl[0].scrollTop;
 
-                            dropX = dropX / opengraph.scale;
-                            dropY = dropY / opengraph.scale;
+            //                 dropX = dropX / opengraph.scale;
+            //                 dropY = dropY / opengraph.scale;
 
-                            componentInfo = {
-                                component: componentInfo.component,
-                                x: dropX,
-                                y: dropY,
-                                width: parseInt(componentInfo.width, 10),
-                                height: parseInt(componentInfo.height, 10),
-                                label: ''
-                            }
+            //                 componentInfo = {
+            //                     component: componentInfo.component,
+            //                     x: dropX,
+            //                     y: dropY,
+            //                     width: parseInt(componentInfo.width, 10),
+            //                     height: parseInt(componentInfo.height, 10),
+            //                     label: ''
+            //                 }
 
-                            me.addElement(componentInfo);
-                        }
-                        canvasEl.removeData('DRAG_SHAPE');
-                    }
-                });
-            },
+            //                 me.addElement(componentInfo);
+            //             }
+            //             canvasEl.removeData('DRAG_SHAPE');
+            //         }
+            //     });
+            // },
             copy: function () {
                 var me = this;
                 me.copyActivity = [];
@@ -1904,7 +1923,7 @@
                     if (activity.relations && Object.values(activity.relations).length) {
                         $.each(Object.values(activity.relations), function (i, relation) {
                             bpmnComponent = me.getComponentByName('bpmn-relation');
-                            required = bpmnComponent.default.computed.createNew();
+                            required = bpmnComponent.computed.createNew();
                             for (var key in required) {
                                 if (!relation[key]) {
                                     relation[key] = required[key];
@@ -1939,7 +1958,7 @@
                 var boundary = dividedLane.shape.geom.getBoundary();
                 var bpmnComponent = me.getComponentByName('bpmn-role');
 
-                var additionalData = bpmnComponent.default.computed.createNew(
+                var additionalData = bpmnComponent.computed.createNew(
                     boundary.getCentroid().x,
                     boundary.getCentroid().y,
                     boundary.getWidth(),
@@ -1951,46 +1970,29 @@
                 additionalData.elementView.parent = me.canvas.getParent(dividedLane).id;
 
                 // me.value.roles.push(additionalData);
-                me.addElementPush(me.value, additionalData)
+                // me.addElementPush(me.value, additionalData)
+                me.addElementAction(additionalData)
             },
             /**
              * 도형이 연결되었을 경우.
              **/
             onConnectShape: function (edge, from, to) {
                 var me = this;
-                //존재하는 릴레이션인 경우 (뷰 컴포넌트), 데이터 매핑에 의해 자동으로 from, to 가 변경되어있기 때문에 따로 로직은 필요없음.
-                //=> 바뀌어야 함.
-                //신규 릴레이션인 경우에는 릴레이션 생성
-                var edgeElement, originalData;
-                var isComponent = false;
-                if (edge.shape) {
-                    edgeElement = edge;
-                }
-                //  else {
-                //     isComponent = true;
-                //     edgeElement = edge.element;
-                //     originalData = this.getActAndRelByOpengraphId(edgeElement.id);
-                // }
 
+                let edgeElement = edge.shape ? edge : edge.element
                 if (edgeElement && from && to) {
                     var vertices = '[' + edgeElement.shape.geom.vertices.toString() + ']';
                     var componentInfo = {
+                        isRelation: true,
                         component: "bpmn-relation",
                         from: from.$parent.value,
                         to: to.$parent.value,
                         vertices: vertices
                     }
-
-                    // if (isComponent) {
-                    //     me.canvas.removeShape(edgeElement, true);
-                    //     this.removeComponentByOpenGraphComponentId(edgeElement.elementView.id);
-                    //     //기존 컴포넌트가 있는 경우 originalData 와 함께 생성
-                    //     this.addElement(componentInfo, null, JSON.parse(JSON.stringify(originalData)));
-                    // } else {
+                    // OG: 셀의 데이터를 및 콘텐트를 삭제한다. 기능 ?????
                     me.canvas.removeShape(edgeElement, true);
-                    //기존 컴포넌트가 없는 경우 신규 생성
-                    this.addElement(componentInfo);
-                    // }
+
+                    me.addElement(componentInfo);
                 }
             },
             /**
@@ -2021,8 +2023,8 @@
              * @param {Object} shapeInfo (shapeId,x,y,width,height,label)
              **/
             addElement: function (componentInfo, newTracingTag, originalData) {
-                this.enableHistoryAdd = true;
                 var me = this;
+                me.enableHistoryAdd = true;
                 var additionalData = {};
 
                 //릴레이션 추가인 경우
@@ -2041,7 +2043,7 @@
                     var relationComponentTag = (fromPool == toPool || toPool == null ? "bpmn-relation" : "bpmn-message-flow")
 
                     var bpmnComponent = me.getComponentByName(relationComponentTag);
-                    additionalData = bpmnComponent.default.computed.createNew(
+                    additionalData = bpmnComponent.computed.createNew(
                         componentInfo.from,
                         componentInfo.to,
                         componentInfo.vertices,
@@ -2080,7 +2082,7 @@
                 } else if (componentInfo.component == 'bpmn-role') {    // 롤 추가인 경우
                     var bpmnComponent = me.getComponentByName('bpmn-role');
 
-                    additionalData = bpmnComponent.default.computed.createNew(
+                    additionalData = bpmnComponent.computed.createNew(
                         componentInfo.x,
                         componentInfo.y,
                         componentInfo.width,
@@ -2094,7 +2096,7 @@
                     }
                     // console.log('newTracingTag', newTracingTag);
 
-                    additionalData = bpmnComponent.default.computed.createNew(
+                    additionalData = bpmnComponent.computed.createNew(
                         newTracingTag,
                         componentInfo.x,
                         componentInfo.y,
@@ -2103,7 +2105,9 @@
                         this.uuid()
                     );
                 }
-                this.addElementPush(me.value, additionalData)
+                // this.addElementPush(me.value, additionalData)
+
+                me.addElementAction(additionalData)
 
                 return additionalData
             },
@@ -2119,19 +2123,6 @@
                     }
                 });
                 return componentByClassName;
-            },
-
-            /**
-             * 컴포넌트 이름으로 Bpmn 컴포넌트를 가져온다.
-             **/
-            getComponentByName: function (name) {
-                var componentByName;
-                $.each(window.Vue.bpmnComponents, function (i, component) {
-                    if (component.default.name == name) {
-                        componentByName = component;
-                    }
-                });
-                return componentByName;
             },
 
             undo: function () {
@@ -2400,6 +2391,7 @@
                         // relation
                         vertices = [[startEventElement.elementView.x, startEventElement.elementView.y], [cmdTaskElement.elementView.x, cmdTaskElement.elementView.y]]
                         edgeInfo = {
+                            isRelation: true,
                             component: 'bpmn-relation',
                             from: startEventElement,
                             to: cmdTaskElement,
@@ -2436,6 +2428,7 @@
                             // relation
                             vertices = [[cmdTaskElement.elementView.x, cmdTaskElement.elementView.y], [commandEventElement.elementView.x, commandEventElement.elementView.y]]
                             edgeInfo = {
+                                isRelation: true,
                                 component: 'bpmn-relation',
                                 from: cmdTaskElement,
                                 to: commandEventElement,
@@ -2480,6 +2473,7 @@
                                     }
                                     vertices = [[event.elementView.x, event.elementView.y], [policyEventInfo.x, policyEventInfo.y]]
                                     edgeInfo = {
+                                        isRelation: true,
                                         component: 'bpmn-relation',
                                         from: event,
                                         vertices: JSON.stringify(vertices),
@@ -2529,6 +2523,7 @@
                                     // relation
                                     vertices = [[event.elementView.x, event.elementView.y], [cmdTaskInfo.x, cmdTaskInfo.y]]
                                     edgeInfo = {
+                                        isRelation: true,
                                         component: 'bpmn-relation',
                                         from: event,
                                         vertices: JSON.stringify(vertices),
@@ -2575,6 +2570,7 @@
                                     // relation
                                     vertices = [[task.elementView.x, task.elementView.y], [commnadEventInfo.x, commnadEventInfo.y]]
                                     edgeInfo = {
+                                        isRelation: true,
                                         component: 'bpmn-relation',
                                         from: task,
                                         vertices: JSON.stringify(vertices),
@@ -2819,4 +2815,5 @@
             display:block;
         }
     }
+    
 </style>

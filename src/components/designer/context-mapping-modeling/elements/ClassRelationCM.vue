@@ -17,7 +17,6 @@
       :customMoveActionExist="canvas.isCustomMoveExist"
       v-on:customRelationMoveAction="delayedRelationMove"
       v-on:removeShape="onRemoveShape"
-      :image.sync="refreshedImg"
     >
       <sub-elements>
         <text-element
@@ -33,7 +32,7 @@
     <class-relation-panel
       v-if="propertyPanel"
       v-model="value"
-      :readOnly="!isEditElement"
+      :isReadOnly="!isEditElement"
       :newEditUserImg="newEditUserImg"
       :image="image"
       :validationLists="filteredElementValidationResults"
@@ -144,7 +143,6 @@ export default {
     setElementCanvas(){
       var me = this
       me.canvas = getParent(me.$parent, "context-mapping-model-canvas");
-      me.modelCanvasComponent = me.canvas
     },
     validate(executeRelateToValidate, panelValue) {
       // var me = this;

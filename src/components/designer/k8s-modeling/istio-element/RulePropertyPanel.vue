@@ -2,7 +2,7 @@
     <kubernetes-common-panel
             v-model="value"
             :img="img"
-            :readOnly="readOnly"
+            :isReadOnly="isReadOnly"
             @openDesDoc="desDocOpen"
             @close="closePanel"
     >
@@ -20,12 +20,12 @@
             <v-text-field
                     label="Handler"
                     v-model="value.object.spec.actions[0].handler"
-                    :disabled="readOnly"
+                    :disabled="isReadOnly"
             ></v-text-field>
             <v-text-field
                     label="Instance"
                     v-model="value.object.spec.actions[0].instances[0]"
-                    :disabled="readOnly"
+                    :disabled="isReadOnly"
             ></v-text-field>
         </template>
     </kubernetes-common-panel>

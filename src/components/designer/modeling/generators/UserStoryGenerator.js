@@ -43,11 +43,13 @@ export default class UserStoryGenerator extends AIGenerator{
                 });
                 // modelDescription += "Painpoint analysis and Possible solutions: \n\n"
             }else {
-                if(this.client.input.personas.length>0){
-                    let personas = this.client.input.personas
-                    modelDescription += "Create pain points and possible solutions that may arise by considering the following Personas. \n\n"
-                    for(var i=0; i<personas.length; i++){
-                        modelDescription +="- "+ personas[i].persona + "\n"
+                if(this.client.input.personas){
+                    if(this.client.input.personas.length>0){
+                        let personas = this.client.input.personas
+                        modelDescription += "Create pain points and possible solutions that may arise by considering the following Personas. \n\n"
+                        for(var i=0; i<personas.length; i++){
+                            modelDescription +="- "+ personas[i].persona + "\n"
+                        }
                     }
                 }
             }

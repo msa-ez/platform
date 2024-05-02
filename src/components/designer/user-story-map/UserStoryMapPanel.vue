@@ -27,32 +27,32 @@
                         <div style="color: skyblue" v-if="isShowError">Notice: {{showError}}</div>
                         <v-text-field
                                 v-model="value.name"
-                                :disabled="canvas.isReadOnlyModel"
+                                :disabled="isReadOnly"
                                 label="Name"
                                 autofocus
                         ></v-text-field>
                         <v-textarea
                                 v-model="value.description"
                                 label="Description"
-                                :disabled="canvas.isReadOnlyModel"
+                                :disabled="isReadOnly"
                                 auto-grow
                         ></v-textarea>
                         <v-text-field
                                 v-if="value._type == 'UserStory'"
                                 v-model="value.as"
-                                :disabled="canvas.isReadOnlyModel"
+                                :disabled="isReadOnly"
                                 label="As"
                         ></v-text-field>
                         <v-text-field
                                 v-if="value._type == 'UserStory'"
                                 v-model="value.iWant"
-                                :disabled="canvas.isReadOnlyModel"
+                                :disabled="isReadOnly"
                                 label="I Want"
                         ></v-text-field>
                         <v-text-field
                                 v-if="value._type == 'UserStory'"
                                 v-model="value.soThat"
-                                :disabled="canvas.isReadOnlyModel"
+                                :disabled="isReadOnly"
                                 label="So that"
                         ></v-text-field>
                         <div class="my-5">
@@ -84,7 +84,7 @@
                         <div style="color: skyblue" v-if="isShowError">Notice: {{showError}}</div>
                         <v-text-field
                                 v-model="value.name"
-                                :disabled="canvas.isReadOnlyModel"
+                                :disabled="isReadOnly"
                                 label="Name"
                                 autofocus
                         ></v-text-field>
@@ -235,9 +235,6 @@
         },
         created: function () {
             var me = this
-
-            me.panelOpenAction()
-
             if(me.value._type == 'UserStoryMapLineElement') {
                 me.colorList.push('#000000')
                 me.colorList.push('#9E9E9E')
@@ -245,7 +242,6 @@
         },
         data: function () {
             return {
-                modelCanvasComponent: null,
                 colorList: [ '#F1A746', '#5099F7', '#BB94BF', '#F8D454', '#ED73B6', '#5FC08B', '#8E24AA' ],
                 imgSrcList: [ 
                     {
@@ -285,7 +281,6 @@
         methods: {
             setElementCanvas(){
                 var me = this
-                me.modelCanvasComponent = me.$parent.getComponent('user-story-map-canvas')
                 me.canvas = me.$parent.getComponent('user-story-map-canvas')
             },
             changeName: function () {

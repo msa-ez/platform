@@ -21,7 +21,6 @@
                     'label-angle':value.elementView.angle,
                     'text-anchor': 'middle',
                 }"
-                :image.sync="refreshedImg"
         >
             <geometry-rect
                     v-if="!movingElement"
@@ -35,6 +34,9 @@
                     }"
             >
             </geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-elements>
                 <text-element
@@ -50,7 +52,7 @@
         <cjm-model-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :showError="showError"
                 @close="closePanel"
         ></cjm-model-panel>
@@ -59,11 +61,14 @@
 
 <script>
     import Element from './CJMModelElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'cjm-text-element',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             className() {
                 return 'CJMTextElement'

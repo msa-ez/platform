@@ -85,7 +85,7 @@
                             solo
                         >
                         </v-textarea>
-                        <v-btn color="primary" style="float:right; margin-top:5px;" @click="jump()">Create Model<v-icon>mdi-arrow-right</v-icon></v-btn>
+                        <v-btn class="cjm-create-btn" color="primary" style="float:right; margin-top:5px;" @click="jump()">Create Model<v-icon>mdi-arrow-right</v-icon></v-btn>
                     </v-card-text>
                 </v-card>
                 <!-- <div

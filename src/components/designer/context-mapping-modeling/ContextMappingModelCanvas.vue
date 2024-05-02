@@ -666,7 +666,7 @@
                           <div>
                             <v-btn
                                     class="gs-model-z-index-1"
-                                    v-if="isHexagonalModeling"
+                                    v-if="isHexagonal"
                                     text
                                     color="primary"
                                     style="margin-left: -20px; margin-top: 1px"
@@ -706,7 +706,7 @@
                         <template v-slot:activator="{ on }">
                           <div>
                             <v-btn
-                                    v-if="isHexagonalModeling"
+                                    v-if="isHexagonal"
                                     text
                                     color="primary"
                                     style="margin-left: -20px; margin-top: 1px"
@@ -842,8 +842,8 @@
                               v-on="on"
                               v-if="
                           !isReadOnlyModel &&
-                          (!isHexagonalModeling ||
-                            (isHexagonalModeling &&
+                          (!isHexagonal ||
+                            (isHexagonal &&
                               (item.component.includes('bounded-context') ||
                                 item.component.includes(
                                   'packaged-business-capabilities'
@@ -934,8 +934,8 @@
                               v-on="on"
                               v-if="
                           !isReadOnlyModel &&
-                          (!isHexagonalModeling ||
-                            (isHexagonalModeling &&
+                          (!isHexagonal ||
+                            (isHexagonal &&
                               (item.component.includes('bounded-context') ||
                                 item.component.includes(
                                   'packaged-business-capabilities'
@@ -1081,9 +1081,6 @@
   export default {
     name: "context-mapping-model-canvas",
     mixins: [EventStormingModelCanvas],
-    components: {
-    },
-
     data() {
       return {
         /////////////////////////////////
@@ -1106,26 +1103,32 @@
         ],
       };
     },
-    computed: {
-
-    },
-    created: async function () {
-      var me = this;
-
-      try {
-        me.canvasType = "cm";
-        Vue.use(ContextMappingModeling);
-        me.track();
-      } catch (e) {
-        alert("Error: Context Mapping Created().", e);
-      }
-    },
-    mounted: function () {
-    },
     watch: {
-
+        "initLoad":function(newVal){
+          if(newVal){
+            this.syncMirrorElements();
+          }
+        },
+        "isLoadedInitMirror": function (newVal) {
+          var me = this;
+          if (newVal && me.initLoad) {
+              // changed MirrorValue and init definition load
+              me.syncMirrorElements();
+          }
+        },
+        "isLoadedMirrorQueue": function (newVal) {
+          var me = this;
+          if (newVal && me.isLoadedInitMirror) {
+              // changed MirrorValue and init definition load
+              me.syncMirrorElements();
+          }
+        },
     },
     methods: {
+      setCanvasType(){
+          Vue.use(ContextMappingModeling);
+          this.canvasType = 'cm'
+      },
       async saveModel(){
         // override
         var me = this
@@ -1218,30 +1221,30 @@
         }
       },
       async synchronizeAssociatedProject(associatedProject, newId, oldId) {
-                var me = this;
-                if(!associatedProject) return;
+          var me = this;
+          if(!associatedProject) return;
 
-                let type = me.storageCondition.type == 'es' ? 'eventStorming' : 'contextMapping'
+          let type = me.storageCondition.type == 'es' ? 'eventStorming' : 'contextMapping'
 
-                let lists = await me.list(`db://definitions/${associatedProject}/information/${type}`);
-                let index = -1;
-                if (lists && lists.modelList) {
-                    if(oldId) {
-                        index = lists.modelList.findIndex((id) => id == oldId);
-                    } else {
-                        index = lists.modelList.findIndex((id) => id == newId); //duplicate
-                    }
-                    index = index == -1 ? lists.modelList.length : index;
-                }
+          let lists = await me.list(`db://definitions/${associatedProject}/information/${type}`);
+          let index = -1;
+          if (lists && lists.modelList) {
+              if(oldId) {
+                  index = lists.modelList.findIndex((id) => id == oldId);
+              } else {
+                  index = lists.modelList.findIndex((id) => id == newId); //duplicate
+              }
+              index = index == -1 ? lists.modelList.length : index;
+          }
 
-                index = index == -1 ? 0 : index;
-                await me.setString(`db://definitions/${associatedProject}/information/${type}/modelList/${index}`, newId);
+          index = index == -1 ? 0 : index;
+          await me.setString(`db://definitions/${associatedProject}/information/${type}/modelList/${index}`, newId);
       },
       overrideElements(elementValues){
         var me = this
 
         elementValues.filter(ele => ele && ele.mirrorElement).forEach(function(mirrorEle){
-          if( !mirrorEle._type.endsWith('BoundedContext'))  return;
+          if( !mirrorEle._type.endsWith('BoundedContext')) return;
 
           mirrorEle.aggregates.forEach(function(agg ,index){
             let origin = me.mirrorValue.elements[agg.id];

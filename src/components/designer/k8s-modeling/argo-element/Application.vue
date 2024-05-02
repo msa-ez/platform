@@ -19,7 +19,7 @@
                 v-on:deSelectShape="deSelectedActivity"
                 v-on:dblclick="openPanel"
                 v-on:addedToGroup="onAddedToGroup"
-                v-on:removeShape="onRemoveShape(value)"
+                v-on:removeShape="onRemoveShape"
                 :label.sync="name"
                 :_style="{
                     'label-angle':value.elementView.angle,
@@ -42,6 +42,9 @@
                         'z-index': '998'
                     }"
             ></geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-controller
                     :image="'terminal.png'"
@@ -72,7 +75,7 @@
                 v-if="propertyPanel"
                 v-model="value"
                 :img="imgSrc"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         >
         </property-panel>
@@ -89,11 +92,13 @@
 <script>
     import Element from "../KubernetesElement";
     import PropertyPanel from './ApplicationPanel';
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'application',
         components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             "property-panel": PropertyPanel
         },
         props: {},

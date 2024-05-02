@@ -24,9 +24,6 @@
 
         }
     },
-    mounted: function () {
-
-    },
     methods: {
       generateShape: function () {
         var me = this;

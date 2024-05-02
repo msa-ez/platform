@@ -28,7 +28,6 @@
                 v-on:rotateShape="onRotateShape"
                 v-on:addedToGroup="onAddedToGroup"
                 :label="getFieldDescriptors && !canvas.isHexagonal ? '': namePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                 'label-angle':value.elementView.angle,
                 'font-weight': 'bold', 'font-size': '16',
@@ -83,14 +82,7 @@
             </sub-elements>
 
             <sub-elements v-if="!canvas.isHexagonal" v-for="(index) in newEditUserImg.length">
-                <image-element
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="value.elementView.height"
-                >
-                </image-element>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="elementCoordinate.height"></multi-user-status-indicator>
             </sub-elements>
 
             <sub-elements>
@@ -154,8 +146,8 @@
                 <storming-sub-controller
                         :type="value._type"
                         :value="value"
-                        :readOnly="canvas.isReadOnlyModel"
-                        :isHexagonalModeling="canvas.isHexagonal"
+                        :isReadOnly="!isEditElement"
+                        :isHexagonal="canvas.isHexagonal"
                 ></storming-sub-controller>
 
                 <sub-controller
@@ -177,7 +169,7 @@
         <aggregate-definition-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"
@@ -197,23 +189,17 @@
     import AggregateDefinitionPanel from "../panels/AggregateDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
     import Generator from "../../modeling/generators/AggregateGenerator";
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     var changeCase = require('change-case');
-    var pluralize = require('pluralize');
     var _ = require('lodash')
-
-    var jsondiffpatch = require('jsondiffpatch').create({
-        objectHash: function (obj, index) {
-            return '$$index:' + index;
-        },
-    });
-
     export default {
         mixins: [Element],
         name: 'aggregate-definition',
         props: {},
         components: {
             AggregateDefinitionPanel,
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             'storming-sub-controller' : StormingSubController
         },
         watch: {
@@ -593,7 +579,7 @@
                     me.value.aggregateRoot.fieldDescriptors.splice(idx, 1);
                 }
             },
-            removeAction(){
+            executeElementBeforeDestroy(){
                 this.onMoveAction()
             },
             onMoveAction(executeRecursion){

@@ -1,7 +1,7 @@
 <template>
     <div>
         <sub-controller
-                v-if="clone.rotate && !isHexagonalModeling"
+                v-if="clone.rotate && !isHexagonal"
                 :image="'rotate.png'"
                 @click.prevent.stop="rotate()"
         >
@@ -27,28 +27,28 @@
         >
         </sub-controller> -->
         <sub-controller
-                v-if="!isHexagonalModeling && selectedList"
+                v-if="!isHexagonal && selectedList"
                 :image="'content-cut.png'"
                 @click.prevent="cutElement"
         ></sub-controller>
         <sub-controller
-                v-if="!isHexagonalModeling && clipboard"
+                v-if="!isHexagonal && clipboard"
                 :image="'content-paste.png'"
                 @click.prevent="pasteElement"
         ></sub-controller>
         <sub-controller
-                v-if="!isHexagonalModeling"
+                v-if="!isHexagonal"
                 :image="'copy.png'"
                 @click.prevent.stop="copyPaste()"
         ></sub-controller>
 
-        <div v-if="isHexagonalModeling && type.endsWith('BoundedContext')">
+        <div v-if="isHexagonal && type.endsWith('BoundedContext')">
             <sub-controller
                     :image="'../event/aggregate.png'"
                     v-on:click="addAggregateElement"
             ></sub-controller>
         </div>
-        <div v-if="isHexagonalModeling && type.endsWith('Aggregate')">
+        <div v-if="isHexagonal && type.endsWith('Aggregate')">
             <sub-controller
                     :image="'../event/event.png'"
                     v-on:click="addEventElement"
@@ -91,13 +91,13 @@
             calleeDefinitionId: String,
             elementId: String,
             value: Object,
-            readOnly: {
+            isReadOnly: {
                 type: Boolean,
                 default: function () {
                     return false;
                 }
             },
-            isHexagonalModeling: Boolean,
+            isHexagonal: Boolean,
             canvasType: String,
             isProjectConnecting: Boolean
         },
@@ -153,14 +153,9 @@
                 selectedElements: [],
             }
         },
-        watch: {
-            'readOnly': function (newVal) {
-                console.log(newVal)
-            }
-        },
         mounted: function () {
             var me = this
-            if (!me.readOnly)
+            if (!me.isReadOnly)
                 this.clone.rotate = true;
 
             if (this.type == "org.uengine.modeling.model.BoundedContext") {
@@ -212,9 +207,7 @@
                             tmp.id = me.canvas.uuid();
                             tmp.elementView.id = tmp.id;
 
-                            // me.canvas.addElements(me.canvas.value, tmp);
                             me.canvas.appendElement(tmp);
-
                             elementIds.push(tmp.id);
                         })
                     }
@@ -464,7 +457,7 @@
                     height: 100,
                     component: componentName
                 }
-                if (me.canvas && me.isHexagonalModeling) {
+                if (me.canvas && me.isHexagonal) {
                     targetElement = me.canvas.addElement(targetInfo);
 
                     if(!targetElement._type.includes("Aggregate")) {

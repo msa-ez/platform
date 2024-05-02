@@ -5,7 +5,7 @@
                 style="padding:0; margin:0; height:30px; padding-right:15px;"
                 :label="isJson ? 'Json' : 'Yaml'"
         ></v-switch>
-        <v-card :disabled="readOnly">
+        <v-card :disabled="isReadOnly">
             <codemirror
                     style="width: 100%; height: 100%;"
                     v-if="!isJson"
@@ -28,18 +28,14 @@
 
 
 <script>
-    import yaml from "js-yaml";
-    import json2yaml from 'json2yaml'
     import vueJsonEditor from 'vue-json-editor';
-
     import {codemirror} from "vue-codemirror";
-
 
     export default {
         name: 'local-yaml-editor',
         props: {
             value: String,
-            readOnly: {
+            isReadOnly: {
                 type: Boolean,
                 default: function () {
                     return false

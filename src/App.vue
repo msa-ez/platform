@@ -81,7 +81,9 @@
             <v-tooltip v-if="inCourse && !showNewButton" bottom>
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn style="margin-right:10px;" v-bind="attrs" v-on="on" @click="addNewClass()"
-                         icon large>
+                        icon large
+                        color="black"
+                    >
                         <v-icon>mdi-file-plus</v-icon>
                     </v-btn>
                 </template>
@@ -185,6 +187,7 @@
                                 <v-row>
                                     <v-col cols="12">
                                         <v-img @click.native="moveToModel(item.type)"
+                                            class="cp-create-model-img"
                                             :src="item.image"
                                             style="height:150px; margin:10px 0px; cursor:pointer;"
                                         ></v-img>
@@ -366,7 +369,7 @@
                 <v-list style="width:310px;">
                     <v-list-item-group>
                         <div style="font-size: small; cursor:default; display: table-cell; padding-left:16px;">
-                            <div v-if="isLogin">{{userInfo.email}}</div>
+                            <div v-if="isLogin">{{userInfo.email}} ({{userInfo.providerUid}})</div>
                             <div v-else-if="isGuestLogin">(GUEST) {{userInfo.email}}</div>
                         </div>
                         <v-divider style="margin-top: 5px;"></v-divider>
@@ -383,23 +386,7 @@
             </v-menu>
 
         </v-app-bar>
-        <div v-if= "showMemo" ref="draggable" @mousedown="dragStart" @mousemove="dragging" @mouseup="dragStop" style="position: absolute; top: 0; left: -400px; width: 500px;" >      
-            <v-card style="margin: 55px 100px 0 1000px; width: 500px; position: absolute; top: 220px; left: 380px; z-index: 9;">
-                    <ckeditor v-model="editorData" :config="editorConfig"></ckeditor>
-                    <v-tooltip bottom>
-                        <template v-slot:activator="{ on, attrs }">
-                            <v-btn fill="none" 
-                                style="margin-left:5px; position: absolute; top: 0px; left: 450px; clo" 
-                                v-bind="attrs" v-on="on"
-                                color="gray" icon large
-                                @click="showMemo = false">
-                                <v-icon>mdi-close</v-icon>
-                            </v-btn>
-                        </template>
-                        <span>닫기</span>
-                    </v-tooltip>
-            </v-card>
-        </div>
+        
         <course-navigator v-if="courseNavi && $route.path.includes('eventstorming')"
                           :value.sync="naviObject"></course-navigator>
         <v-content :style="headerFloating == true ? 'margin-top:-64px;':'margin-top:0px;'">
@@ -651,31 +638,6 @@
                 </v-stepper-header>
             </v-stepper>
         </v-alert>
-
-        <div v-if="showMain" class="d-flex flex-row mt-sm-8 mt-5 overflow-hidden main-page-slider-group-box">
-            <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSlide.png" />
-            </div>
-            <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSlide.png" />
-            </div>
-            <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSlide.png" />
-            </div>
-            <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSlide.png" />
-            </div>
-            <div class="main-page-slider-group">
-                <img src="/static/image/main/mainSlide.png" />
-            </div>
-        </div>
-        
-        <v-footer v-if="showFooter"
-            padless
-            style="background-color: transparent;"
-        >
-            <ProvisionIndication style="margin:0; padding:0px; width:100%;"></ProvisionIndication>
-        </v-footer>
     </v-app>
 </template>
 
@@ -697,7 +659,6 @@
     import SubscriptionItemTemplate from "./components/payment/SubscriptionItemTemplate";
     const fs = require('fs');
     import Draggable from 'vue-draggable';
-    import ProvisionIndication from './components/payment/ProvisionIndication.vue'
 
     export default {
         name: 'App',
@@ -790,7 +751,6 @@
                 {key: 'manager', display: `loginList.purchaseList`},
                 {key: 'getCoin', display: `loginList.CoinsCoupons`},
                 {key: 'payQuestion', display: `loginList.inquiry`},
-                {key: 'showMemo', display: `메모장 사용하기`},
                 {key: 'logout', display: `loginList.logout`}
             ],
             loginText: 'Login',
@@ -893,7 +853,6 @@
                     ],
                 
             },
-            showMemo: false,
             isDragging: false,
             startX: 0,
             startY: 0,
@@ -905,7 +864,6 @@
 
         }),
         components: {
-            ProvisionIndication,
             SubscriptionItemTemplate,
             PodEvents,
             ParticipantIcons,
@@ -921,14 +879,6 @@
         // beforeMount(){
         // },
         computed: {
-            showMain() {
-                const path = this.$route.path;
-                return path === '/';
-            },
-            showFooter() {
-                const path = this.$route.path;
-                return path === '/courses' || path === '/' || path === '/myPage';
-            },
             isForeign() {
                 if (window.countryCode == 'ko') {
                     return false
@@ -1007,6 +957,7 @@
             var me = this
 
             Vue.prototype.$app = me
+
             me.$EventBus.$on('open-new-making-dialog', function () {
                 me.makingDialog = true
             })
@@ -1148,7 +1099,7 @@
             var me = this
             if (me.isLogin) {
                 var convertEmail = me.userInfo.email.replace(/\./gi, '_')
-                me.watch_off(`db://enrolledUsers/${convertEmail}/purchaseHistory`)
+                // me.watch_off(`db://enrolledUsers/${convertEmail}/purchaseHistory`)
                 // firebase.database().ref(`enrolledUsers/${convertEmail}/purchaseHistory`).off();
             }
             window.localStorage.removeItem("accessToken");
@@ -1691,34 +1642,27 @@
             setColor(index) {
                 this.selectedItem = index;
             },
-            moveToModel(type) {
+            async moveToModel(type) {
                 var me = this
+                if(!me.userInfo.providerUid) await await me.loginUser()
+               
                 me.makingDialog = false
                 try {
                     if (!type) type = me.mode
-
+                    let path = me.userInfo.providerUid ? `/${me.userInfo.providerUid}` : ''
+                
                     if (type == 'es') {
-                        me.$router.push({path: `storming/${me.dbuid()}`});
+                        path = `${path}/storming`
                     } else if (type == 'k8s') {
-                        me.$router.push({path: `kubernetes/${me.dbuid()}`});
+                        path = `${path}/kubernetes`
                     } else if (type == 'bm') {
-                        me.$router.push({path: `business-model-canvas/${me.dbuid()}`});
-                    } else if (type == 'sticky') {
-                        me.$router.push({path: `sticky/${me.dbuid()}`});
-                    } else if (type == 'bpmn') {
-                        me.$router.push({path: `bpmn/${me.dbuid()}`});
-                    } else if (type == 'uml') {
-                        me.$router.push({path: `uml/${me.dbuid()}`});
-                    } else if (type == 'project'){
-                        me.$router.push({path: `project/${me.dbuid()}`});
-                    }else if (type == 'cjm') {
-                        me.$router.push({path: `cjm/${me.dbuid()}`});
-                    }else if (type == 'userStoryMap') {
-                        me.$router.push({path: `userStoryMap/${me.dbuid()}`});
+                        path = `${path}/business-model-canvas`
                     } else {
-                        me.$router.push({path: `storming/${me.dbuid()}`});
-                    }
+                        path = `${path}/${type}`
+                    } 
+                    path = `${path}/${me.dbuid()}`
 
+                    me.$router.push({path: path});
                 } catch (e) {
                     alert('Error-NewProject', e)
                 }
@@ -1884,9 +1828,7 @@
                             window.ipcRenderer.send("closeView");
                         }
                     } else if (key == 'payQuestion') {
-                        alert("'help@uengine.org' 으로 메일 문의 바랍니다. ")
-                    } else if(key == 'showMemo'){
-                        me.openMemo()
+                        alert("'help@uengine.org' 으로 메일 문의 바랍니다. ") 
                     } else {
                         console.log("app")
                         if (me.isLogin) {
@@ -2094,20 +2036,6 @@
                     window.open("https://github.com/msa-ez/msa-ez.github.io/issues", "_blank")
                 }
             },
-            async openMemo() {
-                var me = this;
-                var convertEmail = localStorage.getItem("email").replace(/\./gi, '_')
-                me.editorData = await me.getString('db://labs/' + me.getTenantId().split('.')[0] + '/' + me.courseId + '/classes/' + me.classId + '/memo/' + convertEmail , me.editorData);
-                me.showMemo = !me.showMemo
-            },
-            async saveMemo(){
-                var me = this; 
-                var convertEmail = localStorage.getItem("email").replace(/\./gi, '_')
-                await me.setString('db://labs/' + me.getTenantId().split('.')[0] + '/' + me.courseId + '/classes/' + me.classId + '/memo/' + convertEmail , me.editorData);
-                if(!me.editorData){
-                    await me.setString('db://labs/' + me.getTenantId().split('.')[0] + '/' + me.courseId + '/classes/' + me.classId + '/memo/' + convertEmail , me.editorData + '메모할 내용을 입력해주세요.');
-                }
-            },
             dragStart(event) {
                 var me = this;
                 me.isDragging = true;
@@ -2136,24 +2064,6 @@
 
 </script>
 <style>
-    .main-page-slider-group-box {
-        opacity: 0.2;
-    }
-    .main-page-slider-group-box:hover {
-        opacity: 0.8;
-    }
-    .main-page-slider-group {
-        animation: mainSlide 35s linear infinite;
-    }
-
-    @keyframes mainSlide {
-        0% {
-            transform: translate3d(0, 0, 0);
-        }
-        100% {
-            transform: translate3d(-100%, 0, 0);
-        }
-    }
     .making-col {
         padding:20px;
     }

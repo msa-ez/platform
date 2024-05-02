@@ -2,7 +2,7 @@
     <kubernetes-common-panel
             v-model="value"
             :img="img"
-            :readOnly="readOnly"
+            :isReadOnly="isReadOnly"
             @openDesDoc="desDocOpen"
             @close="closePanel"
     >
@@ -29,17 +29,17 @@
                                     label="Name"
                                     v-model="value.object.metadata.name"
                                     autofocus
-                                    :disabled="readOnly"
+                                    :disabled="isReadOnly"
                             ></v-text-field>
                             <v-text-field
                                     label="Host"
                                     v-model="value.object.spec.host"
-                                    :disabled="readOnly"
+                                    :disabled="isReadOnly"
                             ></v-text-field>
                             <v-btn
                                     color="primary"
                                     text
-                                    :disabled="readOnly"
+                                    :disabled="isReadOnly"
                                     @click="addSubset"
                                     class="mb-4"
                             >
@@ -47,7 +47,7 @@
                             </v-btn>
                             <kube-attr-field 
                                     v-model="value" 
-                                    :readOnly="readOnly"
+                                    :isReadOnly="isReadOnly"
                             ></kube-attr-field>
                         </v-card-text>
                     </v-card>
@@ -55,7 +55,7 @@
                 <v-flex>
                     <kube-yaml-editor
                             v-model="propertyData"
-                            :readOnly="readOnly"
+                            :isReadOnly="isReadOnly"
                     ></kube-yaml-editor>
                 </v-flex>
             </v-layout>
@@ -70,40 +70,40 @@
                             <kube-number-field
                                 :label="'Http1 Max Pending Requests'"
                                 v-model="value.trafficPolicy.connectionPool.http.http1MaxPendingRequests"
-                                :readOnly="readOnly || !editTrafficPolicy"
+                                :isReadOnly="isReadOnly || !editTrafficPolicy"
                             ></kube-number-field>
                             <kube-number-field
                                     :label="'Max Requests Per Connection'"
-                                    :readOnly="readOnly || !editTrafficPolicy"
+                                    :isReadOnly="isReadOnly || !editTrafficPolicy"
                                     v-model="value.trafficPolicy.connectionPool.http.maxRequestsPerConnection"
                             ></kube-number-field>
                             <kube-number-field
                                     :label="'Max Connections'"
-                                    :readOnly="readOnly || !editTrafficPolicy"
+                                    :isReadOnly="isReadOnly || !editTrafficPolicy"
                                     v-model="value.trafficPolicy.connectionPool.tcp.maxConnections"
                             ></kube-number-field>
                             <v-text-field
                                     label="Base Ejection Time"
                                     v-model="baseEjectionTime"
-                                    :disabled="readOnly || !editTrafficPolicy"
+                                    :disabled="isReadOnly || !editTrafficPolicy"
                                     type="number"
                                     suffix="s"
                             ></v-text-field>
                             <kube-number-field
                                     :label="'Consecutive Errors'"
-                                    :readOnly="readOnly || !editTrafficPolicy"
+                                    :isReadOnly="isReadOnly || !editTrafficPolicy"
                                     v-model="value.trafficPolicy.outlierDetection.consecutiveErrors"
                             ></kube-number-field>
                             <v-text-field
                                     label="Interval"
-                                    :disabled="readOnly || !editTrafficPolicy"
+                                    :disabled="isReadOnly || !editTrafficPolicy"
                                     v-model="interval"
                                     type="number"
                                     suffix="s"
                             ></v-text-field>
                             <kube-number-field
                                     :label="'Max Ejection Percent'"
-                                    :readOnly="readOnly || !editTrafficPolicy"
+                                    :isReadOnly="isReadOnly || !editTrafficPolicy"
                                     v-model="value.trafficPolicy.outlierDetection.maxEjectionPercent"
                             ></kube-number-field>
                         </v-card-text>
@@ -112,7 +112,7 @@
                 <v-flex>
                     <kube-yaml-editor
                             v-model="trafficPolicy"
-                            :readOnly="readOnly || !editTrafficPolicy"
+                            :isReadOnly="isReadOnly || !editTrafficPolicy"
                     ></kube-yaml-editor>
                 </v-flex>
             </v-layout>

@@ -74,6 +74,7 @@
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on: tooltip }">
                                         <v-btn :disabled="!isGeneratorDone"
+                                            class="cp-git-btn"
                                             style="font-size: 16px;
                                                 margin-right: 5px;
                                                 margin-top: 1px;
@@ -159,7 +160,7 @@
 
                     <v-tooltip bottom v-if="editableTemplate">
                         <template v-slot:activator="{ on, attrs }">
-                            <v-btn v-on="on" class="code-preview-btn"
+                            <v-btn v-on="on" class="code-preview-btn cp-edit-template-btn"
                                     icon fab @click="openTemplateEditor()"
                                     :color="editTemplateMode ? 'primary':''"
                             >
@@ -216,7 +217,7 @@
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
                             <div>
-                                <v-btn v-on="on" class="code-preview-btn"
+                                <v-btn v-on="on" class="code-preview-btn cp-download-btn"
                                         icon fab @click="downloadArchive()"
                                 >
                                     <slot name="downloadArchive">
@@ -695,7 +696,7 @@
                                                         dense
                                                         style="text-overflow: clip !important;"
                                                         :style="editTemplateMode ? 'max-height: 70%;':''"
-                                                        class="gs-v-treeview-width"
+                                                        class="gs-v-treeview-width "
                                                 >
                                                     <template v-slot:prepend="{ item, open }">
                                                         <v-icon v-if="isChangedCode(item)"
@@ -704,7 +705,7 @@
                                                                 style="position: absolute; z-index:9999; font-size: 1px;"
                                                         >fiber_manual_record
                                                         </v-icon>
-                                                        <div v-if="isNotFolderIcon">
+                                                        <div class="cp-code" v-if="isNotFolderIcon">
                                                             <v-icon size="22" :style="templatePathStyle(item)">
                                                                 {{ icon[item.file] ? icon[item.file] : 'mdi-folder'}}
                                                             </v-icon>
@@ -5095,6 +5096,15 @@ jobs:
 
                 window.$HandleBars.registerHelper('wrap', function (exp) {
                     return '{'+exp+'}';
+                })
+
+                window.$HandleBars.registerHelper('parseToYaml', function (obejct) {
+                    try {
+                        var yaml = json2yaml.stringify(obejct);
+                        return yaml;
+                    } catch(e){
+                        console.log(e)
+                    }
                 })
 
             },
