@@ -8396,584 +8396,607 @@ jobs:
             },
             processTemplate(ele, processContext) {
                 var me = this;
-                var frameWork = processContext.content;
-                var frameWorkelement = processContext.element;
-
-                var content = processContext.content;
-                var originContent = processContext && processContext.originContent ? JSON.parse(JSON.stringify(processContext.originContent)) : content
-                var template = processContext.template;
-                var forEach = processContext.forEach;
-                var element = processContext.element;
-                var rootModel = processContext.rootModel;
-                var rootPath = processContext.rootPath;
-                var options = processContext.options;
-                let generatedType = processContext.generatedType;
-
-                let fullPath
-
-                var isEditTemplate = false
-                if( me.editTemplateFrameWorkList[template] && me.editTemplateFrameWorkList[template][frameWorkelement] ){
-                    isEditTemplate = true 
-                    frameWork = me.editTemplateFrameWorkList[template][frameWorkelement].code
-                    
-                    if(me.editTemplateFrameWorkList[template][frameWorkelement].code.includes("---")){
-                        content = me.editTemplateFrameWorkList[template][frameWorkelement].code
-                    } else {
-                        let editTempContent = [content.split("---")[0], me.editTemplateFrameWorkList[template][frameWorkelement].code]
-                        content = editTempContent.join("---")
+                if(processContext.element.includes('.png')){
+                    const fullPath = processContext.element.replace("for-model/", "")
+                    const parts = fullPath.split('/');
+                    let obj = {
+                        bcId: null,
+                        boundedContext: parts[0],
+                        code: Buffer.from(processContext.originContent,).toString('base64'),
+                        element: null,
+                        file: "png",
+                        fileName: parts[parts.length - 1],
+                        fullPath: fullPath,
+                        generatedType: "TOPPING",
+                        hash: null,
+                        key: me.uuid(),
+                        options: processContext.options,
+                        priority: undefined,
+                        template: processContext.template,
+                        templatePath: fullPath
                     }
-                }
+                    me.codeLists.push(obj);
+                } else {
 
-                try {
-                    if(!me.codeLists){
-                        me.codeLists = []
-                    }
-
-                    var space = "  "
-                    var replaceRoof = true;
-                    var gen = null;
-
-                    if(options && options.package){
-                        // source code package name
-                        options.package = options.package.replace(/ /gi, "").replace("-", "").replace(/\//gi, '.');
-                        // options.packagePath = options.packagePath.replace(/ /gi, ".").replace("-", "").replace(/\//gi, '.');
-                        options.packagePath = options.packagePath.replace(/ /gi, "").replace("-", "");
-                    }
-
-                    ele.options = options;
-                    ele.contexts = {};
-                    ele.k8sValue = me.value.k8sValue
-                    ele.options.rootModel = me.value
-
-
-                    while(replaceRoof){
-                        if(processContext.filteredProjectName.includes(space)){
-                            processContext.filteredProjectName = processContext.filteredProjectName.replaceAll(space, " ")
-                            space = space + " "
+                    var frameWork = processContext.content;
+                    var frameWorkelement = processContext.element;
+    
+                    var content = processContext.content;
+                    var originContent = processContext && processContext.originContent ? JSON.parse(JSON.stringify(processContext.originContent)) : content
+                    var template = processContext.template;
+                    var forEach = processContext.forEach;
+                    var element = processContext.element;
+                    var rootModel = processContext.rootModel;
+                    var rootPath = processContext.rootPath;
+                    var options = processContext.options;
+                    let generatedType = processContext.generatedType;
+    
+                    let fullPath
+    
+                    var isEditTemplate = false
+                    if( me.editTemplateFrameWorkList[template] && me.editTemplateFrameWorkList[template][frameWorkelement] ){
+                        isEditTemplate = true 
+                        frameWork = me.editTemplateFrameWorkList[template][frameWorkelement].code
+                        
+                        if(me.editTemplateFrameWorkList[template][frameWorkelement].code.includes("---")){
+                            content = me.editTemplateFrameWorkList[template][frameWorkelement].code
                         } else {
-                            replaceRoof = false
+                            let editTempContent = [content.split("---")[0], me.editTemplateFrameWorkList[template][frameWorkelement].code]
+                            content = editTempContent.join("---")
                         }
                     }
-                    if(processContext.filteredProjectName.at(-1) == " "){
-                        processContext.filteredProjectName = processContext.filteredProjectName.replace(/.$/, "");
-                    }
-
-                    //mustach
-                    // var gen = window.$Mustache.render(content, ele);
-
-                    //$HandleBars
-                    var currentFile
-                    if(me.opennedTemplateFramework && content == me.opennedTemplateFramework[0].code){
-                        currentFile = true
-                    }
-
-                    if (content.split("<function>")[1]) {
-                        var functionBlock = content.split("<function>")[1];
-                        functionBlock = functionBlock.replace("\n</function>", "");
-                        content = content.replace("\n</function>", "");
-                        content = content.replace("<function>\n", "");
-                        content = content.replace("<function>", "");
-                        content = content.replace(functionBlock, "");
-
-                        if(currentFile){
-                            var code = functionBlock.split("\n")
-                            var idx = -1
-                            me.debuggerPoint.forEach(function (lineNum){
-                                code.splice(lineNum + idx, 0, 'debugger;');
-                                idx++;
-                            })
-                            functionBlock = code.join("\n")
+    
+                    try {
+                        if(!me.codeLists){
+                            me.codeLists = []
                         }
-
-                        functionBlock += "\n//# sourceURL=templates/"+ processContext.template.replaceAll(" ", "-") + "/"+processContext.templateFile+".js"
-
-                        try{
-                            var result = function(str){
-                                return eval(str);
-                            }.call(ele,functionBlock);
-                        }catch(e){
-                            throw e;
+    
+                        var space = "  "
+                        var replaceRoof = true;
+                        var gen = null;
+    
+                        if(options && options.package){
+                            // source code package name
+                            options.package = options.package.replace(/ /gi, "").replace("-", "").replace(/\//gi, '.');
+                            // options.packagePath = options.packagePath.replace(/ /gi, ".").replace("-", "").replace(/\//gi, '.');
+                            options.packagePath = options.packagePath.replace(/ /gi, "").replace("-", "");
                         }
-
-                    }
-                    // try{
-                    
-                    var compileTemplate = window.$HandleBars.compile(content);
-                    gen = compileTemplate(ele);
-
-                    
-                    if(processContext.element.includes('for-model/kubernetes/docs')){
-                        compileTemplate = window.$HandleBars.compile(gen);
-                        gen = compileTemplate(ele);
-
-                        // 임시조치 (추가될 템플릿에 따라 정규표현으로 처리 예정)
-                        gen = gen.replaceAll("&#x60;", "`"); // 코드 블록 변환
-                        gen = gen.replaceAll("&gt;", ">"); // 꺽쇠(>) 변환
-                    }
-
-                    var metadataAndSource = gen.split("---"); // 소스와 구분
-
-                    var header = yamlpaser.load(metadataAndSource[0].replace(/\n\n/gi, "\n"))
-                    var headerOptions = {}
-                    Object.keys(header).forEach(function (keyValue, idx) {
-                        var key = keyValue
-                        var value = Object.values(header)[idx]
-                        if (key == 'path' && (value.lastIndexOf('.') == value.length - 1)) {
-                            value = value.substring(0, value.lastIndexOf(".") - 1)
-                        }
-                        headerOptions[key] = value;
-                    })
-
-                    if(element.includes('/for-model')){
-                        // topping관련: topping-apollo-graphql-shl/apollo-graphql/for-model/apollo-graphQL/
-                        // element = element.replace(`${element.split('/for-model')[0]}/for-model`,'for-model')
-                        headerOptions['path'] = headerOptions['path'].replace(`${headerOptions['path'].split('/for-model')[0]}/for-model`,'for-model')
-                    }
-
-                    let optionsPathString = '';
-                    if(forEach == 'Model'){
-                        // Setting path of for-model( BASE)
-                        var optionsMetadataAndSource = content.split("---"); // 소스와 구분
-                        var optionsPathHeader = yamlpaser.load(optionsMetadataAndSource[0])
-                        var elementPath = element.split('/');
-                        var elementPathString = elementPath[0] + '/' + elementPath[1];
-                        var removeRootPath = rootPath ? optionsPathHeader['path'].replace(rootPath,'') : optionsPathHeader['path']
-
-                        if(elementPathString){
-                            if (removeRootPath && (removeRootPath.includes(elementPathString) || elementPathString.includes(removeRootPath)) ) {
-                                optionsPathHeader['path'] = rootPath ? elementPathString.replace('for-model/', `for-model/${rootPath}`) : elementPathString
+    
+                        ele.options = options;
+                        ele.contexts = {};
+                        ele.k8sValue = me.value.k8sValue
+                        ele.options.rootModel = me.value
+    
+    
+                        while(replaceRoof){
+                            if(processContext.filteredProjectName.includes(space)){
+                                processContext.filteredProjectName = processContext.filteredProjectName.replaceAll(space, " ")
+                                space = space + " "
                             } else {
-                                var lastWord = elementPath[1]
-                                var replaceRootPath  = rootPath.replaceAll('/',`/${lastWord}/`)
-                                if(optionsPathHeader['path']){
-                                    optionsPathHeader['path'] = optionsPathHeader['path'].replace(elementPathString,replaceRootPath)
-                                }
+                                replaceRoof = false
                             }
                         }
-                        if(optionsPathHeader['path']){
-                            var optionsPath = optionsPathHeader['path'].split('/');
-                            for (var o = 1; o < optionsPath.length; o++) {
-                                if (o == 1) {
-                                    optionsPathString = optionsPathString.concat(optionsPath[o]);
+                        if(processContext.filteredProjectName.at(-1) == " "){
+                            processContext.filteredProjectName = processContext.filteredProjectName.replace(/.$/, "");
+                        }
+    
+                        //mustach
+                        // var gen = window.$Mustache.render(content, ele);
+    
+                        //$HandleBars
+                        var currentFile
+                        if(me.opennedTemplateFramework && content == me.opennedTemplateFramework[0].code){
+                            currentFile = true
+                        }
+    
+                        if (content.split("<function>")[1]) {
+                            var functionBlock = content.split("<function>")[1];
+                            functionBlock = functionBlock.replace("\n</function>", "");
+                            content = content.replace("\n</function>", "");
+                            content = content.replace("<function>\n", "");
+                            content = content.replace("<function>", "");
+                            content = content.replace(functionBlock, "");
+    
+                            if(currentFile){
+                                var code = functionBlock.split("\n")
+                                var idx = -1
+                                me.debuggerPoint.forEach(function (lineNum){
+                                    code.splice(lineNum + idx, 0, 'debugger;');
+                                    idx++;
+                                })
+                                functionBlock = code.join("\n")
+                            }
+    
+                            functionBlock += "\n//# sourceURL=templates/"+ processContext.template.replaceAll(" ", "-") + "/"+processContext.templateFile+".js"
+    
+                            try{
+                                var result = function(str){
+                                    return eval(str);
+                                }.call(ele,functionBlock);
+                            }catch(e){
+                                throw e;
+                            }
+    
+                        }
+                        // try{
+                        
+                        var compileTemplate = window.$HandleBars.compile(content);
+                        gen = compileTemplate(ele);
+    
+                        
+                        if(processContext.element.includes('for-model/kubernetes/docs')){
+                            compileTemplate = window.$HandleBars.compile(gen);
+                            gen = compileTemplate(ele);
+    
+                            // 임시조치 (추가될 템플릿에 따라 정규표현으로 처리 예정)
+                            gen = gen.replaceAll("&#x60;", "`"); // 코드 블록 변환
+                            gen = gen.replaceAll("&gt;", ">"); // 꺽쇠(>) 변환
+                        }
+    
+                        var metadataAndSource = gen.split("---"); // 소스와 구분
+    
+                        var header = yamlpaser.load(metadataAndSource[0].replace(/\n\n/gi, "\n"))
+                        var headerOptions = {}
+                        Object.keys(header).forEach(function (keyValue, idx) {
+                            var key = keyValue
+                            var value = Object.values(header)[idx]
+                            if (key == 'path' && (value.lastIndexOf('.') == value.length - 1)) {
+                                value = value.substring(0, value.lastIndexOf(".") - 1)
+                            }
+                            headerOptions[key] = value;
+                        })
+    
+                        if(element.includes('/for-model')){
+                            // topping관련: topping-apollo-graphql-shl/apollo-graphql/for-model/apollo-graphQL/
+                            // element = element.replace(`${element.split('/for-model')[0]}/for-model`,'for-model')
+                            headerOptions['path'] = headerOptions['path'].replace(`${headerOptions['path'].split('/for-model')[0]}/for-model`,'for-model')
+                        }
+    
+                        let optionsPathString = '';
+                        if(forEach == 'Model'){
+                            // Setting path of for-model( BASE)
+                            var optionsMetadataAndSource = content.split("---"); // 소스와 구분
+                            var optionsPathHeader = yamlpaser.load(optionsMetadataAndSource[0])
+                            var elementPath = element.split('/');
+                            var elementPathString = elementPath[0] + '/' + elementPath[1];
+                            var removeRootPath = rootPath ? optionsPathHeader['path'].replace(rootPath,'') : optionsPathHeader['path']
+    
+                            if(elementPathString){
+                                if (removeRootPath && (removeRootPath.includes(elementPathString) || elementPathString.includes(removeRootPath)) ) {
+                                    optionsPathHeader['path'] = rootPath ? elementPathString.replace('for-model/', `for-model/${rootPath}`) : elementPathString
                                 } else {
-                                    optionsPathString = optionsPathString.concat('/' + optionsPath[o]);
+                                    var lastWord = elementPath[1]
+                                    var replaceRootPath  = rootPath.replaceAll('/',`/${lastWord}/`)
+                                    if(optionsPathHeader['path']){
+                                        optionsPathHeader['path'] = optionsPathHeader['path'].replace(elementPathString,replaceRootPath)
+                                    }
+                                }
+                            }
+                            if(optionsPathHeader['path']){
+                                var optionsPath = optionsPathHeader['path'].split('/');
+                                for (var o = 1; o < optionsPath.length; o++) {
+                                    if (o == 1) {
+                                        optionsPathString = optionsPathString.concat(optionsPath[o]);
+                                    } else {
+                                        optionsPathString = optionsPathString.concat('/' + optionsPath[o]);
+                                    }
                                 }
                             }
                         }
-                    }
-                    var optionsPath = headerOptions['path']=='/' ? '' : headerOptions['path'];
-
-                    // Generate packageName to filePath
-                    optionsPath = optionsPath && optionsPath.startsWith('.') ? optionsPath.replace('.','/') : optionsPath
-                    if(optionsPath && optionsPath != ""){
-                        fullPath = optionsPath+ '/' + headerOptions['fileName'];
-                    } else {
-                        fullPath = headerOptions['fileName'];
-                    }
-                    if( forEach == 'Model' && fullPath.startsWith('/') ){
-                        fullPath = elementPathString.concat(fullPath)
-                    }
-
-                    if(!me.modelForElement[template]){
-                        me.modelForElement[template] = {}
-                    }
-
-                    if(forEach != 'Model'){
-                        if(!me.modelForElement[template][frameWorkelement]){
-                            me.modelForElement[template][frameWorkelement] = {}
+                        var optionsPath = headerOptions['path']=='/' ? '' : headerOptions['path'];
+    
+                        // Generate packageName to filePath
+                        optionsPath = optionsPath && optionsPath.startsWith('.') ? optionsPath.replace('.','/') : optionsPath
+                        if(optionsPath && optionsPath != ""){
+                            fullPath = optionsPath+ '/' + headerOptions['fileName'];
+                        } else {
+                            fullPath = headerOptions['fileName'];
                         }
-                        if (headerOptions['except'] == true) {
-                            if(!me.modelForElement[template][frameWorkelement][fullPath]){
+                        if( forEach == 'Model' && fullPath.startsWith('/') ){
+                            fullPath = elementPathString.concat(fullPath)
+                        }
+    
+                        if(!me.modelForElement[template]){
+                            me.modelForElement[template] = {}
+                        }
+    
+                        if(forEach != 'Model'){
+                            if(!me.modelForElement[template][frameWorkelement]){
+                                me.modelForElement[template][frameWorkelement] = {}
+                            }
+                            if (headerOptions['except'] == true) {
+                                if(!me.modelForElement[template][frameWorkelement][fullPath]){
+                                    me.modelForElement[template][frameWorkelement][fullPath] = ele
+                                }
+                            } else {
                                 me.modelForElement[template][frameWorkelement][fullPath] = ele
                             }
-                        } else {
-                            me.modelForElement[template][frameWorkelement][fullPath] = ele
                         }
-                    }
-
-
-
-                    var representativeFor = headerOptions['representativeFor']
-                    var priority = headerOptions['priority']
-
-                    var fileName = headerOptions['fileName']
-                    if (template == 'spring-boot' && headerOptions['fileName'] && headerOptions['fileName'].includes("Impl")) {
-                        if (!ele.boundedContext.fallback) {
+    
+    
+    
+                        var representativeFor = headerOptions['representativeFor']
+                        var priority = headerOptions['priority']
+    
+                        var fileName = headerOptions['fileName']
+                        if (template == 'spring-boot' && headerOptions['fileName'] && headerOptions['fileName'].includes("Impl")) {
+                            if (!ele.boundedContext.fallback) {
+                                return;
+                            }
+                        }
+                        if (headerOptions['except'] == true) {
                             return;
                         }
-                    }
-                    if (headerOptions['except'] == true) {
-                        return;
-                    }
-
-                    var source = ''
-                    if (metadataAndSource && metadataAndSource.length > 1) {
-                        for (var data in metadataAndSource) {
-
-                            if (data != 0 && data < metadataAndSource.length - 1) {
-                                source = source.concat(metadataAndSource[data] + '---\n')
-                            } else if (data == metadataAndSource.length - 1) {
-                                source = source.concat(metadataAndSource[data])
+    
+                        var source = ''
+                        if (metadataAndSource && metadataAndSource.length > 1) {
+                            for (var data in metadataAndSource) {
+    
+                                if (data != 0 && data < metadataAndSource.length - 1) {
+                                    source = source.concat(metadataAndSource[data] + '---\n')
+                                } else if (data == metadataAndSource.length - 1) {
+                                    source = source.concat(metadataAndSource[data])
+                                }
                             }
                         }
-                    }
-
-                    if(fullPath.includes('_template/')){
-                        if(!me._templateLists) me._templateLists = {}
-                        if(fullPath.startsWith('for-model')){
-                            me.$set(me._templateLists, fullPath.replace('for-model', template.split('/')[template.split('/').length-1]), source)
-                        }else{
-                            me.$set(me._templateLists, fullPath, source)
+    
+                        if(fullPath.includes('_template/')){
+                            if(!me._templateLists) me._templateLists = {}
+                            if(fullPath.startsWith('for-model')){
+                                me.$set(me._templateLists, fullPath.replace('for-model', template.split('/')[template.split('/').length-1]), source)
+                            }else{
+                                me.$set(me._templateLists, fullPath, source)
+                            }
+                            return;
                         }
-                        return;
-                    }
-
-                    if(!me.templateFrameWorkList[template]) me.templateFrameWorkList[template] = {}
-                    if(!me.templateFrameWorkList[template][frameWorkelement]) {
-                        me.templateFrameWorkList[template][frameWorkelement] = {}
-                    }
-                    if(!me.templateFrameWorkList[template][frameWorkelement].refList){
-                        me.templateFrameWorkList[template][frameWorkelement].refList = []
-                    }
-
-                    me.templateFrameWorkList[template][frameWorkelement].content = originContent;
-                    // me.templateFrameWorkList[template][frameWorkelement].content = frameWork;
-                    if(!me.templateFrameWorkList[template][frameWorkelement].refList.find(x => x == fullPath)){
-                        me.templateFrameWorkList[template][frameWorkelement].refList.push(fullPath.replace('for-model/', ''))
-                    }
-
-                    // set of Design Patterns
-                    let patterns = [{start: '//<<<', end:'//>>>'}, {start: '#<<<', end:'#>>>'}];
-
-                    patterns.forEach(function(pattern){
-                        if(source.indexOf(pattern.start) > 0){
-                            var copySource = fullPath.endsWith('.java') ? JSON.parse(JSON.stringify(source)) : source
-                            // var matchPatternLen = copySource.match(pattern.start).length;
-                            var matchPatternLen =  copySource.split('\n').filter(x=>x.includes(pattern.start)).length;
-
-                            for ( var matchNum = 0; matchNum < matchPatternLen; matchNum ++ ){
-                                var lineObj = {}
-                                let patternSearch = copySource.split(pattern.start)[1].split('\n')[0];
-                                let patternName = copySource.split(pattern.start)[1].split('\n')[0];
-
-                                lineObj.search = patternSearch.trim();
-                                if(patternSearch.match('for (.*) (.*)')){
-                                    lineObj.type = patternSearch.match('for (.*) "(.*)"')[1];
-                                    lineObj.elementName = patternSearch.match('for (.*) "(.*)"')[2];
-                                    patternName = patternSearch.replace(patternSearch.match(/\(.+/gi)[0],'');
-                                }
-
-                                var endPatternIndex = copySource.split('\n').filter(line => line.includes(pattern.start) || line.includes(pattern.end)).findIndex(item => item.includes(`${pattern.end}${patternSearch}`))
-                                var startLineNumber =  copySource.substring(0,copySource.indexOf(`${pattern.start}${patternSearch}`)).split('\n').length;
-                                copySource = copySource.replace(`${pattern.start}${patternName}\n`, '')
-                                var endLineNumber =  copySource.substring(0,copySource.indexOf(`${pattern.end}${patternSearch}`)).split('\n').length
-                                if(copySource.split('\n').length == endLineNumber){
-                                    copySource = copySource.replace(`${pattern.end}${patternSearch}`,'')
-                                }else{
-                                    copySource = copySource.replace(`${pattern.end}${patternSearch}\n`,'')
-                                }
-
-                                lineObj.start = startLineNumber - 1
-                                lineObj.end = endLineNumber - (endPatternIndex + 1)
-
-                                lineObj.path = fullPath
-                                patternName = patternName.trim()
-
-                                if( me.designPatterns[patternName] ){
-                                    if(me.designPatterns[patternName].filter( obj => JSON.stringify(obj) == JSON.stringify(lineObj)).length == 0 ){
+    
+                        if(!me.templateFrameWorkList[template]) me.templateFrameWorkList[template] = {}
+                        if(!me.templateFrameWorkList[template][frameWorkelement]) {
+                            me.templateFrameWorkList[template][frameWorkelement] = {}
+                        }
+                        if(!me.templateFrameWorkList[template][frameWorkelement].refList){
+                            me.templateFrameWorkList[template][frameWorkelement].refList = []
+                        }
+    
+                        me.templateFrameWorkList[template][frameWorkelement].content = originContent;
+                        // me.templateFrameWorkList[template][frameWorkelement].content = frameWork;
+                        if(!me.templateFrameWorkList[template][frameWorkelement].refList.find(x => x == fullPath)){
+                            me.templateFrameWorkList[template][frameWorkelement].refList.push(fullPath.replace('for-model/', ''))
+                        }
+    
+                        // set of Design Patterns
+                        let patterns = [{start: '//<<<', end:'//>>>'}, {start: '#<<<', end:'#>>>'}];
+    
+                        patterns.forEach(function(pattern){
+                            if(source.indexOf(pattern.start) > 0){
+                                var copySource = fullPath.endsWith('.java') ? JSON.parse(JSON.stringify(source)) : source
+                                // var matchPatternLen = copySource.match(pattern.start).length;
+                                var matchPatternLen =  copySource.split('\n').filter(x=>x.includes(pattern.start)).length;
+    
+                                for ( var matchNum = 0; matchNum < matchPatternLen; matchNum ++ ){
+                                    var lineObj = {}
+                                    let patternSearch = copySource.split(pattern.start)[1].split('\n')[0];
+                                    let patternName = copySource.split(pattern.start)[1].split('\n')[0];
+    
+                                    lineObj.search = patternSearch.trim();
+                                    if(patternSearch.match('for (.*) (.*)')){
+                                        lineObj.type = patternSearch.match('for (.*) "(.*)"')[1];
+                                        lineObj.elementName = patternSearch.match('for (.*) "(.*)"')[2];
+                                        patternName = patternSearch.replace(patternSearch.match(/\(.+/gi)[0],'');
+                                    }
+    
+                                    var endPatternIndex = copySource.split('\n').filter(line => line.includes(pattern.start) || line.includes(pattern.end)).findIndex(item => item.includes(`${pattern.end}${patternSearch}`))
+                                    var startLineNumber =  copySource.substring(0,copySource.indexOf(`${pattern.start}${patternSearch}`)).split('\n').length;
+                                    copySource = copySource.replace(`${pattern.start}${patternName}\n`, '')
+                                    var endLineNumber =  copySource.substring(0,copySource.indexOf(`${pattern.end}${patternSearch}`)).split('\n').length
+                                    if(copySource.split('\n').length == endLineNumber){
+                                        copySource = copySource.replace(`${pattern.end}${patternSearch}`,'')
+                                    }else{
+                                        copySource = copySource.replace(`${pattern.end}${patternSearch}\n`,'')
+                                    }
+    
+                                    lineObj.start = startLineNumber - 1
+                                    lineObj.end = endLineNumber - (endPatternIndex + 1)
+    
+                                    lineObj.path = fullPath
+                                    patternName = patternName.trim()
+    
+                                    if( me.designPatterns[patternName] ){
+                                        if(me.designPatterns[patternName].filter( obj => JSON.stringify(obj) == JSON.stringify(lineObj)).length == 0 ){
+                                            me.designPatterns[patternName].push(lineObj)
+                                        }
+                                    }else{
+                                        me.designPatterns[patternName] = []
                                         me.designPatterns[patternName].push(lineObj)
                                     }
-                                }else{
-                                    me.designPatterns[patternName] = []
-                                    me.designPatterns[patternName].push(lineObj)
                                 }
                             }
-                        }
-                    });
-                    // end of Design Patterns
-
-
-
-                    // var codeValue = {}
-                    // var fullValue = {}
-
-                    source = source.replace('\n', '')
-                    let codeObj
-                    if (source.length > 1) {
-                        var uuid = me.uuid();
-                        // if (source == undefined) {
-                        //     console.log(source, fullPath)
-                        // }
-                        // var hashName = JSON.parse(JSON.stringify(fileName))
-                        // var hashValue = JSON.parse(JSON.stringify(source))
-                        // var hashPath = JSON.parse(JSON.stringify(fullPath))
-
-                        //템플릿단에서 BC 파악 위해서 element의 BC 파악.
-                        var getBcId = null
-                        if (ele && ele.boundedContext && ele.boundedContext.elementView) {
-                            getBcId = ele.boundedContext.elementView.id
-                        }
-
-                        codeObj = {
-                            'element': null,
-                            'key': uuid,
-                            'fileName': fileName,
-                            'code': source,
-                            'file': me.fileType(fileName),
-                            'boundedContext': fullPath.split("/")[0],
-                            'bcId': getBcId,
-                            'fullPath': fullPath.replace('for-model/', ''),
-                            'priority': priority,
-                            'options': options,
-                            'templatePath': frameWorkelement,
-                            'generatedType': generatedType,
-                            'template': template
-                        }
-
-                        codeObj.fullPath = fullPath.replace('for-model/', '')
-
-                        // set Hash.
-                        let hashConcat = fileName.concat(source).concat(codeObj.fullPath)
-                        var sourceHash = Math.abs(me.hashCode(hashConcat))
-                        codeObj.hash = sourceHash;
-
-                        if (ele._type && ele._type.endsWith("Model")) {
-                            // /src/main/java/com/example/Application.java
-                            // gateway2/src/main/java/com/example/template/Application.java
-                            codeObj.element = ele.elementView ? ele.elementView.id : null;
-                        } else {
-                            if (ele._type && ele._type.endsWith("BoundedContext")) {
-                                codeObj.isMirrorElement = ele.mirrorElement ? true: false;
-                                if(element.includes("for-model/")){
-                                    codeObj.boundedContext = 'for-model';
-                                    codeObj.bcId = null;
-                                } else {
-                                    codeObj.element = ele.elementView ? ele.elementView.id : null;
-                                    codeObj.bcId = ele.elementView ? ele.elementView.id : null;
-                                    codeObj.representativeFor = representativeFor ? representativeFor : null;
-                                    codeObj.forEach = forEach ? forEach : null;
-                                    codeObj.fullPath = fullPath;
-                                }
+                        });
+                        // end of Design Patterns
+    
+    
+    
+                        // var codeValue = {}
+                        // var fullValue = {}
+    
+                        source = source.replace('\n', '')
+                        let codeObj
+                        if (source.length > 1) {
+                            var uuid = me.uuid();
+                            // if (source == undefined) {
+                            //     console.log(source, fullPath)
+                            // }
+                            // var hashName = JSON.parse(JSON.stringify(fileName))
+                            // var hashValue = JSON.parse(JSON.stringify(source))
+                            // var hashPath = JSON.parse(JSON.stringify(fullPath))
+    
+                            //템플릿단에서 BC 파악 위해서 element의 BC 파악.
+                            var getBcId = null
+                            if (ele && ele.boundedContext && ele.boundedContext.elementView) {
+                                getBcId = ele.boundedContext.elementView.id
+                            }
+    
+                            codeObj = {
+                                'element': null,
+                                'key': uuid,
+                                'fileName': fileName,
+                                'code': source,
+                                'file': me.fileType(fileName),
+                                'boundedContext': fullPath.split("/")[0],
+                                'bcId': getBcId,
+                                'fullPath': fullPath.replace('for-model/', ''),
+                                'priority': priority,
+                                'options': options,
+                                'templatePath': frameWorkelement,
+                                'generatedType': generatedType,
+                                'template': template
+                            }
+    
+                            codeObj.fullPath = fullPath.replace('for-model/', '')
+    
+                            // set Hash.
+                            let hashConcat = fileName.concat(source).concat(codeObj.fullPath)
+                            var sourceHash = Math.abs(me.hashCode(hashConcat))
+                            codeObj.hash = sourceHash;
+    
+                            if (ele._type && ele._type.endsWith("Model")) {
+                                // /src/main/java/com/example/Application.java
+                                // gateway2/src/main/java/com/example/template/Application.java
+                                codeObj.element = ele.elementView ? ele.elementView.id : null;
                             } else {
-                                //////// why key is requred?
-                                // -> Code view 관련 key 설정 없을시, 중복선택 막음
-                                if(element.includes("for-model/") && fullPath.split("/")[0] == "for-model"){
-                                    codeObj.boundedContext = 'for-model';
-                                    codeObj.bcId = null;
-                                    codeObj.fullPath = fullPath.replace(fullPath.split("/")[0] + '/', '');
-                                } else {
-                                    codeObj.element = ele.elementView ? ele.elementView.id : null;
-                                    codeObj.representativeFor = representativeFor ? representativeFor : null;
-                                    codeObj.forEach = forEach ? forEach : null;
-                                    codeObj.fullPath = fullPath;
-                                }
-                            }
-                        }
-
-                        // var diffObj = me.fullPathList.find(x => x.fullPath === fullPath);
-
-                        if(me.codeLists){
-                            let dupObj = me.codeLists.find(x => x.fullPath === codeObj.fullPath);
-
-                            if (dupObj) {
-                                if( headerOptions['ifDuplicated'] && headerOptions['ifDuplicated'] === "merge") {
-                                    //ifDuplicate
-                                    // _codeMerger(compare, origin, type of compare)
-                                    var mergedCode = null
-                                    if(codeObj.generatedType == 'TOPPING'){
-                                        mergedCode = me._codeMerger(codeObj.code, dupObj.code, codeObj.fileName);
+                                if (ele._type && ele._type.endsWith("BoundedContext")) {
+                                    codeObj.isMirrorElement = ele.mirrorElement ? true: false;
+                                    if(element.includes("for-model/")){
+                                        codeObj.boundedContext = 'for-model';
+                                        codeObj.bcId = null;
                                     } else {
-                                        mergedCode = me._codeMerger(dupObj.code, codeObj.code, codeObj.fileName);
+                                        codeObj.element = ele.elementView ? ele.elementView.id : null;
+                                        codeObj.bcId = ele.elementView ? ele.elementView.id : null;
+                                        codeObj.representativeFor = representativeFor ? representativeFor : null;
+                                        codeObj.forEach = forEach ? forEach : null;
+                                        codeObj.fullPath = fullPath;
                                     }
-
-                                    dupObj.code = mergedCode;
                                 } else {
-                                    // priority 1 이상....
-                                    if ( priority && (priority < dupObj.priority) || codeObj.generatedType =="TOPPING" ) {
-                                        dupObj.code = codeObj.code;
-                                    }else{
-                                        return;
+                                    //////// why key is requred?
+                                    // -> Code view 관련 key 설정 없을시, 중복선택 막음
+                                    if(element.includes("for-model/") && fullPath.split("/")[0] == "for-model"){
+                                        codeObj.boundedContext = 'for-model';
+                                        codeObj.bcId = null;
+                                        codeObj.fullPath = fullPath.replace(fullPath.split("/")[0] + '/', '');
+                                    } else {
+                                        codeObj.element = ele.elementView ? ele.elementView.id : null;
+                                        codeObj.representativeFor = representativeFor ? representativeFor : null;
+                                        codeObj.forEach = forEach ? forEach : null;
+                                        codeObj.fullPath = fullPath;
                                     }
                                 }
-                            } else {
-                                me.codeLists.push(codeObj);
                             }
-                        }
-
-
-
-                        me.$set(me.newTreeHashLists, sourceHash, fullPath)
-
-                        // if(isEditTemplate){
-                        //     me.editTemplateFrameWorkList[template][frameWorkelement].elementResult = null
-                        //     me.editTemplateFrameWorkList[template][frameWorkelement].elementResult = codeObj
-                        // }
-
-                        // treeLists beforeFullPath 미포함.
-                        if(me.openCode && me.openCode[0]){
-                            if(me.openCode[0].path == codeObj.fullPath || me.openCode[0].fullPath == codeObj.fullPath || (me.openCode[0].template == codeObj.template && me.openCode[0].templatePath == codeObj.templatePath)){
-                                me.openCode[0].code = codeObj.code
+    
+                            // var diffObj = me.fullPathList.find(x => x.fullPath === fullPath);
+    
+                            if(me.codeLists){
+                                let dupObj = me.codeLists.find(x => x.fullPath === codeObj.fullPath);
+    
+                                if (dupObj) {
+                                    if( headerOptions['ifDuplicated'] && headerOptions['ifDuplicated'] === "merge") {
+                                        //ifDuplicate
+                                        // _codeMerger(compare, origin, type of compare)
+                                        var mergedCode = null
+                                        if(codeObj.generatedType == 'TOPPING'){
+                                            mergedCode = me._codeMerger(codeObj.code, dupObj.code, codeObj.fileName);
+                                        } else {
+                                            mergedCode = me._codeMerger(dupObj.code, codeObj.code, codeObj.fileName);
+                                        }
+    
+                                        dupObj.code = mergedCode;
+                                    } else {
+                                        // priority 1 이상....
+                                        if ( priority && (priority < dupObj.priority) || codeObj.generatedType =="TOPPING" ) {
+                                            dupObj.code = codeObj.code;
+                                        }else{
+                                            return;
+                                        }
+                                    }
+                                } else {
+                                    me.codeLists.push(codeObj);
+                                }
+                            }
+    
+    
+    
+                            me.$set(me.newTreeHashLists, sourceHash, fullPath)
+    
+                            // if(isEditTemplate){
+                            //     me.editTemplateFrameWorkList[template][frameWorkelement].elementResult = null
+                            //     me.editTemplateFrameWorkList[template][frameWorkelement].elementResult = codeObj
+                            // }
+    
+                            // treeLists beforeFullPath 미포함.
+                            if(me.openCode && me.openCode[0]){
+                                if(me.openCode[0].path == codeObj.fullPath || me.openCode[0].fullPath == codeObj.fullPath || (me.openCode[0].template == codeObj.template && me.openCode[0].templatePath == codeObj.templatePath)){
+                                    me.openCode[0].code = codeObj.code
+                                } 
+                                // else {
+                                //     if(!me.opennedTemplateFramework[0].templateErrMsg){
+                                //         var platform = me.getPlatformPath()
+                                //         var tempPath = me.getTempPath()
+                                //         if(me.editTemplateFrameWorkList[platform] && me.editTemplateFrameWorkList[platform][tempPath] && me.editTemplateFrameWorkList[platform][tempPath].elementResult){
+                                //             me.openCode[0].code = me.editTemplateFrameWorkList[platform][tempPath].elementResult.code
+                                //         }
+                                //     }
+                                // }
                             } 
-                            // else {
-                            //     if(!me.opennedTemplateFramework[0].templateErrMsg){
-                            //         var platform = me.getPlatformPath()
-                            //         var tempPath = me.getTempPath()
-                            //         if(me.editTemplateFrameWorkList[platform] && me.editTemplateFrameWorkList[platform][tempPath] && me.editTemplateFrameWorkList[platform][tempPath].elementResult){
-                            //             me.openCode[0].code = me.editTemplateFrameWorkList[platform][tempPath].elementResult.code
-                            //         }
+    
+    
+                            var fileNameCheckArray = content.split("---");
+                            if (fileNameCheckArray[0].includes("fileName: {{")) {
+                                if (ele.name != ele.oldName && ele.oldName != undefined && ele.oldName.length > 0) {
+                                    var nameCamelCase = _.camelCase(ele.oldName);
+                                    var namePascalCase = nameCamelCase.substring(0, 1).toUpperCase() + nameCamelCase.substring(1);
+                                    var beforeFullPath = "";
+                                    var stringArray = codeObj.fullPath.split("/");
+                                    stringArray.forEach(function (value, index) {
+                                        if (index != stringArray.length - 1) {
+                                            beforeFullPath = beforeFullPath.concat(value + "/");
+                                        } else {
+                                            beforeFullPath = beforeFullPath.concat(value.replace(ele.namePascalCase, namePascalCase));
+                                        }
+                                    })
+                                    codeObj.beforeFullPath = beforeFullPath;
+                                }
+                            }
+                            if (ele.boundedContext || options.forEach == "BoundedContext") {
+                                if (options.forEach == "BoundedContext") {
+                                    if (ele.oldName != undefined)
+                                        if (ele.name != ele.oldName) {
+                                            codeObj.beforeFullPath = fullPath.replace(ele.name, ele.oldName);
+                                        }
+                                } else if (ele.boundedContext) {
+                                    if (ele.boundedContext.oldName != undefined) {
+                                        if (codeObj.beforeFullPath) {
+                                            codeObj.beforeFullPath = codeObj.beforeFullPath.replace(ele.boundedContext.name, ele.boundedContext.oldName)
+                                        } else {
+                                            codeObj.beforeFullPath = codeObj.fullPath.replace(ele.boundedContext.name, ele.boundedContext.oldName)
+                                        }
+                                    }
+                                }
+                            }
+                            // treeLists beforeFullPath 포함.
+                            // fullValue.beforeFullPath = fullValue.beforeFullPath ? fullValue.beforeFullPath : null
+                            // me.getCodeList.push(codeValue)
+                            // me.fullPathList.push(fullValue)
+                            // me.$set(me.newTreeHashLists, sourceHash, fullPath)
+                            // if(me.templateResultPath && me.filteredOpenCode && me.filteredOpenCode[0]){
+                            //     if((me.filteredOpenCode[0].fullPath && me.filteredOpenCode[0].fullPath == codeObj.fullPath) || (me.filteredOpenCode[0].path && me.filteredOpenCode[0].path == codeObj.path)){
+                            //         var selectedRef = me.filteredPrettierCodeLists.find(x => x.fullPath == me.filteredOpenCode[0].fullPath)
+                            //         if(!selectedRef){
+                            //             selectedRef = me.filteredPrettierCodeLists.find(x => x.path == me.filteredOpenCode[0].path)
+                            //         } 
+                            //         me.openCode[0].code = selectedRef.code
+                            //         me.editModeResultViewerRenderKey++;
                             //     }
                             // }
-                        } 
-
-
-                        var fileNameCheckArray = content.split("---");
-                        if (fileNameCheckArray[0].includes("fileName: {{")) {
-                            if (ele.name != ele.oldName && ele.oldName != undefined && ele.oldName.length > 0) {
-                                var nameCamelCase = _.camelCase(ele.oldName);
-                                var namePascalCase = nameCamelCase.substring(0, 1).toUpperCase() + nameCamelCase.substring(1);
-                                var beforeFullPath = "";
-                                var stringArray = codeObj.fullPath.split("/");
-                                stringArray.forEach(function (value, index) {
-                                    if (index != stringArray.length - 1) {
-                                        beforeFullPath = beforeFullPath.concat(value + "/");
-                                    } else {
-                                        beforeFullPath = beforeFullPath.concat(value.replace(ele.namePascalCase, namePascalCase));
-                                    }
-                                })
-                                codeObj.beforeFullPath = beforeFullPath;
-                            }
-                        }
-                        if (ele.boundedContext || options.forEach == "BoundedContext") {
-                            if (options.forEach == "BoundedContext") {
-                                if (ele.oldName != undefined)
-                                    if (ele.name != ele.oldName) {
-                                        codeObj.beforeFullPath = fullPath.replace(ele.name, ele.oldName);
-                                    }
-                            } else if (ele.boundedContext) {
-                                if (ele.boundedContext.oldName != undefined) {
-                                    if (codeObj.beforeFullPath) {
-                                        codeObj.beforeFullPath = codeObj.beforeFullPath.replace(ele.boundedContext.name, ele.boundedContext.oldName)
-                                    } else {
-                                        codeObj.beforeFullPath = codeObj.fullPath.replace(ele.boundedContext.name, ele.boundedContext.oldName)
-                                    }
+                            if (me.ideWindow) {
+                                console.log("canvas code");
+                                var projectId;
+                                if (me.information && me.information.projectId) {
+                                    projectId = me.information.projectId;
+                                } else {
+                                    projectId = me.params.projectId;
                                 }
+                                var message = {
+                                    "message": "code",
+                                    "type": "update",
+                                    "path": projectId + "/" + codeObj.fullPath,
+                                    "content": codeObj.code,
+                                }
+                                if (codeObj.beforeFullPath) {
+                                    message.beforePath = projectId + "/" + codeObj.beforeFullPath;
+                                }
+                                // if (me.fullPathList.length == 1) {
+                                if (me.codeLists.length == 1) {
+                                    message.start = true
+                                }
+                                if (options.mergeType) {
+                                    message.mergeType = options.mergeType
+                                }
+                                me.ideWindow.postMessage(message);
                             }
                         }
-                        // treeLists beforeFullPath 포함.
-                        // fullValue.beforeFullPath = fullValue.beforeFullPath ? fullValue.beforeFullPath : null
-                        // me.getCodeList.push(codeValue)
-                        // me.fullPathList.push(fullValue)
-                        // me.$set(me.newTreeHashLists, sourceHash, fullPath)
-                        // if(me.templateResultPath && me.filteredOpenCode && me.filteredOpenCode[0]){
-                        //     if((me.filteredOpenCode[0].fullPath && me.filteredOpenCode[0].fullPath == codeObj.fullPath) || (me.filteredOpenCode[0].path && me.filteredOpenCode[0].path == codeObj.path)){
-                        //         var selectedRef = me.filteredPrettierCodeLists.find(x => x.fullPath == me.filteredOpenCode[0].fullPath)
-                        //         if(!selectedRef){
-                        //             selectedRef = me.filteredPrettierCodeLists.find(x => x.path == me.filteredOpenCode[0].path)
-                        //         } 
-                        //         me.openCode[0].code = selectedRef.code
-                        //         me.editModeResultViewerRenderKey++;
-                        //     }
-                        // }
-                        if (me.ideWindow) {
-                            console.log("canvas code");
-                            var projectId;
-                            if (me.information && me.information.projectId) {
-                                projectId = me.information.projectId;
-                            } else {
-                                projectId = me.params.projectId;
+                        if(me.editTemplateFrameWorkList[template] && me.editTemplateFrameWorkList[template][frameWorkelement]){
+                            if(me.editTemplateFrameWorkList[template][frameWorkelement].failedGenerate == true){
+                                me.editTemplateFrameWorkList[template][frameWorkelement].failedGenerate = false
+                                me.editTemplateFrameWorkList[template][frameWorkelement].errorMessage = null
+                                if(me.editTemplateFrameWorkList[template][frameWorkelement].isEditted == true){
+                                    me.editTemplateFrameWorkList[template][frameWorkelement].isFixed = true
+                                    me.editTemplateFrameWorkList[template][frameWorkelement].isEditted = false
+                                } 
                             }
-                            var message = {
-                                "message": "code",
-                                "type": "update",
-                                "path": projectId + "/" + codeObj.fullPath,
-                                "content": codeObj.code,
-                            }
-                            if (codeObj.beforeFullPath) {
-                                message.beforePath = projectId + "/" + codeObj.beforeFullPath;
-                            }
-                            // if (me.fullPathList.length == 1) {
-                            if (me.codeLists.length == 1) {
-                                message.start = true
-                            }
-                            if (options.mergeType) {
-                                message.mergeType = options.mergeType
-                            }
-                            me.ideWindow.postMessage(message);
                         }
-                    }
-                    if(me.editTemplateFrameWorkList[template] && me.editTemplateFrameWorkList[template][frameWorkelement]){
-                        if(me.editTemplateFrameWorkList[template][frameWorkelement].failedGenerate == true){
-                            me.editTemplateFrameWorkList[template][frameWorkelement].failedGenerate = false
-                            me.editTemplateFrameWorkList[template][frameWorkelement].errorMessage = null
-                            if(me.editTemplateFrameWorkList[template][frameWorkelement].isEditted == true){
-                                me.editTemplateFrameWorkList[template][frameWorkelement].isFixed = true
-                                me.editTemplateFrameWorkList[template][frameWorkelement].isEditted = false
+    
+                        if(!(me.openCode && me.openCode[0]) && me.opennedTemplateFramework && me.opennedTemplateFramework[0]){
+                            if(me.opennedTemplateFramework[0].templatePath == codeObj.templatePath || me.opennedTemplateFramework[0].path == codeObj.templatePath){
+                                me.opennedTemplateFramework[0].templateErrMsg = null 
+                                me.setTemplateResult(codeObj.fullPath)
+                            }
+                        }
+    
+                    } catch (e) {
+                        var filePath = processContext.element
+                        var template = processContext.template
+                        // var code = originContent
+                        var fileName = filePath.split('/')
+                        var subFileName = filePath.replace(fileName.at(-1), "")
+                        console.log(filePath, ": ", e)
+                        var elementObj =
+                            {
+                                'code' : frameWork,
+                                'failedGenerate': true,
+                                'isFixed': false,
+                                'errorMessage': e.message,
+                                'element': [
+                                    {
+                                        'templatePath': filePath,
+                                        'computedFileName': fileName.at(-1),
+                                        'computedSubFileName': subFileName ? subFileName : null,
+                                        'code': frameWork,
+                                        'template': template
+                                    }
+                                ]
+                            }
+                        if(localStorage.getItem("editTemplateList") && me.firstSetEditTemplateList){
+                            var CircularJSON = require('circular-json');
+                            var obj = CircularJSON.parse(localStorage.getItem("editTemplateList"));
+                            if(obj && obj.projectId == me.modelingProjectId){
+                                me.editTemplateFrameWorkList = obj.editTemplateList
+                            }
+                            me.firstSetEditTemplateList = false
+                        }
+                        if( !(me.editTemplateFrameWorkList[template] && me.editTemplateFrameWorkList[template][frameWorkelement]) ){
+                            if(!me.editTemplateFrameWorkList[template]) {
+                                me.editTemplateFrameWorkList[template] = {}
+                            }
+                            me.$set(me.editTemplateFrameWorkList[template], filePath, elementObj)
+                        } else {
+                            me.editTemplateFrameWorkList[template][frameWorkelement].errorMessage = e.message
+                        }
+    
+                        me.$set(me.editTemplateFrameWorkList[template], filePath, elementObj);
+                        
+                        if(fullPath){
+                            if(!me.errTempResultList[template]){
+                                me.errTempResultList[template] = {}
                             } 
+                            if(!me.errTempResultList[template][filePath]){
+                                me.errTempResultList[template][filePath] = {}
+                            } 
+                            me.errTempResultList[template][filePath][fullPath] = e.message
+                            console.log(fullPath, e.message)
                         }
-                    }
-
-                    if(!(me.openCode && me.openCode[0]) && me.opennedTemplateFramework && me.opennedTemplateFramework[0]){
-                        if(me.opennedTemplateFramework[0].templatePath == codeObj.templatePath || me.opennedTemplateFramework[0].path == codeObj.templatePath){
-                            me.opennedTemplateFramework[0].templateErrMsg = null 
-                            me.setTemplateResult(codeObj.fullPath)
-                        }
-                    }
-
-                } catch (e) {
-                    var filePath = processContext.element
-                    var template = processContext.template
-                    // var code = originContent
-                    var fileName = filePath.split('/')
-                    var subFileName = filePath.replace(fileName.at(-1), "")
-                    console.log(filePath, ": ", e)
-                    var elementObj =
-                        {
-                            'code' : frameWork,
-                            'failedGenerate': true,
-                            'isFixed': false,
-                            'errorMessage': e.message,
-                            'element': [
-                                {
-                                    'templatePath': filePath,
-                                    'computedFileName': fileName.at(-1),
-                                    'computedSubFileName': subFileName ? subFileName : null,
-                                    'code': frameWork,
-                                    'template': template
-                                }
-                            ]
-                        }
-                    if(localStorage.getItem("editTemplateList") && me.firstSetEditTemplateList){
-                        var CircularJSON = require('circular-json');
-                        var obj = CircularJSON.parse(localStorage.getItem("editTemplateList"));
-                        if(obj && obj.projectId == me.modelingProjectId){
-                            me.editTemplateFrameWorkList = obj.editTemplateList
-                        }
-                        me.firstSetEditTemplateList = false
-                    }
-                    if( !(me.editTemplateFrameWorkList[template] && me.editTemplateFrameWorkList[template][frameWorkelement]) ){
-                        if(!me.editTemplateFrameWorkList[template]) {
-                            me.editTemplateFrameWorkList[template] = {}
-                        }
-                        me.$set(me.editTemplateFrameWorkList[template], filePath, elementObj)
-                    } else {
-                        me.editTemplateFrameWorkList[template][frameWorkelement].errorMessage = e.message
-                    }
-
-                    me.$set(me.editTemplateFrameWorkList[template], filePath, elementObj);
-                    
-                    if(fullPath){
-                        if(!me.errTempResultList[template]){
-                            me.errTempResultList[template] = {}
-                        } 
-                        if(!me.errTempResultList[template][filePath]){
-                            me.errTempResultList[template][filePath] = {}
-                        } 
-                        me.errTempResultList[template][filePath][fullPath] = e.message
-                        console.log(fullPath, e.message)
-                    }
-                    if(me.openCode && me.openCode[0]){
-                        if(filePath == me.openCode[0].templatePath){
-                            me.setTemplateResult(filePath)
+                        if(me.openCode && me.openCode[0]){
+                            if(filePath == me.openCode[0].templatePath){
+                                me.setTemplateResult(filePath)
+                            }
                         }
                     }
                 }
