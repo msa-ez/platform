@@ -27,7 +27,7 @@
                 v-on:deSelectShape="deSelectedActivity"
                 v-on:rotateShape="onRotateShape"
                 v-on:addedToGroup="onAddedToGroup"
-                :label="getFieldDescriptors && !canvas.isHexagonal ? '': namePanel"
+                :label="getFieldDescriptors && !canvas.isHexagonal ? '': getNamePanel"
                 :_style="{
                 'label-angle':value.elementView.angle,
                 'font-weight': 'bold', 'font-size': '16',

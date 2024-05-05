@@ -95,6 +95,9 @@
             var me = this
             //필수
             try {
+                if (me.value && me.value.displayName === undefined) {
+                    me.$set(me.value, 'displayName', null);
+                }
                 me.setUserInfo()
                 me.setInitElement()
 
