@@ -184,7 +184,7 @@
                 return this.restfulList.slice(1)
             },
             getControllerList(){
-                return this.restfulList.filter(method => method !== 'PATCH');
+                return this.restfulList.filter(method => method === 'POST' || method === 'PUT' || method === 'DELETE');
             },
             elementPrefix(){
                 var me = this
@@ -369,9 +369,6 @@
                             me.commandExample = `http PUT localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))}/1/${me.value.controllerInfo.apiPath} ${descriptorName}="{value}"`
                         }else if(me.value.controllerInfo.method == 'DELETE'){
                             me.commandExample = `http DELETE localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))}/1/${me.value.controllerInfo.apiPath} ${descriptorName}="{value}"`
-                        }else if(me.value.controllerInfo.method == 'GET'){
-                            me.commandExample = `http GET localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))}/1/${me.value.controllerInfo.apiPath} ${descriptorName}="{value}"`
-
                         }
                         me.setApiPath()
                     }
