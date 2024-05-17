@@ -106,6 +106,14 @@
                             'fill-opacity': 1,
                         }"
                 ></rectangle-element>
+                <text-element
+                        :sub-width="'100%'"
+                        :sub-height="value.elementView.fieldH"
+                        :sub-top="40"
+                        :sub-left="10"
+                        :subStyle="{'font-size': '14px', 'text-anchor':'start', 'font-color': '#FAFAFA'}"
+                        :text="attributeLabels"
+                ></text-element>
             </sub-elements>
 
             <!-- operation -->
@@ -121,6 +129,14 @@
                             'z-index': -1
                         }"
                 ></rectangle-element>
+                <text-element
+                        :sub-width="'100%'"
+                        :sub-height="value.elementView.methodH"
+                        :sub-top="value.elementView.subEdgeH"
+                        :sub-left="10"
+                        :subStyle="{'font-size': '14px', 'text-anchor':'start', 'font-color': '#FAFAFA'}"
+                        :text="operationLabels"
+                ></text-element>
             </sub-elements>
 
             <uml-sub-controller
@@ -129,7 +145,7 @@
             ></uml-sub-controller>
         </group-element>
 
-        <div v-if="value.fieldDescriptors">
+        <!-- <div v-if="value.fieldDescriptors">
             <div v-for="(attr, index) in value.fieldDescriptors" :key="'a'+index">
                 <uml-class-text
                         v-model="value"
@@ -148,9 +164,9 @@
                         }"
                 ></uml-class-text>
             </div>
-        </div>
+        </div> -->
 
-        <div v-if="value.operations">
+        <!-- <div v-if="value.operations">
             <div v-for="(item, index) in value.operations" :key="'method'+index">
                 <uml-class-text
                         v-model="value"
@@ -169,7 +185,7 @@
                         }"
                 ></uml-class-text>
             </div>
-        </div>
+        </div> -->
 
         <uml-class-panel
                 v-if="propertyPanel"
@@ -290,16 +306,24 @@
             },
             attributeLabels() {
                 try {
+                    // var me = this
+                    // var arr = []
+                    // if (me.value.fieldDescriptors.length > 0) {
+                    //     me.value.fieldDescriptors.forEach(function (item) {
+                    //         var labelName = item.displayName ? item.displayName : item.name;
+                    //         var label = item.label ? item.label : '- ' + labelName + ': ' + item.className;
+                    //         arr.push(label);
+                    //     });
+                    // }
+                    // return arr
                     var me = this
-                    var arr = []
-                    if (me.value.fieldDescriptors.length > 0) {
-                        me.value.fieldDescriptors.forEach(function (item) {
-                            var labelName = item.displayName ? item.displayName : item.name;
-                            var label = item.label ? item.label : '- ' + labelName + ': ' + item.className;
-                            arr.push(label);
-                        });
-                    }
-                    return arr
+                    var text = '';
+                    me.value.fieldDescriptors.forEach((item) => {
+                        var labelName = item.displayName ? item.displayName : item.name;
+                        var label = item.label ? item.label : '- ' + labelName + ': ' + item.className;
+                        text += label + '\n';
+                    })
+                    return text;
                 } catch (e) {
                     return "";
                 }
