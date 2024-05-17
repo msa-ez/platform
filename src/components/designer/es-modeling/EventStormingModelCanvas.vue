@@ -6505,8 +6505,9 @@
             },
             updateUMLClassValue(agg) {
                 var me = this;
+                me.$set(me.value.elements, agg.id, agg);
                 me.changedByMe = true;
-                me.value.elements[agg.id] = agg;
+                // me.value.elements[agg.id] = agg;
             },
             openExportDialog() {
                 this.settingExportDialog = true;
