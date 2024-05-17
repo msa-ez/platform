@@ -421,23 +421,25 @@
         mounted() {
             var me = this
 
-            if(me.value.isAggregateRoot) {
-                me.classType = "AggregateRoot"
-            }
-            if(me.value.isVO) {
-                me.classType = "ValueObject"
-            }
-            if(me.value.isAbstract) {
-                me.classType = "Abstract"
-            }
-            if(me.value.isInterface) {
-                me.classType = "Interface"
-            }
-            if(!me.value.isAggregateRoot && !me.value.isVO && !me.value.isAbstract && !me.value.isInterface) {
-                me.classType = "Class"
-            }
+            Vue.nextTick(() => {
+                if(me.value.isAggregateRoot) {
+                    me.classType = "AggregateRoot"
+                }
+                if(me.value.isVO) {
+                    me.classType = "ValueObject"
+                }
+                if(me.value.isAbstract) {
+                    me.classType = "Abstract"
+                }
+                if(me.value.isInterface) {
+                    me.classType = "Interface"
+                }
+                if(!me.value.isAggregateRoot && !me.value.isVO && !me.value.isAbstract && !me.value.isInterface) {
+                    me.classType = "Class"
+                }
 
-            me.setReturnTypeList()
+                me.setReturnTypeList()
+            });
         },
         watch: {
             'value.name': {
