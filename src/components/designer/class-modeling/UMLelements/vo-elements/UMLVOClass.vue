@@ -96,6 +96,14 @@
                             'fill-opacity': 1,
                         }"
                 ></rectangle-element>
+                <text-element
+                        :sub-width="'100%'"
+                        :sub-height="value.elementView.fieldH"
+                        :sub-top="40"
+                        :sub-left="10"
+                        :subStyle="{'font-size': '14px', 'text-anchor':'start', 'font-color': '#FAFAFA'}"
+                        :text="attributeLabels"
+                ></text-element>
             </sub-elements>
 
             <!-- operation -->
@@ -111,6 +119,14 @@
                             'z-index': -1
                         }"
                 ></rectangle-element>
+                <text-element
+                        :sub-width="'100%'"
+                        :sub-height="value.elementView.methodH"
+                        :sub-top="value.elementView.subEdgeH"
+                        :sub-left="10"
+                        :subStyle="{'font-size': '14px', 'text-anchor':'start', 'font-color': '#FAFAFA'}"
+                        :text="operationLabels"
+                ></text-element>
             </sub-elements>
 
             <uml-sub-controller 

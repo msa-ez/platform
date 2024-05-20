@@ -96,6 +96,14 @@
                             'fill-opacity': 1,
                         }"
                 ></rectangle-element>
+                <text-element
+                        :sub-width="'100%'"
+                        :sub-height="value.elementView.fieldH"
+                        :sub-top="40"
+                        :sub-left="10"
+                        :subStyle="{'font-size': '14px', 'text-anchor':'start', 'font-color': '#FAFAFA'}"
+                        :text="attributeLabels"
+                ></text-element>
             </sub-elements>
 
             <!-- operation -->
@@ -111,6 +119,14 @@
                             'z-index': -1
                         }"
                 ></rectangle-element>
+                <text-element
+                        :sub-width="'100%'"
+                        :sub-height="value.elementView.methodH"
+                        :sub-top="value.elementView.subEdgeH"
+                        :sub-left="10"
+                        :subStyle="{'font-size': '14px', 'text-anchor':'start', 'font-color': '#FAFAFA'}"
+                        :text="operationLabels"
+                ></text-element>
             </sub-elements>
 
             <uml-sub-controller
@@ -119,7 +135,7 @@
             ></uml-sub-controller>
         </group-element>
 
-        <div v-if="value.fieldDescriptors">
+        <!-- <div v-if="value.fieldDescriptors">
             <div v-for="(attr, index) in value.fieldDescriptors" :key="'a'+index">
                 <uml-class-text
                         v-model="value"
@@ -138,9 +154,9 @@
                         }"
                 ></uml-class-text>
             </div>
-        </div>
+        </div> -->
 
-        <div v-if="value.operations">
+        <!-- <div v-if="value.operations">
             <div v-for="(item, index) in value.operations" :key="'method'+index">
                 <uml-class-text
                         v-model="value"
@@ -159,7 +175,7 @@
                         }"
                 ></uml-class-text>
             </div>
-        </div>
+        </div> -->
 
         <uml-class-panel
                 v-if="propertyPanel"
