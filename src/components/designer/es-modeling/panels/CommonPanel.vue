@@ -289,7 +289,13 @@
             //     this.openExample = true
             // },
             close(){
-                this.$emit('close')
+                var me = this;
+                me.$emit('close')
+                if(me.value._type.endsWith('BoundedContext') && me.value.name){
+                    if(/[-._]/.test(me.value.name))me.value.name = me.value.name.replace(/[-._]/g, '');
+                    if(me.value.name.match(/[A-Z]/)) me.value.name = me.value.name.toLowerCase();
+                }
+                
             },
             changeTranslate() {
                 this.$emit('changeTranslate')
