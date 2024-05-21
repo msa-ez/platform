@@ -171,7 +171,7 @@
                                     </slot>
                                 </v-row>
                                 <div class="action-btn-box">
-                                    <v-row v-if="isOwnModel && isServerModel && !isReadOnlyModel">
+                                    <v-row v-if="isOwnModel">
                                         <v-col align="right">
                                             <v-btn class="action-btn" text color=primary @click="generateImplementationModel()">
                                                 <Icon icon="mdi:head-cog-outline"
