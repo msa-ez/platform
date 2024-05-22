@@ -10,6 +10,7 @@
             :element-author-display="elementAuthorDisplay"
             @close="closePanel"
             @changeTranslate="changeTranslate"
+            @updateBCName="updateBCName()"
             v-on:update:members="value.members = $event"
     >
 
@@ -311,6 +312,9 @@
                 return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
                     s4() + '-' + s4() + s4() + s4();
             },
+            updateBCName(){
+                this.$emit('updateBCName')
+            }
         }
     }
 </script>

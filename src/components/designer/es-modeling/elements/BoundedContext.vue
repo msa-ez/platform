@@ -161,6 +161,7 @@
                 :validationLists="filteredElementValidationResults"
                 @close="closePanel"
                 @changedPanelValue="changedPanelValue"
+                @updateBCName="updateBCName()"
                 :generateDone.sync="generateDone"
                 :generator="generator"
         ></bounded-context-panel>
@@ -418,6 +419,10 @@
                         me.elementValidationResults.push(me.validationFromCode(me.ESE_NOT_NAME))
                     }
                 }
+            },
+            updateBCName(){
+                this.value.name = this.value.name.replace(/[-._]/g, '');
+                this.value.name = this.value.name.toLowerCase();
             }
         }
     }
