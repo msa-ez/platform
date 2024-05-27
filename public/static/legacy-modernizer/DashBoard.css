@@ -1,0 +1,16 @@
+body {
+  margin: 0;
+}
+
+.dashboard {
+  display: flex;
+  height: 100vh;
+}
+
+.content-section {
+  flex-grow: 1; 
+  background-color: #DFE6F7;
+  padding: 1.25rem;
+  overflow: hidden; 
+  box-sizing: border-box; 
+}

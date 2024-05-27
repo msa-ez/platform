@@ -1,0 +1,36 @@
+.app-menu {
+  background-color: #2c3e50;
+  height: 100vh;
+  width: 19%;
+  min-width: 19%; 
+  padding: 1.25rem;
+  box-sizing: border-box;
+  border-right: 10px solid #142b41;
+}
+
+.menu-title {
+  color: white;
+  font-size: 1.25vw; 
+  font-weight: bold; 
+  padding-bottom: 1.25rem;; 
+  border-bottom: 1px solid #77818c; 
+  text-align: center;
+}
+
+.app-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.app-menu li a {
+  color: white;
+  text-decoration: none;
+  display: block;
+  padding: 0.625rem;
+  border-bottom: 1px solid #34495e;
+}
+
+.app-menu li a:hover {
+  background-color: #34495e;
+}

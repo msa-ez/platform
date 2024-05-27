@@ -24,6 +24,7 @@ const UserStoryMap = () => import(/* webpackChunkName: "UserStoryMap" */ "./comp
 const UMLClassModel = () => import(/* webpackChunkName: "UMLClassModel" */ "./components/designer/class-modeling/UMLClassModel");
 const BpmnModel = () => import(/* webpackChunkName: "BpmnModel" */ "./components/designer/bpmnModeling/BpmnModel");
 const Project = () => import(/* webpackChunkName: "ProjectModel" */ "./components/designer/project-modeling/ProjectModel");
+const LegacyModernizer = () => import(/* webpackChunkName: "LegacyModernizer" */ "./components/designer/legacy-modernizer/components/DashBoard");
 
 const StartElectron = () =>
   import(/* webpackChunkName: "startelectron" */ "./components/labs/StartElectron");
@@ -347,7 +348,17 @@ var options = {
         path: '/result',
         name: "Result",
         component: ModelingResult
-    }
+    },
+    {
+        path: '/legacy-modernizer/:projectId',
+        name: "LegacyModernizer",
+        component: LegacyModernizer
+    },
+    {
+        path: "/:providerUid/legacy-modernizer/:projectId",
+        name: "LegacyModernizer",
+        component: LegacyModernizer,
+    },
       
     // {
     //     path: "/courses/labAdminTest",

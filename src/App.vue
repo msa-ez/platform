@@ -206,6 +206,56 @@
                         </v-col>
                     </v-row>
 
+
+                    <div class="making-sub-title">{{$t('making.migration')}}</div>
+                    <v-row
+                        style="margin:0px;"
+                    >
+                        <v-col class="making-col"
+                            v-for="(item,index) in migration"
+                            :key="index"
+                            lg="4"
+                            md="4"
+                            sm="6"
+                            xs="12"
+                        >
+                            <v-card
+                                class="mx-auto"
+                                outlined
+                                style="padding:15px; height:100%; position: relative;"
+                            >
+                                <v-row class="ma-0">
+                                    <div style="font-weight: 500; font-size:18px; color:black;">
+                                        {{$t(item.title)}}
+                                    </div>
+                                    <v-spacer></v-spacer>
+                                    <v-chip v-if="item.tagStatus === 'Stable'" class="gs-stable-chip" small>
+                                        {{ item.tagStatus }}
+                                    </v-chip>
+                                    <v-chip v-else outlined small color="orange">{{ item.tagStatus }}</v-chip>
+                                </v-row>
+                                <v-row>
+                                    <v-col cols="12">
+                                        <v-img @click.native="moveToModel(item.type)"
+                                            :src="item.image"
+                                            style="height:150px; margin:10px 0px; cursor:pointer;"
+                                        ></v-img>
+                                    </v-col>
+                                </v-row>
+                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
+                                <v-card-actions style="position: absolute; right:0px; bottom:0px;">
+                                    <v-spacer></v-spacer>
+                                    <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                    <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                        @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+
                     <!-- 만들기 개발(development) -->
                     <div class="making-sub-title">{{$t('making.operation')}}</div>
                     <v-row
@@ -811,6 +861,16 @@
                     title: 'tools.bpmn',
                     image: '/static/image/main/mainBPMN.png',
                     subtitle: 'tools.bpmn-inst',
+                    disabled: false,
+                    tagStatus: 'Beta'
+                },
+            ],
+            migration : [
+                {
+                    type: 'lm', 
+                    title: 'tools.legacy-modernizer',
+                    image: '/static/image/main/maink8s.png',
+                    subtitle: 'tools.legacy-modernizer-inst',
                     disabled: false,
                     tagStatus: 'Beta'
                 },
@@ -1657,6 +1717,8 @@
                         path = `${path}/kubernetes`
                     } else if (type == 'bm') {
                         path = `${path}/business-model-canvas`
+                    } else if (type == 'lm') {
+                        path = `${path}/legacy-modernizer`
                     } else {
                         path = `${path}/${type}`
                     } 
@@ -1666,7 +1728,6 @@
                 } catch (e) {
                     alert('Error-NewProject', e)
                 }
-
             },
             loadTextFromFile(test) {
                 var me = this
