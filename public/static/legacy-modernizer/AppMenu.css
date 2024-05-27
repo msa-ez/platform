@@ -5,15 +5,17 @@
   min-width: 19%; 
   padding: 1.25rem;
   box-sizing: border-box;
-  border-right: 0.5px solid gray;
+  border-right: 1px solid #BDBDBD;
+}
+
+.shape-description-text {
+  margin:3px 0px 0px 5px;
 }
 
 .menu-title {
   color: black;
   font-size: 1.25vw; 
-  font-weight: bold; 
-  padding-bottom: 1.25rem;; 
-  border-bottom: 1px solid #77818c; 
+  font-weight: bold;
   text-align: center;
 }
 
@@ -28,9 +30,20 @@
   text-decoration: none;
   display: block;
   padding: 0.625rem;
-  border-bottom: 1px solid #34495e;
+  border-bottom: 1px solid #BDBDBD;
 }
 
 .app-menu li a:hover {
   background-color: #34495e;
+}
+
+.divider-style {
+  margin:10px 0px;
+}
+
+.flowchart-card {
+  font-size:20px;
+  font-weight: 500;
+  padding:5px;
+  margin:5px 0px;
 }

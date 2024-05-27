@@ -1,12 +1,11 @@
 <template>
-  <div ref="graphContainer" class="graph-container card" @click="handleGraphClick">
+  <div ref="graphContainer" class="graph-container card">
 
     <node-panel
       v-if="showNodePanel"
       :data="nodeInfoData"
       @node-info-send="handleSendNode"
       @error="handleError"
-      :style="{ position: 'absolute', top: mousePosition.y + 'px', left: mousePosition.x + 'px' }"
     >
     </node-panel>
 
@@ -62,7 +61,6 @@ export default {
     data: {
       type: Object,
       required: true,
-      mousePosition: { x: 0, y: 0 },
     },
     loading: {  
       type: Boolean,
@@ -158,9 +156,7 @@ export default {
       node.on('click', (event, d) => {                              // 클릭 이벤트 핸들러 추가
         if (d.label === 'Table') {
           console.log("테이블 노드 클릭!");
-          this.nodeInfoData = d;                                  // 클릭된 노드의 정보를 저장
-          this.mousePosition.x = event.clientX; // 클라이언트 영역 내의 마우스 x 좌표
-          this.mousePosition.y = event.clientY; // 클라이언트 영역 내의 마우스 y 좌표
+          this.nodeInfoData = d;                                    // 클릭된 노드의 정보를 저장
           this.showNodePanel = true;                                // NodePanel을 표시        
           this.showTableInfo = true;
         }
