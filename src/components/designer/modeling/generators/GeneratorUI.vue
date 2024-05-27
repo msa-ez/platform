@@ -258,6 +258,7 @@
     import UserStoryMapGenerator from './UserStoryMapGenerator.js'
     import ModelModificationGenerator from './ModelModificationGenerator.js'
     import AggregateMemberGenerator from './AggregateMemberGenerator.js'
+    import KubernetesGenerator from './KubernetesGenerator.js'
     import Usage from '../../../../utils/Usage'
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
@@ -426,6 +427,7 @@
                         case "BMGenerator": this.generatorComponent = new BMGenerator(this); break;
                         case "UserStoryMapGenerator": this.generatorComponent = new UserStoryMapGenerator(this); break;
                         case "AggregateMemberGenerator": this.generatorComponent = new AggregateMemberGenerator(this); break;
+                        case "KubernetesGenerator": this.generatorComponent = new KubernetesGenerator(this); break;
 
                     }
 

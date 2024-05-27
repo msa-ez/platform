@@ -1323,6 +1323,8 @@
         <div v-for="(otherMouseEvent, email) in filteredMouseEventHandlers" :key="email">
             <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
         </div>
+
+        <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" :modelValue="value" @createModel="createModel" :defaultInputData="defaultGeneratorUiInputData" @clearModelValue="clearModelValue" @modificateModel="modificateModel"></GeneratorUI>
     </div>
 </template>
 
@@ -1344,6 +1346,7 @@
     import SeparatePanelComponents from "../../SeparatePanelComponents";
     import CodeGenerator from "../modeling/CodeGenerator";
     import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
+    import GeneratorUI from "../modeling/generators/GeneratorUI";
 
 
     var _ = require('lodash');
@@ -1373,7 +1376,8 @@
             'text-reader': TextReader,
             'model-storage-dialog': ModelStorageDialog,
             SeparatePanelComponents,
-            MouseCursorComponent
+            MouseCursorComponent,
+            GeneratorUI
         },
         mixins: [ModelCanvas],
         props: {
@@ -1383,6 +1387,10 @@
         },
         data() {
             return {
+                defaultGeneratorUiInputData: {
+                    "generator": "KubernetesGenerator",
+                    "userStory": ""
+                },
                 codePreviewLeftReSizeNumber: null,
                 gitOpsLoading: false,
                 namespaceList: [],
@@ -2236,6 +2244,28 @@
                     "content": code
                 };
                 window.opener.postMessage(message, "*")
+            },
+            clearModelValue(){
+                var me = this
+                me.value.elements = {}
+                me.value.relations = {}
+            },
+            createModel(val){
+                var me = this
+
+                me.value.elements = {}
+                me.value.relations = {}
+
+                if(val && val.elements){
+                    me.value.elements = Object.assign({}, val.elements);
+                    me.value.relations = Object.assign({}, val.relations);
+
+                    me.changedByMe = true
+                }
+            },
+            modificateModel(model){
+                var me = this;
+                
             },
             messageProcessing(e) {
                 var me = this
