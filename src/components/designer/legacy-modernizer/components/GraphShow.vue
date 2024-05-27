@@ -10,6 +10,11 @@
     >
     </node-panel>
 
+    <table-info
+      v-if="showTableInfo"
+      :data="nodeInfoData">
+    </table-info>
+
     <java-show v-show="showJavaResult"
       ref="javaShowComponent"
       @error="handleError">
@@ -27,6 +32,7 @@ import LinkUtils from './graphUtil/Link.js';
 import NodePanel from './NodePanel.vue';
 import JavaShow from './JavaShow.vue';
 import LoadingSpinner from './LoadingSpinner.vue';
+import TableInfo from './TableInfo.vue';
 
 /**
  * 역할:
@@ -36,18 +42,21 @@ import LoadingSpinner from './LoadingSpinner.vue';
  * - NodePanel: 선택된 노드의 정보를 보여줍니다.
  * - JavaShow: 선택된 노드 정보를 자바 코드로 변환하여 보여줍니다.
  * - LoadingSpinner: 데이터 로딩 중임을 사용자에게 알려주는 스피너입니다.
- *
+ * - TableInfo : 선택된 테이블의 상세 정보를 보여주는 패널입니다
+ * 
  * 로직 원리:
  * 1. 데이터가 업데이트되면 updateGraph 메소드를 호출하여 그래프를 새로 그립니다.
- * 2. 노드 클릭 시 해당 노드의 정보를 NodePanel에 전달하고, JavaShow 컴포넌트를 통해 자바 코드로 변환합니다.
- * 3. 에러 발생 시 사용자에게 알림을 제공합니다.
+ * 2. 노드 클릭 시 해당 노드의 정보를 NodePanel과 TableInfo에 전달하고, 각 정보를 화면에 표시합니다 
+ * 3. Node의 정보는 JavaShow 컴포넌트로도 전달되고, 자바 코드로 변환되어, 화면에 표시됩니다
+ * 4. 에러 발생 시 사용자에게 알림을 제공합니다.
  */
 
 export default {
   components: {
     NodePanel,
     JavaShow,
-    LoadingSpinner
+    LoadingSpinner,
+    TableInfo,
   },
   props: {
     data: {
@@ -66,6 +75,7 @@ export default {
       nodeInfoData: null,              // 선택된 노드의 정보를 저장
       showJavaResult: false,           // 자바 결과 표시 여부
       isLoading: false,                // 현재 로딩 중인지의 상태
+      showTableInfo: false,            // 테이블 정보 표시 여부
     };
   },
   watch: {                             // 속성의 변화를 감시합니다.
@@ -151,7 +161,8 @@ export default {
           this.nodeInfoData = d;                                  // 클릭된 노드의 정보를 저장
           this.mousePosition.x = event.clientX; // 클라이언트 영역 내의 마우스 x 좌표
           this.mousePosition.y = event.clientY; // 클라이언트 영역 내의 마우스 y 좌표
-          this.showNodePanel = true;                                // NodePanel을 표시          
+          this.showNodePanel = true;                                // NodePanel을 표시        
+          this.showTableInfo = true;
         }
       });
 

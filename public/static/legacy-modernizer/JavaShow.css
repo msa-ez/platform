@@ -1,10 +1,10 @@
 .llm-ui {
-  position: absolute;  
-  top: 50%;            
+  position: absolute; 
+  top: 66%; 
   right: 1vw;          
   transform: translate(0, -50%); 
   width: 20vw;
-  height: 60vh;
+  height: 56vh;
   padding: 0.625rem;
   border-radius: 5px;
   border: 1px solid #ced4da;
