@@ -2263,9 +2263,9 @@
                     me.changedByMe = true
                 }
             },
-            modificateModel(model){
-                var me = this;
-                
+            modificateModel({selectedElement, updatedElement}){
+                let valueToUpdateElement = this.embedded ? this.value.k8sValue : this.value
+                this.$set(valueToUpdateElement.elements, selectedElement.elementView.id, updatedElement)
             },
             messageProcessing(e) {
                 var me = this
