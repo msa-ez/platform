@@ -13,7 +13,7 @@
   position: relative;
   box-sizing: border-box; 
   width: 100%; 
-  height: calc(100vh - 116px); 
+  height: calc(100vh - 180px); 
   background-color: #ffffff; 
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   overflow: hidden;

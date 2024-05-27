@@ -5,7 +5,7 @@
   min-width: 19%; 
   padding: 1.25rem;
   box-sizing: border-box;
-  border-right: 10px solid #142b41;
+  border-right: 0.5px solid gray;
 }
 
 .menu-title {

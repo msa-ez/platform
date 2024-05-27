@@ -4,7 +4,8 @@ body {
 
 .dashboard {
   display: flex;
-  height: 100vh;
+  height: calc(100vh - 64px);
+  border-top: 0.5px solid gray;
 }
 
 .content-section {
