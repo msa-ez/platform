@@ -1,7 +1,9 @@
 <template>
   <div class="llm-ui">
     <div class="content-area">
-      <VueMarkdown :source="serverResponse"></VueMarkdown>
+      <VueMarkdown :source="serverResponse"
+      class="markdown-body"
+      ></VueMarkdown>
     </div>
   </div>
 </template>
