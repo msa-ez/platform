@@ -259,6 +259,7 @@
     import ModelModificationGenerator from './ModelModificationGenerator.js'
     import AggregateMemberGenerator from './AggregateMemberGenerator.js'
     import KubernetesGenerator from './KubernetesGenerator.js'
+    import KubernetesModificationGenerator from './KubernetesModificationGenerator.js'
     import Usage from '../../../../utils/Usage'
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
@@ -544,7 +545,11 @@
                         this.input.modificationMessage = ""
                         this.chatMessage = ""
 
-                        this.generatorComponent = new ModelModificationGenerator(this);
+                        switch(this.generatorName){
+                            case "KubernetesGenerator": this.generatorComponent = new KubernetesModificationGenerator(this); break;
+                            default: this.generatorComponent = new ModelModificationGenerator(this); break;
+                        }
+
                         this.generatorName = "ModelModificationGenerator"
                     }
                 }else{
