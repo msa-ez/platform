@@ -1,16 +1,8 @@
 .llm-ui {
-  position: absolute; 
-  top: 66%; 
-  right: 1vw;          
-  transform: translate(0, -50%); 
-  width: 20vw;
-  height: 56vh;
-  padding: 0.625rem;
   border-radius: 5px;
   border: 1px solid #ced4da;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   background-color: #F9FCFF;
-  overflow: hidden;
 }
 
 .content-area {
@@ -20,5 +12,6 @@
   height : 100%;
   width : 100%;
   overflow-y: auto; 
-  text-align: left; 
+  text-align: left;
+  padding:10px;
 }

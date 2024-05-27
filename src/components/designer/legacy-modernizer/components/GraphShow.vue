@@ -9,15 +9,25 @@
     >
     </node-panel>
 
-    <table-info
-      v-if="showTableInfo"
-      :data="nodeInfoData">
-    </table-info>
-
-    <java-show v-show="showJavaResult"
-      ref="javaShowComponent"
-      @error="handleError">
-    </java-show>
+    <div>
+      <div style="display: flex; flex-direction: column; width: 20vw; height: calc(100vh - 180px); justify-content: flex-end; position: absolute; right:0px; top:0px;"
+        v-if="showTableInfo || showJavaResult"
+      >
+        <div style="height:30%; position: relative; overflow:auto;">
+          <tableInfo
+            v-if="showTableInfo"
+            :data="nodeInfoData">
+          </tableInfo>
+        </div>
+        <div style="height:70%; position: relative; overflow:auto; margin-top:5px;">
+          <JavaShow
+            v-show="showJavaResult"
+            ref="javaShowComponent"
+            @error="handleError">
+          </JavaShow>
+        </div>
+      </div>
+    </div>
 
     <loading-spinner v-if="isLoading"></loading-spinner>
 

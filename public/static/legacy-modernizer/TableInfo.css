@@ -1,16 +1,9 @@
 .table-info-panel {
-  position: absolute;
-  top: 9rem;
-  right: 1vw;
-  transform: translate(0, -50%);
-  width: 20vw;
-  height: 27vh;
-  padding: 0.625rem;
-  border-radius: 5px;
   border: 1px solid #ced4da;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   background-color: #f9fcff;
   overflow: auto;
+  padding:10px;
 }
 
 .table {

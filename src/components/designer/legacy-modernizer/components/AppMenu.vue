@@ -60,19 +60,23 @@ export default {
     return {
       flowcharts: [
         {
-          name : 'upload sp file',
+          name : 'Upload Stored Procedure Code',
           status: true
         },
         {
-          name : 'visualization the structure',
+          name : 'Analyzing Code Structure',
           status: false
         },
         {
-          name : 'select target table',
+          name : 'Understanding & Convert to Graph',
           status: false
         },
         {
-          name : 'convert to java',
+          name : 'Select Entity',
+          status: false
+        },
+        {
+          name : 'ava Code Generation',
           status: false
         },
       ]
