@@ -55,6 +55,7 @@ export default {
   methods: {
     async handleConvertJava(nodeInfo) {
       console.log("자바로 변환 시작");
+      this.$emit('sequence-trigger', 4);
       this.serverResponse = '변환중...';
       
       try {

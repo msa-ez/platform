@@ -1,16 +1,18 @@
 <template>
   <div class="dashboard">
-    <app-menu class="menu-section"></app-menu>
+    <app-menu ref="appMenu" class="menu-section"></app-menu>
     <div class="content-section">
 
       <file-select
-       @upload-success="handleFileUpload"
+       @send-success="handleSendData"
+       @next-sequence="handleSequence"
        @error="handleError"
        @loading="setLoading"> 
       </file-select>
 
       <graph-show
       :data="CyperQuery || {}"
+      @next-sequence="handleSequence"
       :loading="isLoading">
       </graph-show>
 
@@ -51,9 +53,13 @@ export default {
     };
   },
   methods: {
-    handleFileUpload(cyperQuery) {
+    handleSendData(cyperQuery) {
       this.CyperQuery = cyperQuery;
       this.setLoading(false);
+      this.handleCompleteSequence(2);
+    },
+    handleSequence(index) {
+      this.$refs.appMenu.setStatusTrue(index)
     },
     handleError(error) {
       console.error('Error:', error);

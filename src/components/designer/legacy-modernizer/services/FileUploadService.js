@@ -26,8 +26,12 @@ export default {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await axios.post('http://localhost:5500/uploadFile/', formData);
-      console.log("Upload Success", response.data);                    
+      const response = await axios.post('https://localhost:8443/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      console.log('Upload Success', response.data.fileContent);
       return response.data;
     } catch (error) {
       console.error('File upload failed:', error.response.data);

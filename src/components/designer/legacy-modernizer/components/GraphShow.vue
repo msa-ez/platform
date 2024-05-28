@@ -23,6 +23,7 @@
           <JavaShow
             v-show="showJavaResult"
             ref="javaShowComponent"
+            @sequence-trigger="triggerNextSequence"
             @error="handleError">
           </JavaShow>
         </div>
@@ -103,6 +104,9 @@ export default {
     this.updateGraph();                // 컴포넌트가 마운트되면 초기 그래프를 그립니다 
   },
   methods: {
+    triggerNextSequence(index) {
+      this.$emit("next-sequence", index);
+    },
     handleSendNode(nodeInfo) {         // 자바로 변환 버튼 클릭 이벤트 핸들러
       this.showJavaResult = true;
       this.$refs.javaShowComponent.handleConvertJava(nodeInfo);
@@ -169,6 +173,7 @@ export default {
           this.nodeInfoData = d;                                    // 클릭된 노드의 정보를 저장
           this.showNodePanel = true;                                // NodePanel을 표시        
           this.showTableInfo = true;
+          this.$emit("next-sequence", 3);
         }
       });
 

@@ -10,6 +10,7 @@
 
 <script>
 import FileUploadService from "../services/FileUploadService";
+import Convert2GraphService from "../services/Convert2GraphService";
 
 /**
  * 역할:
@@ -31,13 +32,18 @@ export default {
   methods: {
     async handleFileUpload(event) {
       const file = event.target.files[0];                         
-      if (!file) return;                                          
-
+      if (!file) return;     
+      this.$emit("next-sequence", 0);                                       
       this.$emit('loading', true);
-
+      
       try {
         const result = await FileUploadService.uploadFile(file);
-        this.$emit("upload-success", result);                     
+        this.$emit("next-sequence", 1);
+        
+        const response = await Convert2GraphService.sendData(result);
+        this.$emit("next-sequence", 2);
+        this.$emit("send-success", response);     
+
       } catch (error) {
         this.$emit("error", error);
       } finally {

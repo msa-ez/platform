@@ -28,7 +28,7 @@ export default {
     };
 
     try {
-      const response = await fetch('http://localhost:5500/convertJava/', {
+      const response = await fetch('http://localhost:5502/convertJava/', {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(nodeInfo)
