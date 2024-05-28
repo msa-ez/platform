@@ -54,4 +54,29 @@ export default {
 };
 </script>
 
-<style src="../../../../../public/static/legacy-modernizer/FileSelect.css"></style>
+<style scoped>
+.mb-3 {
+    border: 1px solid #ced4da;
+    padding: 0.625rem;  
+    border-radius: 0.3125rem; 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
+    background-color: #F9FCFF;
+}
+
+.form-control {
+    width: 100%; 
+    box-sizing: border-box; 
+    background-color: #fff; 
+    background-clip: padding-box;
+    border-radius: 0.25rem; 
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out; 
+}
+
+.form-control:focus {
+    color: #495057; 
+    background-color: #fff;
+    border-color: #80bdff; 
+    outline: 0; 
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+</style>

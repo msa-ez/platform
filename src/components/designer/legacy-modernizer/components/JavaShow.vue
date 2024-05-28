@@ -1,10 +1,8 @@
 <template>
-  <div class="llm-ui">
-    <div class="content-area">
-      <VueMarkdown :source="serverResponse"
+  <div class="content-area">
+    <VueMarkdown :source="serverResponse"
       class="markdown-body"
-      ></VueMarkdown>
-    </div>
+    ></VueMarkdown>
   </div>
 </template>
 
@@ -70,4 +68,14 @@ export default {
 };
 </script>
 
-<style scoped src="../../../../../public/static/legacy-modernizer/JavaShow.css"></style>
+<style scoped>
+.content-area {
+  background-color: #fff; 
+  border-radius: 0.25rem; 
+  height : 100%;
+  width : 100%;
+  overflow-y: auto; 
+  text-align: left;
+  padding:10px;
+}
+</style>

@@ -73,4 +73,22 @@ export default {
 };
 </script>
 
-<style src="../../../../../public/static/legacy-modernizer/DashBoard.css"></style>
+<style scoped>
+body {
+  margin: 0;
+}
+
+.dashboard {
+  display: flex;
+  height: calc(100vh - 64px);
+  border-top: 0.5px solid #BDBDBD;
+}
+
+.content-section {
+  flex-grow: 1; 
+  background-color: #DFE6F7;
+  padding: 1.25rem;
+  overflow: hidden; 
+  box-sizing: border-box; 
+}
+</style>
