@@ -2263,7 +2263,26 @@
                     me.changedByMe = true
                 }
             },
-            modificateModel({selectedElement, updatedElement}){
+            modificateModel({selectedElement, updatedElement, error, aiResponse}){
+                if(error){
+                    this.$refs.generatorUI.chatList.push({
+                        text: `죄송합니다.
+AI 응답 결과 처리 도중 에러가 발생해서 처리를 중지했습니다.
+잠시 후 다시 시도해 주세요.
+
+* 예외가 발생한 AI 응답
+${aiResponse}
+
+* 예외 내용
+${error}
+`,
+                        type: 'response'
+                    })
+                    return
+                }
+                if(selectedElement === null)
+                    return
+
                 let valueToUpdateElement = this.embedded ? this.value.k8sValue : this.value
                 this.$set(valueToUpdateElement.elements, selectedElement.elementView.id, updatedElement)
             },
