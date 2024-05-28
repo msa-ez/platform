@@ -133,6 +133,9 @@
             openDoc(desDoc) {
                 this.$emit('openDesDoc', desDoc)
             },
+            closePanel(){
+                this.$emit('close')
+            }
         }
     }
 </script>
