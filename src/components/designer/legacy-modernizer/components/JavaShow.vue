@@ -1,10 +1,8 @@
 <template>
-  <div class="llm-ui">
-    <div class="content-area">
-      <VueMarkdown :source="serverResponse"
+  <div class="content-area">
+    <VueMarkdown :source="serverResponse"
       class="markdown-body"
-      ></VueMarkdown>
-    </div>
+    ></VueMarkdown>
   </div>
 </template>
 
@@ -70,15 +68,7 @@ export default {
 </script>
 
 <style scoped>
-.llm-ui {
-  border-radius: 5px;
-  border: 1px solid #ced4da;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  background-color: #F9FCFF;
-}
-
 .content-area {
-  border: 1px solid #ced4da; 
   background-color: #fff; 
   border-radius: 0.25rem; 
   height : 100%;

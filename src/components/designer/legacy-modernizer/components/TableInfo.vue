@@ -1,6 +1,21 @@
 <template>
   <div class="table-info-panel">
-    <h4>{{ data.name }} 테이블</h4>
+    <v-row class="ma-0 pa-0"
+      style="padding:10px 0px !important;"
+    >
+      <v-card-title class="ma-0 pa-0">{{ data.name }} 테이블</v-card-title>
+      <v-spacer></v-spacer>
+      <v-btn @click="handleUploadNodeInfo()"
+        color="primary"
+        small
+        style="margin-right:5px;"
+      >자바로 변환</v-btn>
+      <v-btn @click=""
+        icon small
+      >
+        <Icon icon="iconamoon:arrow-down-2" width="20" height="20"></Icon>
+      </v-btn>
+    </v-row>
     <table class="table">
       <thead>
         <tr>
@@ -17,7 +32,6 @@
     </table>
   </div>
 </template>
-
 <script>
 /**
  * 역할:
@@ -50,15 +64,17 @@ export default {
       });
       return result;
     }
-  }
+  },
+  methods: {
+    async handleUploadNodeInfo() {
+      this.$emit('node-info-send', { id: this.data.id });
+    }
+  },
 }
 </script>
 
 <style scoped>
 .table-info-panel {
-  border: 1px solid #ced4da;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  background-color: #f9fcff;
   overflow: auto;
   padding:10px;
 }
@@ -66,6 +82,7 @@ export default {
 .table {
   width: 100%;
   border-collapse: collapse; /* 테이블의 테두리를 겹치게 함 */
+  margin-bottom:10px;
 }
 
 .table th, .table td {

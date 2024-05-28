@@ -1,31 +1,29 @@
 <template>
-  <div ref="graphContainer" class="graph-container card">
-
-    <node-panel
-      v-if="showNodePanel"
-      :data="nodeInfoData"
-      @node-info-send="handleSendNode"
-      @error="handleError"
-    >
-    </node-panel>
-
+  <div ref="graphContainer" class="graph-container">
     <div>
-      <div style="display: flex; flex-direction: column; width: 20vw; height: calc(100vh - 180px); justify-content: flex-end; position: absolute; right:0px; top:0px;"
+      <div style="display: flex;
+        flex-direction: column;
+        width: 20vw;
+        height: calc(100vh - 180px);
+        position: absolute;
+        right:0px; top:0px;"
         v-if="showTableInfo || showJavaResult"
       >
-        <div style="height:30%; position: relative; overflow:auto;">
+        <v-card class="ma-0 pa-0" style="height:30%; position: relative;">
           <tableInfo
-            v-if="showTableInfo"
-            :data="nodeInfoData">
+              v-if="showTableInfo"
+              :data="nodeInfoData"
+              @node-info-send="handleSendNode"
+              @error="handleError"
+            >
           </tableInfo>
-        </div>
-        <div style="height:70%; position: relative; overflow:auto; margin-top:5px;">
+        </v-card>
+        <v-card v-show="showJavaResult" class="ma-0 pa-0" style="height:70%; position: relative; overflow:auto; margin-top:5px;">
           <JavaShow
-            v-show="showJavaResult"
             ref="javaShowComponent"
             @error="handleError">
           </JavaShow>
-        </div>
+        </v-card>
       </div>
     </div>
 
@@ -38,7 +36,6 @@
 import * as d3 from 'd3';
 import { createNodes, createLabels, nodeDrag } from './graphUtil/Node.js';
 import LinkUtils from './graphUtil/Link.js'; 
-import NodePanel from './NodePanel.vue';
 import JavaShow from './JavaShow.vue';
 import LoadingSpinner from './LoadingSpinner.vue';
 import TableInfo from './TableInfo.vue';
@@ -62,7 +59,6 @@ import TableInfo from './TableInfo.vue';
 
 export default {
   components: {
-    NodePanel,
     JavaShow,
     LoadingSpinner,
     TableInfo,
@@ -79,7 +75,6 @@ export default {
   },
   data() {
     return {
-      showNodePanel: false,            // 노드 패널의 표시 여부
       nodeInfoData: null,              // 선택된 노드의 정보를 저장
       showJavaResult: false,           // 자바 결과 표시 여부
       isLoading: false,                // 현재 로딩 중인지의 상태
@@ -167,7 +162,6 @@ export default {
         if (d.label === 'Table') {
           console.log("테이블 노드 클릭!");
           this.nodeInfoData = d;                                    // 클릭된 노드의 정보를 저장
-          this.showNodePanel = true;                                // NodePanel을 표시        
           this.showTableInfo = true;
         }
       });
