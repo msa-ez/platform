@@ -86,7 +86,7 @@ body {
 
 .content-section {
   flex-grow: 1; 
-  background-color: #DFE6F7;
+  background-color: aliceblue;
   padding: 1.25rem;
   overflow: hidden; 
   box-sizing: border-box; 

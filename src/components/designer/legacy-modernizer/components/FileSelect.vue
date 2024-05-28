@@ -1,48 +1,80 @@
 <template>
-  <div class="mb-3">
+  <v-card class="mb-3"
+    @dragover.prevent="handleDragOver"
+    @dragenter.prevent="handleDragEnter"
+    @dragleave.prevent="handleDragLeave"
+    @drop.prevent="handleFileDrop"
+    :class="{ 'drag-over': isDragging }"
+  >
+    <label for="formFile" class="custom-file-label">
+      {{ fileName }}
+    </label>
     <input 
-      class="form-control" 
+      class="form-control d-none" 
       type="file" 
       id="formFile" 
-      @change="handleFileUpload"/>
-  </div>
+      @change="handleFileUpload"
+    />
+    <div v-if="isDragging" class="drop-zone">
+      드래그하여 파일을 업로드 합니다.
+    </div>
+  </v-card>
 </template>
 
 <script>
 import FileUploadService from "../services/FileUploadService";
 import Convert2GraphService from "../services/Convert2GraphService";
 
-/**
- * 역할:
- * - 사용자가 파일을 선택하면 해당 파일을 서버로 업로드합니다.
- * - 업로드의 성공, 실패 여부에 따라 이벤트를 발생시킵니다.
- * 
- * 구성 요소:
- * - input: 파일을 선택할 수 있는 입력 필드입니다.
- * - handleFileUpload: 파일 선택 시 실행되는 메소드입니다.
- * 
- * 로직 원리:
- * 1. 사용자가 파일을 선택하면 handleFileUpload 메소드가 호출됩니다.
- * 2. 선택된 파일을 FileUploadService를 통해 서버로 업로드합니다.
- * 3. 업로드 성공 시 'upload-success' 이벤트를, 실패 시 'error' 이벤트를 발생시킵니다.
- * 4. 업로드 과정의 시작과 끝에 로딩 상태 이벤트('loading')를 발생시켜 로딩 상태를 관리합니다.
- */
-
 export default {
+  data() {
+    return {
+      isDragging: false,
+      dragCounter: 0,
+      fileName: '클릭하여 파일을 업로드 하거나\n파일을 드래그 & 드롭 해주세요',
+    };
+  },
   methods: {
+    handleDragOver() {
+      // Prevent default to allow drop
+    },
+    handleDragEnter() {
+      this.dragCounter++;
+      this.isDragging = true;
+    },
+    handleDragLeave() {
+      this.dragCounter--;
+      if (this.dragCounter === 0) {
+        this.isDragging = false;
+      }
+    },
+    async handleFileDrop(event) {
+      this.isDragging = false;
+      this.dragCounter = 0;
+      const file = event.dataTransfer.files[0];
+      if (file) {
+        this.fileName = file.name;
+        await this.uploadFile(file);
+      }
+    },
     async handleFileUpload(event) {
-      const file = event.target.files[0];                         
-      if (!file) return;     
-      this.$emit("next-sequence", 0);                                       
+      const file = event.target.files[0];
+      if (file) {
+        this.fileName = file.name;
+        await this.uploadFile(file);
+      }
+    },
+    async uploadFile(file) {
+      if (!file) return;
+      this.$emit("next-sequence", 0);
       this.$emit('loading', true);
-      
+
       try {
         const result = await FileUploadService.uploadFile(file);
         this.$emit("next-sequence", 1);
-        
+
         const response = await Convert2GraphService.sendData(result);
         this.$emit("next-sequence", 2);
-        this.$emit("send-success", response);     
+        this.$emit("send-success", response);
 
       } catch (error) {
         this.$emit("error", error);
@@ -55,28 +87,54 @@ export default {
 </script>
 
 <style scoped>
-.mb-3 {
-    border: 1px solid #ced4da;
-    padding: 0.625rem;  
-    border-radius: 0.3125rem; 
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
-    background-color: #F9FCFF;
-}
 
 .form-control {
-    width: 100%; 
-    box-sizing: border-box; 
-    background-color: #fff; 
-    background-clip: padding-box;
-    border-radius: 0.25rem; 
-    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out; 
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #fff;
+  background-clip: padding-box;
+  border-radius: 0.25rem;
+  transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
 }
 
 .form-control:focus {
-    color: #495057; 
-    background-color: #fff;
-    border-color: #80bdff; 
-    outline: 0; 
-    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+  color: #495057;
+  background-color: #fff;
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.custom-file-label {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background-color: white;
+  border-radius: 0.25rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+.d-none {
+  display: none;
+}
+
+.drag-over {
+  background-color: #f0f0f0;
+  border: 2px dashed #007bff;
+}
+
+.drop-zone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #007bff;
+  font-size: 1.2em;
+  background-color: rgba(255, 255, 255, 1);
 }
 </style>

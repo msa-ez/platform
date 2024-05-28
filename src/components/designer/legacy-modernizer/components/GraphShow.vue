@@ -1,31 +1,23 @@
 <template>
   <div ref="graphContainer" class="graph-container">
-    <div>
-      <div style="display: flex;
-        flex-direction: column;
-        width: 20vw;
-        height: calc(100vh - 180px);
-        position: absolute;
-        right:0px; top:0px;"
-        v-if="showTableInfo || showJavaResult"
+    <div v-if="showTableInfo || showJavaResult"
+      style="display: flex; flex-direction: column; height: calc(100vh - 180px); width: 78.3vw; position: absolute; right: 0px; top: 0px;"
       >
-        <v-card class="ma-0 pa-0" style="height:30%; position: relative;">
-          <tableInfo
-              v-if="showTableInfo"
-              :data="nodeInfoData"
-              @node-info-send="handleSendNode"
-              @error="handleError"
-            >
-          </tableInfo>
-        </v-card>
-        <v-card v-show="showJavaResult" class="ma-0 pa-0" style="height:70%; position: relative; overflow:auto; margin-top:5px;">
-          <JavaShow
-            ref="javaShowComponent"
-            @sequence-trigger="triggerNextSequence"
-            @error="handleError">
-          </JavaShow>
-        </v-card>
-      </div>
+      <v-card class="ma-0 pa-0 skyblue-card" style="height: 65%; position: relative;">
+        <tableInfo
+          v-if="showTableInfo"
+          :data="nodeInfoData"
+          @node-info-send="handleSendNode"
+          @error="handleError">
+        </tableInfo>
+      </v-card>
+      <v-card v-show="showJavaResult" class="ma-0 pa-0" style="height: 35%; position: relative; overflow: auto; margin-top: 5px;">
+        <JavaShow
+          ref="javaShowComponent"
+          @sequence-trigger="triggerNextSequence"
+          @error="handleError">
+        </JavaShow>
+      </v-card>
     </div>
 
     <loading-spinner v-if="isLoading"></loading-spinner>
@@ -211,6 +203,11 @@ export default {
 </script>
 
 <style scoped>
+.skyblue-card {
+  align-self: flex-end; /* 오버플로우로 인해 스크롤을 방지 */
+  width: 20vw;
+}
+
 .link {
   stroke: #999;
   stroke-opacity: 0.6;
