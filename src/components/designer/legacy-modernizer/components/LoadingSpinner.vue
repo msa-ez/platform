@@ -23,4 +23,22 @@ export default {
 };
 </script>
 
-<style scoped src="../../../../../public/static/legacy-modernizer/LoadingSpinner.css"></style>
+<style scoped>
+.spinner-overlay {
+  position: absolute; 
+  top: 50%;           
+  left: 50%;          
+  transform: translate(-50%, -50%); 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent; 
+  pointer-events: none; 
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+  color: #392f31;
+}
+</style>

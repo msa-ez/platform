@@ -85,4 +85,54 @@ export default {
 };
 </script>
 
-<style scoped src="../../../../../public/static/legacy-modernizer/AppMenu.css"></style>
+<style scoped>
+.app-menu {
+  background-color: white;
+  height: calc(100vh - 64px);
+  width: 19%;
+  min-width: 19%; 
+  padding: 1.25rem;
+  box-sizing: border-box;
+  border-right: 1px solid #BDBDBD;
+}
+
+.shape-description-text {
+  margin:3px 0px 0px 5px;
+}
+
+.menu-title {
+  color: black;
+  font-size: 1.25vw; 
+  font-weight: bold;
+  text-align: center;
+}
+
+.app-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.app-menu li a {
+  color: white;
+  text-decoration: none;
+  display: block;
+  padding: 0.625rem;
+  border-bottom: 1px solid #BDBDBD;
+}
+
+.app-menu li a:hover {
+  background-color: #34495e;
+}
+
+.divider-style {
+  margin:10px 0px;
+}
+
+.flowchart-card {
+  font-size:16px;
+  font-weight: 500;
+  padding:5px;
+  margin:5px 0px;
+}
+</style>

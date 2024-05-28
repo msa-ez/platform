@@ -54,4 +54,29 @@ export default {
 }
 </script>
 
-<style src="../../../../../public/static/legacy-modernizer/TableInfo.css"></style>
+<style scoped>
+.table-info-panel {
+  border: 1px solid #ced4da;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  background-color: #f9fcff;
+  overflow: auto;
+  padding:10px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse; /* 테이블의 테두리를 겹치게 함 */
+}
+
+.table th, .table td {
+  padding: 8px; /* 셀 패딩 */
+  text-align: left; /* 텍스트 왼쪽 정렬 */
+  border-bottom: 1px solid #ddd; /* 셀 하단 테두리 */
+}
+
+.table th {
+  background-color: #f2f2f2; /* 헤더 배경색 */
+  color: #333; /* 헤더 텍스트 색상 */
+}
+
+</style>

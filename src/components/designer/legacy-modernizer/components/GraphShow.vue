@@ -211,4 +211,25 @@ export default {
 };
 </script>
 
-<style src="../../../../../public/static/legacy-modernizer/GraphShow.css"></style>
+<style scoped>
+.link {
+  stroke: #999;
+  stroke-opacity: 0.6;
+}
+
+.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+/*TODO height 반응형 필요**/
+.graph-container {
+  position: relative;
+  box-sizing: border-box; 
+  width: 100%; 
+  height: calc(100vh - 180px); 
+  background-color: #ffffff; 
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+</style>
