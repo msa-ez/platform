@@ -207,7 +207,7 @@
                     </v-row>
 
 
-                    <div class="making-sub-title">{{$t('making.migration')}}</div>
+                    <!-- <div class="making-sub-title">{{$t('making.migration')}}</div>
                     <v-row
                         style="margin:0px;"
                     >
@@ -253,7 +253,7 @@
                                 </v-card-actions>
                             </v-card>
                         </v-col>
-                    </v-row>
+                    </v-row> -->
 
 
                     <!-- 만들기 개발(development) -->
