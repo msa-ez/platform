@@ -41,6 +41,7 @@
                                         v-on:update:sliderLocationScale="sliderLocationScale = $event"
                                         v-on:connectShape="onConnectShape"
                                         v-on:canvasReady="bindEvents"
+                                        :key="openGraphRenderKey"
                             >
 
                                 <!--엘리먼트-->
@@ -1897,6 +1898,8 @@
                     'warning': {icon: 'mdi-alert-outline', color: '#FFA726'},
                     'info': {icon: 'mdi-information-outline', color: '#29B6F6'},
                 },
+
+                openGraphRenderKey: 0
             }
         },
         beforeDestroy: function () {
@@ -2160,6 +2163,13 @@
                 window.addEventListener("message", me.messageProcessing);
                 window.opener.postMessage({message: "kubernetesYaml"}, "*");
             }
+
+            // #region 처음 캔버스를 열 때, Dom이 로딩되기 전에 좌표 값을 얻어와서 렌더링에 버그가 생기기때문에 재렌더링 시킴
+            this.$nextTick(() => {
+                if(this.openGraphRenderKey === 0)
+                    this.openGraphRenderKey += 1
+            })
+            // #endregion
         },
         watch: {
             argoServerInfo: {
