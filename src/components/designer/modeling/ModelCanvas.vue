@@ -880,20 +880,33 @@
             },
             async saveLocalScreenshot(){
                 var me = this
-                me.$app.try({
-                    context: me,
-                    async action(me){
-                        if(!me.initLoad) return;
-                        let base64Img = await me.screenshot();
-                        await me.putString(`localstorage://image_${me.projectId}`, base64Img);
+                try {
+                    if(!me.initLoad) return;
+                    let base64Img = await me.screenshot();
+                    await me.putString(`localstorage://image_${me.projectId}`, base64Img);
 
-                        me.modelCanvasChannel.postMessage({
-                            event: "ScreenShot",
-                            model: me.projectId,
-                            image: base64Img,
-                        });
-                    }
-                })
+                    me.modelCanvasChannel.postMessage({
+                        event: "ScreenShot",
+                        model: me.projectId,
+                        image: base64Img,
+                    });
+                } catch(e){
+
+                }
+                // me.$app.try({
+                //     context: me,
+                //     async action(me){
+                //         if(!me.initLoad) return;
+                //         let base64Img = await me.screenshot();
+                //         await me.putString(`localstorage://image_${me.projectId}`, base64Img);
+
+                //         me.modelCanvasChannel.postMessage({
+                //             event: "ScreenShot",
+                //             model: me.projectId,
+                //             image: base64Img,
+                //         });
+                //     }
+                // })
             },
             async saveServerScreenshot(){
                 var me = this
@@ -1016,7 +1029,17 @@
                     let lastIndex = this.filteredVersionLists.findIndex(x=>x.version == 'latest')
                     let lateVersion = this.filteredVersionLists[lastIndex - 1]
                     let version = item.version == 'latest' ? lateVersion.version : item.version
-                    let route = this.$router.resolve(`${this.projectId}:${version}`);
+                    // let route = this.$router.resolve(`${this.projectId}:${version}`);
+
+                    let path = this.$route.path;
+                    let route = this.$router.resolve(`${path}:${version}`);
+
+                    if(path.includes(":")){
+                        let currentVer = path.split(":")[1]
+                        path = path.replace(currentVer ,version)
+                        route = this.$router.resolve(path);
+                    }
+                   
                     window.open(route.href, '_blank');
                 }
             },
