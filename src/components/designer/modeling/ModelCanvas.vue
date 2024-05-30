@@ -4021,7 +4021,13 @@
                     context: me,
                     async action(me){
                         if(!options) options = {}
-                        if(!value) value = me.value
+                        if(!value) {
+                            if(me.$options.name === 'kubernetes-model-canvas')
+                                value = me.embedded ? me.value.k8sValue : me.value
+                            else
+                                value = me.value
+                        }
+    
                         let elementId = element.relationView ? element.relationView.id : element.elementView.id
 
                         // First Excution

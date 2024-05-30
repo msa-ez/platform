@@ -364,7 +364,7 @@
                     me.refreshImg();
                 }
 
-                if(obj.action == 'deleteAnnotations' && me.value.object.metadata.annotations) {
+                if(obj.action == 'deleteAnnotations' && me.value.object && me.value.object.metadata && me.value.object.metadata.annotations) {
                     var name = obj.element.targetElement.name ? obj.element.targetElement.name : obj.element.targetElement.object.metadata.name
                     var key = 'msaez.io/' + obj.element.targetElement._type + '_' + name
                     delete me.value.object.metadata.annotations[key]
@@ -541,7 +541,7 @@
                             element: me.value
                         })
                         if (me.value.relationView) {
-                            me.deleteAnnotations(obj.element)
+                            me.deleteAnnotations(me.value)
                         } 
                         /////////////////////////////////////////
                         
