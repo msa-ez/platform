@@ -242,7 +242,7 @@
 
                         fieldMapping.push(obj)
                     } else {
-                        canvas.alertInfo.text = 'Please TextField input Text'
+                        canvas.alertInfo.text = 'Please fill out the target mapping field'
                         canvas.alertInfo.show = true
                     }
 
