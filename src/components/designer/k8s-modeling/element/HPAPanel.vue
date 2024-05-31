@@ -69,17 +69,6 @@
                                     ></kube-number-field>
                                 </v-col>
                             </v-row>
-                            <v-select
-                                    label="Resource Type"
-                                    :disabled="isReadOnly"
-                                    v-model="value.object.spec.metrics[0].resource.name"
-                                    :items="resourceTypes">
-                            </v-select>
-                            <kube-number-field
-                                    :label="'AverageUtilization'"
-                                    :isReadOnly="isReadOnly"
-                                    v-model="value.object.spec.metrics[0].resource.target.averageUtilization"
-                            ></kube-number-field>
                             <kube-attr-field 
                                     v-model="value" 
                                     :isReadOnly="isReadOnly"

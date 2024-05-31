@@ -146,18 +146,7 @@
                             "scaleTargetRef": {},
                             "minReplicas": 1,
                             "maxReplicas": 10,
-                            "metrics": [
-                                {
-                                    "type": "Resource",
-                                    "resource": {
-                                        "name": "cpu",
-                                        "target": {
-                                            "type": "Utilization",
-                                            "averageUtilization": 50
-                                        }
-                                    }
-                                }
-                            ]
+                            "metrics": []
                         }
                     },
                     status: null,

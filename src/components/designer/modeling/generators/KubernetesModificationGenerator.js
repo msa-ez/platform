@@ -44,8 +44,8 @@ ${(isNewElementExist) ? "당신에게는 쿠버네티스 설정을 수정하거�
 
 각각의 속성을 설명하겠습니다.
 ${(isNewElementExist) ? `가장 최상단에는 modifications, newElements이 있습니다.
-modifications는 사용자가 전달한 쿠버네티스 설정을 변경시키는데 사용하고, newElements는 해당 설정에 대한 새로운 요소들을 추가하는데 사용합니다.` : 
-"modifications는 사용자가 전달한 쿠버네티스 설정을 변경시키는데 사용하는 속성입니다."}
+modifications는 사용자가 전달한 쿠버네티스 설정을 변경시키는 경우에 사용하고, newElements는 해당 설정에 대한 새로운 요소들을 추가하는 경우에 사용합니다.` : 
+"modifications는 사용자가 전달한 쿠버네티스 설정을 변경시키는 경우에 사용하는 속성입니다."}
 
 
 modifications 속성은 주어진 JsonPath를 이용해서 설정을 변경시킬 수 있습니다.
@@ -67,16 +67,16 @@ modifications 속성은 주어진 JsonPath를 이용해서 설정을 변경시�
 
 
 ${((isNewElementExist) ? `newElements는 사용자가 전달한 속성과 관련해서 엘리먼트를 추가할 수 있으며, 다음 가이드에 있는 요소만 추가할 수 있습니다.
-가이드에는 각각의 사용가능한 요소에 대한 타입, 설명, 어떤 사용자 요청에 대해서 사용하는지, 디폴트로 사용되는 쿠버네티스 설정이 있습니다.
+가이드에는 각각의 사용할 수 있는 요소에 대한 타입, 설명, 어떤 사용자 요청에 대해서 사용하는지, 디폴트로 사용되는 쿠버네티스 설정이 있습니다.
 * 가이드
 ${JSON.stringify(newElementGuidesForAI, null, 2)}
 
-newElements에 들어가는 각각의 속성에 대해서 설명해드겠습니다.
+newElements에 들어가는 각각의 속성에 관해서 설명해 드리겠습니다.
 * elementType
 - 새롭게 추가시킬 엘리먼트의 종류입니다. 가이드에 있는 elementType만 사용할 수 있습니다.
 
 * modifications
-- 각 가이드에 있는 엘리먼트의 defaultKubeConfig에서 추가적으로 수정할 지시사항들을 적습니다.` : "")}
+- 각 가이드에 있는 엘리먼트에서 디폴트로 사용되는 쿠버네티스 설정에서 추가로 수정할 지시 사항들을 적습니다.` : "")}
 
 
 현재의 쿠버네티스 설정 내용은 다음과 같습니다.
@@ -101,7 +101,7 @@ labels에 tag: request를 추가시켜주세요.
 }
 
 ${((isNewElementExist) ? `[입력]
-maxReplicas가 5가 되도록 새로운 HPA를 추가시켜주세요.
+CPU 임계치 50%를 기준으로, maxReplicas가 5가 될 수 있도록 새로운 HPA를 추가시켜주세요.
 
 [출력]
 {
@@ -113,6 +113,18 @@ maxReplicas가 5가 되도록 새로운 HPA를 추가시켜주세요.
                     "jsonPath": "$['spec']['maxReplicas']",
                     "action": "replace",
                     "value": 5
+                },
+
+                {
+                    "jsonPath": "$['spec']['metrics']",
+                    "action": "add",
+                    "value": {
+                        "type": "Resource",
+                        "resource": {
+                            "name": "cpu",
+                            "targetAverageUtilization": 50
+                        }
+                    }
                 }
             ]
         }
@@ -174,6 +186,7 @@ maxReplicas가 5가 되도록 새로운 HPA를 추가시켜주세요.
                     if(!newElementGuide) continue
 
                     newElement.modifications.forEach(modification => {
+                        this.beforeModificationProcess(modification, selectedElement._type, newElement.elementType)
                         this.applyModification(modification, newElementGuide.elementGuide.defaultKubeConfig)
                     })
 
@@ -226,9 +239,9 @@ maxReplicas가 5가 되도록 새로운 HPA를 추가시켜주세요.
         switch (action) {
             case 'add':
                 jp.apply(targetJson, jsonPath, (val) => {
-                    if (Array.isArray(val)) val.push(value)
+                    if (Array.isArray(val)) return [...val, value]
                     else if(typeof val === 'object') return { ...val, ...value }
-                    else return val
+                    else return value
                 });
                 break;
             case 'replace':
@@ -240,6 +253,18 @@ maxReplicas가 5가 되도록 새로운 HPA를 추가시켜주세요.
                 break;
         }
         // #endregion
+    }
+
+    /**
+     * AI가 잘못된 응답을 제공한 경우의 예외 처리 수행
+     */
+    beforeModificationProcess(modification, selectedElementType, newElementType) {
+        if(selectedElementType === "Deployment" && newElementType === "horizontalPodAutoscaler") {
+            // spec.metrics가 객체 값이 아닌, 배열 값으로 잘못 반환시킨 경우 후처리하는 로직
+            if(modification.jsonPath === "$['spec']['metrics']" && Array.isArray(modification.value) && modification.value.length === 1) {
+                modification.value = modification.value[0]
+            }
+        }
     }
 }
 
