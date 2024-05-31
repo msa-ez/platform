@@ -92,7 +92,6 @@
                             </v-layout>
                             
                             <v-flex v-if="embedded" style="justify:end; align:start;">
-                                <v-row justify="end" align="start">
                                     <v-btn
                                         style="position: absolute; top:26px; right: 60px;"
                                         text
@@ -2273,7 +2272,7 @@
                     me.changedByMe = true
                 }
             },
-            modificateModel({selectedElement, updatedElement, error, aiResponse}){
+            modificateModel({selectedElement, updatedElement, newElements, error, aiResponse}){
                 if(error){
                     this.$refs.generatorUI.chatList.push({
                         text: `죄송합니다.
@@ -2293,8 +2292,48 @@ ${error}
                 if(selectedElement === null)
                     return
 
+                
                 let valueToUpdateElement = this.embedded ? this.value.k8sValue : this.value
                 this.$set(valueToUpdateElement.elements, selectedElement.elementView.id, updatedElement)
+
+
+                for(let newElement of newElements){
+                    // #region 새로운 엘리먼트 추가하기
+                    const getElementTypeByComponent = (componentName, x, y) => {
+                        for (let i = 0; i < this.elementTypes.length; i++) {
+                            for (let j = 0; j < this.elementTypes[i].length; j++) {
+                                if (this.elementTypes[i][j].component === componentName) {
+                                    return { ...this.elementTypes[i][j], x, y}
+                                }
+                            }
+                        }
+                    }
+
+                    const currentElementX = selectedElement.elementView.x
+                    const currentElementY = selectedElement.elementView.y
+
+                    const addedElement = this.addElement(
+                        getElementTypeByComponent(newElement.elementGuide.elementType, currentElementX, currentElementY + 150),
+                        newElement.elementGuide.defaultKubeConfig
+                    )
+                    // #endregion
+
+                    // #region 만들어진 새로운 엘리먼트에 연결 추가하기
+                    const createRelation = (sourceElementValue, targetElementValue) => {
+                        const relationObj = (this.getComponentByName("kube-relation")).computed.createNew(
+                            this.uuid(),
+                            sourceElementValue,
+                            targetElementValue
+                        )
+                        this.$set(valueToUpdateElement.relations, relationObj.relationView.id, relationObj)
+                    }
+
+                    if(newElement.connectFlow === "OUT")
+                        createRelation(addedElement, updatedElement)
+                    else
+                        createRelation(updatedElement, addedElement)
+                    // #endregion
+                }
             },
             messageProcessing(e) {
                 var me = this
