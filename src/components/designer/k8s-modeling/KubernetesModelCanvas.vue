@@ -5694,6 +5694,140 @@ ${error}
                         svcArr.push(svcSpec);
                     })
 
+                    // #region "Argo + Istio" 토핑시에 Argo 관련 배포 모형을 캔버스에 BC마다 추가시키기
+                    let rolloutFlag = false; // Rollout이 이미 추가된 경우에는 추가하지 않음
+                    Object.keys(me.value.k8sValue.elements).forEach(function(key) {
+                        if(me.value.k8sValue.elements[key]){
+                            if(me.value.k8sValue.elements[key]._type === "Rollout"){
+                                rolloutFlag = true;
+                            }
+                        }
+                    })
+
+                    if(me.value.toppingPlatforms.includes("argo") && !rolloutFlag) {
+                        bcList.forEach((item, index) => {
+                            const rolloutDCName = item.name.replace(" ", "-").toLowerCase()
+                            const rolloutSpec = {
+                                "apiVersion": "argoproj.io/v1alpha1",
+                                "kind": "Rollout",
+                                "metadata": {
+                                    "name": `rollout-${rolloutDCName}`,
+                                    annotations: {
+                                        "msaez.io/x": "1000",
+                                        "msaez.io/y": (56 + index * 125).toString(),
+                                        "msaez.io/width": "100",
+                                        "msaez.io/height": "100"
+                                    }
+                                },
+                                "spec": {
+                                    "replicas": 5,
+                                    "strategy": {
+                                        "canary": {
+                                            "trafficRouting": {
+                                                "istio": {
+                                                    "virtualService": {
+                                                        "name": `vsvc-${rolloutDCName}`,
+                                                        "routes": [
+                                                            "primary"
+                                                        ]
+                                                    },
+                                                    "destinationRule": {
+                                                        "name": `destrule-${rolloutDCName}`,
+                                                        "canarySubsetName": "canary",
+                                                        "stableSubsetName": "stable"
+                                                    }
+                                                }
+                                            },
+                                            "steps": [
+                                                {
+                                                    "setWeight": 5
+                                                },
+                                                {
+                                                    "pause": {
+                                                        "duration": "10s"
+                                                    }
+                                                },
+                                                
+                                                {
+                                                    "setWeight": 20
+                                                },
+                                                {
+                                                    "pause": {
+                                                        "duration": "10s"
+                                                    }
+                                                },
+                                                
+                                                {
+                                                    "setWeight": 40
+                                                },
+                                                {
+                                                    "pause": {
+                                                        "duration": "10s"
+                                                    }
+                                                },
+                                                
+                                                {
+                                                    "setWeight": 60
+                                                },
+                                                {
+                                                    "pause": {
+                                                        "duration": "10s"
+                                                    }
+                                                },
+                                                
+                                                {
+                                                    "setWeight": 80
+                                                },
+                                                {
+                                                    "pause": {
+                                                        "duration": "10s"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "revisionHistoryLimit": 2,
+                                    "selector": {
+                                        "matchLabels": {
+                                            "app": rolloutDCName
+                                        }
+                                    },
+                                    "template": {
+                                        "metadata": {
+                                            "labels": {
+                                                "app": rolloutDCName
+                                            }
+                                        },
+                                        "spec": {
+                                            "containers": [
+                                                {
+                                                    "name": rolloutDCName,
+                                                    "image": `userid/${rolloutDCName}:version`,
+                                                    "ports": [
+                                                        {
+                                                            "name": "http",
+                                                            "containerPort": 80,
+                                                            "protocol": "TCP"
+                                                        }
+                                                    ],
+                                                    "resources": {
+                                                        "requests": {
+                                                            "memory": "32Mi",
+                                                            "cpu": "5m"
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+
+                            me.localYamlText += json2yaml.stringify(rolloutSpec);
+                        })
+                    }
+                    // #endregion
+
                     deployArr.forEach(function(item) {
                         me.localYamlText += json2yaml.stringify(item);
                     });

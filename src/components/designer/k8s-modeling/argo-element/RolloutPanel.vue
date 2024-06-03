@@ -65,7 +65,9 @@
         watch: {
             'value.object.metadata.name': {
                 deep: true,
-                handler: function(val) {
+                handler: function(val, oldVal) {
+                    if((oldVal === undefined) || (oldVal === val)) return
+
                     this.value.name = val;
                     this.value.object.spec.selector.matchLabels.app = val;
                     this.value.object.spec.template.spec.containers[0].name = val;
