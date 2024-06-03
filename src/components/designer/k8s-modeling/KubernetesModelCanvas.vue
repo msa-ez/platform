@@ -5568,7 +5568,7 @@ ${error}
                     var ingressFlag = false;
                     Object.keys(me.value.k8sValue.elements).forEach(function(key) {
                         if(me.value.k8sValue.elements[key]){
-                            if(me.value.k8sValue.elements[key].object.metadata.name=="gateway"){
+                            if(me.value.k8sValue.elements[key]._type === "Ingress"){
                                 ingressFlag = true;
                             }
                         }
