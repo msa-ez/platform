@@ -14,6 +14,9 @@
 .main-page-slider-group {
     animation: mainSlide 35s linear infinite;
 }
+.main-page-slider-group img {
+    height: 500px;
+}
 
 @keyframes mainSlide {
     0% {

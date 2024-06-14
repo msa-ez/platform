@@ -1,9 +1,9 @@
 // https
 const fs = require('fs');
 const os=require('os');
+const CompressionPlugin = require("compression-webpack-plugin");
 
 // const MonacoEditorPlugin = require('monaco-editor-webpack-plugin')
-const CompressionPlugin = require("compression-webpack-plugin");
 // const TerserPlugin = require("terser-webpack-plugin");
 module.exports = {
     filenameHashing: true,
@@ -27,6 +27,14 @@ module.exports = {
             https: true,
             disableHostCheck: true,
         },
+        plugins: [
+            new CompressionPlugin({
+                algorithm: 'gzip',
+                test: /\.(js|css|html|svg)$/,
+                threshold: 10240,
+                minRatio: 0.8
+            })
+        ]
         // plugins: [new BundleAnalyzerPlugin({
         //     analyzerMode: 'static', // 분석파일 html을 dist 폴더에 저장.
         //     reportFilename: 'bundle-report.html', // 분석파일 이름
