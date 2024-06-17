@@ -1299,6 +1299,7 @@
                             :generatorStep="generatorStep"
                             :defaultInputData="defaultGeneratorUiInputData"
                             :modelValue="value"
+                            :tabs="tabs"
                     >
                         <v-tooltip v-if="showContinue" slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
@@ -1330,6 +1331,7 @@
                             @clearModelValue="clearModelValue"
                             :generatorStep="generatorStep"
                             :modelValue="value"
+                            :tabs="tabs"
                     >
                         <!-- <v-tooltip slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
@@ -2397,6 +2399,7 @@
                 },
                 createModelInBoundedContext: false,
                 createReadModel: false,
+                tabs: [{name: 'LOGS', component: 'DebeziumLogsTab'}]
             };
         },
         computed: {

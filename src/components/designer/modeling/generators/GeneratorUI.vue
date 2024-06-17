@@ -130,6 +130,7 @@
                     </div>
 
                     <v-tabs v-model="userPanel">
+                        <v-tab v-for="tab in tabs" :key="tab.component" :disabled="hasElements" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('tab')">{{tab.name}}</v-tab>
                         <v-tab :disabled="hasElements" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Input</v-tab>
                         <v-tab :disabled="hasElements" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Output</v-tab>
                         <v-tab v-if="hasElements" :disabled="selectedElement.length===0" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('chat')">Chat</v-tab>
@@ -158,6 +159,10 @@
                             </v-expansion-panel-header>
                             <v-expansion-panel-content class="auto-modeling-dialog" >
                                 <v-tabs-items v-model="userPanel">
+                                    <v-tab-item v-for="tab in tabs" :key="tab.component" :disabled="hasElements">
+                                        <component :is="tab.component" :ref="tab.component"></component>
+                                    </v-tab-item>
+
                                     <v-tab-item :disabled="hasElements">
                                         <v-card flat>
                                             <v-textarea v-if="input"
@@ -261,6 +266,7 @@
     import KubernetesGenerator from './KubernetesGenerator.js'
     import KubernetesModificationGenerator from './KubernetesModificationGenerator.js'
     import Usage from '../../../../utils/Usage'
+    import DebeziumLogsTab from "./generatorTabs/DebeziumLogsTab.vue"
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
 
@@ -279,6 +285,10 @@
             generatorStep: String,
             defaultInputData: Object,
             modelValue: Object,
+            tabs: Array
+        },
+        components: {
+            DebeziumLogsTab
         },
 
         created(){
@@ -351,6 +361,7 @@
                 chatMessage: "",
                 hasElements: false,
                 openGeneratorUI: false,
+                focusedTabComponent: null
             }
         },
         computed: {
@@ -381,7 +392,7 @@
             if(me.$attrs.embedded) {
                 this.hasElements = true;
                 this.switchGenerator('chat');
-                this.userPanel = 2;
+                this.userPanel = 2 + this.tabs.length;
             }
         },
         updated() {
@@ -408,7 +419,7 @@
                         localStorage["gen-state"] = null;
                     } else {
                         this.isAutoGen = false
-                        this.userPanel = 0
+                        this.userPanel = 0 + this.tabs.length
                         this.generatorName = this.defaultInputData.generator
                     }
                 } else {
@@ -500,10 +511,33 @@
                     this.chatMessage = ""
                     this.generatorComponent.generate();
                 }else{
-                        this.$emit("clearModelValue")
-                        this.userPanel = 1
+                    this.$emit("clearModelValue")
 
-                    if(!this.isAutoGen || this.generatorStep === 'aggregate'){
+                    this.focusedTabComponent = (this.userPanel < this.tabs.length) ? this.$refs[this.tabs[this.userPanel].component][0] : null
+                    if (this.focusedTabComponent) {
+                        //#region 추가 탭 선택시에 관련 메세지 유효성 검증 & 입력된 값을 통한 프롬프트 초기화 및 생성
+                        const msg = this.focusedTabComponent.getValidErrorMsg()
+                        if(msg) {
+                            alert(msg)
+                            return;
+                        }
+
+                        this.generatorComponent = this.focusedTabComponent.getGenerater(this)
+                        const userPrompt = this.generatorComponent.createPrompt(this.focusedTabComponent.getUserProps())
+                        let generateOption = {
+                            "messages": [{
+                                role: 'user',
+                                content: userPrompt
+                            }],
+                            "action": "skipCreatePrompt"
+                        }
+                        this.generatorComponent.generate(generateOption);
+                        //#endregion
+
+                        this.generationStopped = true;
+                        this.userPanel = 1 + this.tabs.length
+                        return
+                    } else if(!this.isAutoGen || this.generatorStep === 'aggregate') {
                         let generateOption = {
                             "messages": [],
                             "action": "skipCreatePrompt"
@@ -528,6 +562,7 @@
                     } else {
                         this.generatorComponent.generate();
                     }
+                    this.userPanel = 1 + this.tabs.length
                 }
 
                 this.generationStopped = true;
@@ -601,8 +636,11 @@
                     this.chatList.push(response);
                 }else{
                     this.savedResult = this.result;
-                    this.input['userStory'] = this.generatorComponent.previousMessages[0].content
-                    this.userPanel = 1
+
+                    if(!this.focusedTabComponent)
+                        this.input['userStory'] = this.generatorComponent.previousMessages[0].content
+
+                    this.userPanel = 1 + this.tabs.length
                 }
 
                 this.generationCompleted = true
@@ -617,8 +655,6 @@
                     model: model
                 });
             }
-
-
         }
     }
 </script>
