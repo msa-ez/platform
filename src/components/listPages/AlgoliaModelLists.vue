@@ -1544,7 +1544,6 @@
                             locals.splice(index, 1)
                         }
                     })
-                    console.log(locals)
                     localStorage.setItem('localLists', JSON.stringify(locals))
                 } else if(key = 'mine'){
 
