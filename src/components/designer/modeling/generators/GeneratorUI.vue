@@ -130,9 +130,9 @@
                     </div>
 
                     <v-tabs v-model="userPanel">
-                        <v-tab v-for="tab in tabs" :key="tab.component" :disabled="hasElements" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('tab')">{{tab.name}}</v-tab>
-                        <v-tab :disabled="hasElements" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Input</v-tab>
-                        <v-tab :disabled="hasElements" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Output</v-tab>
+                        <v-tab v-for="tab in tabs" :key="tab.component" :disabled="hasElements" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('tab')">{{tab.name}}</v-tab>
+                        <v-tab :disabled="hasElements" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Input</v-tab>
+                        <v-tab :disabled="hasElements" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Output</v-tab>
                         <v-tab v-if="hasElements" :disabled="selectedElement.length===0" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('chat')">Chat</v-tab>
                         <!-- <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;">TEST</v-tab> -->
                     </v-tabs>
@@ -290,6 +290,10 @@
                 default: function(){
                     return [];
                 }
+            },
+            isGenerated: {
+                type: Boolean,
+                default: false
             }
         },
         components: {
@@ -309,6 +313,11 @@
                     this.input.modificationMessage = ""
                     this.chatMessage = ""
                 }
+            }
+
+            if(this.isGenerated){
+                this.userPanel = 2 + this.tabs.length;
+                this.switchGenerator('chat')
             }
         },
         watch: {
@@ -357,7 +366,7 @@
                 modelCreationCompleted: true,
                 associatedProject: null,
                 dummyMessage: {
-                    text: "What do you want to create?",
+                    text: "Please select any deployment model to modify settings",
                     type: 'response'
                 },
                 openAiMessageList: [],
