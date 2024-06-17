@@ -285,7 +285,12 @@
             generatorStep: String,
             defaultInputData: Object,
             modelValue: Object,
-            tabs: Array
+            tabs: {
+                type: Array,
+                default: function(){
+                    return [];
+                }
+            }
         },
         components: {
             DebeziumLogsTab
