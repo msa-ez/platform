@@ -659,10 +659,9 @@
                     me.projectInfo.contextMapping.modelList[oldModelIndex] = changedInfo.new
                     me.projectInfo.contextMapping.modelList.__ob__.dep.notify()
                 }else if(changedInfo.type == 'cjm'){
-                    console.log('!!!', changedInfo);
-                    // var oldModelIndex = me.projectInfo.customerJourneyMap.modelList.findIndex(x => x == changedInfo.old)
-                    // me.projectInfo.customerJourneyMap.modelList[oldModelIndex] = changedInfo.new
-                    // me.projectInfo.customerJourneyMap.modelList.__ob__.dep.notify()
+                    var oldModelIndex = me.projectInfo.customerJourneyMap.modelList.findIndex(x => x == changedInfo.old)
+                    me.projectInfo.customerJourneyMap.modelList[oldModelIndex] = changedInfo.new
+                    me.projectInfo.customerJourneyMap.modelList.__ob__.dep.notify()
                 }
                 
                 me.backupProject();
@@ -743,13 +742,10 @@
                     let lists = await me.getObject(`localstorage://localLists`)
                     lists = lists ? lists : [];
                     var index = lists.findIndex(list => list.projectId == me.projectId)
-                    if( index == -1 ){
-                        // new
-                        lists.push(me.projectInfo)
-                    } else {
+                    if( index != -1 ){
                         lists[index] = me.projectInfo
+                        me.putObject(`localstorage://localLists`, lists);
                     }
-                    me.putObject(`localstorage://localLists`, lists);
                 }
             },
             onUIStyleSelected(uiStyle){

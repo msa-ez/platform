@@ -982,7 +982,7 @@
                                         var index = lists.findIndex(list => list.projectId == me.projectId)
                                         if (index != -1) {
                                             if (localStorage.getItem(me.projectId)) {
-                                                lists[index].projectName = me.projectName;
+                                                lists[index].projectName = me.projectName ? me.projectName : 'untitled';
                                                 lists[index].lastModifiedTimeStamp = Date.now();
                                             } else {
                                                 lists.splice(index, 1);
@@ -2242,6 +2242,7 @@
                         me.information = Object.assign(basicInformation,lists[index]);
                     } else {
                         me.information = me.information ? Object.assign(me.information, basicInformation) : basicInformation;
+                        me.information.projectName = me.projectName ? me.projectName : 'untitled';
                         lists.push(me.information)
                         me.putObject(`localstorage://localLists`, lists);
                     }

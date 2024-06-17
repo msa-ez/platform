@@ -1445,7 +1445,8 @@
                                     if(me.searchObj.type != 'all'){
                                         result.lists = result.lists.filter(item => item.type == me.searchObj.type);
                                     }
-                                    me.local = result.lists
+                                    me.validation(result.lists, 'local')
+                                    me.local = result.lists.filter(item => item.type)
                                 } else if(obj.id == 'mine'&& obj.show){
                                     if(window.MODE == 'bpm' || window.MODE == 'onprem') {
                                         let data = await this.list(`db://userLists/${me.userInfo.uid}/mine`)
@@ -1464,7 +1465,7 @@
                                         });
                                         result.lists.map(x =>x.versions = null);
                                     }
-                                    me.mine = result.lists
+                                    me.mine = result.lists.filter(item => item.type)
                                 } else if(obj.id == 'share' && obj.show){
                                     if(window.MODE == 'bpm' || window.MODE == 'onprem') {
                                         let data = await this.getObject(`db://userLists/${me.userInfo.uid}/share`)
@@ -1488,7 +1489,7 @@
                                         });
                                     }
                                     
-                                    me.share = result.lists
+                                    me.share = result.lists.filter(item => item.type)
                                 } else if(obj.id == 'public' && obj.show){
                                     if(window.MODE == 'bpm' || window.MODE == 'onprem') {
                                         // let result = {}
@@ -1513,7 +1514,7 @@
                                         });
                                         result.lists.map(x =>x.versions = null);
                                     }
-                                    me.public = result.lists
+                                    me.public = result.lists.filter(item => item.type)
                                 }
                                 // console.log(result)
                                 obj.count = result ? result.count : 0
@@ -1525,6 +1526,28 @@
                     console.log(e)
                 }finally {
                     me.showLoading = false
+                }
+            },
+            validation(lists, key){
+                if(key == 'local'){
+                    if(!lists) return;
+                    if(lists.filter(item => !item.type).length == 0) return;
+
+
+                    let locals = localStorage.getItem('localLists')
+                    if(!locals) return;
+                    locals = JSON.parse(locals)
+                    
+                    lists.filter(item => !item.type).forEach(item => {
+                        let index = locals.findIndex(local=> JSON.stringify(local) === JSON.stringify(item))
+                        if(index != -1){
+                            locals.splice(index, 1)
+                        }
+                    })
+                    console.log(locals)
+                    localStorage.setItem('localLists', JSON.stringify(locals))
+                } else if(key = 'mine'){
+
                 }
             },
             setListByAcebase(data) {
