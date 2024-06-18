@@ -1,5 +1,6 @@
 <template>
     <div v-if="modelCreationCompleted">
+        <!-- 모델링 관련 AI Chat 버튼  -->
         <v-btn class="generator-ui-btn"
             v-if="!openGeneratorUI"
             fab
@@ -7,8 +8,8 @@
             fixed
             @click="openGeneratorUI=!openGeneratorUI"
         >
-            <!-- <v-icon color="primary">mdi-chat</v-icon> -->
-            <Icon icon="arcticons:openai-chatgpt" width="35" height="35" />
+            <v-icon>mdi-auto-fix</v-icon>
+            <!-- <Icon icon="arcticons:openai-chatgpt" width="35" height="35" /> -->
         </v-btn>
         <v-row v-if="openGeneratorUI" style="position:absolute; right:30px; top:75px;">
             <v-card style="text-align: center; z-index: 2;" width="auto">
@@ -194,7 +195,7 @@
                                                             </v-card>
                                                         </v-row>
                                                         <v-row v-else-if="message.type == 'response'" style="margin-bottom: 20px;">
-                                                            <v-card style="display:inline-block; background-color: #DAF5FF; width: 400px; max-height: 500px; overflow-x: scroll; text-align: left;">
+                                                            <v-card style="display:inline-block; background-color: #DAF5FF; width: 400px; overflow: auto; text-align: left;">
                                                                 <v-card-text class="auto-modeling-message">
                                                                     <pre style="font-size: small;">{{ message.text }}</pre>
                                                                 </v-card-text>
@@ -210,16 +211,16 @@
                                                         </v-textarea> -->
                                                     </div>                                    
                                                 </v-col>
-                                                <div>
-                                                    <!-- <v-btn v-if="generationStopped"
+                                                <!-- <div>
+                                                    <v-btn v-if="generationStopped"
                                                         @click="validateDuplicateChatPrompt(promptList[promptList.length -1], 'retry')"
                                                         style="z-index:999; margin-top: 15px; color: black;" text>
                                                             <v-icon>mdi-refresh</v-icon>Regenerate Response
                                                     </v-btn>
                                                     <v-btn v-else @click="stopExplainCode()" style="z-index:999; margin-top: 15px; color: black;" text>
                                                         <v-icon>mdi-stop-circle-outline</v-icon>Stop generating
-                                                    </v-btn> -->
-                                                </div>
+                                                    </v-btn>
+                                                </div> -->
                                             </v-card-text>
                                             <v-card style="text-align: -webkit-center; height: 65px;">
                                                 <v-text-field
@@ -510,7 +511,7 @@
                         }
                         if(this.generatorStep === 'aggregate'){
                             const removalStrings = [
-                                "Please create an event storming model in json for following service: ",
+                                "Please create an event storming model in json for following service: 4",
                                 "The result must be in JSON format and the name of events must be in \"Adjectivalized Object\" that means In this structure, the object, which is used in verb form, is transformed into an adjective and comes first, followed by the past tense verb.\n        for example, \"OrderPlaced\", \"PaymentCompleted\", \"JobDone\". not \"Placed Order\", \"Complete Payment\", \"Do Job\".\n        Event Names must be less than 3 words.\n        : \n        \n        {\n            \"serviceName\": \"Service Name\",\n            \"actors\": [\"Actor Name\"],\n            \"events\": [\n\n                {\n                    \"actor\": \"Actor Name\",\n                    \"name\": \"Event Name\", // must be in Past tense. i.e. Order Placed (p.p.).  Less than 3 words.\n                    \"undefinedName\": \"name in undefined\", // must be in Past tense. i.e. 택시 호출됨. (p.p.).\n                }\n            ]\n        \n        }\n "
                             ];
     
