@@ -1324,7 +1324,7 @@
             <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
         </div>
 
-        <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" :modelValue="value" @createModel="createModel" :defaultInputData="defaultGeneratorUiInputData" @clearModelValue="clearModelValue" @modificateModel="modificateModel"></GeneratorUI>
+        <GeneratorUI v-if="projectId" ref="generatorUI" :isGenerated="embedded" :projectId="projectId" :modelValue="value" @createModel="createModel" :defaultInputData="defaultGeneratorUiInputData" @clearModelValue="clearModelValue" @modificateModel="modificateModel"></GeneratorUI>
     </div>
 </template>
 

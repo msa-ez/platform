@@ -178,12 +178,10 @@ class ESGenerator extends JsonAIGenerator{
     describeCommunicationStyle(){
 
         if(this.client.input.communicationStyle === 'Orchestration')
-            return 
-                `Since I prefer the Orchestration communication style for this case, the policies tend to be in the bounded context which is orchestrator role so that it can be a centralized collaboration.`;
+            return `Since I prefer the Orchestration communication style for this case, the policies tend to be in the bounded context which is orchestrator role so that it can be a centralized collaboration.`;
         
         if(this.client.input.communicationStyle === 'Choreography')
-             return 
-            `Since I prefer the Choreography communication style for this case, the policies tend to be in the bounded context that will do the action so that it can be a distributed collaboration`;
+             return `Since I prefer the Choreography communication style for this case, the policies tend to be in the bounded context that will do the action so that it can be a distributed collaboration`;
 
         return ''
 
@@ -1064,15 +1062,16 @@ class ESGenerator extends JsonAIGenerator{
             } 
         } catch(e){
             console.log(e)
-            var obj = {
-                projectName: modelValue ? modelValue["serviceName"] : "untitle",
-                elements: me.modelElements ? me.modelElements : {},
-                relations: relations ? relations : {},
-                uiStyle: me.client.input.uiStyle
-            }
-
-            return obj;
         }
+
+        var obj = {
+            projectName: modelValue ? modelValue["serviceName"] : "untitle",
+            elements: me.modelElements ? me.modelElements : {},
+            relations: relations ? relations : {},
+            uiStyle: me.client.input.uiStyle
+        }
+
+        return obj;
     }
 
 }
