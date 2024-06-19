@@ -158,7 +158,7 @@
                                     </v-tooltip>
                                 </template>
                             </v-expansion-panel-header>
-                            <v-expansion-panel-content class="auto-modeling-dialog" >
+                            <v-expansion-panel-content class="auto-modeling-dialog pa-0" >
                                 <v-tabs-items v-model="userPanel">
                                     <v-tab-item v-for="tab in tabs" :key="tab.component" :disabled="hasElements">
                                         <component :is="tab.component" :ref="tab.component"></component>
@@ -189,58 +189,58 @@
 
                                     <v-tab-item v-if="hasElements">
                                         <v-card flat>
-                                            <v-card-text id="scroll_messageList" style="height: 100%; max-height: 75vh; overflow-y: scroll;">
-                                                <v-col cols="12">
+                                            <div id="scroll_messageList"
+                                                style="height: 100%; max-height: 75vh;
+                                                overflow: auto; padding:10px;
+                                                border-bottom: solid 2px rgba(0, 0, 0, 0.2);"
+                                            >
+                                                <v-alert
+                                                    dense
+                                                    color="blue"
+                                                    outlined
+                                                    type="info"
+                                                    style="text-align: left;"
+                                                >Please select any deployment model to modify settings
+                                                </v-alert>
+                                                <v-col cols="12" class="pa-0">
                                                     <div v-for="message in chatList" :key="message">
-                                                        <v-row v-if="message.type == 'prompt'" style="justify-content: right; margin-bottom: 20px;">
-                                                            <v-card style="display:inline-block; width: 350px; text-align: left;">
-                                                                <v-card-text class="auto-modeling-message">
-                                                                    {{ message.text }}
-                                                                </v-card-text>
-                                                            </v-card>
-                                                        </v-row>
-                                                        <v-row v-else-if="message.type == 'response'" style="margin-bottom: 20px;">
-                                                            <v-card style="display:inline-block; background-color: #DAF5FF; width: 400px; overflow: auto; text-align: left;">
-                                                                <v-card-text class="auto-modeling-message">
-                                                                    <pre style="font-size: small;">{{ message.text }}</pre>
-                                                                </v-card-text>
-                                                            </v-card>
-                                                        </v-row>
-                                                        <!-- <v-textarea
-                                                            v-else-if="message.type == 'response'"
-                                                            v-model="message.text"
-                                                            solo
-                                                            class="auto-modeling-dialog-textarea"
-                                                            style="font-size: small; padding-top:0px; width: 350px;"
+                                                        <!-- 내가 입력한 텍스트  -->
+                                                        <div v-if="message.type == 'prompt'"
+                                                            class="d-flex justify-end"
+                                                            style="margin-bottom:20px;"
                                                         >
-                                                        </v-textarea> -->
+                                                            <v-sheet class="pa-2"
+                                                                style="background-color:#E5F3FB;
+                                                                    border-radius: 6px;"
+                                                            >{{ message.text }}
+                                                            </v-sheet>
+                                                        </div>
+                                                        <!-- 답변을 받는 텍스트 -->
+                                                        <v-sheet v-else-if="message.type == 'response'"
+                                                            class="grey lighten-3 pa-2"
+                                                            style="display:inline-block;
+                                                                width: 415px;
+                                                                overflow: auto;
+                                                                text-align: left; 
+                                                                margin-bottom:20px;
+                                                                border-radius: 6px;"
+                                                        >
+                                                            <pre style="font-size: small; text-align: left;">{{ message.text }}</pre>
+                                                        </v-sheet>
                                                     </div>                                    
                                                 </v-col>
-                                                <!-- <div>
-                                                    <v-btn v-if="generationStopped"
-                                                        @click="validateDuplicateChatPrompt(promptList[promptList.length -1], 'retry')"
-                                                        style="z-index:999; margin-top: 15px; color: black;" text>
-                                                            <v-icon>mdi-refresh</v-icon>Regenerate Response
-                                                    </v-btn>
-                                                    <v-btn v-else @click="stopExplainCode()" style="z-index:999; margin-top: 15px; color: black;" text>
-                                                        <v-icon>mdi-stop-circle-outline</v-icon>Stop generating
-                                                    </v-btn>
-                                                </div> -->
-                                            </v-card-text>
-                                            <v-card style="text-align: -webkit-center; height: 65px;">
-                                                <v-text-field
-                                                    v-model="chatMessage"
-                                                    class="prompt_field"
-                                                    style="width: 492px; background-color: #FFFFFF; color: white;"
-                                                    outlined
-                                                    autofocus
-                                                    append-icon="mdi-send"
-                                                    :disabled="selectedElement.length === 0"
-                                                    @click:append="generate()"
-                                                    @keypress.enter="generate()"
-                                                >
-                                                </v-text-field>                                     
-                                            </v-card>
+                                            </div>
+                                            <v-text-field
+                                                v-model="chatMessage"
+                                                class="prompt_field generator-ui-text-field"
+                                                solo
+                                                autofocus
+                                                append-icon="mdi-send"
+                                                :disabled="selectedElement.length === 0"
+                                                @click:append="generate()"
+                                                @keypress.enter="generate()"
+                                            >
+                                            </v-text-field>                                     
                                         </v-card>
                                     </v-tab-item>
                                 </v-tabs-items>
@@ -366,10 +366,6 @@
                 isExpanded: false,
                 modelCreationCompleted: true,
                 associatedProject: null,
-                dummyMessage: {
-                    text: "Please select any deployment model to modify settings",
-                    type: 'response'
-                },
                 openAiMessageList: [],
                 chatList: [],
                 selectedElement: [],
@@ -591,7 +587,6 @@
                     if(mode=='chat'){
                         this.chatList = []
                         this.openAiMessageList = []
-                        this.chatList.push(this.dummyMessage)
                         this.input.modificationMessage = ""
                         this.chatMessage = ""
 

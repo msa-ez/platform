@@ -839,7 +839,7 @@ code[class*=language-]:nth-child(1) {
     height:75vh;
 }
 .auto-modeling-dialog .v-expansion-panel-content__wrap {
-    padding:0px 0px 0px 10px;
+    padding:0px;
 }
 
 .auto-modling-textarea {
@@ -860,6 +860,10 @@ code[class*=language-]:nth-child(1) {
     height:24px !important;
     width:24px !important;
     margin-right:5px !important;
+}
+
+.generator-ui-text-field .v-input__control .v-input__slot {
+    box-shadow: none !important;
 }
 
 .auto-modeling-message {
