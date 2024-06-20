@@ -167,9 +167,9 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                             // 3. entities 속성에 ValueObject, Enumeration으로 정의된 name이 있는 경우, 해당 이름을 사용할 수 있습니다.
                             "type": "<PropertyType>",
 
-                            "isKey": <true | false>, // properties중 오직 하나만 isKey가 true로 설정되어야 합니다.
+                            "isKey": <true | false> // properties중 오직 하나만 isKey가 true로 설정되어야 합니다.
                             ${this.generationOptions.ui ? `
-                            "uiStyle":{
+                            ,"uiStyle":{
                                 "inputUI": <"TEXT" | "SELECT" | "TEXTAREA"> // 속성값에 대해서 적절한 UI 스타일을 골라야 합니다.
                             }`:``}
                         }
@@ -237,10 +237,10 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                             "api_verb": <"POST" | "DELETE" | "PUT">,
                             "isCreation": <true | false>, // 이 커멘드가 Aggregate에 새로운 인스턴스를 생성하는지 여부를 나타내는 값입니다.
                             "actor": "<ActorName>",
-                            "outputEvents": ["<EventName>"],
+                            "outputEvents": ["<EventName>"]
 
                             ${this.generationOptions.ui ? `
-                            "uiStyle":{
+                            ,"uiStyle":{
                                 "icon": "이 커맨드를 나타내는 Material design icon font name"
                             }`:``}
 
