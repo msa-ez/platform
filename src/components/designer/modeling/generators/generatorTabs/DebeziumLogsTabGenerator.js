@@ -113,17 +113,19 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
     //  - 설명: 환자 정보와 의료 기록이 일치하지 않으면 잘못된 진단이나 치료가 발생할 수 있습니다.
     //
     // aggregateRootTable의 이름과 valueObjectTable의 이름은 반드시 위의 tables에서 작성한 name을 사용해야 하며, 재귀적으로 작성하면 안 됩니다.
-    // 위에서 정의한 모든 테이블 이름을 사용해야 합니다. 만약, aggregateRootTable이 별도의 관계를 맺지 않을 경우, 빈 리스트로 남기면 됩니다.
     "relations":{
-        "<AggregateRootTableName>":[ // 위의 tables에서 작성한 name을 사용해야 합니다.
+        // ValueObject를 가지고 있는 테이블을 아래와 같은 형식으로 정의하십시오.
+        "<AggregateRootTableName>":[
             {  
-                "relationName": "<RelationName>",
+                "relationName": "<RelationName>", // 위의 tables에서 작성한 name을 사용해야 합니다.
                 "valueObjectTable": "<ValueObjectTableName>", // 위의 tables에서 작성한 name을 사용해야 합니다.
                 "businessCriticalReason": "<BusinessCriticalReason>" // 위에서 제시한 비즈니스적으로 치명적인 사례에 대한 설명과 같이 작성합니다.
             }
-        ]
-    },
+        ],
 
+        // ValueObject를 가지고 있지 않은 테이블을 아래와 같은 형식으로 정의하십시오.
+        "<AggregateRootTableName>": null
+    },
 
     // 당신은 위에서 작성한 tables, relations에 대한 내용을 토대로 아래에 이벤트 스토밍과 관련된 설계 내용들을 작성합니다.
     "serviceName": "<ServiceName>", // Service 이름은 반드시 영어로 작성되어야 하고, 공백이 허용되지 않습니다. 대신 "-"를 사용해 주세요.
