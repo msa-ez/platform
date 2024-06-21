@@ -4,9 +4,7 @@
         <v-container 
         fluid
         style = "position: fixed;
-        width :100%;
-        height: 100%;
-        overflow: auto;"
+        width :100%;"
         >
             <v-row no-gutters style="margin-top: -20px;"> 
                 <v-col
@@ -20,6 +18,7 @@
                         :fixed="true"
                         :temporary="isMobile"
                         hide-overlay
+                        style="height:calc(100vh - 65px);"
                     >
                         <v-list-item>
                             <v-tooltip bottom>
@@ -49,7 +48,10 @@
 
                         <v-divider></v-divider>
                         
-                        <div style="margin-bottom: 300px;">
+                        <div style="padding-bottom: 200px;
+                            overflow-y: auto;
+                            height:calc(100% - 65px);
+                        ">
 
                             <v-list 
                                 v-if="editModeController == 'inputLabinfo'"
@@ -72,12 +74,6 @@
 
                                         <template v-slot:activator>
                                             <v-list-item-title :style="group.groupName != 'uncategorized' ? (group.labsList.length == 0 ? 'margin-left: -30px;':''):''" v-text="group.groupName"></v-list-item-title>
-                                            <!-- <v-chip
-                                                color="grey"
-                                                text-color="white"
-                                                style="margin-left: 5px;"
-                                                x-small>{{group.labsList.length}}
-                                            </v-chip> -->
                                         </template>
                                         <draggable class="list-group" :list="group.labsList" group="people" @change="log">
                                             <v-list-item 
@@ -89,7 +85,7 @@
                                                 <v-list-item-title 
                                                     style="margin-left: 20px;"
                                                     :key="updateLabsList"
-                                                    >
+                                                >
                                                     <div v-if="AlllabsList[group.groupName] && AlllabsList[group.groupName][labId]">
                                                         <li :style="AlllabsList[group.groupName][labId].active ? '':'opacity: 0.4;'">
                                                             {{AlllabsList[group.groupName][labId].labName}}
@@ -126,12 +122,15 @@
                                 </draggable>
                             </v-list>
                             
-                            <v-list v-else dense expand>
+                            <v-list v-else dense expand
+                                style="display: flex; flex-direction: column; max-width: 100%;"
+                            >
                                 <div v-for="(lab, i) in classInfo.groupedLabsList" :key="i">
                                     <v-list-group
                                         v-if="lab && lab.labsList.length > 0"
                                         :value="true"
                                         @click="selectGroup(lab)"
+                                        class="lab-list-group-box"
                                     >
                                         <template v-slot:activator>
                                             <v-list-item-title>
@@ -139,8 +138,8 @@
                                             </v-list-item-title>
                                             <v-icon v-if="isLoadingLabInfo" color="primary">mdi-spin mdi-loading</v-icon>
                                         </template>
-                                        <div v-for="(groupedLab, i) in lab.labsList" :key="i">
-                                            <div v-if="AlllabsList[lab.groupName] && AlllabsList[lab.groupName][groupedLab]">
+                                        <div v-for="(groupedLab, i) in lab.labsList" :key="i" style="display: flex; max-width: 100%;">
+                                            <div v-if="AlllabsList[lab.groupName] && AlllabsList[lab.groupName][groupedLab]" style="white-space: nowrap;">
                                                 <v-list-item
                                                     v-if="AlllabsList[lab.groupName][groupedLab].active == true || isAdmin"
                                                     link
@@ -183,7 +182,7 @@
                                             </div>
                                             <v-list-item v-else link>
                                                 <v-list-item-title 
-                                                    style="margin-left: 20px;"
+                                                    style="margin-left: 20px; white-space: nowrap;"
                                                     :key="updateLabsList"
                                                     @click="getSelectedLabInfo(lab, groupedLab)" 
                                                 >

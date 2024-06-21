@@ -899,6 +899,10 @@ code[class*=language-]:nth-child(1) {
     width: 90% !important;
 }
 
+.lab-list-group-box .v-list-group__items{
+    overflow-x: auto;
+}
+
 .scrollable {
     overflow-y: scroll;
 }
