@@ -567,7 +567,8 @@
             switchGenerator(mode){
                 // CHAT 탭엔 경우에는 GENERATE 버튼이 보여지지 않게 만듬
                 this.showGenerateBtn = !(mode === 'chat' || mode === 'output')
-
+                this.SelectChatTab = false
+                
                 if(mode){
                     if(mode=='chat'){
                         this.chatList = []
@@ -584,7 +585,6 @@
                         this.generatorName = "ModelModificationGenerator"
                     }
                 }else{
-                    this.SelectChatTab = false
                     this.createGenerator();
                 }
             },
