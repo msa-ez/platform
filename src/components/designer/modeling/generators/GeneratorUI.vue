@@ -111,7 +111,7 @@
                         <v-tab v-for="tab in tabs" :key="tab.component" :disabled="hasElements" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('tab')">{{tab.name}}</v-tab>
                         <v-tab :disabled="hasElements && !showGenerateBtn" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Input</v-tab>
                         <v-tab :disabled="hasElements && !showGenerateBtn" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Output</v-tab>
-                        <v-tab v-if="hasElements" :disabled="selectedElement.length===0" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('chat')">Chat</v-tab>
+                        <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('chat')">Chat</v-tab>
                     </v-tabs>
 
                     <v-expansion-panels v-model="autoModelDialog">
@@ -164,7 +164,7 @@
                                         </v-card>
                                     </v-tab-item>
 
-                                    <v-tab-item v-if="hasElements">
+                                    <v-tab-item>
                                         <v-card flat>
                                             <div id="scroll_messageList"
                                                 style="height: 100%; max-height: 75vh;
@@ -561,6 +561,9 @@
                 }
             },
             switchGenerator(mode){
+                // CHAT 탭엔 경우에는 GENERATE 버튼이 보여지지 않게 만듬
+                this.showGenerateBtn = !(mode === 'chat')
+
                 if(mode){
                     if(mode=='chat'){
                         this.chatList = []
