@@ -616,6 +616,7 @@
                 }
 
                 this.generationStopped = true;
+                this.userPanel = 1 + this.tabs.length
             },
 
             continueGenerator(){
