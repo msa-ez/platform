@@ -35,7 +35,7 @@
                         </v-tooltip>
                     </div>
                     <div v-else style="text-align: right; position: absolute; right: 10px; top: 55px;">
-                    <template v-if="!SelectChatTab">
+                    <template v-if="(!SelectChatTab) && (prevUsedGeneratorTabIndex !== null)">
                         <v-tooltip  bottom>
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn @click="reGenerate(input['userStory'])"
@@ -568,7 +568,7 @@
                 // CHAT 탭엔 경우에는 GENERATE 버튼이 보여지지 않게 만듬
                 this.showGenerateBtn = !(mode === 'chat' || mode === 'output')
                 this.SelectChatTab = false
-                
+
                 if(mode){
                     if(mode=='chat'){
                         this.chatList = []
