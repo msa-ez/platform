@@ -19,7 +19,7 @@
                         style="margin-top: 10px; pointer-events: none;"
                     ></v-progress-linear>
 
-                    <div v-if="generationStopped" style="text-align: right; position: absolute; right: 15px; top: 65px;">
+                    <div v-if="showStopBtn && generationStopped" style="text-align: right; position: absolute; right: 15px; top: 65px;">
                         <v-tooltip bottom>
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn @click="stop()"
@@ -63,7 +63,7 @@
                         </v-tooltip>
                     </template>
                         
-                    <v-tooltip bottom v-if="isAutoGen || generationCompleted">
+                    <v-tooltip bottom v-if="showContinueBtn && (isAutoGen || generationCompleted)">
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn v-if="generatorStep === 'aggregate' || generatorName === 'CJMGenerator' || generatorName === 'BMGenerator' || generatorName === 'UserStoryMapGenerator'"
                                     @click="finishModelCreation()"
@@ -104,7 +104,7 @@
                             <span>Click to generate model</span>
                         </v-tooltip>
 
-                        <slot name="buttons"></slot>
+                        <slot v-if="showContinueBtn" name="buttons"></slot>
                     </div>
 
                     <v-tabs v-model="userPanel">
@@ -352,7 +352,9 @@
                 openGeneratorUI: false,
                 focusedTabComponent: null,
                 tabUserProps: {},
-                prevUsedGeneratorTabIndex: null
+                prevUsedGeneratorTabIndex: null,
+                showContinueBtn: true,
+                showStopBtn: true
             }
         },
         computed: {
@@ -567,6 +569,8 @@
             switchGenerator(mode){
                 // CHAT 탭엔 경우에는 GENERATE 버튼이 보여지지 않게 만듬
                 this.showGenerateBtn = !(mode === 'chat' || mode === 'output')
+                this.showContinueBtn = !(mode === 'chat')
+                this.showStopBtn = !(mode === 'chat')
                 this.SelectChatTab = false
 
                 if(mode){
