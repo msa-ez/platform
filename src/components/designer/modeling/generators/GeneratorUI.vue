@@ -110,7 +110,7 @@
                     <v-tabs v-model="userPanel">
                         <v-tab v-for="tab in tabs" :key="tab.component" :disabled="hasElements" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('tab')">{{tab.name}}</v-tab>
                         <v-tab :disabled="hasElements && !showGenerateBtn" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Input</v-tab>
-                        <v-tab :disabled="hasElements && !showGenerateBtn" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Output</v-tab>
+                        <v-tab :disabled="hasElements && !showGenerateBtn" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('output')">Output</v-tab>
                         <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('chat')">Chat</v-tab>
                     </v-tabs>
 
@@ -351,7 +351,8 @@
                 hasElements: false,
                 openGeneratorUI: false,
                 focusedTabComponent: null,
-                tabUserProps: {}
+                tabUserProps: {},
+                prevUsedGeneratorTabIndex: null
             }
         },
         computed: {
@@ -489,6 +490,7 @@
                     this.input = changedInput;
 
                 this.result = '';
+                this.prevUsedGeneratorTabIndex = this.userPanel
                 
                 if(this.generatorName === "ModelModificationGenerator"){
                     this.input.modificationMessage = this.chatMessage
@@ -564,7 +566,7 @@
             },
             switchGenerator(mode){
                 // CHAT 탭엔 경우에는 GENERATE 버튼이 보여지지 않게 만듬
-                this.showGenerateBtn = !(mode === 'chat')
+                this.showGenerateBtn = !(mode === 'chat' || mode === 'output')
 
                 if(mode){
                     if(mode=='chat'){
@@ -591,7 +593,15 @@
                 this.result = '';
                 this.$emit("clearModelValue")
 
-                this.focusedTabComponent = (this.userPanel < this.tabs.length) ? this.$refs[this.tabs[this.userPanel].component][0] : null
+                // OUTPUT탭을 활성화한채로 재생성 버튼을 눌렀을 경우, 이전에 생성하는데 사용한 생성기를 사용하고,
+                // OUTPUT탭이 아닌 곳에서 재생성 버튼을 눌렀을 경우, 활성화된 탭의 생성기를 활용함
+                let checkTabIndex = null
+                if(this.userPanel === 1 + this.tabs.length) 
+                    checkTabIndex = (this.prevUsedGeneratorTabIndex !== null) ? this.prevUsedGeneratorTabIndex : this.userPanel
+                else
+                    checkTabIndex = this.userPanel
+
+                this.focusedTabComponent = (checkTabIndex < this.tabs.length) ? this.$refs[this.tabs[checkTabIndex].component][0] : null
                 if (this.focusedTabComponent) {
                     const msg = this.focusedTabComponent.getValidErrorMsg()
                     if(msg) {
@@ -608,6 +618,7 @@
                     }
                     this.generatorComponent.generate(generateOption);
                 } else {
+                    this.switchGenerator()
                     let reGeneratePrompt = {
                         action: "reGenerate",
                         messages: userStory
