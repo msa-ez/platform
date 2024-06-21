@@ -137,6 +137,7 @@
                             <v-expansion-panel-content class="auto-modeling-dialog pa-0" >
                                 <v-tabs-items v-model="userPanel">
                                     <v-tab-item v-for="tab in tabs" :key="tab.component" :disabled="hasElements">
+                                        <div style="padding-top:40px;"></div>
                                         <component :is="tab.component" :ref="tab.component"></component>
                                     </v-tab-item>
 
