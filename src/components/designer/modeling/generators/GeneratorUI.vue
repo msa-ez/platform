@@ -19,7 +19,7 @@
                         style="margin-top: 10px; pointer-events: none;"
                     ></v-progress-linear>
 
-                    <div v-if="generationStopped" style="text-align: right; position: absolute; right: 30px; top: 25px;">
+                    <div v-if="generationStopped" style="text-align: right; position: absolute; right: 15px; top: 65px;">
                         <v-tooltip bottom>
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn @click="stop()"
@@ -34,20 +34,8 @@
                             <span>Stop</span>
                         </v-tooltip>
                     </div>
-                    <div v-else style="text-align: right; position: absolute; right: 20px; top: 10px;">
-                        <!-- <v-tooltip  bottom>
-                            <template v-slot:activator="{ on, attrs }">
-                                <v-btn @click="generate(test)"
-                                    icon small
-                                    v-bind="attrs"
-                                    v-on="on"
-                                    style="margin-right: 10px; z-index:2"
-                                >
-                                    <v-icon style="margin-right: 5px;">mdi-refresh</v-icon>
-                                </v-btn>
-                            </template>
-                            <span>reCreate model use to json</span>
-                        </v-tooltip> -->
+                    <div v-else style="text-align: right; position: absolute; right: 10px; top: 55px;">
+                    <template v-if="!SelectChatTab">
                         <v-tooltip  bottom>
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn @click="reGenerate(input['userStory'])"
@@ -73,20 +61,9 @@
                             </template>
                             <span>Try again</span>
                         </v-tooltip>
-                        <!-- <v-tooltip  bottom>
-                            <template v-slot:activator="{ on, attrs }">
-                                <v-btn @click="continueGenerator()"
-                                    icon small
-                                    v-bind="attrs"
-                                    v-on="on"
-                                    style="margin-right: 10px; z-index:2"
-                                >
-                                    <v-icon style="margin-right: 5px;">mdi-refresh</v-icon>
-                                </v-btn>
-                            </template>
-                            <span>Continue</span>
-                        </v-tooltip> -->
-                        <v-tooltip bottom v-if="isAutoGen || generationCompleted">
+                    </template>
+                        
+                    <v-tooltip bottom v-if="isAutoGen || generationCompleted">
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn v-if="generatorStep === 'aggregate' || generatorName === 'CJMGenerator' || generatorName === 'BMGenerator' || generatorName === 'UserStoryMapGenerator'"
                                     @click="finishModelCreation()"
@@ -132,10 +109,9 @@
 
                     <v-tabs v-model="userPanel">
                         <v-tab v-for="tab in tabs" :key="tab.component" :disabled="hasElements" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('tab')">{{tab.name}}</v-tab>
-                        <v-tab :disabled="hasElements" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Input</v-tab>
-                        <v-tab :disabled="hasElements" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Output</v-tab>
+                        <v-tab :disabled="hasElements && !showGenerateBtn" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Input</v-tab>
+                        <v-tab :disabled="hasElements && !showGenerateBtn" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Output</v-tab>
                         <v-tab v-if="hasElements" :disabled="selectedElement.length===0" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('chat')">Chat</v-tab>
-                        <!-- <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;">TEST</v-tab> -->
                     </v-tabs>
 
                     <v-expansion-panels v-model="autoModelDialog">
@@ -169,7 +145,7 @@
                                             <v-textarea v-if="input"
                                                 v-model="input.userStory"
                                                 class="auto-modeling-dialog-textarea"
-                                                style="font-size: small; padding-top:0px; height: 100%;"
+                                                style="font-size: small; padding-top:40px; height: 100%;"
                                             >
                                             </v-textarea>
                                         </v-card>
@@ -181,7 +157,7 @@
                                                 v-model="displayResult"
                                                 @scroll="handleScroll" id="scroll-text"
                                                 class="auto-modeling-dialog-textarea"
-                                                style="font-size: small; padding-top:0px; height: 100%;"
+                                                style="font-size: small; padding-top:40px; height: 100%;"
                                             >
                                             </v-textarea>
                                         </v-card>
@@ -350,6 +326,7 @@
 
         data() {
             return {
+                SelectChatTab: false,
                 showGenerateBtn: true,
                 isAutoGen: true,
                 generationCompleted: false,
@@ -589,6 +566,7 @@
                         this.openAiMessageList = []
                         this.input.modificationMessage = ""
                         this.chatMessage = ""
+                        this.SelectChatTab = true
 
                         switch(this.generatorName){
                             case "KubernetesGenerator": this.generatorComponent = new KubernetesModificationGenerator(this); break;
@@ -598,6 +576,7 @@
                         this.generatorName = "ModelModificationGenerator"
                     }
                 }else{
+                    this.SelectChatTab = false
                     this.createGenerator();
                 }
             },

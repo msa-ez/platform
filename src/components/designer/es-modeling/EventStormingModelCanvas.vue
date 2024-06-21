@@ -3043,8 +3043,7 @@
                 // this.openCodeViewer()
             },
             generateAggregate() {
-                this.generatorParameter.userStory =
-                    this.$refs.generatorUI.input.userStory;
+                this.generatorParameter.userStory = this.$refs.generatorUI.input.userStory;
                 this.generatorParameter.model = Object.assign([], this.value);
                 this.generatorParameter.uiStyle = this.value.uiStyle;
                 //  we need to convert Vue JS object to normal js object for the ESGenerator. see: https://github.com/vuejs/Discussion/issues/292
