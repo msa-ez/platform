@@ -25,12 +25,12 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
     }
     
 
-    createPrompt(userProps){
+    createPrompt(){
         this.modelElements = {}
         this.generateCnt = 0
 
         const PROMPT = this.getSystemPrompt() +
-                       this.getUserPrompt(userProps.DebeziumLogs)
+                       this.getUserPrompt(this.client.tabUserProps.DebeziumLogs)
 
         console.log("[*] DebeziumLogsTabGenerator에 전달한 프롬프트: ", PROMPT)
         return PROMPT

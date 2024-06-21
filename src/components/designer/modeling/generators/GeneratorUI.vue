@@ -350,7 +350,8 @@
                 chatMessage: "",
                 hasElements: false,
                 openGeneratorUI: false,
-                focusedTabComponent: null
+                focusedTabComponent: null,
+                tabUserProps: {}
             }
         },
         computed: {
@@ -512,7 +513,8 @@
                         }
 
                         this.generatorComponent = this.focusedTabComponent.getGenerater(this)
-                        const userPrompt = this.generatorComponent.createPrompt(this.focusedTabComponent.getUserProps())
+                        this.tabUserProps = this.focusedTabComponent.getUserProps()
+                        const userPrompt = this.generatorComponent.createPrompt()
                         let generateOption = {
                             "messages": [{
                                 role: 'user',
@@ -586,14 +588,33 @@
             },
 
             async reGenerate(userStory){
-                let reGeneratePrompt = {
-                    action: "reGenerate",
-                    messages: userStory
-                }
-
                 this.result = '';
                 this.$emit("clearModelValue")
-                this.generatorComponent.generate(reGeneratePrompt);
+
+                this.focusedTabComponent = (this.userPanel < this.tabs.length) ? this.$refs[this.tabs[this.userPanel].component][0] : null
+                if (this.focusedTabComponent) {
+                    const msg = this.focusedTabComponent.getValidErrorMsg()
+                    if(msg) {
+                        alert(msg)
+                        return;
+                    }
+
+                    this.generatorComponent = this.focusedTabComponent.getGenerater(this)
+                    this.tabUserProps = this.focusedTabComponent.getUserProps()
+                    const userPrompt = this.generatorComponent.createPrompt()
+                    let generateOption = {
+                        action: "reGenerate",
+                        messages: userPrompt
+                    }
+                    this.generatorComponent.generate(generateOption);
+                } else {
+                    let reGeneratePrompt = {
+                        action: "reGenerate",
+                        messages: userStory
+                    }
+                    this.generatorComponent.generate(reGeneratePrompt);
+                }
+
                 this.generationStopped = true;
             },
 
