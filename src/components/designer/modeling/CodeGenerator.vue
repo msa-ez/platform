@@ -269,7 +269,9 @@
                         <span>Explain Project</span>
                     </v-tooltip>
                     <v-spacer />
-                    <v-menu left :close-on-content-click="false" :close-on-click="false" @input="onClickToppingBox(true)">
+                    <v-menu left :close-on-content-click="false" :close-on-click="false" @input="onClickToppingBox(true)"
+                        style="overflow-y:hidden !important;"
+                    >
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn text small
                                 v-bind="attrs"
@@ -279,11 +281,11 @@
                                 <v-icon>{{ showTopping ? ' mdi-menu-up' : 'mdi-menu-down' }}</v-icon>
                             </v-btn>
                         </template>
-                        <v-card style="width:400px; overflow-y:scroll;" v-if="showTopping">
+                        <v-card style="width:390px; height:87vh;" v-if="showTopping">
                             <v-btn @click="onClickToppingBox(false)" small icon style="position:absolute; right:5px; top:5px;">
                                 <v-icon>mdi-close</v-icon>
                             </v-btn>
-                            <v-card-text>
+                            <v-card-text style="height:100%;">
                                 Java/Spring Version
                                 <v-btn style="margin-bottom: 1px; color:gray" text @click="marketplaceDialog = true">
                                     <v-icon style="margin-right: 5px; color:gray" small>mdi-cart</v-icon>
@@ -292,7 +294,6 @@
 
                                 <v-divider></v-divider>
                                 <div>
-
                                     <v-radio-group
                                             v-model="selectedVersion"
                                             row
@@ -310,8 +311,11 @@
                                     </v-radio-group>
                                 </div>
 
-
-                                <div class="topping-radio-group">
+                                <div class="topping-radio-group"
+                                    style="height:calc(100% - 125px) !important;
+                                    overflow-y:auto;
+                                    overflow-x:hidden;"
+                                >
                                     <div v-for="baseToppingGroup in Object.keys(baseToppingPlatforms)">
                                         {{baseToppingGroup}}
                                         <v-divider></v-divider>
@@ -360,83 +364,6 @@
                                             </v-row>
                                         </div>
                                     </div>
-                                    <!--                                                Kubernetes-->
-                                    <!--                                                <v-divider></v-divider>-->
-                                    <!--                                                <div>-->
-                                    <!--                                                    <v-checkbox-->
-                                    <!--                                                            :input-value="isUsedTopping('isVanillaK8s')"-->
-                                    <!--                                                            label="Vanilia kubernetes"-->
-                                    <!--                                                            dense-->
-                                    <!--                                                            @click="changedTopping('isVanillaK8s')"-->
-                                    <!--                                                            class="topping-checkbox"-->
-                                    <!--                                                    ></v-checkbox>-->
-                                    <!--                                                </div>-->
-
-                                    <!--                                                Security - Token based Authentication-->
-                                    <!--                                                <v-divider></v-divider>-->
-                                    <!--                                                <div>-->
-                                    <!--                                                    <v-checkbox-->
-                                    <!--                                                            :input-value="isUsedTopping('spring-security')"-->
-                                    <!--                                                            @click="changedTopping('spring-security')"-->
-                                    <!--                                                            label="Oauth by Spring Security + Spring GW"-->
-                                    <!--                                                            dense-->
-                                    <!--                                                    ></v-checkbox>-->
-                                    <!--                                                    <v-checkbox-->
-                                    <!--                                                            :input-value="isUsedTopping('keycloak-security')"-->
-                                    <!--                                                            @click="changedTopping('keycloak-security')"-->
-                                    <!--                                                            label="Oauth by Keycloak + Spring GW"-->
-                                    <!--                                                            dense-->
-                                    <!--                                                            class="topping-checkbox"-->
-                                    <!--                                                    ></v-checkbox>-->
-                                    <!--                                                </div>-->
-
-                                    <!--                                                Service Mesh-->
-                                    <!--                                                <v-divider></v-divider>-->
-                                    <!--                                                <div>-->
-                                    <!--                                                    <v-checkbox-->
-                                    <!--                                                            :input-value="isUsedTopping('istio')"-->
-                                    <!--                                                            label="Istio"-->
-                                    <!--                                                            dense-->
-                                    <!--                                                            @click="changedTopping('istio')"-->
-                                    <!--                                                    ></v-checkbox>-->
-                                    <!--                                                    <v-checkbox-->
-                                    <!--                                                            :input-value="isUsedTopping('ingress')"-->
-                                    <!--                                                            label="Ingress"-->
-                                    <!--                                                            dense-->
-                                    <!--                                                            @click="changedTopping('ingress')"-->
-                                    <!--                                                            class="topping-checkbox"-->
-                                    <!--                                                    ></v-checkbox>-->
-                                    <!--                                                </div>-->
-
-                                    <!--                                                DevOps-->
-                                    <!--                                                <v-divider></v-divider>-->
-                                    <!--                                                <div>-->
-                                    <!--                                                    <v-checkbox-->
-                                    <!--                                                            :input-value="isUsedTopping('argo')"-->
-                                    <!--                                                            label="Argo + Istio"-->
-                                    <!--                                                            dense-->
-                                    <!--                                                            @click="changedTopping('argo')"-->
-                                    <!--                                                    ></v-checkbox>-->
-                                    <!--                                                </div>-->
-
-                                    <!--                                                Data Projection-->
-                                    <!--                                                <v-divider></v-divider>-->
-                                    <!--                                                <div>-->
-                                    <!--                                                    <v-checkbox-->
-                                    <!--                                                            :input-value="isUsedTopping('apollo-graphql')"-->
-                                    <!--                                                            label="Apollo GraphQL"-->
-                                    <!--                                                            dense-->
-                                    <!--                                                            @click="changedTopping('apollo-graphql')"-->
-                                    <!--                                                    ></v-checkbox>-->
-                                    <!--                                                    <v-checkbox-->
-                                    <!--                                                            :input-value="isUsedTopping('java-graphql')"-->
-                                    <!--                                                            label="JAVA GraphQL"-->
-                                    <!--                                                            disabled-->
-                                    <!--                                                            dense-->
-                                    <!--                                                            @click="changedTopping('java-graphql')"-->
-                                    <!--                                                            class="topping-checkbox"-->
-                                    <!--                                                    ></v-checkbox>-->
-                                    <!--                                                </div>-->
                                     <div>Custom Toppings</div>
                                     <v-divider></v-divider>
                                     <div v-for="customToppingPath in Object.keys(filteredCustomToppingLists)">
@@ -486,10 +413,10 @@
                                         </div>
                                     </div>
                                 </div>
+                                <v-card-actions>
+                                    <v-btn block dark @click="openTemplateDialog('TOPPING')"> Custom Topping </v-btn>
+                                </v-card-actions>
                             </v-card-text>
-                            <v-card-actions>
-                                <v-btn block dark @click="openTemplateDialog('TOPPING')"> Custom Topping </v-btn>
-                            </v-card-actions>
                         </v-card>
                     </v-menu>
                 </v-row>
