@@ -11,7 +11,10 @@
             <span>인스트럭션 크기 조절</span>
         </v-tooltip>
 
-        <v-row no-gutters v-if="labInfo && labInfo.layout == 'vertical'" style="height: 100%;">
+        <v-row v-if="labInfo && labInfo.layout == 'vertical'"
+            no-gutters 
+            style="height: 100%;"
+        >
             <LabLocatorChat
                     :lab-info="labInfo"
                     style="z-index: 9999"
@@ -170,7 +173,7 @@
                 </v-row>
             </v-col>
         </v-row>
-        <v-row v-else-if="labInfo" style="height: 100%;">
+        <v-row v-else-if="labInfo" style="height: 100%; margin:0px !important;">
             <v-navigation-drawer
                     v-model="guideOpened"
                     app
