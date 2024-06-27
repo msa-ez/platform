@@ -2,9 +2,10 @@
     <div>
         <!-- <v-container v-if="isLogin" -->
         <v-container 
-        fluid
-        style = "position: fixed;
-        width :100%;"
+            fluid
+            style = "position: fixed;
+            width :100%;
+            height:91.5vh; overflow-y:auto;"
         >
             <v-row no-gutters style="margin-top: -20px;"> 
                 <v-col
