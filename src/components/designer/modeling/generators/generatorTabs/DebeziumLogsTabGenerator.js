@@ -323,7 +323,9 @@ ${debeziumLogs}
 
     createModel(text){
         console.log("[*] DebeziumLogsTabGenerator가 생성한 값: ", text)
-        text = text.replace(/^```json\n/, "").replace(/\n```$/, "").replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '').trim()
+        if (text.includes("```json")) {
+            text = text.match(/```json\n([\s\S]+)\n```/)[1]
+        }
 
         var me = this
         let modelValue
