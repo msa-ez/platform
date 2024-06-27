@@ -272,6 +272,12 @@
             isGenerated: {
                 type: Boolean,
                 default: false
+            },
+            chatGenerators: {
+                type: Array,
+                default: function(){
+                    return [];
+                }
             }
         },
         components: {
@@ -497,6 +503,25 @@
                 if(this.generatorName === "ModelModificationGenerator"){
                     this.input.modificationMessage = this.chatMessage
                     if(this.input.modificationMessage=="") return;
+
+                    if(this.chatGenerators.length > 0) {
+                        for(let chatGenerator of this.chatGenerators) {
+                            const chatGeneratorModule = await import(`./chatPlugins/${chatGenerator}.js`)
+                            const generatorInstance = new chatGeneratorModule.default(this)
+                            
+                            if(generatorInstance.isMatchedGenerator(this.input.modificationMessage)) {
+                                var message = {
+                                    text: this.input.modificationMessage,
+                                    type: "prompt"
+                                }
+                                this.chatList.push(message);
+                                this.chatMessage = ""
+                                generatorInstance.generate();
+                                return
+                            }
+                        }
+                    }
+
                     var message = {
                         text: this.input.modificationMessage,
                         type: "prompt"

@@ -1300,6 +1300,7 @@
                             :defaultInputData="defaultGeneratorUiInputData"
                             :modelValue="value"
                             :tabs="tabs"
+                            :chatGenerators="chatGenerators"
                     >
                         <v-tooltip v-if="showContinue" slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
@@ -1332,6 +1333,7 @@
                             :generatorStep="generatorStep"
                             :modelValue="value"
                             :tabs="tabs"
+                            :chatGenerators="chatGenerators"
                     >
                         <!-- <v-tooltip slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
@@ -2399,7 +2401,8 @@
                 },
                 createModelInBoundedContext: false,
                 createReadModel: false,
-                tabs: [{name: 'LOGS', component: 'DebeziumLogsTab'}]
+                tabs: [{name: 'LOGS', component: 'DebeziumLogsTab'}],
+                chatGenerators: ['DebeziumLogsModificationGenerator']
             };
         },
         computed: {
@@ -3212,6 +3215,38 @@
             },
             modificateModel(model){
                 var me = this;
+
+                if(model && model.fromGeneratorId === "DebeziumLogsModificationGenerator") {
+                    console.log("[*] DebeziumLogsModificationGenerator에서 최종적으로 전달한 쿼리 값")
+                    console.log(model.modificationQueries)
+
+                    for(const modificationQuery of model.modificationQueries) {
+                        try {
+
+                            switch(modificationQuery.type) {
+                                case "event":
+                                case "command":
+                                    if(modificationQuery.action === "add")
+                                        me.value.elements[modificationQuery.value.id] = modificationQuery.value
+                                    break;
+                                default:
+                                    break;
+                            }
+
+                        }catch(e){
+
+                            console.log("[!] DebeziumLogsModificationGenerator에서 최종적으로 처리된 쿼리를 처리하는 과정에서 문제 발생!")
+                            console.log("문제가 발생한 쿼리 >")
+                            console.log(modificationQuery)
+                            console.log("에러 내용 >")
+                            console.log(e)
+
+                        }
+                    }
+
+                    return
+                }
+
                 if(model && model.updateElement){
                     me.value.elements[model.updateElement.id] = model.updateElement
                     me.changedByMe = true
