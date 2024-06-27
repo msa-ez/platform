@@ -1949,7 +1949,19 @@
                     //me.gptCodes = []
                     //me.collectSelectedFileContents(newVal)
                 }
-            }
+            },
+            tempToppingPlatforms(newVal){
+                var me = this;
+                if(me.showTopping){
+                    if( !me.compareArrayOnlyValue(newVal, me.toppingPlatforms) ){
+                        me.tempToppingPlatforms = Array.from(new Set(newVal));
+                        me.settingPlatform('TOPPING', newVal);
+                        me.refreshCallGenerate();
+
+                        me.showTopping = true;
+                    }
+                }
+            },
             // "changedModifying": async function(newVal) {
             //     var me = this
             //     if (newVal) {
