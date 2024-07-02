@@ -118,14 +118,11 @@
 
                 //tmp Vari
                 namePanel: '',
-                modelCanvasComponent: null,
                 filterConnectionTypes: null,
 
                 messageRef: {},
                 deploySuccess: false,
                 menuList: [],
-
-                isMovedElement: false,
 
                 ESE_NOT_NAME: 0,
                 validationCodeLists: {
@@ -367,7 +364,7 @@
                     me.refreshImg();
                 }
 
-                if(obj.action == 'deleteAnnotations' && me.value.object.metadata.annotations) {
+                if(obj.action == 'deleteAnnotations' && me.value.object && me.value.object.metadata && me.value.object.metadata.annotations) {
                     var name = obj.element.targetElement.name ? obj.element.targetElement.name : obj.element.targetElement.object.metadata.name
                     var key = 'msaez.io/' + obj.element.targetElement._type + '_' + name
                     delete me.value.object.metadata.annotations[key]
@@ -379,21 +376,6 @@
             if(me.canvas.embedded) {
                 me.refreshImg()
             }
-
-            me.$EventBus.$on('isMovedElement', function (id) {
-                if (me.value.elementView) {
-                    //only Element
-                    if (me.value.elementView.id == id) {
-                        me.isMovedElement = true
-                        me.movedNewActivity()
-                    } else {
-                        if (me.isMovedElement == true) {
-                            me.isMovedElement = false
-                            me.movedOldActivity()
-                        }
-                    }
-                }
-            })
 
         },
         beforeDestroy() {
@@ -407,41 +389,7 @@
         methods: {
             setElementCanvas(){
                 var me = this
-                me.modelCanvasComponent = me.getComponent('kubernetes-model-canvas');
                 me.canvas = me.getComponent('kubernetes-model-canvas');
-            },
-            movedNewActivity() {
-                var me = this
-                if (me.canvas.isLogin && me.canvas.isServerModel && !me.canvas.isClazzModeling && !me.canvas.isReadOnlyModel) {
-                    var obj = {
-                        action: 'userMovedOn',
-                        editUid: me.userInfo.uid,
-                        name: me.userInfo.name,
-                        picture: me.userInfo.profile,
-                        timeStamp: Date.now(),
-                        // editElement: me.value.elementView.id
-                        editElement: me.value.elementView ? me.value.elementView.id : me.value.relationView.id
-                    }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
-                }
-            },
-            movedOldActivity() {
-                var me = this
-                if (me.canvas.isLogin && me.canvas.isServerModel && !me.canvas.isClazzModeling && !me.canvas.isReadOnlyModel) {
-                    var obj = {
-                        action: 'userMovedOff',
-                        editUid: me.userInfo.uid,
-                        name: me.userInfo.name,
-                        picture: me.userInfo.profile,
-                        timeStamp: Date.now(),
-                        // editElement: me.value.elementView.id
-                        editElement: me.value.elementView ? me.value.elementView.id : me.value.relationView.id
-                    }
-                    me.pushObject(`db://definitions/${me.params.projectId}/queue`, obj)
-                }
-            },
-            onMoveShape: function () {
-                this.$EventBus.$emit('isMovedElement', this.value.elementView.id)
             },
             mergeDeep(target, sources) {
                 // console.log(target)
@@ -483,29 +431,21 @@
             connected: function () {
                 // console.log(this.value)
             },
-
-            selectedActivity: function () {
+            // override
+            onActivitySelected(){
                 var me = this
-                if (this.value) {
-                    this.selected = true
-
+                if (me.value) {
                     // selected Template
                     var elementType = me.value._type ? me.value._type : null
                     me.$EventBus.$emit('selectedElementObj', {selected: true, id: me.getId, type: elementType, isEmbedded: me.isEmbedded})
                 }
-
             },
-            deSelectedActivity: function () {
+            // override
+            onActivityDeselected(){
                 var me = this
                 if (this.value) {
-                    this.propertyPanel = false
-                    this.selected = false
-                    this.staySelected = false
-
-                    // deselected Template
                     me.$EventBus.$emit('selectedElementObj', {selected: false, id: me.getId, isEmbedded: me.isEmbedded})
                 }
-
             },
             showProperty() {
                 if (this.selected)
@@ -585,29 +525,50 @@
                 }
                 return component
             },
-            onRemoveShape: function (value) {
+            /**
+             *  Extends ModelElement.
+             *  Element >  onRemoveShape 
+             **/
+            onRemoveShape(element){
                 var me = this
-                var obj = {
-                    action: 'delete',
-                    element: value
-                }
-                if (me.value.relationView) {
-                    me.$EventBus.$emit(`${me.value.relationView.id}`, obj)
-                    me.deleteAnnotations(obj.element)
-                } else {
-                    me.$EventBus.$emit(`${me.value.elementView.id}`, obj)
-                }
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        // Custom Remove Action
+                        let id = me.value.relationView ? me.value.relationView.id : me.value.elementView.id
+                        me.$EventBus.$emit(id, {
+                            action: 'delete',
+                            element: me.value
+                        })
+                        if (me.value.relationView) {
+                            me.deleteAnnotations(me.value)
+                        } 
+                        /////////////////////////////////////////
+                        
+                        me.canvas.removeElementAction(me.value)
+                        me.validate()
 
-                try {
-                    if ( me.canvas.isCustomMoveExist ) {
-                        me.removeShapeQueue()
-                    } else {
-                        me.removeShapeLocal()
+                        if(!element) return;
+                        // selected Element Remove
+                        if (me.value.elementView && element && element.id === me.value.elementView.id) {
+                            Object.values(me.canvas.value.elements).forEach((element) => {
+                                if(!me.canvas.validateElementFormat(element)) return;
+                                if (element && element.elementView.id !== me.value.elementView.id) {
+                                    let component = me.canvas.$refs[element.elementView.id];
+                                    if (component) {
+                                        component = component[0];
+                                        if (component.selected) {
+                                            component.onRemoveShape();
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    },
+                    onFail(e){
+                        console.log(`[Error] ModelElement-onRemoveShape: ${e}`)
                     }
-                    me.validate()
-                } catch (e) {
-                    alert(`[Error] ModelElement-onRemoveShape: ${e}`)
-                }
+                })
                 // console.log("============== Storage Location Search Test 1-2 (Delete Btn) ============= ")
             },
             deleteRelation: function (relationId) {

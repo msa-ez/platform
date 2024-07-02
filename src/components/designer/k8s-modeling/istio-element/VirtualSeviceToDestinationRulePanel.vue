@@ -18,7 +18,7 @@
                         <v-checkbox 
                             label="Mirror Traffic" 
                             v-model="isMirror" 
-                            :disabled="readOnly"
+                            :disabled="isReadOnly"
                         ></v-checkbox>
                         <v-text-field
                             v-if="!isMirror" 
@@ -26,7 +26,7 @@
                             v-model="weight" 
                             type="number" 
                             suffix="%"
-                            :disabled="readOnly"
+                            :disabled="isReadOnly"
                         ></v-text-field>
                     </v-card-text>
                 </v-layout>

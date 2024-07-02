@@ -41,6 +41,7 @@
                                         v-on:update:sliderLocationScale="sliderLocationScale = $event"
                                         v-on:connectShape="onConnectShape"
                                         v-on:canvasReady="bindEvents"
+                                        :key="openGraphRenderKey"
                             >
 
                                 <!--엘리먼트-->
@@ -91,10 +92,9 @@
                             </v-layout>
                             
                             <v-flex v-if="embedded" style="justify:end; align:start;">
-                                <v-row justify="end" align="start">
                                     <v-btn
                                         style="position: absolute; top:26px; right: 60px;"
-                                        color="primary"
+                                        text
                                         @click="openCommandViewer()"
                                         v-on="on"
                                         small
@@ -107,11 +107,22 @@
 
                             <v-flex v-if="!embedded" style="min-width:100%;">
                                 <v-row justify="center" align="center" >
+                                    <div class="kubernetes-mobile-home-button">
+                                        <router-link to="/">
+                                            <v-icon
+                                                style="height: 24px;
+                                                margin-top: 38px;
+                                                margin-right: 5px;"
+                                            >
+                                                mdi-home
+                                            </v-icon>
+                                        </router-link>
+                                    </div>
                                     <v-text-field class="k8s-is-mobile-project-name"
                                             style="margin-right: 5px; margin-top: 40px; max-width: 140px; z-index: 1;"
                                             label="Project Name"
                                             v-model="projectName"
-                                            :disabled="readOnly"
+                                            :disabled="isReadOnly"
                                             dense
                                     ></v-text-field>
                                     <!-- 웹페이지 버튼들 -->
@@ -125,8 +136,7 @@
                                             <template v-slot:activator="{ attrs, on }">
                                                 <v-btn text
                                                         style="margin-right: 5px; margin-top: 15px;"
-                                                        color="primary"
-                                                        class="white--text k8s-hide-cluster-btn"
+                                                        class="k8s-hide-cluster-btn"
                                                         v-bind="attrs"
                                                         v-on="on"
                                                 >
@@ -150,62 +160,7 @@
                                                 </v-list-item>
                                             </v-list>
                                         </v-menu>
-                                        <!--                        <v-btn-->
-                                        <!--                                style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                                color="cyan" dark-->
-                                        <!--                                @click="clusterDialog = true">-->
-                                        <!--                            <v-icon>settings</v-icon>-->
-                                        <!--                            {{ clusterInfo ? clusterInfo.name : '' }}-->
-                                        <!--                        </v-btn>-->
-
-                                        <!--<<<<<<< HEAD-->
-                                        <!--                    <v-btn-->
-                                        <!--                            style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                            color="pink" dark-->
-                                        <!--                            @click="terminal()">-->
-                                        <!--                        <v-icon>{{ icon.shell }}</v-icon>-->
-                                        <!--                        TERMINAL-->
-                                        <!--                    </v-btn>-->
-
-                                        <!--                    <v-btn-->
-                                        <!--                            style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                            color="primary" dark-->
-                                        <!--                            @click="deployDialog = true">-->
-                                        <!--                        <v-icon>{{ icon.version }}</v-icon>-->
-                                        <!--                        Deploy-->
-                                        <!--                    </v-btn>-->
-                                        <!--=======-->
-                                        <!--                    <v-btn-->
-                                        <!--                            style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                            color="pink" dark-->
-                                        <!--                            @click="terminal()">-->
-                                        <!--                        <v-icon>{{ icon.shell }}</v-icon>-->
-                                        <!--                        TERMINAL-->
-                                        <!--                    </v-btn>-->
-
-                                        <!--                    <v-btn-->
-                                        <!--                            style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                            color="primary" dark-->
-                                        <!--                            @click="deployDialog = true">-->
-                                        <!--                        <v-icon>{{ icon.version }}</v-icon>-->
-                                        <!--                        Deploy-->
-                                        <!--                    </v-btn>-->
-                                        <!--                    <v-btn-->
-                                        <!--                            style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                            color="pink" dark-->
-                                        <!--                            @click="terminal()">-->
-                                        <!--                        <v-icon>{{ icon.shell }}</v-icon>-->
-                                        <!--                        TERMINAL-->
-                                        <!--                    </v-btn>-->
-
-                                        <!--                    <v-btn-->
-                                        <!--                            style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                            color="primary" dark-->
-                                        <!--                            @click="deployDialog = true">-->
-                                        <!--                        <v-icon>{{ icon.version }}</v-icon>-->
-                                        <!--                        Deploy-->
-                                        <!--                    </v-btn>-->
-
+                                        
                                         <v-menu
                                                 offset-y
                                                 open-on-hover
@@ -215,8 +170,7 @@
                                             <template v-slot:activator="{ attrs, on }">
                                                 <v-btn text
                                                         style="margin-right: 5px; margin-top: 15px;"
-                                                        color="primary"
-                                                        class="white--text k8s-hide-reverse-btn"
+                                                        class="k8s-hide-reverse-btn"
                                                         v-bind="attrs"
                                                         v-on="on"
                                                 >
@@ -235,21 +189,6 @@
                                             </v-list>
                                         </v-menu>
 
-                                        <!--                    <v-btn-->
-                                        <!--                            style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                            color="primary" dark-->
-                                        <!--                            @click="apiCallTest()">-->
-                                        <!--                        <v-icon>{{ icon.version }}</v-icon>-->
-                                        <!--                        Test-->
-                                        <!--                    </v-btn>-->
-                                        <!--                    <v-btn-->
-                                        <!--                            style="margin-right: 5px; margin-top: 15px;"-->
-                                        <!--                            color="primary" dark-->
-                                        <!--                            @click="clear()">-->
-                                        <!--                        <v-icon>{{ icon.version }}</v-icon>-->
-                                        <!--                        clear-->
-                                        <!--                    </v-btn>-->
-
                                         <v-menu
                                                 offset-y
                                                 open-on-hover
@@ -260,11 +199,15 @@
                                                 <v-btn class="k8s-hide-gitops-btn"
                                                         text
                                                         style="margin-right: 5px;margin-top: 15px;"
-                                                        color="primary" dark
                                                         @click="openCodeViewer()"
-                                                        v-on="on">
-                                                    <Icon class="gs-icon-style" icon="icomoon-free:git"
-                                                        style="margin-right: 2px; height: 22px; width: 22px"/>
+                                                        v-on="on"
+                                                >
+                                                    <Icon class="gs-icon-style"
+                                                        icon="icomoon-free:git"
+                                                        style="margin-right: 2px;
+                                                        height: 22px;
+                                                        width: 22px"
+                                                    />
                                                     <div class="k8s-hide-gitops">GITOPS</div>
                                                 </v-btn>
                                             </template>
@@ -288,10 +231,8 @@
                                             <template v-slot:activator="{ on }">
                                                 <v-btn class="k8s-hide-fork-btn"
                                                         text
-                                                        v-if="readOnly"
+                                                        v-if="isReadOnlyModel"
                                                         style="margin-right: 5px; margin-top: 15px;"
-                                                        color="primary"
-                                                        dark
                                                         @click="saveComposition('fork')"
                                                 >
                                                     <v-icon>{{icon.fork}}</v-icon>
@@ -301,8 +242,6 @@
                                                         text
                                                         v-else
                                                         style="margin-right: 5px; margin-top: 15px;"
-                                                        color="primary"
-                                                        dark
                                                         @click="saveComposition('save')"
                                                         v-on="on"
                                                 >
@@ -332,8 +271,6 @@
                                                 <v-btn class="k8s-hide-share-btn"
                                                         text
                                                         style="margin-right: 5px; margin-top: 15px;"
-                                                        color="primary"
-                                                        dark
                                                         v-on="on"
                                                         @click="openInviteUsers()"
                                                 >
@@ -350,9 +287,11 @@
                                             <template v-slot:activator="{ on }">
                                                 <v-btn class="k8s-hide-code-btn"
                                                         style="margin-right: 5px;margin-top: 15px;"
-                                                        color="primary" dark
                                                         @click="openCodeViewer()"
-                                                        v-on="on">
+                                                        v-on="on"
+                                                        color="primary"
+                                                        text
+                                                    >
                                                     <v-icon> {{ icon.code }}</v-icon>
                                                     <div class="k8s-hide-code">CODE</div>
                                                 </v-btn>
@@ -365,6 +304,31 @@
                                                 </v-list-item>
                                             </v-list>
                                         </v-menu>
+                                        <v-menu
+                                            v-if="isReadOnlyModel"
+                                            offset-y
+                                            open-on-hover
+                                            left
+                                        >
+                                            <template v-slot:activator="{ on }">
+                                                <v-btn
+                                                    class="k8s-hide-code-btn"
+                                                    style="margin-right: 5px;margin-top: 15px;"
+                                                    v-on="on"
+                                                    :color="joinRequestedText.show ? 'primary': 'success'"
+                                                    @click="requestInviteUser()"
+                                                    text
+                                                >
+                                                    <div v-if="joinRequestedText.show" >
+                                                        <v-icon>{{icon.join}}</v-icon>
+                                                    </div>
+                                                    {{joinRequestedText.text }}
+                                                </v-btn>
+                                            </template>
+                                            <v-list></v-list>
+                                        </v-menu>
+
+                                        
                                     </div>
                                     <!-- 웹페이지 버튼들 끝 -->
                                 </v-row>
@@ -397,11 +361,9 @@
                                             >
                                                 <template v-slot:activator="{ attrs, on }">
                                                     <v-btn small
-                                                            color="primary"
-                                                            class="white--text"
-                                                            v-bind="attrs"
-                                                            v-on="on"
-                                                            text
+                                                        v-bind="attrs"
+                                                        v-on="on"
+                                                        text
                                                     >
                                                         <div v-if="loadTerminal">
                                                             <v-progress-circular
@@ -443,13 +405,11 @@
                                             >
                                                 <template v-slot:activator="{ attrs, on }">
                                                     <v-btn
-                                                            style="margin-right: 5px; margin-top: 15px;"
-                                                            color="primary"
-                                                            class="white--text"
-                                                            v-bind="attrs"
-                                                            v-on="on"
-                                                            small
-                                                            text
+                                                        style="margin-right: 5px; margin-top: 15px;"
+                                                        v-bind="attrs"
+                                                        v-on="on"
+                                                        small
+                                                        text
                                                     >
                                                         <v-icon>mdi-cached</v-icon>
                                                         <div>Reverse</div>
@@ -477,6 +437,7 @@
                                                             @click="openCodeViewer()"
                                                             v-on="on"
                                                             small
+                                                            text
                                                     >
                                                         <v-icon> {{ icon.code }}</v-icon>
                                                         CODE
@@ -496,7 +457,7 @@
                                                 <template v-slot:activator="{ on }">
                                                     <v-btn
                                                             style="margin-right: 5px;margin-top: 15px;"
-                                                            color="primary"
+                                                            text
                                                             @click="openCodeViewer()"
                                                             v-on="on"
                                                             small
@@ -521,14 +482,14 @@
                                                     </v-list-item>
                                                 </v-list>
                                             </v-menu>
-                                            <v-menu v-if="!parents"
-                                                    style="margin: 0px !important;"
-                                                    open-on-hover offset-y>
+                                            <v-menu 
+                                                v-if="!parents"
+                                                style="margin: 0px !important;"
+                                                open-on-hover offset-y>
                                                 <template v-slot:activator="{ on }">
                                                     <v-btn
-                                                            v-if="readOnly"
+                                                            v-if="isReadOnlyModel"
                                                             style="margin-right: 5px; margin-top: 15px;"
-                                                            color="primary"
                                                             @click="saveComposition('fork')"
                                                             small
                                                             text
@@ -539,7 +500,6 @@
                                                     <v-btn
                                                             v-else
                                                             style="margin-right: 5px; margin-top: 15px;"
-                                                            color="primary"
                                                             @click="saveComposition('save')"
                                                             v-on="on"
                                                             small
@@ -563,7 +523,7 @@
 
 
                                             <v-menu
-                                                    v-if="isOwnModel && isServerModel && !isReadOnlyModel "
+                                                    v-if="isOwnModel && isServerModel && !isReadOnlyModel"
                                                     class="pa-2"
                                                     offset-y
                                                     open-on-hover
@@ -573,7 +533,6 @@
                                                     <v-btn
                                                             text
                                                             style="margin-right: 5px; margin-top: 15px;"
-                                                            color="primary"
                                                             v-on="on"
                                                             @click="openInviteUsers()"
                                                     >
@@ -790,7 +749,7 @@
                                     <v-spacer></v-spacer>
                                     <div v-if="!isDownloading">
                                         <v-btn text @click="generateZipDialog = false">Cancel</v-btn>
-                                        <v-btn color="primary" text @click="generateZip()">Download</v-btn>
+                                        <v-btn text @click="generateZip()">Download</v-btn>
                                     </div>
                                     <v-progress-circular
                                             v-else
@@ -1360,8 +1319,13 @@
                 ></kube-code-generator>
             </template>
         </separate-panel-components>
-    </div>
+        <!-- Mouse Cursor -->
+        <div v-for="(otherMouseEvent, email) in filteredMouseEventHandlers" :key="email">
+            <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
+        </div>
 
+        <GeneratorUI v-if="projectId" ref="generatorUI" :isGenerated="embedded" :projectId="projectId" :modelValue="value" @createModel="createModel" :defaultInputData="defaultGeneratorUiInputData" @clearModelValue="clearModelValue" @modificateModel="modificateModel"></GeneratorUI>
+    </div>
 </template>
 
 <script>
@@ -1381,6 +1345,8 @@
     import ModelCanvasShareDialog from "../modeling/ModelCanvasShareDialog";
     import SeparatePanelComponents from "../../SeparatePanelComponents";
     import CodeGenerator from "../modeling/CodeGenerator";
+    import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
+    import GeneratorUI from "../modeling/generators/GeneratorUI";
 
 
     var _ = require('lodash');
@@ -1409,17 +1375,22 @@
             'model-canvas-share-dialog': ModelCanvasShareDialog,
             'text-reader': TextReader,
             'model-storage-dialog': ModelStorageDialog,
-            SeparatePanelComponents
+            SeparatePanelComponents,
+            MouseCursorComponent,
+            GeneratorUI
         },
         mixins: [ModelCanvas],
         props: {
             boundedContextList: Array,
-            getReadOnly: Boolean,
             isReadOnlyModel: Boolean,
             specVersion: String
         },
         data() {
             return {
+                defaultGeneratorUiInputData: {
+                    "generator": "KubernetesGenerator",
+                    "userStory": ""
+                },
                 codePreviewLeftReSizeNumber: null,
                 gitOpsLoading: false,
                 namespaceList: [],
@@ -1926,6 +1897,8 @@
                     'warning': {icon: 'mdi-alert-outline', color: '#FFA726'},
                     'info': {icon: 'mdi-information-outline', color: '#29B6F6'},
                 },
+
+                openGraphRenderKey: 0
             }
         },
         beforeDestroy: function () {
@@ -1981,9 +1954,7 @@
         created: function () {
             var me = this
             try {
-                Vue.use(KubeModeling);
                 if(!me.embedded) {
-                    me.canvasType = 'k8s';
                     me.isQueueModel = true;
                     me.clusterItems = [
                         {title: 'Terminal'},
@@ -1992,7 +1963,8 @@
                     ]
                     if (!me.readOnly)
                         me.isSearch = true
-                    me.track();
+                }else{
+                    me.setCanvasType();
                 }
             } catch (e) {
                 console.log(e)
@@ -2191,19 +2163,12 @@
                 window.opener.postMessage({message: "kubernetesYaml"}, "*");
             }
 
-
-            // window.addEventListener("beforeunload", (event) => {
-            //     var delta = jsondiffpatch.diff(me.oldCopyValue, me.newCopyValue);
-            
-            //     if (me.initLoad && delta && !me.embedded) {
-            //         me.modifiedElement(delta)
-            //     } else if(delta && me.embedded) {
-            //         me.$emit('input', me.newCopyValue);
-            //     }
-
-            //     me.changedByMe = true
-            // });
-
+            // #region 처음 캔버스를 열 때, Dom이 로딩되기 전에 좌표 값을 얻어와서 렌더링에 버그가 생기기때문에 재렌더링 시킴
+            this.$nextTick(() => {
+                if(this.openGraphRenderKey === 0)
+                    this.openGraphRenderKey += 1
+            })
+            // #endregion
         },
         watch: {
             argoServerInfo: {
@@ -2232,22 +2197,6 @@
                     }
                 }
             },
-            // "copyValue": {
-            //     deep: true,
-            //     handler: function (newVal, oldVal) {
-            //         var me = this
-            //
-            //         // // me.newCopyValue = newVal;
-            //         // // me.oldCopyValue = oldVal;
-            //         var delta = jsondiffpatch.diff(oldVal, newVal);
-            //         //
-            //         // me.changedByMe = true;
-            //         // me.modifiedElement(delta)
-            //         if (me.initLoad && delta) {
-            //             me.modifiedElement(delta)
-            //         }
-            //     }
-            // },
             "value.elements": {
                 deep: true,
                 handler: _.debounce(function (newVal) {
@@ -2287,6 +2236,10 @@
             },
         },
         methods: {
+            setCanvasType(){
+                Vue.use(KubeModeling);
+                this.canvasType = 'k8s'
+            },
             moveModelUrl(modelId){
                 this.$router.push({path: `/kubernetes/${modelId}`});
             },
@@ -2300,6 +2253,87 @@
                     "content": code
                 };
                 window.opener.postMessage(message, "*")
+            },
+            clearModelValue(){
+                var me = this
+                me.value.elements = {}
+                me.value.relations = {}
+            },
+            createModel(val){
+                var me = this
+
+                me.value.elements = {}
+                me.value.relations = {}
+
+                if(val && val.elements){
+                    me.value.elements = Object.assign({}, val.elements);
+                    me.value.relations = Object.assign({}, val.relations);
+
+                    me.changedByMe = true
+                }
+            },
+            modificateModel({selectedElement, updatedElement, newElements, error, aiResponse}){
+                if(error){
+                    this.$refs.generatorUI.chatList.push({
+                        text: `죄송합니다.
+AI 응답 결과 처리 도중 에러가 발생해서 처리를 중지했습니다.
+잠시 후 다시 시도해 주세요.
+
+* 예외가 발생한 AI 응답
+${aiResponse}
+
+* 예외 내용
+${error}
+`,
+                        type: 'response'
+                    })
+                    return
+                }
+                if(selectedElement === null)
+                    return
+
+                
+                let valueToUpdateElement = this.embedded ? this.value.k8sValue : this.value
+                this.$set(valueToUpdateElement.elements, selectedElement.elementView.id, updatedElement)
+
+
+                for(let newElement of newElements){
+                    // #region 새로운 엘리먼트 추가하기
+                    const getElementTypeByComponent = (componentName, x, y) => {
+                        for (let i = 0; i < this.elementTypes.length; i++) {
+                            for (let j = 0; j < this.elementTypes[i].length; j++) {
+                                if (this.elementTypes[i][j].component === componentName) {
+                                    return { ...this.elementTypes[i][j], x, y}
+                                }
+                            }
+                        }
+                    }
+
+                    const currentElementX = selectedElement.elementView.x
+                    const currentElementY = selectedElement.elementView.y
+
+                    const addedElement = this.addElement(
+                        getElementTypeByComponent(newElement.elementGuide.elementType, currentElementX, currentElementY + 150),
+                        newElement.elementGuide.defaultKubeConfig
+                    )
+                    // #endregion
+
+                    // #region 만들어진 새로운 엘리먼트에 연결 추가하기
+                    const createRelation = (sourceElementValue, targetElementValue) => {
+                        const relationObj = (this.getComponentByName("kube-relation")).computed.createNew(
+                            this.uuid(),
+                            sourceElementValue,
+                            targetElementValue
+                        )
+                        this.$set(valueToUpdateElement.relations, relationObj.relationView.id, relationObj)
+                    }
+
+                    if(newElement.connectFlow === "OUT")
+                        createRelation(addedElement, updatedElement)
+                    else
+                        createRelation(updatedElement, addedElement)
+                    // #endregion
+                }
             },
             messageProcessing(e) {
                 var me = this
@@ -4576,9 +4610,7 @@
                         //기존 컴포넌트가 없는 경우 신규 생성
                     }
 
-                    if (me.validateRelation(from.id, to.id)) {
-                        me.addElement(componentInfo);
-                    }
+                    me.addElement(componentInfo);
                 }
             },
             modifyRelation(element) {
@@ -4594,7 +4626,6 @@
                 }
             },
             addElement: function (componentInfo, object, isOpened) {
-                this.enableHistoryAdd = true;
                 var me = this;
                 var additionalData = {};
                 var vueComponent = me.getComponentByName(componentInfo.component);
@@ -4665,30 +4696,16 @@
 
                 }
 
-
-
-                // var location = element.elementView ? me.value.elements : me.value.relations
-                // var eleId = element.elementView ? element.elementView.id : element.relationView.id
-                // if (componentInfo.component == "namespace") {
-                //     // location.unshift()
-                // }
-                // me.$set(location, eleId, element)
-
-                if(me.embedded){
-                    if (!me.value.k8sValue) {
-                        me.value.k8sValue = {'elements': {}, 'relations': {}}
-                    }
-                    me.addElementPush(me.value.k8sValue, element)
-                }else{
-                    me.addElementPush(me.value, element)
+                if (me.embedded){
+                    if(!me.value.k8sValue)  me.value.k8sValue = {'elements': {}, 'relations': {}} 
+                    me.addElementAction(element, me.value.k8sValue)
+                    // me.addElementPush(me.value.k8sValue, element)
+                } else{
+                    // me.addElementPush(me.value, element)
+                    me.addElementAction(element, me.value)
                 }
-
-                //auto openPanel
-                // me.autoOpenPanel = isOpened
-
                 //추천 element 리턴
                 return element
-
             },
             definedCrdDialog() {
                 var me = this
@@ -5551,7 +5568,7 @@
                     var ingressFlag = false;
                     Object.keys(me.value.k8sValue.elements).forEach(function(key) {
                         if(me.value.k8sValue.elements[key]){
-                            if(me.value.k8sValue.elements[key].object.metadata.name=="gateway"){
+                            if(me.value.k8sValue.elements[key]._type === "Ingress"){
                                 ingressFlag = true;
                             }
                         }
@@ -5677,6 +5694,140 @@
                         svcArr.push(svcSpec);
                     })
 
+                    // #region "Argo + Istio" 토핑시에 Argo 관련 배포 모형을 캔버스에 BC마다 추가시키기
+                    let rolloutFlag = false; // Rollout이 이미 추가된 경우에는 추가하지 않음
+                    Object.keys(me.value.k8sValue.elements).forEach(function(key) {
+                        if(me.value.k8sValue.elements[key]){
+                            if(me.value.k8sValue.elements[key]._type === "Rollout"){
+                                rolloutFlag = true;
+                            }
+                        }
+                    })
+
+                    if(me.value.toppingPlatforms.includes("argo") && !rolloutFlag) {
+                        bcList.forEach((item, index) => {
+                            const rolloutDCName = item.name.replace(" ", "-").toLowerCase()
+                            const rolloutSpec = {
+                                "apiVersion": "argoproj.io/v1alpha1",
+                                "kind": "Rollout",
+                                "metadata": {
+                                    "name": `rollout-${rolloutDCName}`,
+                                    annotations: {
+                                        "msaez.io/x": "1000",
+                                        "msaez.io/y": (56 + index * 125).toString(),
+                                        "msaez.io/width": "100",
+                                        "msaez.io/height": "100"
+                                    }
+                                },
+                                "spec": {
+                                    "replicas": 5,
+                                    "strategy": {
+                                        "canary": {
+                                            "trafficRouting": {
+                                                "istio": {
+                                                    "virtualService": {
+                                                        "name": `vsvc-${rolloutDCName}`,
+                                                        "routes": [
+                                                            "primary"
+                                                        ]
+                                                    },
+                                                    "destinationRule": {
+                                                        "name": `destrule-${rolloutDCName}`,
+                                                        "canarySubsetName": "canary",
+                                                        "stableSubsetName": "stable"
+                                                    }
+                                                }
+                                            },
+                                            "steps": [
+                                                {
+                                                    "setWeight": 5
+                                                },
+                                                {
+                                                    "pause": {
+                                                        "duration": "10s"
+                                                    }
+                                                },
+                                                
+                                                {
+                                                    "setWeight": 20
+                                                },
+                                                {
+                                                    "pause": {
+                                                        "duration": "10s"
+                                                    }
+                                                },
+                                                
+                                                {
+                                                    "setWeight": 40
+                                                },
+                                                {
+                                                    "pause": {
+                                                        "duration": "10s"
+                                                    }
+                                                },
+                                                
+                                                {
+                                                    "setWeight": 60
+                                                },
+                                                {
+                                                    "pause": {
+                                                        "duration": "10s"
+                                                    }
+                                                },
+                                                
+                                                {
+                                                    "setWeight": 80
+                                                },
+                                                {
+                                                    "pause": {
+                                                        "duration": "10s"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "revisionHistoryLimit": 2,
+                                    "selector": {
+                                        "matchLabels": {
+                                            "app": rolloutDCName
+                                        }
+                                    },
+                                    "template": {
+                                        "metadata": {
+                                            "labels": {
+                                                "app": rolloutDCName
+                                            }
+                                        },
+                                        "spec": {
+                                            "containers": [
+                                                {
+                                                    "name": rolloutDCName,
+                                                    "image": `userid/${rolloutDCName}:version`,
+                                                    "ports": [
+                                                        {
+                                                            "name": "http",
+                                                            "containerPort": 80,
+                                                            "protocol": "TCP"
+                                                        }
+                                                    ],
+                                                    "resources": {
+                                                        "requests": {
+                                                            "memory": "32Mi",
+                                                            "cpu": "5m"
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+
+                            me.localYamlText += json2yaml.stringify(rolloutSpec);
+                        })
+                    }
+                    // #endregion
+
                     deployArr.forEach(function(item) {
                         me.localYamlText += json2yaml.stringify(item);
                     });
@@ -5727,6 +5878,9 @@
 </script>
 
 <style scoped lang="scss" rel="stylesheet/scss">
+    .kubernetes-mobile-home-button {
+        display:none;
+    }
     .embedded {
         position: absolute;
         width: 100%;
@@ -6017,7 +6171,26 @@
         .k8s-is-mobile-project-name {
             position: absolute !important;
             right: 160px !important;
-            top:-15px
+            top: -15px
         }
     }
+
+    @media only screen and (max-width:600px){ 
+        .k8s-is-mobile-project-name {
+            position: absolute !important;
+            right: auto !important;
+            top: -5px;
+            left: 70px; 
+            max-width: 100px !important;
+        }
+
+        .kubernetes-mobile-home-button {
+            display:block;
+            z-index: 1;
+            position: absolute;
+            top:3px;
+            left:25px;
+        }
+    }
+    
 </style>

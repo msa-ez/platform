@@ -2,7 +2,7 @@
     <common-panel
             v-model="value"
             :image="image"
-            :is-read-only="canvas.isReadOnlyModel"
+            :is-read-only="isReadOnly"
             :width-style="widthStyle"
             :related-url="relatedUrl"
             :validation-lists="validationLists"
@@ -19,7 +19,7 @@
                         <v-checkbox v-model="value.isSaga" label="Saga"></v-checkbox> 
                         <event-storming-attribute  v-if="value.isSaga"
                                 v-model="value.fieldDescriptors"
-                                :isReadOnly="canvas.isReadOnlyModel"
+                                :isReadOnly="isReadOnly"
                                 :type="value._type"
                                 :elementId="value.elementView.id"
                         ></event-storming-attribute>
@@ -39,7 +39,7 @@
 
         <template slot="t-edit-user">
             <div
-                    v-if="newEditUserImg.length > 0 && canvas.isReadOnlyModel"
+                    v-if="newEditUserImg.length > 0 && isReadOnly"
                     style="text-align:center"
             >
                 <v-chip
@@ -65,7 +65,7 @@
                 text
                 color="primary"
                 style="margin-left: 10px; margin-top: -12px;"
-                :disabled="canvas.isReadOnlyModel"
+                :disabled="isReadOnly"
                 @click="openExampleDialog()"
             >Examples</v-btn>
         </template>
@@ -97,9 +97,7 @@
         },
         beforeDestroy() {
         },
-        created: function () {
-            this.panelInit()
-        },
+        created: function () { },
         watch: {},
         methods: {
             panelInit(){

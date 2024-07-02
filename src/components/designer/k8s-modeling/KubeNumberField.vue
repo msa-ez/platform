@@ -2,7 +2,7 @@
     <v-text-field
             :label="label"
             v-model="numberVal"
-            :disabled="readOnly"
+            :disabled="isReadOnly"
             type="number">
         <template v-slot:append-outer>
             <v-icon v-if="desDoc" small @click="openDoc(desDoc)">mdi-help-circle-outline</v-icon>
@@ -18,7 +18,7 @@
             value: Number,
             label: String,
             desDoc: String,
-            readOnly: {
+            isReadOnly: {
                 type: Boolean,
                 default: function () {
                     return false

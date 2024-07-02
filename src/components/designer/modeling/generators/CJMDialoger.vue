@@ -25,7 +25,7 @@
                             sm="6"
                             cols="12"
                         >
-                            <v-col v-for="(persona) in value.personas" v-bind:key="persona.name">
+                            <v-col v-if="value.personas" v-for="(persona) in value.personas" v-bind:key="persona.name">
                                 <v-card style="text-align: center; min-width:200px; min-height:200px;"
                                     :style="state.persona == persona.persona ? 'border: solid darkturquoise;':''"
                                 >
@@ -85,7 +85,7 @@
                             solo
                         >
                         </v-textarea>
-                        <v-btn color="primary" style="float:right; margin-top:5px;" @click="jump()">Create Model<v-icon>mdi-arrow-right</v-icon></v-btn>
+                        <v-btn class="cjm-create-btn" color="primary" style="float:right; margin-top:5px;" @click="jump()">Create Model<v-icon>mdi-arrow-right</v-icon></v-btn>
                     </v-card-text>
                 </v-card>
                 <!-- <div
@@ -106,15 +106,21 @@
 <script>
     import { VueTypedJs } from 'vue-typed-js'
     import Generator from './CJMPersonaGenerator.js'
+    import StorageBase from '../../../CommonStorageBase.vue';
+    import Usage from '../../../../utils/Usage'
+
     export default {
         name: 'customer-journey-map-dialoger',
         props: {
             value: Object,
             prompt: String,
             projectId: String,
+            modelIds: Object,
+            isServerProject: Boolean
         },
+        mixins: [StorageBase],
         components: {
-            VueTypedJs,
+            VueTypedJs
         },
         computed: {
             isForeign() {
@@ -124,19 +130,30 @@
                 return true
             },
         },
-        created(){
+        async created(){
+            await this.setUserInfo()
         },
         watch: {
+            "prompt": {
+                deep:true,
+                handler:  _.debounce(function(newVal, oldVal)  {
+                    if(this.isCreatedModel){
+                        this.modelIds.CJMDefinitionId = this.uuid()
+                        this.isCreatedModel = false
+                    }
+                },1000)
+            }
         },
         async mounted(){
             var me = this
             this.generator = new Generator(this);
             this.step=1;
-            
-            me.init()
+            this.init()
+        
         },
         data() {
             return {
+                isCreatedModel: false,
                 selectedEditPersona: null,
                 listKey: 0,
                 input:{title: this.prompt},
@@ -169,6 +186,8 @@
                 },
                 generator: null,
                 personaEditMode: false,
+                storageCondition: null,
+                showStorageDialog: false,
             }
         },
         methods: {
@@ -184,6 +203,7 @@
             },
             init(){
                 var me = this
+                if(!me.modelIds.CJMDefinitionId) me.modelIds.CJMDefinitionId = me.uuid();
                 if(!me.value){
                     me.value = {
                         personas: [],
@@ -205,6 +225,7 @@
                 me.state.modelList=persona.modelList; 
                 me.state.persona=persona.persona; 
                 me.state.personaDescription=persona.description; 
+                me.state.title = me.prompt; // ? 
                 me.step=2;
                 me.listKey++;
             },
@@ -214,6 +235,7 @@
                 me.done = true;
                 me.$emit("input", me.value)
                 me.$emit("change", "customerJourneyMap")
+                me.$emit("setPersonas", me.value.personas);
             },
             onModelCreated(personas){
                 var me = this;
@@ -235,7 +257,22 @@
                         
                     };
             },
-            generate(){
+            async generate(){
+                let issuedTimeStamp = Date.now()
+                let usage = new Usage({
+                    serviceType: `CJM_AIGeneration`,
+                    issuedTimeStamp: issuedTimeStamp,
+                    expiredTimeStamp: Date.now(),
+                    metadata: {
+                        projectId: this.modelIds.projectId,
+                        modelId: this.modelIds.CJMDefinitionId
+                    }
+                });
+                if(!await usage.use()) {
+                    this.stop()
+                    return false;
+                }
+
                 if(localStorage.getItem("prompt")) {
                     if(localStorage.getItem("prompt")==this.prompt) {
                         localStorage.setItem("useCache", true);
@@ -257,27 +294,21 @@
             },
             jump(){
                 var me = this
-                let uuid = me.uuid();
 
                 let personaIndex = me.value.personas.findIndex(x => x.persona == me.value.selectedPersona.persona)
                 if(!me.value.personas[personaIndex].modelList){
                     me.value.personas[personaIndex].modelList = []
                 }
-                me.value.personas[personaIndex].modelList.push(uuid)
+
+                // if(me.isServerProject) me.value.personas[personaIndex].modelList.push(me.modelIds.CJMDefinitionId)
+                if(me.isServerProject) me.state.associatedProject = me.modelIds.projectId
                 me.selectPersona(me.value.personas[personaIndex])
                 me.$emit("input", me.value)
                 me.$emit("change", "customerJourneyMap")
-
-                me.state.title = me.value; // ? 
                     
-                let stateJson = JSON.stringify(
-                    me.state
-                );
-                
-                localStorage["gen-state"] = stateJson;
-                window.open(`/#/cjm/${uuid}`, "_blank")
-               // window.open(`/#/sticky/${uuid}`, "_blank")
-//                this.$router.push({path: `sticky/${uuid}`});
+                localStorage["gen-state"] = JSON.stringify(me.state);
+                window.open(`/#/cjm/${me.modelIds.CJMDefinitionId}`, "_blank")
+                me.isCreatedModel = true;
             },
             uuid: function () {
                 function s4() {

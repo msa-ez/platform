@@ -17,7 +17,7 @@
                     <v-card-text>
                         <v-radio-group 
                                 v-model="value.version"
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                                 row dense>
                             <v-radio label="canary" value="canary" />
                             <v-radio label="stable" value="stable" />

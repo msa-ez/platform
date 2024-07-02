@@ -20,7 +20,6 @@
                 v-on:removeShape="onRemoveShape"
                 v-on:dblclick="openPanel"
                 v-on:addedToGroup="onAddedToGroup"
-                :image.sync="refreshedImg"
                 :_style="{
                     'label-angle':value.elementView.angle,
                     'font-weight': 'bold', 'font-size': '14',
@@ -38,6 +37,9 @@
                     }"
             ></geometry-rect>
 
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
             <sub-elements>
                 <rectangle-element
                         :sub-width="'100%'"
@@ -104,7 +106,7 @@
                 v-model="value"
                 :titleName="'Enumeration'"
                 :img="imgSrc"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></uml-enum-panel>
     </div>
@@ -112,13 +114,15 @@
 
 <script>
     import Element from './UMLClassElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     var changeCase = require('change-case');
-
     export default {
         mixins: [Element],
         name: 'enum-class-definition',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             imgSrc() {
                 return `${ window.location.protocol + "//" + window.location.host}/static/image/symbol/class_enum.png`

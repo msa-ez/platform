@@ -22,7 +22,6 @@
                 v-on:rotateShape="onRotateShape"
                 v-on:addedToGroup="onAddedToGroup"
                 :label.sync="namePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                 'label-angle':value.elementView.angle,
                 'font-weight': 'bold','font-size': '16'
@@ -57,15 +56,8 @@
                     }"
             >
             </geometry-rect>
-            <sub-elements v-for="(index) in newEditUserImg.length">
-                <image-element
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="value.elementView.height"
-                >
-                </image-element>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="elementCoordinate.height"></multi-user-status-indicator>
             </sub-elements>
             <sub-elements>
                 <geometry-point
@@ -89,8 +81,12 @@
                         :sub-bottom="'5px'"
                 >
                 </image-element>
-                <storming-sub-controller :type="value._type" :value="value"
-                                         :readOnly="canvas.isReadOnlyModel"></storming-sub-controller>
+                <storming-sub-controller 
+                    :type="value._type" 
+                    :value="value"
+                    :isReadOnly="!isEditElement">
+                </storming-sub-controller>
+
                 <sub-controller
                     :image="'chatgpt.png'"
                     @click="openAutoModeling"
@@ -100,7 +96,7 @@
         <external-definition-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"
@@ -113,13 +109,14 @@
     import Element from './EventStormingModelElement'
     import ExternalDefinitionPanel from "../panels/ExternalDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-    var changeCase = require('change-case');
-    var pluralize = require('pluralize');
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
+    
     export default {
         mixins: [Element],
         name: 'external-definition',
         components:{
             ExternalDefinitionPanel,
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             'storming-sub-controller' : StormingSubController
         },
         computed: {

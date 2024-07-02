@@ -21,7 +21,6 @@
                 v-on:deSelectShape="deSelectedActivity"
                 v-on:addedToGroup="onAddedToGroup"
                 :label="canvas.isHexagonal ? '' : getNamePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                     'label-angle': canvas.isHexagonal ? 0 : value.elementView.angle,
                     'font-weight': 'bold','font-size': '16'
@@ -85,14 +84,7 @@
             ></geometry-rect>
 
             <sub-elements v-if="!canvas.isHexagonal">
-                <image-element
-                        v-for="(index) in newEditUserImg.length" :key="index"
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="value.elementView.height"
-                ></image-element>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="elementCoordinate.height"></multi-user-status-indicator>
             </sub-elements>
 
             <sub-elements>
@@ -125,8 +117,8 @@
                         v-if="!isPBCModel"
                         :type="value._type" 
                         :value="value"
-                        :readOnly="canvas.isReadOnlyModel"
-                        :isHexagonalModeling="canvas.isHexagonal"
+                        :isReadOnly="!isEditElement"
+                        :isHexagonal="canvas.isHexagonal"
                 ></storming-sub-controller>
 
             </sub-elements>
@@ -160,7 +152,7 @@
         <policy-definition-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"
@@ -175,18 +167,15 @@
     import Element from './EventStormingModelElement'
     import PolicyDefinitionPanel from "../panels/PolicyDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-
-    var changeCase = require('change-case');
-    var pluralize = require('pluralize');
-
-    var Mustache = require('mustache')
-
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
+    
     export default {
         mixins: [Element],
         name: 'policy-definition',
         components:{
             PolicyDefinitionPanel,
-            'storming-sub-controller' : StormingSubController
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+            'storming-sub-controller': StormingSubController
         },
         computed: {
             namePascalCase() {

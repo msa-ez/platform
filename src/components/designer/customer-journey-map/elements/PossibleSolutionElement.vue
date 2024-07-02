@@ -18,7 +18,6 @@
                 v-on:dblclick="openPanel"
                 v-on:selectShape="selectedActivity"
                 v-on:deSelectShape="deSelectedActivity"
-                :image.sync="refreshedImg"
                 :label.sync="value.name"
                 :_style="{
                     'label-angle':value.elementView.angle,
@@ -32,13 +31,16 @@
                         'fill-r': 1,
                         'fill-cx': .1,
                         'fill-cy': .1,
-                        'stroke-width': 0,
-                        'stroke': '#ED73B6',
-                        'fill': '#ED73B6',
+                        'stroke-width': 10,
+                        'stroke': '#817ffc',
+                        'fill': '#817ffc',
                         'fill-opacity': 1,
                         'r': '1',
                     }"
             ></geometry-rect>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
 
             <sub-elements>
                 <text-element
@@ -54,7 +56,7 @@
         <cjm-model-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :showError="showError"
                 :widthStyle="panelStyle"
                 @close="closePanel"
@@ -65,11 +67,14 @@
 
 <script>
     import Element from './CJMModelElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'possible-solution-element',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             defaultStyle() {
                 return {}
@@ -111,8 +116,6 @@
             return {
             };
         },
-        created: function () {
-        },
         watch: {
             "getDescription": {
                 deep: true,
@@ -150,9 +153,7 @@
                     if(me.$store) me.$store.dispatch('resize', obj)
                 }
             },
-        },
-        methods: {}
-
+        }
     }
 </script>
 

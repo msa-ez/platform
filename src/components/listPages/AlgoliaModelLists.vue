@@ -1,1285 +1,544 @@
 <template>
-    <v-container style="max-width: 1500px;">
-        <slot name="body">
-            <div>
-<!--                <AutoModelingDialog-->
-<!--                    v-if="showDialog"-->
-<!--                    ref="autoModelingDialog"-->
-<!--                    mode="project"-->
-<!--                    :showChat="true"-->
-<!--                    :projectId="projectUid"-->
-<!--                    @closeDialog="closeDialog"-->
-<!--                ></AutoModelingDialog>-->
-                
-                        <v-list nav>
-                            <v-row class="main-tap-list" style="margin-top:-80px; margin-bottom:10px; position:absolute; max-width:60%; min-width:10%; z-index:1; left: 50%; transform: translate(-50%, 0%);">
-                                <v-btn 
-                                    text
-                                    style="font-size:16px; margin:0px 10px;"
-                                    @click="wikiOpen()"
-                                >{{$t('mainNav.introduction')}}
-                                </v-btn>
-                                <v-btn v-for="(item, index) in mainNav"
-                                    :key="index"
-                                    text
-                                    style="font-size:16px; margin:0px 10px;"
-                                    @click="toggleDialog(item)"
-                                >{{$t(item.title)}}
-                                </v-btn>
-                            </v-row>
-                        </v-list>
-                        <v-hover v-slot="{ hover }">
-                            <v-list-group class="nav-project-list"
-                                :value="hover"
-                                style="background-color:white; position:absolute; top:-56px; z-index:1"
-                                :style="isLogin ? 'right:85px;' : 'right:60px;'"
+    <div>
+        <v-container style="max-width: 1500px;">
+            <slot name="body">
+                <div>
+                    <div class="main-nav-tabs-box">
+                        <v-tabs class="main-nav-tabs" background-color="transparent" show-arrows color="none">
+                            <v-tab to="/"
+                                class="main-nav-tab main-nav-tab-home"
                             >
-                                <template v-slot:activator>
-                                    <v-list-item-title style="margin-right:-20px;">{{$t('mainNav.project')}}</v-list-item-title>
-                                </template>
-                            
-                                <v-list-item
-                                    v-for="(tabObj, tabIndex) in filterTabLists"
-                                    v-if="tabObj.id !== 'home' && tabObj.show"
-                                    :key="tabObj.id"
-                                    link
-                                    @click="tabId = tabObj.id"
-                                >
-                                    <v-list-item-title style="margin-top:-4px;">{{ tabObj.display }}</v-list-item-title>
-                                    <v-avatar v-if="tabIndex > 0 && tabObj.totalCount != null" color="green lighten-5" size="30"
-                                            style="font-size:10px;">
-                                        {{ tabObj.totalCount == null ? '...' : (tabObj.totalCount == 0 ? '0' : tabObj.totalCount) }}
-                                    </v-avatar>
-                                </v-list-item>
-                            </v-list-group>
-                        </v-hover>
-                        
-                        <v-dialog v-for="(item, index) in mainNav"
-                                v-if="item.dialogType === 'partnership'"
-                                :key="`dialog-${index}`"
-                                v-model="item.dialog"
-                        >
-                            <v-card>
-                                <v-card-title class="text-h5">{{ item.title }}</v-card-title>
-                                <div>
-                                    <v-card-text>Your Content Here</v-card-text>
-                                    <v-card-actions>
-                                    </v-card-actions>
-                                </div>
-                            </v-card>
-                        </v-dialog>
-                        <v-dialog v-for="(item, index) in mainNav"
-                            v-if="item.dialogType === 'learn'"
-                            :key="`dialog-${index}`"
-                            v-model="item.dialog"
-                            max-width="90%"
-                        >
-                            <v-card style="padding:10px; height:85vh; overflow:auto;">
-                                <v-row style="margin:0px;">
-                                    <v-card-title class="text-h5 pa-0">{{$t(item.title)}}</v-card-title>
-                                    <v-spacer></v-spacer>
-                                    <v-btn
-                                        @click="navigateTo('https://www.msaschool.io/operation/education/curriculum/')"
-                                        text
-                                        style="font-size:16px;"
-                                    >{{$t('main.training')}}
-                                    </v-btn>
-                                    <v-btn
-                                        text
-                                        @click="navigateTo('/courses')"
-                                        style="margin-right:10px;"
-                                    >
-                                        <div class="app-new-text" style=" font-weight:700;">{{$t('main.goToLectures')}}</div>
-                                    </v-btn>
-                                </v-row>
-                                <v-row class="title-page-card-box-row">
-                                    <v-col
-                                        v-for="(card, index) in navLearnTutorialCards"
-                                        :key="index"
-                                        lg="3"
-                                        md="4"
-                                        sm="6"
-                                        xs="12"
-                                    >
-                                        <v-card
-                                            class="mx-auto"
-                                            width="356"
-                                            min-height="150"
-                                            outlined
-                                        >
-                                            <v-row style="margin-left: 3px; margin-top:0px; margin-bottom:-25px;">
-                                                <v-chip
-                                                    class="ma-2"
-                                                    :color="card.color"
-                                                    text-color="white"
-                                                    style="width: auto; height: 20px; font-size: 12px; font-weight:bold; z-index: 200;"
-                                                    small
-                                                >{{$t('word.dev')}}
-                                                </v-chip>
-                                            </v-row>
-                                            <v-list-item three-line>
-                                                <a @click="moveToPages(card.page)">
-                                                    <v-img class="mt-4 mr-3"
-                                                        style="height:115px; width:165px;"
-                                                        :src="card.imageUrl"
-                                                    >
-                                                    </v-img>
-                                                </a>
-                                                <v-list-item-content>
-                                                    <v-list-item-subtitle class="mb-1" style="font-weight: 500; font-size:14px; color:black;">
-                                                        {{$t(card.title)}}
-                                                    </v-list-item-subtitle>
-                                                    <div style="font-size:12px; color:#757575;">{{$t(card.subtitle)}}</div>
-                                                </v-list-item-content>
-                                            </v-list-item>
-                                        </v-card>
-                                    </v-col>
-                                </v-row>
-
-                                <v-row class="title-page-card-box-row">
-                                    <v-col
-                                        v-for="(card, index) in navLearnExamplesCards"
-                                        :key="index"
-                                        lg="3"
-                                        md="4"
-                                        sm="6"
-                                        xs="12"
-                                    >
-                                        <v-card
-                                        class="mx-auto"
-                                        width="356"
-                                        min-height="150"
-                                        outlined
-                                        >
-                                        <v-list-item three-line>
-                                            <a @click="moveToPages(card.page)">
-                                                <v-img class="mt-4 mr-3"
-                                                    style="height:115px; width:165px;"
-                                                    :src="card.imageUrl"
-                                                >
-                                                </v-img>
-                                            </a>
-                                            <v-list-item-content>
-                                            <div style="margin-top:10px; font-weight: 500; font-size:16px; color:black;">
-                                                {{$t(card.title)}}
-                                            </div>
-                                            <v-card-actions class="title-card-actions-btn" style="margin-bottom:-15px;">
-                                                <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                                    :to="card.page">
-                                                {{$t('examples.enter-btn')}}
-                                                </v-btn>
-                                            </v-card-actions>
-                                            </v-list-item-content>
-                                        </v-list-item>
-                                        </v-card>
-                                    </v-col>
-                                </v-row>
-                            </v-card>
-                        </v-dialog>
-                    <!-- <v-tabs
-                        v-model="tabId"
-                        :key="renderTabId"
-                        background-color="transparent"
-                        color="blue darken-1"
-                        show-arrows
-                        centered
-                    >
-                        <div v-for="(tabObj,index) in filterTabLists" style="align-self: center;">
-                            <v-tab
-                                v-if="tabObj.show"
-                                :disabled="showLoading && index != selectedTabIndex"
-                                :href="`#${tabObj.id}`"
-                                :key="tabObj.id"
-                                style="height:45px;"
-                            >
-                                {{tabObj.display}}
-
-                                <v-avatar v-if="index > 0 && tabObj.totalCount!=null" color="green lighten-5" size="30"
-                                          style="margin-left: 5px;margin-bottom: 15px; font-size:10px;">
-                                    {{tabObj.totalCount == null ? '...': (tabObj.totalCount == 0 ? '0' : tabObj.totalCount)}}
-                                </v-avatar>
+                                <v-icon style="margin-top:10px;">mdi-home</v-icon>
                             </v-tab>
-                        </div>
-
-                        <v-tab
-                                v-if="!isOnPrem"
-                                :to="'/courses'"
-                        >
-                        LEARN
-                        </v-tab>
-                        <v-row style="width:100%; height:57px;" dense>
-
-                            <v-icon @click="searchOpen = !searchOpen" style="width:26px; height:26px; margin-top:16px; margin-left:15px;">mdi-magnify</v-icon>
-                        </v-row>
-                    </v-tabs> -->
-
-                <div class="mobile-tab-list" style="position: fixed; bottom:15px; right:30px; z-index:999;">
-                    <v-speed-dial
-                        v-model="fab"
-                        direction="top"
-                        transition="slide-y-transition"
-                    >
-                        <template v-slot:activator>
-                            <v-btn
-                                v-model="fab"
-                                fab
-                                depressed
-                                dark
-                                color="blue darken-2"
-                            >
-                            <v-icon v-if="fab">
-                                mdi-close
+                            <v-tab @click="wikiOpen('introduction')"
+                                class="main-nav-tab"
+                            >{{$t('mainNav.introduction')}}
+                            </v-tab>
+                            <v-tab @click="wikiOpen('company')"
+                                class="main-nav-tab"
+                            >{{$t('mainNav.company')}}
+                            </v-tab>
+                            <v-tab @click="wikiOpen('pricing')"
+                                class="main-nav-tab"
+                            >{{$t('mainNav.pricing')}}
+                            </v-tab>
+                            <v-tab @click="wikiOpen('partnership')"
+                                class="main-nav-tab"
+                            >{{$t('mainNav.partnership')}}
+                            </v-tab>
+                            <v-tab @click="learnNavDialog = true"
+                                class="main-nav-tab"
+                            >{{$t('mainNav.learn')}}
+                            </v-tab>
+                            <v-tab @click="openMakingDialog()"
+                                class="main-nav-tab main-nav-tab-display"
+                            >{{$t('making.title')}}
+                            </v-tab>
+                            <v-icon @click="searchOpen = !searchOpen"
+                                class="main-nav-tab"
+                            >mdi-magnify
                             </v-icon>
-                            <v-icon v-else>
-                                mdi-menu
-                            </v-icon>
-                            </v-btn>
-                        </template>
-                        <v-list>
-                            <v-tabs
-                                v-model="tabId"
-                                :key="renderTabId"
-                                vertical
-                                color="primary"
-                            >
-                                <v-tab @click="searchOpen = !searchOpen">
-                                    <v-icon style="width:26px; height:26px;">mdi-magnify</v-icon>
-                                </v-tab>
-                                <div v-for="(tabObj,index) in filterTabLists">
-                                    <v-tab
-                                        v-if="tabObj.show"
-                                        :disabled="showLoading && index != selectedTabIndex"
-                                        :href="`#${tabObj.id}`"
-                                        :key="tabObj.id"
-                                        style="height:45px;"
-                                    >
-                                        {{tabObj.display}}
-
-                                        <v-avatar v-if="index > 0 && tabObj.totalCount!=null" color="green lighten-5" size="30"
-                                                style="margin-left: 5px;margin-bottom: 15px; font-size:10px;">
-                                            {{tabObj.totalCount == null ? '...': (tabObj.totalCount == 0 ? '0' : tabObj.totalCount)}}
-                                        </v-avatar>
-                                    </v-tab>
-                                </div>
-                                <v-tab
-                                    v-if="!isOnPrem"
-                                    :to="'/courses'"
-                                >
-                                    LEARN
-                                </v-tab>
-                            </v-tabs>
-                        </v-list>
-                    </v-speed-dial>
-                </div>
-
-                <v-alert
-                        v-if="searchOpen"
-                        elevation="2"
-                        style="position:fixed; top:50px; z-index:2; height:70px; width:40%; left: 50%; transform: translate(-50%, 0%);"
-                >
-                    <div>
-                        <v-row style="align-items: baseline;">
-                            <v-menu offset-y>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <v-chip
-                                            :color="selectedMode.color"
-                                            dark
-                                            style="margin-right: 10px;"
-                                            v-bind="attrs"
-                                            v-on="on"
-                                    >
-                                        {{selectedMode.type}}
-                                    </v-chip>
-                                </template>
-                                <v-list>
-                                    <v-list-item
-                                            v-for="(item, index) in listMode"
-                                            :key="index"
-                                            @click="selectMode(item)"
-                                    >
-                                        <v-list-item-title>{{ item.display }}</v-list-item-title>
-                                    </v-list-item>
-                                </v-list>
-                            </v-menu>
-                            <v-text-field
-                                    v-model="searchObj.name"
-                                    outlined
-                                    class="gs-main-search"
-                                    :label="searchObj.name ? filterListsCount : 'Search for name'"
-                                    autofocus
-                                    hide-details
-                                    dense
-                            ></v-text-field>
-                            <v-icon @click="searchClose(true)" style="width:26px; height:26px; margin-top: 13px;">mdi-close</v-icon>
-                        </v-row>
-                        <v-row>
-                            <v-btn @click="searchClose()" block text style="height: 25px"> <v-icon>mdi-chevron-up</v-icon> </v-btn>
-                        </v-row>
+                        </v-tabs>
                     </div>
-                </v-alert>
-
-                <v-tabs-items v-model="selectedTabIndex">
-                    <v-tab-item v-if="selectedTabIndex == -1" :value="selectedTabIndex">
-                        <!-- SEARCH -->
-                        <v-row style="margin-top:0px;">
-                            <v-col v-if="showLoading || (filteredList == undefined && typeof filteredList == 'undefined')"
-                                   style="height: 100%;">
-                                <v-row>
-                                    <v-col
-                                            v-for="idx in 9"
-                                            cols="6"
-                                            md="4"
-                                    >
-                                        <v-card
-                                                outlined
-                                                class="mx-auto"
-                                                style="width: 500px; height: 400px; justify-content: center"
-                                                align="center"
-                                        >
-                                            <v-skeleton-loader
-                                                    ref="skeleton"
-                                                    type="card"
-                                                    class="mx-auto"
-                                            >
-                                            </v-skeleton-loader>
-                                        </v-card>
-                                    </v-col>
-                                </v-row>
-                            </v-col>
-                            <v-col v-else-if="filteredList == null && typeof filteredList == 'object' "
-                                   style="height: 590px;">
-                                No Items
-                            </v-col>
-                            <v-col
-                                    v-else
-                                    v-for="(project,index) in filteredList"
-                                    :key="project.projectId"
-                                    xl="4"
-                                    lg="4"
-                                    md="6"
-                                    sm="12"
-                            >
-                                <EventStormingListCard
-                                        :information="project"
-                                        @delete="deleteProjectItem"
-                                        @openAutoModelingDialog=openAutoModelingDialog
-                                >
-                                    <template slot="chips">
-                                        <slot name="chips"></slot>
-                                    </template>
-                                    <template slot="action" slot-scope="project">
-                                        <slot name="action" :project="project"></slot>
-                                    </template>
-                                </EventStormingListCard>
-                            </v-col>
-                        </v-row>
-                    </v-tab-item>
-
-                    <v-tab-item v-else-if="selectedTabIndex == 0" :value="selectedTabIndex">
-                        <!-- HOME -->
-                        <div class="gs-main-page-top-box">
-                            <transition name="fade" mode="out-in">
-                                <div v-for="item in mainTexts" :key="item.id" v-if="currentTextId === item.id">
-                                    <v-row justify="start" align="center">
-                                        <v-col cols="2"></v-col>
-                                        <v-col cols="5">
-                                            <div style="display: flex; justify-content: flex-end;">
-                                                <div style="text-align: left;">
-                                                    <div class="gs-main-page-top-title" style="white-space: pre-wrap;">{{$t(item.title)}}</div>
-                                                    <div class="gs-main-page-sub-title">
-                                                        <div v-for="content in item.content" :key="content">{{$t(content)}}<br></div>
-                                                    </div>
-                                                    <a :href="item.goToUrl" target="_blank" style="text-decoration: none; color: inherit;">
-                                                        <v-btn color="primary"
-                                                            text
-                                                            style="margin-top:5px;
-                                                            font-size:18px;
-                                                            font-weight:700;
-                                                            padding: 0px;"
-                                                        >{{$t('main.goToUrlText')}}</v-btn>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </v-col>
-                                        <v-col cols="3">
-                                            <v-img :src="item.imageUrl"/>
-                                        </v-col>
-                                        <v-col cols="2"></v-col>
-                                    </v-row>
-                                </div>
-                            </transition>
-                        </div>
-                        <div class="gs-main-page-top-box-mobile">
-                            <transition name="fade" mode="out-in">
-                                <div v-for="item in mainTexts" :key="item.id" v-if="currentTextId === item.id">
-                                    <v-row>
-                                        <v-col cols="3.5"></v-col>
-                                        <v-col cols="5">
-                                            <v-img :src="item.imageUrl"/>
-                                        </v-col>
-                                        <v-col cols="3.5"></v-col>
-                                    </v-row>
-                                    <div style="text-align: center;">
-                                        <div class="gs-main-page-top-title-mobile" style="white-space: pre-wrap;">{{$t(item.title)}}</div>
-                                        <div class="gs-main-page-sub-title-mobile">
-                                            <div v-for="content in item.content" :key="content">{{$t(content)}}<br></div>
-                                        </div>
-                                        <a :href="item.goToUrl" target="_blank" style="text-decoration: none; color: inherit;">
-                                            <v-btn color="primary" style="margin-top:10px;">{{$t('main.goToUrlText')}}</v-btn>
-                                        </a>
+                    <v-hover v-slot="{ hover }">
+                        <v-list-group class="nav-storage-list"
+                            :value="hover"
+                            style="background-color:white; position:fixed; top:7px; z-index:1; width:100px;"
+                            :style="isLogin ? 'right:85px;' : 'right:70px;'"
+                            :append-icon="null"
+                        >
+                            <template v-slot:activator>
+                                <v-list-item-title style="margin:5px 0px 0px 10px; font-weight: 700;">
+                                    <div style="display: flex;">
+                                        <Icon icon="material-symbols:home-storage" width="28" height="28" style="margin-right:3px;" />
+                                        <div class="cp-storage" style="margin-top:5px;">{{$t('mainNav.Storage')}}</div>
                                     </div>
-                                </div>
-                            </transition>
-                        </div>
-                        <AutoModelingDialog
-                            mode="es"
-                            :showDialog="false"
-                            :showChat="true"
-                            @startCreateModel="openCanvas"
-                            :projectId="null"
-                        ></AutoModelingDialog>
-                        <!-- <div class="title-page-title gs-modeling-tools-title-page-title">{{$t('tools.modeling')}}</div> -->
-                        <!-- <v-row class="title-page-card-box-row">
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
+                                </v-list-item-title>
+                            </template>
+                        
+                            <v-list-item
+                                v-for="(tabObj, tabIndex) in filterTabLists"
+                                v-if="tabObj.id !== 'home' && tabObj.show"
+                                :key="tabObj.id"
+                                link
+                                @click="tabId = tabObj.id"
                             >
-                                <v-card
-                                        class="title-page-card-box"
-                                        outlined
-                                >
-                                    <v-card-title style="text-align: center;" class="home-card-title">{{$t('tools.eventstorming')}}</v-card-title>
-                                    <v-img @click="moveToPages('es')"
-                                           class="introduction-img"
-                                           src="https://user-images.githubusercontent.com/113568664/208291359-e7ce6d88-776b-4447-a236-d7a1cddadcf4.png"
-                                    >
-                                    </v-img>
-                                    <v-card-subtitle>{{$t('tools.eventstorming-inst')}}</v-card-subtitle>
-                                    <v-card-actions class="title-card-actions-btn">
-                                        <v-btn small depressed text @click="goTutorials('es')">{{$t('tools.tutorial-btn')}}</v-btn>
-                                        <v-btn small depressed text @click="goVideo('es')">{{$t('tools.video-btn')}}</v-btn>
-                                        <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                               @click="moveToPages('es')">{{$t('tools.create-btn')}}
-                                        </v-btn>
-                                    </v-card-actions>
-                                </v-card>
-                            </v-col>
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        outlined
-                                        class="title-page-card-box"
-                                >
-                                    <v-card-title style="text-align: center;" class="home-card-title">{{$t('tools.kubernetes')}}</v-card-title>
-                                    <v-img @click="moveToPages('k8s')"
-                                           class="introduction-img"
-                                           src="https://user-images.githubusercontent.com/113568664/208291286-15b57907-3126-48f6-bf71-490df5ce027d.png"
-                                    >
-                                    </v-img>
-                                    <v-card-subtitle>{{$t('tools.kubernetes-inst')}}</v-card-subtitle>
-                                    <v-card-actions class="title-card-actions-btn">
-                                        <v-btn small depressed text @click="goTutorials('k8s')">{{$t('tools.tutorial-btn')}}</v-btn>
-                                        <v-btn small depressed text @click="goVideo('k8s')">{{$t('tools.video-btn')}}</v-btn>
-                                        <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                               @click="moveToPages('k8s')">{{$t('tools.create-btn')}}
-                                        </v-btn>
-                                    </v-card-actions>
-                                </v-card>
-                            </v-col>
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        outlined
-                                        class="title-page-card-box"
-                                >
-                                    <v-card-title style="text-align: center;" class="home-card-title">{{$t('tools.bmc')}}</v-card-title>
-                                    <v-img @click="moveToPages('bm')"
-                                           class="introduction-img"
-                                           src="https://user-images.githubusercontent.com/92732781/233012222-d0662c4b-5546-4e7b-af28-c07617a57ef0.png"
-                                    >
-                                    </v-img>
-                                    <v-card-subtitle>{{$t('tools.bmc-inst')}}</v-card-subtitle>
-                                    <v-card-actions class="title-card-actions-btn">
-                                        <v-btn small depressed disabled text @click="goTutorials('bm')">{{$t('tools.tutorial-btn')}}
-                                        </v-btn>
-                                        <v-btn small depressed disabled text @click="goVideo('bm')">{{$t('tools.video-btn')}}</v-btn>
-                                        <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                               @click="moveToPages('bm')">{{$t('tools.create-btn')}}
-                                        </v-btn>
-                                    </v-card-actions>
-                                </v-card>
-                            </v-col>
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        outlined
-                                        class="title-page-card-box"
-                                >
-                                    <v-card-title style="text-align: center;" class="home-card-title">{{$t('tools.bpmn')}}</v-card-title>
-                                    <v-img @click="moveToPages('bpmn')"
-                                           class="introduction-img"
-                                           src="https://user-images.githubusercontent.com/92732781/233012303-64841fa2-2952-43eb-a768-f75be9a73679.png"
-                                    >
-                                    </v-img>
-                                    <v-card-subtitle>{{$t('tools.bpmn-inst')}}</v-card-subtitle>
-                                    <v-card-actions class="title-card-actions-btn">
-                                        <v-btn small depressed text @click="goTutorials('bpmn')">{{$t('tools.tutorial-btn')}}</v-btn>
-                                        <v-btn small depressed text @click="goVideo('bpmn')">{{$t('tools.video-btn')}}</v-btn>
-                                        <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                               @click="moveToPages('bpmn')"> {{$t('tools.create-btn')}}
-                                        </v-btn>
-                                    </v-card-actions>
-                                </v-card>
-                            </v-col>
-                        </v-row> -->
-                        <!-- <div class="title-page-title">{{$t('tutorials.tutorial')}}</div> -->
-                        <!-- <v-row class="title-page-card-box-row">
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        class="mx-auto"
-                                        width="356"
-                                        min-height="150"
-                                        outlined
-                                >
-                                    <v-row style="margin-left: 3px; margin-top:0px; margin-bottom:-25px;">
-                                        <v-chip
-                                                class="ma-2"
-                                                color="red"
-                                                text-color="white"
-                                                style="width: auto; height: 20px; font-size: 12px; font-weight:bold; z-index: 200;"
-                                                small
-                                        >
-                                            {{$t('word.biz')}}
-                                        </v-chip>
-                                    </v-row>
-                                    <v-list-item three-line>
-                                        <a @click="moveToPages('ggd')">
-                                            <v-img class="mt-4 mr-3" style="height:115px; width:165px;"
-                                                   src="https://user-images.githubusercontent.com/113568664/211271741-4e4cdd7a-37af-4445-902c-a3229c392e6e.png">
-                                            </v-img>
-                                        </a>
-                                        <v-list-item-content>
-                                            <v-list-item-subtitle class="mb-1" style="font-weight: 500; font-size:14px; color:black;">
-                                                {{$t('tutorials.ddd')}}
-                                            </v-list-item-subtitle>
-                                            <div style="font-size:12px; color:#757575;">{{$t('tutorials.ddd-inst')}}</div>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </v-card>
-                            </v-col>
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        class="mx-auto"
-                                        width="356"
-                                        min-height="150"
-                                        outlined
-                                >
-                                    <v-row style="margin-left: 3px; margin-top:0px; margin-bottom:-25px;">
-                                        <v-chip
-                                                class="ma-2"
-                                                color="green"
-                                                text-color="white"
-                                                style="width: auto; height: 20px; font-size: 12px; font-weight:bold; z-index: 200;"
-                                                small
-                                        >
-                                            {{$t('word.dev')}}
-                                        </v-chip>
-                                    </v-row>
-                                    <v-list-item three-line>
-                                        <a @click="moveToPages('run-mu')">
-                                            <v-img class="mt-4 mr-3" style="height:115px; width:165px;"
-                                                   src="https://user-images.githubusercontent.com/113568664/211271746-a3f5fce0-ad12-4cf3-88cb-a6348d990044.png">
-                                            </v-img>
-                                        </a>
-                                        <v-list-item-content>
-                                            <v-list-item-subtitle class="mb-1" style="font-weight: 500; font-size:14px; color:black;">
-                                                {{$t('tutorials.unit')}}
-                                            </v-list-item-subtitle>
-                                            <div style="font-size:12px; color:#757575;">{{$t('tutorials.unit-inst')}}</div>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </v-card>
-                            </v-col>
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        class="mx-auto"
-                                        width="356"
-                                        min-height="150"
-                                        outlined
-                                >
-                                    <v-row style="margin-left: 3px; margin-top:0px; margin-bottom:-25px;">
-                                        <v-chip
-                                                class="ma-2"
-                                                color="green"
-                                                text-color="white"
-                                                style="width: auto; height: 20px; font-size: 12px; font-weight:bold; z-index: 200;"
-                                                small
-                                        >
-                                            {{$t('word.dev')}}
-                                        </v-chip>
-                                    </v-row>
-                                    <v-list-item three-line>
-                                        <a @click="moveToPages('req-res')">
-                                            <v-img class="mt-4 mr-3" style="height:115px; width:165px;"
-                                                   src="https://user-images.githubusercontent.com/113568664/211271766-11c1234e-8ee9-4ef5-9c4a-36df00530766.png">
-                                            </v-img>
-                                        </a>
-                                        <v-list-item-content>
-                                            <v-list-item-subtitle class="mb-1" style="font-weight: 500; font-size:14px; color:black;">
-                                                {{$t('tutorials.reqres')}}
-                                            </v-list-item-subtitle>
-                                            <div style="font-size:12px; color:#757575;">{{$t('tutorials.reqres-inst')}}</div>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </v-card>
-                            </v-col>
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        class="mx-auto"
-                                        width="356"
-                                        min-height="150"
-                                        outlined
-                                >
-                                    <v-row style="margin-left: 3px; margin-top:0px; margin-bottom:-25px;">
-                                        <v-chip
-                                                class="ma-2"
-                                                color="green"
-                                                text-color="white"
-                                                style="width: auto; height: 20px; font-size: 12px; font-weight:bold; z-index: 200;"
-                                                small
-                                        >
-                                            {{$t('word.dev')}}
-                                        </v-chip>
-                                    </v-row>
-                                    <v-list-item three-line>
-                                        <a @click="moveToPages('cb')">
-                                            <v-img class="mt-4 mr-3" style="height:115px; width:165px;"
-                                                   src="https://user-images.githubusercontent.com/113568664/211271764-07de1f1c-96de-49fe-99ea-d12c658a8644.png">
-                                            </v-img>
-                                        </a>
-                                        <v-list-item-content>
-                                            <v-list-item-subtitle class="mb-1" style="font-weight: 500; font-size:14px; color:black;">
-                                                {{$t('tutorials.cb')}}
-                                            </v-list-item-subtitle>
-                                            <div style="font-size:12px; color:#757575;">{{$t('tutorials.cb-inst')}}</div>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </v-card>
-                            </v-col>
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        class="mx-auto"
-                                        width="356"
-                                        min-height="150"
-                                        outlined
-                                >
-                                    <v-row style="margin-left: 3px; margin-top:0px; margin-bottom:-25px;">
-                                        <v-chip
-                                                class="ma-2"
-                                                color="green"
-                                                text-color="white"
-                                                style="width: auto; height: 20px; font-size: 12px; font-weight:bold; z-index: 200;"
-                                                small
-                                        >
-                                            {{$t('word.dev')}}
-                                        </v-chip>
-                                    </v-row>
-                                    <v-list-item three-line>
-                                        <a @click="moveToPages('pub-sub')">
-                                            <v-img class="mt-4 mr-3" style="height:115px; width:165px;"
-                                                   src="https://user-images.githubusercontent.com/113568664/211271759-4bb531e0-e8ad-4964-a8f7-65ceae30c79c.png">
-                                            </v-img>
-                                        </a>
-                                        <v-list-item-content>
-                                            <v-list-item-subtitle class="mb-1" style="font-weight: 500; font-size:14px; color:black;">
-                                                {{$t('tutorials.pubsub')}}
-                                            </v-list-item-subtitle>
-                                            <div style="font-size:12px; color:#757575;">{{$t('tutorials.pubsub-inst')}}</div>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </v-card>
-                            </v-col>
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        class="mx-auto"
-                                        width="356"
-                                        min-height="150"
-                                        outlined
-                                >
-                                    <v-row style="margin-left: 3px; margin-top:0px; margin-bottom:-25px;">
-                                        <v-chip
-                                                class="ma-2"
-                                                color="green"
-                                                text-color="white"
-                                                style="width: auto; height: 20px; font-size: 12px; font-weight:bold; z-index: 200;"
-                                                small
-                                        >
-                                            {{$t('word.dev')}}
-                                        </v-chip>
-                                    </v-row>
-                                    <v-list-item three-line>
-                                        <a @click="moveToPages('com-cor')">
-                                            <v-img class="mt-4 mr-3" style="height:115px; width:165px;"
-                                                   src="https://user-images.githubusercontent.com/113568664/211271747-7c7d01e4-30c6-4b44-804c-be834713d8fa.png">
-                                            </v-img>
-                                        </a>
-                                        <v-list-item-content>
-                                            <v-list-item-subtitle class="mb-1" style="font-weight: 500; font-size:14px; color:black;">
-                                                {{$t('tutorials.comcor')}}
-                                            </v-list-item-subtitle>
-                                            <div style="font-size:12px; color:#757575;">{{$t('tutorials.comcor-inst')}}</div>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </v-card>
-                            </v-col>
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        class="mx-auto"
-                                        width="356"
-                                        min-height="150"
-                                        outlined
-                                >
-                                    <v-row style="margin-left: 3px; margin-top:0px; margin-bottom:-25px;">
-                                        <v-chip
-                                                class="ma-2"
-                                                color="green"
-                                                text-color="white"
-                                                style="width: auto; height: 20px; font-size: 12px; font-weight:bold; z-index: 200;"
-                                                small
-                                        >
-                                            {{$t('word.dev')}}
-                                        </v-chip>
-                                    </v-row>
-                                    <v-list-item three-line>
-                                        <a @click="moveToPages('jwt-auth')">
-                                            <v-img class="mt-4 mr-3" style="height:115px; width:165px;"
-                                                   src="https://user-images.githubusercontent.com/113568664/211271754-e0c813d9-9f85-4af5-8770-4ddce2383d90.png">
-                                            </v-img>
-                                        </a>
-                                        <v-list-item-content>
-                                            <v-list-item-subtitle class="mb-1" style="font-weight: 500; font-size:14px; color:black;">
-                                                {{$t('tutorials.jwt')}}
-                                            </v-list-item-subtitle>
-                                            <div style="font-size:12px; color:#757575;">{{$t('tutorials.jwt-inst')}}</div>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </v-card>
-                            </v-col>
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        class="mx-auto"
-                                        width="356"
-                                        min-height="150"
-                                        outlined
-                                >
-                                    <v-row style="margin-left: 3px; margin-top:0px; margin-bottom:-25px;">
-                                        <v-chip
-                                                class="ma-2"
-                                                color="green"
-                                                text-color="white"
-                                                style="width: auto; height: 20px; font-size: 12px; font-weight:bold; z-index: 200;"
-                                                small
-                                        >
-                                            {{$t('word.dev')}}
-                                        </v-chip>
-                                    </v-row>
-                                    <v-list-item three-line>
-                                        <a @click="moveToPages('dp-fh')">
-                                            <v-img class="mt-4 mr-3" style="height:115px; width:165px;"
-                                                   src="https://user-images.githubusercontent.com/113568664/211271752-19bcfa58-61f0-47ca-9e42-b3e017eda354.png">
-                                            </v-img>
-                                        </a>
-                                        <v-list-item-content>
-                                            <v-list-item-subtitle class="mb-1" style="font-weight: 500; font-size:14px; color:black;">
-                                                {{$t('tutorials.hateoas')}}
-                                            </v-list-item-subtitle>
-                                            <div style="font-size:12px; color:#757575;">{{$t('tutorials.hateoas-inst')}}</div>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </v-card>
-                            </v-col>
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        class="mx-auto"
-                                        width="356"
-                                        min-height="150"
-                                        outlined
-                                >
-                                    <v-row style="margin-left: 3px; margin-top:0px; margin-bottom:-25px;">
-                                        <v-chip
-                                                class="ma-2"
-                                                color="green"
-                                                text-color="white"
-                                                style="width: auto; height: 20px; font-size: 12px; font-weight:bold; z-index: 200;"
-                                                small
-                                        >
-                                            {{$t('word.dev')}}
-                                        </v-chip>
-                                    </v-row>
-                                    <v-list-item three-line>
-                                        <a @click="moveToPages('dp-gql')">
-                                            <v-img class="mt-4 mr-3" style="height:115px; width:165px;"
-                                                   src="https://user-images.githubusercontent.com/113568664/211271748-f3662a80-cb9b-4190-96e9-33a5b244b1f5.png">
-                                            </v-img>
-                                        </a>
-                                        <v-list-item-content>
-                                            <v-list-item-subtitle class="mb-1" style="font-weight: 500; font-size:14px; color:black;">
-                                                {{$t('tutorials.graphql')}}
-                                            </v-list-item-subtitle>
-                                            <div style="font-size:12px; color:#757575;">{{$t('tutorials.graphql-inst')}}</div>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </v-card>
-                            </v-col>
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        class="mx-auto"
-                                        width="356"
-                                        min-height="150"
-                                        outlined
-                                >
-                                    <v-row style="margin-left: 3px; margin-top:0px; margin-bottom:-25px;">
-                                        <v-chip
-                                                class="ma-2"
-                                                color="green"
-                                                text-color="white"
-                                                style="width: auto; height: 20px; font-size: 12px; font-weight:bold; z-index: 200;"
-                                                small
-                                        >
-                                            {{$t('word.dev')}}
-                                        </v-chip>
-                                    </v-row>
-                                    <v-list-item three-line>
-                                        <a @click="moveToPages('axon')">
-                                            <v-img class="mt-4 mr-3" style="height:115px; width:165px;"
-                                                   src="https://user-images.githubusercontent.com/113568664/225213375-c0dcc8cc-c696-48f0-be8d-b0330f6b9ee5.png">
-                                            </v-img>
-                                        </a>
-                                        <v-list-item-content>
-                                            <v-list-item-subtitle class="mb-1" style="font-weight: 500; font-size:14px; color:black;">
-                                                {{$t('tutorials.axon')}}
-                                            </v-list-item-subtitle>
-                                            <div style="font-size:12px; color:#757575;">{{$t('tutorials.axon-inst')}}</div>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </v-card>
-                            </v-col>
-                        </v-row> -->
-                        <!-- <div class="title-page-title">{{$t('examples.modeling')}}</div> -->
-                        <!-- <v-row class="title-page-card-box-row">
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        class="mx-auto"
-                                        width="356"
-                                        min-height="150"
-                                        outlined
-                                >
-                                    <v-list-item three-line>
-                                        <a @click="moveToPages('petshop')">
-                                            <v-img class="mt-4 mr-3" style="height:115px; width:165px;"
-                                                   src="https://user-images.githubusercontent.com/92732781/163898754-62dc9532-5505-41b0-852b-6070ac817eff.png">
-                                            </v-img>
-                                        </a>
-                                        <v-list-item-content>
-                                            <div style="margin-top:10px; font-weight: 500; font-size:16px; color:black;">
-                                                {{$t('examples.pet')}}
-                                            </div>
-                                            <v-card-actions class="title-card-actions-btn" style="margin-bottom:-15px;">
-                                                <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                                       :to="'/storming/e25a97f84aa34376697cc220496a9608'">
-                                                    {{$t('examples.enter-btn')}}
-                                                </v-btn>
-                                            </v-card-actions>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </v-card>
-                            </v-col>
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        class="mx-auto"
-                                        width="356"
-                                        min-height="150"
-                                        outlined
-                                >
-                                    <v-list-item three-line>
-                                        <a @click="moveToPages('food-delivery')">
-                                            <v-img class="mt-4 mr-3" style="height:115px; width:165px;"
-                                                   src="https://user-images.githubusercontent.com/92732781/163902964-56a0dc31-b069-4bd0-8b15-9d52a1dc84eb.png">
-                                            </v-img>
-                                        </a>
-                                        <v-list-item-content>
-                                            <div style="margin-top:10px; font-weight: 500; font-size:16px; color:black;">
-                                                {{$t('examples.food')}}
-                                            </div>
-                                            <v-card-actions class="title-card-actions-btn" style="margin-bottom:-15px;">
-                                                <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                                       :to="'/storming/2737b4f61c1ea85e3de602479ddc1e3a'">
-                                                    {{$t('examples.enter-btn')}}
-                                                </v-btn>
-                                            </v-card-actions>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </v-card>
-                            </v-col>
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        class="mx-auto"
-                                        width="356"
-                                        min-height="150"
-                                        outlined
-                                >
-                                    <v-list-item three-line>
-                                        <a @click="moveToPages('shop')">
-                                            <v-img class="mt-4 mr-3" style="height:115px; width:165px;"
-                                                   src="https://user-images.githubusercontent.com/92732781/163904161-c15eba6a-be32-4ee5-9541-f258ef72f7a4.png">
-                                            </v-img>
-                                        </a>
-                                        <v-list-item-content>
-                                            <div style="margin-top:10px; font-weight: 500; font-size:16px; color:black;">
-                                                {{$t('examples.shop')}}
-                                            </div>
-                                            <v-card-actions class="title-card-actions-btn" style="margin-bottom:-15px;">
-                                                <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                                       :to="'/storming/0f89dcccd80e9ec9fb6540c3236cfe2b'">
-                                                    {{$t('examples.enter-btn')}}
-                                                </v-btn>
-                                            </v-card-actions>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </v-card>
-                            </v-col>
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        class="mx-auto"
-                                        width="356"
-                                        min-height="150"
-                                        outlined
-                                >
-                                    <v-list-item three-line>
-                                        <a @click="moveToPages('k8s-blueprint')">
-                                            <v-img class="mt-4 mr-3" style="height:115px; width:165px;"
-                                                   src="https://user-images.githubusercontent.com/92732781/163903262-60260260-dae9-47f9-bf88-1bdc6fe7de88.png">
-                                            </v-img>
-                                        </a>
-                                        <v-list-item-content>
-                                            <div style="margin-top:10px; font-weight: 500; font-size:16px; color:black;">
-                                                {{$t('examples.k8s')}}
-                                            </div>
-                                            <v-card-actions class="title-card-actions-btn" style="margin-bottom:-15px;">
-                                                <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                                       :to="'/storming/e8f1d14ea6a9a714f79f73aa4fff0601'">
-                                                    {{$t('examples.enter-btn')}}
-                                                </v-btn>
-                                            </v-card-actions>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </v-card>
-                            </v-col>
-                            <v-col
-                                    lg="3"
-                                    md="4"
-                                    sm="6"
-                                    xs="12"
-                            >
-                                <v-card
-                                        class="mx-auto"
-                                        width="356"
-                                        min-height="150"
-                                        outlined
-                                >
-                                    <v-list-item three-line>
-                                        <a @click="moveToPages('google-drive')">
-                                            <v-img class="mt-4 mr-3" style="height:115px; width:165px;"
-                                                   src="https://user-images.githubusercontent.com/92732781/163904696-8f9202b3-2301-4ca4-bae6-f90f9a07d64e.png">
-                                            </v-img>
-                                        </a>
-                                        <v-list-item-content>
-                                            <div style="margin-top:10px; font-weight: 500; font-size:16px; color:black;">
-                                                {{$t('examples.google')}}
-                                            </div>
-                                            <v-card-actions class="title-card-actions-btn" style="margin-bottom:-15px;">
-                                                <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                                       :to="'/storming/d8525abb1acc3cf621b6aacf371fa4be'">
-                                                    {{$t('examples.enter-btn')}}
-                                                </v-btn>
-                                            </v-card-actions>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </v-card>
-                            </v-col>
+                                <v-list-item-title style="margin-top:-4px;">{{ tabObj.display }}</v-list-item-title>
+                                <v-avatar v-if="tabIndex > 0 && tabObj.totalCount != null" color="green lighten-5" size="30"
+                                        style="font-size:10px;">
+                                    {{ tabObj.totalCount == null ? '...' : (tabObj.totalCount == 0 ? '0' : tabObj.totalCount) }}
+                                </v-avatar>
+                            </v-list-item>
+                        </v-list-group>
+                    </v-hover>
 
-                            <v-col
-                                    lg="3"
+                    <v-dialog v-model="learnNavDialog"
+                        max-width="90%"
+                    >
+                        <v-card style="padding:10px; height:85vh; overflow:auto;">
+                            <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('mainNav.learn')}}</div>
+                            <v-row
+                                style="margin:0px;"
+                            >
+                                <!-- 튜토리얼, 모델링 예제 -->
+                                <v-col v-for="(item,index) in navSubCards"
+                                    :key="index"
+                                    lg="4"
                                     md="4"
                                     sm="6"
                                     xs="12"
+                                >
+                                    <v-card style="height:100%;"
+                                        outlined
+                                        @click="wikiOpen('business')"
+                                    >
+                                        <v-card-title class="justify-center">{{ $t(item.title) }}</v-card-title>
+                                        <v-img 
+                                            :src="item.image"
+                                            style="cursor: pointer; height:200px;"
+                                        >
+                                        </v-img>
+                                        <v-card-subtitle style="margin-bottom:20px;">{{ $t(item.subtitle) }}</v-card-subtitle>
+                                    </v-card>
+                                    <!-- 튜토리얼 다이얼로그-->
+                                    <!-- <v-dialog v-model="item.dialog"
+                                        v-if="item.dialogType === 'tutorial'"
+                                    >
+                                        <v-card style="padding:10px; height:85vh; overflow:auto;">
+                                            <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('mainNavSubCard.tutorial')}}</div>
+                                            <v-row class="title-page-card-box-row">
+                                                <v-col
+                                                    v-for="(card, index) in navLearnTutorialCards"
+                                                    :key="index"
+                                                    lg="2"
+                                                    md="3"
+                                                    sm="4"
+                                                    xs="12"
+                                                >
+                                                    <v-card @click="moveToPages(card.page)"
+                                                        class="mx-auto"
+                                                        outlined
+                                                        style="padding:15px; height:100%;"
+                                                    >
+                                                        <v-chip
+                                                            :color="card.color"
+                                                            style="width: auto; height: 20px; font-size: 12px; margin-bottom:5px; font-weight:bold; z-index: 200;"
+                                                            small
+                                                            outlined
+                                                        >{{$t(card.chip)}}
+                                                        </v-chip>
+                                                        <div style="font-weight: 500; font-size:18px; color:black;">
+                                                            {{$t(card.title)}}
+                                                        </div>
+                                                        <v-row>
+                                                            <v-col cols="12">
+                                                                <v-img :src="card.imageUrl"></v-img>
+                                                            </v-col>
+                                                        </v-row>
+                                                        <div style="font-size:14px; margin-top:10px; color:#757575;">{{$t(card.subtitle)}}</div>
+                                                    </v-card>
+                                                </v-col>
+                                            </v-row>
+                                        </v-card>
+                                    </v-dialog> -->
+                                    <!-- 모델링 예제 다이얼로그 -->
+                                    <!-- <v-dialog v-model="item.dialog"
+                                        v-if="item.dialogType === 'examples'"
+                                    >
+                                        <v-card style="padding:10px; height:85vh; overflow:auto;">
+                                            <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('mainNavSubCard.examples')}}</div>
+                                            <v-row class="title-page-card-box-row">
+                                                <v-col
+                                                    v-for="(card, index) in navLearnExamplesCards"
+                                                    :key="index"
+                                                    lg="2"
+                                                    md="3"
+                                                    sm="4"
+                                                    xs="12"
+                                                >
+                                                    <v-card @click="moveToPages(card.page)"
+                                                        class="mx-auto"
+                                                        outlined
+                                                        style="padding:15px; height:100%;"
+                                                    >
+                                                    <div style="font-weight: 500; font-size:18px; color:black;">
+                                                        {{$t(card.title)}}
+                                                    </div>
+                                                    <v-row>
+                                                        <v-col cols="12">
+                                                            <v-img
+                                                                :src="card.imageUrl"
+                                                                style="height:110px; margin:10px 0px; cursor:pointer;"
+                                                            ></v-img>
+                                                        </v-col>
+                                                    </v-row>
+                                                    </v-card>
+                                                </v-col>
+                                            </v-row>
+                                        </v-card>
+                                    </v-dialog> -->
+                                </v-col>
+                                <!-- 아카데미 -->
+                                <v-col
+                                    lg="4"
+                                    md="4"
+                                    sm="6"
+                                    xs="12"
+                                >
+                                    <v-card style="height:100%;"
+                                        outlined
+                                        @click="navigateTo('/courses')"
+                                    >
+                                        <v-card-title class="justify-center">{{ $t('mainNavSubCard.Academy') }}</v-card-title>
+                                        <v-img 
+                                            src="/static/image/main/mainSubLectures.png"
+                                            style="cursor: pointer; height:200px;"
+                                        >
+                                        </v-img>
+                                        <v-card-subtitle style="margin-bottom:20px;">{{  }}</v-card-subtitle>
+                                    </v-card>
+                                </v-col>
+                                <!-- 교육신청 -->
+                                <v-col
+                                    lg="4"
+                                    md="4"
+                                    sm="6"
+                                    xs="12"
+                                >
+                                    <v-card style="height:100%;"
+                                        outlined
+                                        @click="navigateTo('https://www.msaschool.io/operation/education/curriculum/')"
+                                    >
+                                        <v-card-title class="justify-center">{{ $t('mainNavSubCard.training') }}</v-card-title>
+                                        <v-img 
+                                            src="/static/image/main/mainSubTraining.png"
+                                            style="cursor: pointer; height:200px;"
+                                        >
+                                        </v-img>
+                                        <v-card-subtitle style="margin-bottom:20px;">{{  }}</v-card-subtitle>
+                                    </v-card>
+                                </v-col>
+                            </v-row>
+                        </v-card>
+                    </v-dialog>
+
+                    <v-alert
+                            v-if="searchOpen"
+                            elevation="2"
+                            style="position:fixed; top:50px; z-index:2; height:70px; width:40%; left: 50%; transform: translate(-50%, 0%);"
+                    >
+                        <div>
+                            <v-row style="align-items: baseline;">
+                                <v-menu offset-y>
+                                    <template v-slot:activator="{ on, attrs }">
+                                        <v-chip
+                                                :color="selectedMode.color"
+                                                dark
+                                                style="margin-right: 10px;"
+                                                v-bind="attrs"
+                                                v-on="on"
+                                        >
+                                            {{selectedMode.type}}
+                                        </v-chip>
+                                    </template>
+                                    <v-list>
+                                        <v-list-item
+                                                v-for="(item, index) in listMode"
+                                                :key="index"
+                                                @click="selectMode(item)"
+                                        >
+                                            <v-list-item-title>{{ item.display }}</v-list-item-title>
+                                        </v-list-item>
+                                    </v-list>
+                                </v-menu>
+                                <v-text-field
+                                        v-model="searchObj.name"
+                                        outlined
+                                        class="gs-main-search"
+                                        :label="searchObj.name ? filterListsCount : 'Search for name'"
+                                        autofocus
+                                        hide-details
+                                        dense
+                                ></v-text-field>
+                                <v-icon @click="searchClose(true)" style="width:26px; height:26px; margin-top: 13px;">mdi-close</v-icon>
+                            </v-row>
+                            <v-row>
+                                <v-btn @click="searchClose()" block text style="height: 25px"> <v-icon>mdi-chevron-up</v-icon> </v-btn>
+                            </v-row>
+                        </div>
+                    </v-alert>
+
+                    <v-tabs-items v-model="selectedTabIndex">
+                        <v-tab-item v-if="selectedTabIndex == -1" :value="selectedTabIndex">
+                            <!-- SEARCH -->
+                            <v-row style="margin-top:0px;">
+                                <v-col v-if="showLoading || (filteredList == undefined && typeof filteredList == 'undefined')"
+                                    style="height: 100%;">
+                                    <v-row>
+                                        <v-col
+                                                v-for="idx in 9"
+                                                cols="6"
+                                                md="4"
+                                        >
+                                            <v-card
+                                                    outlined
+                                                    class="mx-auto"
+                                                    style="width: 500px; height: 400px; justify-content: center"
+                                                    align="center"
+                                            >
+                                                <v-skeleton-loader
+                                                        ref="skeleton"
+                                                        type="card"
+                                                        class="mx-auto"
+                                                >
+                                                </v-skeleton-loader>
+                                            </v-card>
+                                        </v-col>
+                                    </v-row>
+                                </v-col>
+                                <v-col v-else-if="filteredList == null && typeof filteredList == 'object' "
+                                    style="height: 590px;">
+                                    No Items
+                                </v-col>
+                                <v-col
+                                        v-else
+                                        v-for="(project,index) in filteredList"
+                                        :key="project.projectId"
+                                        xl="4"
+                                        lg="4"
+                                        md="6"
+                                        sm="12"
+                                >
+                                    <EventStormingListCard
+                                            :information="project"
+                                            @delete="deleteProjectItem"
+                                            @openAutoModelingDialog=openAutoModelingDialog
+                                    >
+                                        <template slot="chips">
+                                            <slot name="chips"></slot>
+                                        </template>
+                                        <template slot="action" slot-scope="project">
+                                            <slot name="action" :project="project"></slot>
+                                        </template>
+                                    </EventStormingListCard>
+                                </v-col>
+                            </v-row>
+                        </v-tab-item>
+
+                        <v-tab-item v-else-if="selectedTabIndex == 0" :value="selectedTabIndex">
+                            <!-- HOME -->
+                            <div class="gs-main-page-top-box">
+                                <transition name="fade" mode="out-in">
+                                    <div v-for="item in mainTexts" :key="item.id" v-if="currentTextId === item.id">
+                                        <v-row justify="start" align="center">
+                                            <v-col cols="2"></v-col>
+                                            <v-col cols="6" class="gs-main-page-text-box">
+                                                <div style="display: flex; justify-content: flex-start;">
+                                                    <div style="text-align: left;">
+                                                        <div class="gs-main-page-top-title" style="white-space: pre-wrap;">{{$t(item.title)}}</div>
+                                                        <div class="gs-main-page-sub-title">
+                                                            <div v-for="content in item.content" :key="content">{{$t(content)}}<br></div>
+                                                        </div>
+                                                        <a :href="item.goToUrl" target="_blank" style="text-decoration: none; color: inherit;">
+                                                            <v-btn color="primary"
+                                                                text
+                                                                style="margin-top:5px;
+                                                                font-size:18px;
+                                                                font-weight:700;
+                                                                padding: 0px;"
+                                                            >{{$t('main.goToUrlText')}}</v-btn>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </v-col>
+                                            <v-col cols="4" class="gs-main-page-img-box">
+                                                <v-img :src="item.imageUrl"/>
+                                            </v-col>
+                                            <v-col cols="2"></v-col>
+                                        </v-row>
+                                    </div>
+                                </transition>
+                            </div>
+                            <div class="gs-main-page-top-box-mobile">
+                                <transition name="fade" mode="out-in">
+                                    <div v-for="item in mainTexts" :key="item.id" v-if="currentTextId === item.id">
+                                        <v-row>
+                                            <v-col cols="3.5"></v-col>
+                                            <v-col cols="5" class="gs-main-page-img-box-mobile">
+                                                <v-img :src="item.imageUrl"/>
+                                            </v-col>
+                                            <v-col cols="3.5"></v-col>
+                                        </v-row>
+                                        <div style="text-align: center;">
+                                            <div class="gs-main-page-top-title-mobile" style="white-space: pre-wrap;">{{$t(item.title)}}</div>
+                                            <div class="gs-main-page-sub-title-mobile">
+                                                <div v-for="content in item.content" :key="content">{{$t(content)}}<br></div>
+                                            </div>
+                                            <a :href="item.goToUrl" target="_blank" style="text-decoration: none; color: inherit;">
+                                                <v-btn color="primary" style="margin-top:10px;">{{$t('main.goToUrlText')}}</v-btn>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </transition>
+                            </div>
+                            <AutoModelingDialog
+                                mode="es"
+                                :showDialog="false"
+                                :showChat="true"
+                            ></AutoModelingDialog>
+                        <div style="margin-top:30px;">
+                            <carousel :perPageCustom="[[0, 1], [576, 2], [768, 3], [992, 4], [1200, 5]]">
+                                <slide v-for="(logo, index) in logos" :key="index">
+                                    <img :src="logo.url" :alt="logo.alt">
+                                </slide>
+                            </carousel>
+                        </div>
+                        </v-tab-item>
+                        <v-tab-item v-else-if="0 < selectedTabIndex && selectedTabIndex < 4" :value="selectedTabIndex" :key="selectedTabIndex">
+                            <!-- MINE, SHARE,PUBLIC -->
+                            <v-row style="margin-top:0px;">
+                                <v-col v-if="showLoading || (filteredList == undefined && typeof filteredList == 'undefined')"
+                                    style="height: 100%;">
+                                    <v-row>
+                                        <v-col
+                                                v-for="idx in 9"
+                                                cols="6"
+                                                md="4"
+                                        >
+                                            <v-card
+                                                    outlined
+                                                    class="mx-auto"
+                                                    style="width: 500px; height: 400px; justify-content: center"
+                                                    align="center"
+                                            >
+                                                <v-skeleton-loader
+                                                        ref="skeleton"
+                                                        type="card"
+                                                        class="mx-auto"
+                                                >
+                                                </v-skeleton-loader>
+                                            </v-card>
+                                        </v-col>
+                                    </v-row>
+                                </v-col>
+                                <v-col v-else-if="filteredList == null && typeof filteredList == 'object' "
+                                    style="height: 590px;">
+                                    No Items
+                                </v-col>
+                                <v-col
+                                        v-else
+                                        v-for="(project,index) in filteredList"
+                                        :key="project.projectId"
+                                        xl="4"
+                                        lg="4"
+                                        md="6"
+                                        sm="12"
+                                >
+                                    <EventStormingListCard
+                                            :information="project"
+                                            @delete="deleteProjectItem"
+                                            @openAutoModelingDialog=openAutoModelingDialog
+                                    >
+                                        <template slot="chips">
+                                            <slot name="chips"></slot>
+                                        </template>
+                                        <template slot="action" slot-scope="project">
+                                            <slot name="action" :project="project"></slot>
+                                        </template>
+                                    </EventStormingListCard>
+                                </v-col>
+                            </v-row>
+                        </v-tab-item>
+                        <v-tab-item v-else-if="selectedTabIndex == 4" :value="selectedTabIndex">
+                            <!-- LOCAL -->
+                            <v-row style="margin-top:0px;">
+                                <v-col v-if="(showLoading && filteredList && filteredList.length < 10) || filteredList == undefined && typeof filteredList == 'undefined'"
+                                    style="height: 100%;">
+                                    <v-row>
+                                        <v-col
+                                                v-for="idx in 9"
+                                                cols="6"
+                                                md="4"
+                                        >
+                                            <v-card
+                                                    outlined
+                                                    class="mx-auto"
+                                                    style="width: 500px; height: 400px; justify-content: center"
+                                                    align="center"
+                                            >
+                                                <v-skeleton-loader
+                                                        ref="skeleton"
+                                                        type="card"
+                                                        class="mx-auto"
+                                                >
+                                                </v-skeleton-loader>
+                                            </v-card>
+                                        </v-col>
+                                    </v-row>
+                                </v-col>
+                                <v-col v-else-if="filteredList == null && typeof filteredList == 'object' "
+                                    style="height: 590px;">
+                                    No Items
+                                </v-col>
+                                <v-col
+                                        v-else
+                                        v-for="(project,index) in filteredList"
+                                        :key="project.projectId"
+                                        xl="4"
+                                        lg="4"
+                                        md="6"
+                                        sm="12"
+                                >
+                                    <EventStormingListCard
+                                            :information="project"
+                                            @delete="deleteProjectItem"
+                                            @openAutoModelingDialog=openAutoModelingDialog
+                                    >
+                                        <template slot="chips">
+                                            <slot name="chips"></slot>
+                                        </template>
+                                        <template slot="action" slot-scope="project">
+                                            <slot name="action" :project="project"></slot>
+                                        </template>
+                                    </EventStormingListCard>
+                                </v-col>
+                            </v-row>
+                        </v-tab-item>
+                    </v-tabs-items>
+                    <div style="text-align-last: center;" v-if="selectedTabIndex != 0 ">
+                        <div v-if="showLoadingForMorePage" class="ticontainer" style="margin-left: 50%; margin-top: 30px;">
+                            <div class="tiblock">
+                                <div class="tidot"></div>
+                                <div class="tidot"></div>
+                                <div class="tidot"></div>
+                            </div>
+                        </div>
+                        <div v-if="!showLoading && !showMoreButton" block text style="padding:10px 0 10px 0;">마지막 페이지</div>
+                        <v-row v-else-if="showLoading && showMoreButton">
+                            <v-col
+                                    v-for="idx in 9"
+                                    cols="6"
+                                    md="4"
                             >
                                 <v-card
-                                        class="mx-auto"
-                                        width="356"
-                                        min-height="150"
                                         outlined
+                                        class="mx-auto"
+                                        style="width: 500px; height: 400px; justify-content: center;"
+                                        align="center"
                                 >
-                                    <v-list-item three-line>
-                                        <a @click="moveToPages('axonex')">
-                                            <v-img class="mt-4 mr-3" style="height:115px; width:165px;"
-                                                   src="https://user-images.githubusercontent.com/113568664/224649981-78c46486-4ef0-46e6-b861-2f1a662c4c91.png">
-                                            </v-img>
-                                        </a>
-                                        <v-list-item-content>
-                                            <div style="margin-top:10px; font-weight: 500; font-size:16px; color:black;">
-                                                {{$t('examples.axon')}}
-                                            </div>
-                                            <v-card-actions class="title-card-actions-btn" style="margin-bottom:-15px;">
-                                                <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                                       :to="'/storming/human-resource-mgmt-0303:v0.0.1'">
-                                                    {{$t('examples.enter-btn')}}
-                                                </v-btn>
-                                            </v-card-actions>
-                                        </v-list-item-content>
-                                    </v-list-item>
+                                    <v-skeleton-loader
+                                            ref="skeleton"
+                                            type="card"
+                                            class="mx-auto"
+                                    >
+                                    </v-skeleton-loader>
                                 </v-card>
                             </v-col>
-                        </v-row> -->
-                    </v-tab-item>
-                    <v-tab-item v-else-if="0 < selectedTabIndex && selectedTabIndex < 4" :value="selectedTabIndex" :key="selectedTabIndex">
-                        <!-- MINE, SHARE,PUBLIC -->
-                        <v-row style="margin-top:0px;">
-                            <v-col v-if="showLoading || (filteredList == undefined && typeof filteredList == 'undefined')"
-                                   style="height: 100%;">
-                                <v-row>
-                                    <v-col
-                                            v-for="idx in 9"
-                                            cols="6"
-                                            md="4"
-                                    >
-                                        <v-card
-                                                outlined
-                                                class="mx-auto"
-                                                style="width: 500px; height: 400px; justify-content: center"
-                                                align="center"
-                                        >
-                                            <v-skeleton-loader
-                                                    ref="skeleton"
-                                                    type="card"
-                                                    class="mx-auto"
-                                            >
-                                            </v-skeleton-loader>
-                                        </v-card>
-                                    </v-col>
-                                </v-row>
-                            </v-col>
-                            <v-col v-else-if="filteredList == null && typeof filteredList == 'object' "
-                                   style="height: 590px;">
-                                No Items
-                            </v-col>
-                            <v-col
-                                    v-else
-                                    v-for="(project,index) in filteredList"
-                                    :key="project.projectId"
-                                    xl="4"
-                                    lg="4"
-                                    md="6"
-                                    sm="12"
-                            >
-                                <EventStormingListCard
-                                        :information="project"
-                                        @delete="deleteProjectItem"
-                                        @openAutoModelingDialog=openAutoModelingDialog
-                                >
-                                    <template slot="chips">
-                                        <slot name="chips"></slot>
-                                    </template>
-                                    <template slot="action" slot-scope="project">
-                                        <slot name="action" :project="project"></slot>
-                                    </template>
-                                </EventStormingListCard>
-                            </v-col>
                         </v-row>
-                    </v-tab-item>
-                    <v-tab-item v-else-if="selectedTabIndex == 4" :value="selectedTabIndex">
-                        <!-- LOCAL -->
-                        <v-row style="margin-top:0px;">
-                            <v-col v-if="(showLoading && filteredList && filteredList.length < 10) || filteredList == undefined && typeof filteredList == 'undefined'"
-                                   style="height: 100%;">
-                                <v-row>
-                                    <v-col
-                                            v-for="idx in 9"
-                                            cols="6"
-                                            md="4"
-                                    >
-                                        <v-card
-                                                outlined
-                                                class="mx-auto"
-                                                style="width: 500px; height: 400px; justify-content: center"
-                                                align="center"
-                                        >
-                                            <v-skeleton-loader
-                                                    ref="skeleton"
-                                                    type="card"
-                                                    class="mx-auto"
-                                            >
-                                            </v-skeleton-loader>
-                                        </v-card>
-                                    </v-col>
-                                </v-row>
-                            </v-col>
-                            <v-col v-else-if="filteredList == null && typeof filteredList == 'object' "
-                                   style="height: 590px;">
-                                No Items
-                            </v-col>
-                            <v-col
-                                    v-else
-                                    v-for="(project,index) in filteredList"
-                                    :key="project.projectId"
-                                    xl="4"
-                                    lg="4"
-                                    md="6"
-                                    sm="12"
-                            >
-                                <EventStormingListCard
-                                        :information="project"
-                                        @delete="deleteProjectItem"
-                                        @openAutoModelingDialog=openAutoModelingDialog
-                                >
-                                    <template slot="chips">
-                                        <slot name="chips"></slot>
-                                    </template>
-                                    <template slot="action" slot-scope="project">
-                                        <slot name="action" :project="project"></slot>
-                                    </template>
-                                </EventStormingListCard>
-                            </v-col>
-                        </v-row>
-                    </v-tab-item>
-                </v-tabs-items>
-                <div style="text-align-last: center;" v-if="selectedTabIndex != 0 ">
-                    <div v-if="showLoadingForMorePage" class="ticontainer" style="margin-left: 50%; margin-top: 30px;">
-                        <div class="tiblock">
-                            <div class="tidot"></div>
-                            <div class="tidot"></div>
-                            <div class="tidot"></div>
-                        </div>
                     </div>
-                    <div v-if="!showLoading && !showMoreButton" block text style="padding:10px 0 10px 0;">마지막 페이지</div>
-                    <v-row v-else-if="showLoading && showMoreButton">
-                        <v-col
-                                v-for="idx in 9"
-                                cols="6"
-                                md="4"
-                        >
-                            <v-card
-                                    outlined
-                                    class="mx-auto"
-                                    style="width: 500px; height: 400px; justify-content: center;"
-                                    align="center"
-                            >
-                                <v-skeleton-loader
-                                        ref="skeleton"
-                                        type="card"
-                                        class="mx-auto"
-                                >
-                                </v-skeleton-loader>
-                            </v-card>
-                        </v-col>
-                    </v-row>
                 </div>
-            </div>
-        </slot>
-
-        <slot name="footer">
-            <div style="min-height: 190px;">
-                <v-footer padless>
-                    <ProvisionIndication :style="!showLoading && showMoreButton ? 'padding-top:40px':''"
-                                         divider></ProvisionIndication>
-                </v-footer>
-            </div>
-        </slot>
-
+            </slot>
+        </v-container>
 
         <v-dialog v-model="deleteDialog" v-if="deleteItem" persistent max-width="470">
             <v-card>
@@ -1298,7 +557,33 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
-    </v-container>
+
+        <!-- 메인페이지 슬라이드 -->
+        <div v-if="selectedTabIndex == 0" class="d-flex flex-row mt-sm-8 mt-5 overflow-hidden main-page-slider-group-box">
+            <div class="main-page-slider-group">
+                <img src="/static/image/main/mainSlide.png" />
+            </div>
+            <div class="main-page-slider-group">
+                <img src="/static/image/main/mainSlide.png" />
+            </div>
+            <div class="main-page-slider-group">
+                <img src="/static/image/main/mainSlide.png" />
+            </div>
+            <div class="main-page-slider-group">
+                <img src="/static/image/main/mainSlide.png" />
+            </div>
+            <div class="main-page-slider-group">
+                <img src="/static/image/main/mainSlide.png" />
+            </div>
+        </div>
+        
+        <v-footer
+            padless
+            style="background-color: transparent;"
+        >
+            <ProvisionIndication style="margin:0; padding:0px; width:100%;"></ProvisionIndication>
+        </v-footer>
+    </div>
 </template>
 
 <script>
@@ -1306,6 +591,8 @@
     import {YoutubeIcon} from 'vue-feather-icons'
     import 'instantsearch.css/themes/satellite-min.css';
     import AutoModelingDialog from '../designer/modeling/AutoModelingDialog.vue';
+    import { Carousel, Slide } from 'vue-carousel';
+    import ProvisionIndication from '../../components/payment/ProvisionIndication.vue'
     // import VueCookies from "vue-cookies";
     var _ = require('lodash');
 
@@ -1314,38 +601,58 @@
         mixins: [CommonStorageBase],
         components: {
             'EventStormingListCard': () => import('./EventStormingListCard'),
-            'ProvisionIndication': () => import('../payment/ProvisionIndication'),
+            // 'ProvisionIndication': () => import('../payment/ProvisionIndication'),
             YoutubeIcon,
             AutoModelingDialog,
+            Carousel,
+            Slide,
+            ProvisionIndication
         },
         data() {
             return {
                 navLectureTab: null,
-                navLearnModelingCards: [
+                wikiOpenUrl: [
                     {
-                        title: 'tools.eventstorming',
-                        image: 'https://user-images.githubusercontent.com/113568664/208291359-e7ce6d88-776b-4447-a236-d7a1cddadcf4.png',
-                        subtitle: 'tools.eventstorming-inst',
-                        page: 'es'
+                        type: 'introduction',
+                        ko: 'https://intro-kor.msaez.io/started/',
+                        en: 'https://intro.msaez.io/started/'
                     },
                     {
-                        title: 'tools.kubernetes',
-                        image: 'https://user-images.githubusercontent.com/113568664/208291286-15b57907-3126-48f6-bf71-490df5ce027d.png',
-                        subtitle: 'tools.kubernetes-inst',
-                        page: 'k8s'
+                        type: 'company',
+                        ko: 'https://intro-kor.msaez.io/info/company/',
+                        en: 'https://intro.msaez.io/info/company/'
                     },
                     {
-                        title: 'tools.bmc',
-                        image: 'https://user-images.githubusercontent.com/92732781/233012222-d0662c4b-5546-4e7b-af28-c07617a57ef0.png',
-                        subtitle: 'tools.bmc-inst',
-                        page: 'bm'
+                        type: 'pricing',
+                        ko: 'https://intro-kor.msaez.io/info/pricing',
+                        en: 'https://intro.msaez.io/info/pricing'
                     },
                     {
-                        title: 'tools.bpmn',
-                        image: 'https://user-images.githubusercontent.com/92732781/233012303-64841fa2-2952-43eb-a768-f75be9a73679.png',
-                        subtitle: 'tools.bpmn-inst',
-                        page: 'bpmn'
+                        type: 'partnership',
+                        ko: 'https://intro-kor.msaez.io/info/partnership',
+                        en: 'https://intro.msaez.io/info/partnership'
                     },
+                    {
+                        type: 'business',
+                        ko: 'https://intro-kor.msaez.io/business/',
+                        en: 'https://intro.msaez.io/business/'
+                    },
+                ],
+                navSubCards: [
+                    {
+                        title: 'mainNavSubCard.tutorial',
+                        image: '/static/image/main/mainSubTutorial.png',
+                        subtitle: 'mainNavSubCard.tutorial-inst',
+                        dialogType: 'tutorial',
+                        dialog: false,
+                    },
+                    // {
+                    //     title: 'mainNavSubCard.examples',
+                    //     image: '/static/image/main/mainSubExamples.png',
+                    //     subtitle: 'mainNavSubCard.examples-inst',
+                    //     dialogType: 'examples',
+                    //     dialog: false,
+                    // },
                 ],
                 navLearnTutorialCards: [
                     {
@@ -1353,70 +660,80 @@
                         title: 'tutorials.ddd',
                         subtitle: 'tutorials.ddd-inst',
                         imageUrl: 'https://user-images.githubusercontent.com/113568664/211271741-4e4cdd7a-37af-4445-902c-a3229c392e6e.png',
-                        page: 'ggd'
+                        page: 'ggd',
+                        chip: 'word.biz'
                     },
                     {
                         color: "green",
                         title: 'tutorials.unit',
                         subtitle: 'tutorials.unit-inst',
                         imageUrl: 'https://user-images.githubusercontent.com/113568664/211271746-a3f5fce0-ad12-4cf3-88cb-a6348d990044.png',
-                        page: 'run-mu'
+                        page: 'run-mu',
+                        chip: 'word.dev'
                     },
                     {
                         color: "green",
                         title: 'tutorials.reqres',
                         subtitle: 'tutorials.reqres-inst',
                         imageUrl: 'https://user-images.githubusercontent.com/113568664/211271766-11c1234e-8ee9-4ef5-9c4a-36df00530766.png',
-                        page: 'req-res'
+                        page: 'req-res',
+                        chip: 'word.dev'
                     },
                     {
                         color: "green",
                         title: 'tutorials.cb',
                         subtitle: 'tutorials.cb-inst',
                         imageUrl: 'https://user-images.githubusercontent.com/113568664/211271764-07de1f1c-96de-49fe-99ea-d12c658a8644.png',
-                        page: 'cb'
+                        page: 'cb',
+                        chip: 'word.dev'
                     },
                     {
                         color: "green",
                         title: 'tutorials.pubsub',
                         subtitle: 'tutorials.pubsub-inst',
                         imageUrl: 'https://user-images.githubusercontent.com/113568664/211271759-4bb531e0-e8ad-4964-a8f7-65ceae30c79c.png',
-                        page: 'pub-sub'
+                        page: 'pub-sub',
+                        chip: 'word.dev'
                     },
                     {
                         color: "green",
                         title: 'tutorials.comcor',
                         subtitle: 'tutorials.comcor-inst',
                         imageUrl: 'https://user-images.githubusercontent.com/113568664/211271747-7c7d01e4-30c6-4b44-804c-be834713d8fa.png',
-                        page: 'com-cor'
+                        page: 'com-cor',
+                        chip: 'word.dev'
                     },
                     {
                         color: "green",
                         title: 'tutorials.jwt',
                         subtitle: 'tutorials.jwt-inst',
                         imageUrl: 'https://user-images.githubusercontent.com/113568664/211271754-e0c813d9-9f85-4af5-8770-4ddce2383d90.png',
-                        page: 'jwt-auth'
+                        page: 'jwt-auth',
+                        chip: 'word.dev'
                     },
                     {
                         color: "green",
                         title: 'tutorials.hateoas',
                         subtitle: 'tutorials.hateoas-inst',
                         imageUrl: 'https://user-images.githubusercontent.com/113568664/211271752-19bcfa58-61f0-47ca-9e42-b3e017eda354.png',
-                        page: 'dp-fh'
+                        page: 'dp-fh',
+                        chip: 'word.dev'
                     },
                     {
                         color: "green",
                         title: 'tutorials.graphql',
                         subtitle: 'tutorials.graphql-inst',
                         imageUrl: 'https://user-images.githubusercontent.com/113568664/211271748-f3662a80-cb9b-4190-96e9-33a5b244b1f5.png',
-                        page: 'dp-gql'
+                        page: 'dp-gql',
+                        chip: 'word.dev'
                     },
                     {
                         color: "green",
                         title: 'tutorials.axon',
                         subtitle: 'tutorials.axon-inst',
                         imageUrl: 'https://user-images.githubusercontent.com/113568664/225213375-c0dcc8cc-c696-48f0-be8d-b0330f6b9ee5.png',
-                        page: 'axon'
+                        page: 'axon',
+                        chip: 'word.dev'
                     }
                 ],
                 navLearnExamplesCards: [
@@ -1452,17 +769,27 @@
                     }
                 ],
                 mainNav: [
+                    {   
+                        title: '제품 소개',
+                        icon: 'mdi-information',
+                        dialog: false,
+                        dialogType: 'introduction',
+                    },
                     {
                         title: 'mainNav.partnership',
+                        icon: 'mdi-handshake',
                         dialogType: 'partnership',
                         dialog: false,
                     },
                     {
                         title: 'mainNav.learn',
+                        icon: 'mdi-school',
                         dialogType: 'learn',
                         dialog: false,
                     }
                 ],
+
+                learnNavDialog: false,
                 projectUid: "",
                 showDialog: false,
                 showMainText1: true,
@@ -1552,7 +879,6 @@
             console.log('Ev beforeDestroy')
         },
         async created() {
-            this.$EventBus.$on('goToLectures', this.navigateTo);
             this.labURL = window.location.href.split('/');
             this.showLoading = true;
             this.$EventBus.$emit('showNewButton', true);
@@ -1578,7 +904,7 @@
             var me = this
 
             me.showMainIndex = 1
-            setInterval(me.toggleMainTexts, 8500);
+            setInterval(me.toggleMainTexts, 10000);
             $(window).scroll(function () {
                 if (Math.ceil($(window).scrollTop()) >= (($(document).height() - $(window).height()))) {
                     if (!me.showLoading && me.showMoreButton && !me.searchObj.name) {
@@ -1825,11 +1151,15 @@
             },
         },
         methods: {
-            wikiOpen() {
-                if (this.isForeign) {
-                    window.open("https://intro.msaez.io/started/", "_blank")
-                } else {
-                    window.open("https://intro-kor.msaez.io/started/", "_blank")
+            openMakingDialog() {
+                var me = this
+                me.$EventBus.$emit('open-new-making-dialog');
+            },
+            wikiOpen(linkType) {
+                const link = this.wikiOpenUrl.find(item => item.type === linkType);
+                if (link) {
+                    const url = this.isForeign ? link.en : link.ko;
+                    window.open(url, "_blank");
                 }
             },
             toggleDialog(item) {
@@ -1861,19 +1191,7 @@
             },
             selectMode(item){
                 this.searchObj.type = item.type
-            },
-            openCanvas(val){
-                var me = this
-                var dbuid = me.dbuid()
-                localStorage.setItem(dbuid + '-model-info', JSON.stringify(val))
-                //localStorage.setItem(dbuid + '-Project-Name', val.name)
-                // localStorage.setItem(dbuid + '-Scenario', val.result)
-                if(val.type == 'ES'){
-                    me.$router.push({path: `storming/${dbuid}`});
-                } else if(val.type == 'BM'){
-                    me.$router.push({path: `business-model-canvas/${dbuid}`});
-                }
-            },  
+            }, 
             searchClose(close) {
                 var me = this
                 if(close) me.searchObj.name = '';
@@ -2127,7 +1445,8 @@
                                     if(me.searchObj.type != 'all'){
                                         result.lists = result.lists.filter(item => item.type == me.searchObj.type);
                                     }
-                                    me.local = result.lists
+                                    me.validation(result.lists, 'local')
+                                    me.local = result.lists.filter(item => item.type)
                                 } else if(obj.id == 'mine'&& obj.show){
                                     if(window.MODE == 'bpm' || window.MODE == 'onprem') {
                                         let data = await this.list(`db://userLists/${me.userInfo.uid}/mine`)
@@ -2146,7 +1465,7 @@
                                         });
                                         result.lists.map(x =>x.versions = null);
                                     }
-                                    me.mine = result.lists
+                                    me.mine = result.lists.filter(item => item.type)
                                 } else if(obj.id == 'share' && obj.show){
                                     if(window.MODE == 'bpm' || window.MODE == 'onprem') {
                                         let data = await this.getObject(`db://userLists/${me.userInfo.uid}/share`)
@@ -2170,7 +1489,7 @@
                                         });
                                     }
                                     
-                                    me.share = result.lists
+                                    me.share = result.lists.filter(item => item.type)
                                 } else if(obj.id == 'public' && obj.show){
                                     if(window.MODE == 'bpm' || window.MODE == 'onprem') {
                                         // let result = {}
@@ -2195,7 +1514,7 @@
                                         });
                                         result.lists.map(x =>x.versions = null);
                                     }
-                                    me.public = result.lists
+                                    me.public = result.lists.filter(item => item.type)
                                 }
                                 // console.log(result)
                                 obj.count = result ? result.count : 0
@@ -2207,6 +1526,27 @@
                     console.log(e)
                 }finally {
                     me.showLoading = false
+                }
+            },
+            validation(lists, key){
+                if(key == 'local'){
+                    if(!lists) return;
+                    if(lists.filter(item => !item.type).length == 0) return;
+
+
+                    let locals = localStorage.getItem('localLists')
+                    if(!locals) return;
+                    locals = JSON.parse(locals)
+                    
+                    lists.filter(item => !item.type).forEach(item => {
+                        let index = locals.findIndex(local=> JSON.stringify(local) === JSON.stringify(item))
+                        if(index != -1){
+                            locals.splice(index, 1)
+                        }
+                    })
+                    localStorage.setItem('localLists', JSON.stringify(locals))
+                } else if(key = 'mine'){
+
                 }
             },
             setListByAcebase(data) {
@@ -2477,8 +1817,38 @@
 </script>
 
 <style>
-    .nav-project-list .v-list-item {
+    .main-nav-tab-home {
+        display:none;
+    }
+    .main-nav-tabs-box {
+        margin-top:-78px;
+        margin-bottom:10px;
+        position:absolute;
+        max-width:60%;
+        min-width:10%;
+        z-index:1;
+        left: 50%;
+        transform: translate(-50%, 0%);
+    }
+    .main-nav-tab {
+        height:45px;
+        font-size:16px;
+        color:#898989 !important;
+        font-weight: 700;
+        margin-right:10px;
+        margin-top:2px;
+    }
+    .main-nav-tabs {
+        cursor: pointer !important;
+    }
+    .main-nav-tabs .v-tabs-slider-wrapper {
+        display: none;
+    }
+    .nav-storage-list .v-list-item {
         padding:0px 5px;
+    }
+    .main-nav-tab:hover {
+        color: #2C81D5 !important; /* Vuetify의 primary 색상 */
     }
 </style>
 
@@ -2563,6 +1933,10 @@
         color: #8e44ad;
     }
 
+    .main-nav-tab-display {
+        display: none;
+    }
+
     .x-pagination a, .x-pagination span {
         -webkit-box-shadow: none !important;
         -moz-box-shadow: none !important;
@@ -2622,9 +1996,9 @@
     .mobile-tab {
         display: none;
     }
-    .mobile-tab-list {
+    /* .mobile-tab-list {
         display: none;
-    }
+    } */
     /* .main-search {
         position:fixed; 
         top:50px; 
@@ -2646,11 +2020,10 @@
         margin-top: 10px;
     }
     
-    @media only screen and (max-width: 1110px) {
-        .main-tap-list {
-            max-width:50% !important;
+    @media only screen and (max-width: 1200px) {
+        .main-nav-tab-display {
+            display:flex;
         }
-
     }
 
     @media only screen and (max-width: 850px) {
@@ -2662,6 +2035,12 @@
             margin-left: -10px;
         }
 
+        .main-nav-tabs-box {
+            max-width: 450px;
+            left: 46%;
+            margin-top: -70px;
+        }
+
     }
 
     @media only screen and (max-width: 800px) {
@@ -2671,65 +2050,36 @@
 
     }
 
-    @media only screen and (max-width: 600px) {
+    @media only screen and (max-width: 750px) {
+        .main-nav-tabs-box {
+            max-width: 300px;
+            left: 45%;
+        }
+    }
+
+    @media only screen and (max-width: 599px) {
+        .main-nav-tab-home {
+            display:block;
+        }
         .main-logo-image {
             display:block;
         }
         .main-chair-image {
             display: none;
         }
-        /* .mobile-menu-tab {
-            width: 45px;
+        .main-nav-tabs-box {
+            max-width: 300px;
+            left: 32%;
         }
-        .mobile-tab {
-            display:block;
-        }
-        .web-tab {
-            display:none;
-        }
-        .mobile-tab-list {
-            display: flex;
-            margin-top:-76px; 
-            margin-bottom:10px; 
-            position:absolute; 
-            z-index:1;  
-            max-width:100%; 
-            min-width:10%;
-            left: 50%; 
-            transform: translate(-50%, 0%);
-        } */
-        .mobile-tab-list {
-            display:block;
-        }
-        .main-tap-list {
-            display:none;
-        }
-
         .main-search {
             width: 75%;
         }
     }
 
-    /* @media only screen and (max-width: 575px) {
-        .mobile-tab-list {
-            left: 40%;
+    @media only screen and (max-width: 499px) {
+        .main-nav-tabs-box {
+            max-width: 200px;
+            left: 28%;
         }
-
     }
-    @media only screen and (max-width: 475px) {
-        .mobile-tab-list {
-            left: 25px;
-            transform: none;
-        }
-
-    }
-
-
-    @media only screen and (max-width: 400px) {
-        .mobile-tab-list {
-            left: 10px;
-            transform: none;
-        }
-
-    } */
 </style>

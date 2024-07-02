@@ -2,7 +2,7 @@
     <kubernetes-common-panel
             v-model="value"
             :img="img"
-            :readOnly="readOnly"
+            :isReadOnly="isReadOnly"
             @openDesDoc="desDocOpen"
             @close="closePanel"
     >
@@ -19,7 +19,7 @@
         <template slot="edit-property">
             <v-text-field
                     label="Image"
-                    :disabled="readOnly"
+                    :disabled="isReadOnly"
                     v-model="value.object.spec.runLatest.configuration.revisionTemplate.spec.container.image"
             ></v-text-field>
             <v-label>Environment</v-label>
@@ -28,14 +28,14 @@
                     <v-text-field
                             label="Key"
                             v-model="dataKey"
-                            :disabled="readOnly"
+                            :disabled="isReadOnly"
                     ></v-text-field>
                 </v-col>
                 <v-col class="py-0">
                     <v-text-field
                             label="Value"
                             v-model="dataValue"
-                            :disabled="readOnly"
+                            :disabled="isReadOnly"
                             v-on:keyup.enter="addData(dataKey, dataValue)"
                     ></v-text-field>
                 </v-col>
@@ -45,7 +45,7 @@
                         class="mx-5"
                         color="primary"
                         rounded dark
-                        :disabled="readOnly"
+                        :disabled="isReadOnly"
                         @click="addData(dataKey, dataValue)"
                 >Add Env</v-btn>
             </v-row>

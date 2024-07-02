@@ -21,7 +21,6 @@
                     'label-angle':value.elementView.angle,
                     'text-anchor': 'middle',
                 }"
-                :image.sync="refreshedImg"
         >
             <geometry-rect
                     v-if="!movingElement"
@@ -45,6 +44,10 @@
                         :subStyle="{'font-size': fontSize, 'font-weight': 'bold'}"
                 ></text-element>
             </sub-elements>
+
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
         </geometry-element>
 
         <sticky-model-panel
@@ -58,11 +61,14 @@
 
 <script>
     import Element from './StickyModelElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'sticky-text-element',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             className() {
                 return 'StickyTextElement'

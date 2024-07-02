@@ -41,9 +41,9 @@
                             :dragPageMovable="dragPageMovable" :enableContextmenu="false" :enableRootContextmenu="false"
                             :enableHotkeyCtrlC="false" :enableHotkeyCtrlV="false"
                             :enableHotkeyDelete="false" :enableHotkeyCtrlZ="false" :enableHotkeyCtrlD="false"
-                            :enableHotkeyCtrlG="false" :slider="true" :movable="!getReadOnly" :resizable="!getReadOnly"
+                            :enableHotkeyCtrlG="false" :slider="true" :movable="!isReadOnlyModel" :resizable="!isReadOnlyModel"
                             :selectable="true"
-                            :connectable="!getReadOnly" v-if="value" v-on:canvasReady="bindEvents" :autoSliderUpdate="true"
+                            :connectable="!isReadOnlyModel" v-if="value" v-on:canvasReady="bindEvents" :autoSliderUpdate="true"
                             v-on:connectShape="onConnectShape" :imageBase="imageBase">
 
                         <!--background 9 perspectives-->
@@ -74,7 +74,7 @@
 
 
                     <slot name="undoRedo">
-                        <v-flex v-if="!getReadOnly">
+                        <v-flex v-if="!isReadOnlyModel">
                             <v-row class="gs-modeling-undo-redo">
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on }">
@@ -101,7 +101,7 @@
                     <div v-if="isMobile">
                         <v-speed-dial
                             v-model="fab"
-                            style="position:fixed; bottom:50px; right:50px;"
+                            class="business-mobile-speed-dial"
                         >
                             <template v-slot:activator>
                                 <v-btn
@@ -120,21 +120,19 @@
                                 </v-btn>
                             </template>
                             <v-col style="margin-right:390px;">
-                                <v-btn small color=primary text
+                                <v-btn small text dark
                                         @click="saveComposition('save')">save
                                 </v-btn>
                                 <v-btn
                                         text
-                                        v-if="isOwnModel && !getReadOnly"
-                                        color="primary"
-                                        dark
+                                        v-if="isOwnModel && !isReadOnlyModel"
                                         @click="openInviteUsers()"
                                         small
                                 >
                                     <v-icon>{{icon.share}}</v-icon>
                                     SHARE
                                 </v-btn>
-                                <v-btn class="action-btn" color=primary @click="generateImplementationModel()">
+                                <v-btn class="action-btn" text color=primary @click="generateImplementationModel()">
                                     <Icon icon="mdi:head-cog-outline"
                                         height="24"
                                         style="margin-right:5px;"
@@ -147,39 +145,49 @@
 
                     <slot name="top">
                         <v-flex style="align:start;">
-                            <v-row style="position: absolute; left: 50%; transform: translate(-50%, 0%);" class="gs-model-z-index-1" >
+                            <v-row class="gs-model-z-index-1 business-model-canvas-top-menu" >
                                 <v-row align="start" style="margin-top:10px; width:150px;">
+                                    <div class="business-model-canvas-mobile-home-button">
+                                        <router-link to="/">
+                                            <v-icon
+                                                style="height: 24px;
+                                                margin-top: 38px;
+                                                margin-right: 5px;"
+                                            >
+                                                mdi-home
+                                            </v-icon>
+                                        </router-link>
+                                    </div>
                                     <slot name="projectName">
                                         <v-col align="start" id="project-name">
                                             <v-text-field
                                                 style="z-index:2;"
-                                                    :disabled="getReadOnly"
-                                                    label="Project Name" v-model="projectName"
-                                                    @click.native="unselectedAll">
+                                                :disabled="isReadOnlyModel"
+                                                label="Project Name" v-model="projectName"
+                                                @click.native="unselectedAll"
+                                            >
                                             </v-text-field>
                                         </v-col>
                                     </slot>
                                 </v-row>
                                 <div class="action-btn-box">
-                                    <v-row>
+                                    <v-row v-if="isOwnModel">
                                         <v-col align="right">
-                                            <v-btn class="action-btn" color=primary @click="generateImplementationModel()">
+                                            <v-btn class="action-btn" text color=primary @click="generateImplementationModel()">
                                                 <Icon icon="mdi:head-cog-outline"
                                                     height="24"
                                                     style="margin-right:5px;"
                                                 />
                                                 <div>implementation model</div>
                                             </v-btn>
-                                            <v-btn class="action-btn" color=primary @click="storageDialogReady('save')"
+                                            <v-btn class="action-btn" @click="storageDialogReady('save')"
                                                     text>
                                                 <v-icon>{{icon.save}}</v-icon>
-                                                save
+                                                SAVE
                                             </v-btn>
                                             <v-btn
+                                                    v-if="isOwnModel && isServerModel && !isReadOnlyModel"
                                                     text
-                                                    v-if="isOwnModel && isServerModel && !getReadOnly"
-                                                    color="primary"
-                                                    dark
                                                     @click="openInviteUsers()"
                                             >
                                                 <v-icon>{{icon.share}}</v-icon>
@@ -187,16 +195,44 @@
                                             </v-btn>
                                         </v-col>
                                     </v-row>
+                                    <v-row v-else>
+                                        <v-btn
+                                            v-if="isReadOnlyModel"
+                                            class="gs-model-z-index-1 es-hide-fork-btn"
+                                            text
+                                            :color="joinRequestedText.show? 'primary': 'success'"
+                                            @click="requestInviteUser()"
+                                            style="margin-right: 5px; margin-top: 15px;">
+                                            <div v-if="joinRequestedText.show">
+                                                <v-icon>{{icon.join}}</v-icon>
+                                            </div>
+                                            {{joinRequestedText.text }}
+                                        </v-btn>
+                                        <v-btn
+                                            v-if="!isReadOnlyModel"
+                                            class="gs-model-z-index-1 es-hide-fork-btn"
+                                            text
+                                            :disabled="disableBtn"
+                                            @click="saveComposition('fork')"
+                                            style="margin-right: 5px; margin-top: 15px;">
+                                        <v-icon>{{ icon.fork }}</v-icon>
+                                        <div class="es-hide-fork">
+                                            FORK
+                                        </div>
+                                    </v-btn>
+                                    </v-row>
                                 </div>
                             </v-row>
                         </v-flex>
                     </slot>
 
+                    <a href="https://www.strategyzer.com/" target="_blank"
+                        class="strategyzer-link"
+                    >strategyzer.com</a>
+
                     <slot name="palette">
-                        <v-card class="tools"
-                                style="top:100px; text-align: center;"
-                        >
-                            <v-tooltip v-if="!getReadOnly" right v-for="(category, categoryIndex) in elementTypes"
+                        <v-card class="business-model-canvas-sticker">
+                            <v-tooltip v-if="!isReadOnlyModel" right v-for="(category, categoryIndex) in elementTypes"
                                     :key="categoryIndex">
 
                                 <template v-slot:activator="{ on }">
@@ -315,9 +351,14 @@
             :showDialog="dialogModeOfAutoModeling"
             :showChat="dialogModeOfAutoModeling"
             :BMState="BMState"
+            :projectId="projectId"
             @startCreateModel="openEventStorming"
         ></AutoModelingDialog>
-        <GeneratorUI ref="generatorUI" @createModel="createModel" @clearModelValue="clearModelValue"></GeneratorUI>
+        <GeneratorUI v-if="projectId" ref="generatorUI" :projectId="projectId" :modelValue="value" :defaultInputData="defaultGeneratorUiInputData" @createModel="createModel" @clearModelValue="clearModelValue" @modificateModel="modificateModel"></GeneratorUI>
+        <!-- Mouse Cursor -->
+        <div v-for="(otherMouseEvent, email) in filteredMouseEventHandlers" :key="email">
+            <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
+        </div>
     </div>
 </template>
 
@@ -330,6 +371,7 @@
     import ModelCanvasShareDialog from "../modeling/ModelCanvasShareDialog";
     import AutoModelingDialog from "../modeling/AutoModelingDialog";
     import GeneratorUI from "../modeling/generators/GeneratorUI";
+    import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
 
     var jsondiffpatch = require('jsondiffpatch').create({
         objectHash: function (obj, index) {
@@ -346,53 +388,43 @@
             'model-storage-dialog': ModelStorageDialog,
             AutoModelingDialog,
             GeneratorUI,
+            MouseCursorComponent
         },
         mixins: [ModelCanvas],
         created: function () {
             var me = this
-            try {
-                Vue.use(BusinessModeling);
-                me.canvasType = 'bm'
-                me.isQueueModel = true
+            me.isQueueModel = true
 
-                if (localStorage.getItem(me.$route.params.projectId + '-Project-Name')) {
-                    me.projectName = localStorage.getItem(me.$route.params.projectId + '-Project-Name')
-                    localStorage.removeItem(me.$route.params.projectId + '-Project-Name')
-                }
-
-                me.track()
-            } catch (e) {
-                alert('Error: BusinessModelCanvas Created().', e)
+            if (localStorage.getItem(me.$route.params.projectId + '-Project-Name')) {
+                me.projectName = localStorage.getItem(me.$route.params.projectId + '-Project-Name')
+                localStorage.removeItem(me.$route.params.projectId + '-Project-Name')
             }
         },
-        computed: {
-            getReadOnly() {
-                return this.readOnly
-            },
-        },
-        watch: {
-            // copyValue: {
-            //     deep: true,
-            //     handler: function (newVal, oldVal) {
-            //         var me = this
-            //         var delta = jsondiffpatch.diff(oldVal, newVal);
-            //         if (me.initLoad && delta) {
-            //             me.modifiedElement(delta)
-            //         }
-            //     }
-            // },
-        },
         methods: {
+            setCanvasType(){
+                Vue.use(BusinessModeling);
+                this.canvasType = 'bm'
+            },
             moveModelUrl(modelId){
                 this.$router.push({path: `/business-model-canvas/${modelId}`});
             },
-            onChangedValue(oldVal, newVal){
-                var me = this
-                var diff = jsondiffpatch.diff(oldVal, newVal);
-                if(me.initLoad && diff){
-                    me.changeValueAction(diff);
-                    me.publishScreenShot();
+            async synchronizeAssociatedProject(associatedProject, newId, oldId) {
+                var me = this;
+                if(!associatedProject) return;
+
+                let lists = await me.list(`db://definitions/${associatedProject}/information/businessModel`);
+                let index = -1;
+                if (lists && lists.modelList) {
+                    if(oldId) {
+                        index = lists.modelList.findIndex((id) => id == oldId);
+                    } else {
+                        index = lists.modelList.findIndex((id) => id == newId); //duplicate
+                    }
+                    index = index == -1 ? lists.modelList.length : index;
                 }
+
+                index = index == -1 ? 0 : index;
+                await me.setString(`db://definitions/${associatedProject}/information/businessModel/modelList/${index}`, newId);
             },
             openEventStorming(val){
                 var me = this
@@ -411,6 +443,7 @@
                 var me = this
                 var perspectives = this.perspectives
                 if(val){
+                    if (val.associatedProject) me.information.associatedProject = val.associatedProject;
                     Object.keys(val).forEach(function (key){
                         perspectives.forEach(perspective => {
                             if (val[key].componentName == perspective.perspective.replaceAll("-", "")) {
@@ -426,6 +459,13 @@
                             me.eleCnt++;
                         }
                     })
+                }
+            },
+            modificateModel(model){
+                var me = this;
+                if(model && model.updateElement){
+                    me.value.elements[model.selectedElement.elementView.id] = Object.assign(me.value.elements[model.selectedElement.elementView.id], model.updateElement)
+                    me.changedByMe = true
                 }
             },
             getComponentByClassName: function (className) {
@@ -626,6 +666,11 @@
 
         data() {
             return {
+                defaultGeneratorUiInputData: {
+                    generator: "BMGenerator",
+                    title: "생성할 서비스명",
+                    userStory: "",
+                },
                 BMState: false,
                 dialogModeOfAutoModeling: false,
                 eleCnt: 0,
@@ -636,6 +681,7 @@
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Key Partners",
                         "perspective": "key-partner",
+                        "icon": "static/image/symbol/icons-link.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "e8f5cd23-616c-b911-5bcd-a5bd1243df24",
@@ -649,6 +695,7 @@
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Key Activities",
                         "perspective": "key-activity",
+                        "icon": "static/image/symbol/check.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "d8deafd1-564b-19b7-1d0b-2ace2730f6cf",
@@ -662,6 +709,7 @@
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Key Resources",
                         "perspective": "key-resource",
+                        "icon": "static/image/symbol/business.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "462bb51c-8efb-6657-3b04-6c754876be40",
@@ -675,6 +723,7 @@
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Value Proposition",
                         "perspective": "value-proposition",
+                        "icon": "static/image/symbol/gift.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "2fde0b06-3c34-d5c1-d43c-36a52718a205",
@@ -688,6 +737,7 @@
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Customer Relationships",
                         "perspective": "customer-relationship",
+                        "icon": "static/image/symbol/heart.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "ecdf7402-a80d-1474-ec23-9363a74698af",
@@ -701,6 +751,7 @@
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Channels",
                         "perspective": "channel",
+                        "icon": "static/image/symbol/truck.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "d0183098-e987-3214-7f42-20dcf8a364c5",
@@ -714,6 +765,7 @@
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Customer Segments",
                         "perspective": "customer-segment",
+                        "icon": "static/image/symbol/customer-segment.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "84f0b913-207f-7229-cdb4-a536625138c2",
@@ -727,6 +779,7 @@
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Cost Structure",
                         "perspective": "cost-structure",
+                        "icon": "static/image/symbol/tag.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "5b350418-d0aa-37de-7185-2ba8613bfa25",
@@ -740,6 +793,7 @@
                         "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                         "name": "Revenue Streams",
                         "perspective": "revenue-stream",
+                        "icon": "static/image/symbol/sack-dollar.png",
                         "elementView": {
                             "_type": "org.uengine.modeling.businessmodelcanvas.BusinessModelPerspective",
                             "id": "636ae7aa-186a-0a54-00cf-bf221578aab4",
@@ -1893,6 +1947,38 @@
 
 
 <style>
+    .business-mobile-speed-dial {
+        position:fixed;
+        bottom:50px;
+        right:50px;
+    }
+    .strategyzer-link {
+        position: fixed;
+        left:20px;
+        top:65px;
+        color:black !important;
+        text-decoration: none;
+    }
+    .strategyzer-link:hover {
+        color:#1976D2 !important;
+    }
+    .business-model-canvas-sticker {
+        position: absolute;
+        width: 48px;
+        left: 20px;
+        padding: 4px;
+        overflow: hidden;
+        top: 100px;
+        text-align: center;
+    }
+    .business-model-canvas-mobile-home-button {
+        display: none;
+    }
+    .business-model-canvas-top-menu {
+        position: absolute;
+        left: 50%;
+        transform: translate(-50%, 0%);
+    }
     .action-btn-box {
         margin-right: 10px;
         margin-top:25px;
@@ -1902,9 +1988,50 @@
         margin-right: 8px;
     }
 
-    @media only screen and (max-width: 1090px) {
+    @media only screen and (max-width: 1093px) {
         .action-btn-box {
             display:none;
+        }
+        .business-mobile-speed-dial {
+            bottom:20px;
+            right:13px;
+        }
+        .business-mobile-speed-dial .v-btn {
+            width:56px;
+            height:56px;
+        }
+    }
+
+    @media only screen and (max-width: 600px) {
+        .business-mobile-speed-dial {
+            bottom:110px;
+            right:13px;
+        }
+        .business-mobile-speed-dial .v-btn {
+            width:40px;
+            height:40px;
+        }
+        .business-model-canvas-top-menu {
+            position: absolute;
+            left:120px;
+            top:5px;
+        }
+        .strategyzer-link {
+            left:35px;
+        }
+        .business-model-canvas-mobile-home-button {
+            display: block;
+            z-index:1;
+        }
+        .business-model-canvas-sticker {
+            width: 330px !important;
+            top: auto !important;
+            bottom: 45px;
+            left: 33px;
+            padding-top: 10px;
+        }
+        .business-model-canvas-sticker span img {
+            margin-right:5px;
         }
     }
 </style>

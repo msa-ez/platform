@@ -19,7 +19,6 @@
                 v-on:removeShape="onRemoveShape"
                 v-on:addToGroup="onAddToGroup"
                 :label.sync="name"
-                :image.sync="refreshedImg"
                 :_style="{
                     'label-angle':value.elementView.angle,
                     'font-weight': 'bold', 'font-size': '14',
@@ -39,8 +38,12 @@
                         r: '1'
                     }"
             ></geometry-rect>
+
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
             <uml-sub-controller
-                    v-if="!canvas.isReadOnlyModel"
+                    v-if="isEditElement"
                     :value="value" 
             ></uml-sub-controller>
         </group-element>
@@ -49,11 +52,14 @@
 
 <script>
     import Element from './UMLClassElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'uml-class-group',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             defaultStyle() {
                 return {}
@@ -92,15 +98,6 @@
                 umlCanvas: null,
             };
         },
-        created: function () {
-        },
-        watch: {
-        },
-        mounted: function () {
-            var me = this;
-        },
-        methods: {
-        }
     }
 </script>
 

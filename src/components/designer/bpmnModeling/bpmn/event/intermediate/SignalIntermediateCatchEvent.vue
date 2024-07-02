@@ -48,14 +48,8 @@
                 ></geometry-polygon>
             </sub-elements>
 
-            <sub-elements v-for="(index) in newEditUserImg.length" :key="index">
-                <image-element
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="value.elementView.height"
-                ></image-element>
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
             </sub-elements>
 
             <bpmn-sub-controller :type="type"></bpmn-sub-controller>
@@ -72,13 +66,15 @@
 <script>
   import IBpmn from '../../IBpmn'
   import BpmnPropertyPanel from './IntermediateEventPanel'
+  import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [IBpmn],
         name: 'bpmn-signal-intermediate-catch-event',
         props: {},
-        component: {
-          'bpmn-intermediate-event-panel': BpmnPropertyPanel
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+            'bpmn-intermediate-event-panel': BpmnPropertyPanel
         },
         computed: {
             defaultStyle(){

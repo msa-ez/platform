@@ -298,11 +298,11 @@
                                                 background-color: transparent;
                                             "
                                         >
-                                            <div class="mobile-home-button">
+                                            <div class="eventstorming-mobile-home-button">
                                                 <router-link to="/">
                                                     <v-icon
-                                                            style="height: 24px; margin-top: 38px; margin-right: 5px;"
-                                                            color="primary"
+                                                        style="height: 24px; margin-top: 38px; margin-right: 5px;"
+                                                        color="primary"
                                                     >
                                                         mdi-home
                                                     </v-icon>
@@ -320,33 +320,21 @@
                                             </v-icon>
                                             <slot name="projectName">
                                                 <v-text-field
-                                                        class="es-modeling-project-name"
-                                                        :disabled="
-                                                        isReadOnlyModel ||
-                                                        (fullPath &&
-                                                            fullPath.includes(
-                                                                'replay'
-                                                            ))
-                                                    "
-                                                        :color="projectNameColor"
-                                                        :error-messages="
-                                                        projectNameHint
-                                                    "
-                                                        label="Project Name"
-                                                        v-model="projectName"
-                                                        @click.native="
-                                                        unselectedAll
-                                                    "
+                                                    class="es-modeling-project-name"
+                                                    :disabled="isReadOnlyModel || (fullPath && fullPath.includes('replay'))"
+                                                    :color="projectNameColor"
+                                                    :error-messages="projectNameHint"
+                                                    label="Project Name"
+                                                    v-model="projectName"
+                                                    @click.native="unselectedAll"
                                                 >
                                                 </v-text-field>
                                             </slot>
                                         </v-row>
                                         <div
-                                                class="es-is-not-mobile"
-                                                style="
-                                                margin: 40px 0px 0px 15px;
-                                                z-index: 1;
-                                            "
+                                            class="es-is-not-mobile"
+                                            style="margin: 40px 0px 0px 15px;
+                                            z-index: 1;"
                                         >
                                             <v-row
                                                     justify="end"
@@ -368,7 +356,6 @@
                                                             <div>
                                                                 <v-btn
                                                                         class="gs-model-z-index-1 es-hide-k8s-btn"
-                                                                        color="primary"
                                                                         text
                                                                         style="margin-right: 5px;"
                                                                         :disabled="disableBtn"
@@ -399,7 +386,6 @@
                                                                         style="
                                                                         margin-right: 5px;
                                                                     "
-                                                                        color="primary"
                                                                         @click="generateModel()"
                                                                         :disabled="disableBtn"
                                                                         v-on="on"
@@ -416,7 +402,6 @@
                                                                         v-else
                                                                         text
                                                                         style="margin-right: 5px;"
-                                                                        color="primary"
                                                                         @click="generateHexagonal()"
                                                                         :disabled="disableBtn"
                                                                         v-on="on"
@@ -510,7 +495,6 @@
                                                                         style="
                                                                         margin-right: 5px;
                                                                     "
-                                                                        color="primary"
                                                                         @click="
                                                                         loadVersions()
                                                                     "
@@ -615,7 +599,6 @@
                                                                 <v-btn
                                                                         class="gs-model-z-index-1 es-hide-fork-btn"
                                                                         text
-                                                                        color="primary"
                                                                         :disabled="disableBtn"
                                                                         @click="saveComposition('fork')"
                                                                         style="
@@ -659,7 +642,6 @@
                                                                         style="
                                                                         margin-right: 5px;
                                                                     "
-                                                                        color="primary"
                                                                         :disabled="
                                                                         disableBtn
                                                                     "
@@ -679,7 +661,6 @@
                                                                         class="gs-model-z-index-1"
                                                                         text
                                                                         v-else
-                                                                        color="primary"
                                                                         :disabled="
                                                                         disableBtn
                                                                     "
@@ -727,46 +708,26 @@
                                                             open-on-hover
                                                             left
                                                     >
-                                                        <template
-                                                                v-slot:activator="{
-                                                                on,
-                                                            }"
-                                                        >
+                                                        <template v-slot:activator="{ on }">
                                                             <div>
                                                                 <v-btn
-                                                                        class="gs-model-z-index-1 es-hide-share-btn"
-                                                                        text
-                                                                        style="
-                                                                        margin-right: 5px;
-                                                                    "
-                                                                        color="primary"
-                                                                        :disabled="
-                                                                        !initLoad
-                                                                    "
-                                                                        v-on="on"
-                                                                        @click="openInviteUsers()"
+                                                                    class="gs-model-z-index-1 es-hide-share-btn"
+                                                                    text
+                                                                    style="margin-right: 5px;"
+                                                                    :disabled="!initLoad"
+                                                                    v-on="on"
+                                                                    @click="openInviteUsers()"
                                                                 >
-                                                                    <v-icon>{{
-                                                                        icon.share
-                                                                        }}</v-icon>
-                                                                    <div
-                                                                            class="es-hide-share"
-                                                                    >
-                                                                        SHARE
-                                                                    </div>
+                                                                    <v-icon>{{icon.share}}</v-icon>
+                                                                    <div class="es-hide-share"> SHARE </div>
                                                                     <v-avatar
-                                                                            v-if="
-                                                                            requestCount
-                                                                        "
+                                                                            v-if="requestCount"
                                                                             size="25"
                                                                             color="red"
                                                                             style="
-                                                                            margin-left: 2px;
-                                                                        "
+                                                                            margin-left: 2px;"
                                                                     >
-                                                                        {{
-                                                                        requestCount
-                                                                        }}
+                                                                        {{ requestCount }}
                                                                     </v-avatar>
                                                                 </v-btn>
                                                             </div>
@@ -810,21 +771,15 @@
                                                         >
                                                             <div>
                                                                 <v-btn
-                                                                        class="gs-model-z-index-1"
-                                                                        style="
-                                                                        margin-right: 5px;
-                                                                        color: white;
-                                                                    "
-                                                                        color="primary"
-                                                                        @click="openCodeViewer()"
-                                                                        :disabled="
-                                                                        !initLoad
-                                                                    "
-                                                                        v-on="on"
+                                                                    class="gs-model-z-index-1"
+                                                                    style="margin-right: 5px;"
+                                                                    color="primary"
+                                                                    text
+                                                                    @click="openCodeViewer()"
+                                                                    :disabled="!initLoad"
+                                                                    v-on="on"
                                                                 >
-                                                                    <v-icon>{{
-                                                                        icon.code
-                                                                        }}</v-icon>
+                                                                    <v-icon>{{ icon.code }}</v-icon>
                                                                     <div>
                                                                         CODE
                                                                     </div>
@@ -841,42 +796,16 @@
                                                                 style="width: 175px"
                                                         >
                                                             <v-list-item
-                                                                    v-for="(
-                                                                    item, index
-                                                                ) in codeItems"
+                                                                    v-for="( item, index ) in codeItems"
                                                                     :key="index"
                                                                     @click="functionSelect(item.title,index)"
                                                             >
                                                                 <v-list-item-title
-                                                                >{{
-                                                                    item.title
-                                                                    }}
+                                                                >{{ item.title }}
                                                                 </v-list-item-title>
                                                             </v-list-item>
                                                         </v-list>
                                                     </v-menu>
-
-                                                    <!-- <v-menu
-                                                            offset-y
-                                                            open-on-hover
-                                                            left
-                                                    >
-                                                        <template v-slot:activator="{ on }">
-                                                            <div>
-                                                                <v-btn  class="gs-model-z-index-1 es-hide-code-btn"
-                                                                        text
-                                                                        style="margin-right: 5px; color: white;"
-                                                                        color="orange"
-                                                                        @click="showUiWizard=true"
-                                                                        v-on="on"
-                                                                >
-                                                                    <v-icon>{{icon.code}}</v-icon>
-                                                                    <div class="es-hide-code">UI</div>
-                                                                </v-btn>
-                                                            </div>
-                                                        </template>
-
-                                                    </v-menu> -->
                                                 </slot>
                                             </v-row>
                                         </div>
@@ -901,7 +830,6 @@
                                                 >
                                                     <div>
                                                         <v-btn class="mobile-btn"
-                                                            color="primary"
                                                             text
                                                             :disabled="disableBtn"
                                                             @click="openEmbeddedCanvas('Kubernetes')"
@@ -925,7 +853,6 @@
                                                 >
                                                     <div>
                                                         <v-btn
-                                                                color="primary"
                                                                 dark
                                                                 @click="showReplay()"
                                                                 small
@@ -960,28 +887,22 @@
                                                     <v-btn
                                                             text
                                                             v-if="isReadOnlyModel"
-                                                            color="primary"
-                                                            dark
                                                             class="mobile-btn"
                                                             @click="saveComposition('fork')"
                                                             v-on="on"
                                                             small
                                                     >
-                                                        <v-icon>{{ icon.fork}}</v-icon>
+                                                        <v-icon>{{ icon.fork }}</v-icon>
                                                     </v-btn>
                                                     <v-btn
                                                             text
                                                             v-else
-                                                            color="primary"
-                                                            dark
-                                                            class="mobile-btn"
+                                                            class="mobile-btn cp-es-save-btn"
                                                             @click.native="saveComposition('save')"
                                                             v-on="on"
                                                             small
                                                     >
-                                                        <v-icon>{{
-                                                            icon.save
-                                                            }}</v-icon>
+                                                        <v-icon>{{ icon.save }}</v-icon>
                                                     </v-btn>
                                                 </template>
                                                 <v-list v-if="!isClazzModeling">
@@ -997,7 +918,7 @@
                                                 </v-list>
                                             </v-menu>
                                             <v-menu
-                                                    v-if="isOwnModel && isServerModel && !isReadOnlyModel "
+                                                    v-if="isOwnModel && isServerModel && !isReadOnlyModel"
                                                     class="pa-2"
                                                     offset-y
                                                     open-on-hover
@@ -1008,23 +929,18 @@
                                                     <div>
                                                         <v-btn
                                                                 text
-                                                                color="primary"
                                                                 dark
-                                                                class="mobile-btn"
+                                                                class="mobile-btn cp-es-share-btn"
                                                                 v-on="on"
                                                                 @click="openInviteUsers()"
                                                                 small
                                                         >
-                                                            <v-icon>{{
-                                                                icon.share
-                                                                }}</v-icon>
+                                                            <v-icon>{{ icon.share }}</v-icon>
                                                             <v-avatar
-                                                                    v-if="requestCount"
-                                                                    size="25"
-                                                                    color="red"
-                                                                    style="
-                                                                    margin-left: 2px;
-                                                                "
+                                                                v-if="requestCount"
+                                                                size="25"
+                                                                color="red"
+                                                                style="margin-left: 2px;"
                                                             >
                                                                 {{ requestCount }}
                                                             </v-avatar>
@@ -1033,11 +949,9 @@
                                                 </template>
                                                 <v-list>
                                                     <v-list-item
-                                                            v-for="(
-                                                            item, index
-                                                        ) in shareItems"
-                                                            :key="index"
-                                                            @click="functionSelect(item.title,index)"
+                                                        v-for="( item, index ) in shareItems"
+                                                        :key="index"
+                                                        @click="functionSelect(item.title,index)"
                                                     >
                                                         <v-list-item-title
                                                         >{{ item.title }}
@@ -1046,20 +960,19 @@
                                                 </v-list>
                                             </v-menu>
                                             <v-menu
-                                                    class="pa-2"
-                                                    open-on-hover
-                                                    offset-y
-                                                    left
+                                                class="pa-2"
+                                                open-on-hover
+                                                offset-y
+                                                left
                                             >
                                                 <template
-                                                        v-slot:activator="{ on }"
+                                                    v-slot:activator="{ on }"
                                                 >
                                                     <div>
                                                         <v-btn
                                                             class="gs-model-z-index-1 mobile-btn"
-                                                            v-if="isHexagonalModeling"
+                                                            v-if="isHexagonal"
                                                             text
-                                                            color="primary"
                                                             style="margin-top:2px;"
                                                             @click="generateModel()"
                                                             :disabled="disableBtn"
@@ -1071,7 +984,6 @@
                                                             class="gs-model-z-index-1 mobile-btn"
                                                             v-else
                                                             text
-                                                            color="primary"
                                                             style="margin-top:2px;"
                                                             @click="generateHexagonal()"
                                                             :disabled="disableBtn"
@@ -1083,11 +995,9 @@
                                                 </template>
                                                 <v-list>
                                                     <v-list-item
-                                                            v-for="(
-                                                            item, index
-                                                        ) in conversionItems"
-                                                            :key="index"
-                                                            @click="functionSelect(item.title,index)"
+                                                        v-for="( item, index ) in conversionItems"
+                                                        :key="index"
+                                                        @click="functionSelect(item.title,index)"
                                                     >
                                                         <v-list-item-title
                                                         >{{ item.title }}
@@ -1095,51 +1005,6 @@
                                                     </v-list-item>
                                                 </v-list>
                                             </v-menu>
-                                            <!-- <v-menu
-                                                    class="pa-2"
-                                                    open-on-hover
-                                                    offset-y
-                                                    left
-                                            >
-                                                <template
-                                                        v-slot:activator="{ on }"
-                                                >
-                                                    <div>
-                                                        <v-btn
-                                                                v-if="
-                                                                isHexagonalModeling
-                                                            "
-                                                                text
-                                                                color="primary"
-                                                                style="
-                                                                margin-left: -20px;
-                                                                margin-top: 1px;
-                                                            "
-                                                                @click="generateModel()"
-                                                                :disabled="disableBtn"
-                                                        >
-                                                            <v-icon>
-                                                                mdi-checkbox-multiple-blank-outline
-                                                            </v-icon>
-                                                        </v-btn>
-                                                        <v-btn
-                                                                v-else
-                                                                text
-                                                                color="primary"
-                                                                style="
-                                                                margin-left: -20px;
-                                                                margin-top: 1px;
-                                                            "
-                                                                @click="generateHexagonal()"
-                                                                :disabled="disableBtn"
-                                                        >
-                                                            <v-icon
-                                                            >mdi-hexagon-outline</v-icon
-                                                            >
-                                                        </v-btn>
-                                                    </div>
-                                                </template>
-                                            </v-menu> -->
 
                                             <v-menu open-on-hover offset-y>
                                                 <template
@@ -1148,14 +1013,14 @@
                                                     <div>
                                                         <v-btn
                                                             color="primary"
-                                                            dark
-                                                            class="mobile-btn"
+                                                            text
+                                                            class="mobile-btn cp-es-code-viewer-btn"
                                                             @click="openCodeViewer()"
                                                             v-on="on"
                                                             small
                                                             style="margin-left:10px;"
                                                         >
-                                                            <v-icon>{{icon.code}}</v-icon>CODE
+                                                            <v-icon>{{icon.code}}</v-icon>
                                                         </v-btn>
                                                     </div>
                                                 </template>
@@ -1172,100 +1037,77 @@
                                         </v-row>
                                     </div>
                                 </slot>
-                                <!-- <v-fab-transition>
-                                    <v-btn
-                                            v-if="!rtcLogin && ((isServerModel && (information && information.permissions)) )"
-                                            color="blue"
-                                            dark
-                                            fab
-                                            small
-                                            absolute
-                                            bottom
-                                            right
-                                            style="margin:0 5px 40px 0;"
-                                            @click="onJoin()"
-                                    >
-                                        <v-icon>mdi-camera</v-icon>
-                                    </v-btn>
-                                </v-fab-transition> -->
                             </div>
 
                             <v-card
-                                    class="tools"
-                                    style="top: 100px; text-align: center"
+                                class="tools"
+                                style="top: 100px; text-align: center"
                             >
                                 <v-tooltip right>
                                     <template v-slot:activator="{ on, attrs }">
                                         <span
-                                                class="bpmn-icon-hand-tool"
-                                                v-bind:class="{ icons: !dragPageMovable, hands: dragPageMovable,}"
-                                                _width="30"
-                                                _height="30"
-                                                v-on:click="toggleGrip"
-                                                v-bind="attrs"
-                                                v-on="on"
+                                            class="bpmn-icon-hand-tool"
+                                            v-bind:class="{ icons: !dragPageMovable, hands: dragPageMovable,}"
+                                            _width="30"
+                                            _height="30"
+                                            v-on:click="toggleGrip"
+                                            v-bind="attrs"
+                                            v-on="on"
                                         >
                                         </span>
                                     </template>
-                                    <span v-if="dragPageMovable == true"
-                                    >Draggable Screen : on</span
-                                    >
-                                    <span v-if="dragPageMovable == false"
-                                    >Draggable Screen : off</span
-                                    >
+                                    <span v-if="dragPageMovable == true">Draggable Screen : on</span>
+                                    <span v-if="dragPageMovable == false">Draggable Screen : off</span>
                                 </v-tooltip>
 
                                 <v-tooltip right v-if="!isReadOnlyModel">
                                     <template v-slot:activator="{ on, attrs }">
                                         <span
-                                                class="gs-automatic-guidance-btn"
-                                                @click="automaticGuidanceChange"
-                                                v-bind="attrs"
-                                                v-on="on"
+                                            class="gs-automatic-guidance-btn"
+                                            @click="automaticGuidanceChange"
+                                            v-bind="attrs"
+                                            v-on="on"
                                         >
                                             <v-icon
-                                                    class="gs-automatic-guidance-icon"
-                                                    large
-                                                    style="color: #fbc02d"
-                                                    v-if="automaticGuidance == true"
-                                            >mdi-border-inside</v-icon
-                                            >
+                                                class="gs-automatic-guidance-icon"
+                                                large
+                                                style="color: #fbc02d"
+                                                v-if="automaticGuidance == true"
+                                            >mdi-border-inside
+                                            </v-icon>
                                             <v-icon
-                                                    class="gs-automatic-guidance-icon"
-                                                    large
-                                                    v-if="automaticGuidance == false"
-                                            >mdi-border-none</v-icon
-                                            >
+                                                class="gs-automatic-guidance-icon"
+                                                large
+                                                v-if="automaticGuidance == false"
+                                            >mdi-border-none
+                                            </v-icon>
                                         </span>
                                     </template>
-                                    <span v-if="automaticGuidance == true"
-                                    >Arrange Guidance : on</span
-                                    >
-                                    <span v-if="automaticGuidance == false"
-                                    >Arrange Guidance : off</span
-                                    >
+                                    <span v-if="automaticGuidance == true">Arrange Guidance : on</span>
+                                    <span v-if="automaticGuidance == false">Arrange Guidance : off</span>
                                 </v-tooltip>
                                 <v-tooltip
-                                        large
-                                        nudge-top="10"
-                                        v-for="(item, key) in elementTypes"
-                                        :key="key"
-                                        right
+                                    large
+                                    nudge-top="10"
+                                    v-for="(item, key) in elementTypes"
+                                    :key="key"
+                                    right
                                 >
                                     <template v-slot:activator="{ on }">
                                         <span
-                                                class="draggable"
-                                                align="center"
-                                                :_component="item.component"
-                                                :_width="item.width"
-                                                :_height="item.height"
+                                            class="draggable"
+                                            align="center"
+                                            :_component="item.component"
+                                            :_width="item.width"
+                                            :_height="item.height"
                                         >
                                             <img
-                                                    height="30px"
-                                                    width="30px"
-                                                    :src="item.src"
-                                                    v-on="on"
-                                                    v-if="!isReadOnlyModel &&(!isHexagonal ||(isHexagonal && (item.component.includes('bounded-context') ||item.component.includes('packaged-business-capabilities'))))"
+                                                class="cp-sticker"
+                                                height="30px"
+                                                width="30px"
+                                                :src="item.src"
+                                                v-on="on"
+                                                v-if="!isReadOnlyModel &&(!isHexagonal ||(isHexagonal && (item.component.includes('bounded-context') ||item.component.includes('packaged-business-capabilities'))))"
                                             />
                                         </span>
                                     </template>
@@ -1294,7 +1136,7 @@
                                                     width="30px"
                                                     :src="item.src"
                                                     v-on="on"
-                                                    v-if="!isReadOnlyModel &&(!isHexagonalModeling || (isHexagonalModeling && (item.component.includes('bounded-context') ||item.component.includes('packaged-business-capabilities'))))"
+                                                    v-if="!isReadOnlyModel &&(!isHexagonal || (isHexagonal && (item.component.includes('bounded-context') ||item.component.includes('packaged-business-capabilities'))))"
                                             />
                                         </span>
                                     </template>
@@ -1388,8 +1230,8 @@
                                                     v-on="on"
                                                     v-if="
                                                     !isReadOnlyModel &&
-                                                    (!isHexagonalModeling ||
-                                                        (isHexagonalModeling &&
+                                                    (!isHexagonal ||
+                                                        (isHexagonal &&
                                                             (item.component.includes(
                                                                 'bounded-context'
                                                             ) ||
@@ -1447,13 +1289,20 @@
 
                     <GeneratorUI
                             key="eventGenerator"
-                            v-if="generatorStep === 'event'"
+                            v-if="generatorStep === 'event' && projectId"
+                            :projectId="projectId"
                             ref="generatorUI"
                             @createModel="createModel"
+                            @modificateModel="modificateModel"
                             @clearModelValue="clearModelValue"
+                            @showContinueBtn="showContinue = true"
                             :generatorStep="generatorStep"
+                            :defaultInputData="defaultGeneratorUiInputData"
+                            :modelValue="value"
+                            :tabs="tabs"
+                            :chatGenerators="chatGenerators"
                     >
-                        <v-tooltip slot="buttons" bottom>
+                        <v-tooltip v-if="showContinue" slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn
                                     @click="generateAggregate()"
@@ -1472,14 +1321,19 @@
                     </GeneratorUI>
                     <GeneratorUI
                             key="aggregateGenerator"
-                            v-if="generatorStep === 'aggregate'"
+                            v-if="generatorStep === 'aggregate' && projectId"
+                            :projectId="projectId"
                             generator="ESGenerator"
                             :generatorParameter="generatorParameter"
                             ref="aggregateGeneratorUI"
                             @createModel="createModel"
+                            @modificateModel="modificateModel"
                             @onGenerationFinished="onGenerationFinished"
                             @clearModelValue="clearModelValue"
                             :generatorStep="generatorStep"
+                            :modelValue="value"
+                            :tabs="tabs"
+                            :chatGenerators="chatGenerators"
                     >
                         <!-- <v-tooltip slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
@@ -1719,12 +1573,8 @@
                                             <v-list-item-content>
                                                 <v-list-item-title>
                                                     <v-icon
-                                                            style="margin-right: 2%"
-                                                            :color="
-                                                            validationLevelIcon[
-                                                                item.level
-                                                            ].color
-                                                        "
+                                                        style="margin-right: 2%"
+                                                        :color="validationLevelIcon[item.level].color"
                                                     >{{validationLevelIcon[item.level].icon}}
                                                     </v-icon>
                                                     [ {{ item.eleName }} ] {{ item.msg }}
@@ -1817,6 +1667,8 @@
                                         :embedded="true"
                                         v-model="embeddedCanvasValue"
                                         :aggregateRootList="aggregateRootList"
+                                        :esValue="value"
+                                        :projectId="projectId"
                                 ></uml-class-model-canvas>
                             </v-layout>
                             <v-layout
@@ -1827,7 +1679,6 @@
                                         :projectId="projectId"
                                         :projectName="projectName"
                                         :isOwnModel="isOwnModel"
-                                        :getReadOnly="isReadOnlyModel"
                                         :isReadOnlyModel="isReadOnlyModel"
                                         :modelingProjectId="projectId"
                                         :projectVersion="projectVersion"
@@ -1962,8 +1813,6 @@
                     <modeler-image-generator
                             ref="modeler-image-generator"
                     ></modeler-image-generator>
-                    <!-- autoPay -->
-                    <auto-payment-composition></auto-payment-composition>
 
                     <hsc-window-style-metal>
                         <hsc-window
@@ -2031,6 +1880,7 @@
                         :newTreeHashLists.sync="newTreeHashLists"
                         :projectVersion="projectVersion"
                         :generatorStep="generatorStep"
+                        :userInfo="userInfo"
                         @changedByMe="settingChangedByMe"
                         @editModelData="editModelData"
                         canvas-name="event-storming-model-canvas"
@@ -2043,19 +1893,12 @@
                 @close="closeGitInfo()"
                 :git.sync="gitURLforModel"
         ></GitInformation>
-        <div v-for="(otherMouseEvent, index) in filteredMouseEventHandlers">
-            <div class="mouse-cursor" :id="index">
-                <div class="mouse-cursor-name">
-                    <v-chip
-                            small
-                            :color="otherMouseEvent.color"
-                            text-color="white"
-                    >
-                        {{ otherMouseEvent.name }}
-                    </v-chip>
-                </div>
-            </div>
+   
+        <!-- Mouse Cursor -->
+        <div v-for="(otherMouseEvent, email) in filteredMouseEventHandlers" :key="email">
+            <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
         </div>
+      
         <v-dialog v-model="showLoginCard"
         ><Login :onlyGitLogin="true" @login="showLoginCard = false"
         /></v-dialog>
@@ -2117,9 +1960,7 @@
     import { diffString, diff } from "json-diff";
     import IdeLoadingPage from "../../IdeLoadingPage";
     import GitInformation from "../../GitInformation";
-    import json2yaml from "json2yaml";
     import IDEResourceDialog from "../../IDEResourceDialog";
-    import AutoPaymentComposition from "../../payment/AutoPaymentComposition";
     import DialogPurchaseItem from "../../payment/DialogPurchaseItem";
     import { mdiAbTesting, mdiFolderEye } from "@mdi/js";
     import * as io from "socket.io-client";
@@ -2128,14 +1969,15 @@
     import KubernetesModelCanvas from "../k8s-modeling/KubernetesModelCanvas";
     import UMLClassDiagram from "../class-modeling/UMLClassModelCanvas";
     import CodeGenerator from "../modeling/CodeGenerator";
-    // import EventStormingModelList from "./EventStormingModelList";
     import PBCModelList from "./PBCModelList";
     import UIWizardDialoger from "../modeling/generators/UIWizardDialoger";
-    import StorageBase from "../modeling/StorageBase";
     import Login from "../../oauth/Login";
-    // import EventStormingModelList from "../../listPages/AlgoliaModelLists";
-    // import ModelCodeGenerator from "../modeling/ModelCodeGenerator";
     import isAttached from "../../../utils/isAttached";
+    import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
+
+    const prettier = require("prettier");
+    const plugins = require("prettier-plugin-java");
+    const axios = require("axios");
 
     var JSZip = require("jszip");
     var yamlpaser = require("js-yaml");
@@ -2145,27 +1987,25 @@
     var ConfigIniParser = require("config-ini-parser").ConfigIniParser;
     var delimiter = "\r\n"; //or "\n" for *nux
     var _ = require("lodash");
-    const CodeGeneratorCore = require("../modeling/CodeGeneratorCore");
-
     var jsondiffpatch = require("jsondiffpatch").create({
         objectHash: function (obj, index) {
             return "$$index:" + index;
         },
     });
-
     var codeArraydiffpatch = require("jsondiffpatch").create({
         objectHash: function (obj, index) {
             console.log(obj);
             return obj.code;
         },
     });
-
-    const prettier = require("prettier");
-    const plugins = require("prettier-plugin-java");
-    const axios = require("axios");
-
     window.jp = require("jsonpath");
 
+    // const CodeGeneratorCore = require("../modeling/CodeGeneratorCore");
+    // import json2yaml from "json2yaml";
+    // import StorageBase from "../modeling/StorageBase";
+    // import EventStormingModelList from "./EventStormingModelList";
+    // import EventStormingModelList from "../../listPages/AlgoliaModelLists";
+    // import ModelCodeGenerator from "../modeling/ModelCodeGenerator";
     export default {
         name: "event-storming-model-canvas",
         mixins: [ModelCanvas],
@@ -2192,10 +2032,10 @@
             "model-canvas-share-dialog": ModelCanvasShareDialog,
             "dialog-purchase-item": DialogPurchaseItem,
             "model-storage-dialog": ModelStorageDialog,
-            "auto-payment-composition": AutoPaymentComposition,
             "uml-class-model-canvas": UMLClassDiagram,
             CodeGenerator,
             PBCModelList,
+            MouseCursorComponent
             // ModelCodeGenerator
         },
         props: {
@@ -2204,6 +2044,16 @@
         },
         data() {
             return {
+                showContinue: false,
+                defaultGeneratorUiInputData: {
+                    generator: "EventOnlyESGenerator", // EventOnlyESGenerator
+                    firstMessageIsTyping: true,
+                    secondMessageIsTyping: true,
+                    userStory: '생성할 서비스 종류: \n\n엑터: \n\n세부 유스케이스 명세: \n\n페인 포인트 및 해결 방안: \n\n시스템을 관리하는 개발팀 및 바운디드 컨텍스트: \n\n',
+                    communicationStyle: 'Choreography', // 'Orchestration'
+                    aggregateDetail: false,
+                    uiStyle: null
+                },
                 mirrorElementDialog: false,
                 mirrorElementInfo: {
                     component: null,
@@ -2416,9 +2266,8 @@
                         label: "Event",
                         width: "100",
                         height: "100",
-                        src: `${
-                            window.location.protocol + "//" + window.location.host
-                        }/static/image/event/event.png`,
+                        src: `${window.location.protocol + "//" + window.location.host}/static/image/event/event.png`,
+                        // image: `${ window.location.protocol + "//" + window.location.host}/static/image/event/event.svg`
                     },
                     {
                         icon: "bpmn-icon-start-event-none", //'OG.shape.essencia.Alpha',
@@ -2552,12 +2401,14 @@
                 },
                 createModelInBoundedContext: false,
                 createReadModel: false,
+                tabs: [{name: 'LOGS', component: 'DebeziumLogsTab'}],
+                chatGenerators: ['DebeziumLogsModificationGenerator']
             };
         },
         computed: {
             projectSendable(){
                 var me = this
-                if(!me.getProjectDefinitionLists().includes(me.projectId)) return false;
+                if(!me.modelListOfassociatedProject().includes(me.projectId)) return false;
 
                 if(me.information && me.information.associatedProject) {
                     return true;
@@ -2627,9 +2478,6 @@
                     return true;
                 }
                 return false;
-            },
-            isHexagonalModeling() {
-                return this.isHexagonal;
             },
             getUserCoin() {
                 if (this.userInfo.savedCoin) {
@@ -2708,27 +2556,25 @@
         created: async function () {
             var me = this;
 
-            if (localStorage.getItem("gitAccessToken")) {
-                me.gitAccessToken = localStorage.getItem("gitAccessToken");
-                me.githubHeaders = {
-                    Authorization: "token " + me.gitAccessToken,
-                    Accept: "application/vnd.github+json",
-                };
-            }
+            me.$app.try({
+                context: me,
+                async action(me){
+                    if (localStorage.getItem("gitAccessToken")) {
+                        me.gitAccessToken = localStorage.getItem("gitAccessToken");
+                        me.githubHeaders = {
+                            Authorization: "token " + me.gitAccessToken,
+                            Accept: "application/vnd.github+json",
+                        };
+                    }
 
-            try {
-                Vue.use(EventStormingModeling);
-                me.canvasType = "es";
-                if (this.$isElectron) me.isQueueModel = false;
-                else me.isQueueModel = true;
-                me.clusterItems = [{ title: "Cluster" }];
-                me.track();
+                    if (this.$isElectron) me.isQueueModel = false;
+                    else me.isQueueModel = true;
+                    me.clusterItems = [{ title: "Cluster" }];
 
-                // var getFilePathList = await axios.get(`https://gitlab.msastudy.io/api/v4/projects/48/repository/tree?ref=main&id=48&page=1&per_page=100&pagination=keyset&recursive=true`, {headers: {Authorization: 'Bearer _9zq7KJ29CfzjYjXP3Wb'}});
-                // console.log(getFilePathList)
-            } catch (e) {
-                alert("Error: EventStormingModelCanvas Created().", e);
-            }
+                    // var getFilePathList = await axios.get(`https://gitlab.msastudy.io/api/v4/projects/48/repository/tree?ref=main&id=48&page=1&per_page=100&pagination=keyset&recursive=true`, {headers: {Authorization: 'Bearer _9zq7KJ29CfzjYjXP3Wb'}});
+                    // console.log(getFilePathList)
+                }
+            })
         },
         mounted: function () {
             var me = this;
@@ -2805,6 +2651,40 @@
             ); //this.$vnode.tag);
         },
         watch: {
+            "initLoad":function(newVal){
+                if(newVal){
+                    this.syncMirrorElements();
+                }
+            },
+            "isLoadedInitMirror": function (newVal) {
+                var me = this;
+                if (newVal && me.initLoad) {
+                    // changed MirrorValue and init definition load
+                    me.syncMirrorElements();
+                }
+            },
+            "isLoadedMirrorQueue": function (newVal) {
+                var me = this;
+                if (newVal && me.isLoadedInitMirror) {
+                    // changed MirrorValue and init definition load
+                    me.syncMirrorElements();
+                }
+            },
+            "projectName": _.debounce(function (newVal, oldVal) {
+                var me = this;
+                if (me.initLoad) me.modelChanged = true;
+                if (newVal) {
+                    if (me.gitRepoName == null) {
+                        me.gitRepoName = newVal;
+                    }
+                    me.gitInfo.name = newVal;
+                    me.projectNameHint = null;
+                    me.projectNameColor = null;
+                } else {
+                    me.projectNameHint = "Project name is required.";
+                    me.projectNameColor = "red";
+                }
+            }, 0),
             information: function () {
                 var me = this;
                 if (me.information) {
@@ -2829,84 +2709,129 @@
                     }
                 }
             },
-
-
-            // "initLoad": async function (newVal) {
-            //     var me = this
-            //     if (newVal) {
-            // !!!!!!!!!!!!!! Changed initLoad -> afterLoad !!!!
-            //         // complete for init model.
-            //         // me.mirrorIdsByValue(me.value)
-            //         if(me.value){
-            //             if(!me.value.elements || Object.keys(me.value.elements).length == 0){
-            //                 me.openAiMode = 'es'
-            //                 me.openAiMenu = true
-            //             }
-            //         }
-            //     }
-            // },
-            // "changedModifying": async function(newVal) {
-            //     var me = this
-            //
-            //     if (newVal) {
-            //         var parser = new ConfigIniParser("\n")
-            //         var initContent = await me.getGitConfig()
-            //         // parser.parse(iniContent);
-            //         var parseConfig = parser.parse(initContent);
-            //         parseConfig._ini.sections.forEach(function (section) {
-            //             if (section.name.includes('origin')) {
-            //                 section.options.forEach(function (option) {
-            //                     if (option.name == 'url') {
-            //                         me.linkedSCM = true;
-            //                         me.scmUrl = option.value
-            //                     }
-            //                 })
-            //
-            //             }
-            //         })
-            //     }
-            // },
-            projectName: _.debounce(function (newVal, oldVal) {
-                var me = this;
-                if (me.initLoad) me.modelChanged = true;
-                if (newVal) {
-                    if (me.gitRepoName == null) {
-                        me.gitRepoName = newVal;
-                    }
-                    me.gitInfo.name = newVal;
-                    me.projectNameHint = null;
-                    me.projectNameColor = null;
-                } else {
-                    me.projectNameHint = "Project name is required.";
-                    me.projectNameColor = "red";
-                }
-            }, 0),
         },
         methods: {
-            detectDeletedModel(beforeInfo){
+            setCanvasType(){
+                Vue.use(EventStormingModeling);
+                this.canvasType = 'es'
+            },
+            isUserInteractionActive(){
                 var me = this
-                if(!me.projectInformation) return;
+                if(me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.isHexagonal && !me.isReadOnlyModel){
+                    return true
+                }
+                return false
+            },
+            async receiveAssociatedProject(associatedProjectId){
+                var me = this
+                let startKey = '';
+
+                me.isLoadedInitMirror = false;
+                me.associatedProjectInformation = await me.list(`db://definitions/${associatedProjectId}/information`);
+
+                if(!me.associatedProjectInformation) return; // local
+
+                // server
+                // TODO: Snapshot Logic.
+                let snapshots = await me.list(`db://definitions/${associatedProjectId}/snapshotLists`, {
+                    sort: "desc",
+                    orderBy: null,
+                    size: 1,
+                    startAt: null,
+                    endAt: null,
+
+                })
+
+                if (snapshots) {
+                    startKey = snapshots[0].lastSnapshotKey ? snapshots[0].lastSnapshotKey : ''
+                    me.mirrorValue = JSON.parse(snapshots[0].snapshot);
+                } else {
+                    startKey = ''
+                    me.mirrorValue =
+                    {
+                        'elements': {},
+                        'relations': {},
+                        'basePlatform': null,
+                        'basePlatformConf': {},
+                        'toppingPlatforms': null,
+                        'toppingPlatformsConf': {},
+                        'scm': {}
+                    }
+                }
+
+
+                let isWaitingQueue = null
+                let waitingTime = startKey ? 10000 : 3000
+                isWaitingQueue = setTimeout(function () {
+                    /* receivedSnapshot End */
+                    me.isLoadedInitMirror = true;
+                    me.watchProjectInformation(associatedProjectId)
+                }, waitingTime)
+
+
+                // TODO: Qeuue Logic.
+                me.watch_added(`db://definitions/${associatedProjectId}/queue`, {
+                    sort: null,
+                    orderBy: null,
+                    size: null,
+                    startAt: startKey,
+                    endAt: null,
+                }, async function (queue) {
+
+                    if( queue.action.includes('user') ){
+                        return;
+                    }
+                    me.isLoadedMirrorQueue = true
+                    clearTimeout(isWaitingQueue);
+
+                    var obj = {
+                        _ordered: false,
+                        childKey: queue.key,
+                        childValue: queue,
+                        isMirrorQueue: true,
+                    }
+                    obj.childValue.key = queue.key;
+                    obj.childValue.receivedTime = Date.now();
+
+                    me.receivedQueueDrawElement(obj, true);
+                    me.mirrorQueueCount++;
+
+                    me.saveAssociatedModelSnapshot(associatedProjectId, queue)
+
+                    isWaitingQueue = setTimeout(function () {
+                        /* receivedSnapshot End */
+                        if(!me.isLoadedInitMirror){
+                            me.isLoadedInitMirror = true;
+                            me.watchProjectInformation(associatedProjectId)
+                        }
+                        me.isLoadedMirrorQueue = false;
+                    }, 1000)
+                });
+            },
+            watchDeletedModel(beforeInfo){
+                var me = this
+                if(!me.associatedProjectInformation) return;
                 if(!beforeInfo) return;
 
                 if(!beforeInfo.eventStorming) return; // init added Model
 
                 // delete all
-                if(!me.projectInformation.eventStorming && beforeInfo.eventStorming) {
+                if(!me.associatedProjectInformation.eventStorming && beforeInfo.eventStorming) {
                     me.$emit('forceUpdateKey')
                 }
 
                 // equals
-                if(JSON.stringify(me.projectInformation.eventStorming.modelList) == JSON.stringify(beforeInfo.eventStorming.modelList)) return;
+                if(JSON.stringify(me.associatedProjectInformation.eventStorming.modelList) == JSON.stringify(beforeInfo.eventStorming.modelList)) return;
 
                 // add
-                if(me.projectInformation.eventStorming.modelList.length > beforeInfo.eventStorming.modelList.length) return;
+                if(me.associatedProjectInformation.eventStorming.modelList.length > beforeInfo.eventStorming.modelList.length) return;
 
                 // modified
                 me.$emit('forceUpdateKey')
             },
-            getProjectDefinitionLists(){
-                if( this.projectInformation && this.projectInformation.eventStorming ) {
-                    return this.projectInformation.eventStorming.modelList
+            modelListOfassociatedProject(){
+                if( this.associatedProjectInformation && this.associatedProjectInformation.eventStorming ) {
+                    return this.associatedProjectInformation.eventStorming.modelList
                 }
                 return []
             },
@@ -2928,18 +2853,23 @@
                     me.changedByMe = true;
                 }
             },
-            async synchronizeAssociatedProject(oldId, newId) {
+            async synchronizeAssociatedProject(associatedProject, newId, oldId) {
                 var me = this;
+                if(!associatedProject) return;
 
-                let lists = await me.list(`db://definitions/${me.information.associatedProject}/information/eventStorming`);
+                let lists = await me.list(`db://definitions/${associatedProject}/information/eventStorming`);
                 let index = -1;
                 if (lists && lists.modelList) {
-                    index = lists.modelList.findIndex((x) => x == oldId);
+                    if(oldId) {
+                        index = lists.modelList.findIndex((id) => id == oldId);
+                    } else {
+                        index = lists.modelList.findIndex((id) => id == newId); //duplicate
+                    }
                     index = index == -1 ? lists.modelList.length : index;
                 }
 
                 index = index == -1 ? 0 : index;
-                await me.setString(`db://definitions/${me.information.associatedProject}/information/eventStorming/modelList/${index}`, newId);
+                await me.setString(`db://definitions/${associatedProject}/information/eventStorming/modelList/${index}`, newId);
             },
             overrideElements(elementValues) {
                 // Event, Command, Aggregate
@@ -3074,7 +3004,11 @@
                         // return;
                     }
                     me.changeValueAction(diff);
-                    me.publishScreenShot();
+
+                    clearTimeout(me.valueChangedTimer);
+                    me.valueChangedTimer = setTimeout(async function () {
+                        await me.saveLocalScreenshot()
+                    },1000)
                 }
                 if (diff) {
                     me.publishChangedEvent(newVal, diff);
@@ -3112,8 +3046,7 @@
                 // this.openCodeViewer()
             },
             generateAggregate() {
-                this.generatorParameter.userStory =
-                    this.$refs.generatorUI.input.userStory;
+                this.generatorParameter.userStory = this.$refs.generatorUI.input.userStory;
                 this.generatorParameter.model = Object.assign([], this.value);
                 this.generatorParameter.uiStyle = this.value.uiStyle;
                 //  we need to convert Vue JS object to normal js object for the ESGenerator. see: https://github.com/vuejs/Discussion/issues/292
@@ -3137,17 +3070,23 @@
 
                 if (val && val.elements) {
                     if (val.projectName) me.projectName = val.projectName;
+                    if (val.associatedProject) me.information.associatedProject = val.associatedProject;
 
                     // Create Model in BoundedContext > Model Merge
-                    let elements = me.value.elements;
-                    let relations = me.value.relations;
+                    let elements = JSON.parse(JSON.stringify(me.value.elements));
+                    let relations = JSON.parse(JSON.stringify(me.value.relations));
 
                     me.value.elements = {};
                     me.value.relations = {};
 
                     if (me.createModelInBoundedContext) {
+                        if(originModel && Object.keys(me.value.elements).length === 0 && Object.keys(me.value.relations).length === 0){
+                            elements = originModel.elements
+                            relations = originModel.relations
+                        }
+
                         Object.keys(elements).forEach(function (ele) {
-                            if(elements[ele].boundedContext){
+                            if(elements[ele]!=null && elements[ele].boundedContext){
                                 if(elements[ele].boundedContext.id == Object.keys(val.elements)[0]){
                                     delete elements[ele]
                                 }
@@ -3155,8 +3094,10 @@
                         });
 
                         Object.keys(relations).forEach(function (rel) {
-                            if(relations[rel].sourceElement.boundedContext.id == Object.keys(val.elements)[0]){
-                                delete relations[rel]
+                            if(relations[rel]!=null && relations[rel].boundedContext){
+                                if(relations[rel].sourceElement.boundedContext.id == Object.keys(val.elements)[0]){
+                                    delete relations[rel]
+                                }
                             }
                         });
 
@@ -3271,6 +3212,45 @@
                 });
 
                 return attachedRelations;
+            },
+            modificateModel(model){
+                var me = this;
+
+                if(model && model.fromGeneratorId === "DebeziumLogsModificationGenerator") {
+                    console.log("[*] DebeziumLogsModificationGenerator에서 최종적으로 전달한 쿼리 값")
+                    console.log(model.modificationQueries)
+
+                    for(const modificationQuery of model.modificationQueries) {
+                        try {
+
+                            switch(modificationQuery.type) {
+                                case "event":
+                                case "command":
+                                    if(modificationQuery.action === "add")
+                                        me.value.elements[modificationQuery.value.id] = modificationQuery.value
+                                    break;
+                                default:
+                                    break;
+                            }
+
+                        }catch(e){
+
+                            console.log("[!] DebeziumLogsModificationGenerator에서 최종적으로 처리된 쿼리를 처리하는 과정에서 문제 발생!")
+                            console.log("문제가 발생한 쿼리 >")
+                            console.log(modificationQuery)
+                            console.log("에러 내용 >")
+                            console.log(e)
+
+                        }
+                    }
+
+                    return
+                }
+
+                if(model && model.updateElement){
+                    me.value.elements[model.updateElement.id] = model.updateElement
+                    me.changedByMe = true
+                }
             },
             addAppendedProperties(object1, object2) {
                 if (typeof object1 !== "object" || typeof object2 !== "object") {
@@ -3554,51 +3534,6 @@
                 }
 
                 return value;
-            },
-            onMoveElementById(id, newValueStr, child) {
-                var me = this;
-
-                if (me.value && me.value.elements && me.value.elements[id]) {
-                    let isHexagonal =
-                        child.childValue && child.childValue.isHexagonal
-                            ? true
-                            : false;
-
-                    var newValueObj = JSON.parse(newValueStr);
-                    let modifiedView = null;
-                    if (isHexagonal) {
-                        modifiedView = me.value.elements[id].hexagonalView;
-                    } else {
-                        modifiedView = me.value.elements[id].elementView;
-                    }
-
-                    // var modifiedView = isHexagonal ? me.value.elements[id].hexagonalView : me.value.elements[id].elementView
-                    let dx = newValueObj.x - modifiedView.x;
-                    let dy = newValueObj.y - modifiedView.y;
-
-                    modifiedView.x = newValueObj.x;
-                    modifiedView.y = newValueObj.y;
-                    modifiedView.width = newValueObj.width;
-                    modifiedView.height = newValueObj.height;
-                }
-            },
-            onMoveRelationById(id, newValueObj, child) {
-                var me = this;
-                if (me.value && me.value.relations && me.value.relations[id]) {
-                    let isHexagonal =
-                        child.childValue && child.childValue.isHexagonal
-                            ? true
-                            : false;
-
-                    var modifiedView = me.value.relations[id].relationView;
-                    if (isHexagonal) {
-                        modifiedView = me.value.relations[id].hexagonalView;
-                    }
-
-                    if (me.value && me.value.relations && me.value.relations[id]) {
-                        modifiedView.value = newValueObj;
-                    }
-                }
             },
             alertError() {
                 var me = this;
@@ -4380,8 +4315,6 @@
                 return false;
             },
             addElement: function (componentInfo, bounded) {
-                // console.log("추가");
-                this.enableHistoryAdd = true;
                 var me = this;
                 var additionalData = {};
                 var vueComponent = me.getComponentByName(componentInfo.component);
@@ -4452,6 +4385,7 @@
 
                 return element;
             },
+            // override
             addElementAction(element, value, options){
                 var me = this
                 if(!options) options = {}
@@ -4461,12 +4395,6 @@
 
                 // duplication
                 if(Object.keys(valueObj).includes(id)) return;
-
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationPush' : 'elementPush',
-                    STATUS_COMPLETE: false
-                })
-
                 element = me.migrateQueue(element.relationView ? 'relationPush' : 'elementPush', element);
 
                 // First append
@@ -4474,129 +4402,129 @@
                 if(me.isServerModel && me.isQueueModel){
                     // server
                     me.modelChanged = true;
-
                     if(me.isHexagonal) element.isHexagonal = true
                     me.pushAppendedQueue(element, options)
 
                     if (me.projectSendable && !me.isHexagonal) {
                         element.definitionId = me.projectId
-                        options.definitionId = me.information.associatedProject
+                        options.associatedProject = me.information.associatedProject
                         me.pushAppendedQueue(element, options)
                     }
+                    me.$EventBus.$emit(id, {
+                        action: element.relationView ? 'relationPush' : 'elementPush',
+                        STATUS_COMPLETE: false
+                    })
                 }
             },
+            // override
             removeElementAction(element, value, options){
                 var me = this
-                if(!options) options = {}
-                let id = element.relationView ? element.relationView.id : element.elementView.id
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        if(!value) value = me.value
+                        let id = element.relationView ? element.relationView.id : element.elementView.id
 
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationDelete' : 'elementDelete',
-                    STATUS_COMPLETE: false
-                })
+                        me.removeElement(element, value, options)
+                        if(me.isServerModel && me.isQueueModel){
+                            if(me.isHexagonal) element.isHexagonal = true
+                            me.pushRemovedQueue(element, options)
 
-                if(me.isServerModel && me.isQueueModel){
-                    if(me.isHexagonal) element.isHexagonal = true
-                    me.pushRemovedQueue(element, options)
-
-                    if( me.projectSendable && !me.isHexagonal ) {
-                        options.definitionId = me.information.associatedProject
-                        me.pushRemovedQueue(element, options)
+                            if( me.projectSendable && !me.isHexagonal ) {
+                                options.associatedProject = me.information.associatedProject
+                                me.pushRemovedQueue(element, options)
+                            }
+                            me.$EventBus.$emit(id, {
+                                action: element.relationView ? 'relationDelete' : 'elementDelete',
+                                STATUS_COMPLETE: false
+                            })
+                        }
                     }
-                } else {
-                    me.removeElement(element, value, options)
-                }
-            },
-            moveElementAction(element, oldVal, newVal, value, options){
-                var me = this
-                if(!options) options = {}
-                let id = element.relationView ? element.relationView.id : element.elementView.id
-
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationMove' : 'elementMove',
-                    STATUS_COMPLETE: false,
-                    movingElement: true
                 })
-                if(me.isHexagonal) options.isHexagonal = true
-
-                // First Move
-                me.moveElement(element, newVal, me.value, options)
-
-                if (me.isServerModel && me.isQueueModel) {
-                    me.pushMovedQueue(element, oldVal, newVal, options)
-                }
             },
+            // override
             moveElement(element, newVal, value, options){
                 var me = this
-                let isHexagonal = options.isHexagonal ? true : false
-                if(!element) return;
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!element) return;
+                        if(!value) value = me.value
+                        if(!options) options = {}
 
-                if(!value) value = me.value
-                let id = element.relationView ? element.relationView.id : element.elementView.id
-                let valueObj = element.relationView ? value.relations : value.elements
-                if(!valueObj[id]) return;
+                        let isHexagonal = options.isHexagonal ? true : false
+                        let id = element.relationView ? element.relationView.id : element.elementView.id
+                        let valueObj = element.relationView ? value.relations : value.elements
+                        if(!valueObj[id]) return;
 
-                if(element.relationView){
-                    // Relation
-                    if(isHexagonal){
-                        valueObj[id].hexagonalView.value = newVal.replaceAll('-','')
-                    } else {
-                        valueObj[id].relationView.value =  newVal.replaceAll('-','')
+                        if(element.relationView){
+                            // Relation
+                            if(isHexagonal){
+                                valueObj[id].hexagonalView.value = newVal.replaceAll('-','')
+                            } else {
+                                valueObj[id].relationView.value =  newVal.replaceAll('-','')
+                            }
+                        } else {
+                            // null || minus
+                            if(!newVal.x || newVal.x < 0) newVal.x = 100
+                            if(!newVal.y || newVal.y < 0) newVal.y = 100
+
+                            // Element
+                            if(isHexagonal){
+                                valueObj[id].hexagonalView.x = newVal.x
+                                valueObj[id].hexagonalView.y = newVal.y
+                                valueObj[id].hexagonalView.width = newVal.width;
+                                valueObj[id].hexagonalView.height = newVal.height
+                            } else {
+                                valueObj[id].elementView.x = newVal.x
+                                valueObj[id].elementView.y = newVal.y
+                                valueObj[id].elementView.width = newVal.width
+                                valueObj[id].elementView.height = newVal.height
+                            }
+                        }
+
+                        me.$EventBus.$emit(id, {
+                            action: element.relationView ? 'relationMove' : 'elementMove',
+                            STATUS_COMPLETE: true,
+                            movingElement: false
+                        })      
                     }
-                } else {
-                    // null || minus
-                    if(!newVal.x || newVal.x < 0) newVal.x = 100
-                    if(!newVal.y || newVal.y < 0) newVal.y = 100
-
-                    // Element
-                    if(isHexagonal){
-                        valueObj[id].hexagonalView.x = newVal.x
-                        valueObj[id].hexagonalView.y = newVal.y
-                        valueObj[id].hexagonalView.width = newVal.width;
-                        valueObj[id].hexagonalView.height = newVal.height
-                    } else {
-                        valueObj[id].elementView.x = newVal.x
-                        valueObj[id].elementView.y = newVal.y
-                        valueObj[id].elementView.width = newVal.width
-                        valueObj[id].elementView.height = newVal.height
-                    }
-                }
-
-                me.$EventBus.$emit(id, {
-                    action: element.relationView ? 'relationMove' : 'elementMove',
-                    STATUS_COMPLETE: true,
-                    movingElement: false
                 })
             },
+            // override
             pushMovedQueue(element, oldVal, newVal, options){
                 var me = this
-                if(!options) options = {}
-                let definitionId = me.projectId
-                if(options.definitionId) definitionId = options.definitionId
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        let definitionId = me.projectId
+                        if(options.associatedProject) definitionId = options.associatedProject
 
-                let obj = {
-                    action: element.relationView ? 'relationMove' : 'elementMove',
-                    editUid: me.userInfo.uid,
-                    before: element.relationView ? oldVal : JSON.stringify(oldVal),
-                    after: element.relationView ? newVal : JSON.stringify(newVal),
-                    timeStamp: Date.now()
-                }
+                        let obj = {
+                            action: element.relationView ? 'relationMove' : 'elementMove',
+                            editUid: me.userInfo.uid,
+                            before: element.relationView ? oldVal : JSON.stringify(oldVal),
+                            after: element.relationView ? newVal : JSON.stringify(newVal),
+                            timeStamp: Date.now()
+                        }
 
-                if(element.relationView) {
-                    obj.relationId = element.relationView.id
-                } else {
-                    var types = element._type.split('.')
-                    obj.elementType = types[types.length - 1]
-                    obj.elementId = element.elementView.id
-                    obj.elementName = element.name
-                }
-
-                if( options.isHexagonal ){
-                    obj.isHexagonal = true
-                }
-
-                return me.pushObject(`db://definitions/${definitionId}/queue`, obj)
+                        if(element.relationView) {
+                            obj.relationId = element.relationView.id
+                        } else {
+                            var types = element._type.split('.')
+                            obj.elementType = types[types.length - 1]
+                            obj.elementId = element.elementView.id
+                            obj.elementName = element.name
+                        }
+                        if( options.isHexagonal ) obj.isHexagonal = true
+                    
+                        return me.pushObject(`db://definitions/${definitionId}/queue`, obj)
+                    }
+                })
             },
+            // override
             receiveAppendedQueue(element, queue, options){
                 var me = this
                 if(!options) options = {}
@@ -4606,6 +4534,7 @@
                     me.appendElement(element, me.value, options)
                 }
             },
+            // override
             receiveRemovedQueue(element, queue, options){
                 var me = this
                 if(!options) options = {}
@@ -4615,6 +4544,7 @@
                     me.removeElement(element, me.value, options)
                 }
             },
+            // override
             receiveMovedQueue(id, newVal, queue, options){
                 var me = this
                 if(!options) options = {}
@@ -4632,16 +4562,10 @@
                 var me = this;
                 if(!options) options = {}
                 let value = queue.isMirrorQueue ? me.mirrorValue : me.value;
+                if(!diff) return
+                if(!value) return
 
-                try {
-                    me.patchValue(diff, value)
-                } catch (e) {
-                    console.log("Error when to diffpatch for queue " + queue.childKey, e, "\n- queue is", (queue.childValue.item ? JSON.parse(queue.childValue.item) : queue.childValue), "\n- model is", value.elements, value.relations)
-
-                    // create default.
-                    value = await me.checkedDiffValue(diff, value);
-                    me.patchValue(diff, value)
-                }
+                me.applyPatchValue(diff, value, options);
             },
             checkedDiffValue(diff, value) {
                 var me = this;
@@ -5163,13 +5087,7 @@
                     // } else {
                     me.canvas.removeShape(edgeElement, true);
                     //기존 컴포넌트가 없는 경우 신규 생성
-                    if (
-                        me.connectableType(
-                            componentInfo.sourceElement.value,
-                            componentInfo.targetElement.value
-                        ) &&
-                        me.validateRelation(from, to)
-                    ) {
+                    if ( me.connectableType( componentInfo.sourceElement.value, componentInfo.targetElement.value ) ) {
                         this.addElement(componentInfo);
                     }
 
@@ -5425,7 +5343,6 @@
 
             async openCodeViewer() {
                 var me = this;
-
                 try {
                     me.gitAccessToken = localStorage.getItem("gitAccessToken");
                     // me.model = []
@@ -6625,8 +6542,9 @@
             },
             updateUMLClassValue(agg) {
                 var me = this;
+                me.$set(me.value.elements, agg.id, agg);
                 me.changedByMe = true;
-                me.value.elements[agg.id] = agg;
+                // me.value.elements[agg.id] = agg;
             },
             openExportDialog() {
                 this.settingExportDialog = true;
@@ -6869,7 +6787,7 @@
 </script>
 
 <style scoped lang="scss" rel="stylesheet/scss">
-    .mobile-home-button {
+    .eventstorming-mobile-home-button {
         display: none;
     }
     .mobile-btn {
@@ -7194,53 +7112,6 @@
             right: 120px !important;
         }
     }
-
-    .mouse-cursor {
-        // 마우스를 따라다니는 원 설정
-
-        position: absolute;
-
-        top: 0; // 초기 위치값을 설정해줍니다.
-
-        left: 0; // 초기 위치값을 설정해줍니다.
-
-        width: 10px; //원 가로사이즈
-
-        height: 10px; //원 세로사이즈
-
-        border-radius: 50%; // 원의 형태설정
-
-        background-color: #9bf50b; //원 컬러설정
-
-        transform: translate(
-                        -50%,
-                        -50%
-        ); // 원을 정가운데로 맞추기위해서 축을-50%이동해줍니다.
-
-        transition: all 300ms linear 0s; //soft
-
-        opacity: 50%;
-    }
-
-    .mouse-cursor::after {
-        width: 40px;
-        height: 40px;
-        border: 15px solid rgba(var(--white-rbg-color), 0.2);
-        border-radius: 50%;
-        position: absolute;
-        top: -25px;
-        left: -25px;
-        animation: cursor-animate-2 550ms infinite alternate;
-    }
-
-    .mouse-cursor-name {
-        position: absolute;
-        top: 5px;
-        left: 10px;
-        width: max-content;
-        text-align: center;
-        color: #9bf50b;
-    }
     .mobile-first-sticker-tools {
         display: none;
     }
@@ -7286,8 +7157,9 @@
             overflow: hidden;
             transform: translate(-50%, -50%);
         }
-        .mobile-home-button {
+        .eventstorming-mobile-home-button {
             display: block;
+            z-index:1;
         }
     }
 </style>

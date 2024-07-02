@@ -23,3 +23,47 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+import '@4tw/cypress-drag-drop'
+
+// Cypress.Commands.add('login', (username, password) => {
+
+
+//     cy.visit('https://github.com/login')
+
+//     cy.get('input[name="login"]').type(username)
+//     cy.get('input[name="password"]').type(password)
+
+//     cy.get('input[type="submit"]').click()
+// })
+
+  Cypress.Commands.add('login', () => {
+      cy.visit('https://github.com/login')
+
+      cy.window().then((win) => {
+          const email = Cypress.env('EMAIL');
+          const password = Cypress.env('PASSWORD');
+
+          cy.get('input[name="login"]').type(email);
+          cy.get('input[name="password"]').type(password)
+          cy.get('input[type="submit"]').click();
+      });
+  });
+
+  Cypress.Commands.add('dragToPosition', { prevSubject: 'element' }, (subject, x, y) => {
+      cy.wrap(subject)
+        .trigger('mousedown', { which: 1 , force: true})
+        .trigger('mousemove', { clientX: x, clientY: y, force: true })
+        .trigger('mouseup')
+        .dblclick();
+    });
+
+  Cypress.Commands.add('clickAt', (x, y) => {
+    cy.window().then((win) => {
+      const element = win.document.elementFromPoint(x, y);
+      if (element) {
+        cy.wrap(element).click({force: true});
+      } else {
+        throw new Error(`No element found at (${x}, ${y})`);
+      }
+    });
+  });

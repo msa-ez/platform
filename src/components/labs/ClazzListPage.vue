@@ -18,73 +18,6 @@
                     {{tab.tabName}}
                 </v-tab>
 
-                <!-- <div v-if="selectedTab != 6 && isAdmin" style="width: 45%;">
-                    <v-btn icon @click="selectCardMode()" style="float: right;">
-                        <v-icon v-if="isselectCardMode">mdi-close</v-icon>
-                        <v-icon v-else>mdi-pencil</v-icon>
-                    </v-btn>
-                    <span v-if="isselectCardMode">
-                        <v-avatar v-if="deleteCardListCnt != 0" color="green lighten-5" size="20"
-                                style="font-size:10px; float: right; margin-right: 10px; margin-left: -10px;">
-                            {{ deleteCardListCnt }}
-                        </v-avatar>
-                        <v-btn v-if="selectedTab == 7" icon @click="openDeleteDialog = true" style="float: right;">
-                            <v-icon :color="deleteCardListCnt > 0 ? 'red':''">
-                                mdi-delete
-                            </v-icon>
-                        </v-btn>
-                        <v-btn icon v-if="selectedTab != 7" @click="openMoveArchiveDialog = true" style="float: right;">
-                            <v-icon :color="deleteCardListCnt > 0 ? 'red':''">
-                                mdi-power
-                            </v-icon>
-                        </v-btn>
-                    </span>
-                </div> -->
-
-                <!-- <v-dialog
-                    v-model="openDeleteDialog"
-                    persistent
-                    width="400"
-                >
-                    <v-card height="200">
-                        <v-card-title style="background-color: #E57373; color: white; margin-left:-10px;">Delete</v-card-title>
-                        <div style = "padding:15px;">{{ deleteCardListCnt }}개의 클래스가 삭제됩니다.</div>
-                        <v-checkbox
-                            v-model="deleteCheck"
-                            hide-details
-                            :label="'클래스가 삭제됨을 확인했습니다.'"
-                            color="red"
-                            value="red"
-                            style = "padding-left:12px; margin-top:-10px;"
-                        ></v-checkbox>
-                        <div style = "position:absolute; right:5px; bottom:10px;">
-                            <v-btn
-                                v-if="!isMoving"
-                                color="#F44336"
-                                style="float: right;"
-                                :disabled="!deleteCheck"
-                                @click="deleteSelectedCards()"
-                                text
-                            >삭제
-                            </v-btn>
-                            <v-progress-circular 
-                                v-if="isMoving" 
-                                indeterminate
-                                color="#E57373"
-                                style="float: right;"
-                            >
-                            </v-progress-circular>
-                            <v-btn
-                                :disabled="isMoving"
-                                style="float: right;"
-                                @click="openDeleteDialog = false"
-                                text
-                            >취소
-                            </v-btn>
-                        </div>
-                    </v-card>
-                </v-dialog> -->
-
                 <v-dialog
                         v-model="openMoveArchiveDialog"
                         persistent
@@ -632,9 +565,6 @@
                 </v-tab-item>
 
             </v-tabs>
-            <v-footer padless style="max-width: 1500px; margin:0 auto">
-                <ProvisionIndication divider></ProvisionIndication>
-            </v-footer>
         </div>
         <v-dialog
                 v-model="openAlbum"
@@ -681,6 +611,14 @@
                 </v-btn>
             </template>
         </v-snackbar>
+        
+        <v-footer
+            padless
+            style="background-color: transparent;"
+        >
+            <ProvisionIndication style="margin:0; padding:0px; width:100%;"></ProvisionIndication>
+        </v-footer>
+
     </v-container>
 </template>
 

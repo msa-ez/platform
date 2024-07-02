@@ -42,7 +42,7 @@
         mixins: [IBpmn],
         name: 'bpmn-relation',
         props: {},
-        component: {
+        components: {
             'bpmn-relation-panel': BpmnPropertyPanel
         },
         computed: {

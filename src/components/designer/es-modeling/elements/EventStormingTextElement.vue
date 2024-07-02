@@ -21,7 +21,6 @@
                     'label-angle':value.elementView.angle,
                     'text-anchor': 'middle',
                 }"
-                :image.sync="refreshedImg"
         >
             <geometry-rect
                     v-if="!movingElement"
@@ -51,7 +50,7 @@
         <event-storming-text-element-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"

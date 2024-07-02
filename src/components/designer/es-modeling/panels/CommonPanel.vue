@@ -167,17 +167,6 @@
 
 <script>
     import RuleExampleDialog from "../RuleExampleDialog.vue";
-    // import ModelPanel from "../modeling/ModelPanel";
-
-    var googleTranslate = require('google-translate')(process.env.VUE_APP_TRANSLATE_KEY);
-    var changeCase = require('change-case');
-    var pluralize = require('pluralize');
-
-    // var jsondiffpatch = require('jsondiffpatch').create({
-    //     objectHash: function (obj, index) {
-    //         return '$$index:' + index;
-    //     },
-    // });
 
     export default {
         name: 'common-panel',
@@ -247,6 +236,9 @@
                     },
             }
         },
+        beforeDestroy(){
+            this.$emit('updateBCName')
+        },
         created() {
             var me = this;
             me.$EventBus.$on('policyDescriptionUpdated', function (newDescription) {
@@ -300,7 +292,8 @@
             //     this.openExample = true
             // },
             close(){
-                this.$emit('close')
+                var me = this;
+                me.$emit('close')
             },
             changeTranslate() {
                 this.$emit('changeTranslate')

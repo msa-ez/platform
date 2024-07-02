@@ -24,7 +24,7 @@
                                 label="Relation Name"
                                 required
                                 autofocus
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                         ></v-text-field>
                         <v-select 
                                 v-if="!value.relationType.includes('Realization')"
@@ -33,7 +33,7 @@
                                 item-text="name"
                                 item-value="type"
                                 label="Relation Type"
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                         ></v-select>
 
                         <div v-if="value.relationType.includes('Aggregation') || value.relationType.includes('Composition') || value.relationType.includes('Association')">
@@ -41,25 +41,25 @@
                                     v-model="value.sourceMultiplicity"
                                     :items="multiplicityList"
                                     label="Source Multiplicity"
-                                    :disabled="readOnly"
+                                    :disabled="isReadOnly"
                             ></v-select>
                             <v-select 
                                     v-model="value.targetMultiplicity"
                                     :items="multiplicityList"
                                     label="Target Multiplicity"
-                                    :disabled="readOnly"
+                                    :disabled="isReadOnly"
                             ></v-select>
                         </div>
 
                         <v-text-field 
                                 v-model="value.fromLabel"
                                 label="Source Role"
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                         ></v-text-field>
                         <v-text-field 
                                 v-model="value.toLabel"
                                 label="Target Role"
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                         ></v-text-field>
                     </v-card-text>
                 </v-card>

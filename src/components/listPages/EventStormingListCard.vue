@@ -160,8 +160,8 @@
                 set: false,
                 isDelete: false,
                 copyInformation: null,
-                projectPath: null,
-                defaultImage: 'https://user-images.githubusercontent.com/54785805/125735022-10b4560f-51c3-4d0d-8c05-9641c6d8a8b0.png',
+                projectPath: '',
+                defaultImage: '/static/image/listCard/eventStormingDefaultImage.png',
             }
         },
         created() {
@@ -207,6 +207,7 @@
             async setting() {
                 var me = this
                 me.copyInformation = JSON.parse(JSON.stringify(me.information))
+                let providerUid = localStorage.getItem('providerUid')
                 if (me.copyInformation && !me.set) {
                     if (!me.copyInformation.img) me.copyInformation.img = me.defaultImage
                     me.copyInformation.authorId = me.information.authorId ? me.information.authorId : me.information.author
@@ -218,41 +219,44 @@
                     me.copyInformation.isNewProject = me.isNew(me.copyInformation.lastModifiedTimeStamp)
                     me.copyInformation.isDeleteProject = false
                     me.copyInformation.chip = me.chipSetting()
+
+                    let prefix = `${providerUid}_${me.information.type}_`
+                    if(me.copyInformation.projectId.startsWith(`${prefix}`)){
+                        me.projectPath = `/${providerUid}`
+                        me.copyInformation.projectId = me.copyInformation.projectId.split(prefix)[1]
+                    } 
+
                     if (me.information.type == 'es') {
-                        me.projectPath = `/storming/${me.copyInformation.projectId}`
+                        me.projectPath = `${me.projectPath}/storming/${me.copyInformation.projectId}`
                     } else if (me.information.type == 'k8s') {
-                        me.projectPath = `/kubernetes/${me.copyInformation.projectId}`
+                        me.projectPath = `${me.projectPath}/kubernetes/${me.copyInformation.projectId}`
                     } else if (me.information.type == 'bm') {
-                        me.projectPath = `/business-model-canvas/${me.copyInformation.projectId}`
-                    } else if (me.information.type == 'sticky') {
-                        me.projectPath = `/sticky/${me.copyInformation.projectId}`
-                    } else if (me.information.type == 'bpmn') {
-                        me.projectPath = `/bpmn/${me.copyInformation.projectId}`
-                    } else if (me.information.type == 'uml') {
-                        me.projectPath = `/uml/${me.copyInformation.projectId}`
-                    } else if (me.information.type == 'cjm') {
-                        me.projectPath = `/cjm/${me.copyInformation.projectId}`
-                    } else if (me.information.type == 'project') {
-                        me.projectPath = `/project/${me.copyInformation.projectId}`
-                    } else if (me.information.type == 'cm') {
-                        me.projectPath = `/cm/${me.copyInformation.projectId}`
+                        me.projectPath = `${me.projectPath}/business-model-canvas/${me.copyInformation.projectId}`
+                    } else {
+                        me.projectPath = `${me.projectPath}/${me.information.type}/${me.copyInformation.projectId}`
                     }
-
+                    
+                    
                     // lazy image
-                    let result;
-                   
-                        result =  await me.getString(`storage://definitions/${me.copyInformation.projectId}/information/image`);
-                        if( result != undefined ){
-                            me.copyInformation.img = result
+                    let result =  await me.getString(`storage://definitions/${me.copyInformation.projectId}/information/image`);
+                    if( result && !result.Error ){
+                        me.copyInformation.img = result
+                    } else {
+                        let image = await me.getString(`localstorage://image_${me.copyInformation.projectId}`);
+                        if(image) {
+                            me.copyInformation.img = image
                         } else {
-                            let image = await me.getString(`localstorage://image_${me.copyInformation.projectId}`);
-                            if( image ) me.copyInformation.img = image
-
-                            // let serverImageLists = await me.getObject(`localstorage://serverImageLists`)
-                            // if(serverImageLists && serverImageLists[me.copyInformation.projectId]){
-                            //     me.copyInformation.img = serverImageLists[me.copyInformation.projectId];
-                            // }
+                            if(me.copyInformation.type == 'project') {
+                                me.copyInformation.img = me.defaultImage
+                            } else if (me.copyInformation.type == 'es'){
+                                me.copyInformation.img = me.defaultImage
+                            }
                         }
+                        // let serverImageLists = await me.getObject(`localstorage://serverImageLists`)
+                        // if(serverImageLists && serverImageLists[me.copyInformation.projectId]){
+                        //     me.copyInformation.img = serverImageLists[me.copyInformation.projectId];
+                        // }
+                    }
                     
                     
                     me.set = true
@@ -287,11 +291,13 @@
                         return {display: 'Context Mapping', color: '#f7d31e'}
                     } else if (me.copyInformation.type == 'cjm') {
                         return {display: 'Customer Journey Map', color: '#D81B60'}
+                    }else if (me.copyInformation.type == 'userStoryMap') {
+                        return {display: 'User Story Map', color: '#F39C12'}
                     } else {
                         return null
                     }
             },
-            openProject(){
+            openProject(){ 
                 var me = this
                 // if (me.copyInformation.type == 'project') {
                 //     me.$emit("openAutoModelingDialog", me.copyInformation.projectId)

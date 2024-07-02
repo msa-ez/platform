@@ -21,7 +21,6 @@
                 v-on:dblclick="openPanel"
                 v-on:addedToGroup="onAddedToGroup"
                 :label="!value.isVO && !value.isAggregateRoot && !value.isInterface ? namePanel : ''"
-                :image="refreshedImg"
                 :_style="{
                     'label-angle':value.elementView.angle,
                     'font-weight': 'bold', 'font-size': '14',
@@ -42,6 +41,9 @@
                     }"
             ></geometry-rect>
 
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
             <!-- title -->
             <sub-elements>
                 <rectangle-element
@@ -53,7 +55,6 @@
                             'fill': '#FFA400',
                             'fill-opacity': 1,
                         }"
-                        :image="refreshedImg"
                 ></rectangle-element>
                 <text-element
                         v-if="value.isAggregateRoot"
@@ -104,8 +105,15 @@
                             'fill': '#050038',
                             'fill-opacity': 1,
                         }"
-                        :image="refreshedImg"
                 ></rectangle-element>
+                <text-element
+                        :sub-width="'100%'"
+                        :sub-height="value.elementView.fieldH"
+                        :sub-top="40"
+                        :sub-left="10"
+                        :subStyle="{'font-size': '14px', 'text-anchor':'start', 'font-color': '#FAFAFA'}"
+                        :text="attributeLabels"
+                ></text-element>
             </sub-elements>
 
             <!-- operation -->
@@ -120,22 +128,29 @@
                             'fill-opacity': 1,
                             'z-index': -1
                         }"
-                        :image="refreshedImg"
                 ></rectangle-element>
+                <text-element
+                        :sub-width="'100%'"
+                        :sub-height="value.elementView.methodH"
+                        :sub-top="value.elementView.subEdgeH"
+                        :sub-left="10"
+                        :subStyle="{'font-size': '14px', 'text-anchor':'start', 'font-color': '#FAFAFA'}"
+                        :text="operationLabels"
+                ></text-element>
             </sub-elements>
 
             <uml-sub-controller
-                    v-if="!canvas.isReadOnlyModel"
+                    v-if="isEditElement"
                     :value="value" 
             ></uml-sub-controller>
         </group-element>
 
-        <div v-if="value.fieldDescriptors">
+        <!-- <div v-if="value.fieldDescriptors">
             <div v-for="(attr, index) in value.fieldDescriptors" :key="'a'+index">
                 <uml-class-text
                         v-model="value"
                         :type="'attribute'"
-                        :readOnly="canvas.isReadOnlyModel"
+                        :isReadOnly="!isEditElement"
                         :styles="{
                             'name': attr.name,
                             'index': index,
@@ -149,14 +164,14 @@
                         }"
                 ></uml-class-text>
             </div>
-        </div>
+        </div> -->
 
-        <div v-if="value.operations">
+        <!-- <div v-if="value.operations">
             <div v-for="(item, index) in value.operations" :key="'method'+index">
                 <uml-class-text
                         v-model="value"
                         :type="'operation'"
-                        :readOnly="canvas.isReadOnlyModel"
+                        :isReadOnly="!isEditElement"
                         :styles="{
                             'name': item.name,
                             'index': index,
@@ -170,14 +185,14 @@
                         }"
                 ></uml-class-text>
             </div>
-        </div>
+        </div> -->
 
         <uml-class-panel
                 v-if="propertyPanel"
                 v-model="value"
                 :entities="canvas.value"
                 :img="imgSrc"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></uml-class-panel>
     </div>
@@ -185,14 +200,16 @@
 
 <script>
     import Element from './UMLClassElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     var changeCase = require('change-case');
     var pluralize = require('pluralize');
-
     export default {
         mixins: [Element],
         name: 'uml-class-definition',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             imgSrc() {
                 return `${window.location.protocol + "//" + window.location.host}/static/image/symbol/entity.png`
@@ -289,16 +306,24 @@
             },
             attributeLabels() {
                 try {
+                    // var me = this
+                    // var arr = []
+                    // if (me.value.fieldDescriptors.length > 0) {
+                    //     me.value.fieldDescriptors.forEach(function (item) {
+                    //         var labelName = item.displayName ? item.displayName : item.name;
+                    //         var label = item.label ? item.label : '- ' + labelName + ': ' + item.className;
+                    //         arr.push(label);
+                    //     });
+                    // }
+                    // return arr
                     var me = this
-                    var arr = []
-                    if (me.value.fieldDescriptors.length > 0) {
-                        me.value.fieldDescriptors.forEach(function (item) {
-                            var labelName = item.displayName ? item.displayName : item.name;
-                            var label = item.label ? item.label : '- ' + labelName + ': ' + item.className;
-                            arr.push(label);
-                        });
-                    }
-                    return arr
+                    var text = '';
+                    me.value.fieldDescriptors.forEach((item) => {
+                        var labelName = item.displayName ? item.displayName : item.name;
+                        var label = item.label ? item.label : '- ' + labelName + ': ' + item.className;
+                        text += label + '\n';
+                    })
+                    return text;
                 } catch (e) {
                     return "";
                 }
@@ -326,6 +351,13 @@
         created: function () {
         },
         watch: {
+            "value": {
+                deep: true,
+                handler(newVal, oldVal) {
+                    var me = this;
+                    me.refreshImg();
+                }
+            },
             "value.name": {
                 deep: true,
                 handler(newVal, oldVal) {

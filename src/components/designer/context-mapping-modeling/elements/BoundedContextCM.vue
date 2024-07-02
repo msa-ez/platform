@@ -19,7 +19,6 @@
       v-on:dblclick="openPanel"
       v-on:addToGroup="onAddToGroup"
       :label.sync="getNamePanel"
-      :image.sync="refreshedImg"
       :_style="{
         'vertical-align': 'top',
         'font-weight': 'bold',
@@ -74,7 +73,7 @@
         </image-element>
 
         <rectangle-element
-                v-if="innerAggregate"
+                v-if="innerAggregate.length > 0"
                 v-for="index in innerAggregate.length"
                 sub-width="90%"
                 sub-left="5%"
@@ -89,11 +88,10 @@
         > </rectangle-element>
       </sub-elements>
 
-
       <storming-sub-controller
         :type="value._type"
         :value="value"
-        :readOnly="!canvas.isEditable && !isMembers"
+        :isReadOnly="!isEditElement && !isMembers"
         @createDefinition="createDefinition()"
         canvasType="cm"
         :isProjectConnecting="isProjectConnecting"
@@ -115,7 +113,7 @@
     <bounded-context-cm-panel
       v-if="propertyPanel"
       v-model="value"
-      :readOnly="!isEditElement"
+      :isReadOnly="!isEditElement"
       :newEditUserImg="newEditUserImg"
       :image="image"
       :validationLists="filteredElementValidationResults"
@@ -242,7 +240,7 @@
 
         me.canvas.storageCondition = {
           action: 'save',
-          title: 'SAVE',
+          title: 'Edit BoundedContext',
           comment: '',
           projectName: `${me.canvas.information.associatedProject}-${me.value.name}`,
           projectId: `${me.canvas.information.associatedProject}-${me.value.name}`,
@@ -250,6 +248,8 @@
           error: null,
           loading: false,
           type: 'es',
+          associatedProject: me.canvas.information.associatedProject,
+          connectedAssociatedProject : me.canvas.information.associatedProject ? true : false,
           element: me.value
         }
         me.canvas.storageDialog = true
@@ -267,7 +267,6 @@
       setElementCanvas(){
         var me = this
         me.canvas = getParent(me.$parent, "context-mapping-model-canvas");
-        me.modelCanvasComponent = me.canvas
       },
       onChangedElementName(newVal, oldVal) {
         this.setMirrorElementId();

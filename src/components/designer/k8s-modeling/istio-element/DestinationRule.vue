@@ -18,8 +18,7 @@
                 v-on:deSelectShape="deSelectedActivity"
                 v-on:addedToGroup="onAddedToGroup"
                 v-on:dblclick="openPanel"
-                v-on:removeShape="onRemoveShape(value)"
-                :image.sync="refreshedImg"
+                v-on:removeShape="onRemoveShape"
                 :_style="{
                     stroke:'black',
                     'vertical-align': 'top',
@@ -31,7 +30,9 @@
                     :image="'terminal.png'"
                     @click.prevent.stop="handleClick($event)"
             ></sub-controller>
-
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
             <sub-elements>
                 <!--title-->
                 <image-element
@@ -55,7 +56,7 @@
                 v-if="propertyPanel"
                 v-model="value"
                 :img="imgSrc"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
                 @setSubSet="setSubSet"
         ></property-panel>
@@ -72,17 +73,13 @@
 <script>
     import Element from "../KubernetesElement";
     import PropertyPanel from './DestinationRulePropertyPanel'
-
-    var jsondiffpatch = require('jsondiffpatch').create({
-        objectHash: function (obj, index) {
-            return '$$index:' + index;
-        },
-    });
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     export default {
         mixins: [Element],
         name: 'destinationRule',
         components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             "property-panel": PropertyPanel
         },
         props: {},

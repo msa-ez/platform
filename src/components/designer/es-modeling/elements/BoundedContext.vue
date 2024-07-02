@@ -27,7 +27,6 @@
                 v-on:dblclick="openPanel"
                 v-on:addToGroup="onAddToGroup"
                 :label.sync="getNamePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                 'vertical-align': 'top',
                 'font-weight': 'bold',
@@ -130,8 +129,8 @@
             <storming-sub-controller
                     :type="value._type"
                     :value="value" 
-                    :readOnly="canvas.isReadOnlyModel && !isMembers"
-                    :isHexagonalModeling="canvas.isHexagonal"
+                    :isReadOnly="!isEditElement && !isMembers"
+                    :isHexagonal="canvas.isHexagonal"
             ></storming-sub-controller>
             
             <!-- <sub-controller
@@ -141,20 +140,13 @@
             ></sub-controller> -->
 
             <!-- <sub-controller
-                    v-if="!isHexagonalModeling"
+                    v-if="!isHexagonal"
                     :image="'class.png'"
                     @click.prevent.stop="openClassDiagram('java-parse')"
             ></sub-controller> -->
 
             <sub-elements v-if="!canvas.isHexagonal">
-                <image-element
-                        v-for="(index) in newEditUserImg.length" :key="index"
-                        v-bind:image="newEditUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="elementCoordinate.height"
-                ></image-element>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="elementCoordinate.height"></multi-user-status-indicator>
             </sub-elements>
 
         </group-element>
@@ -163,12 +155,13 @@
         <bounded-context-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"
                 @close="closePanel"
                 @changedPanelValue="changedPanelValue"
+                @updateBCName="updateBCName()"
                 :generateDone.sync="generateDone"
                 :generator="generator"
         ></bounded-context-panel>
@@ -183,23 +176,18 @@
     import SubElements from "../../../opengraph/shape/SubElements";
     import BoundedContextPanel from "../panels/BoundedContextPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-
-
-    var changeCase = require('change-case');
-    var pluralize = require('pluralize');
-    var path = require('path');
-    var yamlpaser = require('js-yaml');
-    var _ = require('lodash')
-    import getParent from "../../../../utils/getParent";
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
     import isAttached from '../../../../utils/isAttached';
     import Generator from "../../modeling/generators/BoundedContextGenerator";
 
+    var _ = require('lodash')
     export default {
         components: {
             SubElements,
             ImageElement,
             GroupElement,
             BoundedContextPanel,
+            'multi-user-status-indicator': MultiUserStatusIndicator,
             'storming-sub-controller' : StormingSubController
         },
         mixins: [Element],
@@ -307,7 +295,7 @@
                 }
             },
             onModelCreated(model){
-                this.$EventBus.$emit('createModelInBoundedContext', model);
+                this.$EventBus.$emit('createModelInBoundedContext', model, this.originModel);
             },
             async onGenerationFinished(model){
                 this.generateDone = true;
@@ -370,7 +358,7 @@
             close(){
                 this.closePanel()
             },
-            onMoveAction(){
+            onMoveAction(executeRecursion){
                 var me = this
                 if(me.value.mirrorElement) return;
 
@@ -398,7 +386,7 @@
                 if(Object.keys(attachedElement).length > 0 ){
                     Object.keys(attachedElement).forEach(function(id){
                         var component = me.canvas.$refs[`${id}`] ? me.canvas.$refs[`${id}`][0] : null
-                        if (component) component.onMoveAction(false)
+                        if (component && !executeRecursion) component.onMoveAction(true)
                     })
                 }
 
@@ -431,6 +419,10 @@
                         me.elementValidationResults.push(me.validationFromCode(me.ESE_NOT_NAME))
                     }
                 }
+            },
+            updateBCName(){
+                this.value.name = this.value.name.replace(/[-._]/g, '');
+                this.value.name = this.value.name.toLowerCase();
             }
         }
     }

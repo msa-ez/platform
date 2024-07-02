@@ -104,7 +104,7 @@
 
         <v-card-actions style="justify-content: flex-end;">
             <v-btn text @click="close()">Close</v-btn>
-            <v-btn color="primary" @click="apply()">Apply</v-btn>
+            <v-btn class="cp-es-apply-btn" color="primary" @click="apply()">Apply</v-btn>
         </v-card-actions>
     </v-card>
 </template>

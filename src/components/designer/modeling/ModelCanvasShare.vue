@@ -52,7 +52,6 @@
         },
         data() {
             return {
-                modelCanvasComponent: null,
                 image: null
             }
         },
@@ -97,7 +96,6 @@
             var me = this
 
             try {
-                me.modelCanvasComponent = me.getComponent(me.canvasComponentName)
                 me.canvas = me.getComponent(me.canvasComponentName)
                 me.canvas.$refs['modeler-image-generator'].save(null, me.canvas).then(async function (resolve) {
                     me.image = resolve

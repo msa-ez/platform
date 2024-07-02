@@ -15,7 +15,6 @@
             app
             fixed
             style="left:0px; background-color:transparent; z-index:1;"
-            hide-on-scroll
         >
 
             <v-toolbar-title style="width: 360px;" class="ml-0 pl-3">
@@ -82,48 +81,267 @@
             <v-tooltip v-if="inCourse && !showNewButton" bottom>
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn style="margin-right:10px;" v-bind="attrs" v-on="on" @click="addNewClass()"
-                         icon large>
+                        icon large
+                        color="black"
+                    >
                         <v-icon>mdi-file-plus</v-icon>
                     </v-btn>
                 </template>
                 <span>신규 강의 생성</span>
             </v-tooltip>
             <v-dialog v-if="showNewButton"
-                v-model="newModelingDialog"
+                v-model="makingDialog"
                 max-width="90%"
             >
                 <template v-slot:activator="{ on, attrs }">
-                    <v-btn
+                    <v-btn class="main-nav-modeling-is-mobile"
                         v-on="on"
                         v-bind="attrs"
                         text
-                        style="font-size:16px;"
-                        :style="isLogin ? 'margin-right:120px' : 'margin-right:105px;'"
-                    >{{$t('main.newModeling')}}
+                        style="font-size:16px; margin-top:8px; font-weight: 700; padding:0px;"
+                        :style="isLogin ? 'margin-right:145px' : 'margin-right:130px;'"
+                    ><v-icon style="margin-top:-3px;">mdi-file-plus</v-icon>
+                    {{$t('making.title')}}
                     </v-btn>
                 </template>
                 <v-card style="padding:20px; height:85vh; overflow:auto;">
-                    <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('main.newModeling')}}</div>
+                    <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('making.title')}}</div>
+
+                    <!-- 만들기 기획(planning) -->
+                    <div class="making-sub-title">{{$t('making.planning')}}</div>
                     <v-row
                         style="margin:0px;"
                     >
-                        <v-col v-for="(item,index) in newProjectBtns"
+                        <v-col class="making-col"
+                            v-for="(item,index) in planning"
                             :key="index"
                             lg="3"
+                            md="3"
+                            sm="6"
+                            xs="12"
+                        >
+                            <v-card
+                                class="mx-auto"
+                                outlined
+                                style="padding:15px; height:100%; position: relative;"
+                            >
+                                <v-row class="ma-0">
+                                    <div style="font-weight: 500; font-size:18px; color:black;">
+                                        {{$t(item.title)}}
+                                    </div>
+                                    <v-spacer></v-spacer>
+                                    <v-chip v-if="item.tagStatus === 'Stable'" class="gs-stable-chip" small>
+                                        {{ item.tagStatus }}
+                                    </v-chip>
+                                    <v-chip v-else outlined small color="orange">{{ item.tagStatus }}</v-chip>
+                                </v-row>
+                                <v-row>
+                                    <v-col cols="12">
+                                        <v-img @click.native="moveToModel(item.type)"
+                                            :src="item.image"
+                                            style="height:150px; margin:10px 0px; cursor:pointer;"
+                                        ></v-img>
+                                    </v-col>
+                                </v-row>
+                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
+                                <v-card-actions style="position: absolute; right:0px; bottom:0px;">
+                                    <v-spacer></v-spacer>
+                                    <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                    <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                        @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+                    <!-- 만들기 설계(design) -->
+                    <div class="making-sub-title">{{$t('making.design')}}</div>
+                    <v-row
+                        style="margin:0px;"
+                    >
+                        <v-col class="making-col"
+                            v-for="(item,index) in design"
+                            :key="index"
+                            lg="4"
                             md="4"
                             sm="6"
                             xs="12"
                         >
-                            <v-card style="height:100%;"
+                            <v-card
+                                class="mx-auto"
                                 outlined
+                                style="padding:15px; height:100%; position: relative;"
                             >
-                                <v-card-title class="justify-center">{{ $t(item.title) }}</v-card-title>
-                                <v-img @click.native="moveToModel(item.type)"
-                                    :src="item.image"
-                                    style="cursor: pointer; height:200px;"
-                                >
-                                </v-img>
-                                <v-card-subtitle style="margin-bottom:20px;">{{ $t(item.subtitle) }}</v-card-subtitle>
+                                <v-row class="ma-0">
+                                    <div style="font-weight: 500; font-size:18px; color:black;">
+                                        {{$t(item.title)}}
+                                    </div>
+                                    <v-spacer></v-spacer>
+                                    <v-chip v-if="item.tagStatus === 'Stable'" class="gs-stable-chip" small>
+                                        {{ item.tagStatus }}
+                                    </v-chip>
+                                    <v-chip v-else outlined small color="orange">{{ item.tagStatus }}</v-chip>
+                                </v-row>
+                                <v-row>
+                                    <v-col cols="12">
+                                        <v-img @click.native="moveToModel(item.type)"
+                                            class="cp-create-model-img"
+                                            :src="item.image"
+                                            style="height:150px; margin:10px 0px; cursor:pointer;"
+                                        ></v-img>
+                                    </v-col>
+                                </v-row>
+                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
+                                <v-card-actions style="position: absolute; right:0px; bottom:0px;">
+                                    <v-spacer></v-spacer>
+                                    <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                    <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                        @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+
+                    <!-- <div class="making-sub-title">{{$t('making.migration')}}</div>
+                    <v-row
+                        style="margin:0px;"
+                    >
+                        <v-col class="making-col"
+                            v-for="(item,index) in migration"
+                            :key="index"
+                            lg="4"
+                            md="4"
+                            sm="6"
+                            xs="12"
+                        >
+                            <v-card
+                                class="mx-auto"
+                                outlined
+                                style="padding:15px; height:100%; position: relative;"
+                            >
+                                <v-row class="ma-0">
+                                    <div style="font-weight: 500; font-size:18px; color:black;">
+                                        {{$t(item.title)}}
+                                    </div>
+                                    <v-spacer></v-spacer>
+                                    <v-chip v-if="item.tagStatus === 'Stable'" class="gs-stable-chip" small>
+                                        {{ item.tagStatus }}
+                                    </v-chip>
+                                    <v-chip v-else outlined small color="orange">{{ item.tagStatus }}</v-chip>
+                                </v-row>
+                                <v-row>
+                                    <v-col cols="12">
+                                        <v-img @click.native="moveToModel(item.type)"
+                                            :src="item.image"
+                                            style="height:150px; margin:10px 0px; cursor:pointer;"
+                                        ></v-img>
+                                    </v-col>
+                                </v-row>
+                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
+                                <v-card-actions style="position: absolute; right:0px; bottom:0px;">
+                                    <v-spacer></v-spacer>
+                                    <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                    <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                        @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-col>
+                    </v-row> -->
+
+
+                    <!-- 만들기 개발(development) -->
+                    <div class="making-sub-title">{{$t('making.operation')}}</div>
+                    <v-row
+                        style="margin:0px;"
+                    >
+                        <v-col class="making-col"
+                            v-for="(item,index) in development"
+                            :key="index"
+                            lg="4"
+                            md="4"
+                            sm="6"
+                            xs="12"
+                        >
+                            <v-card
+                                class="mx-auto"
+                                outlined
+                                style="padding:15px; height:100%; position: relative;"
+                            >
+                                <v-row class="ma-0">
+                                    <div style="font-weight: 500; font-size:18px; color:black;">
+                                        {{$t(item.title)}}
+                                    </div>
+                                    <v-spacer></v-spacer>
+                                    <v-chip v-if="item.tagStatus === 'Stable'" class="gs-stable-chip" small>
+                                        {{ item.tagStatus }}
+                                    </v-chip>
+                                    <v-chip v-else outlined small color="orange">{{ item.tagStatus }}</v-chip>
+                                </v-row>
+                                <v-row>
+                                    <v-col cols="12">
+                                        <v-img @click.native="moveToModel(item.type)"
+                                            :src="item.image"
+                                            style="height:150px; margin:10px 0px; cursor:pointer;"
+                                        ></v-img>
+                                    </v-col>
+                                </v-row>
+                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
+                                <v-card-actions style="position: absolute; right:0px; bottom:0px;">
+                                    <v-spacer></v-spacer>
+                                    <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                    <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                        @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+                    <!-- 만들기 프로젝트(project) -->
+                    <div class="making-sub-title">{{$t('making.project')}}</div>
+                    <v-row class="making-col"
+                        style="margin:0px;"
+                    >
+                        <v-col class="making-col"
+                            v-for="(item,index) in makingProject"
+                            :key="index"
+                            lg="4"
+                            md="4"
+                            sm="6"
+                            xs="12"
+                        >
+                            <v-card
+                                class="mx-auto"
+                                outlined
+                                style="padding:15px; height:100%; position: relative;"
+                            >
+                                <v-row class="ma-0">
+                                    <div style="font-weight: 500; font-size:18px; color:black;">
+                                        {{$t(item.title)}}
+                                    </div>
+                                    <v-spacer></v-spacer>
+                                    <v-chip v-if="item.tagStatus === 'Stable'" class="gs-stable-chip" small>
+                                        {{ item.tagStatus }}
+                                    </v-chip>
+                                    <v-chip v-else outlined small color="orange">{{ item.tagStatus }}</v-chip>
+                                </v-row>
+                                <v-row>
+                                    <v-col cols="12">
+                                        <v-img @click.native="moveToModel(item.type)"
+                                            :src="item.image"
+                                            style="height:150px; margin:10px 0px; cursor:pointer;"
+                                        ></v-img>
+                                    </v-col>
+                                </v-row>
+                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
                                 <v-card-actions style="position: absolute; right:0px; bottom:0px;">
                                     <v-spacer></v-spacer>
                                     <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
@@ -137,69 +355,14 @@
                     </v-row>
                 </v-card>
             </v-dialog>
-
-            <!-- 기존 new project 리스트 -->
-            <!-- <v-menu
-                v-if="showNewButton"
-                open-on-hover
-                offset-y
-                left
-            >
-                <template v-slot:activator="{ on }">
-                    <v-btn class="app-new-btn"
-                        v-on="on"
-                        text
-                        @click="goToLectures('/courses')"
-                    >
-                        <div class="app-new-text" style=" font-weight:700;">{{$t('main.goToLectures')}}</div>
-                    </v-btn>
-                </template>
-
-                <v-list>
-                    <v-list-item-group
-                        v-model="selectedItem"
-                    >
-                        <v-list-item
-                            v-for="(item,index) in newProjectBtns"
-                            :key="index"
-                            @mouseleave="selectedItem=null"
-                            @click.native="moveToModel(item.type)"
-                        >
-                            <v-list-item-title>{{ item.title }}</v-list-item-title>
-                        </v-list-item>
-                        <div class="upload">
-                            <div>
-                                <v-divider style= "width:95%;"></v-divider>
-                                <label style="cursor:pointer;" for="file">Upload Model</label>
-                                <input style="display:none;" id="file" type="file" @change="loadTextFromFile"/>
-                            </div>
-                        </div>
-                    </v-list-item-group>
-                </v-list>
-            </v-menu> -->
-
-            <!-- <v-tooltip bottom>
-                <template v-slot:activator="{ on, attrs }">
-                    <v-btn class="app-docs-btn"
-                            v-on="on"
-                            v-bind="attrs"
-                            @click="wikiOpen()"
-                            text
-                            style="margin-right:10px; font-weight:700;"
-                    >
-                        <v-icon>mdi-book</v-icon>
-                        <div class="app-docs-text">DOCS</div>
-                    </v-btn>
-                </template>
-                <span>{{$t('word.introduceText')}}</span>
-            </v-tooltip> -->
             
             <v-btn
-                    v-if="!(isLogin || isGuestLogin)"
-                    @click="loginPage()"
-                    fab icon>
+                v-if="!(isLogin || isGuestLogin)"
+                @click="loginPage()"
+                fab icon
+            >
                 <v-avatar
-                        size="40"
+                    size="40"
                 >
                     <v-icon x-large>mdi-account-circle</v-icon>
                 </v-avatar>
@@ -256,7 +419,7 @@
                 <v-list style="width:310px;">
                     <v-list-item-group>
                         <div style="font-size: small; cursor:default; display: table-cell; padding-left:16px;">
-                            <div v-if="isLogin">{{userInfo.email}}</div>
+                            <div v-if="isLogin">{{userInfo.email}} ({{userInfo.providerUid}})</div>
                             <div v-else-if="isGuestLogin">(GUEST) {{userInfo.email}}</div>
                         </div>
                         <v-divider style="margin-top: 5px;"></v-divider>
@@ -273,23 +436,7 @@
             </v-menu>
 
         </v-app-bar>
-        <div v-if= "showMemo" ref="draggable" @mousedown="dragStart" @mousemove="dragging" @mouseup="dragStop" style="position: absolute; top: 0; left: -400px; width: 500px;" >      
-            <v-card style="margin: 55px 100px 0 1000px; width: 500px; position: absolute; top: 220px; left: 380px; z-index: 9;">
-                    <ckeditor v-model="editorData" :config="editorConfig"></ckeditor>
-                    <v-tooltip bottom>
-                        <template v-slot:activator="{ on, attrs }">
-                            <v-btn fill="none" 
-                                style="margin-left:5px; position: absolute; top: 0px; left: 450px; clo" 
-                                v-bind="attrs" v-on="on"
-                                color="gray" icon large
-                                @click="showMemo = false">
-                                <v-icon>mdi-close</v-icon>
-                            </v-btn>
-                        </template>
-                        <span>닫기</span>
-                    </v-tooltip>
-            </v-card>
-        </div>
+        
         <course-navigator v-if="courseNavi && $route.path.includes('eventstorming')"
                           :value.sync="naviObject"></course-navigator>
         <v-content :style="headerFloating == true ? 'margin-top:-64px;':'margin-top:0px;'">
@@ -423,9 +570,9 @@
 
         <!--login-->
         <v-dialog
-                v-model="loginDialog"
-                width="300"
-                @click:outside="closeLoginDialog()"
+            v-model="loginDialog"
+            width="900"
+            @click:outside="closeLoginDialog()"
         >
             <Login :loginMsg="loginText" @close="closeLoginDialog()" @login="login"></Login>
         </v-dialog>
@@ -541,62 +688,6 @@
                 </v-stepper-header>
             </v-stepper>
         </v-alert>
-
-        <!--        <v-alert-->
-        <!--                style="align-self: center; position: absolute; z-index:999; margin-left: 35%; right: 0;"-->
-        <!--        >-->
-        <!--            <v-stepper vertical alt-labels :width="'1000px'" :min-width="'1000px'">-->
-        <!--                <v-stepper-header>-->
-        <!--                    <v-stepper-step-->
-        <!--                            step="3"-->
-        <!--                            complete-->
-        <!--                    >-->
-        <!--                        Ad type-->
-        <!--                    </v-stepper-step>-->
-        <!--                    <v-divider></v-divider>-->
-        <!--                    <v-stepper-step-->
-        <!--                            step="4"-->
-        <!--                            complete-->
-        <!--                    >-->
-        <!--                        Ad style-->
-        <!--                    </v-stepper-step>-->
-        <!--                    <v-divider></v-divider>-->
-        <!--                    <v-stepper-step-->
-        <!--                            :rules="[() => false]"-->
-        <!--                            step="5"-->
-        <!--                    >-->
-        <!--                        Custom channels-->
-        <!--                        <small>Alert message</small>-->
-        <!--                    </v-stepper-step>-->
-        <!--                    <v-divider></v-divider>-->
-        <!--                    <v-stepper-step step="6">-->
-        <!--                        Get code-->
-        <!--                    </v-stepper-step>-->
-        <!--                </v-stepper-header>-->
-        <!--            </v-stepper>-->
-        <!--        </v-alert>-->
-
-        <v-footer padless
-                  v-if="showReplayBar"
-        >
-            <v-col cols="12">
-                <v-subheader class="pl-0">Show thumb when using slider</v-subheader>
-                <v-slider
-                        v-model="slider"
-                        thumb-label
-                ></v-slider>
-            </v-col>
-        </v-footer>
-
-
-        <v-footer
-                padless
-                style="border-top: solid; border-block-width: 0.5px; border-color: darkgray; background: white;"
-        >
-            <div style="margin-left: 7%; margin-right: 7%;">
-
-            </div>
-        </v-footer>
     </v-app>
 </template>
 
@@ -672,6 +763,7 @@
             ],
             api: [],
             snackbar: false,
+            snackbarText: '',
             fab: false,
             courseNavi: false,
             overlay: true,
@@ -709,64 +801,26 @@
                 {key: 'manager', display: `loginList.purchaseList`},
                 {key: 'getCoin', display: `loginList.CoinsCoupons`},
                 {key: 'payQuestion', display: `loginList.inquiry`},
-                {key: 'showMemo', display: `메모장 사용하기`},
                 {key: 'logout', display: `loginList.logout`}
             ],
             loginText: 'Login',
             LoginHover: false,
-            // navLearnModelingCards: [
-            //         {
-            //             title: 'tools.eventstorming',
-            //             image: 'https://user-images.githubusercontent.com/113568664/208291359-e7ce6d88-776b-4447-a236-d7a1cddadcf4.png',
-            //             subtitle: 'tools.eventstorming-inst',
-            //             page: 'es'
-            //         },
-            //         {
-            //             title: 'tools.kubernetes',
-            //             image: 'https://user-images.githubusercontent.com/113568664/208291286-15b57907-3126-48f6-bf71-490df5ce027d.png',
-            //             subtitle: 'tools.kubernetes-inst',
-            //             page: 'k8s'
-            //         },
-            //         {
-            //             title: 'tools.bmc',
-            //             image: 'https://user-images.githubusercontent.com/92732781/233012222-d0662c4b-5546-4e7b-af28-c07617a57ef0.png',
-            //             subtitle: 'tools.bmc-inst',
-            //             page: 'bm'
-            //         },
-            //         {
-            //             title: 'tools.bpmn',
-            //             image: 'https://user-images.githubusercontent.com/92732781/233012303-64841fa2-2952-43eb-a768-f75be9a73679.png',
-            //             subtitle: 'tools.bpmn-inst',
-            //             page: 'bpmn'
-            //         },
-            //     ],
-            newProjectBtns: [
-                {   type: 'es',
-                    title: 'tools.eventstorming',
-                    image: '/static/image/main/mainModeling.png',
-                    subtitle: 'tools.eventstorming-inst',
-                    disabled: false,
-                },
+            planning : [
                 {
-                    type: 'k8s', 
-                    title: 'tools.kubernetes',
-                    image: '/static/image/main/maink8s.png',
-                    subtitle: 'tools.kubernetes-inst',
-                    disabled: false,
-                },
-                {
-                    type: 'bmc', 
-                    title: 'tools.bmc',
+                    type: 'bm', 
+                    title: 'tools.bm',
                     image: '/static/image/main/mainBMC.png',
-                    subtitle: 'tools.kubernetes-inst',
+                    subtitle: 'tools.bm-inst',
                     disabled: true,
+                    tagStatus: 'Beta'
                 },
                 {
-                    type: 'bpmn', 
-                    title: 'tools.bpmn',
-                    image: '/static/image/main/mainBPMN.png',
-                    subtitle: 'tools.bpmn-inst',
-                    disabled: false,
+                    type: 'cjm', 
+                    title: 'tools.cjm',
+                    image: 'https://miro.medium.com/v2/resize:fit:0/1*GeerSkalcxLlE3bp83i1XA.png',
+                    subtitle: 'tools.cjm-inst',
+                    disabled: true,
+                    tagStatus: 'Beta'
                 },
                 {
                     type: 'sticky', 
@@ -774,6 +828,25 @@
                     subtitle: 'tools.sticky-inst',
                     image: '/static/image/main/mainSticky.png',
                     disabled: true,
+                    tagStatus: 'Beta'
+                },
+                {
+                    type: 'userStoryMap', 
+                    title: 'tools.userStoryMap',
+                    subtitle: 'tools.userStoryMap-inst',
+                    image: '/static/image/userStoryMap.png',
+                    disabled: true,
+                    tagStatus: 'Beta'
+                },
+            ],
+            design : [
+                {
+                    type: 'es',
+                    title: 'tools.eventstorming',
+                    image: '/static/image/main/mainModeling.png',
+                    subtitle: 'tools.eventstorming-inst',
+                    disabled: false,
+                    tagStatus: 'Stable'
                 },
                 {
                     type: 'uml', 
@@ -781,13 +854,45 @@
                     image: '/static/image/main/mainUml.png',
                     subtitle: 'tools.uml-inst',
                     disabled: true,
+                    tagStatus: 'Beta'
                 },
+                {
+                    type: 'bpmn', 
+                    title: 'tools.bpmn',
+                    image: '/static/image/main/mainBPMN.png',
+                    subtitle: 'tools.bpmn-inst',
+                    disabled: false,
+                    tagStatus: 'Beta'
+                },
+            ],
+            migration : [
+                {
+                    type: 'lm', 
+                    title: 'tools.legacy-modernizer',
+                    image: '/static/image/main/maink8s.png',
+                    subtitle: 'tools.legacy-modernizer-inst',
+                    disabled: false,
+                    tagStatus: 'Beta'
+                },
+            ],
+            development : [
+                {
+                    type: 'k8s', 
+                    title: 'tools.kubernetes',
+                    image: '/static/image/main/maink8s.png',
+                    subtitle: 'tools.kubernetes-inst',
+                    disabled: false,
+                    tagStatus: 'Beta'
+                },
+            ],
+            makingProject : [
                 {
                     type: 'project', 
                     title: 'tools.project',
                     image: '/static/image/main/mainProject.png',
                     subtitle: 'tools.project-inst',
                     disabled: true,
+                    tagStatus: 'Beta'
                 },
             ],
             selectedItem: null,
@@ -808,7 +913,6 @@
                     ],
                 
             },
-            showMemo: false,
             isDragging: false,
             startX: 0,
             startY: 0,
@@ -816,7 +920,7 @@
             currentY: 0,
             offsetX: 0,
             offsetY: 0,
-            newModelingDialog: null,
+            makingDialog: null,
 
         }),
         components: {
@@ -913,6 +1017,10 @@
             var me = this
 
             Vue.prototype.$app = me
+
+            me.$EventBus.$on('open-new-making-dialog', function () {
+                me.makingDialog = true
+            })
 
             if (this.$isElectron) {
                 // Electron-specific code
@@ -1051,7 +1159,7 @@
             var me = this
             if (me.isLogin) {
                 var convertEmail = me.userInfo.email.replace(/\./gi, '_')
-                me.watch_off(`db://enrolledUsers/${convertEmail}/purchaseHistory`)
+                // me.watch_off(`db://enrolledUsers/${convertEmail}/purchaseHistory`)
                 // firebase.database().ref(`enrolledUsers/${convertEmail}/purchaseHistory`).off();
             }
             window.localStorage.removeItem("accessToken");
@@ -1594,34 +1702,32 @@
             setColor(index) {
                 this.selectedItem = index;
             },
-            moveToModel(type) {
+            async moveToModel(type) {
                 var me = this
-                me.newModelingDialog = false
+                if(!me.userInfo.providerUid) await await me.loginUser()
+               
+                me.makingDialog = false
                 try {
                     if (!type) type = me.mode
-
+                    let path = me.userInfo.providerUid ? `/${me.userInfo.providerUid}` : ''
+                
                     if (type == 'es') {
-                        me.$router.push({path: `storming/${me.dbuid()}`});
+                        path = `${path}/storming`
                     } else if (type == 'k8s') {
-                        me.$router.push({path: `kubernetes/${me.dbuid()}`});
-                    } else if (type == 'bmc') {
-                        me.$router.push({path: `business-model-canvas/${me.dbuid()}`});
-                    } else if (type == 'sticky') {
-                        me.$router.push({path: `sticky/${me.dbuid()}`});
-                    } else if (type == 'bpmn') {
-                        me.$router.push({path: `bpmn/${me.dbuid()}`});
-                    } else if (type == 'uml') {
-                        me.$router.push({path: `uml/${me.dbuid()}`});
-                    } else if (type == 'project'){
-                        me.$router.push({path: `project/${me.dbuid()}`});
+                        path = `${path}/kubernetes`
+                    } else if (type == 'bm') {
+                        path = `${path}/business-model-canvas`
+                    } else if (type == 'lm') {
+                        path = `${path}/legacy-modernizer`
                     } else {
-                        me.$router.push({path: `storming/${me.dbuid()}`});
-                    }
+                        path = `${path}/${type}`
+                    } 
+                    path = `${path}/${me.dbuid()}`
 
+                    me.$router.push({path: path});
                 } catch (e) {
                     alert('Error-NewProject', e)
                 }
-
             },
             loadTextFromFile(test) {
                 var me = this
@@ -1783,9 +1889,7 @@
                             window.ipcRenderer.send("closeView");
                         }
                     } else if (key == 'payQuestion') {
-                        alert("'help@uengine.org' 으로 메일 문의 바랍니다. ")
-                    } else if(key == 'showMemo'){
-                        me.openMemo()
+                        alert("'help@uengine.org' 으로 메일 문의 바랍니다. ") 
                     } else {
                         console.log("app")
                         if (me.isLogin) {
@@ -1993,20 +2097,6 @@
                     window.open("https://github.com/msa-ez/msa-ez.github.io/issues", "_blank")
                 }
             },
-            async openMemo() {
-                var me = this;
-                var convertEmail = localStorage.getItem("email").replace(/\./gi, '_')
-                me.editorData = await me.getString('db://labs/' + me.getTenantId().split('.')[0] + '/' + me.courseId + '/classes/' + me.classId + '/memo/' + convertEmail , me.editorData);
-                me.showMemo = !me.showMemo
-            },
-            async saveMemo(){
-                var me = this; 
-                var convertEmail = localStorage.getItem("email").replace(/\./gi, '_')
-                await me.setString('db://labs/' + me.getTenantId().split('.')[0] + '/' + me.courseId + '/classes/' + me.classId + '/memo/' + convertEmail , me.editorData);
-                if(!me.editorData){
-                    await me.setString('db://labs/' + me.getTenantId().split('.')[0] + '/' + me.courseId + '/classes/' + me.classId + '/memo/' + convertEmail , me.editorData + '메모할 내용을 입력해주세요.');
-                }
-            },
             dragStart(event) {
                 var me = this;
                 me.isDragging = true;
@@ -2035,7 +2125,21 @@
 
 </script>
 <style>
-
+    .making-col {
+        padding:20px;
+    }
+    .making-sub-title {
+        font-size:20px;
+        font-weight: 700;
+        margin-left:20px;
+        margin-top:30px;
+    }
+    .main-nav-modeling-is-mobile:hover {
+        color: #2C81D5 !important;
+    }
+    .main-nav-modeling-is-mobile {
+        display:block;
+    }
     .upload {
         height: 48px;
         cursor: pointer;
@@ -2099,6 +2203,11 @@
     }
     
     /* 추가 */
+    @media only screen and (max-width: 1200px) { 
+        .main-nav-modeling-is-mobile {
+            display:none;
+        }
+    }
 
     @media only screen and (max-width: 1110px) {
         .app-docs-text, .app-new-text {
@@ -2109,6 +2218,7 @@
             min-width:32px !important;
             max-width:32px !important;
         }
+        
     }
 
     @media only screen and (max-width: 781px) {

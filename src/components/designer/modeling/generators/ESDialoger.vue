@@ -32,7 +32,6 @@
         </div>
         <v-card v-if="!state.secondMessageIsTyping" class="auto-modeling-user-story-card">
             <v-card-subtitle>{{$t('autoModeling.explanation')}}</v-card-subtitle>
-            <v-btn v-if="!done" class="auto-modeling-btn" style="margin-left: 15px;" @click="stop()"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
             <v-card-text class="auto-modling-textarea">
                 <v-textarea 
                         v-model="value.userStory"
@@ -51,6 +50,7 @@
                 <!--                    <v-btn x-small @click="jumpToModel(modelId)">{{ modelId }}</v-btn>    -->
                 <!--                </div>-->
             </v-card-text>
+            <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
             <v-card-actions v-if="done" class="auto-modeling-btn-box">
                 <v-btn class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>Try again</v-btn>
                 <v-btn class="auto-modeling-btn" color="primary" @click="jump()">Create Model<v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon></v-btn>
@@ -75,8 +75,10 @@
     import { VueTypedJs } from 'vue-typed-js'
     import Generator from './UserStoryGenerator.js'
     //import UserStoryGenerator from './UserStoryGenerator.js'
-    import StorageBase from "../StorageBase";
+    // import StorageBase from "../StorageBase";
+    import StorageBase from '../../../CommonStorageBase.vue';
     import getParent from '../../../../utils/getParent'
+    import Usage from '../../../../utils/Usage'
 
     export default {
         name: 'es-dialoger',
@@ -87,6 +89,8 @@
             uiStyle: Object,
             cachedModels: Object,
             projectId: String,
+            modelIds: Object,
+            isServerProject: Boolean
         },
         components: {
             VueTypedJs
@@ -99,10 +103,20 @@
                 return true
             },
         },
-        created(){
+        async created(){
+            await this.setUserInfo()
             this.autoModel = getParent(this.$parent, 'auto-modeling-dialog');
         },
         watch: {
+            "prompt": {
+                deep:true,
+                handler:  _.debounce(function(newVal, oldVal)  {
+                    if(this.isCreatedModel){
+                        this.modelIds.ESDefinitionId = this.uuid()
+                        this.isCreatedModel = false
+                    }
+                },1000)
+            }
         },
         mounted(){
             var me = this;
@@ -111,6 +125,7 @@
         },
         data() {
             return {
+                isCreatedModel: false,
                 autoModel: null,
                 state:{
                     generator: "EventOnlyESGenerator", // EventOnlyESGenerator
@@ -125,7 +140,9 @@
                     title: this.prompt,
                     separationPrinciple:  "Conway's Principle.", // "Business Capability" // "Infra Diversity" // "Per Persona",
                     businessModel: this.cachedModels["BMGenerator"],
-                    painpointAnalysis: this.cachedModels["CJMGenerator"]
+                    painpointAnalysis: this.cachedModels["CJMGenerator"],
+                    userStoryMapModel: this.cachedModels["UserStoryMapGenerator"],
+                    personas: this.cachedModels["Personas"]
                 },
                 done: false,
                 generator: null,
@@ -145,6 +162,7 @@
             },
             init(){
                 var me = this 
+                if(!me.modelIds.ESDefinitionId) me.modelIds.ESDefinitionId = me.uuid();
                 if(!me.value){
                     me.value = {
                         userStory: ''
@@ -172,11 +190,27 @@
                 
             },  
 
-            generate(){
+            async generate(){
+                let issuedTimeStamp = Date.now()
                 this.value.userStory = '';
                 this.input.businessModel = this.cachedModels["BMGenerator"]
                 this.input.painpointAnalysis = this.cachedModels["CJMGenerator"]
                 this.generator = new Generator(this);
+
+                let usage = new Usage({
+                    serviceType: `ES_AIGeneration`,
+                    issuedTimeStamp: issuedTimeStamp,
+                    expiredTimeStamp: Date.now(),
+                    metadata: {
+                        projectId: this.modelIds.projectId, 
+                        modelId: this.modelIds.ESDefinitionId
+                    }
+                });
+                if(!await usage.use()) {
+                    this.stop()
+                    return false;
+                }
+
                 this.generator.generate();
                 this.state.startTemplateGenerate = true
                 this.done = false;            
@@ -191,21 +225,20 @@
             jump(){
                 try{
                     var me = this
-                    let uuid = me.uuid();
+                   
                     if(!me.value.modelList){
                         me.value.modelList = []
                     }
-                    me.value.modelList.push(uuid);
+                    me.state.userStory = me.value.userStory;
+                    // if(me.isServerProject) me.value.modelList.push(me.modelIds.ESDefinitionId);
+                    if(me.isServerProject) me.state.associatedProject = me.modelIds.projectId
 
                     me.$emit("input", me.value);
                     me.$emit("change", 'eventStorming');
 
-                    me.state.userStory = me.value.userStory;
-                    let stateJson = JSON.stringify(me.state);
-                    localStorage["gen-state"] = stateJson;
-
-                    window.open(`/#/storming/${uuid}`, "_blank")
-                    // this.$router.push({path: `storming/${uuid}`});
+                    localStorage["gen-state"] = JSON.stringify(me.state);;
+                    window.open(`/#/storming/${me.modelIds.ESDefinitionId}`, "_blank")
+                    me.isCreatedModel = true;
                 }catch(e){
                     if(e.name=="QuotaExceededError"){
                         var keys = Object.keys(localStorage);

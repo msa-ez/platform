@@ -70,162 +70,180 @@ class AIGenerator {
         return hash;
     }
 
-    async generate(){
-        this.state = 'running'
-        let me = this;
-        me.openaiToken = await me.getToken();
-        let responseCnt = 0;
+    async generate(generateOption){
+        return new Promise((resolve, reject) => {
+            this.state = 'running'
+            let me = this;
+            me.getToken().then(openaiToken => {
+                me.openaiToken = openaiToken;
+                let responseCnt = 0;
+                let messages
 
-        let messages
-        messages = this.createMessages();
-
-
-        if(localStorage.getItem("useCache")=="true"){
-            let message = JSON.stringify(messages)
-
-            let hashKey = this.generateHashKey(message)
-            let existingResult = localStorage.getItem("cache-" + hashKey)
-
-            if(existingResult){
-                setTimeout(()=>{
-
-                    me.state = 'end';
-
-                    let model = me.createModel(existingResult)
-        
-                    if(me.client.onModelCreated){
-                        me.client.onModelCreated(model);
-                    } 
-                    
-                    if(me.client.onGenerationFinished)
-                        me.client.onGenerationFinished(model)
-        
-
-                }, 0)
-
-                return
-            }
-
-        }
-        
-        me.gptResponseId = null;
-        const url = "https://api.openai.com/v1/chat/completions";
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", url);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.setRequestHeader("Authorization", "Bearer " + me.openaiToken);
-
-        xhr.onprogress = function(event) {
-            var currentResId
-            if(me.stopSignaled){
-                xhr.abort();
-                me.stopSignaled = false;
-                me.state = 'stopped'
-            }
-        // console.log("Received " + event.loaded + " bytes of data.");
-        // console.log("Data: " + xhr.responseText);
-            const newUpdates = xhr.responseText
-            .replace("data: [DONE]", "")
-            .trim()
-            .split('data: ')
-            .filter(Boolean)
-
-            const newUpdatesParsed = newUpdates.map((update) => {
-                const parsed = JSON.parse(update);
-
-                if(parsed.error){
-                    if(me.client.onError){
-                        me.client.onError(parsed.error);
-                    }
-                    throw new Error(parsed.error.message)
-                }
-
-                currentResId = parsed.id
-                if(!me.gptResponseId){
-                    me.gptResponseId = parsed.id
-                } 
-                if(parsed.choices[0].finish_reason == 'length'){
-                    me.finish_reason = 'length'
-                }
-                return parsed.choices[0].delta.content || '';
-            });
-
-            const newUpdatesJoined = newUpdatesParsed.join('')
-            if(newUpdatesJoined.includes(": null")){
-                newUpdatesJoined.replaceAll(": null", ": 'null'")
-            }
-            me.modelJson = newUpdatesJoined
-
-            if(me.client.onReceived){
-                if(me.gptResponseId == currentResId){
-                    me.client.onReceived(me.modelJson);
-                }
-            }
-
-            if(me.client.onModelCreated){
-                if(responseCnt > me.responseLimit){
-                    let createdModel = me.createModel(me.modelJson)
-                    if(createdModel){
-                        me.savedModel = createdModel
-                        me.client.onModelCreated(createdModel);
-                        responseCnt = 0;
+                if(generateOption){
+                    if(generateOption.action=="reGenerate"){
+                        messages = this.createMessages();
+                        messages[0].content = generateOption.messages
                     } else {
-                        me.stop();
-                        if(me.client.onGenerationFinished) me.client.onGenerationFinished(me.savedModel)
+                        messages = generateOption.messages
+                        me.previousMessages = generateOption.messages
                     }
                 } else {
-                    responseCnt++;
+                    messages = this.createMessages();
                 }
-            }
-
-
-        };
-
-        xhr.onloadend = function() {
-            console.log("End to Success - onloadend", xhr);
-            if(me.client){
-                if(me.finish_reason == 'length'){
-                    console.log('max_token issue')
-                    alert('max_token issue')
-                } 
-                // else {
-
-                    me.state = 'end';
-                    let model = null;
-                    if(me.client.onModelCreated){
-                        model = me.createModel(me.modelJson)
-                        me.client.onModelCreated(model);
-                    } 
-                    // else {
-                    if(me.client.onGenerationFinished)
-                        me.client.onGenerationFinished(model)
-                    // }
-                    // if (xhr.status === 0){
-                        //     me.client.onGenerationFinished()
-                        // } else {
-                    // }
-                // }
-
 
                 if(localStorage.getItem("useCache")=="true"){
-                    let hashKey = me.generateHashKey(JSON.stringify(messages))
-                    localStorage.setItem("cache-" + hashKey, me.modelJson)
-                }
-            
-            }
-        };
-        
-        
-        const data = JSON.stringify({
-            model: this.model,
-            messages: messages,
-            temperature: 1,
-            frequency_penalty: 0,
-            presence_penalty: 0,
-            stream: true,
-        });
+                    let message = JSON.stringify(messages);
+                    let hashKey = me.generateHashKey(message);
+                    let existingResult = localStorage.getItem("cache-" + hashKey);
 
-        xhr.send(data);
+                    if(existingResult){
+                        setTimeout(()=>{
+                            me.state = 'end';
+                            let model = me.createModel(existingResult);
+                            if(me.client.onModelCreated){
+                                me.client.onModelCreated(model);
+                            }
+                            if(me.client.onGenerationFinished){
+                                me.client.onGenerationFinished(model);
+                                resolve(model); 
+                            }
+                        }, 0);
+                        return;
+                    }
+                }
+                
+                me.gptResponseId = null;
+                const url = "https://api.openai.com/v1/chat/completions";
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", url);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.setRequestHeader("Authorization", "Bearer " + me.openaiToken);
+
+                xhr.onprogress = function(event) {
+                    var currentResId
+                    if(me.stopSignaled){
+                        xhr.abort();
+                        me.stopSignaled = false;
+                        me.state = 'stopped'
+                    }
+                // console.log("Received " + event.loaded + " bytes of data.");
+                // console.log("Data: " + xhr.responseText);
+                    const newUpdates = xhr.responseText
+                    .replace("data: [DONE]", "")
+                    .trim()
+                    .split('data: ')
+                    .filter(Boolean)
+
+                    const newUpdatesParsed = newUpdates.map((update) => {
+                        const parsed = JSON.parse(update);
+
+                        if(parsed.error){
+                            if(me.client.onError){
+                                me.client.onError(parsed.error);
+                            }
+                            throw new Error(parsed.error.message)
+                        }
+
+                        currentResId = parsed.id
+                        if(!me.gptResponseId){
+                            me.gptResponseId = parsed.id
+                        } 
+                        if(parsed.choices[0].finish_reason == 'length'){
+                            me.finish_reason = 'length'
+                        }
+                        return parsed.choices[0].delta.content || '';
+                    });
+
+                    const newUpdatesJoined = newUpdatesParsed.join('')
+                    if(newUpdatesJoined.includes(": null")){
+                        newUpdatesJoined.replaceAll(": null", ": 'null'")
+                    }
+                    me.modelJson = newUpdatesJoined
+
+                    if(me.client.onReceived){
+                        if(me.gptResponseId == currentResId){
+                            me.client.onReceived(me.modelJson);
+                        }
+                    }
+
+                    if(me.client.onModelCreated){
+                        if(responseCnt > me.responseLimit){
+                            let createdModel = me.createModel(me.modelJson)
+                            if(createdModel){
+                                me.savedModel = createdModel
+                                me.client.onModelCreated(createdModel);
+                                responseCnt = 0;
+                            } else {
+                                me.stop();
+                                if(me.client.onGenerationFinished) {
+                                    me.client.onGenerationFinished(me.savedModel)
+                                    resolve(model); 
+                                }
+                            }
+                        } else {
+                            responseCnt++;
+                        }
+                    }
+
+
+                };
+
+                xhr.onloadend = function() {
+                    console.log("End to Success - onloadend", xhr);
+                    if(me.client){
+                        if(me.finish_reason == 'length'){
+                            console.log('max_token issue')
+                            alert('max_token issue')
+                        } 
+                        // else {
+
+                            me.state = 'end';
+                            let model = null;
+                            if(me.client.onModelCreated){
+                                model = me.createModel(me.modelJson)
+                                if(me.client.input.associatedProject) model.associatedProject = me.client.input.associatedProject
+                                if(me.client.input.persona) model.persona = me.client.input.persona
+                                me.client.onModelCreated(model);
+                            } 
+                            // else {
+                            if(me.client.onGenerationFinished){
+                                if(me.client.input){
+                                    if(me.client.input.associatedProject) model.associatedProject = me.client.input.associatedProject
+                                    if(me.client.input.persona) model.persona = me.client.input.persona
+                                }
+                                me.client.onGenerationFinished(model)
+                                resolve(model); 
+                            }
+                            // }
+                            // if (xhr.status === 0){
+                                //     me.client.onGenerationFinished()
+                                // } else {
+                            // }
+                        // }
+
+
+                        if(localStorage.getItem("useCache")=="true"){
+                            let hashKey = me.generateHashKey(JSON.stringify(messages))
+                            localStorage.setItem("cache-" + hashKey, me.modelJson)
+                        }
+                    
+                    }
+                };
+
+                const data = JSON.stringify({
+                    model: this.model,
+                    messages: messages,
+                    temperature: 1,
+                    frequency_penalty: 0,
+                    presence_penalty: 0,
+                    stream: true,
+                });
+
+                xhr.send(data);
+            }).catch(error => {
+                reject(error); 
+            });
+        });
 
     }
 

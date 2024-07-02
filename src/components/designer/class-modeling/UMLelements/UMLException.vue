@@ -20,7 +20,6 @@
                 v-on:customMoveAction="delayedMove"
                 v-on:moveShape="onMoveShape"
                 v-on:addedToGroup="onAddedToGroup"
-                :image.sync="refreshedImg"
                 :_style="{
                     'label-angle':value.elementView.angle,
                     'font-weight': 'bold', 'font-size': '14',
@@ -38,6 +37,9 @@
                     }"
             ></geometry-rect>
 
+            <sub-elements>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="value.elementView.height"></multi-user-status-indicator>
+            </sub-elements>
             <sub-elements>
                 <rectangle-element
                         :sub-width="'100%'"
@@ -99,7 +101,7 @@
                 v-model="value"
                 :titleName="'Exception Class'"
                 :img="imgSrc"
-                :readOnly="canvas.isReadOnlyModel"
+                :isReadOnly="!isEditElement"
                 @close="closePanel"
         ></uml-exception-panel>
     </div>
@@ -107,13 +109,15 @@
 
 <script>
     import Element from './UMLClassElement'
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
 
     var changeCase = require('change-case');
-
     export default {
         mixins: [Element],
         name: 'uml-exception-class',
-        props: {},
+        components: {
+            'multi-user-status-indicator': MultiUserStatusIndicator,
+        },
         computed: {
             imgSrc() {
                 return `${ window.location.protocol + "//" + window.location.host}/static/image/symbol/class_exception.png`
@@ -158,8 +162,6 @@
                 titleH: 50,
             };
         },
-        created: function () {
-        },
         watch: {
             "name": {
                 deep: true,
@@ -172,10 +174,6 @@
                 }
             },
         },
-        mounted: function () {
-        },
-        methods: {
-        }
     }
 </script>
 

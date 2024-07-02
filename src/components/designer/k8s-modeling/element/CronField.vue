@@ -1,9 +1,9 @@
 <template>
     <div class="cron">
-        <el-popover v-model="cronPopover" :disabled="readOnly">
+        <el-popover v-model="cronPopover" :disabled="isReadOnly">
             <cron @change="changeCron" @close="cronPopover = false" i18n="en"></cron>
             <el-input
-                    :disabled="readOnly"
+                    :disabled="isReadOnly"
                     slot="reference"
                     @click="cronPopover = true"
                     v-model="cronVal"
@@ -22,7 +22,7 @@
         name: 'v-cron-field',
         props: {
             value: String,
-            readOnly: {
+            isReadOnly: {
                 type: Boolean,
                 default: function () {
                     return false

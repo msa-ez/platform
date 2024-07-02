@@ -2,11 +2,10 @@
     <div>
         <!-- <v-container v-if="isLogin" -->
         <v-container 
-        fluid
-        style = "position: fixed;
-        width :100%;
-        height: 100%;
-        overflow: auto;"
+            fluid
+            style = "position: fixed;
+            width :100%;
+            height:91.5vh; overflow-y:auto;"
         >
             <v-row no-gutters style="margin-top: -20px;"> 
                 <v-col
@@ -19,6 +18,8 @@
                         :style="isMobile ? 'width: 65%; margin-top: 56px;':'width: 25%; margin-top: 65px;'"
                         :fixed="true"
                         :temporary="isMobile"
+                        hide-overlay
+                        style="height:calc(100vh - 65px);"
                     >
                         <v-list-item>
                             <v-tooltip bottom>
@@ -48,7 +49,10 @@
 
                         <v-divider></v-divider>
                         
-                        <div style="margin-bottom: 300px;">
+                        <div style="padding-bottom: 200px;
+                            overflow-y: auto;
+                            height:calc(100% - 65px);
+                        ">
 
                             <v-list 
                                 v-if="editModeController == 'inputLabinfo'"
@@ -71,12 +75,6 @@
 
                                         <template v-slot:activator>
                                             <v-list-item-title :style="group.groupName != 'uncategorized' ? (group.labsList.length == 0 ? 'margin-left: -30px;':''):''" v-text="group.groupName"></v-list-item-title>
-                                            <!-- <v-chip
-                                                color="grey"
-                                                text-color="white"
-                                                style="margin-left: 5px;"
-                                                x-small>{{group.labsList.length}}
-                                            </v-chip> -->
                                         </template>
                                         <draggable class="list-group" :list="group.labsList" group="people" @change="log">
                                             <v-list-item 
@@ -88,7 +86,7 @@
                                                 <v-list-item-title 
                                                     style="margin-left: 20px;"
                                                     :key="updateLabsList"
-                                                    >
+                                                >
                                                     <div v-if="AlllabsList[group.groupName] && AlllabsList[group.groupName][labId]">
                                                         <li :style="AlllabsList[group.groupName][labId].active ? '':'opacity: 0.4;'">
                                                             {{AlllabsList[group.groupName][labId].labName}}
@@ -125,12 +123,15 @@
                                 </draggable>
                             </v-list>
                             
-                            <v-list v-else dense expand>
+                            <v-list v-else dense expand
+                                style="display: flex; flex-direction: column; max-width: 100%;"
+                            >
                                 <div v-for="(lab, i) in classInfo.groupedLabsList" :key="i">
                                     <v-list-group
                                         v-if="lab && lab.labsList.length > 0"
                                         :value="true"
                                         @click="selectGroup(lab)"
+                                        class="lab-list-group-box"
                                     >
                                         <template v-slot:activator>
                                             <v-list-item-title>
@@ -138,8 +139,8 @@
                                             </v-list-item-title>
                                             <v-icon v-if="isLoadingLabInfo" color="primary">mdi-spin mdi-loading</v-icon>
                                         </template>
-                                        <div v-for="(groupedLab, i) in lab.labsList" :key="i">
-                                            <div v-if="AlllabsList[lab.groupName] && AlllabsList[lab.groupName][groupedLab]">
+                                        <div v-for="(groupedLab, i) in lab.labsList" :key="i" style="display: flex; max-width: 100%;">
+                                            <div v-if="AlllabsList[lab.groupName] && AlllabsList[lab.groupName][groupedLab]" style="white-space: nowrap;">
                                                 <v-list-item
                                                     v-if="AlllabsList[lab.groupName][groupedLab].active == true || isAdmin"
                                                     link
@@ -182,7 +183,7 @@
                                             </div>
                                             <v-list-item v-else link>
                                                 <v-list-item-title 
-                                                    style="margin-left: 20px;"
+                                                    style="margin-left: 20px; white-space: nowrap;"
                                                     :key="updateLabsList"
                                                     @click="getSelectedLabInfo(lab, groupedLab)" 
                                                 >
@@ -306,108 +307,98 @@
                     </div>
                     <div v-else-if="editModeController == 'openClassInfoCard'" style="margin: 15px; margin-right: -5px;">
                         <div v-if="classInfo && courseId" style="margin: 15px;">
-                            <blur-purchase-item
-                                :item-id='`${courseId}@${classId}`'
-                                :itemAmount="classInfo.price"
-                                :itemPeriod="classInfo.period"
-                                :itemOpenRange="100"
-                                itemResourceType="class"
-                                :class-info="classInfo"
-                                @paid="paidClass"
-                            > 
-                                <div style="margin-left: 10px; float: right;">
-                                    <v-icon v-if="!editClassIntroduction && isAdmin"
-                                        @click="openClassInfoDialog">mdi-information-outline
-                                    </v-icon>
-                                </div>
-                                <h1>강의 소개</h1>
-                                <div v-if="classInfo.price && !isPaidClass">
-                                    <v-icon small> mdi-lock-outline</v-icon>
-                                    클래스 구매
-                                </div>
-                                <div style="display: flex;">
-                                    <h4>Introduction</h4>
-                                    <v-icon style="margin-left: 3px;" small dense v-if="!editClassIntroduction && isAdmin" @click="editClassIntroduction = true">
-                                        mdi-pencil
-                                    </v-icon>
-                                </div>
-                                <div v-if="classIntroduction"
-                                        style="margin-top: 5px; padding: 5px; margin-bottom: 5px;">
-                                    <vue-markdown
-                                            v-if="!editClassIntroduction"
-                                            :style="{ textDecoration: 'none !important' }"
-                                            class="markdown-body"
-                                            :source="classIntroduction"
-                                    >
-                                    </vue-markdown>
-                                </div>
-                                <v-divider v-if="!editClassIntroduction"></v-divider>
-                                <div style="float: right; margin-top: -20px; margin-right: 10px;">
-                                    <v-btn small v-if="editClassIntroduction" text style = "font-size:700;"
-                                            @click="editClassIntroduction=false">Cancel
-                                    </v-btn>
-                                    <v-btn small v-if="editClassIntroduction" text style = "font-size:700;" color="primary"
-                                            @click="editIntroduction(classIntroduction)">Save
-                                    </v-btn>
-                                </div>
-                                <div style="margin-top: 5px; padding: 5px; margin-bottom: 5px;">
-                                    <v-col v-if="editClassIntroduction">
-                                        <vue-simplemde v-model="classIntroduction" ref="markdownEditor"/>
-                                    </v-col>
+                            <div style="margin-left: 10px; float: right;">
+                                <v-icon v-if="!editClassIntroduction && isAdmin"
+                                    @click="openClassInfoDialog">mdi-information-outline
+                                </v-icon>
+                            </div>
+                            <h1>강의 소개</h1>
+                            <div v-if="classInfo.price && !isPaidClass">
+                                <v-icon small> mdi-lock-outline</v-icon>
+                                클래스 구매
+                            </div>
+                            <div style="display: flex;">
+                                <h4>Introduction</h4>
+                                <v-icon style="margin-left: 3px;" small dense v-if="!editClassIntroduction && isAdmin" @click="editClassIntroduction = true">
+                                    mdi-pencil
+                                </v-icon>
+                            </div>
+                            <div v-if="classIntroduction"
+                                    style="margin-top: 5px; padding: 5px; margin-bottom: 5px;">
+                                <vue-markdown
+                                        v-if="!editClassIntroduction"
+                                        :style="{ textDecoration: 'none !important' }"
+                                        class="markdown-body"
+                                        :source="classIntroduction"
+                                >
+                                </vue-markdown>
+                            </div>
+                            <v-divider v-if="!editClassIntroduction"></v-divider>
+                            <div style="float: right; margin-top: -20px; margin-right: 10px;">
+                                <v-btn small v-if="editClassIntroduction" text style = "font-size:700;"
+                                        @click="editClassIntroduction=false">Cancel
+                                </v-btn>
+                                <v-btn small v-if="editClassIntroduction" text style = "font-size:700;" color="primary"
+                                        @click="editIntroduction(classIntroduction)">Save
+                                </v-btn>
+                            </div>
+                            <div style="margin-top: 5px; padding: 5px; margin-bottom: 5px;">
+                                <v-col v-if="editClassIntroduction">
+                                    <vue-simplemde v-model="classIntroduction" ref="markdownEditor"/>
+                                </v-col>
 
-                                    <v-checkbox
-                                            v-if="!editClassIntroduction && isOwner"
-                                            v-model="editCourseMandatory"
-                                            label="이 유형의 모든 클래스에 반영"
-                                            color="primary"
-                                            style="display: table-row;"
-                                    ></v-checkbox>
-                                    <v-row justify="center">
-                                        <v-dialog
-                                            v-model="classInfoDialog"
-                                            width="600px"
-                                        >
-                                            <v-card>
-                                                <v-btn icon @click.native="classInfoDialog = false" style="float: right;">
-                                                    <v-icon color="grey lighten-1">mdi-close</v-icon>
-                                                </v-btn>
-                                                <div style = "padding: 20px 0 0 25px;">
-                                                    <div v-if="classInfo.classId">
-                                                        <span style = "font-weight:700; font-size:16px;">Class ID</span>
-                                                        <v-text-field
-                                                            id="copy-class-id"
-                                                            label="ClassId"
-                                                            :value="classInfo.classId"
-                                                            append-icon="mdi-clipboard-text"
-                                                            solo
-                                                            readonly
-                                                            @click:append="copytoClipBoard('classId')"
-                                                            style="margin-right:25px;"
-                                                        ></v-text-field>
-                                                    </div>
-                                                    <div v-if="classInfo.connectionKey">
-                                                        <span style = "font-weight:700; font-size:16px;">Connection Key</span>
-                                                        <v-text-field
-                                                            id="copy-connection-key"
-                                                            label="ConnectionKey"
-                                                            :value="classInfo.connectionKey"
-                                                            append-icon="mdi-clipboard-text"
-                                                            solo
-                                                            readonly
-                                                            @click:append="copytoClipBoard('connectionKey')"
-                                                            style="margin-right:25px;"
-                                                        ></v-text-field>
-                                                    </div>
+                                <v-checkbox
+                                        v-if="!editClassIntroduction && isOwner"
+                                        v-model="editCourseMandatory"
+                                        label="이 유형의 모든 클래스에 반영"
+                                        color="primary"
+                                        style="display: table-row;"
+                                ></v-checkbox>
+                                <v-row justify="center">
+                                    <v-dialog
+                                        v-model="classInfoDialog"
+                                        width="600px"
+                                    >
+                                        <v-card>
+                                            <v-btn icon @click.native="classInfoDialog = false" style="float: right;">
+                                                <v-icon color="grey lighten-1">mdi-close</v-icon>
+                                            </v-btn>
+                                            <div style = "padding: 20px 0 0 25px;">
+                                                <div v-if="classInfo.classId">
+                                                    <span style = "font-weight:700; font-size:16px;">Class ID</span>
+                                                    <v-text-field
+                                                        id="copy-class-id"
+                                                        label="ClassId"
+                                                        :value="classInfo.classId"
+                                                        append-icon="mdi-clipboard-text"
+                                                        solo
+                                                        readonly
+                                                        @click:append="copytoClipBoard('classId')"
+                                                        style="margin-right:25px;"
+                                                    ></v-text-field>
                                                 </div>
-                                                <div v-if="!classInfo.archive" style="text-align-last: center;">
-                                                    <v-divider style="margin: 20px;" />
-                                                    <v-btn small style="margin-bottom: 10px; margin-top: -10px;" color="error" @click="openMoveDialog = true">강의 종료</v-btn>
+                                                <div v-if="classInfo.connectionKey">
+                                                    <span style = "font-weight:700; font-size:16px;">Connection Key</span>
+                                                    <v-text-field
+                                                        id="copy-connection-key"
+                                                        label="ConnectionKey"
+                                                        :value="classInfo.connectionKey"
+                                                        append-icon="mdi-clipboard-text"
+                                                        solo
+                                                        readonly
+                                                        @click:append="copytoClipBoard('connectionKey')"
+                                                        style="margin-right:25px;"
+                                                    ></v-text-field>
                                                 </div>
-                                            </v-card>
-                                        </v-dialog>
-                                    </v-row>
-                                </div>
-                            </blur-purchase-item>
+                                            </div>
+                                            <div v-if="!classInfo.archive" style="text-align-last: center;">
+                                                <v-divider style="margin: 20px;" />
+                                                <v-btn small style="margin-bottom: 10px; margin-top: -10px;" color="error" @click="openMoveDialog = true">강의 종료</v-btn>
+                                            </div>
+                                        </v-card>
+                                    </v-dialog>
+                                </v-row>
+                            </div>
                         </div>
                     </div>
                     
@@ -993,23 +984,12 @@
                             <v-icon>mdi-close</v-icon>
                         </v-btn>
                     </div>
-                    <blur-purchase-item
-                            :itemId="`video@${videoId}`"
-                            :itemAmount="selectedLabInfo.videoPrice"
-                            :itemPeriod="selectedLabInfo.videoPeriod"
-                            itemResourceType="video"
-                            :lab-info="selectedLabInfo"
-                            :class-info="classInfo"
-                            :item-open-range="90"
-                            :showLoginDialog="false"
-                    >
-                        <div style="height: 90%;">
+                    <div style="height: 90%;">
                             <youtube-media
                                     style="width:100%; height: 100%;"
                                     :video-id="videoId"
                             ></youtube-media>
                         </div>
-                    </blur-purchase-item>
                 </v-card>
             </v-dialog>
             <v-snackbar
@@ -1046,6 +1026,7 @@
     import draggable from 'vuedraggable'
     import BlurPurchaseItem from "../payment/BlurPurchaseItem";
     import ModelCanvasVue from "../designer/modeling/ModelCanvas.vue";
+    import BlurServiceByUsage from "../payment/BlurServiceByUsage.vue";
 
     export default {
         name: "ClassDetail",
@@ -1053,7 +1034,8 @@
         order: 0,
         components: {
             draggable,
-            'blur-purchase-item' : BlurPurchaseItem
+            'blur-purchase-item' : BlurPurchaseItem,
+            'blur-service-usage' : BlurServiceByUsage
         },
         mixins: [LabBase],
         props: {},

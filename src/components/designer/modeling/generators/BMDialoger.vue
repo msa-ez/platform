@@ -1,9 +1,9 @@
 <template>
     <div style="margin-top: 10px;">
         <div>
-            <v-btn v-if="value.modelList" class="auto-modeling-btn" color="primary" @click="jump()">Create Model<v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon></v-btn>
+            <v-btn v-if="value && value.modelList" class="auto-modeling-btn" color="primary" @click="jump()">Create Model<v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon></v-btn>
         </div>
-        <div v-if="value.modelList && value.modelList.length > 0"
+        <div v-if="value && value.modelList && value.modelList.length > 0"
              class="auto-modeling-message-card"
              style="margin-top:25px; height: 100%; width: 20%;">
             <!-- <v-col v-if="value && value.modelList && value.modelList.length > 0"
@@ -19,21 +19,34 @@
 
 <script>
     import { VueTypedJs } from 'vue-typed-js'
+    import StorageBase from '../../../CommonStorageBase.vue';
 
     export default {
         name: 'bm-dialoger',
+        mixins:[StorageBase],
         props: {
             value: Object,
             prompt: String,
             projectId: String,
+            modelIds: Object,
+            isServerProject: Boolean
         },
         components: {
             VueTypedJs
         },
-
-        created(){
+        async created(){
+            await this.setUserInfo()
         },
         watch: {
+            "prompt": {
+                deep:true,
+                handler:  _.debounce(function(newVal, oldVal)  {
+                    if(this.isCreatedModel){
+                        this.modelIds.BMDefinitionId = this.uuid()
+                        this.isCreatedModel = false
+                    }
+                },1000)
+            }
         },
         mounted(){
             var me = this
@@ -43,11 +56,14 @@
         },
         data() {
             return {
+                isCreatedModel: false,
                 projectExisted: false,
                 state:{
                     generator: "BMGenerator",
                     title: this.prompt,
                 },
+                storageCondition: null,
+                showStorageDialog: false,
             }
         },
         methods: {
@@ -59,34 +75,23 @@
                 me.$emit("input", me.value);
                 me.$emit("change", 'businessModel');
             },
-            createDefinition(){
-                console.log('createDefinition BM')
-
-            },
             onGenerationFinished(){},  
             jump(){
                 var me = this 
-                let uuid = this.uuid();
 
                 this.$emit('state','BM')
 
                 // this.state.title = this.value;
-                if(!me.value){
-                    me.value = {}
-                    if(!me.value.modelList){
-                        me.value.modelList = []
-                    }
-                }
-                me.value.modelList.push(uuid)
+                if(!me.value) me.value = {}
+                if(!me.value.modelList) me.value.modelList = []
+
+                // if(me.isServerProject) me.value.modelList.push(me.modelIds.BMDefinitionId)
+                if(me.isServerProject) me.state.associatedProject = me.modelIds.projectId
                 me.$emit("input", me.value);
                 me.$emit("change", 'businessModel');
-
-                let stateJson = JSON.stringify(this.state);
-                localStorage["gen-state"] = stateJson;
-
-                window.open(`/#/business-model-canvas/${uuid}`, "_blank")
-                //this.$router.push(`business-model-canvas/${uuid}`);
-
+                
+                localStorage["gen-state"] = JSON.stringify(this.state);
+                window.open(`/#/business-model-canvas/${me.modelIds.BMDefinitionId}`, "_blank")
             },
 
 

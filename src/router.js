@@ -6,6 +6,7 @@ import ModelerRouter from './components/designer/ModelerRouter'
 import ModelerImageGenerator from './components/designer/ModelerImageGenerator'
 import ProcessDesigner from './components/designer/process/ProcessDesigner'
 import OpenIdRedirect from './components/oauth/OpenIdRedirect'
+import ModelingResult from './components/designer/ModelingResult'
 // import ViewModelingDesigner from "./components/designer/modeling/ViewModelingDesigner";
 Vue.component("modeler-router", ModelerRouter);
 Vue.component("modeler-image-generator", ModelerImageGenerator);
@@ -13,51 +14,30 @@ Vue.component("process-designer", ProcessDesigner);
 // Vue.component('view-modeling-designer', ViewModelingDesigner);
 
 ////////////////////////
+const BusinessModel = () => import(/* webpackChunkName: "BusinessModel" */ "./components/designer/business-model-canvas/BusinessModel");
+const ContextMappingModel = () => import(/* webpackChunkName: "ContextMappingModel" */ "./components/designer/context-mapping-modeling/ContextMappingModel");
+const CustomerJourneyMap = () => import(/* webpackChunkName: "CustomerJourneyMap" */ "./components/designer/customer-journey-map/CustomerJourneyMap");
+const EventStormingModel = () => import(/* webpackChunkName: "EventStormingModel" */ "./components/designer/es-modeling/EventStormingModel");
+const KubernetesModel = () => import(/* webpackChunkName: "KubernetesModel" */ "./components/designer/k8s-modeling/KubernetesModel");
+const StickyModel = () => import(/* webpackChunkName: "StickyModel" */ "./components/designer/sticky-modeling/StickyModel");
+const UserStoryMap = () => import(/* webpackChunkName: "UserStoryMap" */ "./components/designer/user-story-map/UserStoryMap");
+const UMLClassModel = () => import(/* webpackChunkName: "UMLClassModel" */ "./components/designer/class-modeling/UMLClassModel");
+const BpmnModel = () => import(/* webpackChunkName: "BpmnModel" */ "./components/designer/bpmnModeling/BpmnModel");
+const Project = () => import(/* webpackChunkName: "ProjectModel" */ "./components/designer/project-modeling/ProjectModel");
+const LegacyModernizer = () => import(/* webpackChunkName: "LegacyModernizer" */ "./components/designer/legacy-modernizer/components/DashBoard");
+
 const StartElectron = () =>
   import(/* webpackChunkName: "startelectron" */ "./components/labs/StartElectron");
 const LabPortal = () =>
   import(/* webpackChunkName: "LabPortal" */ "./components/labs/LabPortal");
-const EventStorming = () =>
-  import(/* webpackChunkName: "EventStorming" */ "./components/designer/es-modeling/EventStorming");
-const Project = () =>
-  import(
-    /* webpackChunkName: "EventStorming" */ "./components/designer/project-modeling/ProjectModel"
-  );
-const ContextMapping = () =>
-  import(
-    /* webpackChunkName: "EventStorming" */ "./components/designer/context-mapping-modeling/ContextMappingModelCanvas"
-  );
-const ClassModeler = () =>
-  import(
-    /* webpackChunkName: "ClassModeler" */ "./components/designer/class-modeling/ClassModeler"
-  );
+
 const ReplayPortal = () =>
   import(
     /* webpackChunkName: "ReplayPortal" */ "./components/designer/modeling/ReplayPortal"
   );
-const BusinessModelCanvas = () =>
-  import(
-    /* webpackChunkName: "BusinessModelCanvas" */ "./components/designer/business-model-canvas/BusinessModelCanvas"
-  );
 const IdeLoadingPage = () =>
   import(
     /* webpackChunkName: "IdeLoadingPage" */ "./components/IdeLoadingPage"
-  );
-const KubernetesModelCanvas = () =>
-  import(
-    /* webpackChunkName: "KubernetesModelCanvas" */ "./components/designer/k8s-modeling/KubernetesModelCanvas"
-  );
-const StickyModelCanvas = () =>
-  import(
-    /* webpackChunkName: "StickyModelCanvas" */ "./components/designer/sticky-modeling/StickyModelCanvas"
-  );
-const BpmnModelCanvas = () =>
-  import(
-    /* webpackChunkName: "BpmnModelCanvas" */ "./components/designer/bpmnModeling/BpmnModelCanvas"
-  );
-const CustomerJourneyMap = () =>
-  import(
-    /* webpackChunkName: "CustomerJourneyMap" */ "./components/designer/customer-journey-map/CustomerJourneyMap"
   );
 const ClazzListPage = () =>
   import(
@@ -99,10 +79,10 @@ const BpmnProcessDesigner = () =>
   import(
     /* webpackChunkName: "ProcessDesigner" */ "./components/designer/bpmnModeling/ProcessDesigner"
   );
-const MyPageManager = () =>
-  import(
-    /* webpackChunkName: "MyPageManager" */ "./components/oauth/MyPageManager"
-  );
+const MyPage = () =>
+import(
+  /* webpackChunkName: "MyPage" */ "./components/mypage/MyPage"
+);
 const SignInHelper = () =>
   import(
     /* webpackChunkName: "SignInHelper" */ "./components/oauth/SignInHelper"
@@ -139,77 +119,150 @@ var options = {
       name: "EventStormingListPages",
       component: LabPortal, //ListPages
     },
+    // BusinessModel
+    {
+      path: "/business-model-canvas/:projectId",
+      name: "BusinessModel",
+      component: BusinessModel,
+    },
+    {
+      path: "/:providerUid/business-model-canvas/:projectId",
+      name: "BusinessModel",
+      component: BusinessModel,
+    },
+    // EventStormingModel
     {
       path: "/storming/:projectId",
-      name: "EventStormingCanvas",
-      component: EventStorming, // EventStormingModelCanvas  EventStorming
+      name: "EventStormingModel",
+      component: EventStormingModel,
+    },
+    {
+      path: "/:providerUid/storming/:projectId",
+      name: "EventStormingModel",
+      component: EventStormingModel, 
+    },
+    // ContextMappingModel
+    {
+      path: "/cm/:projectId",
+      name: "ContextMappingModel",
+      component: ContextMappingModel,
+    },
+    {
+      path: "/:providerUid/cm/:projectId",
+      name: "ContextMappingModel",
+      component: ContextMappingModel,
+    },
+    // CustomerJourneyMap
+    {
+      path: "/cjm/:projectId",
+      name: "CustomerJourneyMap",
+      component: CustomerJourneyMap,
+    },
+    {
+      path: "/:providerUid/cjm/:projectId",
+      name: "CustomerJourneyMap",
+      component: CustomerJourneyMap,
+    },
+    // StickyModel
+    {
+      path: "/sticky/:projectId",
+      name: "StickyModel",
+      component: StickyModel,
+    },
+    {
+      path: "/:providerUid/sticky/:projectId",
+      name: "StickyModel",
+      component: StickyModel,
+    },
+    // KubernetesModel
+    {
+      path: "/kubernetes/:projectId",
+      name: "KubernetesModel",
+      component: KubernetesModel,
+    },
+    {
+      path: "/:providerUid/kubernetes/:projectId",
+      name: "KubernetesModel",
+      component: KubernetesModel,
+    },
+    // BpmnModel
+    {
+      path: "/bpmn",
+      name: "BpmnProcessDesigner",
+      component: BpmnProcessDesigner,
+    },
+    {
+      path: "/bpmn/:projectId",
+      name: "BpmnModel",
+      component: BpmnModel,
+    },
+    {
+      path: "/:providerUid/bpmn/:projectId",
+      name: "BpmnModel",
+      component: BpmnModel,
+    },
+    // UMLClassModel
+    {
+      path: "/uml/:projectId",
+      name: "ClassModelCanvas",
+      component: UMLClassModel,
+    },
+    {
+      path: "/:providerUid/uml/:projectId",
+      name: "ClassModelCanvas",
+      component: UMLClassModel,
     },
     {
       path: "/uml-class/:aggregateId",
       name: "UMLClassCanvas",
-      component: ClassModeler,
+      component: UMLClassModel,
     },
     {
-      // path: '/replay/:projectId/:snapshotKey/:queueKey',
-      path: "/replay/:projectId/:queueKey",
-      name: "ReplayPortal",
-      component: ReplayPortal,
+      path: "/:providerUid/uml-class/:aggregateId",
+      name: "UMLClassCanvas",
+      component: UMLClassModel,
     },
-    {
-      path: "/business-model-canvas/:projectId",
-      name: "BusinessModelCanvas",
-      component: BusinessModelCanvas,
-    },
-    {
-      path: "/IdeLoadingPage",
-      name: "IdeLoadingPage",
-      component: IdeLoadingPage,
-    },
-    {
-      path: "/kubernetes/:projectId",
-      name: "KubeModelingCanvas",
-      component: KubernetesModelCanvas,
-    },
-    {
-      path: "/sticky/:projectId",
-      name: "StickyModelCanvas",
-      component: StickyModelCanvas,
-    },
-    {
-      path: "/bpmn/:projectId",
-      name: "BpmnModelCanvas",
-      component: BpmnModelCanvas,
-    },
-    {
-      path: "/uml/:projectId",
-      name: "ClassModelCanvas",
-      component: ClassModeler,
-    },
+    // ProjectModel
     {
       path: "/project/:projectId",
       name: "ProjectModel",
       component: Project,
     },
     {
-        path: "/cm/:projectId",
-        name: "ContextMapping",
-        component: ContextMapping,
+      path: "/:providerUid/project/:projectId",
+      name: "ProjectModel",
+      component: Project,
+    },
+    // UserStoryMap
+    {
+      path: "/userStoryMap/:projectId",
+      name: "UserStoryMap",
+      component: UserStoryMap,
     },
     {
-        path: "/cjm/:projectId",
-        name: "CustomerJourneyMap",
-        component: CustomerJourneyMap,
+      path: "/:providerUid/userStoryMap/:projectId",
+      name: "UserStoryMap",
+      component: UserStoryMap,
+    },
+
+    ////////////////////////////////////
+    {
+      // path: '/replay/:projectId/:snapshotKey/:queueKey',
+      path: "/replay/:projectId/:queueKey",
+      name: "ReplayPortal",
+      component: ReplayPortal,
+    },
+   
+    {
+      path: "/IdeLoadingPage",
+      name: "IdeLoadingPage",
+      component: IdeLoadingPage,
     },
     {
-        path: "/courses",
-        name: "classList",
-        component: ClazzListPage,
+      path: "/courses",
+      name: "classList",
+      component: ClazzListPage,
     },
-    // {
-    //     path: "/courses/labAdminTest",
-    //     name: "labAdminTest",
-    //     component: labAdminTest,
-    // },
     {
         path: "/manager",
         name: "ManagePurchaseItemListPage",
@@ -220,15 +273,10 @@ var options = {
         name: "PersonalInfo",
         component: PersonalInfo,
     },
-    // {
-    //     path: '/courses/admin',
-    //     name: 'adminClazzList',
-    //     component: AdminClazzListPage
-    // },
     {
-        path: "/courses/:courseId/:classId",
-        name: "ClassRounge",
-        component: ClassRounge,
+      path: "/courses/:courseId/:classId",
+      name: "ClassRounge",
+      component: ClassRounge,
     },
     {
         path: "/courses/:courseId/:classId/:labId/class-room",
@@ -265,15 +313,11 @@ var options = {
         name: "LoginPage",
         component: LoginPage,
     },
-    {
-        path: "/bpmn",
-        name: "BpmnProcessDesigner",
-        component: BpmnProcessDesigner,
-    },
+
     {
         path: "/myPage",
         name: "MyPage",
-        component: MyPageManager,
+        component: MyPage,
     },
     {
         path: "/sign-in-helper",
@@ -299,7 +343,34 @@ var options = {
         path: '/dpg/redirect',
         name: "OpenId",
         component: OpenIdRedirect
-    }
+    },
+    {
+        path: '/result',
+        name: "Result",
+        component: ModelingResult
+    },
+    {
+        path: '/legacy-modernizer/:projectId',
+        name: "LegacyModernizer",
+        component: LegacyModernizer
+    },
+    {
+        path: "/:providerUid/legacy-modernizer/:projectId",
+        name: "LegacyModernizer",
+        component: LegacyModernizer,
+    },
+      
+    // {
+    //     path: "/courses/labAdminTest",
+    //     name: "labAdminTest",
+    //     component: labAdminTest,
+    // },
+    // {
+    //     path: '/courses/admin',
+    //     name: 'adminClazzList',
+    //     component: AdminClazzListPage
+    // },
+    
     ]
 }
 export default new Router(options);

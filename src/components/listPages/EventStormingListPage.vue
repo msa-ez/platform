@@ -886,15 +886,6 @@
                 </div>
             </div>
         </slot>
-
-        <slot name="footer">
-            <div style="min-height: 190px;">
-                <v-footer padless>
-                    <ProvisionIndication :style="!showLoading && showMoreButton ? 'padding-top:40px':''"
-                                          divider></ProvisionIndication>
-                </v-footer>
-            </div>
-        </slot>
         <!-- <div style="position: fixed; z-index:999; right:5px; bottom:5px;">
             <button style="background-color:white; color:red; border-radius:100%; height:40px; width:40px; border:0; outline:0; padding-top:8px;"
                     @click="showInitVideos.show = true">

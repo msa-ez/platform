@@ -45,6 +45,7 @@
                                 var email = user.email ? user.email : user.providerData[0].email
                                 var name = user.displayName ? user.displayName : user.providerData[0].displayName
                                 var profile = user.photoURL ? user.photoURL : user.providerData[0].photoURL
+                                var providerUid = user.providerData[0].uid
 
                                 if (user.providerData[0].providerId == "github.com") {
                                     email = user.providerData[0].email
@@ -55,6 +56,7 @@
                                     name: name,
                                     email: email,
                                     uid: user.uid,
+                                    providerUid: providerUid,
                                     profile: profile,
                                     authorized: null,
                                     accessToken: user.ya,

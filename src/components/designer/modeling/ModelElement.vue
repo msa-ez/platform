@@ -15,6 +15,8 @@
                 canvas: null,
                 // 움직임 변화
                 movingElement: false,
+                // 이전 움직였던 element 파악.
+                isMovedElement: false,
                 // panel 열림 닫힘.
                 propertyPanel: false,
                 // 우측상단 프로필 변수
@@ -35,23 +37,24 @@
                 // ??
                 messageRef: {},
                 EndProgressing: false,
-                // remove.
-                modelCanvasComponent: null,
             }
         },
         created: function () {
             var me = this
-            me.fullPath = this.$route.fullPath.split('/')
-            me.params = this.$route.params
-            me.paramKeys = Object.keys(me.params)
+            me.$app.try({
+                context: me,
+                async action(me){
+                    me.fullPath = me.$route.fullPath.split('/')
+                    me.params = me.$route.params
+                    me.paramKeys = Object.keys(me.params)
 
-            me.setElementCanvas()
-
+                    me.setElementCanvas()
+                }
+            })
             // me.messageRef = firebase.database().ref(`/${me.$route.params.author}/${me.$route.params.projectName}`);
         },
         beforeDestroy() {
-            // console.log("destory");
-            this.removeAction();
+            this.executeElementBeforeDestroy();   
         },
         watch: {
             "value.elementView": {
@@ -76,9 +79,6 @@
             "alertImage": function () {
                 this.refreshImg()
             },
-            "newEditUserImg": function () {
-                this.refreshImg()
-            },
             "value.rotateStatus": function () {
                 var me = this
                 if (this.value.elementView) {
@@ -95,25 +95,33 @@
                     }
                 }
             },
+            'staySelected': function (newVal, oldVal) {
+                if (newVal) {
+                    this.canvas.pushUserSelectionStayedQueue(this.value)
+                } else {
+                    this.canvas.pushUserSelectionReleasedQueue(this.value)
+                }
+
+            },
+            "selected": _.debounce(function (newVal) {
+                this.staySelected = newVal && !this.propertyPanel;
+            }, 2000),
 
         },
         mounted: function () {
             var me = this
-            var elementId = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
-
-            // me.$EventBus.$on('es-EndProgressing', function (newVal) {
-            //     me.EndProgressing = true
-            // })
-
+            let elementId = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
             me.$EventBus.$on(`${elementId}`, function (obj) {
-
-
                 if ( obj.action == 'elementPush' ) {
                     me.STATUS_COMPLETE = obj.STATUS_COMPLETE
                 } else if ( obj.action == 'elementDelete' ) {
                     //STATUS_COMPLETE_elementDelete
                     me.STATUS_COMPLETE = obj.STATUS_COMPLETE
                 } else if ( obj.action == 'elementMove' ) {
+                    if(!me.canvas.isServerModel || (me.canvas.isServerModel && obj.STATUS_COMPLETE) ){
+                        me.validate()
+                        me.onMoveAction();
+                    }
                     me.STATUS_COMPLETE = obj.STATUS_COMPLETE
                     me.movingElement = obj.movingElement
                 } else if ( obj.action == 'valueModify' ) {
@@ -129,42 +137,49 @@
                         me.STATUS_COMPLETE = obj.STATUS_COMPLETE
                     })
                 } else if ( obj.action =='relationMove' ) {
-                    me.$nextTick(function () {
-                        me.STATUS_COMPLETE = obj.STATUS_COMPLETE
-                        me.movingElement = obj.movingElement
-                    })
+                    if(!me.canvas.isServerModel || (me.canvas.isServerModel && obj.STATUS_COMPLETE) ){
+                        me.validate()
+                        me.onMoveAction();
+                    }
+                    me.STATUS_COMPLETE = obj.STATUS_COMPLETE
+                    me.movingElement = obj.movingElement
                 } else if (obj.action == 'userPanelOpen' || obj.action == 'userSelectedOn' || obj.action == 'userMovedOn') {
-                    if(!me.newEditUserImg) {
-                        me.newEditUserImg = []
+                    me.newEditUserImg = me.newEditUserImg || [];
+                    if (!me.newEditUserImg.some(user => user.uid === obj.uid)) {
+                        me.newEditUserImg.push(obj);
                     }
-                    if (me.newEditUserImg.findIndex(user => user.uid == obj.uid) == -1) {
-                        me.newEditUserImg.push(obj)
-                    }
-
+                    me.refreshImg()
                 } else if (obj.action == 'userPanelClose' || obj.action == 'userSelectedOff' || obj.action == 'userMovedOff') {
-                    if (me.newEditUserImg.length > 0) {
-                        me.newEditUserImg.forEach(function (user, idx) {
-                            if (user.uid == obj.uid) {
-                                me.newEditUserImg.splice(idx, 1)
-                            }
-                        })
-                    }
+                    me.newEditUserImg = me.newEditUserImg.filter(user => user.uid !== obj.uid);
+                    me.refreshImg()
                 }
             })
+
+            // me.$EventBus.$on('es-EndProgressing', function (newVal) {
+            //     me.EndProgressing = true
+            // })
+
+             me.$EventBus.$on('isMovedElement', function (id) {
+                if(!me.value.elementView) return;
+
+                if (elementId == id) {
+                    if(me.isMovedElement) return;
+
+                    me.isMovedElement = true
+                    me.canvas.pushUserMovementActivatedQueue(me.value)
+                } else {
+                    if(!me.isMovedElement) return;
+                    
+                    me.isMovedElement = false
+                    me.canvas.pushUserMovementDeactivatedQueue(me.value)
+                }                
+            });
 
 
             // Rotate Element
             me.onRotateElement()
-
         },
         computed: {
-            isCustomMoveExist() {
-                // REMOVE
-                if (this.canvas)
-                    return this.canvas.isCustomMoveExist
-
-                return false
-            },
             selectable(){
                 return !this.movingElement
             },
@@ -175,6 +190,9 @@
                 return !this.canvas.isReadOnlyModel && !this.movingElement
             },
             deletable(){
+                return !this.canvas.isReadOnlyModel && !this.movingElement
+            },
+            connectable(){
                 return !this.canvas.isReadOnlyModel && !this.movingElement
             },
             filteredElementValidationResults(){
@@ -192,15 +210,6 @@
                     me.refreshImg()
                 }
             },
-            getEditUid(){
-                if( localStorage.getItem('uid') ){
-                    return localStorage.getItem('uid')
-                }
-                return null
-            },
-            editUserImg() {
-                return this.newEditUserImg
-            },
             storage() {
                 if (this.canvas) {
                     return this.canvas.storage
@@ -213,46 +222,73 @@
                     return this.canvas.isClazzModeling
                 return false
             },
+            isEditElement() {
+
+                // const { canvas } = this;
+                // if (!canvas || canvas.isReadOnlyModel) return false;
+                // const isAuthor = canvas.userInfo.uid === canvas.information?.author;
+                // const isElementAuthor = this.elementAuthor ? this.elementAuthor === canvas.userInfo.uid : isAuthor;
+                // return isAuthor || isElementAuthor;
+                
+                var me = this
+                if (me.canvas) {
+                    if (me.canvas.isReadOnlyModel) {
+                        return false
+                    } else {
+                        if (me.canvas.information && me.canvas.information.author) {
+                            if (me.canvas.userInfo.uid == me.canvas.information.author) {
+                                //project author
+                                return true
+                            } else {
+                                if (me.elementAuthor) {
+                                    return me.elementAuthor == me.canvas.userInfo.uid
+                                } else {
+                                    if (me.canvas.information.author == me.canvas.userInfo.uid) {
+                                        return true
+                                    } else {
+                                        return false
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return true
+            },
         },
         methods: {
             setElementCanvas(){
                 throw new Error('setElementCanvas() must be implement')
             },
-            removeAction(){},
-            exceptionError(message, options){
-                var me = this
-                var msg = message ? message : '[Element] Exception Error.'
-                if(me.canvas){
-                    me.canvas.exceptionError(msg,options)
-                }
-                console.error(`[Element] Exception: ${msg}`);
-            },
+            executeElementBeforeDestroy(){ return },
+            validate() { return; },
+            onMoveAction() { return; },
             openPanel() {
-                // var openPanelStatus = false
-                // if(this.canvas.isServerModel && this.canvas.isQueueModel) {
-                //     if(this.EndProgressing || this.value.name == "" || this.value.name.includes('BoundedContext')) {
-                //         this.EndProgressing = true
-                //         openPanelStatus = true
-                //     }
-                // } else {
-                //     openPanelStatus = true
-                // }
-                // if(openPanelStatus) {
-                    if(this.propertyPanel) this.propertyPanel = false
-                    this.propertyPanel = true
-                    this.staySelected = false
-                // }
+                if(this.propertyPanel) this.propertyPanel = false
+                this.propertyPanel = true
+                this.staySelected = false
             },
             closePanel() {
                 if(!this.propertyPanel) this.propertyPanel = true
                 this.propertyPanel = false
+            },
+            selectedActivity: function () {
+                var me = this
+                if (me.value) {
+                    me.selected = true
+                    me.$EventBus.$emit('selectedElement', {selected: true, id: me.value.elementView.id, value: me.value})
+                    me.onActivitySelected()
+                }
             },
             deSelectedActivity: function () {
                 var me = this
 
                 if (me.value) {
                     me.selected = false
+                    me.staySelected = false
                     me.propertyPanel = false
+                    me.$EventBus.$emit('selectedElement', {selected: false, id: me.value.elementView.id})
+                    me.onActivityDeselected()
                 }
             },
             refreshImg() {
@@ -266,127 +302,163 @@
                     }
                 })
             },
+            /**
+             * Shape 선택 설정 커스텀 이벤트
+             **/
+            onActivitySelected(){
+                return;
+            },
+            /**
+             * Shape 선택 해제 커스텀 이벤트
+            **/
+            onActivityDeselected(){
+                return;
+            },
+            /**
+             * Element 회전
+             **/
             onRotateElement(){
-                if (this.value.elementView) {
-                    var positionX = this.value.elementView.x / 1000
-                    var positionY = this.value.elementView.y / 1000
-                    $(`#${this.value.elementView.id}`).css('transform-origin', `${positionX}% ${positionY}%`);
-                    if (this.value.rotateStatus) {
-                        $(`#${this.value.elementView.id}`).css('transform', `rotate(-30deg)`);
-                        this.value.rotateStatus = true
-                    } else if (this.value.rotateStatus == false) {
-                        $(`#${this.value.elementView.id}`).css('transform-origin', `${positionX}% ${positionY}%`);
-                        $(`#${this.value.elementView.id}`).css('transform', `rotate(0deg)`);
-                        this.value.rotateStatus = false
-                    }
+                return
+            },
+            /**
+             * OG > Element의 이동시 
+             **/
+            onMoveShape() {
+                var me = this
+                if(me.canvas.isUserInteractionActive()){
+                    let elementId = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
+                     me.$EventBus.$emit('isMovedElement', elementId)
                 }
             },
+            /**
+             * OG >  
+             * BeforeEvent: Element의 이동(서버)
+             **/
             delayedMove(dx, dy, dw, dh, du, dlw, dl, dr) {
                 var me = this
-                try{
-                    var offsetX, offsetY, offsetW, offsetH
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let offsetX, offsetY, offsetW, offsetH
 
-                    var originX = me.value.elementView.x
-                    var originY = me.value.elementView.y
-                    var originW = me.value.elementView.width
-                    var originH = me.value.elementView.height
+                        let originX = me.value.elementView.x
+                        let originY = me.value.elementView.y
+                        let originW = me.value.elementView.width
+                        let originH = me.value.elementView.height
 
-                    if (dx == null && dy == null) {
-                        // resize
-
-                        if (Math.abs(dl) <= Math.abs(dr)) {
-                            // 오른쪽으로 움직임
-                            if (dr >= 0) {
-                                offsetX = originX + (Math.abs(dl + dr) / 2.0)
-                            } else {
-                                offsetX = originX - (Math.abs(dl + dr) / 2.0)
+                        if (dx == null && dy == null) {
+                            // resize
+                            if (Math.abs(dl) <= Math.abs(dr)) {
+                                // 오른쪽으로 움직임
+                                if (dr >= 0) {
+                                    offsetX = originX + (Math.abs(dl + dr) / 2.0)
+                                } else {
+                                    offsetX = originX - (Math.abs(dl + dr) / 2.0)
+                                }
+                            } else if (Math.abs(dl) > Math.abs(dr)) {
+                                // 왼쪽 으로 움직임
+                                if (dl >= 0) {
+                                    offsetX = originX - (Math.abs(dl + dr) / 2.0)
+                                } else {
+                                    offsetX = originX + (Math.abs(dl + dr) / 2.0)
+                                }
                             }
 
+                            if (Math.abs(dlw) <= Math.abs(du)) {
+                                //위로 움직임
+                                if (du >= 0) {
+                                    offsetY = originY - (Math.abs(du + dlw) / 2.0)
+                                } else {
+                                    offsetY = originY + (Math.abs(du + dlw) / 2.0)
+                                }
 
-                        } else if (Math.abs(dl) > Math.abs(dr)) {
-                            // 왼쪽 으로 움직임
-                            if (dl >= 0) {
-                                offsetX = originX - (Math.abs(dl + dr) / 2.0)
-                            } else {
-                                offsetX = originX + (Math.abs(dl + dr) / 2.0)
+                            } else if (Math.abs(dlw) > Math.abs(du)) {
+                                //아래로 움직임
+                                if (dlw >= 0) {
+                                    offsetY = originY + (Math.abs(du + dlw) / 2.0)
+                                } else {
+                                    offsetY = originY - (Math.abs(du + dlw) / 2.0)
+                                }
                             }
 
+                            offsetW = dw
+                            offsetH = dh
+                        } else if (dw == null && dh == null) {
+                            //move
+                            offsetX = originX + dx
+                            offsetY = originY + dy
+                            offsetW = originW
+                            offsetH = originH
+                        } else {
+                            console.log('error Move & Resize')
                         }
+                        let afterViewObj = {x: offsetX, y: offsetY, width: offsetW, height: offsetH}
+                        let beforeViewObj = {x: originX, y: originY, width: originW, height: originH}
 
-                        if (Math.abs(dlw) <= Math.abs(du)) {
-                            //위로 움직임
-                            if (du >= 0) {
-                                offsetY = originY - (Math.abs(du + dlw) / 2.0)
-                            } else {
-                                offsetY = originY + (Math.abs(du + dlw) / 2.0)
-                            }
-
-                        } else if (Math.abs(dlw) > Math.abs(du)) {
-                            //아래로 움직임
-                            if (dlw >= 0) {
-                                offsetY = originY + (Math.abs(du + dlw) / 2.0)
-                            } else {
-                                offsetY = originY - (Math.abs(du + dlw) / 2.0)
-                            }
-
-                        }
-
-                        offsetW = dw
-                        offsetH = dh
-
-                    } else if (dw == null && dh == null) {
-                        //move
-                        offsetX = originX + dx
-                        offsetY = originY + dy
-                        offsetW = originW
-                        offsetH = originH
-                    } else {
-                        console.log('error Move & Resize')
+                        me.canvas.moveElementAction(me.value, beforeViewObj, afterViewObj)
+                    },
+                    onFail(e){
+                        console.log(`[Error] Delayed ElementMove: ${e}`)
                     }
-
-                    var afterViewObj = {x: offsetX, y: offsetY, width: offsetW, height: offsetH}
-                    var beforeViewObj = {x: originX, y: originY, width: originW, height: originH}
-
-                    // me.delayedMoveAction(beforeViewObj, afterViewObj)
-                    me.canvas.moveElementAction(me.value, beforeViewObj, afterViewObj)
-
-                }catch (e) {
-                    alert(`[Error] ModelElement-delayedMove: ${e}`)
-                }
+                })
             },
+             /**
+              * OG > delayedRelationMove 
+              * BeforeEvent: Relation 이동(서버)
+              **/
             delayedRelationMove(vertices) {
                 var me = this
-                try{
-                    var originVertices = JSON.parse(JSON.stringify(me.value.relationView.value))
-                    var newVertices = []
-                    var offsetVertices
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        var originVertices = JSON.parse(JSON.stringify(me.value.relationView.value))
+                        var newVertices = []
+                        var offsetVertices
 
-                    vertices.forEach(function (ver, index) {
-                        newVertices.push([ver.x, ver.y])
-                    })
-                    offsetVertices = JSON.stringify(newVertices)
+                        vertices.forEach(function (ver, index) {
+                            newVertices.push([ver.x, ver.y])
+                        })
+                        offsetVertices = JSON.stringify(newVertices)
 
-                    // me.delayedRelationMoveAction(beforeViewObj, afterViewObj)
-                    me.canvas.moveElementAction(me.value, originVertices, offsetVertices)
-                }catch (e) {
-                    alert(`[Error] ModelElement - delayedRelationMove: ${e}`)
-                }
+                        me.canvas.moveElementAction(me.value, originVertices, offsetVertices)
+                    },
+                    onFail(e){
+                        console.log(`[Error] Delayed RelationMove: ${e}`)
+                    }
+                })
             },
-            onRemoveShape(model) {
+             /**
+             *  OG >  onRemoveShape 
+             **/
+            onRemoveShape(element) {
                 var me = this
-                try {
-                    // if ( me.isCustomMoveExist ) {
-                    //     // 변화 인지
-                    //     me.modelCanvasComponent.modelChanged = true
-                    //     me.removeShapeQueue()
-                    // } else {
-                    //     me.removeShapeLocal()
-                    // }
-                    me.canvas.removeElementAction(me.value)
-                    me.validate()
-                } catch (e) {
-                    alert(`[Error] ModelElement-onRemoveShape: ${e}`)
-                }
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.canvas.removeElementAction(me.value)
+                        me.validate()
+
+                        if(!element) return;
+                        // selected Element Remove
+                        if (me.value.elementView && element && element.id === me.value.elementView.id) {
+                            Object.values(me.canvas.value.elements).forEach((element) => {
+                                if(!me.canvas.validateElementFormat(element)) return;
+                                if (element && element.elementView.id !== me.value.elementView.id) {
+                                    let component = me.canvas.$refs[element.elementView.id];
+                                    if (component) {
+                                        component = component[0];
+                                        if (component.selected) {
+                                            component.onRemoveShape();
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    },
+                    onFail(e){
+                        console.log(`[Error] RemoveShape: ${e}`)
+                    }
+                })
             },
             getComponent(componentName) {
                 let component = null
@@ -415,164 +487,6 @@
                 });
 
                 return newObj;
-            },
-            delayedMoveAction(beforeViewObj, afterViewObj){
-                /*
-                    !!!  REMOVE !!!!
-                    changedMethod: moveElementAction
-                */
-                var me = this
-                // Action
-                if ( me.canvas.isCustomMoveExist ) {
-                    me.movingElement = true
-                    // 변화 인지
-                    me.canvas.modelChanged = true
-                    // move Queue
-                    me.delayedMoveQueue(beforeViewObj, afterViewObj)
-                }
-            },
-            delayedMoveQueue(beforeViewObj , afterViewObj){
-                /*
-                   !!!  REMOVE !!!!
-                   changedMethod: pushMovedQueue
-               */
-                var me = this
-                try{
-                    var types = me.value._type.split('.')
-                    var pushObj =
-                        {
-                            action: 'elementMove',
-                            elementType: types[types.length - 1],
-                            elementName: me.value.name,
-                            editUid: me.getEditUid,
-                            elementId: me.value.elementView.id,
-                            before: JSON.stringify(beforeViewObj),
-                            after: JSON.stringify(afterViewObj),
-                            timeStamp: Date.now(),
-                        }
-                    me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, pushObj)
-                }catch (e) {
-                    alert(`[Error] ModelElement-DelayedMoveQueue PUSH: ${e}`)
-                }
-            },
-            onMoveElement(newObj,STATUS_COMPLETE){
-                /*
-                    !!!  REMOVE !!!!
-                    changedMethod: moveElement
-                */
-                var me = this
-
-                try{
-                    me.value.elementView.x = newObj.x
-                    me.value.elementView.y = newObj.y
-                    me.value.elementView.width = newObj.width
-                    me.value.elementView.height = newObj.height
-
-                    me.$nextTick(function () {
-                        me.movingElement = false
-                        me.STATUS_COMPLETE = STATUS_COMPLETE
-                    })
-                }catch (e) {
-                    alert(`[Error] ModelElement-onMoveElement: ${e}`)
-                }
-            },
-            onMoveRelation(newObj,STATUS_COMPLETE){
-                /*
-                    !!!  REMOVE !!!!
-                    changedMethod: moveElement
-                */
-                var me = this
-
-                try{
-                    me.value.relationView.value = newObj
-
-                    me.$nextTick(function () {
-                        me.movingElement = false
-                        me.STATUS_COMPLETE = STATUS_COMPLETE
-                    })
-                }catch (e) {
-                    alert(`[Error] ModelElement-onMoveRelation: ${e}`)
-                }
-            },
-            delayedRelationMoveAction(originVertices, offsetVertices){
-                /*
-                  !!!  REMOVE !!!!
-                  changedMethod: canvas.moveElementAction
-              */
-                var me = this
-                if ( me.canvas.isCustomMoveExist ) {
-                    me.movingElement = true
-                    // 변화 인지
-                    me.canvas.modelChanged = true
-                    // relation Queue
-                    me.delayedRelationMoveQueue(originVertices, offsetVertices)
-                }
-            },
-            delayedRelationMoveQueue(originVertices , offsetVertices){
-                /*
-                !!!  REMOVE !!!!
-                changedMethod: canvas.pushMovedQueue
-                */
-                var me = this
-                try {
-                    var pushObj =
-                        {
-                            action: 'relationMove',
-                            editUid: me.getEditUid,
-                            relationId: me.value.relationView.id,
-                            before: originVertices,
-                            after: offsetVertices,
-                            timeStamp: Date.now(),
-                        }
-                    me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, pushObj)
-                }catch (e) {
-                    alert(`[Error] ModelElement-DelayedRelationMoveQueue: ${e}`)
-                }
-            },
-            removeShapeLocal(){
-                /*
-                !!!  REMOVE !!!!
-                changedMethod: canvas.removeElementAction
-               */
-                var me = this
-                try{
-                    var id = me.value.elementView ? me.value.elementView.id : me.value.relationView.id
-                    var location = me.value.elementView ? me.canvas.value.elements : me.canvas.value.relations
-                    
-                    var k8sElementTypes = me.getK8sElementTypes()
-                    if(k8sElementTypes.includes(me.value._type)){
-                        location = me.value.elementView ? me.canvas.value.k8sValue.elements : me.canvas.value.k8sValue.relations
-                    }
-
-                    if (location && id)
-                        // location[id] = null
-                        delete location[id]
-
-                    if(me.initLoad){
-                        me.changedTemplateCode = true
-                    }
-                }catch (e) {
-                    alert(`[Error] ModelElement-removeShapeLocal: ${e}`)
-                }
-            },
-            removeShapeQueue(){
-                /*
-                    !!!  REMOVE !!!!
-                    changedMethod: canvas.pushRemovedQueue
-                */
-                var me = this
-                try{
-                    var action = me.value.relationView ? 'relationDelete' :  'elementDelete'
-                    var obj = {
-                        action: action,
-                        editUid: me.getEditUid,
-                        timeStamp: Date.now(),
-                        item: JSON.stringify(me.value)
-                    }
-                    me.pushObject(`db://definitions/${me.canvas.projectId}/queue`, obj)
-                }catch (e) {
-                    alert(`[Error] ModelElement-removeShapeQueue: ${e}`)
-                }
             },
             getK8sElementTypes(){
                 var me = this

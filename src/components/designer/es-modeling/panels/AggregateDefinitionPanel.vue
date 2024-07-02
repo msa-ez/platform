@@ -26,7 +26,7 @@
 
         <template slot="t-edit-user">
             <div
-                    v-if="newEditUserImg.length > 0 && readOnly && !value.mirrorElement"
+                    v-if="newEditUserImg.length > 0 && isReadOnly && !value.mirrorElement"
                     style="text-align:center"
             >
                 <v-chip
@@ -55,7 +55,7 @@
                     color="primary"
                     style="margin-left: 10px; margin-top: -12px;"
                     @click="changeAggregateRulePanelStatus()"
-                    :disabled="readOnly"
+                    :disabled="isReadOnly"
             >Rules</v-btn>
         </template> -->
 
@@ -125,9 +125,7 @@
         computed: {
 
         },
-        created: function () {
-            this.panelInit()
-        },
+        created: function () { },
         data() {
             return {
                 // AggregateRulePanelStatus: false,
@@ -183,11 +181,6 @@
         },
         watch: {},
         methods: {
-            // executeBeforeDestroy() {
-            //     var me = this
-            //     this.$EventBus.$emit('addAttribute')
-            //     me.$super(EventStormingModelPanel).executeBeforeDestroy()
-            // },
             panelInit(){
                 var me = this
                 // Element

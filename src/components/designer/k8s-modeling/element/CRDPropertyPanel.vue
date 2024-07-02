@@ -2,7 +2,7 @@
     <kubernetes-common-panel
             v-model="value"
             :img="img"
-            :readOnly="canvas.isReadOnlyModel"
+            :isReadOnly="isReadOnly"
             :validation-lists="validationLists"
             @openDesDoc="desDocOpen"
             @close="closePanel"

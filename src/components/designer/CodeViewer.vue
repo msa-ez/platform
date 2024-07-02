@@ -11,7 +11,7 @@
             <v-card-text
                 id="scroll-target"
             >
-                <v-btn v-if="!editMode" @click="explain()"
+                <v-btn class="cp-explain-code" v-if="!editMode" @click="explain()"
                     small style="position:absolute; top:70px; right:15px; z-index: 999;" text
                 >
                     Explain code<v-icon x-small>mdi-send</v-icon>
@@ -53,7 +53,7 @@
                                 >
                                 </vue-markdown>
                                 <div style="z-index:1001; position: absolute; right: 0px; top: -8px;">
-                                    <v-btn v-if="explainedResult !=''" @click="closeExplainCode()" style="z-index:999; color: black;" icon><v-icon>mdi-close</v-icon></v-btn>
+                                    <v-btn class="cp-explain-code-close" v-if="explainedResult !=''" @click="closeExplainCode()" style="z-index:999; color: black;" icon><v-icon>mdi-close</v-icon></v-btn>
                                 </div>
                                 <div style="position: absolute; z-index:1001; top:-23px; right: 25px; display: flex; justify-content: center; align-items: center;">
                                     <v-btn v-if="generationStopped"
@@ -70,7 +70,7 @@
                                     style="width:100%; background-color: #FFFFFF; color: white;"
                                     solo
                                     outlined
-                                    class="question-box"
+                                    class="question-box cp-explain-code-text"
                                     append-icon="mdi-send"
                                     @click:append="removeDuplicateChatPrompt"
                                     @keydown.enter="removeDuplicateChatPrompt"
@@ -80,32 +80,38 @@
                     </v-col>
                     <v-col v-if="showGpt" cols="12">
                         <v-row>
-                            <v-card @scroll="handleScroll" id="scroll-text" style="width: 100%; max-height: 86vh; z-index: 1000; overflow-y: scroll; background-color: #FFFFFF; margin-top: -4px;">
-                                <v-alert closable   
-                                    title="Ask ChatGPT"
-                                    icon="mdi-auto-fix"
-                                    type="info"
-                                    v-if="!explainError && showGpt"
-                                >
-                                    Ask anything about the code below this selection. i.e. How can I run this app? Where is the port number? how can I change the database product to MySQL.
-                                </v-alert>
-                                <v-alert closable   
-                                    title="OOps"
-                                    type="error"
-                                    v-if="explainError && showGpt"
-                                >
-                                    {{explainError}}
-                                    <v-btn @click="explainError = null">DISMISS</v-btn>
-                                </v-alert>
+                            <v-card class="pa-2" @scroll="handleScroll" id="scroll-text" style="width: 100%; max-height: 86vh; z-index: 1000; overflow-y: scroll; background-color: #FFFFFF; margin-top: -4px;">
+                                <v-row class="ma-0 pa-0">
+                                    <v-col :cols="11" class="ma-0 pa-0">
+                                        <v-alert closable   
+                                            title="Ask ChatGPT"
+                                            icon="mdi-auto-fix"
+                                            type="info"
+                                            outlined
+                                            v-if="!explainError && showGpt"
+                                        >
+                                            Ask anything about the code below this selection. i.e. How can I run this app? Where is the port number? how can I change the database product to MySQL.
+                                        </v-alert>
+                                        <v-alert closable   
+                                            title="OOps"
+                                            type="error"
+                                            v-if="explainError && showGpt"
+                                        >
+                                            {{explainError}}
+                                            <v-btn @click="explainError = null">DISMISS</v-btn>
+                                        </v-alert>
+                                    </v-col>
+                                    <v-col :cols="1" class="ma-0 pa-0">
+                                        <v-btn class="cp-explain-project-close" v-if="showGpt" @click="closeExplainCode()" style="z-index:999; color: black;" icon><v-icon>mdi-close</v-icon></v-btn>
+                                    </v-col>
+                                </v-row>
                                 <vue-markdown
                                     class="markdown-body"
                                     style="padding: 15px; font-size: 13px; color: #434853;"
                                     :source="explainedResult"
                                 >
                                 </vue-markdown>
-                                <div style="position: fixed;  z-index:1001;  position: absolute; right: 10px; top: 80px">
-                                    <v-btn v-if="showGpt" @click="closeExplainCode()" style="z-index:999; color: black;" icon><v-icon>mdi-close</v-icon></v-btn>
-                                </div>
+                                
                                 <div v-if="explainedResult !=''" style="position: absolute; z-index:1001; top:65px; right: 35px; z-index:1001; display: flex; justify-content: center; align-items: center; ">
                                     <v-btn v-if="generationStopped"
                                         @click="explain(true)"
@@ -117,6 +123,7 @@
                                     </v-btn>
                                 </div>
                                 <div style="display: flex; align-items: center;">
+                                    <!-- explainProject -->
                                     <v-text-field
                                         v-model="chatPrompt"
                                         ref="input"
@@ -124,7 +131,7 @@
                                         solo
                                         outlined
                                         autofocus
-                                        class="question-box"
+                                        class="question-box cp-explain-project-text"
                                         append-icon="mdi-send"
                                         @click:append="removeDuplicateChatPrompt"
                                         @keydown.enter="removeDuplicateChatPrompt"
@@ -552,7 +559,7 @@
                 let prompt
                 this.explainError = ''
                 this.generationStopped = false;
-                
+
                 let codeGenerator = getParent(me.$parent, "code-generator")
                 let collectedCodes = codeGenerator.getSelectedFilesDeeply()
                 
@@ -583,6 +590,7 @@
                     }
                 }
                 me.generator = new AIGenerator(this, {prompt: prompt});
+                
                 //me.generator.model = "gpt-4-32k" //payment issue
                 me.generator.generate();
             },

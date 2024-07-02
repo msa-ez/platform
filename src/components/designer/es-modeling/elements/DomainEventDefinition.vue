@@ -22,7 +22,6 @@
                 v-on:rotateShape="onRotateShape"
                 v-on:addedToGroup="onAddedToGroup"
                 :label="getFieldDescriptors || canvas.isHexagonal ? '': getNamePanel"
-                :image.sync="refreshedImg"
                 :_style="{
                 'label-angle':elementCoordinate.angle,
                 'font-weight': 'bold', 'font-size': '16',
@@ -88,14 +87,7 @@
             ></geometry-rect>
 
             <sub-elements v-if="!canvas.isHexagonal">
-                <image-element
-                        v-for="(index) in editUserImg.length" :key="index"
-                        v-bind:image="editUserImg[index-1].picture"
-                        :sub-width="'24px'"
-                        :sub-height="'24px'"
-                        :sub-right="(10*(index-1))+'px'"
-                        :sub-bottom="elementCoordinate.height"
-                ></image-element>
+                <multi-user-status-indicator :images="newEditUserImg" :element-height="elementCoordinate.height"></multi-user-status-indicator>
             </sub-elements>
 
             <sub-elements>
@@ -159,8 +151,8 @@
                         v-if="!isPBCModel"
                         :type="value._type"
                         :value="value"
-                        :readOnly="canvas.isReadOnlyModel"
-                        :isHexagonalModeling="canvas.isHexagonal"
+                        :isReadOnly="!isEditElement"
+                        :isHexagonal="canvas.isHexagonal"
                 ></storming-sub-controller>
 
             </sub-elements>
@@ -193,7 +185,7 @@
         <domain-event-definition-panel
                 v-if="propertyPanel"
                 v-model="value"
-                :readOnly="!isEditElement"
+                :isReadOnly="!isEditElement"
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"
@@ -209,20 +201,16 @@
     import Element from './EventStormingModelElement'
     import DomainEventDefinitionPanel from "../panels/DomainEventDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-
-
-    var changeCase = require('change-case');
-    var pluralize = require('pluralize');
-
-    var Mustache = require('mustache')
+    import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
+    
     var _ = require('lodash')
-
     export default {
         mixins: [Element],
         name: 'domain-event-definition',
-        components:{
+        components: {
             DomainEventDefinitionPanel,
-            'storming-sub-controller' : StormingSubController
+            'storming-sub-controller' : StormingSubController,
+            'multi-user-status-indicator': MultiUserStatusIndicator
         },
         computed: {
             subjectTop() {
@@ -356,11 +344,6 @@
 
             };
         },
-        created: function () {
-            // this.image = `${window.location.protocol + "//" + window.location.host}/static/image/event/event.png`
-        },
-        mounted() {
-        },
         watch: {
             "value.fieldDescriptors": {
                 deep: true,
@@ -378,7 +361,7 @@
             onChangedElementName(newVal, oldVal){
                 this.setMirrorElementId();
             },
-            onMoveAction(){
+            onMoveAction(executeRecursion){
                 var me = this
                 if( me.value.mirrorElement ) return;
 
@@ -390,7 +373,7 @@
                     var newId = attachedAggregate.elementView.id
 
                     // 움직일때 AGG 변화 파악.
-                    if(newId != me.value.aggregate.id){
+                    if(me.value.aggregate.id != newId){
                         // 서로 들다른 agg
                         me.value.aggregate = { id: newId };
 
@@ -400,7 +383,7 @@
                         }
                     }
 
-                } else if(me.value.aggregate.id){
+                } else if(!me.value.aggregate || me.value.aggregate.id){
                     me.value.aggregate = {};
                     if(me.canvas.initLoad) me.canvas.changedByMe = true;
                 }

@@ -3,7 +3,7 @@
     <common-panel
             v-model="value"
             :image="image"
-            :is-read-only="canvas.isReadOnlyModel"
+            :is-read-only="isReadOnly"
             :width-style="widthStyle"
             :related-url="relatedUrl"
             :validation-lists="validationLists"
@@ -61,9 +61,7 @@
         },
         beforeDestroy() {
         },
-        created: function () {
-            this.panelInit()
-        },
+        created: function () { },
         watch: {},
         methods: {
             panelInit(){

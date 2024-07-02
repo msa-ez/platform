@@ -2,7 +2,7 @@
     <common-panel
             v-model="value"
             :image="image"
-            :is-read-only="readOnly"
+            :is-read-only="isReadOnly"
             :width-style="widthStyle"
             :related-url="relatedUrl"
             :validation-lists="validationLists"
@@ -10,6 +10,7 @@
             :element-author-display="elementAuthorDisplay"
             @close="closePanel"
             @changeTranslate="changeTranslate"
+            @updateBCName="updateBCName()"
             v-on:update:members="value.members = $event"
     >
 
@@ -27,7 +28,7 @@
 
         <template slot="t-edit-user">
             <div
-                    v-if="newEditUserImg.length > 0 && canvas.isReadOnlyModel"
+                    v-if="newEditUserImg.length > 0 && isReadOnly"
                     style="text-align:center"
             >
                 <v-chip
@@ -69,7 +70,7 @@
                                 :items="selectedTemplateLists"
                                 item-text="display"
                                 item-value="template"
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                                 label="Preferred Platform"
                         ></v-autocomplete>
 
@@ -82,7 +83,7 @@
                                 label="Select"
                                 item-text="userName"
                                 return-object
-                                :disabled="readOnly"
+                                :disabled="isReadOnly"
                                 :multiple="true"
                         >
                             <template v-slot:selection="data">
@@ -235,9 +236,7 @@
             },
 
         },
-        created: function () {
-            this.panelInit()
-        },
+        created: function () { },
         mounted(){
            this.setExplainer();
         },
@@ -313,6 +312,9 @@
                 return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
                     s4() + '-' + s4() + s4() + s4();
             },
+            updateBCName(){
+                this.$emit('updateBCName')
+            }
         }
     }
 </script>

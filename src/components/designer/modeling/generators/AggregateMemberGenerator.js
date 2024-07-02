@@ -4,22 +4,23 @@ class AggregateMemberGenerator extends JsonAIGenerator{
 
     constructor(client){
         super(client); 
-        
-        this.aggregateRoot = client.input.aggregateRoot;
-        this.instruction = client.input.instruction;
     }
     // to have multiple order items and order states
     createPrompt(){
         let prompt = 
 `
+${this.client.input.aggregateRoot.name ? 
+`
 In ddd, we have following aggregate root class:
-
-class ${this.aggregateRoot.name}{
-  ${this.aggregateRoot.fieldDescriptors}
+class ${this.client.input.aggregateRoot.name}{
+    ${this.client.input.aggregateRoot.fieldDescriptors}
+}
+Can you append more value objects and enumerations to this aggregate root:
+`:
+'Generate results according to the information requested below.'
 }
 
-Can you append more value objects and enumerations to this aggregate root:
-${this.instruction}
+${this.client.input.instruction}
 
 in this json format:
 
@@ -29,7 +30,7 @@ in this json format:
        name: "Class Name",
        displayName: "Display Name", // Readable property name
        classType: "Entity" | "Value Object" | "Enumeration",  //must be in these three types.
-       isAggregateRoot: true || false,
+       isAggregateRoot: true || false, // Among the classes, one must have isAggregateRoot set to true
         "properties": [
             {
                 "name": "propertyName", // Property Name must be Camel-Case
@@ -100,9 +101,9 @@ please don't forget creating relations between all the generated classes.
                             },
                             fieldDescriptors: [],
                             isAbstract: false,
-                            isAggregateRoot: false,
+                            isAggregateRoot: true,
                             isInterface: false,
-                            isVO: true,
+                            isVO: false,
                             name: entity.name,
                             nameCamelCase: entity.name,
                             namePascalCase: entity.name,

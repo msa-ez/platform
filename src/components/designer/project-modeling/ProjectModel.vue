@@ -30,7 +30,71 @@
                         </v-card-text>
                     </v-card>
                     <v-divider></v-divider>
+                    <v-card flat>
+                        <v-card-title>Customer Journey Map</v-card-title>
+                        <v-card-text style="width: 100%; white-space: nowrap; overflow-x: scroll;">
+                            <v-row style="height: 100%; margin: 2px; width: max-content;">
+                                <div v-for="id in cjmModelLists" :key="id">
+                                    <jump-to-model-lists-card :id="id" path="cjm" @deleteDefinition="openDeleteDialog"></jump-to-model-lists-card>
+                                </div>
 
+                                <v-card :style="cjmModelLists.length == 0 ? 'height: 150px': ''" style="text-align: center; margin-top: 5px; margin-left: 5px;" flat>
+                                    <v-tooltip right>
+                                        <template v-slot:activator="{ on }">
+                                            <v-btn text style="align-items: center; width: 100%; height: 100%;" @click="openStorageDialog('cjm')">
+                                                <v-icon>mdi-plus</v-icon>
+                                            </v-btn>
+                                        </template>
+                                        <span>add Model</span>
+                                    </v-tooltip>
+                                </v-card>
+                            </v-row>
+                        </v-card-text>
+                    </v-card>
+                    <v-divider></v-divider>
+                    <v-card flat>
+                        <v-card-title>Business Model</v-card-title>
+                        <v-card-text style="width: 100%; white-space: nowrap; overflow-x: scroll;">
+                            <v-row style="height: 100%; margin: 2px; width: max-content;">
+                                <div v-for="id in bmModelLists" :key="id">
+                                    <jump-to-model-lists-card :id="id" path="business-model-canvas" @deleteDefinition="openDeleteDialog"></jump-to-model-lists-card>
+                                </div>
+                                <v-card :style="bmModelLists.length == 0 ? 'height: 150px': ''" style="text-align: center; margin-top: 5px; margin-left: 5px;" flat>
+                                    <v-tooltip right>
+                                        <template v-slot:activator="{ on }">
+                                            <v-btn text style="align-items: center; width: 100%; height: 100%;" @click="openStorageDialog('bm')">
+                                                <v-icon>mdi-plus</v-icon>
+                                            </v-btn>
+                                        </template>
+                                        <span>add Model</span>
+                                    </v-tooltip>
+                                </v-card>
+                            </v-row>
+                        </v-card-text>
+                    </v-card>
+                    <v-divider></v-divider>
+                    <v-card flat>
+                        <v-card-title>UserStory Map</v-card-title>
+                        <v-card-text style="width: 100%; white-space: nowrap; overflow-x: scroll;">
+                            <v-row style="height: 100%; margin: 2px; width: max-content;">
+                                <div v-for="id in usmModelLists" :key="id">
+                                    <jump-to-model-lists-card :id="id" path="userStoryMap" @deleteDefinition="openDeleteDialog"></jump-to-model-lists-card>
+                                </div>
+
+                                <v-card :style="usmModelLists.length == 0 ? 'height: 150px': ''" style="text-align: center; margin-top: 5px; margin-left: 5px;" flat>
+                                    <v-tooltip right>
+                                        <template v-slot:activator="{ on }">
+                                            <v-btn text style="align-items: center; width: 100%; height: 100%;" @click="openStorageDialog('userStoryMap')">
+                                                <v-icon>mdi-plus</v-icon>
+                                            </v-btn>
+                                        </template>
+                                        <span>add Model</span>
+                                    </v-tooltip>
+                                </v-card>
+                            </v-row>
+                        </v-card-text>
+                    </v-card>
+                    <v-divider></v-divider>
                     <v-card flat>
                         <v-card-title>Event Storming Model</v-card-title>
                         <v-card-text style="width: 100%; white-space: nowrap; overflow-x: scroll;">
@@ -49,28 +113,6 @@
                                         <span>add Model</span>
                                     </v-tooltip>
                                 </v-card>
-                            </v-row>
-                        </v-card-text>
-                    </v-card>
-                    <v-divider></v-divider>
-
-                    <v-card flat>
-                        <v-card-title>Business Model</v-card-title>
-                        <v-card-text style="width: 100%; white-space: nowrap; overflow-x: scroll;">
-                            <v-row style="height: 100%; margin: 2px; width: max-content;">
-                                <div v-for="id in bmModelLists" :key="id">
-                                    <jump-to-model-lists-card :id="id" path="business-model-canvas" @deleteDefinition="openDeleteDialog"></jump-to-model-lists-card>
-                                </div>
-                                <v-card :style="bmModelLists.length == 0 ? 'height: 150px': ''" style="text-align: center; margin-top: 5px; margin-left: 5px;" flat>
-                                    <v-tooltip right>
-                                        <template v-slot:activator="{ on }">
-                                            <v-btn text style="align-items: center; width: 100%; height: 100%;" @click="openStorageDialog('bm')">
-                                                <v-icon>mdi-plus</v-icon>
-                                            </v-btn>
-                                        </template>
-                                        <span>add Model</span>
-                                    </v-tooltip>
-                                </v-card:>
                             </v-row>
                         </v-card-text>
                     </v-card>
@@ -142,13 +184,14 @@
 
             <v-tab-item>
                 <AutoModelingDialog
-                        v-if="isInitLoading"
+                        v-if="loading"
                         ref="autoModelingDialog"
                         mode="project"
                         :showChat="true"
                         :projectId="projectId"
                         :projectInfo="information"
                         :isServer="isServer"
+                        :genType="generatorType"
                         @closeDialog="close()"
                         @forceUpdateKey="forceUpdateKey"
                         @saveProject="openStorageDialog('project')"
@@ -234,14 +277,16 @@
             return {
                 tab: 0,
                 componentKey: 0,
-                rtcRoomId: null,
-                isInitLoading: false,
+                loading: false,
 
+                // model modify.
                 showStorageDialog: false,
-                storageCondition: null,
-
                 showDeleteDialog: false,
-                deleteCondition: null
+                storageCondition: null,
+                deleteCondition: null,
+
+                //
+                generatorType: null,
             }
         },
         computed: {
@@ -262,6 +307,21 @@
                 if( !this.information.contextMapping ) return []
                 if( !this.information.contextMapping.modelList) return  []
                 return this.information.contextMapping.modelList
+            },
+            usmModelLists(){
+                if( !this.information) return []
+                if( !this.information.userStoryMap ) return []
+                if( !this.information.userStoryMap.modelList) return  []
+                return this.information.userStoryMap.modelList
+            },
+            cjmModelLists(){
+                if( !this.information) return []
+                if( !this.information.customerJourneyMap ) return []
+                if( !this.information.customerJourneyMap.personas) return  []
+                if( !this.information.customerJourneyMap.personas) return  []
+                return this.information.customerJourneyMap.personas
+                    .filter(persona => persona.modelList)
+                    .flatMap(persona => persona.modelList);
             }
         },
         created: async function () {
@@ -273,12 +333,6 @@
             } catch (e) {
                 alert('Error: Project ModelCanvas Created().', e)
             }
-        },
-        mounted: function () {
-
-        },
-        watch: {
-
         },
         beforeDestroy(){
             this.watch_off(`db://definitions/${this.projectId}/information`)
@@ -304,7 +358,9 @@
                     projectId: `${me.information.projectId}-`,
                     error: null,
                     loading: false,
-                    type: type
+                    type: type,
+                    associatedProject: me.information.projectId,
+                    connectedAssociatedProject: me.isServer
                 }
                 if(type == 'project') {
                     condition.title = 'Save project'
@@ -315,6 +371,12 @@
             },
             openStorageDialog(type){
                 var me = this
+                me.generatorType = null;
+                if(type == 'cjm'){
+                    me.tab = 1
+                    me.generatorType = 'CJM'
+                    return;
+                } 
                 me.storageCondition = me.getCondition(type)
                 me.showStorageDialog = true;
             },
@@ -342,7 +404,13 @@
                     me.information.businessModel.modelList = me.information.businessModel.modelList.filter(id => id != me.deleteCondition.projectId)
                 } else if(me.deleteCondition.type == 'cm'){
                     me.information.contextMapping.modelList = me.information.contextMapping.modelList.filter(id => id != me.deleteCondition.projectId)
+                } else if(me.deleteCondition.type == 'userStoryMap'){
+                    me.information.userStoryMap.modelList = me.information.userStoryMap.modelList.filter(id => id != me.deleteCondition.projectId)
+                } else if(me.deleteCondition.type == 'cjm'){
+                    console.log('!!!', me.deleteCondition);
+                    // me.information.customerJourneyMap.modelList = me.information.customerJourneyMap.modelList.filter(id => id != me.deleteCondition.projectId)
                 }
+                
 
                 await me.delete(`db://userLists/${me.deleteCondition.author}/mine/${me.deleteCondition.projectId}`)
                 me.backupProject()
@@ -408,8 +476,13 @@
                         if(!me.information.contextMapping ) me.information.contextMapping = {}
                         if(!me.information.contextMapping.modelList) me.information.contextMapping.modelList = []
                         me.information.contextMapping.modelList.push(settingProjectId);
-                    }
-
+                    } else if(me.storageCondition.type == 'userStoryMap'){
+                        path = me.storageCondition.type
+                        if(!me.information.userStoryMap ) me.information.userStoryMap = {}
+                        if(!me.information.userStoryMap.modelList) me.information.userStoryMap.modelList = []
+                        me.information.userStoryMap.modelList.push(settingProjectId);
+                    } 
+                    
                     me.backupProject();
                     window.open(`/#/${path}/${settingProjectId}`, "_blank")
                     me.closeStorageDialog()
@@ -447,13 +520,15 @@
                     me.setObject(`db://definitions/${me.projectId}/information/businessModel`, me.information.businessModel)
                     me.setObject(`db://definitions/${me.projectId}/information/customerJourneyMap`, me.information.customerJourneyMap)
                     me.setObject(`db://definitions/${me.projectId}/information/contextMapping`, me.information.contextMapping)
+                    me.setObject(`db://definitions/${me.projectId}/information/userStoryMap`, me.information.userStoryMap)
                 }
             },
             async loadProject() {
                 var me = this
 
-                me.isInitLoading = false;
+                me.loading = false;  
                 var modelUrl = me.isClazzModeling ? me.projectId : me.$route.params.projectId
+                modelUrl = modelUrl ? modelUrl : me.uuid()
 
                 if(modelUrl.includes(':')){
                     me.projectId = modelUrl.split(':')[0]
@@ -462,9 +537,6 @@
                 }else{
                     me.projectId = modelUrl
                 }
-
-                // rtc
-                me.rtcRoomId = `projectRtc_${me.projectId}`
 
                 if (me.projectId) {
                     var information = await me.list(`db://definitions/${me.projectId}/information`);
@@ -482,7 +554,7 @@
                     }
                 }
 
-                me.isInitLoading = true;
+                me.loading = true;
             },
             loadServerProject(information){
                 var me = this
@@ -505,6 +577,7 @@
                     customerJourneyMap: null,
                     businessModel: null,
                     contextMapping: null,
+                    userStoryMap: null,
                     prompt: ""
                 }
 

@@ -82,6 +82,12 @@ export default new Vuex.Store({
         stickyNoteBoard: {'width': 100, 'height': 100},
         /* Sticky 기본 사이즈 지정  end */
 
+        /* UserMapStory 기본 사이즈 지정 start */
+        userActivity: {'width': 100, 'height': 100},
+        userTask: {'width': 100, 'height': 100},
+        userStory: {'width': 100, 'height': 100},
+        persona: {'width': 100, 'height': 100},
+        /* UserMapStroy 기본 사이즈 지정  end */
     },
     getters: {
         getAuth(state) {
