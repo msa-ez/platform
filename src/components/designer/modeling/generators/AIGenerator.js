@@ -17,15 +17,19 @@ class AIGenerator {
             this.previousMessages = options.previousMessages;
             this.prompt = options.prompt;
             this.model = options.model || this.model;
-        } 
-
+        } else {
+            this.preferredLanguage = this.setPreferredLanguage();
+        }
+        
         if(!this.previousMessages)
             this.previousMessages = [];
-
+        
         
         if(!this.preferredLanguage){
             this.preferredLanguage="English"
         }
+
+        this.originalLanguage = this.preferredLanguage.toLowerCase();
     }
     
     setPreferredLanguage(){
