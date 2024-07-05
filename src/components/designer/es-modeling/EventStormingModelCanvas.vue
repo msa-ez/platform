@@ -2503,30 +2503,6 @@
                 }
                 return false;
             },
-            attachedLists() {
-                var me = this;
-                let result = {};
-
-                Object.values(me.value.elements).forEach(function (element) {
-                    if (me.validateElementFormat(element)) {
-                        if (!result[element._type]) result[element._type] = {};
-
-                        if( element._type && element.elementView){
-                            me.$set(result[element._type], element.elementView.id, element);
-                        }
-                    }
-                });
-
-                return {
-                    boundedContextLists: result["org.uengine.modeling.model.BoundedContext"]? result["org.uengine.modeling.model.BoundedContext"] : {},
-                    aggregateLists: result["org.uengine.modeling.model.Aggregate"] ? result["org.uengine.modeling.model.Aggregate"] : {},
-                    eventLists: result["org.uengine.modeling.model.Event"] ? result["org.uengine.modeling.model.Event"] : {},
-                    commandLists: result["org.uengine.modeling.model.Command"] ? result["org.uengine.modeling.model.Command"] : {},
-                    policyLists: result["org.uengine.modeling.model.Policy"] ? result["org.uengine.modeling.model.Policy"] : {},
-                    actorLists: result["org.uengine.modeling.model.Actor"] ? result["org.uengine.modeling.model.Actor"] : {},
-                };
-            },
-
             filteredPBCValue() {
                 var me = this;
                 var value = me.pbcValue ? me.pbcValue : { elements: {}, relations: {} };
@@ -2545,10 +2521,10 @@
                     Command: [],
                 };
 
-                modelForElements.Event = Object.values(me.attachedLists.eventLists).filter(x=>x)
+                modelForElements.Event = Object.values(me.attachedLists().eventLists).filter(x=>x)
                 modelForElements.Event = modelForElements.Event.map((element) => element = Object.assign({},element, {selectedPBC: element.visibility == "private" ? false:true}))
 
-                modelForElements.Command = Object.values(me.attachedLists.commandLists).filter(x=>x)
+                modelForElements.Command = Object.values(me.attachedLists().commandLists).filter(x=>x)
                 modelForElements.Command = modelForElements.Command.map((element) => element = Object.assign({},element, {selectedPBC: element.visibility == "private" ? false:true}))
                 return modelForElements;
             },
@@ -2711,6 +2687,29 @@
             },
         },
         methods: {
+            attachedLists() {
+                var me = this;
+                let result = {};
+
+                Object.values(me.value.elements).forEach(function (element) {
+                    if (me.validateElementFormat(element)) {
+                        if (!result[element._type]) result[element._type] = {};
+
+                        if( element._type && element.elementView){
+                            me.$set(result[element._type], element.elementView.id, element);
+                        }
+                    }
+                });
+
+                return {
+                    boundedContextLists: result["org.uengine.modeling.model.BoundedContext"]? result["org.uengine.modeling.model.BoundedContext"] : {},
+                    aggregateLists: result["org.uengine.modeling.model.Aggregate"] ? result["org.uengine.modeling.model.Aggregate"] : {},
+                    eventLists: result["org.uengine.modeling.model.Event"] ? result["org.uengine.modeling.model.Event"] : {},
+                    commandLists: result["org.uengine.modeling.model.Command"] ? result["org.uengine.modeling.model.Command"] : {},
+                    policyLists: result["org.uengine.modeling.model.Policy"] ? result["org.uengine.modeling.model.Policy"] : {},
+                    actorLists: result["org.uengine.modeling.model.Actor"] ? result["org.uengine.modeling.model.Actor"] : {},
+                };
+            },
             setCanvasType(){
                 Vue.use(EventStormingModeling);
                 this.canvasType = 'es'
@@ -2916,7 +2915,7 @@
 
                 boundedLists = boundedLists
                     ? boundedLists
-                    : me.attachedLists.boundedContextLists;
+                    : me.attachedLists().boundedContextLists;
                 if (!(boundedLists && Object.values(boundedLists).length > 0))
                     return null;
 
@@ -2932,7 +2931,7 @@
 
                 aggregateList = aggregateList
                     ? aggregateList
-                    : me.attachedLists.aggregateLists;
+                    : me.attachedLists().aggregateLists;
                 if (!(aggregateList && Object.values(aggregateList).length > 0))
                     return null;
 
@@ -2948,7 +2947,7 @@
 
                 aggregateList = aggregateList
                     ? aggregateList
-                    : me.attachedLists.aggregateLists;
+                    : me.attachedLists().aggregateLists;
                 if (!(aggregateList && Object.values(aggregateList).length > 0))
                     return null;
 
@@ -5651,9 +5650,9 @@
             //                     // Git URL 관련 처리 필요함..
             //                     // BoundedContext 찾기
             //                     var gitConnectedBoundedLists = []
-            //                     Object.keys(me.attachedLists.boundedContextLists).forEach(function (bounded) {
-            //                         if (me.attachedLists.boundedContextLists[bounded].gitURL) {
-            //                             gitConnectedBoundedLists.push(me.attachedLists.boundedContextLists[bounded].name)
+            //                     Object.keys(me.attachedLists().boundedContextLists).forEach(function (bounded) {
+            //                         if (me.attachedLists().boundedContextLists[bounded].gitURL) {
+            //                             gitConnectedBoundedLists.push(me.attachedLists().boundedContextLists[bounded].name)
             //                         }
             //                     })
             //                     await me.makeDir(`labs-eventstorming/running/${userGroup}/classes/users/labs/${localStorage.getItem("email")}/${projectId}`)
