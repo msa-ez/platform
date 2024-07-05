@@ -1300,7 +1300,6 @@
                             :defaultInputData="defaultGeneratorUiInputData"
                             :modelValue="value"
                             :tabs="tabs"
-                            :chatGenerators="chatGenerators"
                     >
                         <v-tooltip v-if="showContinue" slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
@@ -1333,7 +1332,6 @@
                             :generatorStep="generatorStep"
                             :modelValue="value"
                             :tabs="tabs"
-                            :chatGenerators="chatGenerators"
                     >
                         <!-- <v-tooltip slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
@@ -1974,6 +1972,7 @@
     import Login from "../../oauth/Login";
     import isAttached from "../../../utils/isAttached";
     import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
+    import DebeziumTransactionManager from "../modeling/generators/generatorTabs/DebeziumTransactionManager"
 
     const prettier = require("prettier");
     const plugins = require("prettier-plugin-java");
@@ -2401,11 +2400,19 @@
                 },
                 createModelInBoundedContext: false,
                 createReadModel: false,
-                tabs: [{name: 'LOGS', component: 'DebeziumLogsTab'}],
-                chatGenerators: ['DebeziumLogsModificationGenerator']
+                tabs: [{
+                    name: 'LOGS', component: 'DebeziumLogsTab',
+                    isAlwaysActivated: true, isNotMoveToOutput: true, isClearModelValue: false, 
+                    initValue: {manager: new DebeziumTransactionManager()}
+                }]
             };
         },
         computed: {
+            currentDebeziumTransactionManager() {
+                var me = this
+                return me.tabs.find(tab => tab.component === 'DebeziumLogsTab').initValue.manager
+            },
+
             projectSendable(){
                 var me = this
                 if(!me.modelListOfassociatedProject().includes(me.projectId)) return false;
@@ -3066,6 +3073,19 @@
             },
             createModel(val, originModel) {
                 var me = this;
+
+                if(val && val.modelName === "DebeziumLogsTabGenerator") {
+                    if(val.modelValue) {
+                        try {
+                            me.currentDebeziumTransactionManager.addNewTransactionFromModelValue(val.modelValue)
+                            me.currentDebeziumTransactionManager.apply(me.value, me.userInfo)
+                        } catch(e) {
+                            console.error("### 출력 결과를 Debezium Manager에 전달해서 처리하는 과정에서 오류 발생! ###")
+                            console.error(e)
+                        }
+                    }
+                    return
+                }
 
                 if (val && val.elements) {
                     if (val.projectName) me.projectName = val.projectName;

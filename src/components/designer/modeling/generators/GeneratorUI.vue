@@ -35,7 +35,7 @@
                         </v-tooltip>
                     </div>
                     <div v-else style="text-align: right; position: absolute; right: 10px; top: 55px;">
-                    <template v-if="(!SelectChatTab) && (prevUsedGeneratorTabIndex !== null)">
+                    <template v-if="isShowRegenerateBtn && (!SelectChatTab) && (prevUsedGeneratorTabIndex !== null)">
                         <v-tooltip  bottom>
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn @click="reGenerate(input['userStory'])"
@@ -108,10 +108,11 @@
                     </div>
 
                     <v-tabs v-model="userPanel">
-                        <v-tab v-for="tab in tabs" :key="tab.component" :disabled="hasElements" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('tab')">{{tab.name}}</v-tab>
-                        <v-tab :disabled="hasElements && !showGenerateBtn" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator()">Input</v-tab>
-                        <v-tab :disabled="hasElements && !showGenerateBtn" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('output')">Output</v-tab>
-                        <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('chat')">Chat</v-tab>
+                        <v-tab v-for="tab in tabs" :key="tab.component" :disabled="hasElements&&(!tab.isAlwaysActivated)" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" 
+                               @click="switchGenerator('tab', tab.isShowGenerateBtn, tab.isShowContinueBtn, tab.isShowStopBtn, tab.isShowRegenerateBtn)">{{tab.name}}</v-tab>
+                        <v-tab :disabled="hasElements && !showGenerateBtn" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('input', true, true, true, true)">Input</v-tab>
+                        <v-tab :disabled="hasElements && !showGenerateBtn" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('output', false, true, true, true)">Output</v-tab>
+                        <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('chat', false, false, false, false)">Chat</v-tab>
                     </v-tabs>
 
                     <v-expansion-panels v-model="autoModelDialog">
@@ -137,8 +138,7 @@
                             <v-expansion-panel-content class="auto-modeling-dialog pa-0" >
                                 <v-tabs-items v-model="userPanel">
                                     <v-tab-item v-for="tab in tabs" :key="tab.component" :disabled="hasElements">
-                                        <div style="padding-top:40px;"></div>
-                                        <component :is="tab.component" :ref="tab.component"></component>
+                                        <component :is="tab.component" :ref="tab.component" @generate="generate()" :initValue="tab.initValue"></component>
                                     </v-tab-item>
 
                                     <v-tab-item :disabled="hasElements">
@@ -360,7 +360,8 @@
                 tabUserProps: {},
                 prevUsedGeneratorTabIndex: null,
                 showContinueBtn: true,
-                showStopBtn: true
+                showStopBtn: true,
+                isShowRegenerateBtn: true
             }
         },
         computed: {
@@ -530,20 +531,23 @@
                     this.chatMessage = ""
                     this.generatorComponent.generate();
                 }else{
-                    this.$emit("clearModelValue")
-
                     this.focusedTabComponent = (this.userPanel < this.tabs.length) ? this.$refs[this.tabs[this.userPanel].component][0] : null
                     if (this.focusedTabComponent) {
+                        if(this.tabs[this.userPanel].isClearModelValue)
+                            this.$emit("clearModelValue")
+
                         //#region 추가 탭 선택시에 관련 메세지 유효성 검증 & 입력된 값을 통한 프롬프트 초기화 및 생성
-                        const msg = this.focusedTabComponent.getValidErrorMsg()
-                        if(msg) {
-                            alert(msg)
-                            return;
+                        if(this.focusedTabComponent.getValidErrorMsg) {
+                            const msg = this.focusedTabComponent.getValidErrorMsg()
+                            if(msg) {
+                                alert(msg)
+                                return;
+                            }
                         }
 
                         this.generatorComponent = this.focusedTabComponent.getGenerater(this)
-                        this.tabUserProps = this.focusedTabComponent.getUserProps()
-                        const userPrompt = this.generatorComponent.createPrompt()
+                        this.tabUserProps = this.focusedTabComponent.getUserProps ? this.focusedTabComponent.getUserProps() : {}
+                        const userPrompt = this.generatorComponent.createPrompt(this.tabUserProps)
                         let generateOption = {
                             "messages": [{
                                 role: 'user',
@@ -554,10 +558,14 @@
                         this.generatorComponent.generate(generateOption);
                         //#endregion
 
+                        
                         this.generationStopped = true;
-                        this.userPanel = 1 + this.tabs.length
+                        if(!(this.tabs[this.userPanel].isNotMoveToOutput))
+                            this.userPanel = 1 + this.tabs.length
                         return
                     } else if(!this.isAutoGen || this.generatorStep === 'aggregate') {
+                        this.$emit("clearModelValue")
+
                         let generateOption = {
                             "messages": [],
                             "action": "skipCreatePrompt"
@@ -591,15 +599,15 @@
                     this.showGenerateBtn = false
                 }
             },
-            switchGenerator(mode){
+            switchGenerator(mode, isShowGenerateBtn, isShowContinueBtn, isShowStopBtn, isShowRegenerateBtn){
                 // CHAT 탭엔 경우에는 GENERATE 버튼이 보여지지 않게 만듬
-                this.showGenerateBtn = !(mode === 'chat' || mode === 'output')
-                this.showContinueBtn = !(mode === 'chat')
-                this.showStopBtn = !(mode === 'chat')
+                this.showGenerateBtn = isShowGenerateBtn ? isShowGenerateBtn : false
+                this.showContinueBtn = isShowContinueBtn ? isShowContinueBtn : false
+                this.showStopBtn = isShowStopBtn ? isShowStopBtn : false
+                this.isShowRegenerateBtn = isShowRegenerateBtn ? isShowRegenerateBtn : false
                 this.SelectChatTab = false
 
-                if(mode){
-                    if(mode=='chat'){
+                if(mode && mode=='chat'){
                         this.chatList = []
                         this.openAiMessageList = []
                         this.input.modificationMessage = ""
@@ -612,10 +620,9 @@
                         }
 
                         this.generatorName = "ModelModificationGenerator"
-                    }
-                }else{
-                    this.createGenerator();
                 }
+                else
+                    this.createGenerator();
             },
 
             async reGenerate(userStory){
@@ -639,8 +646,8 @@
                     }
 
                     this.generatorComponent = this.focusedTabComponent.getGenerater(this)
-                    this.tabUserProps = this.focusedTabComponent.getUserProps()
-                    const userPrompt = this.generatorComponent.createPrompt()
+                    this.tabUserProps = this.focusedTabComponent.getUserProps ? this.focusedTabComponent.getUserProps() : {}
+                    const userPrompt = this.generatorComponent.createPrompt(this.tabUserProps)
                     let generateOption = {
                         action: "reGenerate",
                         messages: userPrompt
@@ -670,14 +677,29 @@
             },
 
             onModelCreated(model){
+                const callbackModelValueToTabComponent = () => {
+                    this.focusedTabComponent = (this.prevUsedGeneratorTabIndex < this.tabs.length) ? this.$refs[this.tabs[this.prevUsedGeneratorTabIndex].component][0] : null
+                    if (this.focusedTabComponent) {
+                        this.focusedTabComponent.onModelCreated(model)
+                    }
+                }
+
                 if(this.generatorName === "ModelModificationGenerator"){
                     this.$emit("modificateModel", model)
                 } else{
                     this.$emit("createModel", model)
                 }
+                callbackModelValueToTabComponent()
             },
 
             onGenerationFinished(model){
+                const callbackModelValueToTabComponent = () => {
+                    this.focusedTabComponent = (this.prevUsedGeneratorTabIndex < this.tabs.length) ? this.$refs[this.tabs[this.prevUsedGeneratorTabIndex].component][0] : null
+                    if (this.focusedTabComponent) {
+                        this.focusedTabComponent.onGenerationFinished(model)
+                    }
+                }
+                
                 this.generationStopped = false;
                 this.$emit("onGenerationFinished")
                 this.publishModelChanges(model)
@@ -695,11 +717,16 @@
                     if(!this.focusedTabComponent)
                         this.input['userStory'] = this.generatorComponent.previousMessages[0].content
 
-                    this.userPanel = 1 + this.tabs.length
+                    if(this.prevUsedGeneratorTabIndex < this.tabs.length) {
+                        if(!(this.tabs[this.prevUsedGeneratorTabIndex].isNotMoveToOutput))
+                            this.userPanel = 1 + this.tabs.length
+                    }
+                    else
+                        this.userPanel = 1 + this.tabs.length
                 }
 
+                callbackModelValueToTabComponent()
                 this.generationCompleted = true
-
             },
 
             publishModelChanges(model){
