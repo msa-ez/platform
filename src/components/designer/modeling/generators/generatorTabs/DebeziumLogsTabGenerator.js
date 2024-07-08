@@ -1,1402 +1,1355 @@
-const VODefinitions = require("../VODefinitions");
 const JsonAIGenerator = require("../JsonAIGenerator");
-let changeCase = require('change-case');
+const changeCase = require('change-case');
 
 class DebeziumLogsTabGenerator extends JsonAIGenerator{
-    constructor(client){
+    constructor(client, messageObj){
         super(client);
-
-        this.generateType = 'ES'
-        this.generateCnt = 0;
-        this.modelElements = {}
-        this.sequenceForUUID = 0;
-        this.lastBCView = null;
-        this.bcPosition = {};
-        this.VODefinitionsFieldDescriptors = VODefinitions
-
-        // this.originalLanguage = this.preferredLanguage.toLowerCase();
-        // this.preferredLanguage = "English";
-
-        this.generationOptions = {policy: true, ui: false, properties: true}
 
         this.model = "gpt-4o"
         this.preferredLanguage = this.setPreferredLanguage();
         this.originalLanguage = this.preferredLanguage.toLowerCase();
-    }
-    
-
-    createPrompt(){
-        this.modelElements = {}
-        this.generateCnt = 0
-
-        const PROMPT = this.getSystemPrompt() +
-                       this.getUserPrompt(this.client.tabUserProps.DebeziumLogs)
-
-        console.log("[*] DebeziumLogsTabGenerator에 전달한 프롬프트: ", PROMPT)
-        return PROMPT
+        this.messageObj = messageObj
+        this.modelName = "DebeziumLogsTabGenerator"
     }
 
-    getSystemPrompt() {
-        return `
-당신은 특정 시스템의 데이터베이스에서 발생하는 Debezium CDC 트랜젝션 로그를 해석해서 DDD Aggregate 방식으로 이벤트 스토밍 모델 설계를 위한 JSON 객체를 반환해야 합니다.
+    createPrompt(userProps, modelValue){
+        const getPreprocessModelValue = (modelValue) => {
+            const getAllBoundedContexts = (modelValue) => {
+                return Object.values(modelValue.elements)
+                    .filter(element => element && element._type === 'org.uengine.modeling.model.BoundedContext')
+            }
+        
+            const getBoundedContextInfo = (boundedContext, modelValue) => {
+                const getAllAggregates = (boundedContext, modelValue) => {
+                    return boundedContext.aggregates.map(aggregate => modelValue.elements[aggregate.id])
+                }
+        
+                const getAggregateInfo = (aggregate, boundedContext, modelValue) => {
+                    const getAggregateProperties = (aggregate) => {
+                        return aggregate.aggregateRoot.fieldDescriptors.map(fieldDescriptor => {
+                            return {
+                                name: fieldDescriptor.name,
+                                displayName: fieldDescriptor.displayName,
+                                type: fieldDescriptor.className,
+                                isKey: fieldDescriptor.isKey
+                            }
+                        })
+                    }
+        
+                    const getEnumInfos = (aggregate) => {
+                        const getEnumInfo = (element) => {
+                            let enumInfo = {}
+                            enumInfo.id = element.id ? element.id : element.elementView.id
+                            enumInfo.name = element.name
+                            enumInfo.items = element.items.map(item => {
+                                return item.value
+                            })
+                            return enumInfo
+                        }
+        
+                        let enumInfos = []
+                        if(aggregate.aggregateRoot && aggregate.aggregateRoot.entities && aggregate.aggregateRoot.entities.elements) {
+                            for(let element of Object.values(aggregate.aggregateRoot.entities.elements))
+                                if(element && (element._type === 'org.uengine.uml.model.enum'))
+                                    enumInfos.push(getEnumInfo(element))
+                        }
+                        return enumInfos
+                    }
+        
+                    const getValueObjectInfos = (aggregate) => {
+                        const getValueObjectInfo = (element) => {
+                            const getValueObjectProperties = (valueObject) => {
+                                return valueObject.fieldDescriptors.map(fieldDescriptor => {
+                                    return {
+                                        name: fieldDescriptor.name,
+                                        displayName: fieldDescriptor.displayName,
+                                        type: fieldDescriptor.className,
+                                        isKey: fieldDescriptor.isKey,
+                                        isForeignProperty: (fieldDescriptor.className.toLowerCase() === aggregate.name.toLowerCase())
+                                    }
+                                })
+                            }
+        
+                            let valueObjectInfo = {}
+                            valueObjectInfo.id = element.id ? element.id : element.elementView.id
+                            valueObjectInfo.name = element.name
+                            valueObjectInfo.properties = getValueObjectProperties(element)
+                            return valueObjectInfo
+                        }
+        
+                        let valueObjectInfos = []
+                        if(aggregate.aggregateRoot && aggregate.aggregateRoot.entities && aggregate.aggregateRoot.entities.elements) {
+                            for(let element of Object.values(aggregate.aggregateRoot.entities.elements)){
+                                if(element && (element._type === 'org.uengine.uml.model.vo.Class'))
+                                    valueObjectInfos.push(getValueObjectInfo(element))
+                            }
+                        }
+                        return valueObjectInfos
+                    }
+        
+                    const getCommandInfos = (aggregate, boundedContext, modelValue) => {
+                        const getCommandInfo = (element, boundedContext, modelValue) => {
+                            const getOutputEvents = (command, modelValue) => {
+                                let outputEvents = []
+                                for(let relation of Object.values(modelValue.relations)){
+                                    if(relation && relation.sourceElement.id === command.id && 
+                                       relation.targetElement._type === 'org.uengine.modeling.model.Event')
+                                        outputEvents.push({
+                                            relationId: relation.id ? relation.id : relation.elementView.id,
+                                            id: relation.targetElement.id,
+                                            name: relation.targetElement.name
+                                        })
+                                }
+                                return outputEvents
+                            }
+        
+                            const getCommandProperties = (command) => {
+                                return command.fieldDescriptors.map(fieldDescriptor => {
+                                    return {
+                                        name: fieldDescriptor.name,
+                                        displayName: fieldDescriptor.displayName,
+                                        type: fieldDescriptor.className,
+                                        isKey: fieldDescriptor.isKey
+                                    }
+                                })
+                            }
+        
+                            const getPolicyInfos = (command, boundedContext, modelValue) => {
+                                const getPolicyInfo = (policy, modelValue, relation) => {
+                                    const getPolicyInputEvents = (policy, modelValue) => {
+                                        let inputEvents = []
+                                        for(let relation of Object.values(modelValue.relations)){
+                                            if(relation &&
+                                            relation.targetElement.id === policy.id &&
+                                            relation.sourceElement._type === 'org.uengine.modeling.model.Event'){
+                                                inputEvents.push({
+                                                    relationId: relation.id ? relation.id : relation.elementView.id,
+                                                    id: relation.sourceElement.id,
+                                                    name: relation.sourceElement.name
+                                                })
+                                            }
+                                        }
+                                        return inputEvents
+                                    }
+        
+                                    let policyInfo = {}
+                                    policyInfo.relationId = relation.id ? relation.id : relation.elementView.id
+                                    policyInfo.id = policy.id ? policy.id : policy.elementView.id
+                                    policyInfo.name = policy.name
+                                    policyInfo.displayName = policy.displayName
+                                    policyInfo.inputEvents = getPolicyInputEvents(policy, modelValue)
+                                    return policyInfo
+                                }
+        
+                                let policies = []
+                                for(let relation of Object.values(modelValue.relations)){
+                                    if(relation &&
+                                    relation.targetElement.id === command.id &&
+                                    relation.sourceElement.boundedContext.id === boundedContext.id &&
+                                    relation.sourceElement._type === 'org.uengine.modeling.model.Policy'){
+                                        let policy = modelValue.elements[relation.sourceElement.id]
+                                        policies.push(getPolicyInfo(policy, modelValue, relation))
+                                    }
+                                }
+                                return policies
+                            }
+        
+                            let commandInfo = {}
+                            commandInfo.id = element.id ? element.id : element.elementView.id
+                            commandInfo.name = element.name
+                            commandInfo.displayName = element.displayName
+                            commandInfo.api_verb = (element.restRepositoryInfo && element.restRepositoryInfo.method) ? element.restRepositoryInfo.method : "POST"
+                            commandInfo.outputEvents = getOutputEvents(element, modelValue)
+                            commandInfo.properties = getCommandProperties(element)
+                            commandInfo.inputPolicies = getPolicyInfos(element, boundedContext, modelValue)
+                            return commandInfo
+                        }
+        
+                        let commandInfos = []
+                        for(let element of Object.values(modelValue.elements)){
+                            if(element && (element._type === 'org.uengine.modeling.model.Command') &&
+                            (element.boundedContext.id === boundedContext.id) &&
+                            (element.aggregate.id === aggregate.id)){
+                                commandInfos.push(getCommandInfo(element, boundedContext, modelValue))
+                            }
+                        }
+                        return commandInfos
+                    }
+        
+                    const getEventInfos = (aggregate, boundedContext, modelValue) => {
+                        const getEventInfo = (element) => {
+                            const getEventProperties = (event) => {
+                                return event.fieldDescriptors.map(fieldDescriptor => {
+                                    return {
+                                        name: fieldDescriptor.name,
+                                        displayName: fieldDescriptor.displayName,
+                                        type: fieldDescriptor.className,
+                                        isKey: fieldDescriptor.isKey,
+                                    }
+                                })
+                            }
+        
+                            let eventInfo = {}
+                            eventInfo.id = element.id ? element.id : element.elementView.id
+                            eventInfo.name = element.name
+                            eventInfo.displayName = element.displayName
+                            eventInfo.properties = getEventProperties(element)
+                            return eventInfo
+                        }
+        
+                        let events = []
+                        for(let element of Object.values(modelValue.elements)){
+                            if(element && (element._type === 'org.uengine.modeling.model.Event') &&
+                            (element.boundedContext.id === boundedContext.id) &&
+                            (element.aggregate.id === aggregate.id)){
+                                events.push(getEventInfo(element))
+                            }
+                        }
+                        return events
+                    }
+        
+                    let aggegateInfo = {}
+                    aggegateInfo.id = aggregate.id ? aggregate.id : aggregate.elementView.id
+                    aggegateInfo.name = aggregate.name
+                    aggegateInfo.displayName = aggregate.displayName
+                    aggegateInfo.properties = getAggregateProperties(aggregate)
+                    aggegateInfo.enumerations = getEnumInfos(aggregate)
+                    aggegateInfo.valueObjects = getValueObjectInfos(aggregate)
+                    aggegateInfo.commands = getCommandInfos(aggregate, boundedContext, modelValue)
+                    aggegateInfo.events = getEventInfos(aggregate, boundedContext, modelValue)
+        
+                    return aggegateInfo
+                }
+        
+                const getAllActors = (boundedContext, modelValue) => {
+                    let actors = []
+                    for(let element of Object.values(modelValue.elements)){
+                        if(element && (element._type === 'org.uengine.modeling.model.Actor') &&
+                        (element.boundedContext.id === boundedContext.id)){
+                            actors.push({
+                                id: element.id ? element.id : element.elementView.id,
+                                name: element.name
+                            })
+                        }
+                    }
+                    return actors
+                }
+        
+                let boundedContextInfo = {}
+                boundedContextInfo.id = boundedContext.id ? boundedContext.id : boundedContext.elementView.id
+                boundedContextInfo.name = boundedContext.name
+                boundedContextInfo.displayName = boundedContext.displayName
+                
+                boundedContextInfo.aggregates = {}
+                for(let aggregate of getAllAggregates(boundedContext, modelValue))
+                    boundedContextInfo.aggregates[aggregate.id] = getAggregateInfo(aggregate, boundedContext, modelValue)
+                
+                boundedContextInfo.actors = getAllActors(boundedContext, modelValue)
+        
+                return boundedContextInfo
+            }
+            
+            let boundedContextInfos = {}
+            for(let boundedContext of getAllBoundedContexts(modelValue))
+                boundedContextInfos[boundedContext.id] = getBoundedContextInfo(boundedContext, modelValue)
+            return boundedContextInfos;
+        }
 
+        const getSystemPrompt = (preprocessModelValue, debeziumLogs) => {
+            const getFrontGuidePrompt = () => {
+                return `당신은 특정 시스템의 데이터베이스에서 발생하는 Debezium CDC 트랜잭션 로그를 해석해서 주어진 이벤트 스토밍 모델을 수정하기 위한 액션이 담긴 쿼리를 작성해야 합니다.
+Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 있지 않은 유즈케이스들을 찾아서 그에 맞춰서 이벤트 스토밍 모델에 반영하기 위한 액션이 담긴 쿼리들을 작성하시면 됩니다.
 
 다음 규칙을 따라서 작성해 주세요.
-1. 제공된 Debezium CDC 트랜젝션에서 발견된 속성 및 Bounded Context에 대해서만 생성해 주세요. 그 외의 추가적인 속성이나 Bounded Context를 추측해서 추가하지 마세요.
-2. 하나의 Bounded Context에 반드시 하나의 Aggregate가 속하도록 만들어주세요.
-3. 유저 관리나 인증과 관련된 Bounded Context를 만들지 말아주세요.
-4. 출력되는 JSON 객체에는 주석을 절대로 작성하면 안 됩니다.
-5. 각 Bounded Context는 서로와 상호작용을 합니다. 각 Bounded Context는 도메인 이벤트가 발생하면, 다른 Bounded Context의 정책을 호출하고, 그 정책이 Bounded Context의 Aggregate에 속한 Command를 호출하는 식으로 이벤트 내용을 전달할 수 있습니다.
-6. 자바에서 제공하는 기본 데이터타입 혹은 Address, Portrait, Rating, Money, Email을 제외한 속성들은 enumerations나 valueObjects로 직접 정의해야합니다.
-7. event.block이나 hibernate_sequence와 같이 비즈니스 로직과 직접적으로 관련이 없는 트렌젝션은 무시해야합니다.
+1. 제공된 Debezium CDC 트랜잭션에서 발견된 속성 및 Bounded Context에 대해서만 수정 사항들을 생성해 주세요. 그 외의 추가적인 속성을 추측하지 마세요.
+2. 각 Bounded Context는 서로와 상호작용을 합니다. 각 Bounded Context는 도메인 이벤트가 발생하면, 다른 Bounded Context의 정책을 호출하고, 그 정책이 Bounded Context의 Aggregate에 속한 Command를 호출하는 식으로 이벤트 내용을 전달할 수 있습니다.
+3. 출력되는 JSON 객체에는 주석을 절대로 작성하면 안 됩니다.
+4. 자바에서 제공하는 기본 데이터타입 혹은 Address, Portrait, Rating, Money, Email을 제외한 속성들은 enumerations나 valueObjects로 직접 정의해야 합니다.
+5. event.block이나 hibernate_sequence와 같이 비즈니스 로직과 직접적으로 관련이 없는 트랜잭션은 무시해야 합니다.
+6. id 속성은 고유해야 하며, 수정하면 안 됩니다.
 
+`
+            }
 
-당신이 반환해야 하는 형식은 다음과 같습니다.
-최대한 성실하게 적을 수 있는 속성들을 다 적어주시길 바랍니다.
+            const getInputSyntaxGuidePrompt = () => {
+                return `당신은 수정을 수행 할 이벤트 스토밍 모델에 대한 요약된 정보가 담긴 JSON 객체를 얻습니다.
+대략적인 구조는 다음과 같습니다.
 {
-    // 당신은 더 질 좋은 답변을 위해서 먼저 Debezium CDC 트랜젝션에 있는 각 테이블의 속성, 용도, 해당 테이블에 대한 각각의 엑터들의 사용 케이스들을 미리 작성합니다.
-    // 여기서 당신이 정의한 속성들은 향후 모델링 설계 시에 "from"과 같은 이름으로 전부 연계됩니다.
-    // 여기서 작성된 테이블은 반드시 다음에 aggregates 혹은 aggregates 내부의 entities에 정의되어야 합니다.
-    "tables": [
-        {
-            "name": "<TableName>",
+    // 이벤트 스토밍 모델은 여러개의 Bounded Context로 이루어져 있습니다.
+    "<boundedContextId>": {
+        "id": "<boundedContextId>",
+        "name": "<boundedContextName>",
+        "displayName": "<boundedContextAlias>",
+        "actors": [
+            {
+                "id": "<actorId>",
+                "name": "<actorName>"
+            }
+        ],
+        
+        // Bounded Context는 여러개의 aggregate를 가지고 있습니다.
+        "aggregates": {
+            "<aggregateId>": {
+                "id": "<aggregateId>",
+                "name": "<aggregateName>",
+                "displayName": "<aggregateAlias>",
+                
+                // aggregate는 Aggregate Root에 관한 속성들을 가지고 있습니다.
+                "properties": [
+                    {
+                        "name": "<propertyName>",
+                        "displayName": "<propertyAlias>",
+                        
+                        // "<propertyType>"은 다음 3가지중 하나에 속해야합니다.
+                        // 1. 이미 잘 알려진 Java 클래스 이름을 사용할 수 있습니다. 이때, 패키지 전체 경로를 적지 말고, 클래스 명만 적어주세요. (ex. java.lang.String > String)
+                        // 2. 다음 같은 값 중 하나를 사용할 수 있습니다. : Address, Portrait, Rating, Money, Email
+                        // 3. enumerations, valueObjects에 정의된 name이 있는 경우, 해당 이름을 사용할 수 있습니다.
+                        "type": "<propertyType>",
+                        "isKey": <true | false>, // 기본키 여부입니다. properties 중 오직 하나만 isKey가 true로 설정되어야 합니다.
+                    }
+                ],
+                
+                // Aggregate Root에 관한 속성들에 사용되는 Enum 객체에 대한 정의입니다.
+                "enumerations": [
+                    {
+                        "id": "<enumerationId>",
+                        "name": "<enumerationName>",
+                        "items": ["<itemName1>", "<itemName2>"]
+                    }
+                ],
+                
+                // Aggregate Root에 관한 속성들에 사용되는 ValueObject 객체에 대한 정의입니다.
+                "valueObjects": [
+                    {
+                        "id": "<valueObjectId>",
+                        "name": "<valueObjectName>",
+                        "properties": [
+                            {
+                                "name": "<propertyName>",
+                                "displayName": "<propertyAlias>",
+                                "type": "<propertyType>",
+                                "isKey": <true | false>,
+                                "isForeignProperty": <true | false> // 외래키 여부입니다. 이 속성이 다른 테이블의 속성을 참조하는 경우, 이 값은 true로 설정해야 합니다.
+                            }
+                        ]
+                    }
+                ],
+                
+                // REST API를 통해서 요청할 경우를 나타내는 command 목록입니다.
+                "commands": [
+                    {
+                        "id": "<commandId>",
+                        "name": "<commandName>",
+                        "displayName": "<commandAlias>",
+                        "api_verb":  <"POST" | "DELETE" | "PUT">,
+                        "outputEvents": [{
+                            "relationId": "<relationId>",
+                            "id": "<eventId>",
+                            "name": "<eventName>"
+                        }], // 이 command에 요청한 경우, 발생하게 되는 event에 대한 정보가 적힙니다.
+                        
+                        // 이 커멘드를 호출시킨 정책에 관련된 정보를 적힙니다.
+                        // 정책은 다른 Bounded Context에 있는 Event가 호출해서 해당 이벤트에 대해 적절한 동작을 수행하게 만듭니다.
+                        "inputPolicies": [
+                            {
+                                "relationId": "<relationId>",
+                                "id": "<policyId>",
+                                "inputEvents": [{
+                                    "relationId": "<relationId>",
+                                    "id": "<eventId>",
+                                    "name": "<eventName>"
+                                }],
+                                "name": "<policyName>",
+                                "displayName": "<policyAlias>"
+                            }
+                        ],
+                        
+                        "properties": [
+                            {
+                                "name": "<propertyName>",
+                                "displayName": "<propertyAlias>",
+                                "type": "<propertyType>",
+                                "isKey": <true | false>
+                            }
+                        ]
+                    }
+                ],
+                
+                // command에 의해서 발생한 event 목록입니다.
+                "events": [
+                    {
+                        "id": "<eventId>",
+                        "name": "<eventName>",
+                        "displayName": "<eventAlias>",
+                        
+                        "properties": [
+                            {
+                                "name": "<propertyName>",
+                                "displayName": "<propertyAlias>",
+                                "type": "<propertyType>",
+                                "isKey": <true | false>
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+}
 
-            // Debezium CDC 트랜젝션에 parameters.allowed가 있는 경우에는 해당 항목 중 하나만 선택해야 하므로, Enumeration 타입으로 정의해주세요.
-            // 여기서 작성한 타입 중 Enumeration 타입인 경우, 다음에 해당 aggregate 내부의 enumerations에 추가해야 합니다.
-            // 여기서 작성한 타입 중 사용자가 직접 정의한 것으로 생각되는 타입인 경우, aggregate 내부의 valueObjects에 추가해야 합니다.
+`
+            }
+
+            const getOutputSyntaxGuidePrompt = () => {
+                return `당신은 리스트를 반환하며, 그 리스트에는 특정 액션을 수행하기 위한 JSON 객체들이 담겨야 합니다.
+다음과 같은 형태로 반환하면 됩니다.
+{
+    // 먼저, 당신은 Debezium 트랜잭션 로그의 내용을 바탕으로 트랜잭션 별로 id와 description을 적어야 합니다.
+    // 전달된 트랜잭션 로그들의 순서와 일치해야 합니다.
+    "transactions": [
+        {
+            "id": "<transactionId>",
+            "description": "<transactionDescription>",
+
+            // 해당 트랜잭션에서 사용한 속성들을 적습니다.
             "properties": [
                 {
-                    "name": "<PropertyName>",
-                    "type": "<PropertyType>"
-                }
-            ],
-
-            // 앞에서 정의한 properties에서 특정 속성이 다른 테이블의 속성을 참조하는 경우, 이러한 속성들은 반드시 foreignProperties에 정의되어야 합니다.
-            "foreignProperties": [
-                {
-                    "name": "<ForeignPropertyName>",
-                    "references": "<ReferencedTableName>"
-                }
-            ],
-
-            "purpose": "<TablePurpose>",
-
-            // 여기서 작성된 사용 케이스는 반드시 다음에 설계된 모델의 Command, Event에 정의되어야 합니다.
-            // 만약, 사용 케이스에 triggeredUsecaseName가 정의된다면, 이것은 서로 다른 aggregate간의 호출을 의미하므로, 반드시 다음에 Policy로 정의되어야 합니다.
-            // 반드시 하나 이상의 usecase를 적어주세요.
-            "usecases": [
-                {
-                    "name": "<UsecaseName>",
-                    "triggeredUsecaseName": "<TriggeredUsecaseName>", // 만약, 이 usecase가 다른 usecase에 의해서 발생할 수 있으면, 원인이 되는 usecase의 이름을 적어주세요.
-                    "actor": "<ActorName>", // 주어진 서비스를 사용하는 엑터의 이름을 적습니다. 예를 들어서 "사용자", "관리자" 등이 있을 수 있습니다.
-                    "description": "<UsecaseDescription>" // 해당 엑터가 해당 테이블을 사용하는 사용 케이스의 설명을 적습니다. 예를 들어서 "주문 생성", "주문 취소" 등이 있을 수 있습니다. 
+                    "name": "<propertyName>",
+                    "displayName": "<propertyAlias>",
+                    "type": "<propertyType>",
+                    "isKey": <true | false>,
+                    "isForeignProperty": <true | false>
                 }
             ]
         }
     ],
 
-    
-    // 당신은 위에서 작성한 tables를 토대로 어떠한 테이블이 Aggregate에 있고, 어떠한 테이블이 해당 Aggregate의 ValueObject로 존재해야 하는지 미리 작성해야 합니다.
-    // 이때, 만약, 두 테이블의 데이터가 잠깐 불일치가 발생할 경우, 비즈니스적으로 치명적이면 해당 테이블 중 하나는 ValueObject로 존재해야 합니다.
-    // 비즈니스 적으로 치명적일 수 있는 사례는 다음과 같습니다.
-    // 1. 금융 거래 데이터
-    //  - 예시: Transaction 테이블과 AccountBalance 테이블
-    //  - 설명: 거래 내역과 계좌 잔액이 일치하지 않으면 금융 손실이나 부정확한 잔액 정보가 발생할 수 있습니다.
-    // 2. 재고 관리 데이터
-    //  - 예시: Inventory 테이블과 Order 테이블
-    //  - 설명: 재고 수량과 주문 수량이 일치하지 않으면 재고 부족이나 과잉 주문 문제가 발생할 수 있습니다.
-    // 3. 배송 정보 데이터
-    //  - 예시: Shipment 테이블과 Order 테이블
-    //  - 설명: 배송 정보와 주문 정보가 일치하지 않으면 잘못된 배송이나 고객 불만이 발생할 수 있습니다.
-    // 4. 의료 기록 데이터
-    //  - 예시: Patient 테이블과 MedicalRecord 테이블
-    //  - 설명: 환자 정보와 의료 기록이 일치하지 않으면 잘못된 진단이나 치료가 발생할 수 있습니다.
-    //
-    // aggregateRootTable의 이름과 valueObjectTable의 이름은 반드시 위의 tables에서 작성한 name을 사용해야 하며, 재귀적으로 작성하면 안 됩니다.
-    "relations":{
-        // ValueObject를 가지고 있는 테이블을 아래와 같은 형식으로 정의하십시오.
-        "<AggregateRootTableName>":[
-            {  
-                "relationName": "<RelationName>", // 위의 tables에서 작성한 name을 사용해야 합니다.
-                "valueObjectTable": "<ValueObjectTableName>", // 위의 tables에서 작성한 name을 사용해야 합니다.
-                "businessCriticalReason": "<BusinessCriticalReason>" // 위에서 제시한 비즈니스적으로 치명적인 사례에 대한 설명과 같이 작성합니다.
+    // 위에서 정의한 transactions를 바탕으로 당신은 Debezium 로그에서 기존의 이벤트 모델링에 반영되지 않는 유즈케이스들을 최대한 식별해서 적어야 합니다.
+    // 예를 들어서 위의 transactions에 주어진 이벤트 스토밍 정보에는 없는 상품 추가와 관련된 트랜잭션이 있으면, 해당 트랜잭션 id와 함께 유즈케이스를 적으면 됩니다.
+    "usecases": [
+        {
+            // 어떤 트랜잭션 id와 관계가 있는 유즈케이스인지 적습니다.
+            // 여기에 적힌 트랜잭션에서 선언된 속성들은 이 유즈케이스에서 활용하게 됩니다.
+            "relatedTransactionId": "<transactionId>",
+
+            "id": "<usecaseId>",
+            "name": "<usecaseName>",
+            "displayName": "<usecaseAlias>",
+            "actor": "<actorName>", // 이 유즈케이스와 관련된 액터 이름을 적습니다.
+
+            // 해당 유즈케이스에 대해서 수행할 쿼리들의 ID를 미리 작성합니다.
+            // 해당 쿼리 ID들은 추후에 queries에서 전부 구현되어야 합니다.
+            "relatedBoundedContextQueryIds": ["<queryId>"], // 이 유즈케이스에서 사용할 있는 BoundedContext를 INPUT으로 제공한 이벤트 스토밍 모델에서 발견할 수 없을 경우, 쿼리를 추가합니다.
+
+            "relatedAggregateQueryIds": ["<queryId>"], 
+            "relatedEnumerationQueryIds": ["<queryId>"], // 주어진 Aggregate에서 열거형 객체를 선언 했을 경우, 그 열거형 객체에 대한 구체적인 정보를 추가하기 위한 쿼리를 추가합니다.
+
+            // 주어진 Aggregate에서 ValueObject 객체를 선언 했을 경우, 그 ValueObject 객체에 대한 구체적인 정보를 추가하기 위한 쿼리를 추가합니다.
+            // 혹은, 특정 테이블이 주어진 Aggregate를 외래키로 참조하는 경우, 당신은 데이터의 불일치에 대한 비즈니스의 치명성을 판단해서 치명적이라고 판단되면 Aggregate가 아닌, ValueObject에 해당 트랙젝션 테이블을 추가할 수 있습니다.
+            "relatedValueObjectQueryIds": ["<queryId>"],  
+
+            "relatedCommandQueryIds": ["<queryId>"], // 이 유즈케이스를 사용한 커멘드 관련 쿼리의 ID이며, 최소한 하나 이상 존재해야 합니다.
+            "relatedEventQueryIds": ["<queryId>"], // 이 유즈케이스를 사용한 이벤트 관련 쿼리의 ID이며, 최소한 하나 이상 존재해야 합니다.
+            "relatedPolicyQueryIds": ["<queryId>"] // 특정 정책이 커멘드를 호출할 수 있을 경우, 그 정책을 추가하기 위한 쿼리를 추가합니다.
+        }
+    ],
+
+    // 여기에 위에서 제시한 usecase의 내용을 반영하기 위한 쿼리들을 작성하면 됩니다. 
+    "queries": [
+        {
+            // 어느 유즈케이스의 내용을 반영하기 위한 쿼리인지 적어주세요.
+            "fromUsecaseId": "<usecaseId>",
+
+            // 이 쿼리를 식별하기 위한 고유 ID 입니다.
+            "queryId": "<queryId>",
+
+            // 어떤 유형의 객체에 대한 정보를 수정하는지 나타내는 속성입니다.
+            // BoundedContext, Aggregate, Enumeration, ValueObject, Command, Event 중 하나를 선택해야 합니다.
+            "objectType": "<objectType>",
+
+            // 수행할 액션을 나타내는 속성입니다.
+            // new, modify, delete 중 하나를 선택해야 합니다.
+            "action": "<action>",
+
+            // 주어진 액션이 수행되는 객체의 ID 정보들이 담기는 속성입니다.
+            "ids": {
+                "<idName>": "<idValue>"
+            },
+
+            // 액션에 필요한 파라미터를 담는 속성입니다.
+            "args": {
+                "<argName>": "<argValue>"
+            }
+        }
+    ]
+}
+
+각각의 action에 대한 규칙은 다음과 같습니다.
+- new 액션
+    ids와 args에 나열된 모든 속성을 반드시 작성해야 합니다.
+
+- modify 액션
+    수정시킬 대상의 ids를 반드시 작성해야 하고, args에는 변경시킬 속성들만 작성해야 합니다.
+    properties인 경우, 변경시킬 name 속성이 담긴 객체만 작성하면 됩니다.
+    만약, 그 name이 없으면 새롭게 생성될 것이고, 그렇지 않을 때는 기존의 속성을 수정하는 것으로 합니다.
+
+- delete 액션
+    삭제시킬 대상의 ids를 반드시 작성해야 합니다.
+    properties의 일부 속성을 삭제하고 싶을 경우, 해당 properties 속성에서 삭제시킬 객체를 작성하면 됩니다.
+    properties 내부에서 작성된 name 속성과 매칭되는 속성이 삭제됩니다.
+
+각각의 objectType에서 활용하는 ids와 args에 관해서 설명하겠습니다.
+이 설명에서 작성하지 않은 임의의 파리미터를 ids나 args에서 활용할 수 없습니다.
+
+# objectType: BoundedContext
+- 설명
+모든 액션은 전달된 Bounded Context안에서 수행됩니다.
+
+- 반환 형태
+{
+    "objectType": "BoundedContext",
+    "action": "<new | modify | delete>",
+    "ids": {
+        "boundedContextId": "<boundedContextId>"
+    },
+    "args": {
+        "boundedContextName": "<boundedContextName>",
+        "boundedContextAlias": "<boundedContextAlias>"
+    }
+}
+
+# objectType: Aggregate
+- 설명
+Debezium 트랜잭션 로그는 특정 테이블에 대한 액션이 포함되어 있습니다.
+해당 Aggregate가 속할 수 있는 적절한 Bounded Context가 없을 경우에는 쿼리를 통해서 새롭게 만들어야 합니다.
+
+- 반환 형태
+{
+    "objectType": "Aggregate",
+    "action": "<new | modify | delete>",
+    "ids": {
+        "boundedContextId": "<boundedContextId>",
+        "aggregateId": "<aggregateId>"
+    },
+    "args": {
+        "aggregateName": "<aggregateName>",
+        "aggregateAlias": "<aggregateAlias>",
+
+        // 해당 트랜잭션에서 사용한 속성들을 최대한 다 적어주세요.
+        "properties": [
+            {
+                "name": "<propertyName>",
+                "displayName": "<propertyAlias>",
+                "type": "<propertyType>",
+                "isKey": <true | false>
+            }
+        ]
+    }
+}
+
+# objectType: Enumeration
+- 설명
+Aggreage에서 사용할 수 있는 열거형 정보를 담는 객체입니다.
+해당 Enumeration이 속할 수 있는 적절한 Bounded Context나 Aggregate가 없을 경우에는 쿼리를 통해서 새롭게 만들어야 합니다.
+
+- 반환 형태
+{
+    "objectType": "Enumeration",
+    "action": "<new | modify | delete>",
+    "ids": {
+        "boundedContextId": "<boundedContextId>",
+        "aggregateId": "<aggregateId>",
+        "enumerationId": "<enumerationId>"
+    },
+    "args": {
+        "enumerationName": "<enumerationName>",
+        "properties": [
+            {
+                "name": "<propertyName>"
+            }
+        ]
+    }
+}
+
+# objectType: ValueObject
+- 설명
+Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다.
+해당 ValueObject가 속할 수 있는 적절한 Bounded Context나 Aggregate가 없을 경우에는 쿼리를 통해서 새롭게 만들어야 합니다.
+
+- 반환 형태
+{
+    "objectType": "ValueObject",
+    "action": "<new | modify | delete>",
+    "ids": {
+        "boundedContextId": "<boundedContextId>",
+        "aggregateId": "<aggregateId>",
+        "valueObjectId": "<valueObjectId>"
+    },
+    "args": {
+        "valueObjectName": "<valueObjectName>",
+        "properties": [
+            {
+                "name": "<propertyName>",
+                "displayName": "<propertyAlias>",
+                "type": "<propertyType>",
+                "isKey": <true | false>,
+                "isForeignProperty": <true | false> // 외래키 여부입니다. 이 속성이 다른 테이블의 속성을 참조하는 경우, 이 값은 true로 설정해야 합니다
             }
         ],
+    }
+}
 
-        // ValueObject를 가지고 있지 않은 테이블을 아래와 같은 형식으로 정의하십시오.
-        "<AggregateRootTableName>": null
+# objectType: Command
+- 설명
+주어진 트랜잭션에서 의해서 수행되는 커멘드에 대한 정보를 담는 객체입니다.
+해당 커멘드가 속할 수 있는 적절한 Bounded Context나 Aggregate가 없을 경우에는 쿼리를 통해서 새롭게 만들어야 합니다.
+
+- 반환 형태
+{
+    "objectType": "Command",
+    "action": "<new | modify | delete>",
+    "ids": {
+        "boundedContextId": "<boundedContextId>",
+        "aggregateId": "<aggregateId>",
+        "commandId": "<commandId>"
     },
-
-    // 당신은 위에서 작성한 tables, relations에 대한 내용을 토대로 아래에 이벤트 스토밍과 관련된 설계 내용들을 작성합니다.
-    "serviceName": "<ServiceName>", // Service 이름은 반드시 영어로 작성되어야 하고, 공백이 허용되지 않습니다. 대신 "-"를 사용해 주세요.
-    "actors": ["<ActorName>"], // 주어진 서비스를 사용하는 엑터의 이름을 적습니다. 예를 들어서 "사용자", "관리자" 등이 있을 수 있습니다.
-
-    "boundedContext": {
-        // Bounded Context는 반드시 하나의 aggregate를 가져야 합니다.
-        // Bounded Context의 이름은 반드시 소문자로 작성되어야 하며, 공백이 허용되지 않습니다. 대신 "-"를 사용해 주세요.
-        "<bounded-context-name>": {  
-            "${this.originalLanguage}Name": "<${this.originalLanguage} 언어로 작성된 Bounded Context의 이름>",
-            "aggregates": [ 
-                {
-                    "fromTable": "<TableName>", // 이전 tables에서 정의했던 테이블의 이름을 적습니다.
-
-                    // 이전 relations에서 키값으로 사용된 값들만 aggregateRootTableName으로 사용해야 합니다.
-                    "name": "<AggregateRootTableName>",
-                    "${this.originalLanguage}Name": "<${this.originalLanguage} 언어로 작성된 Aggregate의 이름>", 
-                    "${this.originalLanguage}Description": "<${this.originalLanguage} 언어로 작성된 Aggregate에 대한 설명>", 
-
-                    ${this.generationOptions.ui ? `
-                    "uiStyle":{
-                        "layout": <"CARD" | "GRID" | "LIST-ITEM">,
-                        "nameProperty": "<property name for representing the object>",
-                        "imageUrlProperty":"<property name for representing image url if exists>",
-                        "icon": "<material design icon font name for representing this aggregate data>",
-                        "isRepresentingUser": <true | false>
-                    },
-                    `: ``}
-
-                    "properties": [
-                        {
-                            "fromProperty": "<PropertyName>", // 이전 tables에서 정의했던 속성의 이름을 적습니다.
-                            "name": "<PropertyName>", // Property 이름은 반드시 영어로 작성해야 하고, Camel-Case 표기법으로 작성해야 합니다.
-                            "${this.originalLanguage}Name": "<${this.originalLanguage} 언어로 작성된 Property 이름>", 
-
-                            // Property 타입은 다음 3가지 중 하나에 해당하여야 하고, 반드시 작성해야 합니다. 
-                            // 1. 이미 잘 알려진 Java 클래스 이름을 사용할 수 있습니다. 이때, 패키지 전체 경로를 적지 말고, 클래스 명만 적어주세요. (ex. java.lang.String > String)
-                            // 2. 다음 같은 값 중 하나를 사용할 수 있습니다. : Address, Portrait, Rating, Money, Email
-                            // 3. entities 속성에 ValueObject, Enumeration으로 정의된 name이 있는 경우, 해당 이름을 사용할 수 있습니다.
-                            "type": "<PropertyType>",
-
-                            "isKey": <true | false> // properties중 오직 하나만 isKey가 true로 설정되어야 합니다.
-                            ${this.generationOptions.ui ? `
-                            ,"uiStyle":{
-                                "inputUI": <"TEXT" | "SELECT" | "TEXTAREA"> // 속성값에 대해서 적절한 UI 스타일을 골라야 합니다.
-                            }`:``}
-                        }
-                    ],
-                    
-                    // aggregate, event, command의 properties에서 커스텀으로 사용된 속성에 대한 내용을 적습니다.
-                    // Address, Portrait, Rating, Money, Email은 별도로 생성하지 않습니다.
-                    // tables에서 Enumeration으로 정의한 타입이 있다면, 반드시 여기에 해당 속성을 정의해야 합니다.
-                    "enumerations": [
-                        {
-                            "fromTable": "<TableName>", // 이전 tables에서 정의했던 테이블의 이름을 적습니다.
-                            "name": "<EnumerationName>",
-                            "items": ["<Item1>", "<Item2>"]
-                        }
-                    ],
-
-                    // relations에서 valueObjectTable로 정의된 속성은 valueObjects 속성에 정의되어야 합니다.
-                    // valueObjects는 AggregateRoot를 참조하는 foreignProperties를 최소 하나 이상 가지고 있어야 합니다.
-                    valueObjects: [
-                        {
-                            "fromRelation": "<RelationName>", // 이전 relations에서 정의했던 관계의 이름을 적습니다.
-                            "fromTable": "<TableName>", // 이전 tables에서 정의했던 테이블의 이름을 적습니다.
-                            "name": "<ValueObjectTableName>", // 이전 relations에서 valueObjectTable에 정의된 이름만 사용해야 합니다.
-                            "properties": [
-                                {
-                                    "fromProperty": "<PropertyName>", // 이전 tables에서 정의했던 속성의 이름을 적습니다.
-                                    "name": "<PropertyName>", // Property 이름은 반드시 영어로 작성해야 하고, Camel-Case 표기법으로 작성해야 합니다.
-                                    "${this.originalLanguage}Name": "<${this.originalLanguage} 언어로 작성된 Property 이름>", 
-        
-                                    // Property 타입은 다음 3가지 중 하나에 해당하여야 하고, 반드시 작성해야 합니다. 
-                                    // 1. 이미 잘 알려진 Java 클래스 이름을 사용할 수 있습니다. 이때, 패키지 전체 경로를 적지 말고, 클래스 명만 적어주세요. (ex. java.lang.String > String)
-                                    // 2. 다음 같은 값 중 하나를 사용할 수 있습니다. : Address, Portrait, Rating, Money, Email
-                                    // 3. entities 속성에 ValueObject, Enumeration으로 정의된 name이 있는 경우, 해당 이름을 사용할 수 있습니다.
-                                    "type": "<PropertyType>",
-        
-                                    "isKey": <true | false>, // properties중 오직 하나만 isKey가 true로 설정되어야 합니다.
-                                    "isForeignProperty": <true | false> // 이 속성이 다른 테이블의 속성을 참조하는 경우, 이 값은 true로 설정해야 합니다.
-                                }
-                            ]
-                        }
-                    ],
-
-                    // 이전 tables에서 정의한 usecase를 활용해서 반드시 하나 이상의 command를 추가해 주세요.
-                    "commands": [
-                        {
-                            "fromUsecase": "<UsecaseName>", // 이전 tables에서 정의했던 사용 케이스의 이름을 적습니다.
-                            "name": "<CommandName>", // Command 이름은 반드시 반드시 영어로 작성해야 하고, Camel-Case 표기법으로 작성해야 합니다.
-                            "${this.originalLanguage}Name": "<${this.originalLanguage} 언어로 작성된 Command 이름>",
-
-                            ${this.generationOptions.properties ? `
-                            "properties": [
-                                {
-                                    "fromProperty": "<PropertyName>", // 이전 tables에서 정의했던 속성의 이름을 적습니다.
-                                    "name": "<PropertyName>", // Property 이름은 반드시 영어로 작성해야 하고, Camel-Case 표기법으로 작성해야 합니다.
-                                    // Property 타입은 다음 3가지 중 하나에 해당하여야 하고, 반드시 작성해야 합니다. 
-                                    // 1. 이미 잘 알려진 Java 클래스 이름을 사용할 수 있습니다. 이때, 패키지 전체 경로를 적지 말고, 클래스 명만 적어주세요. (ex. java.lang.String > String)
-                                    // 2. 다음 같은 값 중 하나를 사용할 수 있습니다. : Address, Portrait, Rating, Money, Email
-                                    // 3. entities 속성에 ValueObject, Enumeration으로 정의된 name이 있는 경우, 해당 이름을 사용할 수 있습니다.
-                                    "type": "<PropertyType>", 
-                                    "isKey": <true | false> // properties중 오직 하나만 isKey가 true로 설정되어야 합니다.
-                                }
-                            ],
-                            `:``}
-
-                            "api_verb": <"POST" | "DELETE" | "PUT">,
-                            "isCreation": <true | false>, // 이 커멘드가 Aggregate에 새로운 인스턴스를 생성하는지 여부를 나타내는 값입니다.
-                            "actor": "<ActorName>",
-                            "outputEvents": ["<EventName>"]
-
-                            ${this.generationOptions.ui ? `
-                            ,"uiStyle":{
-                                "icon": "이 커맨드를 나타내는 Material design icon font name"
-                            }`:``}
-
-                        }
-                    ],
-                    
-                    // 이전 tables에서 정의한 usecase를 활용해서 반드시 하나 이상의 event를 추가해 주세요.
-                    "events": [
-                        {
-                            "fromUsecase": "<UsecaseName>", // 이전 tables에서 정의했던 사용 케이스의 이름을 적습니다.
-                            "name": "<EventName>", // Event 이름은 반드시 영어로 작성해야 하고, Camel-Case 표기법으로 작성해야 합니다.
-                            "${this.originalLanguage}Name": "<${this.originalLanguage} 언어로 작성된 이벤트 이름>", 
-
-                            ${this.generationOptions.properties ? `
-                            "properties": [
-                                {
-                                    "fromProperty": "<PropertyName>", // 이전 tables에서 정의했던 속성의 이름을 적습니다.
-                                    "name": "<PropertyName>", // Property 이름은 반드시 영어로 작성해야 하고, Camel-Case 표기법으로 작성해야 합니다.
-                                    // Property 타입은 다음 3가지 중 하나에 해당하여야 하고, 반드시 작성해야 합니다. 
-                                    // 1. 이미 잘 알려진 Java 클래스 이름을 사용할 수 있습니다. 이때, 패키지 전체 경로를 적지 말고, 클래스 명만 적어주세요. (ex. java.lang.String > String)
-                                    // 2. 다음 같은 값 중 하나를 사용할 수 있습니다. : Address, Portrait, Rating, Money, Email
-                                    // 3. entities 속성에 ValueObject, Enumeration으로 정의된 name이 있는 경우, 해당 이름을 사용할 수 있습니다.
-                                    "type": "<PropertyType>",
-                                    "isKey": <true | false> // properties중 오직 하나만 isKey가 true로 설정되어야 합니다.
-                                }
-                            ]
-                            `:``}
-                        }
-                    ]
-                }
-            ]
-        }
+    "args": {
+        "commandName": "<commandName>",
+        "commandAlias": "<commandAlias>",
+        "api_verb": <"POST" | "DELETE" | "PUT">,
+        "properties": [
+            {
+                "name": "<propertyName>",
+                "displayName": "<propertyAlias>",
+                "type": "<propertyType>",
+                "isKey": <true | false>
+            }
+        ],
+        "toEventIds": ["<toEventId>"], // 이 커멘드로 인해서 발생되는 이벤트들의 id 리스트
+        "fromPolicyIds": ["<fromPolicyId>"], // 이 커멘드를 수행하기 위해서 필요한 정책들의 id 리스트
+        "actor": "<actorName>" // 해당 액션을 수행하는 액터명입니다. 사용자, 관리자등의 이름이 들어가야 합니다. 특정한 액터가 없을 경우, 빈값으로 넣어야 합니다.
     }
+}
 
-    ${this.generationOptions.policy ? `
-    ,
-    // 특정 이벤트가 발생했을 경우, 다른 Aggregate의 Command를 호출해야 하는 경우가 있는데, 이 경우, Policy를 추가할 수 있습니다.
-    // Policy는 서로 다른 Aggregate간의 통신을 위해서 사용하기 때문에 triggerEvents 속성의 aggregate와 commands의 aggregate가 다른 경우에만 추가해야 합니다.
-    // tables에서 triggeredUsecaseName가 포함된 usecase가 있으면, 해당 usecase에 의한 policy를 반드시 추가해야 합니다.
-    "policies": [
-        {
-            "boundedContext": "<이 정책이 속하는 Bounded Context의 이름>",
-            "fromUsecase": "<UsecaseName>", // 이전 tables에서 정의했던 사용 케이스의 이름을 적습니다.
-            "name": "<PolicyName>", // Policy 이름은 반드시 영어로 작성해야 하고, Camel-Case 표기법으로 작성해야 합니다.
-            "${this.originalLanguage}Name": "<${this.originalLanguage} 언어로 작성된 Policy 이름>",
+# objectType: Event
+- 설명
+특정 커멘드나 정책에 의해서 발생하는 이벤트에 대한 정보를 담는 객체입니다.
+해당 이벤트가 속할 수 있는 적절한 Bounded Context나 Aggregate가 없을 경우에는 쿼리를 통해서 새롭게 만들어야 합니다.
 
-            // 다음 이벤트들이 여기서 정의된 정책을 호출할 수 있습니다.
-            "triggerEvents":[
-                {
-                    "boundedContext": "<이벤트가 발생하는 Bounded Context의 이름>",
-                    "aggregate": "<이벤트가 발생하는 Aggregate 이름>",
-                    "event": "<해당 정책을 호출시킨 이벤트의 이름>"
-                }
-            ],
-
-            // 다음 Command들을 해당 정책은 호출할 수 있습니다.
-            "commands":[
-                {
-                    "boundedContext": "<Command가 실행되는 Bounded Context의 이름>",
-                    "aggregate": "<Command가 실행되는 Aggregate 이름>", // triggerEvents에서 정의한 aggregate와 다른 aggregate에 속해야 합니다.
-                    "command": "<해당 정책이 호출하는 Command의 이름>"
-                }
-            ]
-        }
-    ]`:``} 
-}`
+- 반환 형태
+{
+    "objectType": "Event",
+    "action": "<new | modify | delete>",
+    "ids": {
+        "boundedContextId": "<boundedContextId>",
+        "aggregateId": "<aggregateId>",
+        "eventId": "<eventId>"
+    },
+    "args": {
+        "eventName": "<eventName>",
+        "eventAlias": "<eventAlias>",
+        "properties": [
+            {
+                "name": "<propertyName>",
+                "displayName": "<propertyAlias>",
+                "type": "<propertyType>",
+                "isKey": <true | false>
+            }
+        ]
     }
+}
 
-    getUserPrompt(debeziumLogs) {
-        return (
+# objectType: Policy
+- 설명
+특정 이벤트가 발생했을 경우, 정책을 통해서 다른 커멘드를 호출할 수 있습니다.
+
+- 반환 형태
+{
+    "objectType": "Policy",
+    "action": "<new | modify | delete>",
+    "ids": {
+        "boundedContextId": "<boundedContextId>",
+        "aggregateId": "<aggregateId>",
+        "policyId": "<policyId>"
+    },
+    "args": {
+        "policyName": "<policyName>",
+        "policyAlias": "<policyAlias>",
+        "fromEventNames": ["<fromEventId>"] // 이 정책을 실행시키는 이벤트 이름들
+    }
+}
+
 `
-[INPUT]
+            }
+
+            const getExamplePrompt = () => {
+                return `예시를 들어보겠습니다.
+이 예시에서는 환자 정보, 환자 진료 기록, 환자 선호도 정보 업데이트와 관련된 Debezium 트랜잭션 로그가 전달되었다고 가정해서 출력된 결과입니다.
+이 예시에서 환자 진료 기록, 환자 선호도 정보는 환자 정보를 외래키로 가지고 있기 때문에 ValueObject 혹은 Aggregate로 정의될 수 있습니다.
+환자 진료 기록이 환자 정보와 데이터 불일치가 발생하면 비즈니스적으로 치명적이기 때문에 ValueObject로 환자 정보에 포함했고,
+환자 선호도 정보는 환자 정보와 데이터 불일치가 발생해도 비즈니스적으로 큰 문제가 되지 않기 때문에 Aggregate로 정의하였습니다.
+환자 선호도 정보 업데이트 이벤트가 발생했을 경우, Policy를 이용해서 환자 정보의 데이터도 업데이트한다는 점도 확인해 주세요.
+반환 결과는 다음과 같습니다.
+- 이것은 단지 예시일 뿐입니다. 실제로 제가 제공하는 이벤트 스토밍 모델링 데이터는 추후에 INPUT으로 제공될 겁니다.
+{
+    "transactions": [
+        {
+            "id": "patient-update-transaction",
+            "description": "Update Patient Information",
+            "properties": [
+                {
+                    "name": "id",
+                    "displayName": "Patient ID",
+                    "type": "Integer",
+                    "isKey": true,
+                    "isForeignProperty": false
+                },
+                {
+                    "name": "name",
+                    "displayName": "Patient Name",
+                    "type": "String",
+                    "isKey": false,
+                    "isForeignProperty": false
+                },
+                {
+                    "name": "phoneNumber",
+                    "displayName": "Patient Phone Number",
+                    "type": "String",
+                    "isKey": false,
+                    "isForeignProperty": false
+                },
+                {
+                    "name": "bloodType",
+                    "displayName": "Patient BloodType",
+                    "type": "EnumBloodType",
+                    "isKey": false,
+                    "isForeignProperty": false
+                },
+                {
+                    "name": "isPreferenceInputed",
+                    "displayName": "Is Preference Inputed",
+                    "type": "Boolean",
+                    "isKey": false,
+                    "isForeignProperty": false
+                }
+            ]
+        },
+        {
+            "id": "medicalRecord-update-transaction",
+            "description": "Update medicalRecord Information",
+            "properties": [
+                {
+                    "name": "id",
+                    "displayName": "Medical Record ID",
+                    "type": "Integer",
+                    "isKey": true,
+                    "isForeignProperty": false
+                },
+                {
+                    "name": "patientId",
+                    "displayName": "Patient Id",
+                    "type": "String",
+                    "isKey": false,
+                    "isForeignProperty": true
+                },
+                {
+                    "name": "medicalRecord",
+                    "displayName": "Patient Medical Record",
+                    "type": "String",
+                    "isKey": false,
+                    "isForeignProperty": false
+                }
+            ]
+        },
+        {
+            "id": "patientPreference-update-transaction",
+            "description": "Update patientPreference Information",
+            "properties": [
+                {
+                    "name": "id",
+                    "displayName": "Patient Preference ID",
+                    "type": "Integer",
+                    "isKey": true,
+                    "isForeignProperty": false
+                },
+                {
+                    "name": "patientId",
+                    "displayName": "Patient Id",
+                    "type": "String",
+                    "isKey": false,
+                    "isForeignProperty": true
+                },
+                {
+                    "name": "PreferenceValue",
+                    "displayName": "Patient Preference Value",
+                    "type": "String",
+                    "isKey": false,
+                    "isForeignProperty": false
+                }
+            ]
+        }
+    ],
+
+    "usecases": [
+        {
+            "relatedTransactionId": "patient-update-transaction",
+            "id": "usecase-update-patient",
+            "name": "UpdatePatient",
+            "displayName": "Update Patient",
+            "actor": "User",
+            "relatedBoundedContextQueryIds": ["query-bc-update-patient"],
+            "relatedAggregateQueryIds": ["query-agg-update-patient"],
+            "relatedEnumerationQueryIds": ["query-enum-blood-type"],
+            "relatedValueObjectQueryIds": [],
+            "relatedCommandQueryIds": ["query-cmd-update-patient"],
+            "relatedEventQueryIds": ["query-evt-update-patient"],
+            "relatedPolicyQueryIds": ["query-policy-update-patient"]
+        },
+        
+        {
+            "relatedTransactionId": "medicalRecord-update-transaction",
+            "id": "usecase-update-medical-record",
+            "name": "UpdateMedicalRecord",
+            "displayName": "Update Record Record",
+            "actor": "User",
+            "relatedBoundedContextQueryIds": [],
+            "relatedAggregateQueryIds": [],
+            "relatedEnumerationQueryIds": [],
+            "relatedValueObjectQueryIds": ["query-vo-update-medical-record"],
+            "relatedCommandQueryIds": ["query-cmd-update-medical-record"],
+            "relatedEventQueryIds": ["query-evt-update-medical-record"],
+            "relatedPolicyQueryIds": []
+        },
+        
+        {
+            "relatedTransactionId": "patientPreference-update-transaction",
+            "id": "usecase-update-patient-preference",
+            "name": "UpdatePatientPreference",
+            "displayName": "Update Patient Preference",
+            "actor": "User",
+            "relatedBoundedContextQueryIds": ["query-bc-update-patient-preference"],
+            "relatedAggregateQueryIds": ["query-agg-update-patient-preference"],
+            "relatedEnumerationQueryIds": [],
+            "relatedValueObjectQueryIds": [],
+            "relatedCommandQueryIds": ["query-cmd-update-patient-preference"],
+            "relatedEventQueryIds": ["query-evt-update-patient-preference"],
+            "relatedPolicyQueryIds": []
+        }
+    ],
+    
+    "queries": [
+        {
+            "fromUsecaseId": "usecase-update-patient",
+            "queryId": "query-bc-update-patient",
+            "objectType": "BoundedContext",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient"
+            },
+            "args": {
+                "boundedContextName": "patient-management",
+                "boundedContextAlias": "Patient Management"
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient",
+            "queryId": "query-agg-update-patient",
+            "objectType": "Aggregate",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient",
+                "aggregateId": "agg-patient"
+            },
+            "args": {
+                "aggregateName": "Patient",
+                "aggregateAlias": "Patient",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "Patient ID",
+                        "type": "Integer",
+                        "isKey": true
+                    },
+                    {
+                        "name": "name",
+                        "displayName": "Patient Name",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "phoneNumber",
+                        "displayName": "Patient Phone Number",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "bloodType",
+                        "displayName": "Patient BloodType",
+                        "type": "EnumBloodType",
+                        "isKey": false
+                    },
+                    {
+                        "name": "isPreferenceInputed",
+                        "displayName": "Is Preference Inputed",
+                        "type": "Boolean",
+                        "isKey": false
+                    }
+                ]
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient",
+            "queryId": "query-cmd-update-patient",
+            "objectType": "Command",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient",
+                "aggregateId": "agg-patient",
+                "commandId": "cmd-update-patient"
+            },
+            "args": {
+                "commandName": "UpdatePatient",
+                "commandAlias": "Update Patient",
+                "api_verb": "PUT",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "Patient ID",
+                        "type": "Integer",
+                        "isKey": true
+                    },
+                    {
+                        "name": "name",
+                        "displayName": "Patient Name",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "phoneNumber",
+                        "displayName": "Patient Phone Number",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "bloodType",
+                        "displayName": "Patient BloodType",
+                        "type": "EnumBloodType",
+                        "isKey": false
+                    },
+                    {
+                        "name": "isPreferenceInputed",
+                        "displayName": "Is Preference Inputed",
+                        "type": "Boolean",
+                        "isKey": false
+                    }
+                ],
+                "toEventIds": ["evt-patient-updated"],
+                "fromPolicyIds": ["policy-update-patient"],
+                "actor": "User"
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient",
+            "queryId": "query-evt-update-patient",
+            "objectType": "Event",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient",
+                "aggregateId": "agg-patient",
+                "eventId": "evt-patient-updated"
+            },
+            "args": {
+                "eventName": "PatientUpdated",
+                "eventAlias": "Patient Updated",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "Patient ID",
+                        "type": "Integer",
+                        "isKey": true
+                    },
+                    {
+                        "name": "name",
+                        "displayName": "Patient Name",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "phoneNumber",
+                        "displayName": "Patient Phone Number",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "bloodType",
+                        "displayName": "Patient BloodType",
+                        "type": "EnumBloodType",
+                        "isKey": false
+                    },
+                    {
+                        "name": "isPreferenceInputed",
+                        "displayName": "Is Preference Inputed",
+                        "type": "Boolean",
+                        "isKey": false
+                    }
+                ]
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient",
+            "queryId": "query-enum-blood-type",
+            "objectType": "Enumeration",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient",
+                "aggregateId": "agg-patient",
+                "enumerationId": "enum-blood-type"
+            },
+            "args": {
+                "enumerationName": "EnumBloodType",
+                "properties": [
+                    {
+                        "name": "A"
+                    },
+                    {
+                        "name": "B"
+                    },
+                    {
+                        "name": "AB"
+                    },
+                    {
+                        "name": "O"
+                    }
+                ]
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient",
+            "queryId": "query-policy-update-patient",
+            "objectType": "Policy",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient",
+                "aggregateId": "agg-patient",
+                "policyId": "policy-update-patient"
+            },
+            "args": {
+                "policyName": "UpdatePatientPolicy",
+                "policyAlias": "Update Patient Policy",
+                "fromEventNames": ["PatientPreferenceUpdated"]
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-medical-record",
+            "queryId": "query-vo-update-medical-record",
+            "objectType": "ValueObject",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient",
+                "aggregateId": "agg-patient",
+                "valueObjectId": "vo-medical-record"
+            },
+            "args": {
+                "valueObjectName": "MedicalRecord",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "MedicalRecord ID",
+                        "type": "Integer",
+                        "isKey": true,
+                        "isForeignProperty": false
+                    },
+                    {
+                        "name": "patientId",
+                        "displayName": "Patient Id",
+                        "type": "String",
+                        "isKey": false,
+                        "isForeignProperty": true
+                    },
+                    {
+                        "name": "medicalRecord",
+                        "displayName": "Patient Medical Record",
+                        "type": "String",
+                        "isKey": false,
+                        "isForeignProperty": false
+                    }
+                ]
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-medical-record",
+            "queryId": "query-cmd-update-medical-record",
+            "objectType": "Command",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient",
+                "aggregateId": "agg-patient",
+                "commandId": "cmd-update-medical-record"
+            },
+            "args": {
+                "commandName": "UpdateMedicalRecord",
+                "commandAlias": "Update Patient Medical Record",
+                "api_verb": "PUT",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "MedicalRecord ID",
+                        "type": "Integer",
+                        "isKey": true
+                    },
+                    {
+                        "name": "patientId",
+                        "displayName": "Patient Id",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "medicalRecord",
+                        "displayName": "Patient Medical Record",
+                        "type": "String",
+                        "isKey": false
+                    }
+                ],
+                "toEventIds": ["evt-medical-record-updated"],
+                "fromPolicyIds": [],
+                "actor": "User"
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-medical-record",
+            "queryId": "query-evt-update-medical-record",
+            "objectType": "Event",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient",
+                "aggregateId": "agg-patient",
+                "eventId": "evt-medical-record-updated"
+            },
+            "args": {
+                "eventName": "MedicalRecordUpdated",
+                "eventAlias": "Patient Medical Record Updated",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "MedicalRecord ID",
+                        "type": "Integer",
+                        "isKey": true
+                    },
+                    {
+                        "name": "patientId",
+                        "displayName": "Patient Id",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "medicalRecord",
+                        "displayName": "Patient Medical Record",
+                        "type": "String",
+                        "isKey": false
+                    }
+                ]
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient-preference",
+            "queryId": "query-bc-update-patient-preference",
+            "objectType": "BoundedContext",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient-preference"
+            },
+            "args": {
+                "boundedContextName": "patient-preference-management",
+                "boundedContextAlias": "Patient Preference Manager"
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient-preference",
+            "queryId": "query-agg-update-patient-preference",
+            "objectType": "Aggregate",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient-preference",
+                "aggregateId": "agg-patient-preference"
+            },
+            "args": {
+                "aggregateName": "PatientPreference",
+                "aggregateAlias": "PatientPreference",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "Patient Preference ID",
+                        "type": "Integer",
+                        "isKey": true
+                    },
+                    {
+                        "name": "patientId",
+                        "displayName": "Patient Id",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "PreferenceValue",
+                        "displayName": "Patient Preference Value",
+                        "type": "String",
+                        "isKey": false
+                    }
+                ]
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient-preference",
+            "queryId": "query-cmd-update-patient-preference",
+            "objectType": "Command",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient-preference",
+                "aggregateId": "agg-patient-preference",
+                "commandId": "cmd-update-patient-preference"
+            },
+            "args": {
+                "commandName": "UpdatePatientPreference",
+                "commandAlias": "Update Patient Preference",
+                "api_verb": "PUT",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "Patient Preference ID",
+                        "type": "Integer",
+                        "isKey": true
+                    },
+                    {
+                        "name": "patientId",
+                        "displayName": "Patient Id",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "PreferenceValue",
+                        "displayName": "Patient Preference Value",
+                        "type": "String",
+                        "isKey": false
+                    }
+                ],
+                "toEventIds": ["evt-patient-preference-updated"],
+                "fromPolicyIds": [],
+                "actor": "User"
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient-preference",
+            "queryId": "query-evt-update-patient-preference",
+            "objectType": "Event",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient-preference",
+                "aggregateId": "agg-patient-preference",
+                "eventId": "evt-patient-preference-updated"
+            },
+            "args": {
+                "eventName": "PatientPreferenceUpdated",
+                "eventAlias": "Patient Preference Updated",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "Patient Preference ID",
+                        "type": "Integer",
+                        "isKey": true
+                    },
+                    {
+                        "name": "patientId",
+                        "displayName": "Patient Id",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "PreferenceValue",
+                        "displayName": "Patient Preference Value",
+                        "type": "String",
+                        "isKey": false
+                    }
+                ]
+            }
+        }
+    ]
+}
+
+`
+
+            }
+
+            const getUserPrompt = (preprocessModelValue, debeziumLogs) => {
+                return `[INPUT]
+- 기존 이벤트스토밍 모델 객체
+${preprocessModelValue}
+
+- Debezium 트랜잭션 로그
 ${debeziumLogs}
 
-[OUTPUT]
-`
-)
-    }
+[OUTPUT]`
+            }
 
+            return  getFrontGuidePrompt() +
+                    getInputSyntaxGuidePrompt() +
+                    getOutputSyntaxGuidePrompt() +
+                    getExamplePrompt() +
+                    getUserPrompt(preprocessModelValue, debeziumLogs)
+        }
+
+        this.preprocessModelValue = getPreprocessModelValue(this.client.modelValue)
+        this.preModificationMessage = this.messageObj.modificationMessage
+
+        return getSystemPrompt(
+            JSON.stringify(this.preprocessModelValue, null, 2),
+            this.preModificationMessage 
+        )
+    }
 
     createModel(text){
-        console.log("[*] DebeziumLogsTabGenerator가 생성한 값: ", text)
-        if (text.includes("```json")) {
-            text = text.match(/```json\n([\s\S]+)\n```/)[1]
+        const parseToJson = (aiTextResult) => {
+            if(aiTextResult.includes("```json"))
+                aiTextResult = aiTextResult.match(/```json\n([\s\S]+)\n```/)[1]
+            return JSON.parse(aiTextResult.trim())
         }
 
-        var me = this
-        let modelValue
-        var voClassList = ["Payment", "Money", "Address", "Comment", "Email", "File", "Likes", "Photo", "Rating", "Tags", "User", "Weather"]
-       
-        var bcCnt = 0
-        var heightVal = 0
-        // var elements = {}
-        me.lastBCView = null
-        me.resetUUID();
-
-        try{
-            modelValue = super.createModel(text.trim())
-
-            if(modelValue["boundedContext"]){
-                var portNumber = 8080
-                Object.keys(modelValue["boundedContext"]).forEach(function (key, bcIdx){
-                    portNumber++;
-                    if(portNumber == 8088) {
-                        portNumber++;
-                    }
-                    if(me.generateCnt < bcIdx){
-                        me.generateCnt = bcIdx
-                    }
-                    var bcMaxHeightVal = 0
-                    if(bcCnt == 3){
-                        heightVal++;
-                        bcCnt = 0
-                        me.lastBCView = null
-                    }
-                    bcCnt++;
-                    if(!me.bcPosition[heightVal]){
-                        me.bcPosition[heightVal] = null
-                    }
-                    ////
-                    // .uuid()
-
-                    
-                    var bcUuid = 'bc-' + key.replaceAll("/", "-")
-                    if(me.generateCnt == bcIdx){
-                        me.modelElements[bcUuid] = me.createBoundedContext(
-                            key, 
-                            modelValue["boundedContext"][key], 
-                            400 + ((bcCnt - 1) * 600), 
-                            heightVal != 0 && (me.bcPosition[heightVal - 1]) ? me.bcPosition[heightVal - 1].height/2 + me.bcPosition[heightVal - 1].y + 335:380 + (heightVal * 610)
-                        )
-                    }
-
-                    modelValue["boundedContext"][key].eleInfo = me.modelElements[bcUuid]
-                    if(modelValue["boundedContext"][key]["aggregates"]){
-                        if(modelValue["boundedContext"][key]["aggregates"].length == 0){
-                            me.modelElements[bcUuid]["elementView"].width = 480
-                        } else {
-                            me.modelElements[bcUuid]["elementView"].width = modelValue["boundedContext"][key]["aggregates"].length * 480
-                        }
-                        if(me.lastBCView){
-                            me.modelElements[bcUuid]["elementView"].x = me.lastBCView.x + me.lastBCView.width/2 + 20 + me.modelElements[bcUuid]["elementView"].width/2
-                        } else {
-                            me.modelElements[bcUuid]["elementView"].x = me.modelElements[bcUuid]["elementView"].width/2 + 120
-                        }
-                        me.lastBCView = me.modelElements[bcUuid]["elementView"] 
-                        modelValue["boundedContext"][key]["aggregates"].forEach(function (agg, aggIdx){
-                            // var aggUuid = me.uuid();
-                            var aggMaxHeightVal = 0
-                            var eventHeight = 0
-                            var commandHeight = 0
-                            var eventLength = 0
-                            var commandLength = 0
-                            var lastCommandView = null
-
-                            if(agg["name"]){
-                                var aggUuid = bcUuid + '-agg-' + agg.name.replaceAll("/", "-")
-                                if(me.generateCnt == bcIdx){
-                                    me.modelElements[aggUuid] = {
-                                        aggregateRoot: {
-                                            _type: 'org.uengine.modeling.model.AggregateRoot', 
-                                            fieldDescriptors: [],
-                                            entities: {}, 
-                                            operations: [],
-                                        },
-                                        author: me.userUid,
-                                        boundedContext: {
-                                            name: key, 
-                                            id: bcUuid
-                                        },
-                                        commands: [],
-                                        description: null,
-                                        id: aggUuid, 
-                                        elementView: {
-                                            _type: 'org.uengine.modeling.model.Aggregate', 
-                                            id: aggUuid, 
-                                            // x: modelValue["boundedContext"][key]["aggregates"].length == 1 ? me.modelElements[bcUuid]["elementView"].x:390 + ((bcCnt - 1) * 600) + ((aggIdx * 380)), 
-                                            x: modelValue["boundedContext"][key]["aggregates"].length == 1 ? me.modelElements[bcUuid]["elementView"].x : me.modelElements[bcUuid]["elementView"].x - me.modelElements[bcUuid]["elementView"].width/2 + 280 + (aggIdx * 480), 
-                                            y: me.modelElements[bcUuid]["elementView"].y, 
-                                            width: 130,
-                                            height: 400,
-                                            _type: "org.uengine.modeling.model.Aggregate"
-                                        },
-                                        events: [],
-                                        hexagonalView: {
-                                            _type: 'org.uengine.modeling.model.AggregateHexagonal', 
-                                            id: aggUuid, 
-                                            x: 0, 
-                                            y: 0, 
-                                            subWidth: 0,
-                                            width: 0,
-                                            x: 0,
-                                            y: 0,
-                                            _type: "org.uengine.modeling.model.AggregateHexagonal"
-                                        },
-                                        name: agg.name,
-                                        displayName: agg[me.originalLanguage + 'Name'],
-                                        nameCamelCase: changeCase.camelCase(agg.name),
-                                        namePascalCase: changeCase.pascalCase(agg.name),
-                                        namePlural: "",
-                                        rotateStatus: false,
-                                        selected: false,
-                                        _type: "org.uengine.modeling.model.Aggregate"
-                                    }
-                                    if(agg["properties"] && agg["properties"].length > 0){
-                                        agg["properties"].forEach(function (ele, idx){
-                                            var field = {
-                                                className: ele.type,
-                                                isCopy: false,
-                                                isKey: idx == 0 ? true:false,
-                                                name: ele.name,
-                                                displayName: ele[me.originalLanguage + 'Name'],
-                                                nameCamelCase: changeCase.camelCase(ele.name),
-                                                namePascalCase: changeCase.pascalCase(ele.name),
-                                                _type: "org.uengine.model.FieldDescriptor",
-                                                inputUI: ele.uiStyle ? ele.uiStyle.inputUI:null,
-                                                options: ele.options ? ele.options:null,
-                                            }
-                                            me.modelElements[aggUuid].aggregateRoot.fieldDescriptors.push(field)
-                                            if(ele.options && ele.options.length > 0) {
-                                                let enumItems = []
-                                                ele.options.forEach(function (item) {
-                                                    let itemObj = {
-                                                        value: item
-                                                    }
-                                                    enumItems.push(itemObj)
-                                                })
-                                                var enumField = {
-                                                    className: ele.name + "Type",
-                                                    isCopy: false,
-                                                    isKey: false,
-                                                    name: ele.name + "Type",
-                                                    displayName: ele[me.originalLanguage + 'Name'] + " 유형",
-                                                    nameCamelCase: changeCase.camelCase(ele.name) + "Type",
-                                                    namePascalCase: changeCase.pascalCase(ele.name) + "Type",
-                                                    _type: "org.uengine.model.FieldDescriptor",
-                                                    classId: null,
-                                                    isCorrelationKey: false,
-                                                    isList: false,
-                                                    isLob: false,
-                                                    isName: false,
-                                                    isVO: false,
-                                                    items: enumItems,
-                                                    referenceClass: undefined
-                                                }
-                                                me.modelElements[aggUuid].aggregateRoot.fieldDescriptors.push(enumField)
-                                            }
-                                            
-                                            
-                                            if(voClassList.find(x => x == ele.type)){
-                                                var entityUid = me.uuid();
-                                                if(!me.modelElements[aggUuid].aggregateRoot.entities['elements']){
-                                                    me.modelElements[aggUuid].aggregateRoot.entities['elements'] = {}
-                                                    me.modelElements[aggUuid].aggregateRoot.entities['relations'] = {}
-                                                }
-                                                me.modelElements[aggUuid].aggregateRoot.entities['elements'][entityUid] = {
-                                                    _type: "org.uengine.uml.model.vo.Class",
-                                                    id: entityUid,
-                                                    elementView: {
-                                                        _type: "org.uengine.uml.model.Class",
-                                                        id: entityUid,
-                                                        style: "{}",
-                                                        fieldH: 50,
-                                                        height: 100,
-                                                        methodH: 30,
-                                                        subEdgeH: 70,
-                                                        titleH: 30,
-                                                        width: 200,
-                                                        x: 180 + idx * 200, 
-                                                        y: 300
-                                                    },
-                                                    fieldDescriptors: me.VODefinitionsFieldDescriptors[ele.type],
-                                                    groupElement: null,
-                                                    isAbstract: false,
-                                                    isAggregateRoot: false,
-                                                    isInterface: false,
-                                                    isVO: true,
-                                                    name: ele.type,
-                                                    nameCamelCase: ele.type,
-                                                    namePascalCase: ele.type,
-                                                    namePlural: ele.type,
-                                                    operations: [],
-                                                    parentOperations: [],
-                                                    relationType: null,
-                                                    relations: [],
-                                                    selected: false
-                                                }
-                                            }
-                                        })
-                                    } else if(agg["entities"] && agg["entities"][0] && agg["entities"][0]["properties"]){
-                                        agg["entities"][0]["properties"].forEach(function (ele, idx){
-                                            var field = {
-                                                className: ele.type,
-                                                isCopy: false,
-                                                isKey: idx == 0 ? true:false,
-                                                name: ele.name,
-                                                nameCamelCase: changeCase.camelCase(ele.name),
-                                                namePascalCase: changeCase.pascalCase(ele.name),
-                                                _type: "org.uengine.model.FieldDescriptor"
-                                            }
-                                            me.modelElements[aggUuid].aggregateRoot.fieldDescriptors.push(field)
-                                        })
-                                    }
-                                } 
-                                modelValue["boundedContext"][key]["aggregates"][aggIdx].eleInfo = me.modelElements[aggUuid]
-                            }
-
-                            if(agg["uiStyle"]){
-                                me.modelElements[aggUuid].uiStyle = agg["uiStyle"];
-                            }
-
-                            me.modelElements[aggUuid].description = agg[me.originalLanguage+"Description"];
-
-
-                            var firstEvent = true
-                            var firstCommand = true
-                            var elementUuid
-                            if(agg["events"]){
-                                agg["events"].forEach(function (ele, idx){
-                                    elementUuid = bcUuid + '-event-' + ele.name.replaceAll("/", "-")
-
-                                    if(firstEvent && commandHeight == 0){
-                                        eventHeight = me.modelElements[aggUuid]["elementView"].y + (idx * 120) - 200
-                                        firstEvent = false
-                                    }
-                                    eventLength = agg["events"].length
-                                    if(me.generateCnt == bcIdx){
-
-                                        let event = me.createEvent(
-                                            ele, 
-                                            elementUuid,
-                                            me.modelElements[aggUuid]["elementView"].x + 90, 
-                                            commandHeight == 0 ? me.modelElements[aggUuid]["elementView"].y + (idx * 120) - 200:commandHeight + (idx * 120)
-                                        )
-
-                                        event.aggregate = 
-                                        {
-                                            id: aggUuid
-                                        }
-                                
-                                        event.boundedContext = {
-                                            name: key, 
-                                            id: bcUuid
-                                        }
-
-                                        me.modelElements[elementUuid] = event
-                                        
-                                    }
-                                    modelValue["boundedContext"][key]["aggregates"][aggIdx]["events"][ele.name] = {}
-                                    modelValue["boundedContext"][key]["aggregates"][aggIdx]["events"][ele.name].eleInfo = me.modelElements[elementUuid]
-
-                                    if(me.generateCnt == bcIdx){
-                                        if(ele.properties && ele.properties.length > 0){
-                                            ele.properties.forEach(function (property, propertyIdx){
-                                                var field = {
-                                                    className: property.type,
-                                                    isCopy: false,
-                                                    isKey: propertyIdx == 0 ? true:false,
-                                                    name: property.name,
-                                                    nameCamelCase: changeCase.camelCase(property.name),
-                                                    namePascalCase: changeCase.pascalCase(property.name),
-                                                    _type: "org.uengine.model.FieldDescriptor"
-                                                }
-                                                if(me.modelElements[elementUuid]){
-                                                    me.modelElements[elementUuid].fieldDescriptors.push(field)
-                                                }
-                                            })
-                                        }
-                                    }
-                                })
-                            }
-
-                            if(agg["commands"]){
-                                agg["commands"].forEach(function (ele, idx){
-                                    elementUuid = bcUuid + '-command-' + ele.name.replaceAll("/", "-")
-                                    if(firstCommand && eventHeight == 0){
-                                        commandHeight = me.modelElements[aggUuid]["elementView"].y + (idx * 120) - 200
-                                        firstCommand = false
-                                    }
-                                    commandLength = agg["commands"].length
-                                    if(me.generateCnt == bcIdx){
-                                        me.modelElements[elementUuid] = {
-                                            _type: "org.uengine.modeling.model.Command",
-                                            outputEvents: ele.outputEvents,
-                                            aggregate: {
-                                                id: aggUuid
-                                            },
-                                            author: me.userUid,
-                                            boundedContext: {
-                                                id: bcUuid,
-                                                name: key
-                                            },
-                                            controllerInfo: {
-                                                apiPath: ele.api_uri,
-                                                method: ele.api_verb
-                                            },
-                                            fieldDescriptors: [],
-                                            description: null,
-                                            id: elementUuid,
-                                            elementView: {
-                                                _type: "org.uengine.modeling.model.Command",
-                                                height: 115,
-                                                id: elementUuid,
-                                                style: "{}",
-                                                width: 100,
-                                                x: me.modelElements[aggUuid]["elementView"].x - 90, 
-                                                y: eventHeight == 0 ? me.modelElements[aggUuid]["elementView"].y + (idx * 120) - 200:eventHeight + (idx * 120), 
-                                                "z-index": 999
-                                            },
-                                            hexagonalView: {
-                                                _type: "org.uengine.modeling.model.CommandHexagonal",
-                                                height: 0,
-                                                id: elementUuid,
-                                                style: "{}",
-                                                width: 0,
-                                                x: 0,
-                                                y: 0
-                                            },
-                                            isRestRepository: ele.api_verb == 'PUT' ? false:true,
-                                            name: ele.name,
-                                            displayName: ele[me.originalLanguage + 'Name'],
-                                            nameCamelCase: changeCase.camelCase(ele.name),
-                                            namePascalCase: changeCase.pascalCase(ele.name),
-                                            namePlural: "",
-                                            relationCommandInfo: [],
-                                            relationEventInfo: [],
-                                            restRepositoryInfo: {
-                                                method: ele.api_verb ? ele.api_verb:'POST'
-                                            },
-                                            rotateStatus: false,
-                                            selected: false,
-                                            trigger: "@PrePersist",
-                                        }
-                                    }
-                                    modelValue["boundedContext"][key]["aggregates"][aggIdx]["commands"][ele.name] = {}
-                                    modelValue["boundedContext"][key]["aggregates"][aggIdx]["commands"][ele.name].eleInfo = me.modelElements[elementUuid]
-                                    lastCommandView = me.modelElements[elementUuid]["elementView"]
-                                    if(ele.actor){
-                                        if(me.generateCnt == bcIdx){
-                                            var actorUuid = bcUuid + '-' + elementUuid + '-actor-' + ele.actor.replaceAll("/", "-")
-                                            me.modelElements[actorUuid] = {
-                                                _type:"org.uengine.modeling.model.Actor",
-                                                author: me.userUid,
-                                                boundedContext: {
-                                                    id: bcUuid,
-                                                    name: key
-                                                },
-                                                description: null,
-                                                id: actorUuid,
-                                                elementView: {
-                                                    _type: "org.uengine.modeling.model.Actor",
-                                                    height: 100,
-                                                    id: actorUuid,
-                                                    style: "{}",
-                                                    width: 100,
-                                                    x: me.modelElements[elementUuid]['elementView'].x - 80,
-                                                    y: me.modelElements[elementUuid]['elementView'].y - 40
-                                                },
-                                                innerAggregate: {
-                                                    command: [],
-                                                    event: [],
-                                                    external: [],
-                                                    policy: [],
-                                                    view: [],
-                                                },
-                                                name: ele.actor,
-                                                oldName: "",
-                                                rotateStatus: false
-                                            }
-                                        }
-                                    }
-                                    if(me.generateCnt == bcIdx){
-                                        if(ele.properties && ele.properties.length > 0){
-                                            ele.properties.forEach(function (property, propertyIdx){
-                                                var field = {
-                                                    className: property.type,
-                                                    isCopy: false,
-                                                    isKey: propertyIdx == 0 ? true:false,
-                                                    name: property.name,
-                                                    nameCamelCase: changeCase.camelCase(property.name),
-                                                    namePascalCase: changeCase.pascalCase(property.name),
-                                                    _type: "org.uengine.model.FieldDescriptor"
-                                                }
-                                                if(me.modelElements[elementUuid]){
-                                                    me.modelElements[elementUuid].fieldDescriptors.push(field)
-                                                }
-                                            })
-                                        }
-                                    }
-                                })
-                            }
-
-                            var maxHeightVal = eventLength > commandLength ? eventLength:commandLength
-                            if(maxHeightVal > bcMaxHeightVal){
-                                bcMaxHeightVal = maxHeightVal
-                                if(bcUuid && me.modelElements[bcUuid]){
-                                    me.modelElements[bcUuid]["elementView"].height = me.modelElements[bcUuid]["elementView"].height > (bcMaxHeightVal * 110) + 200 ? me.modelElements[bcUuid]["elementView"].height:(bcMaxHeightVal * 110) + 200
-                                    if(heightVal == 0){
-                                        if(me.modelElements[bcUuid]["elementView"].height > 590){
-                                            // console.log(bcUuid, ": " + me.modelElements[bcUuid]["elementView"].height - (220 + 50 * (bcMaxHeightVal - 4)))
-                                            // me.modelElements[bcUuid]["elementView"].y = me.modelElements[bcUuid]["elementView"].height - (220 + 50 * (bcMaxHeightVal - 4))
-                                            me.modelElements[bcUuid]["elementView"].y = me.modelElements[bcUuid]["elementView"].height/2 + 80
-                                        } else {
-                                            me.modelElements[bcUuid]["elementView"].y = 380
-                                        }
-                                    } 
-                                    if(me.bcPosition[heightVal - 1]){
-                                        me.modelElements[bcUuid]["elementView"].y = me.bcPosition[heightVal - 1].y + me.bcPosition[heightVal - 1].height/2 + 20 + me.modelElements[bcUuid]["elementView"].height/2
-                                    } 
-                                    if(!me.bcPosition[heightVal]){
-                                        me.bcPosition[heightVal] = me.modelElements[bcUuid]["elementView"]
-                                    } else {
-                                        if(me.bcPosition[heightVal].height < me.modelElements[bcUuid]["elementView"].height){
-                                            me.bcPosition[heightVal] = me.modelElements[bcUuid]["elementView"]
-                                        }
-                                    }
-                                }
-                            }    
-
-                            aggMaxHeightVal = eventLength > commandLength ? eventLength:commandLength
-                            
-                            if(aggMaxHeightVal > 0){
-                                if(me.modelElements[aggUuid]){
-                                    me.modelElements[aggUuid]["elementView"].height = 400 > aggMaxHeightVal * 110 + aggMaxHeightVal * 8 ? 400:aggMaxHeightVal * 110 + aggMaxHeightVal * 8
-                                    me.modelElements[aggUuid]["elementView"].y = me.modelElements[bcUuid]["elementView"].y
-                                }
-                            }
-
-                            me.applyEntitiesToAggregate(me.modelElements[aggUuid], agg.enumerations, agg.valueObjects)
-                        })
-                    }
-                })
-                var relations = {}
-                Object.keys(me.modelElements).forEach(function (key){
-                    if(me.modelElements[key]._type == "org.uengine.modeling.model.Command" && (me.modelElements[key].outputEvents && me.modelElements[key].outputEvents.length > 0)){
-                        me.modelElements[key].outputEvents.forEach(function (eventName){
-                            Object.keys(me.modelElements).some(function (key2){
-                                if(eventName == me.modelElements[key2].name){
-                                    if(me.modelElements[key2]['aggregate'] && me.modelElements[key]['aggregate'].id == me.modelElements[key2]['aggregate'].id){
-                                        var relUuid = me.uuid();
-                                        relations[relUuid] = {
-                                            _type: "org.uengine.modeling.model.Relation",
-                                            from: key,
-                                            hexagonalView: {
-                                                _type: "org.uengine.modeling.model.RelationHexagonal",
-                                                from: key,
-                                                id: relUuid,
-                                                needReconnect: true,
-                                                style: `{"arrow-start":"none","arrow-end":"none"}`,
-                                                to: key2,
-                                                value: null
-                                            },
-                                            name: "",
-                                            id: relUuid,
-                                            relationView: {
-                                                from: key,
-                                                id: relUuid,
-                                                needReconnect: true,
-                                                style: `{"arrow-start":"none","arrow-end":"none"}`,
-                                                to: key2,
-                                                value: "[]"
-                                            },
-                                            sourceElement: me.modelElements[key],
-                                            sourceMultiplicity: 1,
-                                            targetElement: me.modelElements[key2],
-                                            targetMultiplicity: 1,
-                                            to: key2
-                                        }
-                                    }
-                                }
-                            })
-                        })  
-                    } 
-                }); 
-                if(me.state == 'end'){
-                    // policy
-                    if(modelValue["policies"]){
-                        let isOrchestrationCnt = 0
-                        modelValue["policies"].forEach(function (policy){
-                            var isPolicyType = null
-                            let policyUuid = me.uuid();
-                            let refEle = null
-                            let elementView = {}
-                            let cmdInfo = []
-                            let evnInfo = null
-
-                            if(policy.commands && policy.commands.length > 0){
-                                // !command ? add command:null
-                                policy.commands.forEach(function (cmd){
-                                    var cmdAggIdx = modelValue["boundedContext"][cmd.boundedContext]["aggregates"].findIndex(x => x.name == cmd.aggregate)
-                                    if(modelValue["boundedContext"][cmd.boundedContext]["aggregates"][cmdAggIdx] && !modelValue["boundedContext"][cmd.boundedContext]["aggregates"][cmdAggIdx]["commands"]){
-                                        modelValue["boundedContext"][cmd.boundedContext]["aggregates"][cmdAggIdx]["commands"] = {}
-                                    }
-                                    if(!modelValue["boundedContext"][cmd.boundedContext]["aggregates"][cmdAggIdx]["commands"][cmd.command]){
-                                        var elementUuid = me.uuid();
-                                        me.modelElements[elementUuid] = {
-                                            _type: "org.uengine.modeling.model.Command",
-                                            outputEvents: null,
-                                            aggregate: {
-                                                id: modelValue["boundedContext"][cmd.boundedContext]["aggregates"][cmdAggIdx]["eleInfo"]["elementView"].id
-                                            },
-                                            author: me.userUid,
-                                            boundedContext: {
-                                                name: modelValue["boundedContext"][cmd.boundedContext]["eleInfo"].name, 
-                                                id: modelValue["boundedContext"][cmd.boundedContext]["eleInfo"]["elementView"].id
-                                            },
-                                            controllerInfo: {
-                                                apiPath: null,
-                                                method: "PUT"
-                                            },
-                                            fieldDescriptors: [],
-                                            id: elementUuid,
-                                            description: null,
-                                            elementView: {
-                                                _type: "org.uengine.modeling.model.Command",
-                                                height: 115,
-                                                id: elementUuid,
-                                                style: "{}",
-                                                width: 100,
-                                                x: me.modelElements[modelValue["boundedContext"][cmd.boundedContext]["aggregates"][cmdAggIdx]["eleInfo"]["elementView"].id]["elementView"].x - 90, 
-                                                y: me.modelElements[modelValue["boundedContext"][cmd.boundedContext]["aggregates"][cmdAggIdx]["eleInfo"]["elementView"].id]["elementView"].y + (modelValue["boundedContext"][cmd.boundedContext]["aggregates"][cmdAggIdx]["commands"].length * 120) - 200, 
-                                                "z-index": 999
-                                            },
-                                            hexagonalView: {
-                                                _type: "org.uengine.modeling.model.CommandHexagonal",
-                                                height: 0,
-                                                id: elementUuid,
-                                                style: "{}",
-                                                width: 0,
-                                                x: 0,
-                                                y: 0
-                                            },
-                                            isRestRepository: true,
-                                            name: cmd.command,
-                                            nameCamelCase: changeCase.camelCase(cmd.command),
-                                            namePascalCase: changeCase.pascalCase(cmd.command),
-                                            namePlural: "",
-                                            relationCommandInfo: [],
-                                            relationEventInfo: [],
-                                            restRepositoryInfo: {
-                                                method: "POST"
-                                            },
-                                            rotateStatus: false,
-                                            selected: false,
-                                            trigger: "@PrePersist",
-                                        }
-                                        modelValue["boundedContext"][cmd.boundedContext]["aggregates"][cmdAggIdx]["commands"][cmd.command] = {}
-                                        modelValue["boundedContext"][cmd.boundedContext]["aggregates"][cmdAggIdx]["commands"][cmd.command].eleInfo = me.modelElements[elementUuid]
-                                    }
-                                    if(modelValue["boundedContext"][cmd.boundedContext]["aggregates"][cmdAggIdx]["commands"][cmd.command].eleInfo){
-                                        cmdInfo.push(modelValue["boundedContext"][cmd.boundedContext]["aggregates"][cmdAggIdx]["commands"][cmd.command].eleInfo)            
-                                    }
-                                })
-
-                                // add policy 
-                                if(policy.triggerEvents && policy.triggerEvents.length > 0){
-                                    var aggIdx
-                                    var checkDiffAggName = policy.commands.find(x => x.aggregate != policy.commands[0].aggregate)
-                                    if(policy.commands.length > 1 && checkDiffAggName){
-                                        isPolicyType = "orchestration"
-                                        refEle = policy.triggerEvents[0]
-                                        aggIdx = modelValue["boundedContext"][refEle.boundedContext]["aggregates"].findIndex(x => x.name == refEle.aggregate)
-                                        elementView = {
-                                            height: 115,
-                                            width: 100,
-                                            x: modelValue["boundedContext"][refEle.boundedContext]["aggregates"][aggIdx]["events"][refEle.event]["eleInfo"]["elementView"].x,
-                                            y: me.modelElements[modelValue["boundedContext"][refEle.boundedContext]["aggregates"][aggIdx]["eleInfo"]["elementView"].id]["elementView"].y + ((modelValue["boundedContext"][refEle.boundedContext]["aggregates"][aggIdx]["events"].length + isOrchestrationCnt) * 120) - 200,
-                                            id: policyUuid,
-                                            style: "{}",
-                                            _type: "org.uengine.modeling.model.Policy"
-                                        }
-                                        isOrchestrationCnt++;
-                                        
-                                    } else {
-                                        isPolicyType = "choreography"
-                                        refEle = policy.commands[0]
-                                        aggIdx = modelValue["boundedContext"][refEle.boundedContext]["aggregates"].findIndex(x => x.name == refEle.aggregate)
-                                        elementView = {
-                                            height: 115,
-                                            width: 100,
-                                            x: modelValue["boundedContext"][refEle.boundedContext]["aggregates"][aggIdx]["commands"][refEle.command]["eleInfo"]["elementView"].x - 80,
-                                            y: modelValue["boundedContext"][refEle.boundedContext]["aggregates"][aggIdx]["commands"][refEle.command]["eleInfo"]["elementView"].y - 33,
-                                            id: policyUuid,
-                                            style: "{}",
-                                            _type: "org.uengine.modeling.model.Policy"
-                                        }
-                                    }
-                                    if(modelValue["boundedContext"][policy.triggerEvents[0].boundedContext]["aggregates"][aggIdx]["events"][policy.triggerEvents[0].event].eleInfo){
-                                        evnInfo = modelValue["boundedContext"][policy.triggerEvents[0].boundedContext]["aggregates"][aggIdx]["events"][policy.triggerEvents[0].event].eleInfo
-                                    }
-
-                                    me.modelElements[policyUuid] = {
-                                        author: me.userUid,
-                                        boundedContext: {
-                                            name: modelValue["boundedContext"][refEle.boundedContext]["eleInfo"].name, 
-                                            id: modelValue["boundedContext"][refEle.boundedContext]["eleInfo"]["elementView"].id
-                                        },
-                                        description: null,
-                                        elementView: elementView,
-                                        fieldDescriptors: [],
-                                        hexagonalView: {
-                                            height: 20,
-                                            id: policyUuid,
-                                            style: "{}",
-                                            subWidth: 100,
-                                            width: 20,
-                                            _type: "org.uengine.modeling.model.PolicyHexagonal"
-                                        },
-                                        isSaga: false,
-                                        name: policy.name,
-                                        displayName: policy[me.originalLanguage + "Name"],
-                                        nameCamelCase: changeCase.camelCase(policy.name),
-                                        namePascalCase: changeCase.pascalCase(policy.name),
-                                        namePlural: "",
-                                        oldName: "",
-                                        rotateStatus: false,
-                                        _type: "org.uengine.modeling.model.Policy"
-                                    }                                    
-                                }
-                            }
-                            
-
-                            // add relation command.length
-                            if(cmdInfo && cmdInfo.length > 0 && evnInfo){
-                                cmdInfo.forEach(function (command){
-                                    var relUuidPtoC = me.uuid();
-                                    relations[relUuidPtoC] = {
-                                        _type: "org.uengine.modeling.model.Relation",
-                                        from: policyUuid,
-                                        hexagonalView: {
-                                            _type: "org.uengine.modeling.model.RelationHexagonal",
-                                            from: policyUuid,
-                                            id: relUuidPtoC,
-                                            needReconnect: true,
-                                            style: `{"arrow-start":"none","arrow-end":"none"}`,
-                                            to: command["elementView"].id,
-                                            value: null
-                                        },
-                                        name: "",
-                                        id: relUuidPtoC,
-                                        relationView: {
-                                            from: policyUuid,
-                                            id: relUuidPtoC,
-                                            needReconnect: true,
-                                            style: `{"arrow-start":"none","arrow-end":"none"}`,
-                                            to: command["elementView"].id,
-                                            value: "[]"
-                                        },
-                                        sourceElement: me.modelElements[policyUuid],
-                                        sourceMultiplicity: 1,
-                                        targetElement: me.modelElements[command["elementView"].id],
-                                        targetMultiplicity: 1,
-                                        to: command["elementView"].id
-                                    }
-                                })
-                                var relUuidEtoP = me.uuid();
-                                relations[relUuidEtoP] = {
-                                    _type: "org.uengine.modeling.model.Relation",
-                                    from: evnInfo["elementView"].id,
-                                    hexagonalView: {
-                                        _type: "org.uengine.modeling.model.RelationHexagonal",
-                                        from: evnInfo["elementView"].id,
-                                        id: relUuidEtoP,
-                                        needReconnect: true,
-                                        style: `{"arrow-start":"none","arrow-end":"none"}`,
-                                        to: policyUuid,
-                                        value: null
-                                    },
-                                    name: "",
-                                    id: relUuidEtoP,
-                                    relationView: {
-                                        from: evnInfo["elementView"].id,
-                                        id: relUuidEtoP,
-                                        needReconnect: true,
-                                        style: `{"arrow-start":"none","arrow-end":"none"}`,
-                                        to: policyUuid,
-                                        value: "[]"
-                                    },
-                                    sourceElement: me.modelElements[evnInfo["elementView"].id],
-                                    sourceMultiplicity: 1,
-                                    targetElement: me.modelElements[policyUuid],
-                                    targetMultiplicity: 1,
-                                    to: policyUuid
-                                }
-
-                            } 
-                        })
-                    }
-
-                    // Payment, Money, Address, ....
-                    
-
-                    // aggregate
-                    Object.keys(me.modelElements).forEach(function (key){
-                        if(me.modelElements[key]._type == "org.uengine.modeling.model.Aggregate") {
-                            me.modelElements[key].aggregateRoot.fieldDescriptors.forEach(function (fieldDescriptor) {
-
-                                Object.keys(me.modelElements).forEach(function (uuid){
-                                    if(me.modelElements[uuid]._type == "org.uengine.modeling.model.Aggregate" && key != uuid) {
-                                        if(fieldDescriptor.className == me.modelElements[uuid].name) {
-                                            var relUuidAtoA = me.uuid();
-                                            relations[relUuidAtoA] = {
-                                                _type: "org.uengine.modeling.model.Relation",
-                                                from: key,
-                                                hexagonalView: {
-                                                    _type: "org.uengine.modeling.model.RelationHexagonal",
-                                                    from: key,
-                                                    id: relUuidAtoA,
-                                                    needReconnect: true,
-                                                    style: `{"arrow-start":"none","arrow-end":"none"}`,
-                                                    to: uuid,
-                                                    value: null
-                                                },
-                                                name: "",
-                                                id: relUuidAtoA,
-                                                relationView: {
-                                                    from: key,
-                                                    id: relUuidAtoA,
-                                                    needReconnect: true,
-                                                    style: `{"arrow-start":"none","arrow-end":"none"}`,
-                                                    to: uuid,
-                                                    value: "[]"
-                                                },
-                                                sourceElement: me.modelElements[key],
-                                                sourceMultiplicity: 1,
-                                                targetElement: me.modelElements[uuid],
-                                                targetMultiplicity: 1,
-                                                to: uuid
-                                            }
-                                        }
-                                    }
-                                });
-                            });
-                        }
-                    });
-                }
-
-                // if(option == 'end'){
-                //     var elementsList = {}
-                //     Object.keys(me.modelElements).forEach(function (key){
-                //         var eleUuid = me.uuid();
-                //         elementsList[eleUuid] = me.modelElements[key]
-                //     })
-                // } else {
-                //     var elementsList = me.modelElements
-                // }
-                var obj = {
-                    projectName: modelValue["serviceName"],
-                    elements: me.modelElements,
-                    relations: relations,
-                    uiStyle: me.client.input.uiStyle
-                }
-
-                console.log("[*] DebeziumLogsTabGenerator가 생성한 값을 처리시킨 객체 결과: ", obj)
-                return obj;
-            } 
-        } catch(e){
-            console.log(e)
+        const getDebeziumLogStrings = (logs) => {
+            return logs.match(/\{"schema":\{.*?"name":".*?\.Envelope".*?\},"payload":\{.*?\}\}/g)
         }
 
-        var obj = {
-            projectName: modelValue ? modelValue["serviceName"] : "untitle",
-            elements: me.modelElements ? me.modelElements : {},
-            relations: relations ? relations : {},
-            uiStyle: me.client.input.uiStyle
-        }
 
-        console.log("[*] DebeziumLogsTabGenerator가 생성한 값을 처리시킨 객체 결과(예외): ", obj)
-        return obj;
-    }
+        if(this.state !== 'end') {
+            console.log("### DebeziumLogsTabGenerator에서 결과 생성중... ###")
+            console.log(text)
 
-
-    applyEntitiesToAggregate(aggregate, enumerations, valueObjects) {
-        const entities = aggregate.aggregateRoot.entities
-        entities.elements = {}
-        entities.relations = {}
-        
-        const ROOT_AGGREGATE_OBJECT = this.makeRootAggregateObject(aggregate)
-        entities.elements[ROOT_AGGREGATE_OBJECT.id] = ROOT_AGGREGATE_OBJECT
-
-        if(enumerations && enumerations.length > 0) {
-            let enumerateXIndex = 0
-
-            for(let enumeration of enumerations) {
-                const ENUMERATE_OBJECT = this.makeEnumerateObject(enumeration, enumerateXIndex)
-                entities.elements[ENUMERATE_OBJECT.id] = ENUMERATE_OBJECT
-                enumerateXIndex += 1
-                
-                const RELATION_OBJECT = this.makeRelationObject(ROOT_AGGREGATE_OBJECT, ENUMERATE_OBJECT)
-                aggregate.aggregateRoot.entities.relations[RELATION_OBJECT.id] = RELATION_OBJECT
-            }
-        }
-
-        if(valueObjects && valueObjects.length > 0) {
-            let valueObjectXIndex = 0
-
-            for(let valueObject of valueObjects) {
-                const VALUE_OBJECT = this.makeValueObject(valueObject, valueObjectXIndex)
-                entities.elements[VALUE_OBJECT.id] = VALUE_OBJECT
-                valueObjectXIndex += 1
-                
-                const RELATION_OBJECT = this.makeRelationObject(VALUE_OBJECT, ROOT_AGGREGATE_OBJECT)
-                aggregate.aggregateRoot.entities.relations[RELATION_OBJECT.id] = RELATION_OBJECT
-            }
-        }
-    }
-
-    makeRootAggregateObject(aggregate) {
-        const UUID = this.uuid()
-
-        return {
-            "_type": "org.uengine.uml.model.Class",
-            "id": UUID,
-            "name": aggregate.name,
-            "namePascalCase": aggregate.name,
-            "nameCamelCase": aggregate.name,
-            "namePlural": aggregate.name + "s",
-            "fieldDescriptors": aggregate.aggregateRoot.fieldDescriptors,
-            "operations": [],
-            "elementView": {
-                "_type": "org.uengine.uml.model.Class",
-                "id": UUID,
-                "x": 350,
-                "y": 200,
-                "width": 200,
-                "height": 100,
-                "style": "{}",
-                "titleH": 50,
-                "subEdgeH": 120,
-                "fieldH": 90,
-                "methodH": 30
-            },
-            "selected": false,
-            "relations": [],
-            "parentOperations": [],
-            "relationType": null,
-            "isVO": false,
-            "isAbstract": false,
-            "isInterface": false,
-            "isAggregateRoot": true,
-            "parentId": aggregate.id
-        }
-    }
-
-    makeEnumerateObject(entity, xIndex) {
-        const UUID = this.uuid()
-        const ITEMS = entity.items.map(item => {
             return {
-                "value": item
+                modelName: this.modelName,
+                modelValue: null,
+                modelRawValue: text
             }
-        })
-
-        return {
-            "_type": "org.uengine.uml.model.enum",
-            "id": UUID,
-            "name": entity.name,
-            "nameCamelCase": entity.name,
-            "namePascalCase": entity.name,
-            "elementView": {
-                "_type": "org.uengine.uml.model.enum",
-                "id": UUID,
-                "x": 350 + (xIndex * 250),
-                "y": 400,
-                "width": 200,
-                "height": 100,
-                "style": "{}",
-                "titleH": 50,
-                "subEdgeH": 50
-            },
-            "selected": false,
-            "items": ITEMS,
-            "useKeyValue": false,
-            "relations": []
-        }
-    }
-
-    makeValueObject(valueObject, xIndex) {
-        const UUID = this.uuid()
-        const FIELD_DESCRIPTORS = valueObject.properties
-            .filter(property => !(property.isForeignProperty) || property.isForeignProperty === false || property.isForeignProperty === "false")
-            .map(property => {
-                return {
-                    "className": property.type,
-                    "isKey": property.isKey,
-                    "label": "- " + property.name + ": " + property.type,
-                    "name": property.name,
-                    "nameCamelCase": property.name,
-                    "namePascalCase": property.name,
-                    "_type": "org.uengine.model.FieldDescriptor"
-                }
-            })
-
-        return {
-            "_type": "org.uengine.uml.model.vo.Class",
-            "id": UUID,
-            "name": valueObject.name,
-            "namePascalCase": valueObject.name,
-            "nameCamelCase": valueObject.name,
-            "fieldDescriptors": FIELD_DESCRIPTORS,
-            "operations": [],
-            "elementView": {
-                "_type": "org.uengine.uml.model.vo.address.Class",
-                "id": UUID,
-                "x": 350 + (xIndex * 250),
-                "y": 600,
-                "width": 200,
-                "height": 100,
-                "style": "{}",
-                "titleH": 50,
-                "subEdgeH": 170,
-                "fieldH": 150,
-                "methodH": 30
-            },
-            "selected": false,
-            "parentOperations": [],
-            "relationType": null,
-            "isVO": true,
-            "relations": [],
-            "groupElement": null,
-            "isAggregateRoot": false,
-            "namePlural": valueObject.name + "s",
-            "isAbstract": false,
-            "isInterface": false
-        }
-    }
-
-    makeRelationObject(fromObject, toObject) {
-        const UUID = this.uuid()
-        fromObject.relations.push(UUID)
-        toObject.relations.push(UUID)
-
-        return {
-            "name": toObject.name + "_id",
-            "id": UUID,
-            "_type": "org.uengine.uml.model.Relation",
-            "sourceElement": fromObject,
-            "targetElement": toObject,
-            "from": fromObject.id,
-            "to": toObject.id,
-            "selected": false,
-            "relationView": {
-                "id": UUID,
-                "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                "from": fromObject.id,
-                "to": toObject.id,
-                "needReconnect": true
-            },
-            "sourceMultiplicity": "1",
-            "targetMultiplicity": "1",
-            "relationType": "Association",
-            "fromLabel": "",
-            "toLabel": ""
-        }
-    }
-
-
-    uuid() {
-        function s4() {
-            return Math.floor((1 + Math.random()) * 0x10000)
-                .toString(16)
-                .substring(1);
         }
 
-        return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-            s4() + '-' + s4() + s4() + s4();
-    }
+        try {
+            console.log("### DebeziumLogsTabGenerator에서 결과이 완료됨! 파싱중... ###")
+            console.log(text)
 
-    resetUUID() {
-        this.sequenceForUUID = 0;
-    }
+            const outputResult = {
+                modelName: this.modelName,
+                modelValue: {
+                    ...parseToJson(text),
+                    debeziumLogStrings: getDebeziumLogStrings(this.preModificationMessage)
+                },
+                modelRawValue: text,
+            }
 
-    createBoundedContext(key, json, x, y, portNumber){
-        let me = this
-        let bcUuid = 'bc-' + key.replaceAll("/", "-")
-
-        return {
-            _type: "org.uengine.modeling.model.BoundedContext",
-            aggregates: [],
-            author: me.userUid,
-            description: null,
-            id: bcUuid,
-            elementView: {
-                _type: "org.uengine.modeling.model.BoundedContext",
-                height: 590,
-                id: bcUuid,
-                style: "{}",
-                width: 560,
-                x: x, //400 + ((bcCnt - 1) * 600),
-                y: y, //heightVal != 0 && (me.bcPosition[heightVal - 1]) ? me.bcPosition[heightVal - 1].height/2 + me.bcPosition[heightVal - 1].y + 335:380 + (heightVal * 610)
-            }, 
-            gitURL: null,
-            hexagonalView: {
-                _type: "org.uengine.modeling.model.BoundedContextHexagonal",
-                height: 350,
-                id: bcUuid,
-                style: "{}",
-                width: 350,
-                x: 235,
-                y: 365
-            },
-            members: [],
-            name: key,
-            displayName: json[me.originalLanguage + "Name"],
-            oldName: "",
-            policies: [],
-            portGenerated: portNumber,
-            preferredPlatform: "template-spring-boot",
-            preferredPlatformConf: {},
-            rotateStatus: false,
-            tempId: "",
-            templatePerElements: {},
-            views: []
+            console.log("### 최종 파싱 결과 ###")
+            console.log(outputResult)
+            return outputResult
         }
-    }
-
-    createEvent(ele, elementUuid, x, y){
-        let me = this
-        return {
-            alertURL: "/static/image/symbol/alert-icon.png",
-            author: me.userUid,
-            checkAlert: true,
-            description: null,
-            id: elementUuid,
-            elementView: {
-                angle: 0,
-                height: 115,
-                id: elementUuid,
-                style: "{}",
-                width: 100,
-                x: x, 
-                y: y, 
-                _type: "org.uengine.modeling.model.Event"
-            },
-            fieldDescriptors: [],
-            hexagonalView: {
-                height: 0,
-                id: elementUuid,
-                style: "{}",
-                width: 0,
-                x: 0,
-                y: 0,
-                _type: "org.uengine.modeling.model.EventHexagonal"
-            },
-            name: ele.name,
-            displayName: ele[me.originalLanguage + 'Name'],
-            nameCamelCase: changeCase.camelCase(ele.name),
-            namePascalCase: changeCase.pascalCase(ele.name),
-            namePlural: "",
-            relationCommandInfo: [],
-            relationPolicyInfo: [],
-            rotateStatus: false,
-            selected: false,
-            trigger: "@PostPersist",
-            _type: "org.uengine.modeling.model.Event"
+        catch(e) {
+            console.error("### DebeziumLogsTabGenerator에서 에러가 발생함! ###")
+            console.error(text)
+            console.error(e)
         }
-
     }
 }
 

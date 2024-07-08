@@ -314,12 +314,15 @@ getUserInfo() {
                 let removeTree = []
                 var isChanged = false
                 let pushTree = []                
+                var allCnt = 0
+                var exceptCnt = 0
+
                 if(options.gitTree.length > 0){
                     options.gitTree.forEach(function (elData) {
                         if(!options.generateCodeLists.find(element => element.fullPath == elData.path)) {
                             isChanged = true
                             let pushData = {
-                                path: elData.path,
+                                path: elData.path.startsWith('/') ? elData.path.substring(1) : elData.path,
                                 mode:"100644",
                                 type:"blob",
                                 sha: null
@@ -329,9 +332,6 @@ getUserInfo() {
                     })
                 }
 
-                // var pushTreeCnt = 0
-                var allCnt = 0
-                var exceptCnt = 0
                 options.generateCodeLists.map(async function (elData) {
                     if(options.gitTree.length == 1 || !options.gitTree.find(element => element.path == elData.fullPath) || ((options.changedCodeLists && options.changedCodeLists.find(element => element.replace("for-model/","") == elData.fullPath)) || options.pushType != "Push")) {
                         var pushValid = false
@@ -365,11 +365,11 @@ getUserInfo() {
                                 encoding: 'utf-8',
                             };
                             
-                            let blobs = await me.pushFile(options.org, options.repo, data)
+                            await me.pushFile(options.org, options.repo, data)
                             .then(function (blob){ 
                                 allCnt++;
                                 let pushData = {
-                                    path: elData.fullPath,
+                                    path: elData.fullPath.startsWith('/') ? elData.fullPath.substring(1) : elData.fullPath,
                                     mode:"100644",
                                     type:"blob",
                                     sha: blob.data.sha
@@ -377,7 +377,31 @@ getUserInfo() {
                                 pushTree.push(pushData)
                             })
                             .catch((error) => {
-                                reject(error)
+                                if (error.response && error.response.headers && error.response.headers["retry-after"] && error.response.headers["retry-after"] === '60') {
+                                    setTimeout(async () => {
+                                        try {
+                                            let blobs = await me.pushFile(options.org, options.repo, data);
+                                            let pushData = {
+                                                path: elData.fullPath.startsWith('/') ? elData.fullPath.substring(1) : elData.fullPath,
+                                                mode: "100644",
+                                                type: "blob",
+                                                sha: blobs.data.sha
+                                            };
+                                            pushTree.push(pushData);
+                                        } catch (retryError) {
+                                            reject(retryError);
+                                        } finally {
+                                            allCnt++;
+                                            if(options.generateCodeLists.length == allCnt + exceptCnt) {
+                                                let result = pushTree.concat(removeTree);
+                                                resolve(result);
+                                            }
+                                        }
+                                    }, 60000);
+                                } else {
+                                    allCnt++;
+                                    reject(error);
+                                }
                             })
 
                         }

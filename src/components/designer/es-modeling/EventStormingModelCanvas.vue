@@ -1300,7 +1300,6 @@
                             :defaultInputData="defaultGeneratorUiInputData"
                             :modelValue="value"
                             :tabs="tabs"
-                            :chatGenerators="chatGenerators"
                     >
                         <v-tooltip v-if="showContinue" slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
@@ -1333,7 +1332,6 @@
                             :generatorStep="generatorStep"
                             :modelValue="value"
                             :tabs="tabs"
-                            :chatGenerators="chatGenerators"
                     >
                         <!-- <v-tooltip slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
@@ -1975,6 +1973,7 @@
     import Login from "../../oauth/Login";
     import isAttached from "../../../utils/isAttached";
     import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
+    import DebeziumTransactionManager from "../modeling/generators/generatorTabs/DebeziumTransactionManager"
 
     const prettier = require("prettier");
     const plugins = require("prettier-plugin-java");
@@ -2402,11 +2401,19 @@
                 },
                 createModelInBoundedContext: false,
                 createReadModel: false,
-                tabs: [{name: 'LOGS', component: 'DebeziumLogsTab'}],
-                chatGenerators: ['DebeziumLogsModificationGenerator']
+                tabs: [{
+                    name: 'LOGS', component: 'DebeziumLogsTab',
+                    isAlwaysActivated: true, isNotMoveToOutput: true, isClearModelValue: false, 
+                    initValue: {manager: new DebeziumTransactionManager()}
+                }]
             };
         },
         computed: {
+            currentDebeziumTransactionManager() {
+                var me = this
+                return me.tabs.find(tab => tab.component === 'DebeziumLogsTab').initValue.manager
+            },
+
             projectSendable(){
                 var me = this
                 if(!me.modelListOfassociatedProject().includes(me.projectId)) return false;
@@ -2504,30 +2511,6 @@
                 }
                 return false;
             },
-            attachedLists() {
-                var me = this;
-                let result = {};
-
-                Object.values(me.value.elements).forEach(function (element) {
-                    if (me.validateElementFormat(element)) {
-                        if (!result[element._type]) result[element._type] = {};
-
-                        if( element._type && element.elementView){
-                            me.$set(result[element._type], element.elementView.id, element);
-                        }
-                    }
-                });
-
-                return {
-                    boundedContextLists: result["org.uengine.modeling.model.BoundedContext"]? result["org.uengine.modeling.model.BoundedContext"] : {},
-                    aggregateLists: result["org.uengine.modeling.model.Aggregate"] ? result["org.uengine.modeling.model.Aggregate"] : {},
-                    eventLists: result["org.uengine.modeling.model.Event"] ? result["org.uengine.modeling.model.Event"] : {},
-                    commandLists: result["org.uengine.modeling.model.Command"] ? result["org.uengine.modeling.model.Command"] : {},
-                    policyLists: result["org.uengine.modeling.model.Policy"] ? result["org.uengine.modeling.model.Policy"] : {},
-                    actorLists: result["org.uengine.modeling.model.Actor"] ? result["org.uengine.modeling.model.Actor"] : {},
-                };
-            },
-
             filteredPBCValue() {
                 var me = this;
                 var value = me.pbcValue ? me.pbcValue : { elements: {}, relations: {} };
@@ -2546,10 +2529,10 @@
                     Command: [],
                 };
 
-                modelForElements.Event = Object.values(me.attachedLists.eventLists).filter(x=>x)
+                modelForElements.Event = Object.values(me.attachedLists().eventLists).filter(x=>x)
                 modelForElements.Event = modelForElements.Event.map((element) => element = Object.assign({},element, {selectedPBC: element.visibility == "private" ? false:true}))
 
-                modelForElements.Command = Object.values(me.attachedLists.commandLists).filter(x=>x)
+                modelForElements.Command = Object.values(me.attachedLists().commandLists).filter(x=>x)
                 modelForElements.Command = modelForElements.Command.map((element) => element = Object.assign({},element, {selectedPBC: element.visibility == "private" ? false:true}))
                 return modelForElements;
             },
@@ -2712,6 +2695,29 @@
             },
         },
         methods: {
+            attachedLists() {
+                var me = this;
+                let result = {};
+
+                Object.values(me.value.elements).forEach(function (element) {
+                    if (me.validateElementFormat(element)) {
+                        if (!result[element._type]) result[element._type] = {};
+
+                        if( element._type && element.elementView){
+                            me.$set(result[element._type], element.elementView.id, element);
+                        }
+                    }
+                });
+
+                return {
+                    boundedContextLists: result["org.uengine.modeling.model.BoundedContext"]? result["org.uengine.modeling.model.BoundedContext"] : {},
+                    aggregateLists: result["org.uengine.modeling.model.Aggregate"] ? result["org.uengine.modeling.model.Aggregate"] : {},
+                    eventLists: result["org.uengine.modeling.model.Event"] ? result["org.uengine.modeling.model.Event"] : {},
+                    commandLists: result["org.uengine.modeling.model.Command"] ? result["org.uengine.modeling.model.Command"] : {},
+                    policyLists: result["org.uengine.modeling.model.Policy"] ? result["org.uengine.modeling.model.Policy"] : {},
+                    actorLists: result["org.uengine.modeling.model.Actor"] ? result["org.uengine.modeling.model.Actor"] : {},
+                };
+            },
             setCanvasType(){
                 Vue.use(EventStormingModeling);
                 this.canvasType = 'es'
@@ -2917,7 +2923,7 @@
 
                 boundedLists = boundedLists
                     ? boundedLists
-                    : me.attachedLists.boundedContextLists;
+                    : me.attachedLists().boundedContextLists;
                 if (!(boundedLists && Object.values(boundedLists).length > 0))
                     return null;
 
@@ -2933,7 +2939,7 @@
 
                 aggregateList = aggregateList
                     ? aggregateList
-                    : me.attachedLists.aggregateLists;
+                    : me.attachedLists().aggregateLists;
                 if (!(aggregateList && Object.values(aggregateList).length > 0))
                     return null;
 
@@ -2949,7 +2955,7 @@
 
                 aggregateList = aggregateList
                     ? aggregateList
-                    : me.attachedLists.aggregateLists;
+                    : me.attachedLists().aggregateLists;
                 if (!(aggregateList && Object.values(aggregateList).length > 0))
                     return null;
 
@@ -3068,6 +3074,19 @@
             },
             createModel(val, originModel) {
                 var me = this;
+
+                if(val && val.modelName === "DebeziumLogsTabGenerator") {
+                    if(val.modelValue) {
+                        try {
+                            me.currentDebeziumTransactionManager.addNewTransactionFromModelValue(val.modelValue)
+                            me.currentDebeziumTransactionManager.apply(me.value, me.userInfo)
+                        } catch(e) {
+                            console.error("### 출력 결과를 Debezium Manager에 전달해서 처리하는 과정에서 오류 발생! ###")
+                            console.error(e)
+                        }
+                    }
+                    return
+                }
 
                 if (val && val.elements) {
                     if (val.projectName) me.projectName = val.projectName;
@@ -5652,9 +5671,9 @@
             //                     // Git URL 관련 처리 필요함..
             //                     // BoundedContext 찾기
             //                     var gitConnectedBoundedLists = []
-            //                     Object.keys(me.attachedLists.boundedContextLists).forEach(function (bounded) {
-            //                         if (me.attachedLists.boundedContextLists[bounded].gitURL) {
-            //                             gitConnectedBoundedLists.push(me.attachedLists.boundedContextLists[bounded].name)
+            //                     Object.keys(me.attachedLists().boundedContextLists).forEach(function (bounded) {
+            //                         if (me.attachedLists().boundedContextLists[bounded].gitURL) {
+            //                             gitConnectedBoundedLists.push(me.attachedLists().boundedContextLists[bounded].name)
             //                         }
             //                     })
             //                     await me.makeDir(`labs-eventstorming/running/${userGroup}/classes/users/labs/${localStorage.getItem("email")}/${projectId}`)
