@@ -1883,6 +1883,7 @@
                         :userInfo="userInfo"
                         @changedByMe="settingChangedByMe"
                         @editModelData="editModelData"
+                        @setInformation="setInformation"
                         canvas-name="event-storming-model-canvas"
                 ></CodeGenerator>
             </template>
@@ -6782,6 +6783,15 @@
 
                 me.bpmnDialog = false;
             },
+            async setInformation(scm){
+                var me = this
+                
+                me.information['gitRepoName'] = scm.repo
+                me.information['gitOrgName'] = scm.org
+
+                await me.putObject(`db://definitions/${me.projectId}/information`, me.information)
+
+            }
         },
     };
 </script>

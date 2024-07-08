@@ -584,6 +584,7 @@ import CodeGeneratorCore from './modeling/CodeGeneratorCore';
             canvas: Object,
             usedTemplates: Array,
             usedToppings: Array,
+            projectVersion: Boolean,
         },
         data() {
             return {
@@ -1866,6 +1867,11 @@ import CodeGeneratorCore from './modeling/CodeGeneratorCore';
                                 me.autoApplyTemplate = false
                             }
                         }
+
+                        if(me.information.gitRepoName){
+                            me.gitRepoName = me.information.gitRepoName
+                        }
+
                         if(me.ShowCreateRepoTab){
                             me.gitSnackBar.show = true
                             me.gitSnackBar.timeout = -1
@@ -2322,6 +2328,7 @@ import CodeGeneratorCore from './modeling/CodeGeneratorCore';
                                 }
                             }
                         })
+                        me.$emit("setGitInfoToModel", me.value)
                     }
                 })
             },
@@ -2436,6 +2443,7 @@ import CodeGeneratorCore from './modeling/CodeGeneratorCore';
                                 })
                             }
                         })
+                        me.$emit("setGitInfoToModel", me.value)
                     }
                 })
             },

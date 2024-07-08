@@ -411,6 +411,8 @@ getUserInfo() {
         let me = this
         return new Promise(async function (resolve, reject) {
             let postTreeData = {
+                owner: org,
+                repo: repo,
                 tree: treeList,
                 base_tree: treesha
             }

@@ -102,6 +102,7 @@
                                     @closeGitMenu="closeGitMenu"
                                     @update:git-users="val => gitUsers = val"
                                     @setActionId="setActionId"
+                                    @setGitInfoToModel="setGitInfoToModel"
                                     :information="projectInformation"
                                     :isOnPrem="isOnPrem"
                                     :projectId="modelingProjectId"
@@ -8981,6 +8982,10 @@ jobs:
                 yaml_text = yaml_text.replace(/ null/g, ' ')
                 // yaml_text = yaml_text.replace(/\"/g, '')
                 return yaml_text
+            },
+            setGitInfoToModel(scm){
+                var me = this
+                me.$emit("setInformation", scm)
             }
 
         }

@@ -689,7 +689,7 @@
             },
             async summaryCodeList(){
                 var me = this
-                me.$app.try({
+                await me.$app.try({
                     context: me,
                     async action(me){
 

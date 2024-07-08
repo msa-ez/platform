@@ -201,8 +201,12 @@ class AIGenerator {
                             let model = null;
                             if(me.client.onModelCreated){
                                 model = me.createModel(me.modelJson)
-                                if(me.client.input.associatedProject) model.associatedProject = me.client.input.associatedProject
-                                if(me.client.input.persona) model.persona = me.client.input.persona
+                                if(me.client.input && me.client.input.associatedProject) {
+                                    model.associatedProject = me.client.input.associatedProject
+                                }
+                                if(me.client.input && me.client.input.persona) {
+                                    model.persona = me.client.input.persona
+                                }
                                 me.client.onModelCreated(model);
                             } 
                             // else {
