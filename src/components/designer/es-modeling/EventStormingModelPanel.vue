@@ -176,6 +176,43 @@
             openExampleDialog(){
                 this.openExample = true
             },
+            validateRuleExample(){
+                var me = this
+                let relations = me.canvas.value.relations
+
+                let sourceElements = null
+                let targetElements = null
+
+                if (me.value._type.includes('Policy')) {
+                    Object.keys(relations).forEach(function (ele) {
+                        if(relations[ele]){
+                            if(relations[ele].sourceElement.id && relations[ele].sourceElement.id == me.value.id){
+                                sourceElements = relations[ele].sourceElement
+                            }
+    
+                            if(relations[ele].targetElement.id && relations[ele].targetElement.id == me.value.id){
+                                targetElements = relations[ele].targetElement
+                            }
+                        }
+                    })
+                }
+
+                if(me.value._type.includes('Command')){
+                    Object.keys(relations).forEach(function (ele) {
+                        if(relations[ele]){
+                            if(relations[ele].sourceElement.id && relations[ele].sourceElement.id == me.value.id){
+                                sourceElements = relations[ele].sourceElement
+                                targetElements = relations[ele].sourceElement
+                            }
+                        }
+                    })
+                }
+                
+                if(sourceElements && targetElements){
+                    return true
+                }
+                return false
+            },
             //<<<<<<<<<<<<<<<<<<<<<<<<<<< Panel Methods
             // stayOpenPanelCheck(){
             //     var me = this
