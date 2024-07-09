@@ -65,9 +65,18 @@
                 text
                 color="primary"
                 style="margin-left: 10px; margin-top: -12px;"
-                :disabled="isReadOnly"
+                :disabled="isReadOnly || !exampleAvailable"
                 @click="openExampleDialog()"
             >Examples</v-btn>
+            <v-tooltip bottom v-if="!exampleAvailable">
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn icon v-bind="attrs" v-on="on"
+                        style="margin-left: -8px; margin-top: -15px; width: 10px; height: 10px;">
+                        <v-icon color="grey lighten-1">mdi-help-circle</v-icon>
+                    </v-btn>
+                </template>
+                <span>Help information about examples</span>
+            </v-tooltip>
         </template>
 
     </common-panel>
@@ -90,14 +99,18 @@
             RuleExampleDialog
         },
         data() {
-            return {}
+            return {
+                exampleAvailable: false
+            }
         },
         computed: {
 
         },
         beforeDestroy() {
         },
-        created: function () { },
+        created: function () { 
+            this.exampleAvailable = this.validateRuleExample()
+        },
         watch: {},
         methods: {
             panelInit(){

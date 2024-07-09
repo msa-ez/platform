@@ -383,8 +383,8 @@
                 if(me.value && me.value._type.includes("Policy") || me.value && me.value._type.includes("Command")){
                     if(me.value.aggregate && me.value.aggregate.id && me.canvas.value.elements[me.value.aggregate.id]){
                         me.rule.givenItems.push(me.canvas.value.elements[me.value.aggregate.id])
-                    } else if (me.canvas.attachedLists.aggregateLists && Object.values(me.canvas.attachedLists.aggregateLists).length > 0) {
-                        Object.values(me.canvas.attachedLists.aggregateLists).forEach(function (aggregate, idx) {
+                    } else if (me.canvas.attachedLists().aggregateLists && Object.values(me.canvas.attachedLists().aggregateLists).length > 0) {
+                        Object.values(me.canvas.attachedLists().aggregateLists).forEach(function (aggregate, idx) {
                             if (isAttached(aggregate, me.value)) {
                                 me.rule.givenItems.push(aggregate)
                             }
@@ -509,8 +509,13 @@
                     "then": [],
                 }
 
-                values['given'][0].name = me.rule.givenItems[0].name;
-                values['when'][0].name = me.rule.whenItems[0].name;
+                if (me.rule.givenItems.length > 0) {
+                    values['given'][0].name = me.rule.givenItems[0].name;
+                }
+
+                if (me.rule.whenItems.length > 0) {
+                    values['when'][0].name = me.rule.whenItems[0].name;
+                }
 
                 if(me.rule.whenItems[0]._type.includes("Event")){
                     values['when'][0].type = "Event";
