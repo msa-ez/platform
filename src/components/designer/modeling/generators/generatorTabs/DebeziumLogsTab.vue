@@ -12,7 +12,7 @@
                 outlined
                 type="info"
                 style="text-align: left;"
-            >Please input Debezium Logs to generate event storming queries
+            >Please input Debezium Logs to generate event storming commands
             </v-alert>
             <!-- #endregion -->
 
@@ -54,11 +54,11 @@
 
                         <div>
                             <div style="height: 18px;">
-                                <pre style="font-size: small; text-align: left;">QUERIES</pre>
+                                <pre style="font-size: small; text-align: left;">COMMANDS</pre>
                             </div>
-                            <div style="height: 15px; display: flex;" v-for="(query, index) in reponseQuery.queries" :key="index">
-                                <pre style="font-size: small; text-align: left;">- {{ query.summary }}</pre>        
-                                <v-btn icon x-small style="margin-top: 2px;" @click="queryDialogTitle=query.summary + ' Query'; queryDialogContent = query.rawQuery; isQueryDialogOpen = true;">
+                            <div style="display: flex;" v-for="(query, index) in reponseQuery.queries" :key="index">
+                                <pre style="font-size: small; text-align: left; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; max-width: 380px;">- {{ query.summary }}</pre>        
+                                <v-btn icon x-small style="margin-top: 2px;" @click="queryDialogTitle=query.summary + ' Command'; queryDialogContent = query.rawQuery; isQueryDialogOpen = true;">
                                     <v-icon>mdi-magnify</v-icon>
                                 </v-btn>     
                             </div>
