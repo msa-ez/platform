@@ -413,12 +413,12 @@ class DebeziumTransactionQuery {
                     }
                 }
 
-                const getValidPosition = (modelValue, query, aggregateObject) => {
-                    const getAllAggregatesInBoundedContext = (modelValue, boundedContextId) => {
-                        return Object.values(modelValue.elements)
-                            .filter(element => element && element._type === "org.uengine.modeling.model.Aggregate" && element.boundedContext.id === boundedContextId)
-                    }
-                    
+                const getAllAggregatesInBoundedContext = (modelValue, boundedContextId) => {
+                    return Object.values(modelValue.elements)
+                        .filter(element => element && element._type === "org.uengine.modeling.model.Aggregate" && element.boundedContext.id === boundedContextId)
+                }
+
+                const getValidPosition = (modelValue, query, aggregateObject) => {  
                     const aggregates = getAllAggregatesInBoundedContext(modelValue, query.ids.boundedContextId)
                     if(aggregates.length <= 0) {
                         const currentBoundedContext = modelValue.elements[query.ids.boundedContextId]
@@ -430,7 +430,7 @@ class DebeziumTransactionQuery {
 
                         const maxXAggregate = aggregates.filter(agg => agg.elementView.x === maxX)[0]
                         return {x: maxX + Math.round(maxXAggregate.elementView.width/2) 
-                               + Math.round(aggregateObject.elementView.width/2) + 177, y: minY}
+                               + Math.round(aggregateObject.elementView.width/2) + 300, y: minY}
                     }
                 }
 
@@ -503,6 +503,49 @@ class DebeziumTransactionQuery {
                     })
                 }
 
+                const relocateUIPositions = (modelValue, query, aggregateObject) => {
+                    const getTargetBoundedContextIds = (modelValue, currentBoundedContext) => {
+                        let targetBoundedContextIds = []
+                        for(const element of Object.values(modelValue.elements)) {
+                            if(element && element._type === "org.uengine.modeling.model.BoundedContext" && element.id !== currentBoundedContext.id)
+                            {
+                                if((currentBoundedContext.elementView.x < element.elementView.x) && 
+                                   (currentBoundedContext.elementView.y + currentBoundedContext.elementView.height/2 > element.elementView.y) &&
+                                   (currentBoundedContext.elementView.y - currentBoundedContext.elementView.height/2 < element.elementView.y))
+                                   targetBoundedContextIds.push(element.id)
+                            }
+                        }
+                        return targetBoundedContextIds
+                    }
+
+                    const getElementIdsInBoundedContext = (modelValue, boundedContextId) => {
+                        return Object.values(modelValue.elements)
+                            .filter(element => element && element.boundedContext && element.boundedContext.id === boundedContextId)
+                            .map(element => element.id)
+                    }
+
+                    const aggregates = getAllAggregatesInBoundedContext(modelValue, query.ids.boundedContextId)
+                    if(aggregates.length <= 0) return
+
+                    const currentBoundedContext = modelValue.elements[query.ids.boundedContextId]
+                    for(const boundedContextId of getTargetBoundedContextIds(modelValue, currentBoundedContext)) {
+                        const boundedContext = modelValue.elements[boundedContextId]
+                        boundedContext.elementView.x = boundedContext.elementView.x + 400
+                        modelValue.elements[boundedContextId] = {...boundedContext}
+
+                        for(const elementId of getElementIdsInBoundedContext(modelValue, boundedContextId)) {
+                            const element = modelValue.elements[elementId]
+                            element.elementView.x = element.elementView.x + 400
+                            modelValue.elements[elementId] = {...element}
+                        }
+                    }
+
+                    currentBoundedContext.elementView.x = currentBoundedContext.elementView.x + 200
+                    currentBoundedContext.elementView.width = currentBoundedContext.elementView.width + 400
+                    currentBoundedContext.aggregates = [...currentBoundedContext.aggregates, {"id": aggregateObject.id}]
+                    modelValue.elements[query.ids.boundedContextId] = {...currentBoundedContext}
+                }
+
                 let aggregateObject = getAggregateBase(
                     userInfo, query.args.aggregateName, query.args.aggregateAlias, 
                     query.ids.boundedContextId, 0, 0, query.ids.aggregateId
@@ -513,7 +556,9 @@ class DebeziumTransactionQuery {
                 aggregateObject.elementView.y = VALID_POSITION.y
 
                 aggregateObject.aggregateRoot.fieldDescriptors = getFileDescriptors(query.args.properties)
+                relocateUIPositions(modelValue, query, aggregateObject)
                 modelValue.elements[aggregateObject.id] = aggregateObject
+
 
                 const rootAggregateObject = getRootAggregateBase(query.args.aggregateName, aggregateObject.id,
                     getFileDescriptorsForRootAggegate(query.args.properties)
