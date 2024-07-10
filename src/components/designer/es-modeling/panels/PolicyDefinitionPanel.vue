@@ -75,7 +75,10 @@
                         <v-icon color="grey lighten-1">mdi-help-circle</v-icon>
                     </v-btn>
                 </template>
-                <span>Help information about examples</span>
+                <span>
+                    A relationship like the example below should be formed. <br>
+                    <img width="504" alt="image" src="https://github.com/msa-ez/platform/assets/123912988/0b1f0855-11df-49b7-ad86-4588f05b34d2">
+                </span>
             </v-tooltip>
         </template>
 
