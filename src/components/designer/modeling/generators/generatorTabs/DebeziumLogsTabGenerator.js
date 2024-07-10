@@ -682,6 +682,601 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
 `
             }
 
+            const getExamplePrompt = () => {
+                return `예시를 들어보겠습니다.
+이 예시에서는 환자 정보, 환자 진료 기록, 환자 선호도 정보 업데이트와 관련된 Debezium 트랜잭션 로그가 전달되었다고 가정해서 출력된 결과입니다.
+이 예시에서 환자 진료 기록, 환자 선호도 정보는 환자 정보를 외래키로 가지고 있기 때문에 ValueObject 혹은 Aggregate로 정의될 수 있습니다.
+환자 진료 기록이 환자 정보와 데이터 불일치가 발생하면 비즈니스적으로 치명적이기 때문에 ValueObject로 환자 정보에 포함했고,
+환자 선호도 정보는 환자 정보와 데이터 불일치가 발생해도 비즈니스적으로 큰 문제가 되지 않기 때문에 Aggregate로 정의하였습니다.
+환자 선호도 정보 업데이트 이벤트가 발생했을 경우, Policy를 이용해서 환자 정보의 데이터도 업데이트한다는 점도 확인해 주세요.
+반환 결과는 다음과 같습니다.
+- 이것은 단지 예시일 뿐입니다. 실제로 제가 제공하는 이벤트 스토밍 모델링 데이터는 추후에 INPUT으로 제공될 겁니다.
+{
+    "transactions": [
+        {
+            "id": "patient-update-transaction",
+            "description": "Update Patient Information",
+            "properties": [
+                {
+                    "name": "id",
+                    "displayName": "Patient ID",
+                    "type": "Integer",
+                    "isKey": true,
+                    "isForeignProperty": false
+                },
+                {
+                    "name": "name",
+                    "displayName": "Patient Name",
+                    "type": "String",
+                    "isKey": false,
+                    "isForeignProperty": false
+                },
+                {
+                    "name": "phoneNumber",
+                    "displayName": "Patient Phone Number",
+                    "type": "String",
+                    "isKey": false,
+                    "isForeignProperty": false
+                },
+                {
+                    "name": "bloodType",
+                    "displayName": "Patient BloodType",
+                    "type": "EnumBloodType",
+                    "isKey": false,
+                    "isForeignProperty": false
+                },
+                {
+                    "name": "isPreferenceInputed",
+                    "displayName": "Is Preference Inputed",
+                    "type": "Boolean",
+                    "isKey": false,
+                    "isForeignProperty": false
+                }
+            ]
+        },
+        {
+            "id": "medicalRecord-update-transaction",
+            "description": "Update medicalRecord Information",
+            "properties": [
+                {
+                    "name": "id",
+                    "displayName": "Medical Record ID",
+                    "type": "Integer",
+                    "isKey": true,
+                    "isForeignProperty": false
+                },
+                {
+                    "name": "patientId",
+                    "displayName": "Patient Id",
+                    "type": "String",
+                    "isKey": false,
+                    "isForeignProperty": true
+                },
+                {
+                    "name": "medicalRecord",
+                    "displayName": "Patient Medical Record",
+                    "type": "String",
+                    "isKey": false,
+                    "isForeignProperty": false
+                }
+            ]
+        },
+        {
+            "id": "patientPreference-update-transaction",
+            "description": "Update patientPreference Information",
+            "properties": [
+                {
+                    "name": "id",
+                    "displayName": "Patient Preference ID",
+                    "type": "Integer",
+                    "isKey": true,
+                    "isForeignProperty": false
+                },
+                {
+                    "name": "patientId",
+                    "displayName": "Patient Id",
+                    "type": "String",
+                    "isKey": false,
+                    "isForeignProperty": true
+                },
+                {
+                    "name": "PreferenceValue",
+                    "displayName": "Patient Preference Value",
+                    "type": "String",
+                    "isKey": false,
+                    "isForeignProperty": false
+                }
+            ]
+        }
+    ],
+
+    "usecases": [
+        {
+            "relatedTransactionId": "patient-update-transaction",
+            "id": "usecase-update-patient",
+            "name": "UpdatePatient",
+            "displayName": "Update Patient",
+            "actor": "User",
+            "relatedBoundedContextQueryIds": ["query-bc-update-patient"],
+            "relatedAggregateQueryIds": ["query-agg-update-patient"],
+            "relatedEnumerationQueryIds": ["query-enum-blood-type"],
+            "relatedValueObjectQueryIds": [],
+            "relatedCommandQueryIds": ["query-cmd-update-patient"],
+            "relatedEventQueryIds": ["query-evt-update-patient"],
+            "relatedPolicyQueryIds": ["query-policy-update-patient"]
+        },
+        
+        {
+            "relatedTransactionId": "medicalRecord-update-transaction",
+            "id": "usecase-update-medical-record",
+            "name": "UpdateMedicalRecord",
+            "displayName": "Update Record Record",
+            "actor": "User",
+            "relatedBoundedContextQueryIds": [],
+            "relatedAggregateQueryIds": [],
+            "relatedEnumerationQueryIds": [],
+            "relatedValueObjectQueryIds": ["query-vo-update-medical-record"],
+            "relatedCommandQueryIds": ["query-cmd-update-medical-record"],
+            "relatedEventQueryIds": ["query-evt-update-medical-record"],
+            "relatedPolicyQueryIds": []
+        },
+        
+        {
+            "relatedTransactionId": "patientPreference-update-transaction",
+            "id": "usecase-update-patient-preference",
+            "name": "UpdatePatientPreference",
+            "displayName": "Update Patient Preference",
+            "actor": "User",
+            "relatedBoundedContextQueryIds": ["query-bc-update-patient-preference"],
+            "relatedAggregateQueryIds": ["query-agg-update-patient-preference"],
+            "relatedEnumerationQueryIds": [],
+            "relatedValueObjectQueryIds": [],
+            "relatedCommandQueryIds": ["query-cmd-update-patient-preference"],
+            "relatedEventQueryIds": ["query-evt-update-patient-preference"],
+            "relatedPolicyQueryIds": []
+        }
+    ],
+    
+    "queries": [
+        {
+            "fromUsecaseId": "usecase-update-patient",
+            "queryId": "query-bc-update-patient",
+            "objectType": "BoundedContext",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient"
+            },
+            "args": {
+                "boundedContextName": "patient-management",
+                "boundedContextAlias": "Patient Management"
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient",
+            "queryId": "query-agg-update-patient",
+            "objectType": "Aggregate",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient",
+                "aggregateId": "agg-patient"
+            },
+            "args": {
+                "aggregateName": "Patient",
+                "aggregateAlias": "Patient",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "Patient ID",
+                        "type": "Integer",
+                        "isKey": true
+                    },
+                    {
+                        "name": "name",
+                        "displayName": "Patient Name",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "phoneNumber",
+                        "displayName": "Patient Phone Number",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "bloodType",
+                        "displayName": "Patient BloodType",
+                        "type": "EnumBloodType",
+                        "isKey": false
+                    },
+                    {
+                        "name": "isPreferenceInputed",
+                        "displayName": "Is Preference Inputed",
+                        "type": "Boolean",
+                        "isKey": false
+                    }
+                ]
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient",
+            "queryId": "query-cmd-update-patient",
+            "objectType": "Command",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient",
+                "aggregateId": "agg-patient",
+                "commandId": "cmd-update-patient"
+            },
+            "args": {
+                "commandName": "UpdatePatient",
+                "commandAlias": "Update Patient",
+                "api_verb": "PUT",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "Patient ID",
+                        "type": "Integer",
+                        "isKey": true
+                    },
+                    {
+                        "name": "name",
+                        "displayName": "Patient Name",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "phoneNumber",
+                        "displayName": "Patient Phone Number",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "bloodType",
+                        "displayName": "Patient BloodType",
+                        "type": "EnumBloodType",
+                        "isKey": false
+                    },
+                    {
+                        "name": "isPreferenceInputed",
+                        "displayName": "Is Preference Inputed",
+                        "type": "Boolean",
+                        "isKey": false
+                    }
+                ],
+                "toEventIds": ["evt-patient-updated"],
+                "fromPolicyIds": ["policy-update-patient"],
+                "actor": "User"
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient",
+            "queryId": "query-evt-update-patient",
+            "objectType": "Event",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient",
+                "aggregateId": "agg-patient",
+                "eventId": "evt-patient-updated"
+            },
+            "args": {
+                "eventName": "PatientUpdated",
+                "eventAlias": "Patient Updated",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "Patient ID",
+                        "type": "Integer",
+                        "isKey": true
+                    },
+                    {
+                        "name": "name",
+                        "displayName": "Patient Name",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "phoneNumber",
+                        "displayName": "Patient Phone Number",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "bloodType",
+                        "displayName": "Patient BloodType",
+                        "type": "EnumBloodType",
+                        "isKey": false
+                    },
+                    {
+                        "name": "isPreferenceInputed",
+                        "displayName": "Is Preference Inputed",
+                        "type": "Boolean",
+                        "isKey": false
+                    }
+                ]
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient",
+            "queryId": "query-enum-blood-type",
+            "objectType": "Enumeration",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient",
+                "aggregateId": "agg-patient",
+                "enumerationId": "enum-blood-type"
+            },
+            "args": {
+                "enumerationName": "EnumBloodType",
+                "properties": [
+                    {
+                        "name": "A"
+                    },
+                    {
+                        "name": "B"
+                    },
+                    {
+                        "name": "AB"
+                    },
+                    {
+                        "name": "O"
+                    }
+                ]
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient",
+            "queryId": "query-policy-update-patient",
+            "objectType": "Policy",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient",
+                "aggregateId": "agg-patient",
+                "policyId": "policy-update-patient"
+            },
+            "args": {
+                "policyName": "UpdatePatientPolicy",
+                "policyAlias": "Update Patient Policy",
+                "fromEventNames": ["PatientPreferenceUpdated"]
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-medical-record",
+            "queryId": "query-vo-update-medical-record",
+            "objectType": "ValueObject",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient",
+                "aggregateId": "agg-patient",
+                "valueObjectId": "vo-medical-record"
+            },
+            "args": {
+                "valueObjectName": "MedicalRecord",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "MedicalRecord ID",
+                        "type": "Integer",
+                        "isKey": true,
+                        "isForeignProperty": false
+                    },
+                    {
+                        "name": "patientId",
+                        "displayName": "Patient Id",
+                        "type": "String",
+                        "isKey": false,
+                        "isForeignProperty": true
+                    },
+                    {
+                        "name": "medicalRecord",
+                        "displayName": "Patient Medical Record",
+                        "type": "String",
+                        "isKey": false,
+                        "isForeignProperty": false
+                    }
+                ]
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-medical-record",
+            "queryId": "query-cmd-update-medical-record",
+            "objectType": "Command",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient",
+                "aggregateId": "agg-patient",
+                "commandId": "cmd-update-medical-record"
+            },
+            "args": {
+                "commandName": "UpdateMedicalRecord",
+                "commandAlias": "Update Patient Medical Record",
+                "api_verb": "PUT",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "MedicalRecord ID",
+                        "type": "Integer",
+                        "isKey": true
+                    },
+                    {
+                        "name": "patientId",
+                        "displayName": "Patient Id",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "medicalRecord",
+                        "displayName": "Patient Medical Record",
+                        "type": "String",
+                        "isKey": false
+                    }
+                ],
+                "toEventIds": ["evt-medical-record-updated"],
+                "fromPolicyIds": [],
+                "actor": "User"
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-medical-record",
+            "queryId": "query-evt-update-medical-record",
+            "objectType": "Event",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient",
+                "aggregateId": "agg-patient",
+                "eventId": "evt-medical-record-updated"
+            },
+            "args": {
+                "eventName": "MedicalRecordUpdated",
+                "eventAlias": "Patient Medical Record Updated",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "MedicalRecord ID",
+                        "type": "Integer",
+                        "isKey": true
+                    },
+                    {
+                        "name": "patientId",
+                        "displayName": "Patient Id",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "medicalRecord",
+                        "displayName": "Patient Medical Record",
+                        "type": "String",
+                        "isKey": false
+                    }
+                ]
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient-preference",
+            "queryId": "query-bc-update-patient-preference",
+            "objectType": "BoundedContext",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient-preference"
+            },
+            "args": {
+                "boundedContextName": "patient-preference-management",
+                "boundedContextAlias": "Patient Preference Manager"
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient-preference",
+            "queryId": "query-agg-update-patient-preference",
+            "objectType": "Aggregate",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient-preference",
+                "aggregateId": "agg-patient-preference"
+            },
+            "args": {
+                "aggregateName": "PatientPreference",
+                "aggregateAlias": "PatientPreference",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "Patient Preference ID",
+                        "type": "Integer",
+                        "isKey": true
+                    },
+                    {
+                        "name": "patientId",
+                        "displayName": "Patient Id",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "PreferenceValue",
+                        "displayName": "Patient Preference Value",
+                        "type": "String",
+                        "isKey": false
+                    }
+                ]
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient-preference",
+            "queryId": "query-cmd-update-patient-preference",
+            "objectType": "Command",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient-preference",
+                "aggregateId": "agg-patient-preference",
+                "commandId": "cmd-update-patient-preference"
+            },
+            "args": {
+                "commandName": "UpdatePatientPreference",
+                "commandAlias": "Update Patient Preference",
+                "api_verb": "PUT",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "Patient Preference ID",
+                        "type": "Integer",
+                        "isKey": true
+                    },
+                    {
+                        "name": "patientId",
+                        "displayName": "Patient Id",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "PreferenceValue",
+                        "displayName": "Patient Preference Value",
+                        "type": "String",
+                        "isKey": false
+                    }
+                ],
+                "toEventIds": ["evt-patient-preference-updated"],
+                "fromPolicyIds": [],
+                "actor": "User"
+            }
+        },
+        {
+            "fromUsecaseId": "usecase-update-patient-preference",
+            "queryId": "query-evt-update-patient-preference",
+            "objectType": "Event",
+            "action": "new",
+            "ids": {
+                "boundedContextId": "bc-patient-preference",
+                "aggregateId": "agg-patient-preference",
+                "eventId": "evt-patient-preference-updated"
+            },
+            "args": {
+                "eventName": "PatientPreferenceUpdated",
+                "eventAlias": "Patient Preference Updated",
+                "properties": [
+                    {
+                        "name": "id",
+                        "displayName": "Patient Preference ID",
+                        "type": "Integer",
+                        "isKey": true
+                    },
+                    {
+                        "name": "patientId",
+                        "displayName": "Patient Id",
+                        "type": "String",
+                        "isKey": false
+                    },
+                    {
+                        "name": "PreferenceValue",
+                        "displayName": "Patient Preference Value",
+                        "type": "String",
+                        "isKey": false
+                    }
+                ]
+            }
+        }
+    ]
+}
+
+`
+            }
+
             const getUserPrompt = (preprocessModelValue, debeziumLogs) => {
                 const getSummarizedDebeziumLogStrings = (debeziumLogStrings) => {
                     const getDebeziumLogStringList = (logs) => {
@@ -721,6 +1316,7 @@ ${getSummarizedDebeziumLogStrings(debeziumLogs)}
             return  getFrontGuidePrompt() +
                     getInputSyntaxGuidePrompt() +
                     getOutputSyntaxGuidePrompt() +
+                    getExamplePrompt() +
                     getUserPrompt(preprocessModelValue, debeziumLogs)
         }
 
