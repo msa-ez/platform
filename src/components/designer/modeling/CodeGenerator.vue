@@ -3675,6 +3675,10 @@ jobs:
                 let list = localStorage.getItem('customToppingLists')
                 list = list ? JSON.parse(list) : []
 
+                if(this.tempToppingPlatforms.length == 0){
+                    apply = true;
+                }
+
                 if (apply) {
                     let applyIndex = this.tempToppingPlatforms.indexOf(topping);
                     this.tempToppingPlatforms.splice(applyIndex, 1)
