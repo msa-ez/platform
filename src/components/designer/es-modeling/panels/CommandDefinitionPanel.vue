@@ -273,9 +273,10 @@
                         var lowerCase = JSON.parse(JSON.stringify(getName)).toLowerCase()
                         lowerCase = lowerCase.replace(' ', '');
                         me.value.controllerInfo.apiPath = lowerCase
-                    }else if(me.value.controllerInfo.apiPath && me.value.controllerInfo.method == 'POST'){
-                        me.value.controllerInfo.apiPath = null;
                     }
+                    // else if(me.value.controllerInfo.apiPath && me.value.controllerInfo.method == 'POST'){
+                    //     me.value.controllerInfo.apiPath = null;
+                    // }
                 } catch {
                     console.log('methods : setApiPath() Error')
                 }
