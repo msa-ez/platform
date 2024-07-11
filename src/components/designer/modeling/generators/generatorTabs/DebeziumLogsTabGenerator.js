@@ -753,17 +753,19 @@ ${getSummarizedDebeziumLogStrings(debeziumLogs)}
 
         this.preprocessModelValue = getPreprocessModelValue(this.client.modelValue)
         this.preModificationMessage = this.messageObj.modificationMessage
-
-        return getSystemPrompt(
+        const systemPrompt = getSystemPrompt(
             JSON.stringify(this.preprocessModelValue, null, 2),
             this.preModificationMessage 
         )
+
+        console.log("[*] 전달된 시스템 프롬프트 \n" + systemPrompt)
+        return systemPrompt
     }
 
     createModel(text){
         const parseToJson = (aiTextResult) => {
-            if(aiTextResult.includes("```json"))
-                aiTextResult = aiTextResult.match(/```json\n([\s\S]+)\n```/)[1]
+            if(aiTextResult.includes("```json")) aiTextResult = aiTextResult.match(/```json\n([\s\S]+)\n```/)[1]
+            if(aiTextResult.includes("```")) aiTextResult = aiTextResult.match(/```([\s\S]+)```/)[1]
             return JSON.parse(aiTextResult.trim())
         }
 
@@ -773,8 +775,7 @@ ${getSummarizedDebeziumLogStrings(debeziumLogs)}
 
 
         if(this.state !== 'end') {
-            console.log("### DebeziumLogsTabGenerator에서 결과 생성중... ###")
-            console.log(text)
+            console.log(`[*] DebeziumLogsTabGenerator에서 결과 생성중... (현재 출력된 문자 수: ${text.length})`)
 
             return {
                 modelName: this.modelName,
@@ -784,8 +785,7 @@ ${getSummarizedDebeziumLogStrings(debeziumLogs)}
         }
 
         try {
-            console.log("### DebeziumLogsTabGenerator에서 결과이 완료됨! 파싱중... ###")
-            console.log(text)
+            console.log("[*] DebeziumLogsTabGenerator에서 결과이 완료됨! 파싱중... \n" + text)
 
             const outputResult = {
                 modelName: this.modelName,
@@ -796,13 +796,11 @@ ${getSummarizedDebeziumLogStrings(debeziumLogs)}
                 modelRawValue: text,
             }
 
-            console.log("### 최종 파싱 결과 ###")
-            console.log(outputResult)
+            console.log("[*] 최종 파싱 결과", outputResult)
             return outputResult
         }
         catch(e) {
-            console.error("### DebeziumLogsTabGenerator에서 에러가 발생함! ###")
-            console.error(text)
+            console.error("[!] DebeziumLogsTabGenerator에서 에러가 발생함! \n" + text)
             console.error(e)
         }
     }
