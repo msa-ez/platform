@@ -408,7 +408,7 @@
                 if (me.isEmptyObject(me.relatedAggregate)) {
                     alert("Attach 'Associated aggregate'. ")
                 } else {
-                    var aggLists = me.canvas.attachedLists.aggregateLists;
+                    var aggLists = me.canvas.attachedLists().aggregateLists;
 
                     if( Object.keys(aggLists).length > 0 ){
                         var eventFields = JSON.parse(JSON.stringify(me.value.fieldDescriptors));
