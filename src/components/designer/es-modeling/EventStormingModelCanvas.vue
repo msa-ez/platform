@@ -3082,7 +3082,7 @@
                             me.currentDebeziumTransactionManager.apply(me.value, me.userInfo)
                             this.forceRefreshCanvas();
                         } catch(e) {
-                            console.error("### 출력 결과를 Debezium Manager에 전달해서 처리하는 과정에서 오류 발생! ###")
+                            console.error("[!] 출력 결과를 Debezium Manager에 전달해서 처리하는 과정에서 오류 발생")
                             console.error(e)
                         }
                     }
