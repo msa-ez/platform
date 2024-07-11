@@ -274,7 +274,7 @@
                     if(!me.value.controllerInfo.apiPath && me.value.controllerInfo.method != 'POST'){
                         me.value.controllerInfo.apiPath = lowerCase
                     }
-                    else if(!me.value.controllerInfo.apiPath && me.value.controllerInfo.method == 'POST'){
+                    else{
                         me.value.controllerInfo.apiPath = '/'+lowerCase;
                     }
                 } catch {
