@@ -213,12 +213,12 @@ export default {
             switch(model.modelMode) {
                 case "generateCommands":
                     this.progressMessageOutput = model.modelRawValue
-                    this.progressMessage = `명령어 생성중... (남은 트렉젝션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
+                    this.progressMessage = `명령어 생성중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
                     break
 
                 case "summaryPreprocessModelValue":
                     this.progressMessageOutput = model.modelRawValue
-                    this.progressMessage = `이벤트 스토밍 정보 요약중... (남은 트렉젝션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
+                    this.progressMessage = `이벤트 스토밍 정보 요약중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
                     break
             }
         },
