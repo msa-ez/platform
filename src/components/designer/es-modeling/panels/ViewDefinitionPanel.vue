@@ -57,8 +57,30 @@
             </span></div>
         </template>
 
-        <template slot="element">
+        <template slot="md-title-side">
+            <v-btn
+                    text
+                    color="primary"
+                    style="margin-left: 10px; margin-top: -12px;"
+                    :disabled="isReadOnly || !exampleAvailable || value.dataProjection != 'query-for-aggregate'"
+                    @click="openExampleDialog()"
+            >Examples</v-btn>
+            <v-tooltip bottom v-if="!exampleAvailable">
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn icon v-bind="attrs" v-on="on"
+                        style="margin-left: -8px; margin-top: -15px; width: 10px; height: 10px;">
+                        <v-icon color="grey lighten-1">mdi-help-circle</v-icon>
+                    </v-btn>
+                </template>
+                <span>
+                    A relationship like the example below should be formed. <br>
+                    <img width="495" alt="image" src="https://github.com/msa-ez/platform/assets/123912988/0c4a988e-64a1-4a31-a368-613aa27e25c4">
+                </span>
+            </v-tooltip>
+        </template>
 
+        <template slot="element">
+            <RuleExampleDialog v-if="openExample" v-model="value" @closeExampleDialog="closeExampleDialog()" />
             <v-card flat>
                 <v-card-text>
                     <v-radio-group :disabled="isReadOnly"
@@ -111,8 +133,8 @@
                                         :isReadOnly="isReadOnly"
                                         :type="value._type"
                                         :elementId="value.elementView.id"
-                                        :entities="relatedAggregate.aggregateRoot.entities"
-                                        :fields="relatedAggregate.aggregateRoot.fieldDescriptors"
+                                        :entities="relatedAggregate ? relatedAggregate.aggregateRoot.entities : null"
+                                        :fields="relatedAggregate ? relatedAggregate.aggregateRoot.fieldDescriptors : null"
                                 ></event-storming-attribute>
                             </v-card-text>
                         </v-card>
@@ -210,6 +232,7 @@
     import ViewCreate from "../../view-modeling/ViewCreate";
     import ViewUpdate from "../../view-modeling/ViewUpdate";
     import ViewDelete from "../../view-modeling/ViewDelete";
+    import RuleExampleDialog from "../RuleExampleDialog"
 
     export default {
         mixins: [EventStormingModelPanel],
@@ -226,7 +249,8 @@
             CommonPanel,
             ViewCreate,
             ViewUpdate,
-            ViewDelete
+            ViewDelete,
+            RuleExampleDialog
         },
         data() {
             return {
@@ -236,6 +260,7 @@
                     userStory: '',
                 },
                 // generateDone: true,
+                exampleAvailable: false,
 
             }
         },
@@ -276,7 +301,9 @@
             // },
 
         },
-        created: function () { },
+        created: function () { 
+            this.exampleAvailable = this.validateRuleExample()
+        },
         mounted(){
             var me = this;
             me.$EventBus.$on("onModelCreated", function (model) {

@@ -267,16 +267,16 @@
             },
             setApiPath(){
                 var me = this
+                var getName = me.value.name
+                var lowerCase = JSON.parse(JSON.stringify(getName)).toLowerCase()
+                lowerCase = lowerCase.replace(' ', '');
                 try {
                     if(!me.value.controllerInfo.apiPath && me.value.controllerInfo.method != 'POST'){
-                        var getName = me.value.name
-                        var lowerCase = JSON.parse(JSON.stringify(getName)).toLowerCase()
-                        lowerCase = lowerCase.replace(' ', '');
                         me.value.controllerInfo.apiPath = lowerCase
                     }
-                    // else if(me.value.controllerInfo.apiPath && me.value.controllerInfo.method == 'POST'){
-                    //     me.value.controllerInfo.apiPath = null;
-                    // }
+                    else{
+                        me.value.controllerInfo.apiPath = '/'+lowerCase;
+                    }
                 } catch {
                     console.log('methods : setApiPath() Error')
                 }
