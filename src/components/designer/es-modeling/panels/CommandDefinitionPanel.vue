@@ -267,14 +267,15 @@
             },
             setApiPath(){
                 var me = this
+                var getName = me.value.name
+                var lowerCase = JSON.parse(JSON.stringify(getName)).toLowerCase()
+                lowerCase = lowerCase.replace(' ', '');
                 try {
                     if(!me.value.controllerInfo.apiPath && me.value.controllerInfo.method != 'POST'){
-                        var getName = me.value.name
-                        var lowerCase = JSON.parse(JSON.stringify(getName)).toLowerCase()
-                        lowerCase = lowerCase.replace(' ', '');
                         me.value.controllerInfo.apiPath = lowerCase
-                    }else if(me.value.controllerInfo.apiPath && me.value.controllerInfo.method == 'POST'){
-                        me.value.controllerInfo.apiPath = null;
+                    }
+                    else{
+                        me.value.controllerInfo.apiPath = '/'+lowerCase;
                     }
                 } catch {
                     console.log('methods : setApiPath() Error')
@@ -408,7 +409,7 @@
                 if (me.isEmptyObject(me.relatedAggregate)) {
                     alert("Attach 'Associated aggregate'. ")
                 } else {
-                    var aggLists = me.canvas.attachedLists.aggregateLists;
+                    var aggLists = me.canvas.attachedLists().aggregateLists;
 
                     if( Object.keys(aggLists).length > 0 ){
                         var eventFields = JSON.parse(JSON.stringify(me.value.fieldDescriptors));

@@ -3675,6 +3675,10 @@ jobs:
                 let list = localStorage.getItem('customToppingLists')
                 list = list ? JSON.parse(list) : []
 
+                if(this.tempToppingPlatforms.length == 0){
+                    apply = true;
+                }
+
                 if (apply) {
                     let applyIndex = this.tempToppingPlatforms.indexOf(topping);
                     this.tempToppingPlatforms.splice(applyIndex, 1)
@@ -8575,7 +8579,7 @@ jobs:
                             }
                         }
                         if (headerOptions['except'] == true) {
-                            // return;
+                            return;
                             // ??? template 수정 표시 처리 이전에 return 되어서 .. 수정이 안된것처럼 보이게 하는 
                         }
     

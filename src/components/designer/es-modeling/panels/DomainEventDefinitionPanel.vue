@@ -190,7 +190,7 @@
                                 if (rel.sourceElement._type.endsWith('Command') && rel.targetElement._type.endsWith('Event')) {
                                     if (me.value.elementView.id == rel.targetElement.elementView.id) {
                                         var coId = rel.sourceElement.elementView.id
-                                        var coVal = me.canvas.attachedLists.commandLists[coId]
+                                        var coVal = me.canvas.attachedLists().commandLists[coId]
 
                                         if (coVal) {
                                             if (coVal.isRestRepository) {
@@ -233,7 +233,7 @@
                                 if (rel.sourceElement._type.endsWith('Policy') && rel.targetElement._type.endsWith('Event')) {
                                     if (me.value.elementView.id == rel.targetElement.elementView.id) {
                                         var coId = rel.sourceElement.elementView.id
-                                        var coVal = me.canvas.attachedLists.policyLists[coId]
+                                        var coVal = me.canvas.attachedLists().policyLists[coId]
 
                                         if (coVal) {
                                             me.policyLists.push(coVal)

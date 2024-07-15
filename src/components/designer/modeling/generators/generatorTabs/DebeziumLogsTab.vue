@@ -195,7 +195,6 @@ export default {
         },
 
         onModelCreated(model) {
-            console.log(model)
         },
         
         onGenerationFinished(model) {
