@@ -146,6 +146,10 @@ class DebeziumTransactionQuery {
             switch(query.action) {
                 case "new":
                     return `Create New ${query.args.boundedContextAlias} Bounded Context`;
+                case "modify":
+                    return `[Not implemented] Modify ${query.args.boundedContextAlias} Bounded Context`;
+                case "delete":
+                    return `[Not implemented] Delete ${query.args.boundedContextAlias} Bounded Context`;
             }
         }
 
@@ -153,6 +157,10 @@ class DebeziumTransactionQuery {
             switch(query.action) {
                 case "new":
                     return `Create New ${query.args.aggregateAlias} Aggregate`;
+                case "modify":
+                    return `[Not implemented] Modify ${query.args.aggregateAlias} Aggregate`;
+                case "delete":
+                    return `[Not implemented] Delete ${query.args.aggregateAlias} Aggregate`;
             }
         }
 
@@ -160,6 +168,10 @@ class DebeziumTransactionQuery {
             switch(query.action) {
                 case "new":
                     return `Create New ${query.args.commandAlias} Command`;
+                case "modify":
+                    return `[Not implemented] Modify ${query.args.commandAlias} Command`;
+                case "delete":
+                    return `[Not implemented] Delete ${query.args.commandAlias} Command`;
             }
         }
 
@@ -167,6 +179,10 @@ class DebeziumTransactionQuery {
             switch(query.action) {
                 case "new":
                     return `Create New ${query.args.eventAlias} Event`;
+                case "modify":
+                    return `[Not implemented] Modify ${query.args.eventAlias} Event`;
+                case "delete":
+                    return `[Not implemented] Delete ${query.args.eventAlias} Event`;
             }
         }
 
@@ -174,6 +190,10 @@ class DebeziumTransactionQuery {
             switch(query.action) {
                 case "new":
                     return `Create New ${query.args.policyAlias} Policy`;
+                case "modify":
+                    return `[Not implemented] Modify ${query.args.policyAlias} Policy`;
+                case "delete":
+                    return `[Not implemented] Delete ${query.args.policyAlias} Policy`;
             }
         }
 
@@ -181,6 +201,10 @@ class DebeziumTransactionQuery {
             switch(query.action) {
                 case "new":
                     return `Create New ${query.args.enumerationName} Enumeration in ${query.ids.aggregateId} Aggregate`;
+                case "modify":
+                    return `[Not implemented] Modify ${query.args.enumerationName} Enumeration in ${query.ids.aggregateId} Aggregate`;
+                case "delete":
+                    return `[Not implemented] Delete ${query.args.enumerationName} Enumeration in ${query.ids.aggregateId} Aggregate`;
             }
         }
 
@@ -188,6 +212,10 @@ class DebeziumTransactionQuery {
             switch(query.action) {
                 case "new":
                     return `Create New ${query.args.valueObjectName} Value Object in ${query.ids.aggregateId} Aggregate`;
+                case "modify":
+                    return `[Not implemented] Modify ${query.args.valueObjectName} Value Object in ${query.ids.aggregateId} Aggregate`;
+                case "delete":
+                    return `[Not implemented] Delete ${query.args.valueObjectName} Value Object in ${query.ids.aggregateId} Aggregate`;
             }
         }
 
@@ -236,6 +264,27 @@ class DebeziumTransactionQuery {
             }
         
             return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4()
+        }
+
+        const correctQuery = (modelValue, query) => {
+            // 수정 요청인데, 해당 수정 요청에서 수정시킬 ID가 존재하지 않는다면, 생성 요청으로 간주함
+            if(query.action !== "new") {
+                if(query.objectType === "BoundedContext" && !modelValue.elements[query.ids.boundedContextId]) {
+                    query.action = "new"
+                } else if(query.objectType === "Aggregate" && !modelValue.elements[query.ids.aggregateId]) {
+                    query.action = "new"
+                } else if(query.objectType === "Command" && !modelValue.elements[query.ids.commandId]) {
+                    query.action = "new"
+                } else if(query.objectType === "Event" && !modelValue.elements[query.ids.eventId]) {
+                    query.action = "new"
+                } else if(query.objectType === "Policy" && !modelValue.elements[query.ids.policyId]) {
+                    query.action = "new"
+                } else if(query.objectType === "Enumeration" && !modelValue.elements[query.ids.enumerationId]) {
+                    query.action = "new"
+                } else if(query.objectType === "ValueObject" && !modelValue.elements[query.ids.valueObjectId]) {
+                    query.action = "new"
+                }
+            }
         }
 
 
@@ -1209,7 +1258,8 @@ class DebeziumTransactionQuery {
 
         if(this.isApplied)
             return callbacks
-    
+
+        correctQuery(modelValue, this.query)
         switch(this.query.objectType) {
             case "BoundedContext":
                 applyToBoundedContext(modelValue, userInfo, this.query);

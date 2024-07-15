@@ -12,7 +12,11 @@
                 outlined
                 type="info"
                 style="text-align: left;"
-            >Please input Debezium Logs to generate event storming commands
+            >
+                {{ progressMessage }}
+                <v-btn v-if="progressMessageOutput && progressMessageOutput.length > 0" icon x-small style="margin-bottom: 4px; color: #2196F3;" @click="queryDialogTitle='Generator Output'; queryDialogContent = progressMessageOutput; isQueryDialogOpen = true;">
+                    <v-icon>mdi-magnify</v-icon>
+                </v-btn>
             </v-alert>
             <!-- #endregion -->
 
@@ -33,14 +37,6 @@
                                 <v-btn icon x-small style="margin-left: 1px;" @click="logDialogTitle='Debezium Log #'+reponseQuery.hash; logDialogContent = reponseQuery.rawTransaction; isLogDialogOpen = true;">
                                     <v-icon>mdi-text</v-icon>
                                 </v-btn>
-                            </div>
-                            <div style="display: flex;">
-                                <v-btn icon x-small style="margin-top: 3px;" @click="dragTransaction()">
-                                    <v-icon>mdi-arrow-up-down</v-icon>
-                                </v-btn>
-                                <v-btn icon x-small style="margin-top: 3px;" @click="isShowUndoDialog = true">
-                                    <v-icon>mdi-redo-variant</v-icon>
-                                </v-btn>                        
                             </div>
                         </div>
 
@@ -64,7 +60,7 @@
                             </div>
                         </div>
                     </v-sheet>
-                </div>                                    
+                </div>                         
             </v-col>
             <!-- #endregion -->
         </div>
@@ -128,19 +124,6 @@
             </v-card>
         </v-dialog>
         <!-- #endregion -->
-        <!-- #region Undo 여부를 확인하기 위한 다이얼로그-->
-        <v-dialog v-model="isShowUndoDialog" max-width="400" max-height="150">
-            <v-card style="width: 400px; height: 150px; display: flex; flex-direction: column; justify-content: center;">
-                <v-card-text style="text-align: center;">
-                    선택한 트랜젝션의 지점으로 되돌아가시겠습니까?
-                </v-card-text>
-                <v-card-actions class="justify-center pt-0">
-                    <v-btn color="primary" variant="flat" @click="undoToSelectedTransaction(); isShowUndoDialog = false">네</v-btn>
-                    <v-btn color="error" variant="flat" @click="isShowUndoDialog = false">아니오</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
-        <!-- #endregion -->
 
         <v-snackbar v-model="showSnackbar" :timeout="2000">
             클립보드에 복사되었습니다.
@@ -164,6 +147,7 @@ export default {
             responseQueries: [],
             debeziumLogs: "",
             isGenerationFinished: true,
+            debeziumLogsGenerator: null,
 
             isLogDialogOpen: false,
             logDialogTitle: "",
@@ -175,7 +159,15 @@ export default {
             queryDialogContent: "",
 
             isShowUndoDialog: false,
-            debeziumTransactionManager: null
+            debeziumTransactionManager: null,
+
+            progressMessage: "Please input Debezium Logs to generate event storming commands",
+            progressMessageOutput: "",
+
+            messageObj: {
+                modificationMessage: ""
+            },
+            debeziumLogsToPrcess: []
         }
     },
     created() {
@@ -184,23 +176,73 @@ export default {
     },
     methods: {
         getGenerater(client) {
-            return new DebeziumLogsTabGenerator(client, {
-                modificationMessage: this.debeziumLogs
-            })
+            if(this.debeziumLogsGenerator === null) {
+                this.debeziumLogsGenerator = new DebeziumLogsTabGenerator(client, this.messageObj)
+            }
+            return this.debeziumLogsGenerator
         },
 
         generate() {
-            this.isGenerationFinished = false
-            this.$emit("generate")
+            const getValidDebeziumLogsToProcess = (logs) => {
+                const getDebeziumLogStrings = (logs) => {
+                    return logs.match(/\{"schema":\{.*?"name":".*?\.Envelope".*?\},"payload":\{.*?\}\}/g)
+                }
+
+                let debeziumLogStrings = getDebeziumLogStrings(logs)
+                if(debeziumLogStrings.length === 0) {
+                    throw new Error("No valid Debezium Logs found")
+                }
+
+                return debeziumLogStrings
+            }
+
+            try {
+                this.debeziumLogsToPrcess = getValidDebeziumLogsToProcess(this.debeziumLogs)
+                this.messageObj.modificationMessage = this.debeziumLogsToPrcess.shift()
+
+                this.isGenerationFinished = false
+                this.$emit("generate")
+            }
+            catch(e) {
+                console.error(e)
+                alert(e.message)
+            }
         },
 
         onModelCreated(model) {
+            switch(model.modelMode) {
+                case "generateCommands":
+                    this.progressMessageOutput = model.modelRawValue
+                    this.progressMessage = `명령어 생성중... (남은 트렉젝션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
+                    break
+
+                case "summaryPreprocessModelValue":
+                    this.progressMessageOutput = model.modelRawValue
+                    this.progressMessage = `이벤트 스토밍 정보 요약중... (남은 트렉젝션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
+                    break
+            }
         },
         
         onGenerationFinished(model) {
-            this.isGenerationFinished = true
-            this.debeziumLogs = ""
-            this.responseQueries = this.debeziumTransactionManager.toStringObject()
+            this.progressMessage = "대기중..."
+
+            switch(model.modelMode) {
+                case "generateCommands":
+                    this.isGenerationFinished = true
+                    this.debeziumLogs = ""
+                    this.responseQueries = this.debeziumTransactionManager.toStringObject()
+
+                    if(this.debeziumLogsToPrcess.length > 0) {
+                        this.messageObj.modificationMessage = this.debeziumLogsToPrcess.shift()
+                        this.isGenerationFinished = false
+                        this.$emit("generate")
+                    }
+                    break
+
+                case "summaryPreprocessModelValue":
+                    this.$emit("generate")
+                    break
+            }
         },
 
         copyToClipboard(textToCopy) {
@@ -209,14 +251,6 @@ export default {
             }).catch(err => {
                 console.error('클립보드 복사 실패:', err);
             });
-        },
-
-        undoToSelectedTransaction() {
-            alert("TODO: 선택한 트랜젝션으로 되돌아가기")
-        },
-
-        dragTransaction() {
-            alert("TODO: 트랜젝션을 드래그하고, 재구성된 순서대로 다시 적용시키도록 만들기")
         }
     }
 }
