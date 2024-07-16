@@ -3076,7 +3076,7 @@
                 var me = this;
 
                 if(val && val.modelName === "DebeziumLogsTabGenerator") {
-                    if(val.modelValue && val.modelMode === "generateCommands") {
+                    if(val.modelValue && val.modelMode === "modificationModelValue") {
                         try {
                             me.currentDebeziumTransactionManager.addNewTransactionFromModelValue(val.modelValue)
                             me.currentDebeziumTransactionManager.apply(me.value, me.userInfo)
