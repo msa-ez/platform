@@ -380,7 +380,7 @@
                 me.rule.whenItems = []
                 me.rule.thenItems = []
 
-                if(me.value && me.value._type.includes("Policy") || me.value && me.value._type.includes("Command")){
+                if(me.value && (me.value._type.includes("Policy") || me.value._type.includes("Command") || me.value._type.includes("View"))){
                     if(me.value.aggregate && me.value.aggregate.id && me.canvas.value.elements[me.value.aggregate.id]){
                         me.rule.givenItems.push(me.canvas.value.elements[me.value.aggregate.id])
                     } else if (me.canvas.attachedLists().aggregateLists && Object.values(me.canvas.attachedLists().aggregateLists).length > 0) {
@@ -451,10 +451,22 @@
                                             }
                                         }
                                     }
-                                } else {
+                                } else if(me.value._type.includes("Command")){
                                     // when
                                     if(rel.sourceElement._type == 'org.uengine.modeling.model.Command' && rel.targetElement._type == 'org.uengine.modeling.model.Event'){
                                         if(rel.sourceElement.elementView.id == me.value.elementView.id){
+                                            if(!whenItems.find(x => x.elementView.id == rel.sourceElement.elementView.id)){
+                                                whenItems.push(me.canvas.value.elements[rel.sourceElement.elementView.id]);
+                                            }
+                                            if(!thenItems.find(x => x.elementView.id == rel.targetElement.elementView.id)){
+                                                thenItems.push(me.canvas.value.elements[rel.targetElement.elementView.id]);
+                                            }
+                                        }
+                                    }
+                                } else if(me.value._type.includes("View")){
+                                    // when
+                                    if(rel.sourceElement._type == 'org.uengine.modeling.model.Command' && rel.targetElement._type == 'org.uengine.modeling.model.View'){
+                                        if(rel.targetElement.elementView.id == me.value.elementView.id){
                                             if(!whenItems.find(x => x.elementView.id == rel.sourceElement.elementView.id)){
                                                 whenItems.push(me.canvas.value.elements[rel.sourceElement.elementView.id]);
                                             }
@@ -539,9 +551,13 @@
                     values['given'][0].value[field.name] = givenObject;
                 });
 
-                me.rule.whenItems[0].fieldDescriptors.forEach(function (field){
-                    values['when'][0].value[field.name] = "N/A";
-                });
+                if(me.rule.whenItems[0].fieldDescriptors && me.rule.whenItems[0].fieldDescriptors.length > 0){
+                    me.rule.whenItems[0].fieldDescriptors.forEach(function (field){
+                        values['when'][0].value[field.name] = "N/A";
+                    });
+                } else {
+                    values['when'][0].value["N/A"] = "N/A";
+                }
 
                 me.rule.thenItems.forEach(function (item){
                     var obj = {
