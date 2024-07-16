@@ -300,7 +300,8 @@
         },
         props: {
             marketplaceDialog: Boolean,
-            selectedBaseTemplateName: null
+            selectedBaseTemplateName: null,
+            marketplaceType: String,
         },
         computed: {
             filteredTemplateLists() {
@@ -345,11 +346,11 @@
                 return !selectedTopping.depends || selectedTopping.depends.includes(this.selectedBaseTemplateName);
             },
             applyTemplate(temp){
-                this.$emit("applyTemplate", temp)
+                this.$emit("applyTemplate", temp, this.marketplaceType)
                 this.detailMarketMode = false;
             },
             applyTopping(topping){
-                this.$emit("applyTopping", topping)
+                this.$emit("applyTopping", topping, this.marketplaceType)
                 this.detailMarketMode = false;
             },
             async loadTemplateInfo() {
