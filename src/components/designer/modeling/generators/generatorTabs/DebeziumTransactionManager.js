@@ -752,6 +752,7 @@ class DebeziumTransactionQuery {
                     }
     
                     const commandObject = modelValue.elements[commandId]
+                    if(!commandObject || !eventObject) return
                     if(commandObject.aggregate.id === eventObject.aggregate.id) return
 
                     const policyObject = getPolicyBase(
