@@ -17,7 +17,9 @@
                 @applyTopping="applyToppingInMarket"
                 @closeMarketplaceDialog="marketplaceDialog = false"
                 :selectedBaseTemplateName="selectedBaseTemplateName"
+                :toppingPlatforms="toppingPlatforms"
                 :marketplaceType="marketplaceType"
+                :templateList="templateList"
             />
         </v-dialog>
         <v-card style="z-index:2; margin:0px; border-radius: 0px; height:100%;">
@@ -2978,11 +2980,11 @@ jobs:
                 }
 
             },
-            applyTemplateInMarket(val, type){
+            applyTemplateInMarket(val, type, toppingInfo){
                 if(type == 'BASE'){
                     this.changePlatformToForkedRepo(`${val.templatePath}`, true, null)
                 } else if(type == 'TEMPLATE'){
-                    this.changePlatformToForkedRepo(`${val.templatePath}`, false, this.templateDialog.selectedValue)
+                    this.changePlatformToForkedRepo(`${val.templatePath}`, false, this.templateDialog.selectedValue, toppingInfo)
                 }
                 this.marketplaceDialog = false
             },
@@ -5325,8 +5327,30 @@ jobs:
             // openForkedRepo(gitPath){
             //     window.open(gitPath, '_blank');
             // },
-            changePlatformToForkedRepo(repoPath, isChangeBaseTemplate, item){
+            changePlatformToForkedRepo(repoPath, isChangeBaseTemplate, item, toppingInfo){
                 var me = this
+                // for(var i = 0; i < toppingInfo.length; i++){
+                //     for(var j = 0; j < toppingInfo[i].depends.length; j++){
+                //         if(!toppingInfo[i].depends[j].includes(repoPath.split('/').pop())){
+                //             this.tempToppingPlatforms = [];
+                //             this.gitToppingList = null;
+                //             this.value.toppingPlatforms = [];
+                //             this.usedToppings = [];
+                //             this.filteredCustomToppingLists = null;
+                //             this.toppingPlatforms = [];
+                //             localStorage.removeItem('customToppingLists');
+                //         }
+                //     }
+                // }
+                if(!repoPath.includes("spring-boot")){
+                    me.tempToppingPlatforms = [];
+                    me.gitToppingList = null;
+                    me.value.toppingPlatforms = [];
+                    me.usedToppings = [];
+                    me.filteredCustomToppingLists = null;
+                    me.toppingPlatforms = [];
+                    localStorage.removeItem('customToppingLists');
+                }
                 if(isChangeBaseTemplate){
                     me.openTemplateDialog('BASE', repoPath);
                 } else {
