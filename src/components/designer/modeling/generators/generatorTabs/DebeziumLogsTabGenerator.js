@@ -370,7 +370,8 @@ Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 �
             "id": "<transactionId>",
             "description": "<transactionDescription>",
 
-            // 해당 트랜잭션에서 사용한 속성들을 적습니다.
+            // 해당하는 트랜잭션의 payload에 작성된 모든 필드를 적여야 합니다.
+            // etc1, etc2와 같이 순번에 매겨져 있는 경우에도 통합시키지 않고, 모두 작성하세요.
             "properties": [
                 {
                     "name": "<propertyName>",
