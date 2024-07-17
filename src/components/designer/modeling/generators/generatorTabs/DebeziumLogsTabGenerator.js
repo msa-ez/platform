@@ -1033,15 +1033,19 @@ ${eventStormingNames.join(", ")}
         }
 
         const applyModifications = (modelValue, modifications) => {
-            for(let modification of modifications) {
-                try {
-                    jp.apply(modelValue, modification.jsonPath, () => {
-                        return modification.value
-                    })
+            try {
+                for(let modification of modifications) {
+                    try {
+                        jp.apply(modelValue, modification.jsonPath, () => {
+                            return modification.value
+                        })
+                    }
+                    catch(e) {
+                        console.error(`[!] 변경 쿼리를 적용하는데 실패했습니다. 해당 변경 쿼리를 무시하고, 진행합니다.\n* modification\n${modification}\n* error\n`, e)
+                    }
                 }
-                catch(e) {
-                    console.error(`[!] 변경 쿼리를 적용하는데 실패했습니다. 해당 변경 쿼리를 무시하고, 진행합니다.\n* modification\n${modification}\n* error\n`, e)
-                }
+            } catch(e) {
+                console.error(`[!] AI가 생성한 변경 쿼리가 유효해보이지 않습니다. 기존 결과를 그대로 사용합니다.\n* error\n`, e)
             }
             return modelValue
         }
