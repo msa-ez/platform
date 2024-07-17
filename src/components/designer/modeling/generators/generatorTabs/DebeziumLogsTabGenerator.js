@@ -362,6 +362,7 @@ Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 �
                 const getOutputSyntaxGuidePrompt = () => {
                     return `당신은 리스트를 반환하며, 그 리스트에는 특정 액션을 수행하기 위한 JSON 객체들이 담겨야 합니다.
 다음과 같은 형태로 반환하면 됩니다.
+\`\`\`json
 {
     // 먼저, 당신은 Debezium 트랜잭션 로그의 내용을 바탕으로 트랜잭션 별로 id와 description을 적어야 합니다.
     // 전달된 트랜잭션 로그들의 순서와 일치해야 합니다.
@@ -442,6 +443,7 @@ Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 �
         }
     ]
 }
+\`\`\`
 
 각각의 action에 대한 규칙은 다음과 같습니다.
 - update 액션
@@ -667,6 +669,7 @@ ${getSummarizedDebeziumLogStrings(debeziumLogs)}
 ${requestDebeziumFieldsPrompt(debeziumLogs)}
 
 [OUTPUT]
+\`\`\`json
 `
                 }
     
@@ -733,6 +736,7 @@ ${requestDebeziumFieldsPrompt(debeziumLogs)}
 bc-customer-management:customer-management, bc-customer-management-command-CreateCustomer:CreateCustomer, bc-order-management:order-management
 
 [OUTPUT]
+\`\`\`json
 {
     "sortedObjectNames": [
         "bc-order-management:order-management",
@@ -740,6 +744,7 @@ bc-customer-management:customer-management, bc-customer-management-command-Creat
         "bc-customer-management:customer-management"
     ]
 }
+\`\`\`
 
 [INPUT]
 - Debezium Logs
@@ -749,6 +754,7 @@ ${getSummarizedDebeziumLogStrings(debeziumLogs)}
 ${eventStormingNames.join(", ")}
 
 [OUTPUT]
+\`\`\`json
 `
             }
 
@@ -770,6 +776,7 @@ ${eventStormingNames.join(", ")}
 3. 주어진 쿼리의 ids에 작성된 객체의 id들은 생성될 예정이거나 기존 이벤트 스토밍 모델에 반드시 존재해야 합니다.
 
 다음과 같이 반환하면 됩니다.
+\`\`\`json
 {
     "modifications": [
         {
@@ -778,8 +785,10 @@ ${eventStormingNames.join(", ")}
         }
     ]
 }
+\`\`\`
 
 [OUTPUT]
+\`\`\`json
 `
             }
 
