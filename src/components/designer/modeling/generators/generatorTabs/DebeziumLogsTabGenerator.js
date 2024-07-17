@@ -1046,9 +1046,14 @@ ${eventStormingNames.join(", ")}
 
         const applyModifications = (modelValue, modifications) => {
             for(let modification of modifications) {
-                jp.apply(modelValue, modification.jsonPath, () => {
-                    return modification.value
-                })
+                try {
+                    jp.apply(modelValue, modification.jsonPath, () => {
+                        return modification.value
+                    })
+                }
+                catch(e) {
+                    console.error(`[!] 변경 쿼리를 적용하는데 실패했습니다. 해당 변경 쿼리를 무시하고, 진행합니다.\n* modification\n${modification}\n* error\n`, e)
+                }
             }
             return modelValue
         }
