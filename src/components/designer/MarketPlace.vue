@@ -273,6 +273,7 @@
                 toppingLists:[],
                 selectedTemplate: null,
                 selectedTopping: null,
+                selectedToppingList: [],
                 githubHeaders: null,
                 allRepoList: null,
                 detailMarketMode: false,
@@ -300,7 +301,8 @@
         },
         props: {
             marketplaceDialog: Boolean,
-            selectedBaseTemplateName: null
+            selectedBaseTemplateName: null,
+            toppingPlatforms: Array
         },
         computed: {
             filteredTemplateLists() {
@@ -336,8 +338,6 @@
             this.setGitHubHeader()
             this.loadAllRepoList()
         },
-        watch: {
-        },
         mounted(){
         },
         methods: {
@@ -345,7 +345,7 @@
                 return !selectedTopping.depends || selectedTopping.depends.includes(this.selectedBaseTemplateName);
             },
             applyTemplate(temp){
-                this.$emit("applyTemplate", temp)
+                this.$emit("applyTemplate", temp, this.selectedToppingList)
                 this.detailMarketMode = false;
             },
             applyTopping(topping){
@@ -401,6 +401,11 @@
                                     const instruction = await axios.get(`https://api.github.com/repos/msa-ez/${toppingInfo.name}/contents/.template/instruction.md`, { headers: me.githubHeaders });
                                     if (instruction) {
                                         obj.instruction = decodeURIComponent(escape(atob(instruction.data.content)));
+                                    }
+                                    for(var i = 0; i < me.toppingPlatforms.length; i++){
+                                        if(me.toppingPlatforms[i] == obj.toppingPath){
+                                            me.selectedToppingList.push(obj);
+                                        }
                                     }
                                 } catch (e) {
                                     console.error(e);
