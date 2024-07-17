@@ -144,10 +144,8 @@ class DebeziumTransactionQuery {
     toStringObject() {
         const boundContextQueryToString = (query) => {
             switch(query.action) {
-                case "new":
-                    return `Create New ${query.args.boundedContextAlias} Bounded Context`;
-                case "modify":
-                    return `[Not implemented] Modify ${query.args.boundedContextAlias} Bounded Context`;
+                case "update":
+                    return `Update ${query.args.boundedContextAlias} Bounded Context`;
                 case "delete":
                     return `[Not implemented] Delete ${query.args.boundedContextAlias} Bounded Context`;
             }
@@ -155,10 +153,8 @@ class DebeziumTransactionQuery {
 
         const aggregateQueryToString = (query) => {
             switch(query.action) {
-                case "new":
-                    return `Create New ${query.args.aggregateAlias} Aggregate`;
-                case "modify":
-                    return `[Not implemented] Modify ${query.args.aggregateAlias} Aggregate`;
+                case "update":
+                    return `Update ${query.args.aggregateAlias} Aggregate`;
                 case "delete":
                     return `[Not implemented] Delete ${query.args.aggregateAlias} Aggregate`;
             }
@@ -166,10 +162,8 @@ class DebeziumTransactionQuery {
 
         const commandQueryToString = (query) => {
             switch(query.action) {
-                case "new":
-                    return `Create New ${query.args.commandAlias} Command`;
-                case "modify":
-                    return `[Not implemented] Modify ${query.args.commandAlias} Command`;
+                case "update":
+                    return `Update ${query.args.commandAlias} Command`;
                 case "delete":
                     return `[Not implemented] Delete ${query.args.commandAlias} Command`;
             }
@@ -177,32 +171,17 @@ class DebeziumTransactionQuery {
 
         const eventQueryToString = (query) => {
             switch(query.action) {
-                case "new":
-                    return `Create New ${query.args.eventAlias} Event`;
-                case "modify":
-                    return `[Not implemented] Modify ${query.args.eventAlias} Event`;
+                case "update":
+                    return `Update ${query.args.eventAlias} Event`;
                 case "delete":
                     return `[Not implemented] Delete ${query.args.eventAlias} Event`;
             }
         }
 
-        const policyQueryToString = (query) => {
-            switch(query.action) {
-                case "new":
-                    return `Create New ${query.args.policyAlias} Policy`;
-                case "modify":
-                    return `[Not implemented] Modify ${query.args.policyAlias} Policy`;
-                case "delete":
-                    return `[Not implemented] Delete ${query.args.policyAlias} Policy`;
-            }
-        }
-
         const enumerationQueryToString = (query) => {
             switch(query.action) {
-                case "new":
-                    return `Create New ${query.args.enumerationName} Enumeration in ${query.ids.aggregateId} Aggregate`;
-                case "modify":
-                    return `[Not implemented] Modify ${query.args.enumerationName} Enumeration in ${query.ids.aggregateId} Aggregate`;
+                case "update":
+                    return `Update ${query.args.enumerationName} Enumeration in ${query.ids.aggregateId} Aggregate`;
                 case "delete":
                     return `[Not implemented] Delete ${query.args.enumerationName} Enumeration in ${query.ids.aggregateId} Aggregate`;
             }
@@ -210,10 +189,8 @@ class DebeziumTransactionQuery {
 
         const valueObjectQueryToString = (query) => {
             switch(query.action) {
-                case "new":
-                    return `Create New ${query.args.valueObjectName} Value Object in ${query.ids.aggregateId} Aggregate`;
-                case "modify":
-                    return `[Not implemented] Modify ${query.args.valueObjectName} Value Object in ${query.ids.aggregateId} Aggregate`;
+                case "update":
+                    return `Update ${query.args.valueObjectName} Value Object in ${query.ids.aggregateId} Aggregate`;
                 case "delete":
                     return `[Not implemented] Delete ${query.args.valueObjectName} Value Object in ${query.ids.aggregateId} Aggregate`;
             }
@@ -232,9 +209,6 @@ class DebeziumTransactionQuery {
                 break;
             case "Event":
                 summary = eventQueryToString(this.query);
-                break;
-            case "Policy":
-                summary = policyQueryToString(this.query);
                 break;
             case "Enumeration":
                 summary = enumerationQueryToString(this.query);
@@ -264,27 +238,6 @@ class DebeziumTransactionQuery {
             }
         
             return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4()
-        }
-
-        const correctQuery = (modelValue, query) => {
-            // 수정 요청인데, 해당 수정 요청에서 수정시킬 ID가 존재하지 않는다면, 생성 요청으로 간주함
-            if(query.action !== "new") {
-                if(query.objectType === "BoundedContext" && !modelValue.elements[query.ids.boundedContextId]) {
-                    query.action = "new"
-                } else if(query.objectType === "Aggregate" && !modelValue.elements[query.ids.aggregateId]) {
-                    query.action = "new"
-                } else if(query.objectType === "Command" && !modelValue.elements[query.ids.commandId]) {
-                    query.action = "new"
-                } else if(query.objectType === "Event" && !modelValue.elements[query.ids.eventId]) {
-                    query.action = "new"
-                } else if(query.objectType === "Policy" && !modelValue.elements[query.ids.policyId]) {
-                    query.action = "new"
-                } else if(query.objectType === "Enumeration" && !modelValue.elements[query.ids.enumerationId]) {
-                    query.action = "new"
-                } else if(query.objectType === "ValueObject" && !modelValue.elements[query.ids.valueObjectId]) {
-                    query.action = "new"
-                }
-            }
         }
 
 
@@ -402,8 +355,8 @@ class DebeziumTransactionQuery {
             }
 
             switch(query.action) {
-                case "new":
-                    createNewBoundedContext(modelValue, userInfo, query);
+                case "update":
+                    if(!modelValue.elements[query.ids.boundedContextId]) createNewBoundedContext(modelValue, userInfo, query);
                     break;
             }
         }
@@ -616,8 +569,8 @@ class DebeziumTransactionQuery {
             }
 
             switch(query.action) {
-                case "new":
-                    createNewAggregate(modelValue, userInfo, query);
+                case "update":
+                    if(!modelValue.elements[query.ids.aggregateId]) createNewAggregate(modelValue, userInfo, query);
                     break;
             }
         }
@@ -698,19 +651,125 @@ class DebeziumTransactionQuery {
                     }
                 }
 
-                const getFileDescriptors = (queryProperties) => {
-                    return queryProperties.map((property) => {
+                const getFileDescriptors = (modelValue, query) => {
+                    return modelValue.elements[query.ids.aggregateId].aggregateRoot.fieldDescriptors.map((property) => {
                         return {
-                            "className": property.type,
+                            "className": property.className,
                             "isCopy": false,
                             "isKey": property.isKey,
                             "name": property.name,
-                            "nameCamelCase": changeCase.camelCase(property.name),
-                            "namePascalCase": changeCase.pascalCase(property.name),
+                            "nameCamelCase": property.nameCamelCase,
+                            "namePascalCase": property.namePascalCase,
                             "displayName": property.displayName,
                             "_type": "org.uengine.model.FieldDescriptor"
                         }
                     })
+                }
+
+                const createNewPolicy = (modelValue, userInfo, eventObject, commandId) => {
+                    const getPolicyBase = (userInfo, name, displayName, boundedContextId, x, y, elementUUID) => {
+                        const elementUUIDtoUse = elementUUID ? elementUUID : getUUID()
+                        return {
+                            id: elementUUIDtoUse,
+                            author: userInfo.uid,
+                            boundedContext: {
+                                id: boundedContextId
+                            },
+                            description: null,
+                            elementView: {
+                                height: 115,
+                                width: 100,
+                                x: x,
+                                y: y,
+                                id: elementUUIDtoUse,
+                                style: "{}",
+                                _type: "org.uengine.modeling.model.Policy"
+                            },
+                            fieldDescriptors: [],
+                            hexagonalView: {
+                                height: 20,
+                                id: elementUUIDtoUse,
+                                style: "{}",
+                                subWidth: 100,
+                                width: 20,
+                                _type: "org.uengine.modeling.model.PolicyHexagonal"
+                            },
+                            isSaga: false,
+                            name: name,
+                            displayName: displayName,
+                            nameCamelCase: changeCase.camelCase(name),
+                            namePascalCase: changeCase.pascalCase(name),
+                            namePlural: "",
+                            oldName: "",
+                            rotateStatus: false,
+                            _type: "org.uengine.modeling.model.Policy"
+                        } 
+                    }
+    
+                    const getValidPosition = (modelValue, aggregateId, policyObject) => {
+                        const getRelatedCommands = (modelValue, policyObject) => {
+                            let relatedCommands = []
+                            for(const relation of Object.values(modelValue.relations)) {
+                                if(relation && relation._type === "org.uengine.modeling.model.Relation" && 
+                                  (relation.sourceElement.id === policyObject.id || relation.sourceElement.id === policyObject.elementView.id) && 
+                                  (relation.targetElement._type === "org.uengine.modeling.model.Command")) {
+                                    relatedCommands.push(modelValue.elements[relation.targetElement.id])
+                                }
+                            }
+                            return relatedCommands
+                        }
+    
+                        const relatedCommands = getRelatedCommands(modelValue, policyObject)
+                        if(relatedCommands.length <= 0) {
+                            const currentAggregate = modelValue.elements[aggregateId]
+                            return {
+                                x: currentAggregate.elementView.x - Math.round(currentAggregate.elementView.width/2) - 148,
+                                y: currentAggregate.elementView.y - Math.round(currentAggregate.elementView.height/2)
+                            }
+                        }
+                        else {
+                            const minX = Math.min(...relatedCommands.map(command => command.elementView.x))
+                            const maxY = Math.max(...relatedCommands.map(command => command.elementView.y))
+    
+                            const maxYCommand = relatedCommands.filter(command => command.elementView.y === maxY)[0]
+                            return {
+                                x: minX - Math.round(policyObject.elementView.width/2) - Math.round(maxYCommand.elementView.width/2) - 19,
+                                y: maxY
+                            }
+                        }
+                    }
+    
+                    const makeEventToPolicyRelation = (modelValue, eventObject, policyObject) => {
+                        const eventPolicyRelation = makeEventStormingRelationObjectBase(
+                            modelValue.elements[eventObject.id], modelValue.elements[policyObject.id])
+                        modelValue.relations[eventPolicyRelation.id] = eventPolicyRelation
+                    }
+
+                    const makePolicyToCommandRelation = (modelValue, policyObject, commandObject) => {
+                        const policyCommandRelation = makeEventStormingRelationObjectBase(
+                            modelValue.elements[policyObject.id], modelValue.elements[commandObject.id])
+                        modelValue.relations[policyCommandRelation.id] = policyCommandRelation
+                    }
+    
+                    const commandObject = modelValue.elements[commandId]
+                    if(!commandObject || !eventObject) return
+                    if(commandObject.aggregate.id === eventObject.aggregate.id) return
+
+                    const policyObject = getPolicyBase(
+                        userInfo, commandObject.name + " Policy", commandObject.name + " Policy", 
+                        commandObject.boundedContext.id, 0, 0
+                    )
+    
+                    callbacks.afterAllRelationAppliedCallBacks.push((modelValue) => {
+                        const VALID_POSITION = getValidPosition(modelValue, commandObject.aggregate.id, policyObject)
+                        policyObject.elementView.x = VALID_POSITION.x
+                        policyObject.elementView.y = VALID_POSITION.y
+                    })
+    
+                    modelValue.elements[policyObject.id] = policyObject
+
+                    makeEventToPolicyRelation(modelValue, eventObject, policyObject)
+                    makePolicyToCommandRelation(modelValue, policyObject, commandObject)
                 }
 
                 const eventObject = getEventBase(
@@ -722,13 +781,19 @@ class DebeziumTransactionQuery {
                 eventObject.elementView.x = VALID_POSITION.x
                 eventObject.elementView.y = VALID_POSITION.y
 
-                eventObject.fieldDescriptors = getFileDescriptors(query.args.properties)
+                eventObject.fieldDescriptors = getFileDescriptors(modelValue, query)
                 modelValue.elements[eventObject.id] = eventObject
+
+                callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
+                    query.args.outputCommandIds.forEach(commandId => {
+                        createNewPolicy(modelValue, userInfo, eventObject, commandId)
+                    })
+                })
             }
 
             switch(query.action) {
-                case "new":
-                    createNewEvent(modelValue, userInfo, query);
+                case "update":
+                    if(!modelValue.elements[query.ids.eventId]) createNewEvent(modelValue, userInfo, query);
                     break;
             }
         }
@@ -789,8 +854,8 @@ class DebeziumTransactionQuery {
                     }
                 }
 
-                const getOutputEventNames = (modelValue, toEventIds) => {
-                    return toEventIds.map(eventId => {
+                const getOutputEventNames = (modelValue, outputEventIds) => {
+                    return outputEventIds.map(eventId => {
                         return modelValue.elements[eventId].name
                     })
                 }
@@ -821,15 +886,15 @@ class DebeziumTransactionQuery {
                     }
                 }
 
-                const getFileDescriptors = (queryProperties) => {
-                    return queryProperties.map((property) => {
+                const getFileDescriptors = (modelValue, query) => {
+                    return modelValue.elements[query.ids.aggregateId].aggregateRoot.fieldDescriptors.map((property) => {
                         return {
-                            "className": property.type,
+                            "className": property.className,
                             "isCopy": false,
                             "isKey": property.isKey,
                             "name": property.name,
-                            "nameCamelCase": changeCase.camelCase(property.name),
-                            "namePascalCase": changeCase.pascalCase(property.name),
+                            "nameCamelCase": property.nameCamelCase,
+                            "namePascalCase": property.namePascalCase,
                             "displayName": property.displayName,
                             "_type": "org.uengine.model.FieldDescriptor"
                         }
@@ -838,19 +903,10 @@ class DebeziumTransactionQuery {
 
                 const makeCommandToEventRelation = (commandObject, query) => {
                     callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
-                        query.args.toEventIds.forEach(eventId => {
+                        query.args.outputEventIds.forEach(eventId => {
                             const eventObject = modelValue.elements[eventId]
                             const commandEventRelation = makeEventStormingRelationObjectBase(commandObject, eventObject)
                             modelValue.relations[commandEventRelation.id] = commandEventRelation
-                        })
-                    })
-                }
-
-                const makePolicyToCommandRelation = (commandObject, query) => {
-                    callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
-                        query.args.fromPolicyIds.forEach(policyId => {
-                            const policyCommandRelation = makeEventStormingRelationObjectBase(modelValue.elements[policyId], commandObject)
-                            modelValue.relations[policyCommandRelation.id] = policyCommandRelation
                         })
                     })
                 }
@@ -895,7 +951,14 @@ class DebeziumTransactionQuery {
                         }
                     }
 
-                    if(query.args.fromPolicyIds.length > 0) return
+                    const getRelatedPolicies = (modelValue, commandObject) => {
+                        return Object.values(modelValue.relations).filter(relation => {
+                            return relation && relation.targetElement.id === commandObject.id && 
+                                relation.sourceElement._type === "org.uengine.modeling.model.Policy"
+                        })
+                    }
+
+                    if(getRelatedPolicies(modelValue, commandObject).length > 0) return
                     if(!(query.args.actor)) return
                     
                     const actorBase = getActorBase(userInfo, query.args.actor, query.ids.boundedContextId, 0, 0)
@@ -912,141 +975,24 @@ class DebeziumTransactionQuery {
                     query.ids.aggregateId, 0, 0, query.ids.commandId
                 )
                 callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
-                    commandObject.outputEvents = getOutputEventNames(modelValue, query.args.toEventIds)
+                    commandObject.outputEvents = getOutputEventNames(modelValue, query.args.outputEventIds)
                 })
                 makeCommandToEventRelation(commandObject, query)
-                makePolicyToCommandRelation(commandObject, query)
 
                 const VALID_POSITION = getValidPosition(modelValue, query, commandObject)
                 commandObject.elementView.x = VALID_POSITION.x
                 commandObject.elementView.y = VALID_POSITION.y
-                makeActorToCommand(modelValue, query, commandObject, userInfo)
+                callbacks.afterAllRelationAppliedCallBacks.push((modelValue) => {
+                    makeActorToCommand(modelValue, query, commandObject, userInfo)
+                })
 
-                commandObject.fieldDescriptors = getFileDescriptors(query.args.properties)
+                commandObject.fieldDescriptors = getFileDescriptors(modelValue, query)
                 modelValue.elements[commandObject.id] = commandObject
             }
 
             switch(query.action) {
-                case "new":
-                    createNewCommand(modelValue, userInfo, query);
-                    break;
-            }
-        }
-
-        const applyToPolicy = (modelValue, userInfo, query) => {
-            const createNewPolicy = (modelValue, userInfo, query) => {
-                const getPolicyBase = (userInfo, name, displayName, boundedContextId, x, y, elementUUID) => {
-                    const elementUUIDtoUse = elementUUID ? elementUUID : getUUID()
-                    return {
-                        id: elementUUIDtoUse,
-                        author: userInfo.uid,
-                        boundedContext: {
-                            id: boundedContextId
-                        },
-                        description: null,
-                        elementView: {
-                            height: 115,
-                            width: 100,
-                            x: x,
-                            y: y,
-                            id: elementUUIDtoUse,
-                            style: "{}",
-                            _type: "org.uengine.modeling.model.Policy"
-                        },
-                        fieldDescriptors: [],
-                        hexagonalView: {
-                            height: 20,
-                            id: elementUUIDtoUse,
-                            style: "{}",
-                            subWidth: 100,
-                            width: 20,
-                            _type: "org.uengine.modeling.model.PolicyHexagonal"
-                        },
-                        isSaga: false,
-                        name: name,
-                        displayName: displayName,
-                        nameCamelCase: changeCase.camelCase(name),
-                        namePascalCase: changeCase.pascalCase(name),
-                        namePlural: "",
-                        oldName: "",
-                        rotateStatus: false,
-                        _type: "org.uengine.modeling.model.Policy"
-                    } 
-                }
-
-                const getValidPosition = (modelValue, query, policyObject) => {
-                    const getRelatedCommands = (modelValue, policyObject) => {
-                        let relatedCommands = []
-                        for(const relation of Object.values(modelValue.relations)) {
-                            if(relation && relation._type === "org.uengine.modeling.model.Relation" && 
-                              (relation.sourceElement.id === policyObject.id || relation.sourceElement.id === policyObject.elementView.id) && 
-                              (relation.targetElement._type === "org.uengine.modeling.model.Command")) {
-                                relatedCommands.push(modelValue.elements[relation.targetElement.id])
-                            }
-                        }
-                        return relatedCommands
-                    }
-
-                    const relatedCommands = getRelatedCommands(modelValue, policyObject)
-                    if(relatedCommands.length <= 0) {
-                        const currentAggregate = modelValue.elements[query.ids.aggregateId]
-                        return {
-                            x: currentAggregate.elementView.x - Math.round(currentAggregate.elementView.width/2) - 148,
-                            y: currentAggregate.elementView.y - Math.round(currentAggregate.elementView.height/2)
-                        }
-                    }
-                    else {
-                        const minX = Math.min(...relatedCommands.map(command => command.elementView.x))
-                        const maxY = Math.max(...relatedCommands.map(command => command.elementView.y))
-
-                        const maxYCommand = relatedCommands.filter(command => command.elementView.y === maxY)[0]
-                        return {
-                            x: minX - Math.round(policyObject.elementView.width/2) - Math.round(maxYCommand.elementView.width/2) - 19,
-                            y: maxY
-                        }
-                    }
-                }
-
-                const makeEventToPolicyRelation = (policyObject, query) => {
-                    const getEventObjectsFromEventName = (modelValue, eventName) => {
-                        let eventObjects = []
-                        for(const element of Object.values(modelValue.elements)) {
-                            if(element && element._type === "org.uengine.modeling.model.Event" && element.name === eventName) {
-                                eventObjects.push(element)
-                            }
-                        }
-                        return eventObjects
-                    }
-
-                    callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
-                        query.args.fromEventNames.forEach(eventName => {
-                            const eventObjects = getEventObjectsFromEventName(modelValue, eventName)
-                            eventObjects.forEach(eventObject => {
-                                const eventPolicyRelation = makeEventStormingRelationObjectBase(eventObject, policyObject)
-                                modelValue.relations[eventPolicyRelation.id] = eventPolicyRelation
-                            })
-                        })
-                    })
-                }
-
-                const policyObject = getPolicyBase(
-                    userInfo, query.args.policyName, query.args.policyAlias, 
-                    query.ids.boundedContextId, 0, 0, query.ids.policyId
-                )
-
-                makeEventToPolicyRelation(policyObject, query)
-                callbacks.afterAllRelationAppliedCallBacks.push((modelValue) => {
-                    const VALID_POSITION = getValidPosition(modelValue, query, policyObject)
-                    policyObject.elementView.x = VALID_POSITION.x
-                    policyObject.elementView.y = VALID_POSITION.y
-                })
-
-                modelValue.elements[policyObject.id] = policyObject
-            }
-
-            switch(query.action) {
-                case "new":
-                    createNewPolicy(modelValue, userInfo, query);
+                case "update":
+                    if(!modelValue.elements[query.ids.commandId]) createNewCommand(modelValue, userInfo, query);
                     break;
             }
         }
@@ -1157,8 +1103,8 @@ class DebeziumTransactionQuery {
             }
 
             switch(query.action) {
-                case "new":
-                    createEnumeration(query);
+                case "update":
+                    if(!modelValue.elements[query.ids.enumerationId]) createEnumeration(query);
                     break;
             }
         }
@@ -1249,8 +1195,8 @@ class DebeziumTransactionQuery {
             }
 
             switch(query.action) {
-                case "new":
-                    createValueObject(query);
+                case "update":
+                    if(!modelValue.elements[query.ids.valueObjectId]) createValueObject(query);
                     break;
             }
         }
@@ -1259,7 +1205,6 @@ class DebeziumTransactionQuery {
         if(this.isApplied)
             return callbacks
 
-        correctQuery(modelValue, this.query)
         switch(this.query.objectType) {
             case "BoundedContext":
                 applyToBoundedContext(modelValue, userInfo, this.query);
@@ -1272,9 +1217,6 @@ class DebeziumTransactionQuery {
                 break
             case "Command":
                 applyToCommand(modelValue, userInfo, this.query);
-                break
-            case "Policy":
-                applyToPolicy(modelValue, userInfo, this.query);
                 break
             case "Enumeration":
                 applyToEnumeration(modelValue, userInfo, this.query);

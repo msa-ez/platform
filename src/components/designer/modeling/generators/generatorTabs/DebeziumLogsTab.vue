@@ -50,11 +50,11 @@
 
                         <div>
                             <div style="height: 18px;">
-                                <pre style="font-size: small; text-align: left;">COMMANDS</pre>
+                                <pre style="font-size: small; text-align: left;">ACTIONS</pre>
                             </div>
                             <div style="display: flex;" v-for="(query, index) in reponseQuery.queries" :key="index">
                                 <pre style="font-size: small; text-align: left; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; max-width: 380px;">- {{ query.summary }}</pre>        
-                                <v-btn icon x-small style="margin-top: 2px;" @click="queryDialogTitle=query.summary + ' Command'; queryDialogContent = query.rawQuery; isQueryDialogOpen = true;">
+                                <v-btn icon x-small style="margin-top: 2px;" @click="queryDialogTitle=query.summary + ' Action'; queryDialogContent = query.rawQuery; isQueryDialogOpen = true;">
                                     <v-icon>mdi-magnify</v-icon>
                                 </v-btn>     
                             </div>
@@ -161,7 +161,7 @@ export default {
             isShowUndoDialog: false,
             debeziumTransactionManager: null,
 
-            progressMessage: "Please input Debezium Logs to generate event storming commands",
+            progressMessage: "Please input Debezium Logs to generate event storming model actions",
             progressMessageOutput: "",
 
             messageObj: {
@@ -189,7 +189,7 @@ export default {
                 }
 
                 let debeziumLogStrings = getDebeziumLogStrings(logs)
-                if(debeziumLogStrings.length === 0) {
+                if(!debeziumLogStrings || debeziumLogStrings.length === 0) {
                     throw new Error("No valid Debezium Logs found")
                 }
 
@@ -201,6 +201,7 @@ export default {
                 this.messageObj.modificationMessage = this.debeziumLogsToPrcess.shift()
 
                 this.isGenerationFinished = false
+                if(this.debeziumLogsGenerator) this.debeziumLogsGenerator.modelMode = "generateCommands"
                 this.$emit("generate")
             }
             catch(e) {
@@ -213,34 +214,54 @@ export default {
             switch(model.modelMode) {
                 case "generateCommands":
                     this.progressMessageOutput = model.modelRawValue
-                    this.progressMessage = `명령어 생성중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
+                    this.progressMessage = `액션 생성중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
                     break
 
                 case "summaryPreprocessModelValue":
                     this.progressMessageOutput = model.modelRawValue
                     this.progressMessage = `이벤트 스토밍 정보 요약중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
                     break
+                
+                case "modificationModelValue":
+                    this.progressMessageOutput = model.modelRawValue
+                    this.progressMessage = `액션 유효성 검토중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
+                    break
             }
         },
         
         onGenerationFinished(model) {
-            this.progressMessage = "대기중..."
+            if(model.errorMessage) {
+                alert("죄송합니다. 에러가 발생했습니다. 다시 시도해주세요.: " + model.errorMessage)
+                this.isGenerationFinished = true
+                this.debeziumLogs = ""
+                this.progressMessage = "대기중..."
+                return
+            }
 
             switch(model.modelMode) {
                 case "generateCommands":
-                    this.isGenerationFinished = true
-                    this.debeziumLogs = ""
+                    this.$emit("generate")
+                    this.progressMessage = `액션 유효성 검토를 요청하는중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
+                    break
+
+                case "summaryPreprocessModelValue":
+                    this.$emit("generate")
+                    this.progressMessage = `이벤트 스토밍 모델 정보에 대한 요약을 요청하는중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
+                    break
+
+                case "modificationModelValue":
                     this.responseQueries = this.debeziumTransactionManager.toStringObject()
 
                     if(this.debeziumLogsToPrcess.length > 0) {
                         this.messageObj.modificationMessage = this.debeziumLogsToPrcess.shift()
                         this.isGenerationFinished = false
                         this.$emit("generate")
+                        this.progressMessage = `다음 트렌젝션 관련 액션을 생성하는중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
+                    } else {
+                        this.isGenerationFinished = true
+                        this.debeziumLogs = ""
+                        this.progressMessage = "대기중..."
                     }
-                    break
-
-                case "summaryPreprocessModelValue":
-                    this.$emit("generate")
                     break
             }
         },
