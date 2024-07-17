@@ -641,13 +641,30 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
 `
                 }
     
-                const getUserPrompt = (preprocessModelValueString, debeziumLogs) => {    
+                const getUserPrompt = (preprocessModelValueString, debeziumLogs) => {
+                    const requestDebeziumFieldsPrompt = (debeziumLogs) => {
+                        const debeziumFieldsSet = new Set()
+                        
+                        const beforePayload = JSON.parse(debeziumLogs).payload.before
+                        if(beforePayload && typeof beforePayload === "object") 
+                            Object.keys(beforePayload).forEach(key => debeziumFieldsSet.add(key))
+                    
+                        const afterPayload = JSON.parse(debeziumLogs).payload.after
+                        if(afterPayload && typeof afterPayload === "object")
+                            Object.keys(afterPayload).forEach(key => debeziumFieldsSet.add(key))
+                        
+                        return `트랜젝션 로그에서 다음 필드들을 반드시 활용해서 액션을 작성하셔야 합니다.: ${Array.from(debeziumFieldsSet).join(", ")}`
+                    }
+                    
                     return `[INPUT]
 - 기존 이벤트스토밍 모델 객체
 ${preprocessModelValueString}
 
 - Debezium 트랜잭션 로그
 ${getSummarizedDebeziumLogStrings(debeziumLogs)}
+
+- 추가 요청
+${requestDebeziumFieldsPrompt(debeziumLogs)}
 
 [OUTPUT]
 `
