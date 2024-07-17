@@ -304,6 +304,7 @@
             selectedBaseTemplateName: null,
             toppingPlatforms: Array,
             marketplaceType: String,
+            templateList: Array
         },
         computed: {
             filteredTemplateLists() {
@@ -343,6 +344,15 @@
         },
         methods: {
             isToppingCompatible(selectedTopping) {
+                let polyglotMode = false;
+                for(var i = 0; i< this.templateList.length; i++){
+                    if(!selectedTopping.depends.includes(this.templateList[i].template.split('/').pop())){
+                        polyglotMode = true
+                    }
+                }
+                if(polyglotMode){
+                    return false;
+                }
                 return !selectedTopping.depends || selectedTopping.depends.includes(this.selectedBaseTemplateName);
             },
             applyTemplate(temp){

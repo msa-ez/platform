@@ -19,6 +19,7 @@
                 :selectedBaseTemplateName="selectedBaseTemplateName"
                 :toppingPlatforms="toppingPlatforms"
                 :marketplaceType="marketplaceType"
+                :templateList="templateList"
             />
         </v-dialog>
         <v-card style="z-index:2; margin:0px; border-radius: 0px; height:100%;">
