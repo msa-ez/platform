@@ -145,36 +145,36 @@ class DebeziumTransactionQuery {
         const boundContextQueryToString = (query) => {
             switch(query.action) {
                 case "update":
-                    return `Update ${query.args.boundedContextAlias} Bounded Context`;
+                    return `Update ${query.args.boundedContextName} Bounded Context`;
                 case "delete":
-                    return `[Not implemented] Delete ${query.args.boundedContextAlias} Bounded Context`;
+                    return `[Not implemented] Delete ${query.args.boundedContextName} Bounded Context`;
             }
         }
 
         const aggregateQueryToString = (query) => {
             switch(query.action) {
                 case "update":
-                    return `Update ${query.args.aggregateAlias} Aggregate`;
+                    return `Update ${query.args.aggregateName} Aggregate`;
                 case "delete":
-                    return `[Not implemented] Delete ${query.args.aggregateAlias} Aggregate`;
+                    return `[Not implemented] Delete ${query.args.aggregateName} Aggregate`;
             }
         }
 
         const commandQueryToString = (query) => {
             switch(query.action) {
                 case "update":
-                    return `Update ${query.args.commandAlias} Command`;
+                    return `Update ${query.args.commandName} Command`;
                 case "delete":
-                    return `[Not implemented] Delete ${query.args.commandAlias} Command`;
+                    return `[Not implemented] Delete ${query.args.commandName} Command`;
             }
         }
 
         const eventQueryToString = (query) => {
             switch(query.action) {
                 case "update":
-                    return `Update ${query.args.eventAlias} Event`;
+                    return `Update ${query.args.eventName} Event`;
                 case "delete":
-                    return `[Not implemented] Delete ${query.args.eventAlias} Event`;
+                    return `[Not implemented] Delete ${query.args.eventName} Event`;
             }
         }
 
@@ -343,7 +343,7 @@ class DebeziumTransactionQuery {
 
                 
                 let boundedContextObject = getBoundedContextBase(
-                    userInfo, query.args.boundedContextName, query.args.boundedContextAlias, 
+                    userInfo, query.args.boundedContextName, "", 
                     getValidPortNumber(modelValue), 0, 0, query.ids.boundedContextId
                 )
 
@@ -439,13 +439,13 @@ class DebeziumTransactionQuery {
                 const getFileDescriptors = (queryProperties) => {
                     return queryProperties.map((property) => {
                         return {
-                            "className": property.type,
+                            "className": property.type ? property.type : "String",
                             "isCopy": false,
-                            "isKey": property.isKey,
+                            "isKey": property.isKey ? true : false,
                             "name": property.name,
                             "nameCamelCase": changeCase.camelCase(property.name),
                             "namePascalCase": changeCase.pascalCase(property.name),
-                            "displayName": property.displayName,
+                            "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         }
                     })
@@ -491,11 +491,11 @@ class DebeziumTransactionQuery {
                 const getFileDescriptorsForRootAggegate = (queryProperties) => {
                     return queryProperties.map((property) => {
                         return {
-                            "className": property.type,
+                            "className": property.type ? property.type : "String",
                             "isCopy": false,
-                            "isKey": property.isKey,
+                            "isKey": property.isKey ? true : false,
                             "name": property.name,
-                            "displayName": property.displayName,
+                            "displayName": "",
                             "nameCamelCase": changeCase.camelCase(property.name),
                             "namePascalCase": changeCase.pascalCase(property.name),
                             "_type": "org.uengine.model.FieldDescriptor",
@@ -549,7 +549,7 @@ class DebeziumTransactionQuery {
                 }
 
                 let aggregateObject = getAggregateBase(
-                    userInfo, query.args.aggregateName, query.args.aggregateAlias, 
+                    userInfo, query.args.aggregateName, "", 
                     query.ids.boundedContextId, 0, 0, query.ids.aggregateId
                 )
 
@@ -656,7 +656,7 @@ class DebeziumTransactionQuery {
                         return {
                             "className": property.className,
                             "isCopy": false,
-                            "isKey": property.isKey,
+                            "isKey": property.isKey ? true : false,
                             "name": property.name,
                             "nameCamelCase": property.nameCamelCase,
                             "namePascalCase": property.namePascalCase,
@@ -773,7 +773,7 @@ class DebeziumTransactionQuery {
                 }
 
                 const eventObject = getEventBase(
-                    userInfo, query.args.eventName, query.args.eventAlias, 
+                    userInfo, query.args.eventName, "", 
                     query.ids.boundedContextId, query.ids.aggregateId, 0, 0, query.ids.eventId
                 )
 
@@ -891,7 +891,7 @@ class DebeziumTransactionQuery {
                         return {
                             "className": property.className,
                             "isCopy": false,
-                            "isKey": property.isKey,
+                            "isKey": property.isKey ? true : false,
                             "name": property.name,
                             "nameCamelCase": property.nameCamelCase,
                             "namePascalCase": property.namePascalCase,
@@ -970,7 +970,7 @@ class DebeziumTransactionQuery {
                 }
 
                 const commandObject = getCommandBase(
-                    userInfo, query.args.commandName, query.args.commandAlias, 
+                    userInfo, query.args.commandName, "", 
                     query.args.api_verb, [], query.ids.boundedContextId,
                     query.ids.aggregateId, 0, 0, query.ids.commandId
                 )
@@ -1150,8 +1150,8 @@ class DebeziumTransactionQuery {
                 const getFileDescriptors = (queryProperties) => {
                     return queryProperties.map((property) => {
                         return {
-                            "className": property.type,
-                            "isKey": property.isKey,
+                            "className": property.type ? property.type : "String",
+                            "isKey": property.isKey ? true : false,
                             "label": "- " + property.name + ": " + property.type,
                             "name": property.name,
                             "nameCamelCase": changeCase.pascalCase(property.name),

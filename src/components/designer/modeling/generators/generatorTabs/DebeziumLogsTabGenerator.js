@@ -13,7 +13,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
         this.modelName = "DebeziumLogsTabGenerator"
 
         this.modelMode = "generateCommands"
-        this.modelInputLengthLimit = 30000
+        this.modelInputLengthLimit = 10000
         this.relatedPreProcessModelValueString = ""
         this.queryResultsToModificate = null
     }
@@ -33,12 +33,12 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                 const getAggregateInfo = (aggregate, boundedContext, modelValue) => {
                     const getAggregateProperties = (aggregate) => {
                         return aggregate.aggregateRoot.fieldDescriptors.map(fieldDescriptor => {
-                            return {
-                                name: fieldDescriptor.name,
-                                displayName: fieldDescriptor.displayName,
-                                type: fieldDescriptor.className,
-                                isKey: fieldDescriptor.isKey
+                            let property = {
+                                name: fieldDescriptor.name
                             }
+                            if(!(fieldDescriptor.className.toLowerCase().includes("string"))) property.type = fieldDescriptor.className
+                            if(fieldDescriptor.isKey) property.isKey = true
+                            return property
                         })
                     }
         
@@ -66,13 +66,13 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                         const getValueObjectInfo = (element) => {
                             const getValueObjectProperties = (valueObject) => {
                                 return valueObject.fieldDescriptors.map(fieldDescriptor => {
-                                    return {
-                                        name: fieldDescriptor.name,
-                                        displayName: fieldDescriptor.displayName,
-                                        type: fieldDescriptor.className,
-                                        isKey: fieldDescriptor.isKey,
-                                        isForeignProperty: (fieldDescriptor.className.toLowerCase() === aggregate.name.toLowerCase())
+                                    let property = {
+                                        name: fieldDescriptor.name
                                     }
+                                    if(!(fieldDescriptor.className.toLowerCase().includes("string"))) property.type = fieldDescriptor.className
+                                    if(fieldDescriptor.isKey) property.isKey = true
+                                    if(fieldDescriptor.className.toLowerCase() === aggregate.name.toLowerCase()) property.isForeignProperty = true
+                                    return property
                                 })
                             }
         
@@ -112,7 +112,6 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                             let commandInfo = {}
                             commandInfo.id = element.id ? element.id : element.elementView.id
                             commandInfo.name = element.name
-                            commandInfo.displayName = element.displayName
                             commandInfo.api_verb = (element.restRepositoryInfo && element.restRepositoryInfo.method) ? element.restRepositoryInfo.method : "POST"
                             commandInfo.outputEvents = getOutputEvents(element, modelValue)
                             return commandInfo
@@ -154,7 +153,6 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                             let eventInfo = {}
                             eventInfo.id = element.id ? element.id : element.elementView.id
                             eventInfo.name = element.name
-                            eventInfo.displayName = element.displayName
                             eventInfo.outputCommands = getOutputCommands(element, modelValue)
                             return eventInfo
                         }
@@ -173,7 +171,6 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                     let aggegateInfo = {}
                     aggegateInfo.id = aggregate.id ? aggregate.id : aggregate.elementView.id
                     aggegateInfo.name = aggregate.name
-                    aggegateInfo.displayName = aggregate.displayName
                     aggegateInfo.properties = getAggregateProperties(aggregate)
                     aggegateInfo.enumerations = getEnumInfos(aggregate)
                     aggegateInfo.valueObjects = getValueObjectInfos(aggregate)
@@ -200,7 +197,6 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                 let boundedContextInfo = {}
                 boundedContextInfo.id = boundedContext.id ? boundedContext.id : boundedContext.elementView.id
                 boundedContextInfo.name = boundedContext.name
-                boundedContextInfo.displayName = boundedContext.displayName
                 
                 boundedContextInfo.aggregates = {}
                 for(let aggregate of getAllAggregates(boundedContext, modelValue))
@@ -267,7 +263,6 @@ Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 �
     "<boundedContextId>": {
         "id": "<boundedContextId>",
         "name": "<boundedContextName>",
-        "displayName": "<boundedContextAlias>",
         "actors": [
             {
                 "id": "<actorId>",
@@ -280,20 +275,18 @@ Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 �
             "<aggregateId>": {
                 "id": "<aggregateId>",
                 "name": "<aggregateName>",
-                "displayName": "<aggregateAlias>",
                 
                 // aggregate는 Aggregate Root에 관한 속성들을 가지고 있습니다.
                 "properties": [
                     {
                         "name": "<propertyName>",
-                        "displayName": "<propertyAlias>",
                         
                         // "<propertyType>"은 다음 3가지중 하나에 속해야합니다.
                         // 1. 이미 잘 알려진 Java 클래스 이름을 사용할 수 있습니다. 이때, 패키지 전체 경로를 적지 말고, 클래스 명만 적어주세요. (ex. java.lang.String > String)
                         // 2. 다음 같은 값 중 하나를 사용할 수 있습니다. : Address, Portrait, Rating, Money, Email
                         // 3. enumerations, valueObjects에 정의된 name이 있는 경우, 해당 이름을 사용할 수 있습니다.
-                        "type": "<propertyType>",
-                        "isKey": <true | false>, // 기본키 여부입니다. properties 중 오직 하나만 isKey가 true로 설정되어야 합니다.
+                        ["type": "<propertyType>"], // type이 String인 경우, type을 명시하지 않습니다.
+                        ["isKey": true] // 기본키 여부입니다. properties 중 오직 하나만 isKey가 true로 설정되어야 합니다.
                     }
                 ],
                 
@@ -314,10 +307,9 @@ Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 �
                         "properties": [
                             {
                                 "name": "<propertyName>",
-                                "displayName": "<propertyAlias>",
-                                "type": "<propertyType>",
-                                "isKey": <true | false>,
-                                "isForeignProperty": <true | false> // 외래키 여부입니다. 이 속성이 다른 테이블의 속성을 참조하는 경우, 이 값은 true로 설정해야 합니다.
+                                ["type": "<propertyType>"], // type이 String인 경우, type을 명시하지 않습니다.
+                                ["isKey": true],
+                                ["isForeignProperty": true] // 외래키 여부입니다. 이 속성이 다른 테이블의 속성을 참조하는 경우, 이 값은 true로 설정해야 합니다.
                             }
                         ]
                     }
@@ -328,7 +320,6 @@ Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 �
                     {
                         "id": "<commandId>",
                         "name": "<commandName>",
-                        "displayName": "<commandAlias>",
                         "api_verb":  <"POST" | "DELETE" | "PUT">,
                         "outputEvents": [{
                             "relationId": "<relationId>",
@@ -343,7 +334,6 @@ Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 �
                     {
                         "id": "<eventId>",
                         "name": "<eventName>",
-                        "displayName": "<eventAlias>",
                         "outputCommands": [{
                             "relationId": "<relationId>",
                             "id": "<commandId>",
@@ -376,10 +366,9 @@ Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 �
             "properties": [
                 {
                     "name": "<propertyName>",
-                    "displayName": "<propertyAlias>",
-                    "type": "<propertyType>",
-                    "isKey": <true | false>,
-                    "isForeignProperty": <true | false>
+                    ["type": "<propertyType>"], // type이 String인 경우, type을 명시하지 않습니다.
+                    ["isKey": true], // 기본키가 존재하는 경우에만 작성해주세요.
+                    ["isForeignProperty": true] // 외래키가 존재하는 경우에만 작성해주세요.
                 }
             ]
         }
@@ -395,7 +384,6 @@ Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 �
 
             "id": "<usecaseId>",
             "name": "<usecaseName>",
-            "displayName": "<usecaseAlias>",
             "actor": "<actorName>", // 이 유즈케이스와 관련된 액터 이름을 적습니다.
 
             // 해당 유즈케이스에 대해서 수행할 쿼리들의 ID를 미리 작성합니다.
@@ -472,8 +460,7 @@ Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 �
         "boundedContextId": "<boundedContextId>"
     },
     "args": {
-        "boundedContextName": "<boundedContextName>",
-        "boundedContextAlias": "<boundedContextAlias>"
+        "boundedContextName": "<boundedContextName>"
     }
 }
 
@@ -492,15 +479,13 @@ Debezium 트랜잭션 로그는 특정 테이블에 대한 액션이 포함되�
     },
     "args": {
         "aggregateName": "<aggregateName>",
-        "aggregateAlias": "<aggregateAlias>",
 
         // 해당 트랜잭션에서 사용한 속성들을 최대한 다 적어주세요.
         "properties": [
             {
                 "name": "<propertyName>",
-                "displayName": "<propertyAlias>",
-                "type": "<propertyType>",
-                "isKey": <true | false>
+                ["type": "<propertyType>"], // type이 String인 경우, type을 명시하지 않습니다.
+                ["isKey": true] // 기본키가 존재하는 경우에만 작성해주세요.
             }
         ]
     }
@@ -549,10 +534,9 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
         "properties": [
             {
                 "name": "<propertyName>",
-                "displayName": "<propertyAlias>",
-                "type": "<propertyType>",
-                "isKey": <true | false>,
-                "isForeignProperty": <true | false> // 외래키 여부입니다. 이 속성이 다른 테이블의 속성을 참조하는 경우, 이 값은 true로 설정해야 합니다
+                ["type": "<propertyType>"], // type이 String인 경우, type을 명시하지 않습니다.
+                ["isKey": true], // 기본키가 존재하는 경우에만 작성해주세요.
+                ["isForeignProperty": true] // 외래키 여부입니다. 이 속성이 다른 테이블의 속성을 참조하는 경우에만 작성해주세요.
             }
         ],
     }
@@ -574,7 +558,6 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
     },
     "args": {
         "commandName": "<commandName>",
-        "commandAlias": "<commandAlias>",
         "api_verb": <"POST" | "DELETE" | "PUT">,
         "outputEventIds": ["<outputEventId>"], // 이 커맨드로 인해서 발생되는 이벤트들의 id 리스트
         "actor": "<actorName>" // 해당 액션을 수행하는 액터명입니다. 사용자, 관리자등의 이름이 들어가야 합니다. 특정한 액터가 없을 경우, 빈값으로 넣어야 합니다.
@@ -597,7 +580,6 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
     },
     "args": {
         "eventName": "<eventName>",
-        "eventAlias": "<eventAlias>",
 
         // 특정한 이벤트는 다른 BoundedContext 내부의 커맨드를 호출시켜서 상태를 변경할 수 있습니다.
         // 이러한 호출 정보를 작성해야하는 예시들은 다음과 같습니다.
@@ -623,23 +605,33 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
 - 이것은 단지 예시일 뿐입니다. 실제로 제가 제공하는 이벤트 스토밍 모델링 데이터는 추후에 INPUT으로 제공될 겁니다.
 
 # transactions: 환자 정보 업데이트 트랜젝션
-{"description":"Update Patient Information","id":"patient-update-transaction","properties":[{"displayName":"ID","isForeignProperty":false,"isKey":true,"name":"id","type":"Integer"},{"displayName":"Name","isForeignProperty":false,"isKey":false,"name":"name","type":"String"},{"displayName":"Phone Number","isForeignProperty":false,"isKey":false,"name":"phoneNumber","type":"String"},{"displayName":"BloodType","isForeignProperty":false,"isKey":false,"name":"bloodType","type":"EnumBloodType"},{"displayName":"Is Preference Inputed","isForeignProperty":false,"isKey":false,"name":"isPreferenceInputed","type":"Boolean"}]}
+{"description":"Update Patient Information","id":"patient-update-transaction","properties":[{"isForeignProperty":false,"isKey":true,"name":"id","type":"Integer"},{"name":"name"},{"name":"phoneNumber"},{"name":"bloodType","type":"EnumBloodType"},{"name":"isPreferenceInputed","type":"Boolean"}]}
 
 # usecase
-[{"actor":"User","displayName":"Update Patient","id":"usecase-update-patient","name":"UpdatePatient","relatedAggregateQueryIds":["query-agg-update-patient"],"relatedBoundedContextQueryIds":["query-bc-update-patient"],"relatedCommandQueryIds":["query-cmd-update-patient"],"relatedEnumerationQueryIds":["query-enum-blood-type"],"relatedEventQueryIds":["query-evt-update-patient"],"relatedTransactionId":"patient-update-transaction","relatedValueObjectQueryIds":[]},{"actor":"User","displayName":"Update Record Record","id":"usecase-update-medical-record","name":"UpdateMedicalRecord","relatedAggregateQueryIds":[],"relatedBoundedContextQueryIds":[],"relatedCommandQueryIds":["query-cmd-update-medical-record"],"relatedEnumerationQueryIds":[],"relatedEventQueryIds":["query-evt-update-medical-record"],"relatedTransactionId":"medicalRecord-update-transaction","relatedValueObjectQueryIds":["query-vo-update-medical-record"]},{"actor":"User","displayName":"Update Patient Preference","id":"usecase-update-patient-preference","name":"UpdatePatientPreference","relatedAggregateQueryIds":["query-agg-update-patient-preference"],"relatedBoundedContextQueryIds":["query-bc-update-patient-preference"],"relatedCommandQueryIds":["query-cmd-update-patient-preference"],"relatedEnumerationQueryIds":[],"relatedEventQueryIds":["query-evt-update-patient-preference"],"relatedTransactionId":"patientPreference-update-transaction","relatedValueObjectQueryIds":[]}]
+[{"actor":"User","id":"usecase-update-patient","name":"UpdatePatient","relatedAggregateQueryIds":["query-agg-update-patient"],"relatedBoundedContextQueryIds":["query-bc-update-patient"],"relatedCommandQueryIds":["query-cmd-update-patient"],"relatedEnumerationQueryIds":["query-enum-blood-type"],"relatedEventQueryIds":["query-evt-update-patient"],"relatedTransactionId":"patient-update-transaction","relatedValueObjectQueryIds":[]},{"actor":"User","id":"usecase-update-medical-record","name":"UpdateMedicalRecord","relatedAggregateQueryIds":[],"relatedBoundedContextQueryIds":[],"relatedCommandQueryIds":["query-cmd-update-medical-record"],"relatedEnumerationQueryIds":[],"relatedEventQueryIds":["query-evt-update-medical-record"],"relatedTransactionId":"medicalRecord-update-transaction","relatedValueObjectQueryIds":["query-vo-update-medical-record"]},{"actor":"User","id":"usecase-update-patient-preference","name":"UpdatePatientPreference","relatedAggregateQueryIds":["query-agg-update-patient-preference"],"relatedBoundedContextQueryIds":["query-bc-update-patient-preference"],"relatedCommandQueryIds":["query-cmd-update-patient-preference"],"relatedEnumerationQueryIds":[],"relatedEventQueryIds":["query-evt-update-patient-preference"],"relatedTransactionId":"patientPreference-update-transaction","relatedValueObjectQueryIds":[]}]
 
 # query-bc-update-patient
-{"action":"update","args":{"boundedContextName":"PatientService","boundedContextAlias":"Patient Service"},"fromUsecaseId":"usecase-update-patient","ids":{"boundedContextId":"bc-patient"},"objectType":"BoundedContext","queryId":"query-bc-update-patient"}
+{"action":"update","args":{"boundedContextName":"PatientService"},"fromUsecaseId":"usecase-update-patient","ids":{"boundedContextId":"bc-patient"},"objectType":"BoundedContext","queryId":"query-bc-update-patient"}
 
 # query-agg-update-patient
-{"action":"update","args":{"aggregateAlias":"Patient","aggregateName":"Patient","properties":[{"displayName":"ID","isKey":true,"name":"id","type":"Integer"},{"displayName":"Name","isKey":false,"name":"name","type":"String"},{"displayName":"Phone Number","isKey":false,"name":"phoneNumber","type":"String"},{"displayName":"BloodType","isKey":false,"name":"bloodType","type":"EnumBloodType"},{"displayName":"Is Preference Inputed","isKey":false,"name":"isPreferenceInputed","type":"Boolean"}]},"fromUsecaseId":"usecase-update-patient","ids":{"aggregateId":"agg-patient","boundedContextId":"bc-patient"},"objectType":"Aggregate","queryId":"query-agg-update-patient"}
+{"action":"update","args":{"aggregateName":"Patient","properties":[{"isKey":true,"name":"id","type":"Integer"},{"name":"name"},{"name":"phoneNumber"},{"name":"bloodType","type":"EnumBloodType"},{"name":"isPreferenceInputed","type":"Boolean"}]},"fromUsecaseId":"usecase-update-patient","ids":{"aggregateId":"agg-patient","boundedContextId":"bc-patient"},"objectType":"Aggregate","queryId":"query-agg-update-patient"}
 
 # query-cmd-update-patient
-{"action":"update","args":{"actor":"User","api_verb":"PUT","commandAlias":"Update Patient","commandName":"UpdatePatient","outputEventIds":["evt-patient-updated"]},"fromUsecaseId":"usecase-update-patient","ids":{"aggregateId":"agg-patient","boundedContextId":"bc-patient","commandId":"cmd-update-patient"},"objectType":"Command","queryId":"query-cmd-update-patient"}
+{"action":"update","args":{"actor":"User","api_verb":"PUT","commandName":"UpdatePatient","outputEventIds":["evt-patient-updated"]},"fromUsecaseId":"usecase-update-patient","ids":{"aggregateId":"agg-patient","boundedContextId":"bc-patient","commandId":"cmd-update-patient"},"objectType":"Command","queryId":"query-cmd-update-patient"}
 
 # query-evt-update-patient-preference
-{"action":"update","args":{"eventAlias":"Patient Preference Updated","eventName":"PatientPreferenceUpdated","outputCommandIds":["cmd-update-patient"]},"fromUsecaseId":"usecase-update-patient-preference","ids":{"aggregateId":"agg-patient-preference","boundedContextId":"bc-patient-preference","eventId":"event-update-patient-preference"},"objectType":"Event","queryId":"query-evt-update-patient-preference"}
-                                           
+{"action":"update","args":{"eventName":"PatientPreferenceUpdated","outputCommandIds":["cmd-update-patient"]},"fromUsecaseId":"usecase-update-patient-preference","ids":{"aggregateId":"agg-patient-preference","boundedContextId":"bc-patient-preference","eventId":"event-update-patient-preference"},"objectType":"Event","queryId":"query-evt-update-patient-preference"}
+
+- Json 반환시에는 아래의 예시처럼 모든 공백을 제거하고, 압축된 형태로 반환해주세요.
+# BEFORE
+{
+    "a": 1,
+    "b": 2
+}
+
+# AFTER
+{"a":1,"b":2}
+
 `
                 }
     
@@ -866,7 +858,6 @@ ${eventStormingNames.join(", ")}
                             args: {
                                 "id": boundedContext.id,
                                 "name": boundedContext.name,
-                                "displayName": boundedContext.displayName,
                                 "aggregates": {},
                                 "actors": boundedContext.actors
                             }
@@ -882,7 +873,6 @@ ${eventStormingNames.join(", ")}
                                 args: {
                                     "id": aggregate.id,
                                     "name": aggregate.name,
-                                    "displayName": aggregate.displayName,
                                     "properties": aggregate.properties,
                                     "commands": [],
                                     "events": [],
@@ -901,7 +891,6 @@ ${eventStormingNames.join(", ")}
                                     args: {
                                         "id": command.id,
                                         "name": command.name,
-                                        "displayName": command.displayName,
                                         "api_verb": command.api_verb,
                                         "outputEvents": command.outputEvents
                                     }
@@ -920,7 +909,6 @@ ${eventStormingNames.join(", ")}
                                     args: {
                                         "id": event.id,
                                         "name": event.name,
-                                        "displayName": event.displayName,
                                         "outputCommands": event.outputCommands
                                     }
                                 })
