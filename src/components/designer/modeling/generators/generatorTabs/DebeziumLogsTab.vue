@@ -50,11 +50,11 @@
 
                         <div>
                             <div style="height: 18px;">
-                                <pre style="font-size: small; text-align: left;">ACTIONS</pre>
+                                <pre style="font-size: small; text-align: left;">EVENT STORMING UPDATES</pre>
                             </div>
                             <div style="display: flex;" v-for="(query, index) in reponseQuery.queries" :key="index">
                                 <pre style="font-size: small; text-align: left; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; max-width: 380px;">- {{ query.summary }}</pre>        
-                                <v-btn icon x-small style="margin-top: 2px;" @click="queryDialogTitle=query.summary + ' Action'; queryDialogContent = query.rawQuery; isQueryDialogOpen = true;">
+                                <v-btn icon x-small style="margin-top: 2px;" @click="queryDialogTitle='Event Storming Update: ' + query.summary; queryDialogContent = query.rawQuery; isQueryDialogOpen = true;">
                                     <v-icon>mdi-magnify</v-icon>
                                 </v-btn>     
                             </div>
