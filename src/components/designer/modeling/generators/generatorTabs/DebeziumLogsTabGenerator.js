@@ -789,6 +789,201 @@ ${eventStormingNames.join(", ")}
                    getModificationPrompt()
         }
 
+        const getSystemPromptForGenerateGWT = (gwtRequestValue, debeziumLogs) => {        
+            const getSystemPrompt = () => {
+                return `당신은 주어진 Debezium 정보와 이벤트 스토밍 정보를 바탕으로 GWT(Given, When, Then) 형식으로 JSON 객체를 생성해야 합니다.
+
+당신은 다음과 같은 형식으로 정보를 제공받습니다.
+\`\`\`json
+{
+    "debeziumLog": "<debeziumLog>", // 당신은 전달된 Debezium CDC 로그와 관련된 GWT를 생성해야 합니다.
+    "eventStorming": {
+        // Given과 관련된 Aggregate의 이름과 관련 속성입니다.
+        "givens": [
+            {
+                "name": "<aggregateName>",
+                "attributes": [
+                    {
+                        "name": "<attributeName>",
+                        "type": "<attributeType>"
+                    }
+                ]
+            }
+        ],
+
+        // When과 관련된 Command의 이름과 관련 속성입니다.
+        "whens": [
+            {
+                "name": "<commandName>",
+                "attributes": [
+                    {
+                        "name": "<attributeName>",
+                        "type": "<attributeType>"
+                    }
+                ]
+            }
+        ],
+
+        // Then과 관련된 Event의 이름과 관련 속성입니다.
+        "thens": [
+            {
+                "name": "<eventName>",
+                "attributes": [
+                    {
+                        "name": "<attributeName>",
+                        "type": "<attributeType>"
+                    }
+                ]
+            }
+        ]
+    }
+}
+\`\`\`
+
+당신이 반환해야 하는 형식은 다음과 같습니다.
+\`\`\`json
+{
+    // 첫 번째로 당신은 GWT를 생성하기 위한 유즈케이스를 생성해야 합니다.
+    // 유즈케이스는 제시된 Command와 관련되어서 액터가 어떠한 행위를 수행할지를 고려해서 작성하시면 됩니다.
+    "usecases": [
+        {
+            "usecaseId": "<usecaseId>",
+            "gwtId": "<gwtId>", // 이 유즈케이스를 활용한 GWT의 ID입니다.
+            "name": "<usecaseName>", // 해당 유즈케이스를 설명하는 일반적인 이름입니다.
+            "description": "<usecaseDescription>", // 해당 유즈케이스를 설명하는 상세한 설명입니다.
+            "actor": "<actor>" // 해당 유즈케이스를 수행하는 액터의 이름입니다.
+        }
+    ],
+
+    // 위에서 제시한 유즈케이스를 활용해서 GWT를 생성하시면 됩니다.
+    "gwts": [
+        {   
+            "gwtId": "<gwtId>",
+            "usecaseId": "<usecaseId>", // 이 GWT를 생성하기 위해서 사용한 유즈케이스의 ID입니다.
+            "givens": [
+                {
+                    "name": "<givenName>", // 위에서 제시한 given의 이름입니다.
+                    "values": {
+                        // 작성할 수 있는 속성값에는 3가지 종류가 있습니다.
+                        // 1. 실제로 존재할 수 있는 값을 작성합니다.
+                        // 2. 현재 값이 비어있는 상태라면 null을 작성합니다.
+                        // 3. 해당 GWT와 관련성이 없어 보이는 속성이라면 "N/A"를 작성합니다.
+                        "<attributeName>": <attributeValue|null|"N/A">
+                    }
+                }
+            ],
+            "whens": [
+                {
+                    "name": "<whenName>", // 위에서 제시한 when의 이름입니다.
+                    "values": {
+                        "<attributeName>": <attributeValue|null|"N/A">
+                    }
+                }
+            ],
+            "thens": [
+                {
+                    "name": "<thenName>", // 위에서 제시한 then의 이름입니다.
+                    "values": {
+                        "<attributeName>": <attributeValue|null|"N/A">
+                    }
+                }
+            ]
+        }
+    ]
+}
+\`\`\`
+
+예시는 다음과 같습니다.
+여기서는 주문 생성과 관련된 트랜잭션과 관련 Aggregate, Command, Event가 주어지고 있습니다.
+출력된 GWT는 처음에는 주문과 관련된 정보가 없어서 null이라는 값이 입력되었지만, 주문을 생성한 Command에 의해서 최종적으로는 Event에 사용자가 입력한 주문 정보가 담긴 상태를 나타내고 있습니다.
+[INPUT]
+\`\`\`json
+{"debeziumLog":"{\"payload\":{\"before\":null,\"after\":{\"order_number\":10005,\"order_date\":19848,\"purchaser\":1001,\"quantity\":3,\"product_id\":104},\"source\":{\"db\":\"inventory\",\"table\":\"orders\"}}}","eventStorming":{"givens":[{"name":"orders","attributes":[{"name":"orderNumber","type":"Integer"},{"name":"orderDate","type":"Integer"},{"name":"purchaser","type":"Integer"},{"name":"quantity","type":"Integer"},{"name":"productId","type":"Integer"}]}],"whens":[{"name":"CreateOrder","attributes":[{"name":"orderNumber","type":"Integer"},{"name":"orderDate","type":"Integer"},{"name":"purchaser","type":"Integer"},{"name":"quantity","type":"Integer"},{"name":"productId","type":"Integer"}]}],"thens":[{"name":"OrderCreated","attributes":[{"name":"orderNumber","type":"Integer"},{"name":"orderDate","type":"Integer"},{"name":"purchaser","type":"Integer"},{"name":"quantity","type":"Integer"},{"name":"productId","type":"Integer"}]}]}}
+\`\`\`
+
+[OUTPUT]
+\`\`\`json
+{"usecases":[{"usecaseId":"UC001","gwtId":"GWT001","name":"고객이 주문을 생성함","description":"고객이 제품을 선택하고 주문 수량을 지정하여 새로운 주문을 생성합니다.","actor":"고객"}],"gwts":[{"gwtId":"GWT001","usecaseId":"UC001","givens":[{"name":"orders","values":{"orderNumber":null,"orderDate":null,"purchaser":null,"quantity":null,"productId":null}}],"whens":[{"name":"CreateOrder","values":{"orderNumber":10005,"orderDate":19848,"purchaser":1001,"quantity":3,"productId":104}}],"thens":[{"name":"OrderCreated","values":{"orderNumber":10005,"orderDate":19848,"purchaser":1001,"quantity":3,"productId":104}}]}]}
+\`\`\`
+
+Json 반환시에는 아래의 예시처럼 모든 공백을 제거하고, 압축된 형태로 반환해주세요.
+# BEFORE
+{
+    "a": 1,
+    "b": 2
+}
+
+# AFTER
+{"a":1,"b":2}
+
+이제 실제로 유저의 입력을 받아서 처리해보겠습니다.
+`
+            }
+
+            const getUserPrompt = (gwtRequestValue, debeziumLogs) => {
+                const getEventStormingObject = (gwtRequestValue) => {
+                    const getAttributes = (fieldDescriptors) => {
+                        return fieldDescriptors.map((fieldDescriptor) => {
+                            return {
+                                "name": fieldDescriptor.name,
+                                "type": fieldDescriptor.className
+                            }
+                        })
+                    }
+                
+                    const getGivens = (givenObjects) => {
+                        return givenObjects.map((givenObject) => {
+                            return {
+                                "name": givenObject.name,
+                                "attributes": getAttributes(givenObject.aggregateRoot.fieldDescriptors)
+                            }
+                        })
+                    }
+                
+                    const getWhens = (whenObjects) => {
+                        return whenObjects.map((whenObject) => {
+                            return {
+                                "name": whenObject.name,
+                                "attributes": getAttributes(whenObject.fieldDescriptors)
+                            }
+                        })
+                    }
+                
+                    const getThens = (thenObjects) => {
+                        return thenObjects.map((thenObject) => {
+                            return {
+                                "name": thenObject.name,
+                                "attributes": getAttributes(thenObject.fieldDescriptors)
+                            }
+                        })
+                    }
+                
+                    return {
+                        "givens": getGivens(gwtRequestValue.givenObjects),
+                        "whens": getWhens(gwtRequestValue.whenObjects),
+                        "thens": getThens(gwtRequestValue.thenObjects)
+                    }
+                }
+
+                const inputObject = {
+                    "debeziumLog": getSummarizedDebeziumLogStrings(debeziumLogs),
+                    "eventStorming": getEventStormingObject(gwtRequestValue)
+                }
+
+                return `[INPUT]
+\`\`\`json
+${JSON.stringify(inputObject)}
+\`\`\`
+
+[OUTPUT]
+\`\`\`json
+`
+            }
+
+            return getSystemPrompt() +
+                getUserPrompt(gwtRequestValue, debeziumLogs)
+        }
+
         let preprocessModelValueString = ""
         switch(this.modelMode) {
             case "generateCommands":
@@ -821,6 +1016,10 @@ ${eventStormingNames.join(", ")}
             
             case "modificationModelValue":
                 systemPrompt = getSystemPromptForModifications(this.prevSystemPrompt, this.queryResultsToModificate)
+                break
+            
+            case "generateGWT":
+                systemPrompt = getSystemPromptForGenerateGWT(this.messageObj.gwtRequestValue, this.preModificationMessage)
                 break
         }
 
@@ -1110,6 +1309,20 @@ ${eventStormingNames.join(", ")}
                         modelRawValue: text
                     }
                     this.queryResultsToModificate = null
+                    this.modelMode = "generateCommands"
+                    break
+                
+                case "generateGWT":
+                    outputResult = {
+                        modelName: this.modelName,
+                        modelMode: this.modelMode,
+                        modelValue: {
+                            ...parseToJson(text),
+                            requestValue: this.messageObj.gwtRequestValue,
+                            debeziumLogStrings: getDebeziumLogStrings(this.preModificationMessage)
+                        },
+                        modelRawValue: text
+                    }
                     this.modelMode = "generateCommands"
                     break
             }

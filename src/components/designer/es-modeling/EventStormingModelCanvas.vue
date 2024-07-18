@@ -3073,17 +3073,78 @@
                 this.canvasRenderKey++;
             },
             createModel(val, originModel) {
+                const generateGWT = (modelValue, requestValue, gwts) => {
+                    const generateExamples = (gwts) => {
+                        const getExample = (gwt) => {
+                            const getGivens = (givens) => {
+                                const given = givens[0]
+                                return [
+                                    {
+                                    "type": "Aggregate",
+                                    "name": given.name,
+                                    "value": given.values
+                                }]
+                            }
+
+                            const getWhens = (whens) => {
+                                const when = whens[0]
+                                return [
+                                    {
+                                        "type": "Command",
+                                        "name": when.name,
+                                        "value": when.values
+                                    }
+                                ]
+                            }
+
+                            const getThens = (thens) => {
+                                return thens.map((then) => {
+                                    return {
+                                        "type": "Event",
+                                        "name": then.name,
+                                        "value": then.values
+                                    }
+                                })
+                            }
+
+                            return {
+                                "given": getGivens(gwt.givens),
+                                "when": getWhens(gwt.whens),
+                                "then": getThens(gwt.thens)
+                            }
+                        }
+
+                        return gwts.map((gwt) => {
+                            return getExample(gwt)
+                        })
+                    }
+
+                    modelValue.elements[requestValue.whenObjects[0].id].examples = generateExamples(gwts)
+                }
+
                 var me = this;
 
                 if(val && val.modelName === "DebeziumLogsTabGenerator") {
-                    if(val.modelValue && val.modelMode === "modificationModelValue") {
-                        try {
-                            me.currentDebeziumTransactionManager.addNewTransactionFromModelValue(val.modelValue)
-                            me.currentDebeziumTransactionManager.apply(me.value, me.userInfo)
-                            this.forceRefreshCanvas();
-                        } catch(e) {
-                            console.error("[!] 출력 결과를 Debezium Manager에 전달해서 처리하는 과정에서 오류 발생")
-                            console.error(e)
+                    if(val.modelValue) {
+                        if(val.modelMode === "modificationModelValue") {
+                            try {
+                                me.currentDebeziumTransactionManager.addNewTransactionFromModelValue(val.modelValue)
+                                me.currentDebeziumTransactionManager.apply(me.value, me.userInfo)
+                                this.forceRefreshCanvas();
+                            } catch(e) {
+                                console.error("[!] 출력 결과를 Debezium Manager에 전달해서 처리하는 과정에서 오류 발생")
+                                console.error(e)
+                            }
+                        }
+
+                        if(val.modelMode === "generateGWT") {
+                            try {
+                                generateGWT(me.value, val.modelValue.requestValue, val.modelValue.gwts)
+                                this.forceRefreshCanvas();
+                            } catch(e) {
+                                console.error("[!] 출력 결과를 이용해서 GWT를 만드는 과정에서 오류 발생")
+                                console.error(e)
+                            }
                         }
                     }
                     return

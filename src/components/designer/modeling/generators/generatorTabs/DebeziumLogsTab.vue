@@ -165,7 +165,12 @@ export default {
             progressMessageOutput: "",
 
             messageObj: {
-                modificationMessage: ""
+                modificationMessage: "",
+                gwtRequestValue: {
+                    givenObjects: null,
+                    whenObjects: null,
+                    thenObjects: null
+                }
             },
             debeziumLogsToPrcess: []
         }
@@ -226,10 +231,86 @@ export default {
                     this.progressMessageOutput = model.modelRawValue
                     this.progressMessage = `액션 유효성 검토중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
                     break
+                
+                case "generateGWT":
+                    this.progressMessageOutput = model.modelRawValue
+                    this.progressMessage = `생성된 커맨드에 대한 GWT 생성중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
+                    break
             }
         },
         
         onGenerationFinished(model) {
+            const getGWTRequestValue = (modelValue, queries) => {
+                const getCommandObject = (modelValue, queries) => {
+                    const getCommandIdByQueries = (queries) => {
+                        const commandQuries = queries.filter((query) => 
+                            query && query.objectType === "Command" && query.action === "update"
+                        )
+
+                        if(commandQuries.length === 0) return null
+                        return commandQuries[0].ids.commandId
+                    }
+
+                    const commandId = getCommandIdByQueries(queries)
+                    if(commandId === null) return null
+                    return modelValue.elements[commandId]
+                }
+
+                const getAggregateObject = (modelValue, commandObject) => {
+                    if(commandObject.aggregate === null || commandObject.aggregate.id === null) return null
+                    return modelValue.elements[commandObject.aggregate.id]
+                }
+
+                const getEventObjects = (modelValue, commandObject) => {
+                    const getCommandToEventRelations = (modelValue, commandObject) => {
+                        return Object.values(modelValue.relations).filter((relation) => 
+                            relation &&
+                            relation._type === "org.uengine.modeling.model.Relation" &&
+                            relation.from === commandObject.id && 
+                            relation.targetElement._type === "org.uengine.modeling.model.Event"
+                        )
+                    }
+
+                    const commandToEventRelations = getCommandToEventRelations(modelValue, commandObject)
+                    if(commandToEventRelations.length === 0) return null
+
+                    return commandToEventRelations.map((commandToEventRelation) => {
+                        if(commandToEventRelation.to === null) return null
+                        return modelValue.elements[commandToEventRelation.to]
+                    }).filter((eventObject) => eventObject !== null)
+                }
+
+
+                const commandObject = getCommandObject(modelValue, queries)
+                if(commandObject === null) return null
+
+                const aggregateObject = getAggregateObject(modelValue, commandObject)
+                if(aggregateObject === null) return null
+
+                const eventObjects = getEventObjects(modelValue, commandObject)
+                if(eventObjects === null) return null
+
+                return {
+                    givenObjects: [aggregateObject],
+                    whenObjects: [commandObject],
+                    thenObjects: eventObjects
+                }
+            }
+
+            const processDebeziumLogsToPrcess = () => {
+                this.debeziumLogsGenerator.modelMode = "generateCommands"
+                if(this.debeziumLogsToPrcess.length > 0) {
+                    this.messageObj.modificationMessage = this.debeziumLogsToPrcess.shift()
+                    this.isGenerationFinished = false
+                    this.$emit("generate")
+                    this.progressMessage = `다음 트렌젝션 관련 액션을 생성하는중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
+                } else {
+                    this.isGenerationFinished = true
+                    this.debeziumLogs = ""
+                    this.progressMessage = "대기중..."
+                }
+            }
+
             if(model.errorMessage) {
                 alert("죄송합니다. 에러가 발생했습니다. 다시 시도해주세요.: " + model.errorMessage)
                 this.isGenerationFinished = true
@@ -252,16 +333,18 @@ export default {
                 case "modificationModelValue":
                     this.responseQueries = this.debeziumTransactionManager.toStringObject()
 
-                    if(this.debeziumLogsToPrcess.length > 0) {
-                        this.messageObj.modificationMessage = this.debeziumLogsToPrcess.shift()
-                        this.isGenerationFinished = false
+                    this.messageObj.gwtRequestValue = getGWTRequestValue(this.debeziumLogsGenerator.client.modelValue, model.modelValue.queries)
+                    if(this.messageObj.gwtRequestValue !== null) {
+                        this.debeziumLogsGenerator.modelMode = "generateGWT"
                         this.$emit("generate")
-                        this.progressMessage = `다음 트렌젝션 관련 액션을 생성하는중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
-                    } else {
-                        this.isGenerationFinished = true
-                        this.debeziumLogs = ""
-                        this.progressMessage = "대기중..."
+                        this.progressMessage = `생성된 커맨드에 대한 GWT 생성 요청을 전송중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
                     }
+                    else 
+                        processDebeziumLogsToPrcess()
+                    break
+                
+                case "generateGWT":
+                    processDebeziumLogsToPrcess()
                     break
             }
         },
