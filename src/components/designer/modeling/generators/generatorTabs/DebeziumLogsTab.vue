@@ -346,6 +346,13 @@ export default {
                 case "generateGWT":
                     processDebeziumLogsToPrcess()
                     break
+                
+                case "mockModelValue":
+                    this.responseQueries = this.debeziumTransactionManager.toStringObject()
+                    this.isGenerationFinished = true
+                    this.debeziumLogs = ""
+                    this.progressMessage = "대기중..."
+                    break
             }
         },
 

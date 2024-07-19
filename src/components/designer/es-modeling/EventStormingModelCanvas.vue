@@ -3126,7 +3126,7 @@
 
                 if(val && val.modelName === "DebeziumLogsTabGenerator") {
                     if(val.modelValue) {
-                        if(val.modelMode === "modificationModelValue") {
+                        if(val.modelMode === "modificationModelValue" || val.modelMode === "mockModelValue") {
                             try {
                                 me.currentDebeziumTransactionManager.addNewTransactionFromModelValue(val.modelValue)
                                 me.currentDebeziumTransactionManager.apply(me.value, me.userInfo)
