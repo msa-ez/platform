@@ -990,7 +990,6 @@ ${JSON.stringify(inputObject)}
             case "generateCommands":
                 this.preprocessModelValue = getPreprocessModelValue(this.client.modelValue)
                 preprocessModelValueString = JSON.stringify(this.preprocessModelValue)
-                this.preModificationMessage = this.messageObj.modificationMessage
         
                 this.modelMode = "generateCommands"
                 if(preprocessModelValueString.length > this.modelInputLengthLimit)
@@ -1007,12 +1006,12 @@ ${JSON.stringify(inputObject)}
         let systemPrompt = ""
         switch(this.modelMode) {
             case "generateCommands":
-                systemPrompt = getSystemPromptForGenerateCommands(preprocessModelValueString, this.preModificationMessage)
+                systemPrompt = getSystemPromptForGenerateCommands(preprocessModelValueString, this.messageObj.modificationMessage)
                 this.prevSystemPrompt = systemPrompt
                 break
 
             case "summaryPreprocessModelValue":
-                systemPrompt = getSystemPromptForSummaryPreProcessModelValue(this.preprocessModelValue, this.preModificationMessage)
+                systemPrompt = getSystemPromptForSummaryPreProcessModelValue(this.preprocessModelValue, this.messageObj.modificationMessage)
                 break
             
             case "modificationModelValue":
@@ -1020,7 +1019,7 @@ ${JSON.stringify(inputObject)}
                 break
             
             case "generateGWT":
-                systemPrompt = getSystemPromptForGenerateGWT(this.messageObj.gwtRequestValue, this.preModificationMessage)
+                systemPrompt = getSystemPromptForGenerateGWT(this.messageObj.gwtRequestValue, this.messageObj.modificationMessage)
                 break
         }
 
@@ -1273,7 +1272,7 @@ ${JSON.stringify(inputObject)}
                         modelMode: this.modelMode,
                         modelValue: {
                             ...this.queryResultsToModificate,
-                            debeziumLogStrings: getDebeziumLogStrings(this.preModificationMessage)
+                            debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
                         },
                         modelRawValue: text
                     }
@@ -1290,7 +1289,7 @@ ${JSON.stringify(inputObject)}
                         modelValue: {
                             sortedObjectNames: sortedObjectNames,
                             relatedPreProcessModelValueString: this.relatedPreProcessModelValueString,
-                            debeziumLogStrings: getDebeziumLogStrings(this.preModificationMessage)
+                            debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
                         },
                         modelRawValue: text
                     }
@@ -1305,7 +1304,7 @@ ${JSON.stringify(inputObject)}
                         modelMode: this.modelMode,
                         modelValue: {
                             ...this.modificatedQueryResults,
-                            debeziumLogStrings: getDebeziumLogStrings(this.preModificationMessage)
+                            debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
                         },
                         modelRawValue: text
                     }
@@ -1320,7 +1319,7 @@ ${JSON.stringify(inputObject)}
                         modelValue: {
                             ...parseToJson(text),
                             requestValue: this.messageObj.gwtRequestValue,
-                            debeziumLogStrings: getDebeziumLogStrings(this.preModificationMessage)
+                            debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
                         },
                         modelRawValue: text
                     }
