@@ -161,7 +161,7 @@ export default {
             isShowUndoDialog: false,
             debeziumTransactionManager: null,
 
-            progressMessage: "Please input Debezium Logs to generate event storming model actions",
+            progressMessage: "Please input Debezium Logs to generate event storming updates",
             progressMessageOutput: "",
 
             messageObj: {
