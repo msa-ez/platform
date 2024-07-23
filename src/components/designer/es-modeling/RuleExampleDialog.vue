@@ -440,7 +440,7 @@
                 me.$EventBus.$emit('policyDescriptionUpdated', me.rule.description)
                 me.isGenerating = true
 
-                if(isDebeziumLogMessage(me.rule.description)){
+                if(me.rule.description && isDebeziumLogMessage(me.rule.description)){
                     me.currentUsingGeneratorName = "DebeziumLogsTabGenerator"
                     me.debeziumGeneratorComponent.modelMode = "generateGWT"
                     me.debeziumMessageObj.modificationMessage = me.rule.description
