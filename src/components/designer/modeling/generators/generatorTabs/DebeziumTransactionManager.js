@@ -349,6 +349,11 @@ class DebeziumTransactionQuery {
             delete modelValue.elements[query.ids.commandId]
         }
 
+        const getAggregateRootObject = (aggregateObject) => {
+            if(!aggregateObject.aggregateRoot || !aggregateObject.aggregateRoot.entities || !aggregateObject.aggregateRoot.entities.elements) return null
+            return Object.values(aggregateObject.aggregateRoot.entities.elements).find(entity => entity.isAggregateRoot)
+        }
+
         const deleteAggregateOrProperty = (modelValue, query) => {
             const deleteAggregateProperty = (modelValue, query) => {
                 const aggregateObject = modelValue.elements[query.ids.aggregateId]
@@ -768,11 +773,6 @@ class DebeziumTransactionQuery {
                     getFileDescriptorsForRootAggegate(query.args.properties)
                 )
                 aggregateObject.aggregateRoot.entities.elements[rootAggregateObject.id] = rootAggregateObject
-            }
-
-            const getAggregateRootObject = (aggregateObject) => {
-                if(!aggregateObject.aggregateRoot || !aggregateObject.aggregateRoot.entities || !aggregateObject.aggregateRoot.entities.elements) return null
-                return Object.values(aggregateObject.aggregateRoot.entities.elements).find(entity => entity.isAggregateRoot)
             }
 
             const updateAggregate = (modelValue, query) => {

@@ -786,6 +786,8 @@ ${eventStormingNames.join(", ")}
 
 [OUTPUT]
 \`\`\`json
+{
+    "modifications": [
 `
             }
 
