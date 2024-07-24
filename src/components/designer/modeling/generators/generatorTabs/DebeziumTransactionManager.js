@@ -349,6 +349,11 @@ class DebeziumTransactionQuery {
             delete modelValue.elements[query.ids.commandId]
         }
 
+        const getAggregateRootObject = (aggregateObject) => {
+            if(!aggregateObject.aggregateRoot || !aggregateObject.aggregateRoot.entities || !aggregateObject.aggregateRoot.entities.elements) return null
+            return Object.values(aggregateObject.aggregateRoot.entities.elements).find(entity => entity.isAggregateRoot)
+        }
+
         const deleteAggregateOrProperty = (modelValue, query) => {
             const deleteAggregateProperty = (modelValue, query) => {
                 const aggregateObject = modelValue.elements[query.ids.aggregateId]
@@ -477,15 +482,33 @@ class DebeziumTransactionQuery {
                 }
 
                 const getValidPosition = (modelValue, boundedContextObject) => {
+                    const getMaxXBoundedContextInMaxYRange = (boundedContexts) => {
+                        const maxY = Math.max(...boundedContexts.map(bc => bc.elementView.y))
+                        const maxYBoundedContext = boundedContexts.filter(bc => bc.elementView.y === maxY)[0]
+    
+                        let boundContextsInMaxYRange = []
+                        for(let boundedContext of boundedContexts) {
+                            if(boundedContext.elementView.y >= maxYBoundedContext.elementView.y - maxYBoundedContext.elementView.height/2 &&
+                               boundedContext.elementView.y <= maxYBoundedContext.elementView.y + maxYBoundedContext.elementView.height/2)
+                                boundContextsInMaxYRange.push(boundedContext)
+                        }
+
+                        let maxXPos = Math.max(...boundContextsInMaxYRange.map(bc => bc.elementView.x))
+                        return boundContextsInMaxYRange.filter(bc => bc.elementView.x === maxXPos)[0]
+                    }
+
+                    const BOUNDED_CONTEXT_MAX_X_LIMIT = 1500
                     const boundedContexts = getAllBoundedContexts(modelValue)
                     if(boundedContexts.length <= 0) return {x: 450, y: 450}
 
-                    const maxX = Math.max(...boundedContexts.map(bc => bc.elementView.x))
-                    const minY = Math.min(...boundedContexts.map(bc => bc.elementView.y))
-
-                    const maxXBoundedContext = boundedContexts.filter(bc => bc.elementView.x === maxX)[0]
-                    return {x: maxX + Math.round(maxXBoundedContext.elementView.width/2) 
-                               + Math.round(boundedContextObject.elementView.width/2) + 25, y: minY}
+                    const maxXBoundedContextInMaxYRange = getMaxXBoundedContextInMaxYRange(boundedContexts)
+                    const xPosInMaxYRange = maxXBoundedContextInMaxYRange.elementView.x + maxXBoundedContextInMaxYRange.elementView.width/2 + 
+                                            boundedContextObject.elementView.width/2 + 25
+                    
+                    if(xPosInMaxYRange <= BOUNDED_CONTEXT_MAX_X_LIMIT)
+                        return {x: xPosInMaxYRange, y: maxXBoundedContextInMaxYRange.elementView.y}
+                    else
+                        return {x: 450, y: maxXBoundedContextInMaxYRange.elementView.y + maxXBoundedContextInMaxYRange.elementView.height/2 + boundedContextObject.elementView.height/2 + 25}
                 }
 
                 
@@ -750,11 +773,6 @@ class DebeziumTransactionQuery {
                     getFileDescriptorsForRootAggegate(query.args.properties)
                 )
                 aggregateObject.aggregateRoot.entities.elements[rootAggregateObject.id] = rootAggregateObject
-            }
-
-            const getAggregateRootObject = (aggregateObject) => {
-                if(!aggregateObject.aggregateRoot || !aggregateObject.aggregateRoot.entities || !aggregateObject.aggregateRoot.entities.elements) return null
-                return Object.values(aggregateObject.aggregateRoot.entities.elements).find(entity => entity.isAggregateRoot)
             }
 
             const updateAggregate = (modelValue, query) => {

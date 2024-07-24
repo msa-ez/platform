@@ -3134,6 +3134,7 @@
                             } catch(e) {
                                 console.error("[!] 출력 결과를 Debezium Manager에 전달해서 처리하는 과정에서 오류 발생")
                                 console.error(e)
+                                alert("죄송합니다. AI가 출력한 결과가 올바르지 않아서 이벤트 스토밍 모델을 처리하는데 실패했습니다. 다시 시도해주시길 바랍니다. 에러 내용:" + e.message)
                             }
                         }
 
@@ -3144,6 +3145,7 @@
                             } catch(e) {
                                 console.error("[!] 출력 결과를 이용해서 GWT를 만드는 과정에서 오류 발생")
                                 console.error(e)
+                                alert("죄송합니다. AI를 통해서 테스트 케이스(GWT)를 생성하는데 실패했습니다. 해당 커맨드 객체를 더블클릭 > Examples 버튼으로 직접 Debezium Log를 넣어서 GWT를 생성해주시길 바랍니다. 에러 내용:" + e.message)
                             }
                         }
                     }

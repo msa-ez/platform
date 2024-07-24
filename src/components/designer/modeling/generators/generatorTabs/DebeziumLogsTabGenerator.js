@@ -620,6 +620,9 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
 # query-cmd-update-patient
 {"action":"update","args":{"actor":"User","api_verb":"PUT","commandName":"UpdatePatient","outputEventIds":["evt-patient-updated"]},"fromUsecaseId":"usecase-update-patient","ids":{"aggregateId":"agg-patient","boundedContextId":"bc-patient","commandId":"cmd-update-patient"},"objectType":"Command","queryId":"query-cmd-update-patient"}
 
+# query-evt-update-patient
+{"action":"update","args":{"eventName":"PatientUpdated","outputCommandIds":[]},"fromUsecaseId":"usecase-update-patient","ids":{"aggregateId":"agg-patient","boundedContextId":"bc-patient","eventId":"evt-patient-updated"},"objectType":"Event","queryId":"query-evt-update-patient"}
+
 # query-evt-update-patient-preference
 {"action":"update","args":{"eventName":"PatientPreferenceUpdated","outputCommandIds":["cmd-update-patient"]},"fromUsecaseId":"usecase-update-patient-preference","ids":{"aggregateId":"agg-patient-preference","boundedContextId":"bc-patient-preference","eventId":"event-update-patient-preference"},"objectType":"Event","queryId":"query-evt-update-patient-preference"}
 
@@ -767,6 +770,7 @@ ${eventStormingNames.join(", ")}
 1. outputCommandIds 속성으로 해당 event가 다른 BoundedContext의 커맨드를 호출해서, 관련된 속성을 잘 업데이트하는지 확인해주세요.
 2. 주어진 쿼리의 properties 속성이 트랜잭션의 속성들을 제대로 반영했는지 확인해주세요.
 3. 주어진 쿼리의 ids에 작성된 객체의 id들은 생성될 예정이거나 기존 이벤트 스토밍 모델에 반드시 존재해야 합니다.
+4. 주어진 쿼리의 outputEventIds나 outputCommandIds에 작성된 Id는 생성될 예정이거나 기존 이벤트 스토밍 모델에 반드시 존재해야 합니다.
 
 다음과 같이 반환하면 됩니다.
 \`\`\`json
@@ -782,6 +786,8 @@ ${eventStormingNames.join(", ")}
 
 [OUTPUT]
 \`\`\`json
+{
+    "modifications": [
 `
             }
 
