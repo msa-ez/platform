@@ -3089,7 +3089,7 @@
                                 const when = whens[0]
                                 return [
                                     {
-                                        "type": "Command",
+                                        "type": "Event",
                                         "name": when.name,
                                         "value": when.values
                                     }
