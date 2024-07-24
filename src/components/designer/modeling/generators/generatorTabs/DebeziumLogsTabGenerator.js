@@ -784,10 +784,19 @@ ${eventStormingNames.join(", ")}
 }
 \`\`\`
 
+- Json 반환시에는 아래의 예시처럼 모든 공백을 제거하고, 압축된 형태로 반환해주세요.
+# BEFORE
+{
+    "a": 1,
+    "b": 2
+}
+
+# AFTER
+{"a":1,"b":2}
+
 [OUTPUT]
 \`\`\`json
-{
-    "modifications": [
+{"modifications":[
 `
             }
 
