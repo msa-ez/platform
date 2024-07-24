@@ -764,7 +764,7 @@ ${eventStormingNames.join(", ")}
 
 [INPUT]
 당신이 출력한 변경 내용중에서 명확하지 않은 부분이 있을 경우, 해당 부분을 교체하기 위한 쿼리를 작성해주세요.
-교체시키려는 속성을 jsonPath로 지정해서 value로 값을 작성하시면 되고, 변경사항이 없으면 빈 배열을 반환해주세요.
+교체시키려는 속성을 jsonPath로 지정해서 value로 값을 작성하시면 되고, 변경사항이 없으면 modifications 속성을 빈 배열로 반환해주세요.
 
 주요 검토 사항은 다음과 같습니다.
 1. outputCommandIds 속성으로 해당 event가 다른 BoundedContext의 커맨드를 호출해서, 관련된 속성을 잘 업데이트하는지 확인해주세요.
@@ -1302,7 +1302,30 @@ ${JSON.stringify(inputObject)}
                     break
                 
                 case "modificationModelValue":
-                    const modifications = parseToJson(text).modifications
+
+                    let modifications = []
+                    try {
+                        modifications = parseToJson(text).modifications
+                    }
+                    catch(e) {
+                        console.error(`[!] AI 생성 결과를 파싱하는데 실패했습니다. AI의 생성 결과를 무시하고, 진행합니다.\n* error\n`, e)
+
+                        outputResult =  {
+                            modelName: this.modelName,
+                            modelMode: this.modelMode,
+                            modelValue: {
+                                modifications: [],
+                                debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
+                            },
+                            modelRawValue: text,
+                            isError:true
+                        }
+
+                        this.queryResultsToModificate = null
+                        this.modelMode = "generateCommands"
+                        break
+                    }
+                     
                     this.modificatedQueryResults = JSON.parse(JSON.stringify(this.queryResultsToModificate))
                     this.modificatedQueryResults = applyModifications(this.modificatedQueryResults, modifications)
                     outputResult = {
