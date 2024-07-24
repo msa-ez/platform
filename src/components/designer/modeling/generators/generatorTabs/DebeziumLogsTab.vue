@@ -133,6 +133,7 @@
   
 <script>
 import DebeziumLogsTabGenerator from "./DebeziumLogsTabGenerator.js"
+import DebeziumTransactionManager from "./DebeziumTransactionManager.js"
 
 export default {
     name: 'DebeziumLogsTab',
@@ -176,6 +177,10 @@ export default {
         }
     },
     created() {
+        if(this.initValue.modelValue.debeziumChatSaveObject) {
+            this.initValue.manager = DebeziumTransactionManager.fromSaveObject(this.initValue.modelValue.debeziumChatSaveObject)
+        }
+
         this.debeziumTransactionManager = this.initValue.manager
         this.responseQueries = this.debeziumTransactionManager.toStringObject()
     },
