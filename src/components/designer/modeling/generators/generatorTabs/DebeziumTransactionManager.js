@@ -643,6 +643,11 @@ class DebeziumTransactionQuery {
                     }
                 }
 
+                const makePrimaryKeyPropertyIfNotExists = (properties) => {
+                    if(properties.find(property => property.isKey)) return properties
+                    return [{name: "id", type: "Long", isKey: true}].concat(properties)
+                }
+
                 const getFileDescriptors = (queryProperties) => {
                     return queryProperties.map((property) => {
                         return {
@@ -764,6 +769,7 @@ class DebeziumTransactionQuery {
                 aggregateObject.elementView.x = VALID_POSITION.x
                 aggregateObject.elementView.y = VALID_POSITION.y
 
+                query.args.properties = makePrimaryKeyPropertyIfNotExists(query.args.properties)
                 aggregateObject.aggregateRoot.fieldDescriptors = getFileDescriptors(query.args.properties)
                 relocateUIPositions(modelValue, query, aggregateObject)
                 modelValue.elements[aggregateObject.id] = aggregateObject
