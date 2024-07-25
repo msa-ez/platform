@@ -497,7 +497,7 @@ class DebeziumTransactionQuery {
                         return boundContextsInMaxYRange.filter(bc => bc.elementView.x === maxXPos)[0]
                     }
 
-                    const BOUNDED_CONTEXT_MAX_X_LIMIT = 1500
+                    const BOUNDED_CONTEXT_MAX_X_LIMIT = 1750
                     const boundedContexts = getAllBoundedContexts(modelValue)
                     if(boundedContexts.length <= 0) return {x: 450, y: 450}
 
@@ -521,7 +521,7 @@ class DebeziumTransactionQuery {
                 boundedContextObject.elementView.x = VALID_POSITION.x
                 boundedContextObject.elementView.y = VALID_POSITION.y
 
-                modelValue.elements[boundedContextObject.id] = boundedContextObject
+                modelValue.elements[boundedContextObject.id] = boundedContextObject     
             }
 
             const updateBoundedContext = (modelValue, query) => {

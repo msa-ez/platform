@@ -251,6 +251,8 @@ Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 �
 4. 자바에서 제공하는 기본 데이터타입 혹은 Address, Portrait, Rating, Money, Email을 제외한 속성들은 enumerations나 valueObjects로 직접 정의해야 합니다.
 5. event.block이나 hibernate_sequence와 같이 비즈니스 로직과 직접적으로 관련이 없는 트랜잭션은 무시해야 합니다.
 6. id 속성은 고유해야 하며, 수정하면 안 됩니다.
+7. 필수적인 상황이 아니라면, 하나의 Bounded Context 안에 하나의 Aggregate가 속하도록 해주세요.
+8. '<해당 Bounded Context에 속하게 될 Aggregate의 이름> + Service'와 같이 Bounded Context의 이름을 작성해 주세요.
     
 `
                 }
@@ -622,6 +624,9 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
 
 # query-evt-update-patient
 {"action":"update","args":{"eventName":"PatientUpdated","outputCommandIds":[]},"fromUsecaseId":"usecase-update-patient","ids":{"aggregateId":"agg-patient","boundedContextId":"bc-patient","eventId":"evt-patient-updated"},"objectType":"Event","queryId":"query-evt-update-patient"}
+
+# query-bc-update-patient-preference
+{"action":"update","args":{"boundedContextName":"PatientPreferenceService"},"fromUsecaseId":"usecase-update-patient-preference","ids":{"boundedContextId":"bc-patient-preference"},"objectType":"BoundedContext","queryId":"query-bc-update-patient-preference"}
 
 # query-evt-update-patient-preference
 {"action":"update","args":{"eventName":"PatientPreferenceUpdated","outputCommandIds":["cmd-update-patient"]},"fromUsecaseId":"usecase-update-patient-preference","ids":{"aggregateId":"agg-patient-preference","boundedContextId":"bc-patient-preference","eventId":"event-update-patient-preference"},"objectType":"Event","queryId":"query-evt-update-patient-preference"}
