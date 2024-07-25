@@ -1089,11 +1089,13 @@ class DebeziumTransactionQuery {
                 eventObject.fieldDescriptors = getFileDescriptors(modelValue, query)
                 modelValue.elements[eventObject.id] = eventObject
 
-                callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
-                    query.args.outputCommandIds.forEach(commandId => {
-                        createNewPolicy(modelValue, userInfo, eventObject, commandId)
+                if(query.args.outputCommandId) {
+                    callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
+                        query.args.outputCommandIds.forEach(commandId => {
+                            createNewPolicy(modelValue, userInfo, eventObject, commandId)
+                        })
                     })
-                })
+                }
             }
 
             const updateEvent = (modelValue, userInfo, query) => {
@@ -1321,9 +1323,14 @@ class DebeziumTransactionQuery {
                     query.args.api_verb, [], query.ids.boundedContextId,
                     query.ids.aggregateId, 0, 0, query.ids.commandId
                 )
-                callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
-                    commandObject.outputEvents = getOutputEventNames(modelValue, query.args.outputEventIds)
-                })
+                
+                if(query.args.outputEventIds) {
+                    callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
+                        commandObject.outputEvents = getOutputEventNames(modelValue, query.args.outputEventIds)
+                    })
+                } else
+                    commandObject.outputEvents = []
+
                 makeCommandToEventRelation(commandObject, query)
 
                 const VALID_POSITION = getValidPosition(modelValue, query, commandObject)
