@@ -1328,7 +1328,7 @@ ${JSON.stringify(inputObject)}
                             modelName: this.modelName,
                             modelMode: this.modelMode,
                             modelValue: {
-                                modifications: [],
+                                ...this.queryResultsToModificate,
                                 debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
                             },
                             modelRawValue: text,
