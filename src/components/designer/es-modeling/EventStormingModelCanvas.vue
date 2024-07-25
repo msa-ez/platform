@@ -2409,11 +2409,6 @@
             };
         },
         computed: {
-            currentDebeziumTransactionManager() {
-                var me = this
-                return me.tabs.find(tab => tab.component === 'DebeziumLogsTab').initValue.manager
-            },
-
             projectSendable(){
                 var me = this
                 if(!me.modelListOfassociatedProject().includes(me.projectId)) return false;
@@ -3072,18 +3067,88 @@
             forceRefreshCanvas() {
                 this.canvasRenderKey++;
             },
+            afterSnapshotLoad(){
+                // Debezium 챗봇의 채팅 내역을 불러오기 위해서
+                this.tabs[0].initValue.modelValue = this.value
+            },
             createModel(val, originModel) {
+                const generateGWT = (modelValue, requestValue, gwts) => {
+                    const generateExamples = (gwts) => {
+                        const getExample = (gwt) => {
+                            const getGivens = (givens) => {
+                                const given = givens[0]
+                                return [
+                                    {
+                                    "type": "Aggregate",
+                                    "name": given.name,
+                                    "value": given.values
+                                }]
+                            }
+
+                            const getWhens = (whens) => {
+                                const when = whens[0]
+                                return [
+                                    {
+                                        "type": "Event",
+                                        "name": when.name,
+                                        "value": when.values
+                                    }
+                                ]
+                            }
+
+                            const getThens = (thens) => {
+                                return thens.map((then) => {
+                                    return {
+                                        "type": "Event",
+                                        "name": then.name,
+                                        "value": then.values
+                                    }
+                                })
+                            }
+
+                            return {
+                                "given": getGivens(gwt.givens),
+                                "when": getWhens(gwt.whens),
+                                "then": getThens(gwt.thens)
+                            }
+                        }
+
+                        return gwts.map((gwt) => {
+                            return getExample(gwt)
+                        })
+                    }
+
+                    modelValue.elements[requestValue.whenObjects[0].id].examples = generateExamples(gwts)
+                }
+
                 var me = this;
 
                 if(val && val.modelName === "DebeziumLogsTabGenerator") {
                     if(val.modelValue) {
-                        try {
-                            me.currentDebeziumTransactionManager.addNewTransactionFromModelValue(val.modelValue)
-                            me.currentDebeziumTransactionManager.apply(me.value, me.userInfo)
-                            this.forceRefreshCanvas();
-                        } catch(e) {
-                            console.error("[!] 출력 결과를 Debezium Manager에 전달해서 처리하는 과정에서 오류 발생")
-                            console.error(e)
+                        if(val.modelMode === "modificationModelValue" || val.modelMode === "mockModelValue") {
+                            try {
+                                const currentDebeziumTransactionManager = this.tabs.find(tab => tab.component === 'DebeziumLogsTab').initValue.manager
+                                currentDebeziumTransactionManager.addNewTransactionFromModelValue(val.modelValue)
+                                currentDebeziumTransactionManager.apply(me.value, me.userInfo)
+                                me.forceRefreshCanvas()
+                                
+                                me.value.debeziumChatSaveObject = currentDebeziumTransactionManager.toSaveObject()
+                            } catch(e) {
+                                console.error("[!] 출력 결과를 Debezium Manager에 전달해서 처리하는 과정에서 오류 발생")
+                                console.error(e)
+                                alert("죄송합니다. AI가 출력한 결과가 올바르지 않아서 이벤트 스토밍 모델을 처리하는데 실패했습니다. 다시 시도해주시길 바랍니다. 에러 내용:" + e.message)
+                            }
+                        }
+
+                        if(val.modelMode === "generateGWT") {
+                            try {
+                                generateGWT(me.value, val.modelValue.requestValue, val.modelValue.gwts)
+                                me.forceRefreshCanvas();
+                            } catch(e) {
+                                console.error("[!] 출력 결과를 이용해서 GWT를 만드는 과정에서 오류 발생")
+                                console.error(e)
+                                alert("죄송합니다. AI를 통해서 테스트 케이스(GWT)를 생성하는데 실패했습니다. 해당 커맨드 객체를 더블클릭 > Examples 버튼으로 직접 Debezium Log를 넣어서 GWT를 생성해주시길 바랍니다. 에러 내용:" + e.message)
+                            }
                         }
                     }
                     return

@@ -139,7 +139,12 @@ class AIGenerator {
                     .filter(Boolean)
 
                     const newUpdatesParsed = newUpdates.map((update) => {
-                        const parsed = JSON.parse(update);
+                        let parsed = ""
+                        try {
+                            parsed = JSON.parse(update);
+                        } catch(e) {
+                            return ""
+                        }
 
                         if(parsed.error){
                             if(me.client.onError){

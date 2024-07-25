@@ -273,6 +273,7 @@
                 toppingLists:[],
                 selectedTemplate: null,
                 selectedTopping: null,
+                selectedToppingList: [],
                 githubHeaders: null,
                 allRepoList: null,
                 detailMarketMode: false,
@@ -300,7 +301,10 @@
         },
         props: {
             marketplaceDialog: Boolean,
-            selectedBaseTemplateName: null
+            selectedBaseTemplateName: null,
+            toppingPlatforms: Array,
+            marketplaceType: String,
+            templateList: Array
         },
         computed: {
             filteredTemplateLists() {
@@ -336,20 +340,27 @@
             this.setGitHubHeader()
             this.loadAllRepoList()
         },
-        watch: {
-        },
         mounted(){
         },
         methods: {
             isToppingCompatible(selectedTopping) {
+                let polyglotMode = false;
+                for(var i = 0; i< this.templateList.length; i++){
+                    if(!selectedTopping.depends.includes(this.templateList[i].template.split('/').pop())){
+                        polyglotMode = true
+                    }
+                }
+                if(polyglotMode){
+                    return false;
+                }
                 return !selectedTopping.depends || selectedTopping.depends.includes(this.selectedBaseTemplateName);
             },
             applyTemplate(temp){
-                this.$emit("applyTemplate", temp)
+                this.$emit("applyTemplate", temp, this.marketplaceType, this.selectedToppingList)
                 this.detailMarketMode = false;
             },
             applyTopping(topping){
-                this.$emit("applyTopping", topping)
+                this.$emit("applyTopping", topping, this.marketplaceType)
                 this.detailMarketMode = false;
             },
             async loadTemplateInfo() {
@@ -401,6 +412,11 @@
                                     const instruction = await axios.get(`https://api.github.com/repos/msa-ez/${toppingInfo.name}/contents/.template/instruction.md`, { headers: me.githubHeaders });
                                     if (instruction) {
                                         obj.instruction = decodeURIComponent(escape(atob(instruction.data.content)));
+                                    }
+                                    for(var i = 0; i < me.toppingPlatforms.length; i++){
+                                        if(me.toppingPlatforms[i] == obj.toppingPath){
+                                            me.selectedToppingList.push(obj);
+                                        }
                                     }
                                 } catch (e) {
                                     console.error(e);

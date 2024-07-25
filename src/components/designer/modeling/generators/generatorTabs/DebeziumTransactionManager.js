@@ -136,58 +136,77 @@ class DebeziumTransaction {
 }
 
 class DebeziumTransactionQuery {
-    constructor(query, isApplied) {
+    constructor(query, isApplied, objectAlias, lastOp) {
         this.query = query ? query : {};
         this.isApplied = isApplied ? isApplied : false;
+        this.objectAlias = objectAlias ? objectAlias : null;
+        this.lastOp = lastOp ? lastOp : null;
     }
 
     toStringObject() {
         const boundContextQueryToString = (query) => {
-            switch(query.action) {
-                case "new":
-                    return `Create New ${query.args.boundedContextAlias} Bounded Context`;
+            switch(this.lastOp) {
+                case "create":
+                    return `Create New ${this.objectAlias ? this.objectAlias : query.ids.boundedContextId} Bounded Context`;
+                case "update":
+                    return `Update ${this.objectAlias ? this.objectAlias : query.ids.boundedContextId} Bounded Context`;
+                case "delete":
+                    return `Delete ${this.objectAlias ? this.objectAlias : query.ids.boundedContextId} Bounded Context`;
             }
         }
 
         const aggregateQueryToString = (query) => {
-            switch(query.action) {
-                case "new":
-                    return `Create New ${query.args.aggregateAlias} Aggregate`;
+            switch(this.lastOp) {
+                case "create":
+                    return `Create New ${this.objectAlias ? this.objectAlias : query.ids.aggregateId} Aggregate`;
+                case "update":
+                    return `Update ${this.objectAlias ? this.objectAlias : query.ids.aggregateId} Aggregate`;
+                case "delete":
+                    return `Delete ${this.objectAlias ? this.objectAlias : query.ids.aggregateId} Aggregate ${(query.args && query.args.properties) ? "Property" : ""}`;
             }
         }
 
         const commandQueryToString = (query) => {
-            switch(query.action) {
-                case "new":
-                    return `Create New ${query.args.commandAlias} Command`;
+            switch(this.lastOp) {
+                case "create":
+                    return `Create New ${this.objectAlias ? this.objectAlias : query.ids.commandId} Command`;
+                case "update":
+                    return `Update ${this.objectAlias ? this.objectAlias : query.ids.commandId} Command`;
+                case "delete":
+                    return `Delete ${this.objectAlias ? this.objectAlias : query.ids.commandId} Command`;
             }
         }
 
         const eventQueryToString = (query) => {
-            switch(query.action) {
-                case "new":
-                    return `Create New ${query.args.eventAlias} Event`;
-            }
-        }
-
-        const policyQueryToString = (query) => {
-            switch(query.action) {
-                case "new":
-                    return `Create New ${query.args.policyAlias} Policy`;
+            switch(this.lastOp) {
+                case "create":
+                    return `Create New ${this.objectAlias ? this.objectAlias : query.ids.eventId} Event`;
+                case "update":
+                    return `Update ${this.objectAlias ? this.objectAlias : query.ids.eventId} Event`;
+                case "delete":
+                    return `Delete ${this.objectAlias ? this.objectAlias : query.ids.eventId} Event`;
             }
         }
 
         const enumerationQueryToString = (query) => {
-            switch(query.action) {
-                case "new":
-                    return `Create New ${query.args.enumerationName} Enumeration in ${query.ids.aggregateId} Aggregate`;
+            switch(this.lastOp) {
+                case "create":
+                    return `Create New ${this.objectAlias ? this.objectAlias : query.ids.enumerationId} Enumeration in ${query.ids.aggregateId} Aggregate`;
+                case "update":
+                    return `Update ${this.objectAlias ? this.objectAlias : query.ids.enumerationId} Enumeration in ${query.ids.aggregateId} Aggregate`;
+                case "delete":
+                    return `Delete ${this.objectAlias ? this.objectAlias : query.ids.enumerationId} Enumeration in ${query.ids.aggregateId} Aggregate`;
             }
         }
 
         const valueObjectQueryToString = (query) => {
-            switch(query.action) {
-                case "new":
-                    return `Create New ${query.args.valueObjectName} Value Object in ${query.ids.aggregateId} Aggregate`;
+            switch(this.lastOp) {
+                case "create":
+                    return `Create New ${this.objectAlias ? this.objectAlias : query.ids.valueObjectId} Value Object in ${query.ids.aggregateId} Aggregate`;
+                case "update":
+                    return `Update ${this.objectAlias ? this.objectAlias : query.ids.valueObjectId} Value Object in ${query.ids.aggregateId} Aggregate`;
+                case "delete":
+                    return `Delete ${this.objectAlias ? this.objectAlias : query.ids.valueObjectId} Value Object in ${query.ids.aggregateId} Aggregate`;
             }
         }
 
@@ -204,9 +223,6 @@ class DebeziumTransactionQuery {
                 break;
             case "Event":
                 summary = eventQueryToString(this.query);
-                break;
-            case "Policy":
-                summary = policyQueryToString(this.query);
                 break;
             case "Enumeration":
                 summary = enumerationQueryToString(this.query);
@@ -238,6 +254,144 @@ class DebeziumTransactionQuery {
             return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4()
         }
 
+
+        const clearRelatedPolicies = (modelValue, objectId, fromType="event") => {
+            if(fromType === "event") {
+
+                for(const toPolicyRelation of Object.values(modelValue.relations)) {
+                    if(toPolicyRelation && toPolicyRelation._type === "org.uengine.modeling.model.Relation" &&
+                        toPolicyRelation.from === objectId && toPolicyRelation.targetElement._type === "org.uengine.modeling.model.Policy") {
+                        
+                        for(const toCommandRelation of Object.values(modelValue.relations)) {
+                            if(toCommandRelation && toCommandRelation._type === "org.uengine.modeling.model.Relation" &&
+                                toCommandRelation.from === toPolicyRelation.to && toCommandRelation.targetElement._type === "org.uengine.modeling.model.Command") {
+                                delete modelValue.relations[toCommandRelation.id]
+                            }
+                        }
+                        
+                        delete modelValue.relations[toPolicyRelation.id]
+                        delete modelValue.elements[toPolicyRelation.to]
+                    }
+                }
+
+            }
+            else if(fromType === "command") {
+
+                for(const toCommandRelation of Object.values(modelValue.relations)) {
+                    if(toCommandRelation && toCommandRelation._type === "org.uengine.modeling.model.Relation" &&
+                        toCommandRelation.to === objectId && toCommandRelation.sourceElement._type === "org.uengine.modeling.model.Policy") {
+                        
+                        for(const toPolicyRelation of Object.values(modelValue.relations)) {
+                            if(toPolicyRelation && toPolicyRelation._type === "org.uengine.modeling.model.Relation" &&
+                                toPolicyRelation.to === toCommandRelation.from && toPolicyRelation.sourceElement._type === "org.uengine.modeling.model.Event") {
+                                delete modelValue.relations[toPolicyRelation.id]
+                            }
+                        }
+
+                        delete modelValue.relations[toCommandRelation.id]
+                        delete modelValue.elements[toCommandRelation.from]
+                    }
+                }
+
+            }
+        }
+
+        const deleteEvent = (modelValue, query) => {
+            const deleteCommandToEventRelations = (modelValue, eventId) => {
+                for(const toEventRelation of Object.values(modelValue.relations)) {
+                    if(toEventRelation && toEventRelation._type === "org.uengine.modeling.model.Relation" && 
+                    toEventRelation.to === eventId && toEventRelation.sourceElement._type === "org.uengine.modeling.model.Command") {
+                        delete modelValue.relations[toEventRelation.id]
+                    }
+                }
+            }
+
+            clearRelatedPolicies(modelValue, query.ids.eventId)
+            deleteCommandToEventRelations(modelValue, query.ids.eventId)
+            delete modelValue.elements[query.ids.eventId]
+        }
+
+        const getRelatedActor = (modelValue, commandId) => {
+            const commandObject = modelValue.elements[commandId]
+            if(!commandObject) return
+
+            for(const actorObject of Object.values(modelValue.elements)) {
+                if(actorObject && actorObject.boundedContext &&
+                   actorObject.boundedContext.id === commandObject.boundedContext.id &&
+                   actorObject._type === "org.uengine.modeling.model.Actor" &&
+                   (commandObject.elementView.x - 200 <= actorObject.elementView.x && actorObject.elementView.x <= commandObject.elementView.x) &&
+                   (commandObject.elementView.y - Math.round(commandObject.elementView.width/2) <= actorObject.elementView.y && actorObject.elementView.y <= commandObject.elementView.y + Math.round(commandObject.elementView.width/2))
+                   ) {
+                    return actorObject
+                }
+            }
+        }
+
+        const deleteActor = (modelValue, commandId) => {
+            const relatedActor = getRelatedActor(modelValue, commandId)
+            if(!relatedActor) return
+            delete modelValue.elements[relatedActor.id]
+        }
+
+        const deleteCommand = (modelValue, query) => {
+            const deleteCommandToEventRelation = (modelValue, commandId) => {
+                for(const toEventRelation of Object.values(modelValue.relations)) {
+                    if(toEventRelation && toEventRelation._type === "org.uengine.modeling.model.Relation" && 
+                    toEventRelation.from === commandId && toEventRelation.targetElement._type === "org.uengine.modeling.model.Event") {
+                        delete modelValue.relations[toEventRelation.id]
+                    }
+                }  
+            }
+
+            deleteCommandToEventRelation(modelValue, query.ids.commandId)
+            clearRelatedPolicies(modelValue, query.ids.commandId, "command")
+            deleteActor(modelValue, query.ids.commandId)
+            delete modelValue.elements[query.ids.commandId]
+        }
+
+        const getAggregateRootObject = (aggregateObject) => {
+            if(!aggregateObject.aggregateRoot || !aggregateObject.aggregateRoot.entities || !aggregateObject.aggregateRoot.entities.elements) return null
+            return Object.values(aggregateObject.aggregateRoot.entities.elements).find(entity => entity.isAggregateRoot)
+        }
+
+        const deleteAggregateOrProperty = (modelValue, query) => {
+            const deleteAggregateProperty = (modelValue, query) => {
+                const aggregateObject = modelValue.elements[query.ids.aggregateId]
+                const aggregateRoot = getAggregateRootObject(aggregateObject)
+                const propertyNameToFilter = query.args.properties.map(property => property.name)
+    
+                aggregateObject.aggregateRoot.fieldDescriptors = aggregateObject.aggregateRoot.fieldDescriptors.filter(fd => !propertyNameToFilter.includes(fd.name))
+                if(aggregateRoot) aggregateRoot.fieldDescriptors = aggregateRoot.fieldDescriptors.filter(fd => !propertyNameToFilter.includes(fd.name))
+            
+                for(const element of Object.values(modelValue.elements)) {
+                    if(element && element.aggregate && element.aggregate.id === aggregateObject.id) {
+                        if(element._type === "org.uengine.modeling.model.Command" || 
+                            element._type === "org.uengine.modeling.model.Event") {
+                            element.fieldDescriptors = element.fieldDescriptors.filter(fd => !propertyNameToFilter.includes(fd.name))
+                        }
+                    }
+                }
+            }
+
+            const deleteAggregate = (modelValue, query) => {
+                for(const element of Object.values(modelValue.elements)) {
+                    if(element && element.aggregate && element.aggregate.id === query.ids.aggregateId) {
+                        if(element._type === "org.uengine.modeling.model.Event") {
+                            deleteEvent(modelValue, {ids:{eventId:element.id}})
+                        }
+                        else if(element._type === "org.uengine.modeling.model.Command") {
+                            deleteCommand(modelValue, {ids:{commandId:element.id}})
+                        }
+                    }
+                }
+
+                delete modelValue.elements[query.ids.aggregateId]
+            }
+
+            if(query.args && query.args.properties) deleteAggregateProperty(modelValue, query)
+            else deleteAggregate(modelValue, query)
+        }
+        
 
         const makeEventStormingRelationObjectBase = (fromObject, toObject) => {
             const elementUUIDtoUse = getUUID()
@@ -328,20 +482,38 @@ class DebeziumTransactionQuery {
                 }
 
                 const getValidPosition = (modelValue, boundedContextObject) => {
+                    const getMaxXBoundedContextInMaxYRange = (boundedContexts) => {
+                        const maxY = Math.max(...boundedContexts.map(bc => bc.elementView.y))
+                        const maxYBoundedContext = boundedContexts.filter(bc => bc.elementView.y === maxY)[0]
+    
+                        let boundContextsInMaxYRange = []
+                        for(let boundedContext of boundedContexts) {
+                            if(boundedContext.elementView.y >= maxYBoundedContext.elementView.y - maxYBoundedContext.elementView.height/2 &&
+                               boundedContext.elementView.y <= maxYBoundedContext.elementView.y + maxYBoundedContext.elementView.height/2)
+                                boundContextsInMaxYRange.push(boundedContext)
+                        }
+
+                        let maxXPos = Math.max(...boundContextsInMaxYRange.map(bc => bc.elementView.x))
+                        return boundContextsInMaxYRange.filter(bc => bc.elementView.x === maxXPos)[0]
+                    }
+
+                    const BOUNDED_CONTEXT_MAX_X_LIMIT = 1500
                     const boundedContexts = getAllBoundedContexts(modelValue)
                     if(boundedContexts.length <= 0) return {x: 450, y: 450}
 
-                    const maxX = Math.max(...boundedContexts.map(bc => bc.elementView.x))
-                    const minY = Math.min(...boundedContexts.map(bc => bc.elementView.y))
-
-                    const maxXBoundedContext = boundedContexts.filter(bc => bc.elementView.x === maxX)[0]
-                    return {x: maxX + Math.round(maxXBoundedContext.elementView.width/2) 
-                               + Math.round(boundedContextObject.elementView.width/2) + 25, y: minY}
+                    const maxXBoundedContextInMaxYRange = getMaxXBoundedContextInMaxYRange(boundedContexts)
+                    const xPosInMaxYRange = maxXBoundedContextInMaxYRange.elementView.x + maxXBoundedContextInMaxYRange.elementView.width/2 + 
+                                            boundedContextObject.elementView.width/2 + 25
+                    
+                    if(xPosInMaxYRange <= BOUNDED_CONTEXT_MAX_X_LIMIT)
+                        return {x: xPosInMaxYRange, y: maxXBoundedContextInMaxYRange.elementView.y}
+                    else
+                        return {x: 450, y: maxXBoundedContextInMaxYRange.elementView.y + maxXBoundedContextInMaxYRange.elementView.height/2 + boundedContextObject.elementView.height/2 + 25}
                 }
 
                 
                 let boundedContextObject = getBoundedContextBase(
-                    userInfo, query.args.boundedContextName, query.args.boundedContextAlias, 
+                    userInfo, query.args.boundedContextName, "", 
                     getValidPortNumber(modelValue), 0, 0, query.ids.boundedContextId
                 )
 
@@ -352,9 +524,46 @@ class DebeziumTransactionQuery {
                 modelValue.elements[boundedContextObject.id] = boundedContextObject
             }
 
+            const updateBoundedContext = (modelValue, query) => {
+                const boundedContextObject = modelValue.elements[query.ids.boundedContextId]
+                if(query.args.boundedContextName) boundedContextObject.name = query.args.boundedContextName
+            }
+
+            const deleteBoundedContext = (modelValue, query) => {
+                for(const element of Object.values(modelValue.elements)) {
+                    if(element && element.boundedContext && element.boundedContext.id === query.ids.boundedContextId) {
+                        deleteAggregateOrProperty(modelValue, {ids:{aggregateId:element.id}})
+                    }
+                }
+
+                delete modelValue.elements[query.ids.boundedContextId]
+            }
+
+            const initObjectAlias = (modelValue, query) => {
+                if(modelValue.elements[query.ids.boundedContextId])
+                    this.objectAlias = modelValue.elements[query.ids.boundedContextId].name
+                else
+                    callbacks.afterAllObjectAppliedCallBacks.push(() => {
+                        this.objectAlias = modelValue.elements[query.ids.boundedContextId] ? modelValue.elements[query.ids.boundedContextId].name : null
+                    })
+            }
+
+            initObjectAlias(modelValue, query)
             switch(query.action) {
-                case "new":
-                    createNewBoundedContext(modelValue, userInfo, query);
+                case "update":
+                    if(modelValue.elements[query.ids.boundedContextId]) {
+                        updateBoundedContext(modelValue, query)
+                        this.lastOp = "update"
+                    }
+                    else {
+                        createNewBoundedContext(modelValue, userInfo, query)
+                        this.lastOp = "create"
+                    }
+                    break;
+                
+                case "delete":
+                    deleteBoundedContext(modelValue, query)
+                    this.lastOp = "delete"
                     break;
             }
         }
@@ -437,13 +646,13 @@ class DebeziumTransactionQuery {
                 const getFileDescriptors = (queryProperties) => {
                     return queryProperties.map((property) => {
                         return {
-                            "className": property.type,
+                            "className": property.type ? property.type : "String",
                             "isCopy": false,
-                            "isKey": property.isKey,
+                            "isKey": property.isKey ? true : false,
                             "name": property.name,
                             "nameCamelCase": changeCase.camelCase(property.name),
                             "namePascalCase": changeCase.pascalCase(property.name),
-                            "displayName": property.displayName,
+                            "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         }
                     })
@@ -489,11 +698,11 @@ class DebeziumTransactionQuery {
                 const getFileDescriptorsForRootAggegate = (queryProperties) => {
                     return queryProperties.map((property) => {
                         return {
-                            "className": property.type,
+                            "className": property.type ? property.type : "String",
                             "isCopy": false,
-                            "isKey": property.isKey,
+                            "isKey": property.isKey ? true : false,
                             "name": property.name,
-                            "displayName": property.displayName,
+                            "displayName": "",
                             "nameCamelCase": changeCase.camelCase(property.name),
                             "namePascalCase": changeCase.pascalCase(property.name),
                             "_type": "org.uengine.model.FieldDescriptor",
@@ -547,7 +756,7 @@ class DebeziumTransactionQuery {
                 }
 
                 let aggregateObject = getAggregateBase(
-                    userInfo, query.args.aggregateName, query.args.aggregateAlias, 
+                    userInfo, query.args.aggregateName, "", 
                     query.ids.boundedContextId, 0, 0, query.ids.aggregateId
                 )
 
@@ -566,14 +775,212 @@ class DebeziumTransactionQuery {
                 aggregateObject.aggregateRoot.entities.elements[rootAggregateObject.id] = rootAggregateObject
             }
 
+            const updateAggregate = (modelValue, query) => {
+                const updateName = (aggregateObject, aggregateRoot, name) => {
+                    aggregateObject.name = name
+                    aggregateObject.displayName = ""
+                    aggregateObject.nameCamelCase = changeCase.camelCase(name)
+                    aggregateObject.namePascalCase = changeCase.pascalCase(name)
+
+                    if(aggregateRoot) {
+                        aggregateRoot.name = name
+                        aggregateRoot.nameCamelCase = changeCase.camelCase(name)
+                        aggregateRoot.namePascalCase = changeCase.pascalCase(name)
+                        aggregateRoot.namePlural = name + "s"
+                    }
+                }
+
+                const updateProperties = (modelValue, aggregateObject, aggregateRoot, properties) => {
+                    const updateFieldDescriptors = (fieldDescriptors, property, isAggregateRoot=false) => {
+                        const fieldDescriptor = fieldDescriptors.find(fd => fd.name === property.name)
+                        if(fieldDescriptor) {
+                            if(property.type) fieldDescriptor.className = property.type
+                            if(property.isKey) fieldDescriptor.isKey = property.isKey
+                        } else {
+                            if(isAggregateRoot) {
+                                fieldDescriptors.push({
+                                    "className": property.type ? property.type : "String",
+                                    "isCopy": false,
+                                    "isKey": property.isKey ? true : false,
+                                    "name": property.name,
+                                    "nameCamelCase": changeCase.camelCase(property.name),
+                                    "namePascalCase": changeCase.pascalCase(property.name),
+                                    "displayName": "",
+                                    "_type": "org.uengine.model.FieldDescriptor",
+                                    "inputUI": null,
+                                    "options": null
+                                })
+                            }
+                            else {
+                                fieldDescriptors.push({
+                                    "className": property.type ? property.type : "String",
+                                    "isCopy": false,
+                                    "isKey": property.isKey ? true : false,
+                                    "name": property.name,
+                                    "nameCamelCase": changeCase.camelCase(property.name),
+                                    "namePascalCase": changeCase.pascalCase(property.name),
+                                    "displayName": "",
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                })
+                            }
+                        }
+                    }
+
+                    for(const property of properties) {
+                        updateFieldDescriptors(aggregateObject.aggregateRoot.fieldDescriptors, property)
+                        if(aggregateRoot) updateFieldDescriptors(aggregateRoot.fieldDescriptors, property, true)
+
+                        for(const element of Object.values(modelValue.elements)) {
+                            if(element && element.aggregate && element.aggregate.id === aggregateObject.id) {
+                                if(element._type === "org.uengine.modeling.model.Command" || 
+                                   element._type === "org.uengine.modeling.model.Event") {
+                                    updateFieldDescriptors(element.fieldDescriptors, property)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                const aggregateObject = modelValue.elements[query.ids.aggregateId]
+                const aggregateRoot = getAggregateRootObject(aggregateObject)
+                if(query.args.aggregateName) updateName(aggregateObject, aggregateRoot, query.args.aggregateName)
+                if(query.args.properties) updateProperties(modelValue, aggregateObject, aggregateRoot, query.args.properties)
+            }
+
+            const initObjectAlias = (modelValue, query) => {
+                if(modelValue.elements[query.ids.aggregateId])
+                    this.objectAlias = modelValue.elements[query.ids.aggregateId].name
+                else
+                    callbacks.afterAllObjectAppliedCallBacks.push(() => {
+                        this.objectAlias = modelValue.elements[query.ids.aggregateId] ? modelValue.elements[query.ids.aggregateId].name : null
+                    })
+            }
+
+            initObjectAlias(modelValue, query)
             switch(query.action) {
-                case "new":
-                    createNewAggregate(modelValue, userInfo, query);
+                case "update":
+                    if(modelValue.elements[query.ids.aggregateId]) {
+                        updateAggregate(modelValue, query)
+                        this.lastOp = "update"
+                    }
+                    else {
+                        createNewAggregate(modelValue, userInfo, query)
+                        this.lastOp = "create"
+                    }
+                    break;
+                
+                case "delete":
+                    deleteAggregateOrProperty(modelValue, query)
+                    this.lastOp = "delete"
                     break;
             }
         }
 
         const applyToEvent = (modelValue, userInfo, query) => {
+            const createNewPolicy = (modelValue, userInfo, eventObject, commandId) => {
+                const getPolicyBase = (userInfo, name, displayName, boundedContextId, x, y, elementUUID) => {
+                    const elementUUIDtoUse = elementUUID ? elementUUID : getUUID()
+                    return {
+                        id: elementUUIDtoUse,
+                        author: userInfo.uid,
+                        boundedContext: {
+                            id: boundedContextId
+                        },
+                        description: null,
+                        elementView: {
+                            height: 115,
+                            width: 100,
+                            x: x,
+                            y: y,
+                            id: elementUUIDtoUse,
+                            style: "{}",
+                            _type: "org.uengine.modeling.model.Policy"
+                        },
+                        fieldDescriptors: [],
+                        hexagonalView: {
+                            height: 20,
+                            id: elementUUIDtoUse,
+                            style: "{}",
+                            subWidth: 100,
+                            width: 20,
+                            _type: "org.uengine.modeling.model.PolicyHexagonal"
+                        },
+                        isSaga: false,
+                        name: name,
+                        displayName: displayName,
+                        nameCamelCase: changeCase.camelCase(name),
+                        namePascalCase: changeCase.pascalCase(name),
+                        namePlural: "",
+                        oldName: "",
+                        rotateStatus: false,
+                        _type: "org.uengine.modeling.model.Policy"
+                    } 
+                }
+
+                const getValidPosition = (modelValue, aggregateId, policyObject) => {
+                    const getRelatedCommands = (modelValue, policyObject) => {
+                        let relatedCommands = []
+                        for(const relation of Object.values(modelValue.relations)) {
+                            if(relation && relation._type === "org.uengine.modeling.model.Relation" && 
+                              (relation.sourceElement.id === policyObject.id || relation.sourceElement.id === policyObject.elementView.id) && 
+                              (relation.targetElement._type === "org.uengine.modeling.model.Command")) {
+                                relatedCommands.push(modelValue.elements[relation.targetElement.id])
+                            }
+                        }
+                        return relatedCommands
+                    }
+
+                    const relatedCommands = getRelatedCommands(modelValue, policyObject)
+                    if(relatedCommands.length <= 0) {
+                        const currentAggregate = modelValue.elements[aggregateId]
+                        return {
+                            x: currentAggregate.elementView.x - Math.round(currentAggregate.elementView.width/2) - 148,
+                            y: currentAggregate.elementView.y - Math.round(currentAggregate.elementView.height/2)
+                        }
+                    }
+                    else {
+                        const minX = Math.min(...relatedCommands.map(command => command.elementView.x))
+                        const maxY = Math.max(...relatedCommands.map(command => command.elementView.y))
+
+                        const maxYCommand = relatedCommands.filter(command => command.elementView.y === maxY)[0]
+                        return {
+                            x: minX - Math.round(policyObject.elementView.width/2) - Math.round(maxYCommand.elementView.width/2) - 19,
+                            y: maxY
+                        }
+                    }
+                }
+
+                const makeEventToPolicyRelation = (modelValue, eventObject, policyObject) => {
+                    const eventPolicyRelation = makeEventStormingRelationObjectBase(
+                        modelValue.elements[eventObject.id], modelValue.elements[policyObject.id])
+                    modelValue.relations[eventPolicyRelation.id] = eventPolicyRelation
+                }
+
+                const makePolicyToCommandRelation = (modelValue, policyObject, commandObject) => {
+                    const policyCommandRelation = makeEventStormingRelationObjectBase(
+                        modelValue.elements[policyObject.id], modelValue.elements[commandObject.id])
+                    modelValue.relations[policyCommandRelation.id] = policyCommandRelation
+                }
+
+                const commandObject = modelValue.elements[commandId]
+                if(!commandObject || !eventObject) return
+                if(commandObject.aggregate.id === eventObject.aggregate.id) return
+
+                const policyObject = getPolicyBase(
+                    userInfo, commandObject.name + " Policy", commandObject.name + " Policy", 
+                    commandObject.boundedContext.id, 0, 0
+                )
+
+                modelValue.elements[policyObject.id] = policyObject
+
+                makeEventToPolicyRelation(modelValue, eventObject, policyObject)
+                makePolicyToCommandRelation(modelValue, policyObject, commandObject)
+
+                const VALID_POSITION = getValidPosition(modelValue, commandObject.aggregate.id, policyObject)
+                policyObject.elementView.x = VALID_POSITION.x
+                policyObject.elementView.y = VALID_POSITION.y
+            }
+
             const createNewEvent = (modelValue, userInfo, query) => {
                 const getEventBase = (userInfo, name, displayName, boundedContextId, aggregateId, x, y, elementUUID) => {
                     const elementUUIDtoUse = elementUUID ? elementUUID : getUUID()
@@ -649,15 +1056,15 @@ class DebeziumTransactionQuery {
                     }
                 }
 
-                const getFileDescriptors = (queryProperties) => {
-                    return queryProperties.map((property) => {
+                const getFileDescriptors = (modelValue, query) => {
+                    return modelValue.elements[query.ids.aggregateId].aggregateRoot.fieldDescriptors.map((property) => {
                         return {
-                            "className": property.type,
+                            "className": property.className,
                             "isCopy": false,
-                            "isKey": property.isKey,
+                            "isKey": property.isKey ? true : false,
                             "name": property.name,
-                            "nameCamelCase": changeCase.camelCase(property.name),
-                            "namePascalCase": changeCase.pascalCase(property.name),
+                            "nameCamelCase": property.nameCamelCase,
+                            "namePascalCase": property.namePascalCase,
                             "displayName": property.displayName,
                             "_type": "org.uengine.model.FieldDescriptor"
                         }
@@ -665,7 +1072,7 @@ class DebeziumTransactionQuery {
                 }
 
                 const eventObject = getEventBase(
-                    userInfo, query.args.eventName, query.args.eventAlias, 
+                    userInfo, query.args.eventName, "", 
                     query.ids.boundedContextId, query.ids.aggregateId, 0, 0, query.ids.eventId
                 )
 
@@ -673,13 +1080,61 @@ class DebeziumTransactionQuery {
                 eventObject.elementView.x = VALID_POSITION.x
                 eventObject.elementView.y = VALID_POSITION.y
 
-                eventObject.fieldDescriptors = getFileDescriptors(query.args.properties)
+                eventObject.fieldDescriptors = getFileDescriptors(modelValue, query)
                 modelValue.elements[eventObject.id] = eventObject
+
+                callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
+                    query.args.outputCommandIds.forEach(commandId => {
+                        createNewPolicy(modelValue, userInfo, eventObject, commandId)
+                    })
+                })
             }
 
+            const updateEvent = (modelValue, userInfo, query) => {
+                const updateName = (eventObject, name) => {
+                    eventObject.name = name
+                    eventObject.displayName = ""
+                    eventObject.nameCamelCase = changeCase.camelCase(name)
+                    eventObject.namePascalCase = changeCase.pascalCase(name)
+                }
+
+                const updatePolicy = (modelValue, userInfo, eventObject, outputCommandIds) => {
+                    clearRelatedPolicies(modelValue, eventObject.id)
+                    outputCommandIds.forEach(commandId => {
+                        createNewPolicy(modelValue, userInfo, eventObject, commandId)
+                    })
+                }
+
+                const eventObject = modelValue.elements[query.ids.eventId]
+                if(query.args.eventName) updateName(eventObject, query.args.eventName)
+                if(query.args.outputCommandIds) updatePolicy(modelValue, userInfo, eventObject, query.args.outputCommandIds)
+            }
+
+            const initObjectAlias = (modelValue, query) => {
+                if(modelValue.elements[query.ids.eventId])
+                    this.objectAlias = modelValue.elements[query.ids.eventId].name
+                else
+                    callbacks.afterAllObjectAppliedCallBacks.push(() => {
+                        this.objectAlias = modelValue.elements[query.ids.eventId] ? modelValue.elements[query.ids.eventId].name : null
+                    })
+            }
+
+            initObjectAlias(modelValue, query)
             switch(query.action) {
-                case "new":
-                    createNewEvent(modelValue, userInfo, query);
+                case "update":
+                    if(modelValue.elements[query.ids.eventId]) {
+                        updateEvent(modelValue, userInfo, query)
+                        this.lastOp = "update"
+                    }
+                    else {
+                        createNewEvent(modelValue, userInfo, query)
+                        this.lastOp = "create"
+                    }
+                    break;
+                
+                case "delete":
+                    deleteEvent(modelValue, query)
+                    this.lastOp = "delete"
                     break;
             }
         }
@@ -740,8 +1195,8 @@ class DebeziumTransactionQuery {
                     }
                 }
 
-                const getOutputEventNames = (modelValue, toEventIds) => {
-                    return toEventIds.map(eventId => {
+                const getOutputEventNames = (modelValue, outputEventIds) => {
+                    return outputEventIds.map(eventId => {
                         return modelValue.elements[eventId].name
                     })
                 }
@@ -772,15 +1227,15 @@ class DebeziumTransactionQuery {
                     }
                 }
 
-                const getFileDescriptors = (queryProperties) => {
-                    return queryProperties.map((property) => {
+                const getFileDescriptors = (modelValue, query) => {
+                    return modelValue.elements[query.ids.aggregateId].aggregateRoot.fieldDescriptors.map((property) => {
                         return {
-                            "className": property.type,
+                            "className": property.className,
                             "isCopy": false,
-                            "isKey": property.isKey,
+                            "isKey": property.isKey ? true : false,
                             "name": property.name,
-                            "nameCamelCase": changeCase.camelCase(property.name),
-                            "namePascalCase": changeCase.pascalCase(property.name),
+                            "nameCamelCase": property.nameCamelCase,
+                            "namePascalCase": property.namePascalCase,
                             "displayName": property.displayName,
                             "_type": "org.uengine.model.FieldDescriptor"
                         }
@@ -789,19 +1244,10 @@ class DebeziumTransactionQuery {
 
                 const makeCommandToEventRelation = (commandObject, query) => {
                     callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
-                        query.args.toEventIds.forEach(eventId => {
+                        query.args.outputEventIds.forEach(eventId => {
                             const eventObject = modelValue.elements[eventId]
                             const commandEventRelation = makeEventStormingRelationObjectBase(commandObject, eventObject)
                             modelValue.relations[commandEventRelation.id] = commandEventRelation
-                        })
-                    })
-                }
-
-                const makePolicyToCommandRelation = (commandObject, query) => {
-                    callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
-                        query.args.fromPolicyIds.forEach(policyId => {
-                            const policyCommandRelation = makeEventStormingRelationObjectBase(modelValue.elements[policyId], commandObject)
-                            modelValue.relations[policyCommandRelation.id] = policyCommandRelation
                         })
                     })
                 }
@@ -846,7 +1292,14 @@ class DebeziumTransactionQuery {
                         }
                     }
 
-                    if(query.args.fromPolicyIds.length > 0) return
+                    const getRelatedPolicies = (modelValue, commandObject) => {
+                        return Object.values(modelValue.relations).filter(relation => {
+                            return relation && relation.targetElement.id === commandObject.id && 
+                                relation.sourceElement._type === "org.uengine.modeling.model.Policy"
+                        })
+                    }
+
+                    if(getRelatedPolicies(modelValue, commandObject).length > 0) return
                     if(!(query.args.actor)) return
                     
                     const actorBase = getActorBase(userInfo, query.args.actor, query.ids.boundedContextId, 0, 0)
@@ -858,179 +1311,91 @@ class DebeziumTransactionQuery {
                 }
 
                 const commandObject = getCommandBase(
-                    userInfo, query.args.commandName, query.args.commandAlias, 
+                    userInfo, query.args.commandName, "", 
                     query.args.api_verb, [], query.ids.boundedContextId,
                     query.ids.aggregateId, 0, 0, query.ids.commandId
                 )
                 callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
-                    commandObject.outputEvents = getOutputEventNames(modelValue, query.args.toEventIds)
+                    commandObject.outputEvents = getOutputEventNames(modelValue, query.args.outputEventIds)
                 })
                 makeCommandToEventRelation(commandObject, query)
-                makePolicyToCommandRelation(commandObject, query)
 
                 const VALID_POSITION = getValidPosition(modelValue, query, commandObject)
                 commandObject.elementView.x = VALID_POSITION.x
                 commandObject.elementView.y = VALID_POSITION.y
-                makeActorToCommand(modelValue, query, commandObject, userInfo)
+                callbacks.afterAllRelationAppliedCallBacks.push((modelValue) => {
+                    makeActorToCommand(modelValue, query, commandObject, userInfo)
+                })
 
-                commandObject.fieldDescriptors = getFileDescriptors(query.args.properties)
+                commandObject.fieldDescriptors = getFileDescriptors(modelValue, query)
                 modelValue.elements[commandObject.id] = commandObject
             }
 
-            switch(query.action) {
-                case "new":
-                    createNewCommand(modelValue, userInfo, query);
-                    break;
-            }
-        }
-
-        const applyToPolicy = (modelValue, userInfo, query) => {
-            const createNewPolicy = (modelValue, userInfo, query) => {
-                const getPolicyBase = (userInfo, name, displayName, boundedContextId, x, y, elementUUID) => {
-                    const elementUUIDtoUse = elementUUID ? elementUUID : getUUID()
-                    return {
-                        id: elementUUIDtoUse,
-                        author: userInfo.uid,
-                        boundedContext: {
-                            id: boundedContextId
-                        },
-                        description: null,
-                        elementView: {
-                            height: 115,
-                            width: 100,
-                            x: x,
-                            y: y,
-                            id: elementUUIDtoUse,
-                            style: "{}",
-                            _type: "org.uengine.modeling.model.Policy"
-                        },
-                        fieldDescriptors: [],
-                        hexagonalView: {
-                            height: 20,
-                            id: elementUUIDtoUse,
-                            style: "{}",
-                            subWidth: 100,
-                            width: 20,
-                            _type: "org.uengine.modeling.model.PolicyHexagonal"
-                        },
-                        isSaga: false,
-                        name: name,
-                        displayName: displayName,
-                        nameCamelCase: changeCase.camelCase(name),
-                        namePascalCase: changeCase.pascalCase(name),
-                        namePlural: "",
-                        oldName: "",
-                        rotateStatus: false,
-                        _type: "org.uengine.modeling.model.Policy"
-                    } 
+            const updateCommand = (modelValue, userInfo, query) => {
+                const updateName = (commandObject, name) => {
+                    commandObject.name = name
+                    commandObject.displayName = ""
+                    commandObject.nameCamelCase = changeCase.camelCase(name)
+                    commandObject.namePascalCase = changeCase.pascalCase(name)
                 }
 
-                const getValidPosition = (modelValue, query, policyObject) => {
-                    const getRelatedCommands = (modelValue, policyObject) => {
-                        let relatedCommands = []
-                        for(const relation of Object.values(modelValue.relations)) {
-                            if(relation && relation._type === "org.uengine.modeling.model.Relation" && 
-                              (relation.sourceElement.id === policyObject.id || relation.sourceElement.id === policyObject.elementView.id) && 
-                              (relation.targetElement._type === "org.uengine.modeling.model.Command")) {
-                                relatedCommands.push(modelValue.elements[relation.targetElement.id])
-                            }
-                        }
-                        return relatedCommands
-                    }
-
-                    const relatedCommands = getRelatedCommands(modelValue, policyObject)
-                    if(relatedCommands.length <= 0) {
-                        const currentAggregate = modelValue.elements[query.ids.aggregateId]
-                        return {
-                            x: currentAggregate.elementView.x - Math.round(currentAggregate.elementView.width/2) - 148,
-                            y: currentAggregate.elementView.y - Math.round(currentAggregate.elementView.height/2)
+                const updateOutputEventIds = (commandObject, outputEventIds) => {
+                    for(const toEventRelation of Object.values(modelValue.relations)) {
+                        if(toEventRelation && toEventRelation._type === "org.uengine.modeling.model.Relation" &&
+                           toEventRelation.from === commandObject.id && toEventRelation.targetElement._type === "org.uengine.modeling.model.Event") {
+                           delete modelValue.relations[toEventRelation.id]
                         }
                     }
-                    else {
-                        const minX = Math.min(...relatedCommands.map(command => command.elementView.x))
-                        const maxY = Math.max(...relatedCommands.map(command => command.elementView.y))
 
-                        const maxYCommand = relatedCommands.filter(command => command.elementView.y === maxY)[0]
-                        return {
-                            x: minX - Math.round(policyObject.elementView.width/2) - Math.round(maxYCommand.elementView.width/2) - 19,
-                            y: maxY
-                        }
-                    }
-                }
-
-                const makeEventToPolicyRelation = (policyObject, query) => {
-                    const getEventObjectsFromEventName = (modelValue, eventName) => {
-                        let eventObjects = []
-                        for(const element of Object.values(modelValue.elements)) {
-                            if(element && element._type === "org.uengine.modeling.model.Event" && element.name === eventName) {
-                                eventObjects.push(element)
-                            }
-                        }
-                        return eventObjects
-                    }
-
-                    callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
-                        query.args.fromEventNames.forEach(eventName => {
-                            const eventObjects = getEventObjectsFromEventName(modelValue, eventName)
-                            eventObjects.forEach(eventObject => {
-                                const eventPolicyRelation = makeEventStormingRelationObjectBase(eventObject, policyObject)
-                                modelValue.relations[eventPolicyRelation.id] = eventPolicyRelation
-                            })
-                        })
+                    outputEventIds.forEach(eventId => {
+                        const eventObject = modelValue.elements[eventId]
+                        const commandEventRelation = makeEventStormingRelationObjectBase(commandObject, eventObject)
+                        modelValue.relations[commandEventRelation.id] = commandEventRelation
                     })
                 }
 
-                const policyObject = getPolicyBase(
-                    userInfo, query.args.policyName, query.args.policyAlias, 
-                    query.ids.boundedContextId, 0, 0, query.ids.policyId
-                )
-
-                makeEventToPolicyRelation(policyObject, query)
-                callbacks.afterAllRelationAppliedCallBacks.push((modelValue) => {
-                    const VALID_POSITION = getValidPosition(modelValue, query, policyObject)
-                    policyObject.elementView.x = VALID_POSITION.x
-                    policyObject.elementView.y = VALID_POSITION.y
-                })
-
-                modelValue.elements[policyObject.id] = policyObject
+                const commandObject = modelValue.elements[query.ids.commandId]
+                if(query.args.commandName) updateName(commandObject, query.args.commandName)
+                if(query.args.api_verb) {
+                    commandObject.controllerInfo.method = query.args.api_verb
+                    commandObject.isRestRepository = (query.args.api_verb == 'PUT' ? false : true)
+                }
+                if(query.args.actor) {
+                    const relatedActor = getRelatedActor(modelValue, commandObject.id)
+                    if(relatedActor) relatedActor.name = query.args.actor
+                }
+                if(query.args.outputEventIds) updateOutputEventIds(commandObject, query.args.outputEventIds)
             }
 
+            const initObjectAlias = (modelValue, query) => {
+                if(modelValue.elements[query.ids.commandId])
+                    this.objectAlias = modelValue.elements[query.ids.commandId].name
+                else
+                    callbacks.afterAllObjectAppliedCallBacks.push(() => {
+                        this.objectAlias = modelValue.elements[query.ids.commandId] ? modelValue.elements[query.ids.commandId].name : null
+                    })
+            }
+
+            initObjectAlias(modelValue, query)
             switch(query.action) {
-                case "new":
-                    createNewPolicy(modelValue, userInfo, query);
+                case "update":
+                    if(modelValue.elements[query.ids.commandId]) {
+                        updateCommand(modelValue, userInfo, query)
+                        this.lastOp = "update"
+                    }
+                    else {
+                        createNewCommand(modelValue, userInfo, query)
+                        this.lastOp = "create"
+                    }
+                    break;
+                
+                case "delete":
+                    deleteCommand(modelValue, query)
+                    this.lastOp = "delete"
                     break;
             }
         }
 
-
-        const makeUMLRelationObjectBase = (fromObject, toObject) => {
-            const elementUUIDtoUse = getUUID()
-            const FROM_OBJECT_ID = fromObject.id ? fromObject.id : fromObject.elementView.id
-            const TO_OBJECT_ID = toObject.id ? toObject.id : toObject.elementView.id
-
-            return {
-                "name": "",
-                "id": elementUUIDtoUse,
-                "_type": "org.uengine.uml.model.Relation",
-                "sourceElement": fromObject,
-                "targetElement": toObject,
-                "from": FROM_OBJECT_ID,
-                "to": TO_OBJECT_ID,
-                "selected": false,
-                "relationView": {
-                    "id": elementUUIDtoUse,
-                    "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                    "from": FROM_OBJECT_ID,
-                    "to": TO_OBJECT_ID,
-                    "needReconnect": true
-                },
-                "sourceMultiplicity": "1",
-                "targetMultiplicity": "1",
-                "relationType": "Association",
-                "fromLabel": "",
-                "toLabel": ""
-            }
-        }
 
         const getEntitiesForAggregate = (modelValue, aggregateId) => {
             const entities = modelValue.elements[aggregateId].aggregateRoot.entities
@@ -1039,14 +1404,51 @@ class DebeziumTransactionQuery {
             return entities
         }
 
-        const getRootAggregate = (aggregate) => {
-            for(const element of Object.values(aggregate.aggregateRoot.entities.elements)) {
-                if(element && element._type === "org.uengine.uml.model.Class" && element.isAggregateRoot)
-                    return element
+        const deleteElementPropertyRelatedToAggregate = (modelValue, aggregateObject, targetObject) => {
+            for(const element of Object.values(modelValue.elements)) {
+                if(element && element.aggregate && element.aggregate.id === aggregateObject.id) {
+                    if(element._type === "org.uengine.modeling.model.Command" || 
+                        element._type === "org.uengine.modeling.model.Event") {
+                        element.fieldDescriptors = element.fieldDescriptors.filter(property => property.className !== targetObject.name)
+                    }
+                }
             }
         }
 
-        const applyToEnumeration = (modelValue, userInfo, query) => {
+        const deleteElementInAggegatePerfectly = (aggregateRootObject, targetObject) => {
+            const deleteRelatedPropertiesInAggregate = (aggregateRootObject, targetObject) => {
+                aggregateRootObject.fieldDescriptors = aggregateRootObject.fieldDescriptors.filter(property => property.className !== targetObject.name)
+            
+                const aggregateRootEntity = Object.values(aggregateRootObject.entities.elements).find(entity => entity.isAggregateRoot)
+                if(!aggregateRootEntity) return
+                aggregateRootEntity.fieldDescriptors = aggregateRootEntity.fieldDescriptors.filter(property => property.className !== targetObject.name)
+            }
+    
+            const deleteRelationsInAggregate = (aggregateRootObject, targetObject) => {
+                const targetEntites = aggregateRootObject.entities
+                if(targetEntites.relations) {
+                    for(let relation of Object.values(targetEntites.relations)) {
+                        if(relation && relation.sourceElement && relation.targetElement) {
+                            if(relation.sourceElement.id === targetObject.id || relation.targetElement.id === targetObject.id) {
+                                delete targetEntites.relations[relation.id]
+                            }
+                        }
+                    }
+                }
+            }
+    
+            const deleteElementInAggregate = (aggregateRootObject, targetObject) => {
+                if(aggregateRootObject.entities && aggregateRootObject.entities.elements) {
+                    delete aggregateRootObject.entities.elements[targetObject.id]
+                }
+            }
+
+            deleteRelatedPropertiesInAggregate(aggregateRootObject, targetObject)
+            deleteRelationsInAggregate(aggregateRootObject, targetObject)
+            deleteElementInAggregate(aggregateRootObject, targetObject)
+        }
+
+        const applyToEnumeration = (modelValue, query) => {
             const createEnumeration = (query) => {
                 const getEnumerationBase = (name, items, x, y, elementUUID) => {
                     const elementUUIDtoUse = elementUUID ? elementUUID : getUUID()
@@ -1092,7 +1494,8 @@ class DebeziumTransactionQuery {
                     const enumObject = getEnumerationBase(
                         query.args.enumerationName, 
                         query.args.properties.map(property => {return {"value": property.name}}),
-                        0, 0
+                        0, 0,
+                        query.ids.enumerationId
                     )
     
                     const VALID_POSITION = getValidPosition(modelValue, query)
@@ -1101,20 +1504,116 @@ class DebeziumTransactionQuery {
 
                     let entities = getEntitiesForAggregate(modelValue, query.ids.aggregateId)
                     entities.elements[enumObject.id] = enumObject
-
-                    const RELATION_OBJECT = makeUMLRelationObjectBase(getRootAggregate(modelValue.elements[query.ids.aggregateId]), entities.elements[enumObject.id]) 
-                    entities.relations[RELATION_OBJECT.id] = RELATION_OBJECT
                 })
             }
 
+            const updateEnumeration = (modelValue, enumerationObject, query) => {
+                const updateName = (modelValue, enumerationObject, name) => {
+                    const prevName = enumerationObject.name
+                    enumerationObject.name = name
+                    enumerationObject.nameCamelCase = changeCase.camelCase(name)
+                    enumerationObject.namePascalCase = changeCase.pascalCase(name)
+
+
+                    const aggregateObject = modelValue.elements[query.ids.aggregateId]
+                    const aggregateRootObject = aggregateObject.aggregateRoot
+                    if(!aggregateObject || !aggregateRootObject) return
+
+                    const matchedProperty = aggregateRootObject.fieldDescriptors.find(property => property.className === prevName)
+                    if(matchedProperty) matchedProperty.className = name
+
+                    if(aggregateRootObject.entities && aggregateRootObject.entities.elements) {
+                        const aggregateRootEntity = Object.values(aggregateRootObject.entities.elements).find(entity => entity.isAggregateRoot)
+                        if(aggregateRootEntity) {
+                            const matchedProperty = aggregateRootEntity.fieldDescriptors.find(property => property.className === prevName)
+                            if(matchedProperty) matchedProperty.className = name
+                        }
+                    }
+
+                    for(const element of Object.values(modelValue.elements)) {
+                        if(element && element.aggregate && element.aggregate.id === aggregateObject.id) {
+                            if(element._type === "org.uengine.modeling.model.Command" || 
+                                element._type === "org.uengine.modeling.model.Event") {
+                                const matchedProperty = element.fieldDescriptors.find(property => property.className === prevName)
+                                if(matchedProperty) matchedProperty.className = name
+                            }
+                        }
+                    }
+                }
+
+                const updateProperties = (enumerationObject, properties) => {
+                    enumerationObject.items = [...enumerationObject.items, ...properties.map(property => {return {"value": property.name}})]
+                }
+
+                if(query.args.enumerationName) updateName(modelValue, enumerationObject, query.args.enumerationName)
+                if(query.args.properties) updateProperties(enumerationObject, query.args.properties)
+            }
+
+            const deleteEnumeration = (modelValue, query) => {
+                const aggregateObject = modelValue.elements[query.ids.aggregateId]
+                const aggregateRootObject = aggregateObject.aggregateRoot
+                if(!aggregateObject || !aggregateRootObject || !aggregateRootObject.entities || !aggregateRootObject.entities.elements) return
+                
+                const enumerationObject = aggregateRootObject.entities.elements[query.ids.enumerationId]
+                if(!enumerationObject) return
+
+                if(query.args && query.args.properties) {
+                    const propertyNameToFilter = query.args.properties.map(property => property.name)
+                    enumerationObject.items = enumerationObject.items.filter(item => !propertyNameToFilter.includes(item.value))
+                }
+                else {
+                    deleteElementInAggegatePerfectly(aggregateRootObject, enumerationObject)
+                    deleteElementPropertyRelatedToAggregate(modelValue, aggregateObject, enumerationObject)
+                }
+            }
+
+            const initObjectAlias = (modelValue, query) => {
+                if(modelValue.elements[query.ids.aggregateId] &&
+                    modelValue.elements[query.ids.aggregateId].aggregateRoot &&
+                    modelValue.elements[query.ids.aggregateId].aggregateRoot.entities &&
+                    modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements &&
+                    modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.enumerationId]
+                 ) {
+
+                    this.objectAlias = modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.enumerationId].name
+                } else
+                    callbacks.afterAllObjectAppliedCallBacks.push(() => {
+                        if(modelValue.elements[query.ids.aggregateId] &&
+                            modelValue.elements[query.ids.aggregateId].aggregateRoot &&
+                            modelValue.elements[query.ids.aggregateId].aggregateRoot.entities &&
+                            modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements &&
+                            modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.enumerationId]
+                         )
+                            this.objectAlias = modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.enumerationId].name
+                    })
+            }
+
+            initObjectAlias(modelValue, query)
             switch(query.action) {
-                case "new":
-                    createEnumeration(query);
-                    break;
+                case "update":
+                    const aggregateObject = modelValue.elements[query.ids.aggregateId]
+                    const aggregateRootObject = aggregateObject.aggregateRoot
+                    if(!aggregateObject || !aggregateRootObject || !aggregateRootObject.entities || !aggregateRootObject.entities.elements) return
+                    const enumerationObject = aggregateRootObject.entities.elements[query.ids.enumerationId]
+
+                    if(enumerationObject) {
+                        updateEnumeration(modelValue, enumerationObject, query)
+                        this.lastOp = "update"
+                    }
+                    else {
+                        createEnumeration(query)
+                        this.lastOp = "create"
+                    }
+                    break
+
+                case "delete":
+                    deleteEnumeration(modelValue, query)
+                    this.lastOp = "delete"
+                    break
             }
         }
 
-        const applyToValueObject = (modelValue, userInfo, query) => {
+        const applyToValueObject = (modelValue, query) => {
             const createValueObject = (query) => {
                 const getValueObjectBase = (name, fieldDescriptors, x, y, elementUUID) => {
                     const elementUUIDtoUse = elementUUID ? elementUUID : getUUID()
@@ -1153,11 +1652,11 @@ class DebeziumTransactionQuery {
                 }
     
                 const getFileDescriptors = (queryProperties) => {
-                    return queryProperties.map((property) => {
+                    return queryProperties.filter(property => !property.isForeignProperty).map((property) => {
                         return {
-                            "className": property.type,
-                            "isKey": property.isKey,
-                            "label": "- " + property.name + ": " + property.type,
+                            "className": property.type ? property.type : "String",
+                            "isKey": property.isKey ? true : false,
+                            "label": "- " + property.name + ": " + (property.type ? property.type : "String"),
                             "name": property.name,
                             "nameCamelCase": changeCase.pascalCase(property.name),
                             "namePascalCase": changeCase.camelCase(property.name),
@@ -1184,7 +1683,7 @@ class DebeziumTransactionQuery {
                     const valueObject = getValueObjectBase(
                         query.args.valueObjectName, 
                         getFileDescriptors(query.args.properties),
-                        0, 0
+                        0, 0, query.ids.valueObjectId
                     )
     
                     const VALID_POSITION = getValidPosition(modelValue, query)
@@ -1193,15 +1692,131 @@ class DebeziumTransactionQuery {
 
                     let entities = getEntitiesForAggregate(modelValue, query.ids.aggregateId)
                     entities.elements[valueObject.id] = valueObject
-
-                    const RELATION_OBJECT = makeUMLRelationObjectBase(entities.elements[valueObject.id], getRootAggregate(modelValue.elements[query.ids.aggregateId]))
-                    entities.relations[RELATION_OBJECT.id] = RELATION_OBJECT
                 })
             }
 
+            const updateValueObject = (modelValue, valueObject, query) => {
+                const updateName = (modelValue, valueObjectName, name) => {
+                    const prevName = valueObjectName.name
+                    valueObjectName.name = name
+                    valueObjectName.nameCamelCase = changeCase.camelCase(name)
+                    valueObjectName.namePascalCase = changeCase.pascalCase(name)
+
+
+                    const aggregateObject = modelValue.elements[query.ids.aggregateId]
+                    const aggregateRootObject = aggregateObject.aggregateRoot
+                    if(!aggregateObject || !aggregateRootObject) return
+
+                    const matchedProperty = aggregateRootObject.fieldDescriptors.find(property => property.className === prevName)
+                    if(matchedProperty) matchedProperty.className = name
+
+                    if(aggregateRootObject.entities && aggregateRootObject.entities.elements) {
+                        const aggregateRootEntity = Object.values(aggregateRootObject.entities.elements).find(entity => entity.isAggregateRoot)
+                        if(aggregateRootEntity) {
+                            const matchedProperty = aggregateRootEntity.fieldDescriptors.find(property => property.className === prevName)
+                            if(matchedProperty) matchedProperty.className = name
+                        }
+                    }
+
+                    for(const element of Object.values(modelValue.elements)) {
+                        if(element && element.aggregate && element.aggregate.id === aggregateObject.id) {
+                            if(element._type === "org.uengine.modeling.model.Command" || 
+                                element._type === "org.uengine.modeling.model.Event") {
+                                const matchedProperty = element.fieldDescriptors.find(property => property.className === prevName)
+                                if(matchedProperty) matchedProperty.className = name
+                            }
+                        }
+                    }
+                }
+
+                const updateProperties = (valueObject, properties) => {
+                    for(const property of properties) {
+                        const fieldDescriptor = valueObject.fieldDescriptors.find(fd => fd.name === property.name)
+                        if(fieldDescriptor) {
+                            if(property.type) {
+                                fieldDescriptor.className = property.type
+                                fieldDescriptor.label = "- " + property.name + ": " + property.type
+                            }
+                            if(property.isKey) fieldDescriptor.isKey = property.isKey
+                            if(property.isForeignProperty) {
+                                valueObject.fieldDescriptors = valueObject.fieldDescriptors.filter(fd => fd.name !== fieldDescriptor.name)
+                            }
+                        } else {
+                            valueObject.fieldDescriptors.push({
+                                "className": property.type ? property.type : "String",
+                                "isKey": property.isKey ? true : false,
+                                "label": "- " + property.name + ": " + (property.type ? property.type : "String"),
+                                "name": property.name,
+                                "nameCamelCase": changeCase.pascalCase(property.name),
+                                "namePascalCase": changeCase.camelCase(property.name),
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            })
+                        }
+                    }
+                }
+
+                if(query.args.valueObjectName) updateName(modelValue, valueObject, query.args.valueObjectName)
+                if(query.args.properties) updateProperties(valueObject, query.args.properties)
+            }
+
+            const deleteValueObject = (modelValue, query) => {
+                const aggregateObject = modelValue.elements[query.ids.aggregateId]
+                const aggregateRootObject = aggregateObject.aggregateRoot
+                if(!aggregateObject || !aggregateRootObject || !aggregateRootObject.entities || !aggregateRootObject.entities.elements) return
+                
+                const valueObject = aggregateRootObject.entities.elements[query.ids.valueObjectId]
+                if(!valueObject) return
+
+                if(query.args && query.args.properties) {
+                    const propertyNameToFilter = query.args.properties.map(property => property.name)
+                    valueObject.fieldDescriptors = valueObject.fieldDescriptors.filter(fd => !propertyNameToFilter.includes(fd.name))
+                } else {
+                    deleteElementInAggegatePerfectly(aggregateRootObject, valueObject)
+                    deleteElementPropertyRelatedToAggregate(modelValue, aggregateObject, valueObject)
+                }
+            }
+
+            const initObjectAlias = (modelValue, query) => {
+                if(modelValue.elements[query.ids.aggregateId] &&
+                    modelValue.elements[query.ids.aggregateId].aggregateRoot &&
+                    modelValue.elements[query.ids.aggregateId].aggregateRoot.entities &&
+                    modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements &&
+                    modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.valueObjectId]
+                 ) {
+                    this.objectAlias = modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.valueObjectId].name
+                } else
+                    callbacks.afterAllObjectAppliedCallBacks.push(() => {
+                        if(modelValue.elements[query.ids.aggregateId] &&
+                            modelValue.elements[query.ids.aggregateId].aggregateRoot &&
+                            modelValue.elements[query.ids.aggregateId].aggregateRoot.entities &&
+                            modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements &&
+                            modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.valueObjectId]
+                         )
+                         this.objectAlias = modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.valueObjectId].name
+                    })
+            }
+
+            initObjectAlias(modelValue, query)
             switch(query.action) {
-                case "new":
-                    createValueObject(query);
+                case "update":
+                    const aggregateObject = modelValue.elements[query.ids.aggregateId]
+                    const aggregateRootObject = aggregateObject.aggregateRoot
+                    if(!aggregateObject || !aggregateRootObject || !aggregateRootObject.entities || !aggregateRootObject.entities.elements) return       
+                    const valueObject = aggregateRootObject.entities.elements[query.ids.valueObjectId]
+
+                    if(valueObject) {
+                        updateValueObject(modelValue, valueObject, query)
+                        this.lastOp = "update"
+                    }
+                    else {
+                        createValueObject(query)
+                        this.lastOp = "create"
+                    }
+                    break;
+                
+                case "delete":
+                    deleteValueObject(modelValue, query)
+                    this.lastOp = "delete"
                     break;
             }
         }
@@ -1209,7 +1824,7 @@ class DebeziumTransactionQuery {
 
         if(this.isApplied)
             return callbacks
-    
+
         switch(this.query.objectType) {
             case "BoundedContext":
                 applyToBoundedContext(modelValue, userInfo, this.query);
@@ -1223,14 +1838,11 @@ class DebeziumTransactionQuery {
             case "Command":
                 applyToCommand(modelValue, userInfo, this.query);
                 break
-            case "Policy":
-                applyToPolicy(modelValue, userInfo, this.query);
-                break
             case "Enumeration":
-                applyToEnumeration(modelValue, userInfo, this.query);
+                applyToEnumeration(modelValue, this.query);
                 break
             case "ValueObject":
-                applyToValueObject(modelValue, userInfo, this.query);
+                applyToValueObject(modelValue, this.query);
                 break
         }
 
@@ -1241,7 +1853,9 @@ class DebeziumTransactionQuery {
     toSaveObject() {
         return {
             query: this.query,
-            isApplied: this.isApplied
+            isApplied: this.isApplied,
+            objectAlias: this.objectAlias,
+            lastOp: this.lastOp
         }
     }
 
@@ -1249,6 +1863,8 @@ class DebeziumTransactionQuery {
         let transactionQuery = new DebeziumTransactionQuery() 
         transactionQuery.query = saveObject.query;
         transactionQuery.isApplied = saveObject.isApplied;
+        transactionQuery.objectAlias = saveObject.objectAlias;
+        transactionQuery.lastOp = saveObject.lastOp;
         return transactionQuery;
     }
 }

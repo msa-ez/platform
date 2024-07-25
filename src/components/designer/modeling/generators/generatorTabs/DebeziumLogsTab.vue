@@ -12,7 +12,11 @@
                 outlined
                 type="info"
                 style="text-align: left;"
-            >Please input Debezium Logs to generate event storming commands
+            >
+                {{ progressMessage }}
+                <v-btn v-if="progressMessageOutput && progressMessageOutput.length > 0" icon x-small style="margin-bottom: 4px; color: #2196F3;" @click="queryDialogTitle='Generator Output'; queryDialogContent = progressMessageOutput; isQueryDialogOpen = true;">
+                    <v-icon>mdi-magnify</v-icon>
+                </v-btn>
             </v-alert>
             <!-- #endregion -->
 
@@ -34,14 +38,6 @@
                                     <v-icon>mdi-text</v-icon>
                                 </v-btn>
                             </div>
-                            <div style="display: flex;">
-                                <v-btn icon x-small style="margin-top: 3px;" @click="dragTransaction()">
-                                    <v-icon>mdi-arrow-up-down</v-icon>
-                                </v-btn>
-                                <v-btn icon x-small style="margin-top: 3px;" @click="isShowUndoDialog = true">
-                                    <v-icon>mdi-redo-variant</v-icon>
-                                </v-btn>                        
-                            </div>
                         </div>
 
                         <div style="height: 15px;">
@@ -54,17 +50,17 @@
 
                         <div>
                             <div style="height: 18px;">
-                                <pre style="font-size: small; text-align: left;">COMMANDS</pre>
+                                <pre style="font-size: small; text-align: left;">EVENT STORMING UPDATES</pre>
                             </div>
                             <div style="display: flex;" v-for="(query, index) in reponseQuery.queries" :key="index">
                                 <pre style="font-size: small; text-align: left; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; max-width: 380px;">- {{ query.summary }}</pre>        
-                                <v-btn icon x-small style="margin-top: 2px;" @click="queryDialogTitle=query.summary + ' Command'; queryDialogContent = query.rawQuery; isQueryDialogOpen = true;">
+                                <v-btn icon x-small style="margin-top: 2px;" @click="queryDialogTitle='Event Storming Update: ' + query.summary; queryDialogContent = query.rawQuery; isQueryDialogOpen = true;">
                                     <v-icon>mdi-magnify</v-icon>
                                 </v-btn>     
                             </div>
                         </div>
                     </v-sheet>
-                </div>                                    
+                </div>                         
             </v-col>
             <!-- #endregion -->
         </div>
@@ -128,19 +124,6 @@
             </v-card>
         </v-dialog>
         <!-- #endregion -->
-        <!-- #region Undo 여부를 확인하기 위한 다이얼로그-->
-        <v-dialog v-model="isShowUndoDialog" max-width="400" max-height="150">
-            <v-card style="width: 400px; height: 150px; display: flex; flex-direction: column; justify-content: center;">
-                <v-card-text style="text-align: center;">
-                    선택한 트랜젝션의 지점으로 되돌아가시겠습니까?
-                </v-card-text>
-                <v-card-actions class="justify-center pt-0">
-                    <v-btn color="primary" variant="flat" @click="undoToSelectedTransaction(); isShowUndoDialog = false">네</v-btn>
-                    <v-btn color="error" variant="flat" @click="isShowUndoDialog = false">아니오</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
-        <!-- #endregion -->
 
         <v-snackbar v-model="showSnackbar" :timeout="2000">
             클립보드에 복사되었습니다.
@@ -150,6 +133,7 @@
   
 <script>
 import DebeziumLogsTabGenerator from "./DebeziumLogsTabGenerator.js"
+import DebeziumTransactionManager from "./DebeziumTransactionManager.js"
 
 export default {
     name: 'DebeziumLogsTab',
@@ -164,6 +148,7 @@ export default {
             responseQueries: [],
             debeziumLogs: "",
             isGenerationFinished: true,
+            debeziumLogsGenerator: null,
 
             isLogDialogOpen: false,
             logDialogTitle: "",
@@ -175,32 +160,205 @@ export default {
             queryDialogContent: "",
 
             isShowUndoDialog: false,
-            debeziumTransactionManager: null
+            debeziumTransactionManager: null,
+
+            progressMessage: "Please input Debezium Logs to generate event storming updates",
+            progressMessageOutput: "",
+
+            messageObj: {
+                modificationMessage: "",
+                gwtRequestValue: {
+                    givenObjects: null,
+                    whenObjects: null,
+                    thenObjects: null
+                }
+            },
+            debeziumLogsToPrcess: []
         }
     },
     created() {
+        if(this.initValue.modelValue.debeziumChatSaveObject) {
+            this.initValue.manager = DebeziumTransactionManager.fromSaveObject(this.initValue.modelValue.debeziumChatSaveObject)
+        }
+
         this.debeziumTransactionManager = this.initValue.manager
         this.responseQueries = this.debeziumTransactionManager.toStringObject()
     },
     methods: {
         getGenerater(client) {
-            return new DebeziumLogsTabGenerator(client, {
-                modificationMessage: this.debeziumLogs
-            })
+            if(this.debeziumLogsGenerator === null) {
+                this.debeziumLogsGenerator = new DebeziumLogsTabGenerator(client, this.messageObj)
+            }
+            return this.debeziumLogsGenerator
         },
 
         generate() {
-            this.isGenerationFinished = false
-            this.$emit("generate")
+            const getValidDebeziumLogsToProcess = (logs) => {
+                const getDebeziumLogStrings = (logs) => {
+                    return logs.match(/\{"schema":\{.*?"name":".*?\.Envelope".*?\},"payload":\{.*?\}\}/g)
+                }
+
+                let debeziumLogStrings = getDebeziumLogStrings(logs)
+                if(!debeziumLogStrings || debeziumLogStrings.length === 0) {
+                    throw new Error("No valid Debezium Logs found")
+                }
+
+                return debeziumLogStrings
+            }
+
+            try {
+                this.debeziumLogsToPrcess = getValidDebeziumLogsToProcess(this.debeziumLogs)
+                this.messageObj.modificationMessage = this.debeziumLogsToPrcess.shift()
+
+                this.isGenerationFinished = false
+                if(this.debeziumLogsGenerator) this.debeziumLogsGenerator.modelMode = "generateCommands"
+                this.$emit("generate")
+            }
+            catch(e) {
+                console.error(e)
+                alert(e.message)
+            }
         },
 
         onModelCreated(model) {
+            switch(model.modelMode) {
+                case "generateCommands":
+                    this.progressMessageOutput = model.modelRawValue
+                    this.progressMessage = `액션 생성중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
+                    break
+
+                case "summaryPreprocessModelValue":
+                    this.progressMessageOutput = model.modelRawValue
+                    this.progressMessage = `이벤트 스토밍 정보 요약중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
+                    break
+                
+                case "modificationModelValue":
+                    this.progressMessageOutput = model.modelRawValue
+                    this.progressMessage = `액션 유효성 검토중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
+                    break
+                
+                case "generateGWT":
+                    this.progressMessageOutput = model.modelRawValue
+                    this.progressMessage = `생성된 커맨드에 대한 GWT 생성중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
+                    break
+            }
         },
         
         onGenerationFinished(model) {
-            this.isGenerationFinished = true
-            this.debeziumLogs = ""
-            this.responseQueries = this.debeziumTransactionManager.toStringObject()
+            const getGWTRequestValue = (modelValue, queries) => {
+                const getCommandObject = (modelValue, queries) => {
+                    const getCommandIdByQueries = (queries) => {
+                        const commandQuries = queries.filter((query) => 
+                            query && query.objectType === "Command" && query.action === "update"
+                        )
+
+                        if(commandQuries.length === 0) return null
+                        return commandQuries[0].ids.commandId
+                    }
+
+                    const commandId = getCommandIdByQueries(queries)
+                    if(commandId === null) return null
+                    return modelValue.elements[commandId]
+                }
+
+                const getAggregateObject = (modelValue, commandObject) => {
+                    if(commandObject.aggregate === null || commandObject.aggregate.id === null) return null
+                    return modelValue.elements[commandObject.aggregate.id]
+                }
+
+                const getEventObjects = (modelValue, commandObject) => {
+                    const getCommandToEventRelations = (modelValue, commandObject) => {
+                        return Object.values(modelValue.relations).filter((relation) => 
+                            relation &&
+                            relation._type === "org.uengine.modeling.model.Relation" &&
+                            relation.from === commandObject.id && 
+                            relation.targetElement._type === "org.uengine.modeling.model.Event"
+                        )
+                    }
+
+                    const commandToEventRelations = getCommandToEventRelations(modelValue, commandObject)
+                    if(commandToEventRelations.length === 0) return null
+
+                    return commandToEventRelations.map((commandToEventRelation) => {
+                        if(commandToEventRelation.to === null) return null
+                        return modelValue.elements[commandToEventRelation.to]
+                    }).filter((eventObject) => eventObject !== null)
+                }
+
+
+                const commandObject = getCommandObject(modelValue, queries)
+                if(commandObject === null) return null
+
+                const aggregateObject = getAggregateObject(modelValue, commandObject)
+                if(aggregateObject === null) return null
+
+                const eventObjects = getEventObjects(modelValue, commandObject)
+                if(eventObjects === null) return null
+
+                return {
+                    givenObjects: [aggregateObject],
+                    whenObjects: [commandObject],
+                    thenObjects: eventObjects
+                }
+            }
+
+            const processDebeziumLogsToPrcess = () => {
+                this.debeziumLogsGenerator.modelMode = "generateCommands"
+                if(this.debeziumLogsToPrcess.length > 0) {
+                    this.messageObj.modificationMessage = this.debeziumLogsToPrcess.shift()
+                    this.isGenerationFinished = false
+                    this.$emit("generate")
+                    this.progressMessage = `다음 트렌젝션 관련 액션을 생성하는중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
+                } else {
+                    this.isGenerationFinished = true
+                    this.debeziumLogs = ""
+                    this.progressMessage = "대기중..."
+                }
+            }
+
+            if(model.errorMessage) {
+                alert("죄송합니다. 에러가 발생했습니다. 다시 시도해주세요.: " + model.errorMessage)
+                this.isGenerationFinished = true
+                this.debeziumLogs = ""
+                this.progressMessage = "대기중..."
+                return
+            }
+
+            switch(model.modelMode) {
+                case "generateCommands":
+                    this.$emit("generate")
+                    this.progressMessage = `액션 유효성 검토를 요청하는중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
+                    break
+
+                case "summaryPreprocessModelValue":
+                    this.$emit("generate")
+                    this.progressMessage = `이벤트 스토밍 모델 정보에 대한 요약을 요청하는중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
+                    break
+
+                case "modificationModelValue":
+                    this.responseQueries = this.debeziumTransactionManager.toStringObject()
+
+                    this.messageObj.gwtRequestValue = getGWTRequestValue(this.debeziumLogsGenerator.client.modelValue, model.modelValue.queries)
+                    if(this.messageObj.gwtRequestValue !== null) {
+                        this.debeziumLogsGenerator.modelMode = "generateGWT"
+                        this.$emit("generate")
+                        this.progressMessage = `생성된 커맨드에 대한 GWT 생성 요청을 전송중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
+                    }
+                    else 
+                        processDebeziumLogsToPrcess()
+                    break
+                
+                case "generateGWT":
+                    processDebeziumLogsToPrcess()
+                    break
+                
+                case "mockModelValue":
+                    this.responseQueries = this.debeziumTransactionManager.toStringObject()
+                    this.isGenerationFinished = true
+                    this.debeziumLogs = ""
+                    this.progressMessage = "대기중..."
+                    break
+            }
         },
 
         copyToClipboard(textToCopy) {
@@ -209,14 +367,6 @@ export default {
             }).catch(err => {
                 console.error('클립보드 복사 실패:', err);
             });
-        },
-
-        undoToSelectedTransaction() {
-            alert("TODO: 선택한 트랜젝션으로 되돌아가기")
-        },
-
-        dragTransaction() {
-            alert("TODO: 트랜젝션을 드래그하고, 재구성된 순서대로 다시 적용시키도록 만들기")
         }
     }
 }
