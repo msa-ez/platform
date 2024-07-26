@@ -16,10 +16,95 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
         this.modelInputLengthLimit = 10000
         this.relatedPreProcessModelValueString = ""
         this.queryResultsToModificate = null
+
+        this.UUIDAliasDic = {}
     }
 
     createPrompt(userProps, modelValue){
-        const getPreprocessModelValue = (modelValue) => {
+        const getUUIDAliasDic = (modelValue) => {
+            let UUIDToAlias = {}
+            let aliasToUUID = {}
+        
+            const getAliasToUse = (element, UUIDToAlias, aliasToUUID) => {
+                const getFrontId = (element) => {
+                    switch(element._type) {
+                        case "org.uengine.modeling.model.BoundedContext": return "bc"
+                        case "org.uengine.modeling.model.Aggregate": return "agg"
+                        case "org.uengine.modeling.model.Command": return "cmd"
+                        case "org.uengine.modeling.model.Event": return "evt"
+                        case "org.uengine.modeling.model.Actor": return "act"
+                        case "org.uengine.uml.model.Class": return element.isAggregateRoot ? "agg-root" : "entity"
+                        case "org.uengine.uml.model.Enum": return "enum"
+                        case "org.uengine.uml.model.vo.Class": return "vo"
+                        default: return "obj"
+                    }
+                }
+        
+                if(UUIDToAlias[element.id]) 
+                    return UUIDToAlias[element.id]
+        
+                let aliasToUse = `${getFrontId(element)}-${changeCase.camelCase(element.name)}`
+                let i = 1
+                while(aliasToUUID[aliasToUse]) {
+                    aliasToUse = `${aliasToUse}-${i}`
+                    i++
+                }
+                return aliasToUse
+            }
+        
+            const getAliasForRelation = (relation, UUIDToAlias, aliasToUUID) => {
+                const sourceAlias = getAliasToUse(relation.sourceElement, UUIDToAlias, aliasToUUID)
+                const targetAlias = getAliasToUse(relation.targetElement, UUIDToAlias, aliasToUUID)
+                return `${sourceAlias}-to-${targetAlias}`
+            }
+        
+            const initUUIDAliasForElements = (elements, UUIDToAlias, aliasToUUID) => {
+                Object.keys(elements).forEach(key => {
+                    const element = elements[key]
+                    const aliasToUse = getAliasToUse(element, UUIDToAlias, aliasToUUID)
+                    UUIDToAlias[key] = aliasToUse
+                    aliasToUUID[aliasToUse] = key
+                })
+            }
+        
+            const initUUIDAliasForRelations = (relations, UUIDToAlias, aliasToUUID) => {
+                Object.keys(relations).forEach(relationKey => {
+                    const relation = relations[relationKey]
+                    const relationAliasToUse = getAliasForRelation(relation, UUIDToAlias, aliasToUUID)
+                    UUIDToAlias[relationKey] = relationAliasToUse
+                    aliasToUUID[relationAliasToUse] = relationKey
+                })
+            }
+        
+            initUUIDAliasForElements(modelValue.elements, UUIDToAlias, aliasToUUID)
+            initUUIDAliasForRelations(modelValue.relations, UUIDToAlias, aliasToUUID)
+        
+            Object.keys(modelValue.elements).forEach(key => {
+                const element = modelValue.elements[key]
+        
+                if(element._type === "org.uengine.modeling.model.Aggregate" &&
+                   element.aggregateRoot && element.aggregateRoot.entities) {
+                    if(element.aggregateRoot.entities.elements) {
+                        initUUIDAliasForElements(element.aggregateRoot.entities.elements, UUIDToAlias, aliasToUUID)
+                    }
+        
+                    if(element.aggregateRoot.entities.relations) {
+                        initUUIDAliasForRelations(element.aggregateRoot.entities.relations, UUIDToAlias, aliasToUUID)
+                    }
+                }
+            })
+        
+            return {
+                UUIDToAlias: UUIDToAlias,
+                aliasToUUID: aliasToUUID
+            }
+        }
+
+        const getPreprocessModelValue = (modelValue, UUIDToAlias) => {
+            const getAliasIfExist = (id) => {
+                return UUIDToAlias[id] ? UUIDToAlias[id] : id
+            }
+        
             const getAllBoundedContexts = (modelValue) => {
                 return Object.values(modelValue.elements)
                     .filter(element => element && element._type === 'org.uengine.modeling.model.BoundedContext')
@@ -45,7 +130,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                     const getEnumInfos = (aggregate) => {
                         const getEnumInfo = (element) => {
                             let enumInfo = {}
-                            enumInfo.id = element.id ? element.id : element.elementView.id
+                            enumInfo.id = getAliasIfExist(element.id ? element.id : element.elementView.id)
                             enumInfo.name = element.name
                             enumInfo.items = element.items.map(item => {
                                 return item.value
@@ -77,7 +162,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                             }
         
                             let valueObjectInfo = {}
-                            valueObjectInfo.id = element.id ? element.id : element.elementView.id
+                            valueObjectInfo.id = getAliasIfExist(element.id ? element.id : element.elementView.id)
                             valueObjectInfo.name = element.name
                             valueObjectInfo.properties = getValueObjectProperties(element)
                             return valueObjectInfo
@@ -101,8 +186,8 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                                     if(relation && relation.sourceElement.id === command.id && 
                                        relation.targetElement._type === 'org.uengine.modeling.model.Event')
                                         outputEvents.push({
-                                            relationId: relation.id ? relation.id : relation.elementView.id,
-                                            id: relation.targetElement.id,
+                                            relationId: getAliasIfExist(relation.id ? relation.id : relation.elementView.id),
+                                            id: getAliasIfExist(relation.targetElement.id),
                                             name: relation.targetElement.name
                                         })
                                 }
@@ -110,7 +195,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                             }
         
                             let commandInfo = {}
-                            commandInfo.id = element.id ? element.id : element.elementView.id
+                            commandInfo.id = getAliasIfExist(element.id ? element.id : element.elementView.id)
                             commandInfo.name = element.name
                             commandInfo.api_verb = (element.restRepositoryInfo && element.restRepositoryInfo.method) ? element.restRepositoryInfo.method : "POST"
                             commandInfo.outputEvents = getOutputEvents(element, modelValue)
@@ -141,8 +226,8 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                                     const targetPolicy = modelValue.elements[policyRelation.targetElement.id]
                                     for(let commandRelation of getRelationsForType(targetPolicy, 'org.uengine.modeling.model.Command', modelValue)) {
                                         outputCommands.push({
-                                            relationId: commandRelation.id ? commandRelation.id : commandRelation.elementView.id,
-                                            id: commandRelation.targetElement.id,
+                                            relationId: getAliasIfExist(commandRelation.id ? commandRelation.id : commandRelation.elementView.id),
+                                            id: getAliasIfExist(commandRelation.targetElement.id),
                                             name: commandRelation.targetElement.name
                                         })   
                                     }
@@ -151,7 +236,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                             }
         
                             let eventInfo = {}
-                            eventInfo.id = element.id ? element.id : element.elementView.id
+                            eventInfo.id = getAliasIfExist(element.id ? element.id : element.elementView.id)
                             eventInfo.name = element.name
                             eventInfo.outputCommands = getOutputCommands(element, modelValue)
                             return eventInfo
@@ -169,7 +254,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                     }
         
                     let aggegateInfo = {}
-                    aggegateInfo.id = aggregate.id ? aggregate.id : aggregate.elementView.id
+                    aggegateInfo.id = getAliasIfExist(aggregate.id ? aggregate.id : aggregate.elementView.id)
                     aggegateInfo.name = aggregate.name
                     aggegateInfo.properties = getAggregateProperties(aggregate)
                     aggegateInfo.enumerations = getEnumInfos(aggregate)
@@ -186,7 +271,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                         if(element && (element._type === 'org.uengine.modeling.model.Actor') &&
                         (element.boundedContext.id === boundedContext.id)){
                             actors.push({
-                                id: element.id ? element.id : element.elementView.id,
+                                id: getAliasIfExist(element.id ? element.id : element.elementView.id),
                                 name: element.name
                             })
                         }
@@ -195,12 +280,12 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                 }
         
                 let boundedContextInfo = {}
-                boundedContextInfo.id = boundedContext.id ? boundedContext.id : boundedContext.elementView.id
+                boundedContextInfo.id = getAliasIfExist(boundedContext.id ? boundedContext.id : boundedContext.elementView.id)
                 boundedContextInfo.name = boundedContext.name
                 
                 boundedContextInfo.aggregates = {}
                 for(let aggregate of getAllAggregates(boundedContext, modelValue))
-                    boundedContextInfo.aggregates[aggregate.id] = getAggregateInfo(aggregate, boundedContext, modelValue)
+                    boundedContextInfo.aggregates[getAliasIfExist(aggregate.id)] = getAggregateInfo(aggregate, boundedContext, modelValue)
                 
                 boundedContextInfo.actors = getAllActors(boundedContext, modelValue)
         
@@ -209,9 +294,10 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
             
             let boundedContextInfos = {}
             for(let boundedContext of getAllBoundedContexts(modelValue))
-                boundedContextInfos[boundedContext.id] = getBoundedContextInfo(boundedContext, modelValue)
+                boundedContextInfos[getAliasIfExist(boundedContext.id)] = getBoundedContextInfo(boundedContext, modelValue)
             return boundedContextInfos;
         }
+
 
         const getSummarizedDebeziumLogStrings = (debeziumLogStrings) => {
             const getDebeziumLogStringList = (logs) => {
@@ -985,7 +1071,8 @@ ${JSON.stringify(inputObject)}
         let preprocessModelValueString = ""
         switch(this.modelMode) {
             case "generateCommands":
-                this.preprocessModelValue = getPreprocessModelValue(this.client.modelValue)
+                this.UUIDAliasDic = getUUIDAliasDic(this.client.modelValue)
+                this.preprocessModelValue = getPreprocessModelValue(this.client.modelValue, this.UUIDAliasDic.UUIDToAlias)
                 preprocessModelValueString = JSON.stringify(this.preprocessModelValue)
         
                 this.modelMode = "generateCommands"
@@ -1249,6 +1336,30 @@ ${JSON.stringify(inputObject)}
             return modelValue
         }
 
+        const applyAliasToUUIDToQueries = (queries, aliasToUUIDDic) => {
+            const getUUIDIfExist = (alias) => {
+                return aliasToUUIDDic[alias] ? aliasToUUIDDic[alias] : alias
+            }
+        
+            for(let query of queries) {
+                if(query.ids) {
+                    if(query.ids.boundedContextId) query.ids.boundedContextId = getUUIDIfExist(query.ids.boundedContextId)
+                    if(query.ids.aggregateId) query.ids.aggregateId = getUUIDIfExist(query.ids.aggregateId)
+                    if(query.ids.commandId) query.ids.commandId = getUUIDIfExist(query.ids.commandId)
+                    if(query.ids.eventId) query.ids.eventId = getUUIDIfExist(query.ids.eventId)
+                    if(query.ids.valueObjectId) query.ids.valueObjectId = getUUIDIfExist(query.ids.valueObjectId)
+                    if(query.ids.enumerationId) query.ids.enumerationId = getUUIDIfExist(query.ids.enumerationId)
+                }
+        
+                if(query.args.outputEventIds)
+                    query.args.outputEventIds = query.args.outputEventIds.map(eventId => getUUIDIfExist(eventId))
+            
+                if(query.args.outputCommandIds)
+                    query.args.outputCommandIds = query.args.outputCommandIds.map(commandId => getUUIDIfExist(commandId))
+            }
+            return queries
+        }
+
         if(this.state !== 'end') {
             console.log(`[*] DebeziumLogsTabGenerator에서 결과 생성중... (현재 모드: ${this.modelMode}, 현재 출력된 문자 수: ${text.length})`)
 
@@ -1296,7 +1407,6 @@ ${JSON.stringify(inputObject)}
                     break
                 
                 case "modificationModelValue":
-
                     let modifications = []
                     try {
                         modifications = parseToJson(text).modifications
@@ -1304,6 +1414,7 @@ ${JSON.stringify(inputObject)}
                     catch(e) {
                         console.error(`[!] AI 생성 결과를 파싱하는데 실패했습니다. AI의 생성 결과를 무시하고, 진행합니다.\n* error\n`, e)
 
+                        applyAliasToUUIDToQueries(this.queryResultsToModificate.queries, this.UUIDAliasDic.aliasToUUID)
                         outputResult =  {
                             modelName: this.modelName,
                             modelMode: this.modelMode,
@@ -1322,6 +1433,8 @@ ${JSON.stringify(inputObject)}
                      
                     this.modificatedQueryResults = JSON.parse(JSON.stringify(this.queryResultsToModificate))
                     this.modificatedQueryResults = applyModifications(this.modificatedQueryResults, modifications)
+                    
+                    applyAliasToUUIDToQueries(this.queryResultsToModificate.queries, this.UUIDAliasDic.aliasToUUID)
                     outputResult = {
                         modelName: this.modelName,
                         modelMode: this.modelMode,
