@@ -253,6 +253,7 @@ Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 �
 6. id 속성은 고유해야 하며, 수정하면 안 됩니다.
 7. 필수적인 상황이 아니라면, 하나의 Bounded Context 안에 하나의 Aggregate가 속하도록 해주세요.
 8. '<해당 Bounded Context에 속하게 될 Aggregate의 이름> + Service'와 같이 Bounded Context의 이름을 작성해 주세요.
+9. 트랜젝션의 속성 및 유즈 케이스가 다르다면, 관련된 새로운 Aggregate를 생성해야 합니다. 기존의 Aggregate를 덮어쓰면 안됩니다.
     
 `
                 }
@@ -1231,6 +1232,9 @@ ${JSON.stringify(inputObject)}
             try {
                 for(let modification of modifications) {
                     try {
+                        // ID 관련 속성은 제대로 수정을 못하므로, 무시함
+                        if(modification.jsonPath.includes("ids.")) continue
+
                         jp.apply(modelValue, modification.jsonPath, () => {
                             return modification.value
                         })
