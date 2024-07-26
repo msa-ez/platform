@@ -293,6 +293,9 @@ class DebeziumTransactionQuery {
             return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4()
         }
 
+        // AI가 생성한 객체 ID를 UUID로 변환시킨 후, 다시 UUID 값을 전달할 경우, AI의 응답성능이 급격히 떨어지는 이슈가 있음
+        // UUID가 의미가 없는 ID 값이기 때문에 제대로 응답을 생성하지 못하는 것 같음
+        // 이 이슈가 해결되기 전까지는 이 함수에 대한 사용을 주석처리 함
         const getUUIDFromAlias = (modelValue, objectAliaToUUID, targetObject, targetProperty) => {        
             if(modelValue.elements[targetObject[targetProperty]]) return
 
@@ -600,7 +603,7 @@ class DebeziumTransactionQuery {
             }
 
             initObjectAlias(modelValue, query)
-            convertAliasToUUID(modelValue, objectAliaToUUID, query)
+            // convertAliasToUUID(modelValue, objectAliaToUUID, query)
             switch(query.action) {
                 case "update":
                     if(modelValue.elements[query.ids.boundedContextId]) {
@@ -920,7 +923,7 @@ class DebeziumTransactionQuery {
             }
 
             initObjectAlias(modelValue, query)
-            convertAliasToUUID(modelValue, objectAliaToUUID, query)
+            // convertAliasToUUID(modelValue, objectAliaToUUID, query)
             switch(query.action) {
                 case "update":
                     if(modelValue.elements[query.ids.aggregateId]) {
@@ -1202,7 +1205,7 @@ class DebeziumTransactionQuery {
             }
 
             initObjectAlias(modelValue, query)
-            convertAliasToUUID(modelValue, objectAliaToUUID, query)
+            // convertAliasToUUID(modelValue, objectAliaToUUID, query)
             switch(query.action) {
                 case "update":
                     if(modelValue.elements[query.ids.eventId]) {
@@ -1481,7 +1484,7 @@ class DebeziumTransactionQuery {
             }
 
             initObjectAlias(modelValue, query)
-            convertAliasToUUID(modelValue, objectAliaToUUID, query)
+            // convertAliasToUUID(modelValue, objectAliaToUUID, query)
             switch(query.action) {
                 case "update":
                     if(modelValue.elements[query.ids.commandId]) {
@@ -1699,7 +1702,7 @@ class DebeziumTransactionQuery {
             }
 
             initObjectAlias(modelValue, query)
-            convertAliasToUUID(modelValue, objectAliaToUUID, query)
+            // convertAliasToUUID(modelValue, objectAliaToUUID, query)
             switch(query.action) {
                 case "update":
                     const aggregateObject = modelValue.elements[query.ids.aggregateId]
@@ -1712,7 +1715,7 @@ class DebeziumTransactionQuery {
                         this.lastOp = "update"
                     }
                     else {
-                        getUUIDFromAlias(modelValue, objectAliaToUUID, query.ids, "enumerationId")
+                        // getUUIDFromAlias(modelValue, objectAliaToUUID, query.ids, "enumerationId")
                         createEnumeration(query)
                         this.lastOp = "create"
                     }
@@ -1914,7 +1917,7 @@ class DebeziumTransactionQuery {
             }
 
             initObjectAlias(modelValue, query)
-            convertAliasToUUID(modelValue, objectAliaToUUID, query)
+            // convertAliasToUUID(modelValue, objectAliaToUUID, query)
             switch(query.action) {
                 case "update":
                     const aggregateObject = modelValue.elements[query.ids.aggregateId]
@@ -1927,7 +1930,7 @@ class DebeziumTransactionQuery {
                         this.lastOp = "update"
                     }
                     else {
-                        getUUIDFromAlias(modelValue, objectAliaToUUID, query.ids, "valueObjectId")
+                        // getUUIDFromAlias(modelValue, objectAliaToUUID, query.ids, "valueObjectId")
                         createValueObject(query)
                         this.lastOp = "create"
                     }
