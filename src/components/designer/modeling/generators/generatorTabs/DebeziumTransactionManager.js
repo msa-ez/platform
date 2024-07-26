@@ -101,11 +101,49 @@ class DebeziumTransaction {
     }
 
     apply(modelValue, userInfo, objectAliaToUUID) {
+        const fixTransactionQueryErrors = (modelValue, usecases, queries) => {
+            const addBoundedContextQueryIfNotExist = (modelValue, usecases, queries) => {
+                const createNewBoundedContextQuery = (usecaseId, queryId, boundedContextId, boundedContextName) => {
+                    return new DebeziumTransactionQuery({
+                        "fromUsecaseId": usecaseId,
+                        "queryId": queryId,
+                        
+                        "objectType": "BoundedContext",
+                        "action": "update",
+                        "ids": {
+                            "boundedContextId": boundedContextId
+                        },
+                        "args": {
+                            "boundedContextName": boundedContextName
+                        }
+                    })
+                }
+
+                const aggregateQueries = queries.filter(query => query.query.objectType === "Aggregate")
+                if(aggregateQueries.length === 0) return
+
+                aggregateQueries.forEach(aggregateQuery => {
+                    const boundedContextId = aggregateQuery.query.ids.boundedContextId
+                    if(modelValue.elements[boundedContextId]) return
+
+                    const boundedContextQuery = queries.filter(query => query.query.objectType === "BoundedContext" && query.query.ids.boundedContextId === boundedContextId)
+                    if(boundedContextQuery.length > 0) return
+
+                    const queryId = `query-${boundedContextId}`
+                    usecases.relatedBoundedContextQueryIds.push(queryId)
+                    queries.unshift(createNewBoundedContextQuery(usecases.id, queryId, boundedContextId, usecases.displayName.split(" ").pop() + "Service"))
+                })
+            }
+
+            addBoundedContextQueryIfNotExist(modelValue, usecases, queries)
+        }
+
         let callbacks = {
             afterAllObjectAppliedCallBacks: [],
             afterAllRelationAppliedCallBacks: []
         }
 
+        fixTransactionQueryErrors(modelValue, this.usecase, this.queries)
         this.queries.forEach(query => {
             const queryCallbacks = query.apply(modelValue, userInfo, objectAliaToUUID)
             callbacks.afterAllObjectAppliedCallBacks = callbacks.afterAllObjectAppliedCallBacks.concat(queryCallbacks.afterAllObjectAppliedCallBacks)
