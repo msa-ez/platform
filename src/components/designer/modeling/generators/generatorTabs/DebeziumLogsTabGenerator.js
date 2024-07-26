@@ -780,8 +780,7 @@ ${eventStormingNames.join(", ")}
 
 [OUTPUT]
 \`\`\`json
-{"modifications":[
-`
+{"modifications":[`
             }
 
             return prevSystemPrompt +
