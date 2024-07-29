@@ -4498,7 +4498,7 @@ jobs:
                             me.suffixValue = me.suffixValue.join("\n")
     
                             me.stopAutoGenerate = false;
-                            me.model = 'gpt-4'
+                            me.model = 'gpt-4o'
                             me.generator = new BusinessLogicGenerator(this);
                             await me.generator.generate();
                         } else {
