@@ -2000,6 +2000,12 @@
     });
     window.jp = require("jsonpath");
 
+    var jsondiffpatch = require('jsondiffpatch').create({
+        objectHash: function (obj, index) {
+            return '$$index:' + index;
+        }
+    });
+
     // const CodeGeneratorCore = require("../modeling/CodeGeneratorCore");
     // import json2yaml from "json2yaml";
     // import StorageBase from "../modeling/StorageBase";
@@ -3125,14 +3131,17 @@
 
                 if(val && val.modelName === "DebeziumLogsTabGenerator") {
                     if(val.modelValue) {
+                        const oldModelValue = JSON.parse(JSON.stringify(me.value))
+
                         if(val.modelMode === "modificationModelValue" || val.modelMode === "mockModelValue") {
                             try {
-                                const currentDebeziumTransactionManager = this.tabs.find(tab => tab.component === 'DebeziumLogsTab').initValue.manager
+                                const currentDebeziumTransactionManager = me.tabs.find(tab => tab.component === 'DebeziumLogsTab').initValue.manager
                                 currentDebeziumTransactionManager.addNewTransactionFromModelValue(val.modelValue)
                                 currentDebeziumTransactionManager.apply(me.value, me.userInfo)
                                 me.forceRefreshCanvas()
-                                
+
                                 me.value.debeziumChatSaveObject = currentDebeziumTransactionManager.toSaveObject()
+                                me.changedByMe = true
                             } catch(e) {
                                 console.error("[!] 출력 결과를 Debezium Manager에 전달해서 처리하는 과정에서 오류 발생")
                                 console.error(e)
@@ -3143,13 +3152,17 @@
                         if(val.modelMode === "generateGWT") {
                             try {
                                 generateGWT(me.value, val.modelValue.requestValue, val.modelValue.gwts)
-                                me.forceRefreshCanvas();
+                                me.forceRefreshCanvas()
+
+                                me.changedByMe = true
                             } catch(e) {
                                 console.error("[!] 출력 결과를 이용해서 GWT를 만드는 과정에서 오류 발생")
                                 console.error(e)
                                 alert("죄송합니다. AI를 통해서 테스트 케이스(GWT)를 생성하는데 실패했습니다. 해당 커맨드 객체를 더블클릭 > Examples 버튼으로 직접 Debezium Log를 넣어서 GWT를 생성해주시길 바랍니다. 에러 내용:" + e.message)
                             }
                         }
+
+                        this.pushChangedValueQueue(jsondiffpatch.diff(oldModelValue, me.value))
                     }
                     return
                 }
