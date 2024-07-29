@@ -1,10 +1,6 @@
 <template>
     <v-card flat>
-        <div id="scroll_messageList"
-            style="height: 100%; max-height: 75vh;
-            overflow: auto; padding:10px;
-            border-bottom: solid 2px rgba(0, 0, 0, 0.2);"
-        >
+        <div style="padding-top:10px; padding-left:10px; padding-right:10px;">
             <!-- #region 상단 안내 문구 -->
             <v-alert
                 dense
@@ -14,13 +10,18 @@
                 style="text-align: left;"
             >
                 {{ progressMessage }}
-                <v-btn v-if="progressMessageOutput && progressMessageOutput.length > 0" icon x-small style="margin-bottom: 4px; color: #2196F3;" @click="queryDialogTitle='Generator Output'; queryDialogContent = progressMessageOutput; isQueryDialogOpen = true;">
+                <v-btn v-if="progressMessageOutput && progressMessageOutput.length > 0" icon x-small style="color: #2196F3;" @click="queryDialogTitle='Generator Output'; queryDialogContent = progressMessageOutput; isQueryDialogOpen = true;">
                     <v-icon>mdi-magnify</v-icon>
                 </v-btn>
             </v-alert>
             <!-- #endregion -->
-
-
+        </div>
+        
+        <div id="scroll_messageList"
+            style="height: 100%; max-height: 60vh;
+            overflow: auto; padding-left:10px; padding-right:10px; padding-bottom:10px;
+            border-bottom: solid 2px rgba(0, 0, 0, 0.2);"
+        >
             <!-- #region AI가 출력시킬 채팅 내용들 -->
             <v-col cols="12" class="pa-0">
                 <div v-for="(reponseQuery, index) in responseQueries" :key="index">

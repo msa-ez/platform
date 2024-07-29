@@ -180,7 +180,7 @@
                                                 >Please select any deployment model to modify settings
                                                 </v-alert>
                                                 <v-col cols="12" class="pa-0">
-                                                    <div v-for="message in chatList" :key="message">
+                                                    <div v-for="(message, idx) in chatList" :key="idx">
                                                         <!-- 내가 입력한 텍스트  -->
                                                         <div v-if="message.type == 'prompt'"
                                                             class="d-flex justify-end"
@@ -213,7 +213,7 @@
                                                 solo
                                                 autofocus
                                                 append-icon="mdi-send"
-                                                :disabled="selectedElement.length === 0"
+                                                :disabled="selectedElement.length === 0 && canvasType !== 'uml-class-model-canvas'"
                                                 @click:append="generate()"
                                                 @keypress.enter="generate()"
                                             >
@@ -367,6 +367,9 @@
         computed: {
             displayResult() {
                 return (this.savedResult != '' && !this.generationStopped) ? this.savedResult : this.result;
+            },
+            canvasType() {
+                return this.$parent.$parent.$options.name
             }
         },
         mounted: async function () { 
@@ -374,19 +377,20 @@
             me.$EventBus.$on('selectedElement', function (selectedObj) {
                 var id = selectedObj.id
 
-                if (selectedObj['selected']) {
-                    me.selectedElement.push(selectedObj)
-                    if(me.modelValue){
-                        me.input.selectedElement = JSON.parse(JSON.stringify(selectedObj.value));
+                if(me.canvasType !== 'uml-class-model-canvas') {
+                    if (selectedObj['selected']) {
+                        me.selectedElement.push(selectedObj)
+                        if(me.modelValue){
+                            me.input.selectedElement = JSON.parse(JSON.stringify(selectedObj.value));
+                        }
+                    } else {
+                        var fidx = me.selectedElement.findIndex(obj => obj.id == id)
+                        if (fidx != -1) {
+                            me.selectedElement.splice(fidx, 1);
+                        }
+                        me.input.selectedElement = {}
                     }
-                } else {
-                    var fidx = me.selectedElement.findIndex(obj => obj.id == id)
-                    if (fidx != -1) {
-                        me.selectedElement.splice(fidx, 1);
-                    }
-                    me.input.selectedElement = {}
                 }
-
             });
 
             if(me.$attrs.embedded) {
@@ -497,6 +501,10 @@
 
                 if(changedInput)
                     this.input = changedInput;
+
+                if(this.canvasType === 'uml-class-model-canvas') {
+                    this.input.selectedElement = this.modelValue;
+                }
 
                 this.result = '';
                 this.prevUsedGeneratorTabIndex = this.userPanel
