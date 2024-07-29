@@ -594,7 +594,7 @@
                 }
                 me.generator = new AIGenerator(this, {prompt: prompt});
                 
-                //me.generator.model = "gpt-4-32k" //payment issue
+                //me.generator.model = "gpt-4o-32k" //payment issue
                 me.generator.generate();
             },
             onReceived(result){
