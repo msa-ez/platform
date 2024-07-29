@@ -61,6 +61,8 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
             const initUUIDAliasForElements = (elements, UUIDToAlias, aliasToUUID) => {
                 Object.keys(elements).forEach(key => {
                     const element = elements[key]
+                    if(!element) return
+
                     const aliasToUse = getAliasToUse(element, UUIDToAlias, aliasToUUID)
                     UUIDToAlias[key] = aliasToUse
                     aliasToUUID[aliasToUse] = key
@@ -70,6 +72,8 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
             const initUUIDAliasForRelations = (relations, UUIDToAlias, aliasToUUID) => {
                 Object.keys(relations).forEach(relationKey => {
                     const relation = relations[relationKey]
+                    if(!relation) return
+
                     const relationAliasToUse = getAliasForRelation(relation, UUIDToAlias, aliasToUUID)
                     UUIDToAlias[relationKey] = relationAliasToUse
                     aliasToUUID[relationAliasToUse] = relationKey
@@ -81,6 +85,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
         
             Object.keys(modelValue.elements).forEach(key => {
                 const element = modelValue.elements[key]
+                if(!element) return
         
                 if(element._type === "org.uengine.modeling.model.Aggregate" &&
                    element.aggregateRoot && element.aggregateRoot.entities) {
