@@ -151,15 +151,19 @@
 
 
             <v-dialog v-model="relatedUrlDialog" max-width="1400" @click:outside="relatedUrlDialog = false">
-                <v-card style="height: 800px">
+                <v-card style="height: 800px; overflow: hidden;">
                     <iframe
-                            id="main_frame"
-                            :src="relatedUrl"
-                            width="100%"
-                            height="100%">
+                        id="main_frame"
+                        :src="relatedUrl"
+                        style="width: 100%; height: 100%; 
+                        border: none; margin: 0; 
+                        padding: 0; 
+                        overflow: hidden;"
+                    >
                     </iframe>
                 </v-card>
             </v-dialog>
+
         </v-navigation-drawer>
 
     </v-layout>

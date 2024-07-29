@@ -16,10 +16,100 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
         this.modelInputLengthLimit = 10000
         this.relatedPreProcessModelValueString = ""
         this.queryResultsToModificate = null
+
+        this.UUIDAliasDic = {}
     }
 
     createPrompt(userProps, modelValue){
-        const getPreprocessModelValue = (modelValue) => {
+        const getUUIDAliasDic = (modelValue) => {
+            let UUIDToAlias = {}
+            let aliasToUUID = {}
+        
+            const getAliasToUse = (element, UUIDToAlias, aliasToUUID) => {
+                const getFrontId = (element) => {
+                    switch(element._type) {
+                        case "org.uengine.modeling.model.BoundedContext": return "bc"
+                        case "org.uengine.modeling.model.Aggregate": return "agg"
+                        case "org.uengine.modeling.model.Command": return "cmd"
+                        case "org.uengine.modeling.model.Event": return "evt"
+                        case "org.uengine.modeling.model.Actor": return "act"
+                        case "org.uengine.uml.model.Class": return element.isAggregateRoot ? "agg-root" : "entity"
+                        case "org.uengine.uml.model.Enum": return "enum"
+                        case "org.uengine.uml.model.vo.Class": return "vo"
+                        default: return "obj"
+                    }
+                }
+        
+                if(UUIDToAlias[element.id]) 
+                    return UUIDToAlias[element.id]
+        
+                let aliasToUse = `${getFrontId(element)}-${changeCase.camelCase(element.name)}`
+                let i = 1
+                while(aliasToUUID[aliasToUse]) {
+                    aliasToUse = `${aliasToUse}-${i}`
+                    i++
+                }
+                return aliasToUse
+            }
+        
+            const getAliasForRelation = (relation, UUIDToAlias, aliasToUUID) => {
+                const sourceAlias = getAliasToUse(relation.sourceElement, UUIDToAlias, aliasToUUID)
+                const targetAlias = getAliasToUse(relation.targetElement, UUIDToAlias, aliasToUUID)
+                return `${sourceAlias}-to-${targetAlias}`
+            }
+        
+            const initUUIDAliasForElements = (elements, UUIDToAlias, aliasToUUID) => {
+                Object.keys(elements).forEach(key => {
+                    const element = elements[key]
+                    if(!element) return
+
+                    const aliasToUse = getAliasToUse(element, UUIDToAlias, aliasToUUID)
+                    UUIDToAlias[key] = aliasToUse
+                    aliasToUUID[aliasToUse] = key
+                })
+            }
+        
+            const initUUIDAliasForRelations = (relations, UUIDToAlias, aliasToUUID) => {
+                Object.keys(relations).forEach(relationKey => {
+                    const relation = relations[relationKey]
+                    if(!relation) return
+
+                    const relationAliasToUse = getAliasForRelation(relation, UUIDToAlias, aliasToUUID)
+                    UUIDToAlias[relationKey] = relationAliasToUse
+                    aliasToUUID[relationAliasToUse] = relationKey
+                })
+            }
+        
+            initUUIDAliasForElements(modelValue.elements, UUIDToAlias, aliasToUUID)
+            initUUIDAliasForRelations(modelValue.relations, UUIDToAlias, aliasToUUID)
+        
+            Object.keys(modelValue.elements).forEach(key => {
+                const element = modelValue.elements[key]
+                if(!element) return
+        
+                if(element._type === "org.uengine.modeling.model.Aggregate" &&
+                   element.aggregateRoot && element.aggregateRoot.entities) {
+                    if(element.aggregateRoot.entities.elements) {
+                        initUUIDAliasForElements(element.aggregateRoot.entities.elements, UUIDToAlias, aliasToUUID)
+                    }
+        
+                    if(element.aggregateRoot.entities.relations) {
+                        initUUIDAliasForRelations(element.aggregateRoot.entities.relations, UUIDToAlias, aliasToUUID)
+                    }
+                }
+            })
+        
+            return {
+                UUIDToAlias: UUIDToAlias,
+                aliasToUUID: aliasToUUID
+            }
+        }
+
+        const getPreprocessModelValue = (modelValue, UUIDToAlias) => {
+            const getAliasIfExist = (id) => {
+                return UUIDToAlias[id] ? UUIDToAlias[id] : id
+            }
+        
             const getAllBoundedContexts = (modelValue) => {
                 return Object.values(modelValue.elements)
                     .filter(element => element && element._type === 'org.uengine.modeling.model.BoundedContext')
@@ -45,7 +135,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                     const getEnumInfos = (aggregate) => {
                         const getEnumInfo = (element) => {
                             let enumInfo = {}
-                            enumInfo.id = element.id ? element.id : element.elementView.id
+                            enumInfo.id = getAliasIfExist(element.id ? element.id : element.elementView.id)
                             enumInfo.name = element.name
                             enumInfo.items = element.items.map(item => {
                                 return item.value
@@ -77,7 +167,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                             }
         
                             let valueObjectInfo = {}
-                            valueObjectInfo.id = element.id ? element.id : element.elementView.id
+                            valueObjectInfo.id = getAliasIfExist(element.id ? element.id : element.elementView.id)
                             valueObjectInfo.name = element.name
                             valueObjectInfo.properties = getValueObjectProperties(element)
                             return valueObjectInfo
@@ -101,8 +191,8 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                                     if(relation && relation.sourceElement.id === command.id && 
                                        relation.targetElement._type === 'org.uengine.modeling.model.Event')
                                         outputEvents.push({
-                                            relationId: relation.id ? relation.id : relation.elementView.id,
-                                            id: relation.targetElement.id,
+                                            relationId: getAliasIfExist(relation.id ? relation.id : relation.elementView.id),
+                                            id: getAliasIfExist(relation.targetElement.id),
                                             name: relation.targetElement.name
                                         })
                                 }
@@ -110,7 +200,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                             }
         
                             let commandInfo = {}
-                            commandInfo.id = element.id ? element.id : element.elementView.id
+                            commandInfo.id = getAliasIfExist(element.id ? element.id : element.elementView.id)
                             commandInfo.name = element.name
                             commandInfo.api_verb = (element.restRepositoryInfo && element.restRepositoryInfo.method) ? element.restRepositoryInfo.method : "POST"
                             commandInfo.outputEvents = getOutputEvents(element, modelValue)
@@ -141,8 +231,8 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                                     const targetPolicy = modelValue.elements[policyRelation.targetElement.id]
                                     for(let commandRelation of getRelationsForType(targetPolicy, 'org.uengine.modeling.model.Command', modelValue)) {
                                         outputCommands.push({
-                                            relationId: commandRelation.id ? commandRelation.id : commandRelation.elementView.id,
-                                            id: commandRelation.targetElement.id,
+                                            relationId: getAliasIfExist(commandRelation.id ? commandRelation.id : commandRelation.elementView.id),
+                                            id: getAliasIfExist(commandRelation.targetElement.id),
                                             name: commandRelation.targetElement.name
                                         })   
                                     }
@@ -151,7 +241,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                             }
         
                             let eventInfo = {}
-                            eventInfo.id = element.id ? element.id : element.elementView.id
+                            eventInfo.id = getAliasIfExist(element.id ? element.id : element.elementView.id)
                             eventInfo.name = element.name
                             eventInfo.outputCommands = getOutputCommands(element, modelValue)
                             return eventInfo
@@ -169,7 +259,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                     }
         
                     let aggegateInfo = {}
-                    aggegateInfo.id = aggregate.id ? aggregate.id : aggregate.elementView.id
+                    aggegateInfo.id = getAliasIfExist(aggregate.id ? aggregate.id : aggregate.elementView.id)
                     aggegateInfo.name = aggregate.name
                     aggegateInfo.properties = getAggregateProperties(aggregate)
                     aggegateInfo.enumerations = getEnumInfos(aggregate)
@@ -186,7 +276,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                         if(element && (element._type === 'org.uengine.modeling.model.Actor') &&
                         (element.boundedContext.id === boundedContext.id)){
                             actors.push({
-                                id: element.id ? element.id : element.elementView.id,
+                                id: getAliasIfExist(element.id ? element.id : element.elementView.id),
                                 name: element.name
                             })
                         }
@@ -195,12 +285,12 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                 }
         
                 let boundedContextInfo = {}
-                boundedContextInfo.id = boundedContext.id ? boundedContext.id : boundedContext.elementView.id
+                boundedContextInfo.id = getAliasIfExist(boundedContext.id ? boundedContext.id : boundedContext.elementView.id)
                 boundedContextInfo.name = boundedContext.name
                 
                 boundedContextInfo.aggregates = {}
                 for(let aggregate of getAllAggregates(boundedContext, modelValue))
-                    boundedContextInfo.aggregates[aggregate.id] = getAggregateInfo(aggregate, boundedContext, modelValue)
+                    boundedContextInfo.aggregates[getAliasIfExist(aggregate.id)] = getAggregateInfo(aggregate, boundedContext, modelValue)
                 
                 boundedContextInfo.actors = getAllActors(boundedContext, modelValue)
         
@@ -209,9 +299,10 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
             
             let boundedContextInfos = {}
             for(let boundedContext of getAllBoundedContexts(modelValue))
-                boundedContextInfos[boundedContext.id] = getBoundedContextInfo(boundedContext, modelValue)
+                boundedContextInfos[getAliasIfExist(boundedContext.id)] = getBoundedContextInfo(boundedContext, modelValue)
             return boundedContextInfos;
         }
+
 
         const getSummarizedDebeziumLogStrings = (debeziumLogStrings) => {
             const getDebeziumLogStringList = (logs) => {
@@ -251,6 +342,9 @@ Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 �
 4. 자바에서 제공하는 기본 데이터타입 혹은 Address, Portrait, Rating, Money, Email을 제외한 속성들은 enumerations나 valueObjects로 직접 정의해야 합니다.
 5. event.block이나 hibernate_sequence와 같이 비즈니스 로직과 직접적으로 관련이 없는 트랜잭션은 무시해야 합니다.
 6. id 속성은 고유해야 하며, 수정하면 안 됩니다.
+7. 필수적인 상황이 아니라면, 하나의 Bounded Context 안에 하나의 Aggregate가 속하도록 해주세요.
+8. '<해당 Bounded Context에 속하게 될 Aggregate의 이름> + Service'와 같이 Bounded Context의 이름을 작성해 주세요.
+9. 트랜젝션의 속성 및 유즈 케이스가 다르다면, 관련된 새로운 Aggregate를 생성해야 합니다. 기존의 Aggregate를 덮어쓰면 안됩니다.
     
 `
                 }
@@ -600,31 +694,12 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
 이 예시에서 환자 진료 기록, 환자 선호도 정보는 환자 정보를 외래키로 가지고 있기 때문에 ValueObject 혹은 Aggregate로 정의될 수 있습니다.
 환자 진료 기록이 환자 정보와 데이터 불일치가 발생하면 비즈니스적으로 치명적이기 때문에 ValueObject로 환자 정보에 포함했고,
 환자 선호도 정보는 환자 정보와 데이터 불일치가 발생해도 비즈니스적으로 큰 문제가 되지 않기 때문에 Aggregate로 정의하였습니다.
-환자 선호도 정보 업데이트 이벤트가 발생했을 경우, 환자 정보 데이터에 환자 선호도와 관련된 상태 정보가 있으므로, 이를 업데이트하기 위해서 outputCommandIds에 관련 커맨드 Id를 명시해주었습니다.
-
-반환 결과 중 일부분을 보여드리겠습니다.
+환자 선호도 정보 업데이트 이벤트가 발생했을 경우, outputCommandIds 속성에 환자 정보 업데이트 커맨드 Id를 전달해서 환자 정보의 데이터도 업데이트한다는 점도 확인해 주세요.
+반환 결과는 다음과 같습니다.
 - 이것은 단지 예시일 뿐입니다. 실제로 제가 제공하는 이벤트 스토밍 모델링 데이터는 추후에 INPUT으로 제공될 겁니다.
-
-# transactions: 환자 정보 업데이트 트랜젝션
-{"description":"Update Patient Information","id":"patient-update-transaction","properties":[{"isForeignProperty":false,"isKey":true,"name":"id","type":"Integer"},{"name":"name"},{"name":"phoneNumber"},{"name":"bloodType","type":"EnumBloodType"},{"name":"isPreferenceInputed","type":"Boolean"}]}
-
-# usecase
-[{"actor":"User","displayName":"Update Patient","id":"usecase-update-patient","name":"UpdatePatient","relatedAggregateQueryIds":["query-agg-update-patient"],"relatedBoundedContextQueryIds":["query-bc-update-patient"],"relatedCommandQueryIds":["query-cmd-update-patient"],"relatedEnumerationQueryIds":["query-enum-blood-type"],"relatedEventQueryIds":["query-evt-update-patient"],"relatedTransactionId":"patient-update-transaction","relatedValueObjectQueryIds":[]},{"actor":"User","displayName":"Update Medical Record","id":"usecase-update-medical-record","name":"UpdateMedicalRecord","relatedAggregateQueryIds":[],"relatedBoundedContextQueryIds":[],"relatedCommandQueryIds":["query-cmd-update-medical-record"],"relatedEnumerationQueryIds":[],"relatedEventQueryIds":["query-evt-update-medical-record"],"relatedTransactionId":"medicalRecord-update-transaction","relatedValueObjectQueryIds":["query-vo-update-medical-record"]},{"actor":"User","displayName":"Update Patient Preference","id":"usecase-update-patient-preference","name":"UpdatePatientPreference","relatedAggregateQueryIds":["query-agg-update-patient-preference"],"relatedBoundedContextQueryIds":["query-bc-update-patient-preference"],"relatedCommandQueryIds":["query-cmd-update-patient-preference"],"relatedEnumerationQueryIds":[],"relatedEventQueryIds":["query-evt-update-patient-preference"],"relatedTransactionId":"patientPreference-update-transaction","relatedValueObjectQueryIds":[]}]
-
-# query-bc-update-patient
-{"action":"update","args":{"boundedContextName":"PatientService"},"fromUsecaseId":"usecase-update-patient","ids":{"boundedContextId":"bc-patient"},"objectType":"BoundedContext","queryId":"query-bc-update-patient"}
-
-# query-agg-update-patient
-{"action":"update","args":{"aggregateName":"Patient","properties":[{"isKey":true,"name":"id","type":"Integer"},{"name":"name"},{"name":"phoneNumber"},{"name":"bloodType","type":"EnumBloodType"},{"name":"isPreferenceInputed","type":"Boolean"}]},"fromUsecaseId":"usecase-update-patient","ids":{"aggregateId":"agg-patient","boundedContextId":"bc-patient"},"objectType":"Aggregate","queryId":"query-agg-update-patient"}
-
-# query-cmd-update-patient
-{"action":"update","args":{"actor":"User","api_verb":"PUT","commandName":"UpdatePatient","outputEventIds":["evt-patient-updated"]},"fromUsecaseId":"usecase-update-patient","ids":{"aggregateId":"agg-patient","boundedContextId":"bc-patient","commandId":"cmd-update-patient"},"objectType":"Command","queryId":"query-cmd-update-patient"}
-
-# query-evt-update-patient
-{"action":"update","args":{"eventName":"PatientUpdated","outputCommandIds":[]},"fromUsecaseId":"usecase-update-patient","ids":{"aggregateId":"agg-patient","boundedContextId":"bc-patient","eventId":"evt-patient-updated"},"objectType":"Event","queryId":"query-evt-update-patient"}
-
-# query-evt-update-patient-preference
-{"action":"update","args":{"eventName":"PatientPreferenceUpdated","outputCommandIds":["cmd-update-patient"]},"fromUsecaseId":"usecase-update-patient-preference","ids":{"aggregateId":"agg-patient-preference","boundedContextId":"bc-patient-preference","eventId":"event-update-patient-preference"},"objectType":"Event","queryId":"query-evt-update-patient-preference"}
+\`\`\`json
+{"transactions":[{"id":"patient-update-transaction","description":"Update Patient Information","properties":[{"name":"id","type":"Long","isKey":true},{"name":"name"},{"name":"phoneNumber"},{"name":"bloodType","type":"EnumBloodType"},{"name":"isPreferenceInputed","type":"Boolean"}]},{"id":"medicalRecord-update-transaction","description":"Update medicalRecord Information","properties":[{"name":"id","type":"Long","isKey":true},{"name":"patientId","isForeignProperty":true},{"name":"medicalRecord"}]},{"id":"patientPreference-update-transaction","description":"Update patientPreference Information","properties":[{"name":"id","type":"Long","isKey":true},{"name":"patientId","isForeignProperty":true},{"name":"PreferenceValue"}]}],"usecases":[{"relatedTransactionId":"patient-update-transaction","id":"usecase-update-patient","name":"UpdatePatient","displayName":"Update Patient","actor":"User","relatedBoundedContextQueryIds":["query-bc-update-patient"],"relatedAggregateQueryIds":["query-agg-update-patient"],"relatedEnumerationQueryIds":["query-enum-blood-type"],"relatedValueObjectQueryIds":[],"relatedCommandQueryIds":["query-cmd-update-patient"],"relatedEventQueryIds":["query-evt-update-patient"]},{"relatedTransactionId":"medicalRecord-update-transaction","id":"usecase-update-medical-record","name":"UpdateMedicalRecord","displayName":"Update Record Record","actor":"User","relatedBoundedContextQueryIds":[],"relatedAggregateQueryIds":[],"relatedEnumerationQueryIds":[],"relatedValueObjectQueryIds":["query-vo-update-medical-record"],"relatedCommandQueryIds":["query-cmd-update-medical-record"],"relatedEventQueryIds":["query-evt-update-medical-record"]},{"relatedTransactionId":"patientPreference-update-transaction","id":"usecase-update-patient-preference","name":"UpdatePatientPreference","displayName":"Update Patient Preference","actor":"User","relatedBoundedContextQueryIds":["query-bc-update-patient-preference"],"relatedAggregateQueryIds":["query-agg-update-patient-preference"],"relatedEnumerationQueryIds":[],"relatedValueObjectQueryIds":[],"relatedCommandQueryIds":["query-cmd-update-patient-preference"],"relatedEventQueryIds":["query-evt-update-patient-preference"]}],"queries":[{"fromUsecaseId":"usecase-update-patient","queryId":"query-bc-update-patient","objectType":"BoundedContext","action":"update","ids":{"boundedContextId":"bc-patient"},"args":{"boundedContextName":"PatientService"}},{"fromUsecaseId":"usecase-update-patient","queryId":"query-agg-update-patient","objectType":"Aggregate","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient"},"args":{"aggregateName":"Patient","properties":[{"name":"id","type":"Long","isKey":true},{"name":"name"},{"name":"phoneNumber"},{"name":"bloodType","type":"EnumBloodType"},{"name":"isPreferenceInputed","type":"Boolean"}]}},{"fromUsecaseId":"usecase-update-patient","queryId":"query-cmd-update-patient","objectType":"Command","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","commandId":"cmd-update-patient"},"args":{"commandName":"UpdatePatient","api_verb":"PUT","outputEventIds":["evt-patient-updated"],"actor":"User"}},{"fromUsecaseId":"usecase-update-patient","queryId":"query-evt-update-patient","objectType":"Event","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","eventId":"evt-patient-updated"},"args":{"eventName":"PatientUpdated"}},{"fromUsecaseId":"usecase-update-patient","queryId":"query-enum-blood-type","objectType":"Enumeration","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","enumerationId":"enum-blood-type"},"args":{"enumerationName":"EnumBloodType","properties":[{"name":"A"},{"name":"B"},{"name":"AB"},{"name":"O"}]}},{"fromUsecaseId":"usecase-update-medical-record","queryId":"query-vo-update-medical-record","objectType":"ValueObject","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","valueObjectId":"vo-medical-record"},"args":{"valueObjectName":"MedicalRecord","properties":[{"name":"id","type":"Long","isKey":true},{"name":"patientId","type":"String","isForeignProperty":true},{"name":"medicalRecord"}]}},{"fromUsecaseId":"usecase-update-medical-record","queryId":"query-cmd-update-medical-record","objectType":"Command","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","commandId":"cmd-update-medical-record"},"args":{"commandName":"UpdateMedicalRecord","api_verb":"PUT","outputEventIds":["evt-medical-record-updated"],"actor":"User"}},{"fromUsecaseId":"usecase-update-medical-record","queryId":"query-evt-update-medical-record","objectType":"Event","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","eventId":"evt-medical-record-updated"},"args":{"eventName":"MedicalRecordUpdated"}},{"fromUsecaseId":"usecase-update-patient-preference","queryId":"query-bc-update-patient-preference","objectType":"BoundedContext","action":"update","ids":{"boundedContextId":"bc-patient-preference"},"args":{"boundedContextName":"PatientPreferenceService"}},{"fromUsecaseId":"usecase-update-patient-preference","queryId":"query-agg-update-patient-preference","objectType":"Aggregate","action":"update","ids":{"boundedContextId":"bc-patient-preference","aggregateId":"agg-patient-preference"},"args":{"aggregateName":"PatientPreference","properties":[{"name":"id","type":"Long","isKey":true},{"name":"patientId"},{"name":"PreferenceValue"}]}},{"fromUsecaseId":"usecase-update-patient-preference","queryId":"query-cmd-update-patient-preference","objectType":"Command","action":"update","ids":{"boundedContextId":"bc-patient-preference","aggregateId":"agg-patient-preference","commandId":"cmd-update-patient-preference"},"args":{"commandName":"UpdatePatientPreference","api_verb":"PUT","outputEventIds":["evt-patient-preference-updated"],"actor":"User"}},{"fromUsecaseId":"usecase-update-patient-preference","queryId":"query-evt-update-patient-preference","objectType":"Event","action":"update","ids":{"boundedContextId":"bc-patient-preference","aggregateId":"agg-patient-preference","eventId":"evt-patient-preference-updated"},"args":{"eventName":"PatientPreferenceUpdated","outputCommandIds":["cmd-update-patient"]}}]}
+\`\`\`
 
 - Json 반환시에는 아래의 예시처럼 모든 공백을 제거하고, 압축된 형태로 반환해주세요.
 # BEFORE
@@ -761,16 +836,15 @@ ${eventStormingNames.join(", ")}
         const getSystemPromptForModifications = (prevSystemPrompt, queryResultsToModificate) => {
             const getModificationPrompt = () => {    
                 return `
+\`\`\`
 
 [INPUT]
 당신이 출력한 변경 내용중에서 명확하지 않은 부분이 있을 경우, 해당 부분을 교체하기 위한 쿼리를 작성해주세요.
-교체시키려는 속성을 jsonPath로 지정해서 value로 값을 작성하시면 되고, 변경사항이 없으면 빈 배열을 반환해주세요.
+교체시키려는 속성을 jsonPath로 지정해서 value로 값을 작성하시면 되고, 변경사항이 없으면 modifications 속성을 빈 배열로 반환해주세요.
 
 주요 검토 사항은 다음과 같습니다.
 1. outputCommandIds 속성으로 해당 event가 다른 BoundedContext의 커맨드를 호출해서, 관련된 속성을 잘 업데이트하는지 확인해주세요.
 2. 주어진 쿼리의 properties 속성이 트랜잭션의 속성들을 제대로 반영했는지 확인해주세요.
-3. 주어진 쿼리의 ids에 작성된 객체의 id들은 생성될 예정이거나 기존 이벤트 스토밍 모델에 반드시 존재해야 합니다.
-4. 주어진 쿼리의 outputEventIds나 outputCommandIds에 작성된 Id는 생성될 예정이거나 기존 이벤트 스토밍 모델에 반드시 존재해야 합니다.
 
 다음과 같이 반환하면 됩니다.
 \`\`\`json
@@ -784,9 +858,19 @@ ${eventStormingNames.join(", ")}
 }
 \`\`\`
 
+- Json 반환시에는 아래의 예시처럼 모든 공백을 제거하고, 압축된 형태로 반환해주세요.
+# BEFORE
+{
+    "a": 1,
+    "b": 2
+}
+
+# AFTER
+{"a":1,"b":2}
+
 [OUTPUT]
 \`\`\`json
-`
+{"modifications":[`
             }
 
             return prevSystemPrompt +
@@ -992,7 +1076,8 @@ ${JSON.stringify(inputObject)}
         let preprocessModelValueString = ""
         switch(this.modelMode) {
             case "generateCommands":
-                this.preprocessModelValue = getPreprocessModelValue(this.client.modelValue)
+                this.UUIDAliasDic = getUUIDAliasDic(this.client.modelValue)
+                this.preprocessModelValue = getPreprocessModelValue(this.client.modelValue, this.UUIDAliasDic.UUIDToAlias)
                 preprocessModelValueString = JSON.stringify(this.preprocessModelValue)
         
                 this.modelMode = "generateCommands"
@@ -1239,18 +1324,45 @@ ${JSON.stringify(inputObject)}
             try {
                 for(let modification of modifications) {
                     try {
+                        // ID 관련 속성은 제대로 수정을 못하므로, 무시함
+                        if(modification.jsonPath.includes("ids.")) continue
+
                         jp.apply(modelValue, modification.jsonPath, () => {
                             return modification.value
                         })
                     }
                     catch(e) {
-                        console.error(`[!] 변경 쿼리를 적용하는데 실패했습니다. 해당 변경 쿼리를 무시하고, 진행합니다.\n* modification\n${modification}\n* error\n`, e)
+                        console.error(`[!] 변경 쿼리를 적용하는데 실패했습니다. 해당 변경 쿼리를 무시하고, 진행합니다.\n* modification\n${JSON.stringify(modification, null, 2)}\n* error\n`, e)
                     }
                 }
             } catch(e) {
                 console.error(`[!] AI가 생성한 변경 쿼리가 유효해보이지 않습니다. 기존 결과를 그대로 사용합니다.\n* error\n`, e)
             }
             return modelValue
+        }
+
+        const applyAliasToUUIDToQueries = (queries, aliasToUUIDDic) => {
+            const getUUIDIfExist = (alias) => {
+                return aliasToUUIDDic[alias] ? aliasToUUIDDic[alias] : alias
+            }
+        
+            for(let query of queries) {
+                if(query.ids) {
+                    if(query.ids.boundedContextId) query.ids.boundedContextId = getUUIDIfExist(query.ids.boundedContextId)
+                    if(query.ids.aggregateId) query.ids.aggregateId = getUUIDIfExist(query.ids.aggregateId)
+                    if(query.ids.commandId) query.ids.commandId = getUUIDIfExist(query.ids.commandId)
+                    if(query.ids.eventId) query.ids.eventId = getUUIDIfExist(query.ids.eventId)
+                    if(query.ids.valueObjectId) query.ids.valueObjectId = getUUIDIfExist(query.ids.valueObjectId)
+                    if(query.ids.enumerationId) query.ids.enumerationId = getUUIDIfExist(query.ids.enumerationId)
+                }
+        
+                if(query.args.outputEventIds)
+                    query.args.outputEventIds = query.args.outputEventIds.map(eventId => getUUIDIfExist(eventId))
+            
+                if(query.args.outputCommandIds)
+                    query.args.outputCommandIds = query.args.outputCommandIds.map(commandId => getUUIDIfExist(commandId))
+            }
+            return queries
         }
 
         if(this.state !== 'end') {
@@ -1300,9 +1412,34 @@ ${JSON.stringify(inputObject)}
                     break
                 
                 case "modificationModelValue":
-                    const modifications = parseToJson(text).modifications
+                    let modifications = []
+                    try {
+                        modifications = parseToJson(text).modifications
+                    }
+                    catch(e) {
+                        console.error(`[!] AI 생성 결과를 파싱하는데 실패했습니다. AI의 생성 결과를 무시하고, 진행합니다.\n* error\n`, e)
+
+                        applyAliasToUUIDToQueries(this.queryResultsToModificate.queries, this.UUIDAliasDic.aliasToUUID)
+                        outputResult =  {
+                            modelName: this.modelName,
+                            modelMode: this.modelMode,
+                            modelValue: {
+                                ...this.queryResultsToModificate,
+                                debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
+                            },
+                            modelRawValue: text,
+                            isError:true
+                        }
+
+                        this.queryResultsToModificate = null
+                        this.modelMode = "generateCommands"
+                        break
+                    }
+                     
                     this.modificatedQueryResults = JSON.parse(JSON.stringify(this.queryResultsToModificate))
                     this.modificatedQueryResults = applyModifications(this.modificatedQueryResults, modifications)
+                    
+                    applyAliasToUUIDToQueries(this.queryResultsToModificate.queries, this.UUIDAliasDic.aliasToUUID)
                     outputResult = {
                         modelName: this.modelName,
                         modelMode: this.modelMode,
