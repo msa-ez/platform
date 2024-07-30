@@ -941,8 +941,8 @@ class DebeziumTransactionQuery {
         }
 
         const applyToEvent = (modelValue, userInfo, objectAliaToUUID, query) => {
-            const createNewPolicy = (modelValue, userInfo, eventObject, commandId) => {
-                const getPolicyBase = (userInfo, name, displayName, boundedContextId, x, y, elementUUID) => {
+            const createNewPolicy = (modelValue, userInfo, eventObject, commandId, updateReason) => {
+                const getPolicyBase = (userInfo, name, displayName, boundedContextId, updateReason, x, y, elementUUID) => {
                     const elementUUIDtoUse = elementUUID ? elementUUID : getUUID()
                     return {
                         id: elementUUIDtoUse,
@@ -950,7 +950,7 @@ class DebeziumTransactionQuery {
                         boundedContext: {
                             id: boundedContextId
                         },
-                        description: null,
+                        description: updateReason ? updateReason : null,
                         elementView: {
                             height: 115,
                             width: 100,
@@ -1032,7 +1032,7 @@ class DebeziumTransactionQuery {
 
                 const policyObject = getPolicyBase(
                     userInfo, commandObject.name + " Policy", commandObject.name + " Policy", 
-                    commandObject.boundedContext.id, 0, 0
+                    commandObject.boundedContext.id, updateReason, 0, 0
                 )
 
                 modelValue.elements[policyObject.id] = policyObject
@@ -1149,8 +1149,8 @@ class DebeziumTransactionQuery {
 
                 if(query.args.outputCommandIds) {
                     callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
-                        query.args.outputCommandIds.forEach(commandId => {
-                            createNewPolicy(modelValue, userInfo, eventObject, commandId)
+                        query.args.outputCommandIds.forEach(outputCommandId => {
+                            createNewPolicy(modelValue, userInfo, eventObject, outputCommandId.commandId, outputCommandId.reason)
                         })
                     })
                 }
@@ -1166,8 +1166,8 @@ class DebeziumTransactionQuery {
 
                 const updatePolicy = (modelValue, userInfo, eventObject, outputCommandIds) => {
                     clearRelatedPolicies(modelValue, eventObject.id)
-                    outputCommandIds.forEach(commandId => {
-                        createNewPolicy(modelValue, userInfo, eventObject, commandId)
+                    outputCommandIds.forEach(outputCommandId => {
+                        createNewPolicy(modelValue, userInfo, eventObject, outputCommandId.commandId, outputCommandId.reason)
                     })
                 }
 
@@ -1191,12 +1191,21 @@ class DebeziumTransactionQuery {
                 getUUIDFromAlias(modelValue, objectAliaToUUID, query.ids, "eventId")
 
                 if(query.args && query.args.outputCommandIds) {
-                    query.args.outputCommandIds = query.args.outputCommandIds.map(commandId => {
-                        if(modelValue.elements[commandId]) return commandId
+                    query.args.outputCommandIds = query.args.outputCommandIds.map(outputCommandId => {
+                        const commandId = outputCommandId.commandId
+                        if(modelValue.elements[commandId]) return {
+                            commandId: commandId,
+                            relatedAttribute: outputCommandId.relatedAttribute,
+                            reason: outputCommandId.reason
+                        }
 
                         if(!objectAliaToUUID[commandId])
                             objectAliaToUUID[commandId] = getUUID()
-                        return objectAliaToUUID[commandId]
+                        return {
+                            commandId: objectAliaToUUID[commandId],
+                            relatedAttribute: outputCommandId.relatedAttribute,
+                            reason: outputCommandId.reason
+                        }
                     })
                 }
             }
