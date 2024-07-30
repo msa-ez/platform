@@ -1147,7 +1147,7 @@ class DebeziumTransactionQuery {
                 eventObject.fieldDescriptors = getFileDescriptors(modelValue, query)
                 modelValue.elements[eventObject.id] = eventObject
 
-                if(query.args.outputCommandId) {
+                if(query.args.outputCommandIds) {
                     callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
                         query.args.outputCommandIds.forEach(commandId => {
                             createNewPolicy(modelValue, userInfo, eventObject, commandId)

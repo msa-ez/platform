@@ -303,6 +303,24 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
             return boundedContextInfos;
         }
 
+        const getObjectIdInfos = (preprocessModelValue) => {
+            let objectIdInfos = {
+                "commandIds": [],
+                "eventIds": []
+            }
+            Object.values(preprocessModelValue).forEach(boundary => {
+                if(boundary.aggregates){
+                    Object.values(boundary.aggregates).forEach(aggregate => {
+                        if(aggregate.commands)
+                            objectIdInfos.commandIds = objectIdInfos.commandIds.concat(aggregate.commands.map(command => command.id))
+                        if(aggregate.events)
+                            objectIdInfos.eventIds = objectIdInfos.eventIds.concat(aggregate.events.map(event => event.id))
+                    })
+                }
+            })
+            return objectIdInfos
+        }
+
 
         const getSummarizedDebeziumLogStrings = (debeziumLogStrings) => {
             const getDebeziumLogStringList = (logs) => {
@@ -329,8 +347,8 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
             return "".concat(summarizedDebeziumLogStrings)
         }
 
-        const getSystemPromptForGenerateCommands = (preprocessModelValueString, debeziumLogs) => {
-            const getSystemPrompt = (preprocessModelValueString, debeziumLogs) => {
+        const getSystemPromptForGenerateCommands = (preprocessModelValueString, debeziumLogs, objectIdInfos) => {
+            const getSystemPrompt = (preprocessModelValueString, debeziumLogs, objectIdInfos) => {
                 const getFrontGuidePrompt = () => {
                     return `당신은 특정 시스템의 데이터베이스에서 발생하는 Debezium CDC 트랜잭션 로그를 해석해서 주어진 이벤트 스토밍 모델을 수정하기 위한 액션이 담긴 쿼리를 작성해야 합니다.
 Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 있지 않은 유즈케이스들을 찾아서 그에 맞춰서 이벤트 스토밍 모델에 반영하기 위한 액션이 담긴 쿼리들을 작성하시면 됩니다.
@@ -714,7 +732,7 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
 `
                 }
     
-                const getUserPrompt = (preprocessModelValueString, debeziumLogs) => {
+                const getUserPrompt = (preprocessModelValueString, debeziumLogs, objectIdInfos) => {
                     const requestDebeziumFieldsPrompt = (debeziumLogs) => {
                         const debeziumFieldsSet = new Set()
                         
@@ -728,7 +746,15 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
                         
                         return `트랜젝션 로그에서 다음 필드들을 반드시 활용해서 액션을 작성하셔야 합니다.: ${Array.from(debeziumFieldsSet).join(", ")}`
                     }
+
+                    const requestReverseEventToCommandIdsPrompt = (eventIds) => {
+                        return `커맨드 생성 쿼리의 경우, 다음 이벤트들이 생성된 커맨드를 호출해서 데이터를 변경시킬 필요가 있는 경우, 해당 이벤트의 outputCommandIds에 추가해야 합니다.: ${eventIds.join(", ")}`
+                    }
                     
+                    const requestEventToCommandIdsPrompt = (commandIds) => {
+                        return `이벤트 생성 쿼리의 경우, 해당 이벤트가 다음 커맨드들을 추가로 호출해서 데이터를 변경시킬 필요가 있는 경우, 해당 이벤트의 outputCommandIds에 추가해야 합니다. : ${commandIds.join(", ")}`
+                    }
+
                     return `[INPUT]
 - 기존 이벤트스토밍 모델 객체
 ${preprocessModelValueString}
@@ -738,6 +764,8 @@ ${getSummarizedDebeziumLogStrings(debeziumLogs)}
 
 - 추가 요청
 ${requestDebeziumFieldsPrompt(debeziumLogs)}
+${objectIdInfos.eventIds.length > 0 ? requestReverseEventToCommandIdsPrompt(objectIdInfos.eventIds) : ""}
+${objectIdInfos.commandIds.length > 0 ? requestEventToCommandIdsPrompt(objectIdInfos.commandIds) : ""}
 
 [OUTPUT]
 \`\`\`json
@@ -748,12 +776,13 @@ ${requestDebeziumFieldsPrompt(debeziumLogs)}
                         getInputSyntaxGuidePrompt() +
                         getOutputSyntaxGuidePrompt() +
                         getExamplePrompt() +
-                        getUserPrompt(preprocessModelValueString, debeziumLogs)
+                        getUserPrompt(preprocessModelValueString, debeziumLogs, objectIdInfos)
             }
 
             return getSystemPrompt(
                 preprocessModelValueString,
-                debeziumLogs 
+                debeziumLogs,
+                objectIdInfos
             )
         }
 
@@ -831,51 +860,6 @@ ${eventStormingNames.join(", ")}
 
             const eventStormingNames = getEventStormingNames(preProcessModelValue)
             return getSystemPrompt(eventStormingNames, debeziumLogs)
-        }
-
-        const getSystemPromptForModifications = (prevSystemPrompt, queryResultsToModificate) => {
-            const getModificationPrompt = () => {    
-                return `
-\`\`\`
-
-[INPUT]
-당신이 출력한 변경 내용중에서 명확하지 않은 부분이 있을 경우, 해당 부분을 교체하기 위한 쿼리를 작성해주세요.
-교체시키려는 속성을 jsonPath로 지정해서 value로 값을 작성하시면 되고, 변경사항이 없으면 modifications 속성을 빈 배열로 반환해주세요.
-
-주요 검토 사항은 다음과 같습니다.
-1. outputCommandIds 속성으로 해당 event가 다른 BoundedContext의 커맨드를 호출해서, 관련된 속성을 잘 업데이트하는지 확인해주세요.
-2. 주어진 쿼리의 properties 속성이 트랜잭션의 속성들을 제대로 반영했는지 확인해주세요.
-
-다음과 같이 반환하면 됩니다.
-\`\`\`json
-{
-    "modifications": [
-        {
-            "jsonPath": "<JsonPath>",
-            "value": "<Value>"
-        }
-    ]
-}
-\`\`\`
-
-- Json 반환시에는 아래의 예시처럼 모든 공백을 제거하고, 압축된 형태로 반환해주세요.
-# BEFORE
-{
-    "a": 1,
-    "b": 2
-}
-
-# AFTER
-{"a":1,"b":2}
-
-[OUTPUT]
-\`\`\`json
-{"modifications":[`
-            }
-
-            return prevSystemPrompt +
-                   JSON.stringify(queryResultsToModificate) +
-                   getModificationPrompt()
         }
 
         const getSystemPromptForGenerateGWT = (gwtRequestValue, debeziumLogs) => {        
@@ -1078,6 +1062,7 @@ ${JSON.stringify(inputObject)}
             case "generateCommands":
                 this.UUIDAliasDic = getUUIDAliasDic(this.client.modelValue)
                 this.preprocessModelValue = getPreprocessModelValue(this.client.modelValue, this.UUIDAliasDic.UUIDToAlias)
+                this.objectIdInfos = getObjectIdInfos(this.preprocessModelValue)
                 preprocessModelValueString = JSON.stringify(this.preprocessModelValue)
         
                 this.modelMode = "generateCommands"
@@ -1086,7 +1071,10 @@ ${JSON.stringify(inputObject)}
                 break
             
             case "summaryPreprocessModelValue":
-                preprocessModelValueString = this.relatedPreProcessModelValueString
+                this.objectIdInfos = getObjectIdInfos(this.relatedPreProcessModelValue)
+                preprocessModelValueString = JSON.stringify(this.relatedPreProcessModelValue)
+                    .replace(/\{\}/g, "{...}")
+                    .replace(/\[\]/g, "[...]")
                 this.modelMode = "generateCommands"
                 break
         }
@@ -1095,16 +1083,11 @@ ${JSON.stringify(inputObject)}
         let systemPrompt = ""
         switch(this.modelMode) {
             case "generateCommands":
-                systemPrompt = getSystemPromptForGenerateCommands(preprocessModelValueString, this.messageObj.modificationMessage)
-                this.prevSystemPrompt = systemPrompt
+                systemPrompt = getSystemPromptForGenerateCommands(preprocessModelValueString, this.messageObj.modificationMessage, this.objectIdInfos)
                 break
 
             case "summaryPreprocessModelValue":
                 systemPrompt = getSystemPromptForSummaryPreProcessModelValue(this.preprocessModelValue, this.messageObj.modificationMessage)
-                break
-            
-            case "modificationModelValue":
-                systemPrompt = getSystemPromptForModifications(this.prevSystemPrompt, this.queryResultsToModificate)
                 break
             
             case "generateGWT":
@@ -1134,7 +1117,7 @@ ${JSON.stringify(inputObject)}
             return logs.match(/\{"schema":\{.*?"name":".*?\.Envelope".*?\},"payload":\{.*?\}\}/g)
         }
 
-        const getRelatedPreprocecssModelValueString = (preprocessModelValue, sortedObjectNames, lengthLimit, onlyNameLengthLimit) => {
+        const getRelatedPreprocecssModelValue = (preprocessModelValue, sortedObjectNames, lengthLimit, onlyNameLengthLimit) => {
             const getSortedObjectPaths = (preProcessModelValue, sortedObjectNames) => {
                 const getSearchedObjectPaths = (preProcessModelValue, sortedObjectId) => {
                     let searchObjectPaths = []
@@ -1309,36 +1292,9 @@ ${JSON.stringify(inputObject)}
                 return relatedPreprocessModelValue
             }
         
-            const getDotExpressionToReladedPreValueString = (relatedPreprocessValueString) => {
-                relatedPreprocessValueString = relatedPreprocessValueString.replace(/\{\}/g, "{...}")
-                relatedPreprocessValueString = relatedPreprocessValueString.replace(/\[\]/g, "[...]")
-                return relatedPreprocessValueString
-            }
-        
             const sortedObjectPaths = getSortedObjectPaths(preprocessModelValue, sortedObjectNames)
-            const relatedPreprocessValue = getRelatedPreprocessModelValueByPath(sortedObjectPaths, lengthLimit, onlyNameLengthLimit)
-            return getDotExpressionToReladedPreValueString(JSON.stringify(relatedPreprocessValue))
-        }
-
-        const applyModifications = (modelValue, modifications) => {
-            try {
-                for(let modification of modifications) {
-                    try {
-                        // ID 관련 속성은 제대로 수정을 못하므로, 무시함
-                        if(modification.jsonPath.includes("ids.")) continue
-
-                        jp.apply(modelValue, modification.jsonPath, () => {
-                            return modification.value
-                        })
-                    }
-                    catch(e) {
-                        console.error(`[!] 변경 쿼리를 적용하는데 실패했습니다. 해당 변경 쿼리를 무시하고, 진행합니다.\n* modification\n${JSON.stringify(modification, null, 2)}\n* error\n`, e)
-                    }
-                }
-            } catch(e) {
-                console.error(`[!] AI가 생성한 변경 쿼리가 유효해보이지 않습니다. 기존 결과를 그대로 사용합니다.\n* error\n`, e)
-            }
-            return modelValue
+            const relatedPreprocessModelValue = getRelatedPreprocessModelValueByPath(sortedObjectPaths, lengthLimit, onlyNameLengthLimit)
+            return relatedPreprocessModelValue
         }
 
         const applyAliasToUUIDToQueries = (queries, aliasToUUIDDic) => {
@@ -1382,75 +1338,34 @@ ${JSON.stringify(inputObject)}
             let outputResult = {}
             switch(this.modelMode) {
                 case "generateCommands":
-                    this.queryResultsToModificate = parseToJson(text)
+                    let queryResults = parseToJson(text)
+                    applyAliasToUUIDToQueries(queryResults.queries, this.UUIDAliasDic.aliasToUUID)
+
                     outputResult = {
                         modelName: this.modelName,
                         modelMode: this.modelMode,
                         modelValue: {
-                            ...this.queryResultsToModificate,
+                            ...queryResults,
                             debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
                         },
                         modelRawValue: text
                     }
-                    this.modelMode = "modificationModelValue"
                     break
 
                 case "summaryPreprocessModelValue":
                     const sortedObjectNames = parseToJson(text).sortedObjectNames
-                    this.relatedPreProcessModelValueString = getRelatedPreprocecssModelValueString(this.preprocessModelValue, sortedObjectNames, this.modelInputLengthLimit, Math.floor(this.modelInputLengthLimit*0.8))
+                    this.relatedPreProcessModelValue = getRelatedPreprocecssModelValue(this.preprocessModelValue, sortedObjectNames, this.modelInputLengthLimit, Math.floor(this.modelInputLengthLimit*0.8))
 
                     outputResult = {
                         modelName: this.modelName,
                         modelMode: this.modelMode,
                         modelValue: {
                             sortedObjectNames: sortedObjectNames,
-                            relatedPreProcessModelValueString: this.relatedPreProcessModelValueString,
+                            relatedPreProcessModelValue: this.relatedPreProcessModelValue,
                             debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
                         },
                         modelRawValue: text
                     }
-                    break
-                
-                case "modificationModelValue":
-                    let modifications = []
-                    try {
-                        modifications = parseToJson(text).modifications
-                    }
-                    catch(e) {
-                        console.error(`[!] AI 생성 결과를 파싱하는데 실패했습니다. AI의 생성 결과를 무시하고, 진행합니다.\n* error\n`, e)
-
-                        applyAliasToUUIDToQueries(this.queryResultsToModificate.queries, this.UUIDAliasDic.aliasToUUID)
-                        outputResult =  {
-                            modelName: this.modelName,
-                            modelMode: this.modelMode,
-                            modelValue: {
-                                ...this.queryResultsToModificate,
-                                debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
-                            },
-                            modelRawValue: text,
-                            isError:true
-                        }
-
-                        this.queryResultsToModificate = null
-                        this.modelMode = "generateCommands"
-                        break
-                    }
-                     
-                    this.modificatedQueryResults = JSON.parse(JSON.stringify(this.queryResultsToModificate))
-                    this.modificatedQueryResults = applyModifications(this.modificatedQueryResults, modifications)
-                    
-                    applyAliasToUUIDToQueries(this.queryResultsToModificate.queries, this.UUIDAliasDic.aliasToUUID)
-                    outputResult = {
-                        modelName: this.modelName,
-                        modelMode: this.modelMode,
-                        modelValue: {
-                            ...this.modificatedQueryResults,
-                            debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
-                        },
-                        modelRawValue: text
-                    }
-                    this.queryResultsToModificate = null
-                    this.modelMode = "generateCommands"
                     break
                 
                 case "generateGWT":
