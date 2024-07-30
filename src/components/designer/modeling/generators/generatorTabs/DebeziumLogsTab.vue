@@ -233,11 +233,6 @@ export default {
                     this.progressMessage = `이벤트 스토밍 정보 요약중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
                     break
                 
-                case "modificationModelValue":
-                    this.progressMessageOutput = model.modelRawValue
-                    this.progressMessage = `액션 유효성 검토중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
-                    break
-                
                 case "generateGWT":
                     this.progressMessageOutput = model.modelRawValue
                     this.progressMessage = `생성된 커맨드에 대한 GWT 생성중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
@@ -327,16 +322,6 @@ export default {
 
             switch(model.modelMode) {
                 case "generateCommands":
-                    this.$emit("generate")
-                    this.progressMessage = `액션 유효성 검토를 요청하는중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
-                    break
-
-                case "summaryPreprocessModelValue":
-                    this.$emit("generate")
-                    this.progressMessage = `이벤트 스토밍 모델 정보에 대한 요약을 요청하는중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
-                    break
-
-                case "modificationModelValue":
                     this.responseQueries = this.debeziumTransactionManager.toStringObject()
 
                     this.messageObj.gwtRequestValue = getGWTRequestValue(this.debeziumLogsGenerator.client.modelValue, model.modelValue.queries)
@@ -347,6 +332,11 @@ export default {
                     }
                     else 
                         processDebeziumLogsToPrcess()
+                    break
+
+                case "summaryPreprocessModelValue":
+                    this.$emit("generate")
+                    this.progressMessage = `이벤트 스토밍 모델 정보에 대한 요약을 요청하는중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
                     break
                 
                 case "generateGWT":

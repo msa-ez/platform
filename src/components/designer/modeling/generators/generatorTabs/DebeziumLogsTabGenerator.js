@@ -833,51 +833,6 @@ ${eventStormingNames.join(", ")}
             return getSystemPrompt(eventStormingNames, debeziumLogs)
         }
 
-        const getSystemPromptForModifications = (prevSystemPrompt, queryResultsToModificate) => {
-            const getModificationPrompt = () => {    
-                return `
-\`\`\`
-
-[INPUT]
-당신이 출력한 변경 내용중에서 명확하지 않은 부분이 있을 경우, 해당 부분을 교체하기 위한 쿼리를 작성해주세요.
-교체시키려는 속성을 jsonPath로 지정해서 value로 값을 작성하시면 되고, 변경사항이 없으면 modifications 속성을 빈 배열로 반환해주세요.
-
-주요 검토 사항은 다음과 같습니다.
-1. outputCommandIds 속성으로 해당 event가 다른 BoundedContext의 커맨드를 호출해서, 관련된 속성을 잘 업데이트하는지 확인해주세요.
-2. 주어진 쿼리의 properties 속성이 트랜잭션의 속성들을 제대로 반영했는지 확인해주세요.
-
-다음과 같이 반환하면 됩니다.
-\`\`\`json
-{
-    "modifications": [
-        {
-            "jsonPath": "<JsonPath>",
-            "value": "<Value>"
-        }
-    ]
-}
-\`\`\`
-
-- Json 반환시에는 아래의 예시처럼 모든 공백을 제거하고, 압축된 형태로 반환해주세요.
-# BEFORE
-{
-    "a": 1,
-    "b": 2
-}
-
-# AFTER
-{"a":1,"b":2}
-
-[OUTPUT]
-\`\`\`json
-{"modifications":[`
-            }
-
-            return prevSystemPrompt +
-                   JSON.stringify(queryResultsToModificate) +
-                   getModificationPrompt()
-        }
-
         const getSystemPromptForGenerateGWT = (gwtRequestValue, debeziumLogs) => {        
             const getSystemPrompt = () => {
                 return `당신은 주어진 Debezium 정보와 이벤트 스토밍 정보를 바탕으로 GWT(Given, When, Then) 형식으로 JSON 객체를 생성해야 합니다.
@@ -1096,15 +1051,10 @@ ${JSON.stringify(inputObject)}
         switch(this.modelMode) {
             case "generateCommands":
                 systemPrompt = getSystemPromptForGenerateCommands(preprocessModelValueString, this.messageObj.modificationMessage)
-                this.prevSystemPrompt = systemPrompt
                 break
 
             case "summaryPreprocessModelValue":
                 systemPrompt = getSystemPromptForSummaryPreProcessModelValue(this.preprocessModelValue, this.messageObj.modificationMessage)
-                break
-            
-            case "modificationModelValue":
-                systemPrompt = getSystemPromptForModifications(this.prevSystemPrompt, this.queryResultsToModificate)
                 break
             
             case "generateGWT":
@@ -1320,27 +1270,6 @@ ${JSON.stringify(inputObject)}
             return getDotExpressionToReladedPreValueString(JSON.stringify(relatedPreprocessValue))
         }
 
-        const applyModifications = (modelValue, modifications) => {
-            try {
-                for(let modification of modifications) {
-                    try {
-                        // ID 관련 속성은 제대로 수정을 못하므로, 무시함
-                        if(modification.jsonPath.includes("ids.")) continue
-
-                        jp.apply(modelValue, modification.jsonPath, () => {
-                            return modification.value
-                        })
-                    }
-                    catch(e) {
-                        console.error(`[!] 변경 쿼리를 적용하는데 실패했습니다. 해당 변경 쿼리를 무시하고, 진행합니다.\n* modification\n${JSON.stringify(modification, null, 2)}\n* error\n`, e)
-                    }
-                }
-            } catch(e) {
-                console.error(`[!] AI가 생성한 변경 쿼리가 유효해보이지 않습니다. 기존 결과를 그대로 사용합니다.\n* error\n`, e)
-            }
-            return modelValue
-        }
-
         const applyAliasToUUIDToQueries = (queries, aliasToUUIDDic) => {
             const getUUIDIfExist = (alias) => {
                 return aliasToUUIDDic[alias] ? aliasToUUIDDic[alias] : alias
@@ -1382,17 +1311,18 @@ ${JSON.stringify(inputObject)}
             let outputResult = {}
             switch(this.modelMode) {
                 case "generateCommands":
-                    this.queryResultsToModificate = parseToJson(text)
+                    let queryResults = parseToJson(text)
+                    applyAliasToUUIDToQueries(queryResults.queries, this.UUIDAliasDic.aliasToUUID)
+
                     outputResult = {
                         modelName: this.modelName,
                         modelMode: this.modelMode,
                         modelValue: {
-                            ...this.queryResultsToModificate,
+                            ...queryResults,
                             debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
                         },
                         modelRawValue: text
                     }
-                    this.modelMode = "modificationModelValue"
                     break
 
                 case "summaryPreprocessModelValue":
@@ -1409,48 +1339,6 @@ ${JSON.stringify(inputObject)}
                         },
                         modelRawValue: text
                     }
-                    break
-                
-                case "modificationModelValue":
-                    let modifications = []
-                    try {
-                        modifications = parseToJson(text).modifications
-                    }
-                    catch(e) {
-                        console.error(`[!] AI 생성 결과를 파싱하는데 실패했습니다. AI의 생성 결과를 무시하고, 진행합니다.\n* error\n`, e)
-
-                        applyAliasToUUIDToQueries(this.queryResultsToModificate.queries, this.UUIDAliasDic.aliasToUUID)
-                        outputResult =  {
-                            modelName: this.modelName,
-                            modelMode: this.modelMode,
-                            modelValue: {
-                                ...this.queryResultsToModificate,
-                                debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
-                            },
-                            modelRawValue: text,
-                            isError:true
-                        }
-
-                        this.queryResultsToModificate = null
-                        this.modelMode = "generateCommands"
-                        break
-                    }
-                     
-                    this.modificatedQueryResults = JSON.parse(JSON.stringify(this.queryResultsToModificate))
-                    this.modificatedQueryResults = applyModifications(this.modificatedQueryResults, modifications)
-                    
-                    applyAliasToUUIDToQueries(this.queryResultsToModificate.queries, this.UUIDAliasDic.aliasToUUID)
-                    outputResult = {
-                        modelName: this.modelName,
-                        modelMode: this.modelMode,
-                        modelValue: {
-                            ...this.modificatedQueryResults,
-                            debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
-                        },
-                        modelRawValue: text
-                    }
-                    this.queryResultsToModificate = null
-                    this.modelMode = "generateCommands"
                     break
                 
                 case "generateGWT":

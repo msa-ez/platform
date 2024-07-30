@@ -3133,7 +3133,7 @@
                     if(val.modelValue) {
                         const oldModelValue = JSON.parse(JSON.stringify(me.value))
 
-                        if(val.modelMode === "modificationModelValue" || val.modelMode === "mockModelValue") {
+                        if(val.modelMode === "generateCommands" || val.modelMode === "mockModelValue") {
                             try {
                                 const currentDebeziumTransactionManager = me.tabs.find(tab => tab.component === 'DebeziumLogsTab').initValue.manager
                                 currentDebeziumTransactionManager.addNewTransactionFromModelValue(val.modelValue)
