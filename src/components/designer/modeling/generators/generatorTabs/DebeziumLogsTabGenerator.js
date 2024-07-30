@@ -303,6 +303,24 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
             return boundedContextInfos;
         }
 
+        const getObjectIdInfos = (preprocessModelValue) => {
+            let objectIdInfos = {
+                "commandIds": [],
+                "eventIds": []
+            }
+            Object.values(preprocessModelValue).forEach(boundary => {
+                if(boundary.aggregates){
+                    Object.values(boundary.aggregates).forEach(aggregate => {
+                        if(aggregate.commands)
+                            objectIdInfos.commandIds = objectIdInfos.commandIds.concat(aggregate.commands.map(command => command.id))
+                        if(aggregate.events)
+                            objectIdInfos.eventIds = objectIdInfos.eventIds.concat(aggregate.events.map(event => event.id))
+                    })
+                }
+            })
+            return objectIdInfos
+        }
+
 
         const getSummarizedDebeziumLogStrings = (debeziumLogStrings) => {
             const getDebeziumLogStringList = (logs) => {
@@ -329,8 +347,8 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
             return "".concat(summarizedDebeziumLogStrings)
         }
 
-        const getSystemPromptForGenerateCommands = (preprocessModelValueString, debeziumLogs) => {
-            const getSystemPrompt = (preprocessModelValueString, debeziumLogs) => {
+        const getSystemPromptForGenerateCommands = (preprocessModelValueString, debeziumLogs, objectIdInfos) => {
+            const getSystemPrompt = (preprocessModelValueString, debeziumLogs, objectIdInfos) => {
                 const getFrontGuidePrompt = () => {
                     return `당신은 특정 시스템의 데이터베이스에서 발생하는 Debezium CDC 트랜잭션 로그를 해석해서 주어진 이벤트 스토밍 모델을 수정하기 위한 액션이 담긴 쿼리를 작성해야 합니다.
 Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 있지 않은 유즈케이스들을 찾아서 그에 맞춰서 이벤트 스토밍 모델에 반영하기 위한 액션이 담긴 쿼리들을 작성하시면 됩니다.
@@ -714,7 +732,7 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
 `
                 }
     
-                const getUserPrompt = (preprocessModelValueString, debeziumLogs) => {
+                const getUserPrompt = (preprocessModelValueString, debeziumLogs, objectIdInfos) => {
                     const requestDebeziumFieldsPrompt = (debeziumLogs) => {
                         const debeziumFieldsSet = new Set()
                         
@@ -728,7 +746,15 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
                         
                         return `트랜젝션 로그에서 다음 필드들을 반드시 활용해서 액션을 작성하셔야 합니다.: ${Array.from(debeziumFieldsSet).join(", ")}`
                     }
+
+                    const requestReverseEventToCommandIdsPrompt = (eventIds) => {
+                        return `커맨드 생성 쿼리의 경우, 다음 이벤트들이 생성된 커맨드를 호출해서 데이터를 변경시킬 필요가 있는 경우, 해당 이벤트의 outputCommandIds에 추가해야 합니다.: ${eventIds.join(", ")}`
+                    }
                     
+                    const requestEventToCommandIdsPrompt = (commandIds) => {
+                        return `이벤트 생성 쿼리의 경우, 해당 이벤트가 다음 커맨드들을 추가로 호출해서 데이터를 변경시킬 필요가 있는 경우, 해당 이벤트의 outputCommandIds에 추가해야 합니다. : ${commandIds.join(", ")}`
+                    }
+
                     return `[INPUT]
 - 기존 이벤트스토밍 모델 객체
 ${preprocessModelValueString}
@@ -738,6 +764,8 @@ ${getSummarizedDebeziumLogStrings(debeziumLogs)}
 
 - 추가 요청
 ${requestDebeziumFieldsPrompt(debeziumLogs)}
+${objectIdInfos.eventIds.length > 0 ? requestReverseEventToCommandIdsPrompt(objectIdInfos.eventIds) : ""}
+${objectIdInfos.commandIds.length > 0 ? requestEventToCommandIdsPrompt(objectIdInfos.commandIds) : ""}
 
 [OUTPUT]
 \`\`\`json
@@ -748,12 +776,13 @@ ${requestDebeziumFieldsPrompt(debeziumLogs)}
                         getInputSyntaxGuidePrompt() +
                         getOutputSyntaxGuidePrompt() +
                         getExamplePrompt() +
-                        getUserPrompt(preprocessModelValueString, debeziumLogs)
+                        getUserPrompt(preprocessModelValueString, debeziumLogs, objectIdInfos)
             }
 
             return getSystemPrompt(
                 preprocessModelValueString,
-                debeziumLogs 
+                debeziumLogs,
+                objectIdInfos
             )
         }
 
@@ -1033,6 +1062,7 @@ ${JSON.stringify(inputObject)}
             case "generateCommands":
                 this.UUIDAliasDic = getUUIDAliasDic(this.client.modelValue)
                 this.preprocessModelValue = getPreprocessModelValue(this.client.modelValue, this.UUIDAliasDic.UUIDToAlias)
+                this.objectIdInfos = getObjectIdInfos(this.preprocessModelValue)
                 preprocessModelValueString = JSON.stringify(this.preprocessModelValue)
         
                 this.modelMode = "generateCommands"
@@ -1041,7 +1071,10 @@ ${JSON.stringify(inputObject)}
                 break
             
             case "summaryPreprocessModelValue":
-                preprocessModelValueString = this.relatedPreProcessModelValueString
+                this.objectIdInfos = getObjectIdInfos(this.relatedPreProcessModelValue)
+                preprocessModelValueString = JSON.stringify(this.relatedPreProcessModelValue)
+                    .replace(/\{\}/g, "{...}")
+                    .replace(/\[\]/g, "[...]")
                 this.modelMode = "generateCommands"
                 break
         }
@@ -1050,7 +1083,7 @@ ${JSON.stringify(inputObject)}
         let systemPrompt = ""
         switch(this.modelMode) {
             case "generateCommands":
-                systemPrompt = getSystemPromptForGenerateCommands(preprocessModelValueString, this.messageObj.modificationMessage)
+                systemPrompt = getSystemPromptForGenerateCommands(preprocessModelValueString, this.messageObj.modificationMessage, this.objectIdInfos)
                 break
 
             case "summaryPreprocessModelValue":
@@ -1084,7 +1117,7 @@ ${JSON.stringify(inputObject)}
             return logs.match(/\{"schema":\{.*?"name":".*?\.Envelope".*?\},"payload":\{.*?\}\}/g)
         }
 
-        const getRelatedPreprocecssModelValueString = (preprocessModelValue, sortedObjectNames, lengthLimit, onlyNameLengthLimit) => {
+        const getRelatedPreprocecssModelValue = (preprocessModelValue, sortedObjectNames, lengthLimit, onlyNameLengthLimit) => {
             const getSortedObjectPaths = (preProcessModelValue, sortedObjectNames) => {
                 const getSearchedObjectPaths = (preProcessModelValue, sortedObjectId) => {
                     let searchObjectPaths = []
@@ -1259,15 +1292,9 @@ ${JSON.stringify(inputObject)}
                 return relatedPreprocessModelValue
             }
         
-            const getDotExpressionToReladedPreValueString = (relatedPreprocessValueString) => {
-                relatedPreprocessValueString = relatedPreprocessValueString.replace(/\{\}/g, "{...}")
-                relatedPreprocessValueString = relatedPreprocessValueString.replace(/\[\]/g, "[...]")
-                return relatedPreprocessValueString
-            }
-        
             const sortedObjectPaths = getSortedObjectPaths(preprocessModelValue, sortedObjectNames)
-            const relatedPreprocessValue = getRelatedPreprocessModelValueByPath(sortedObjectPaths, lengthLimit, onlyNameLengthLimit)
-            return getDotExpressionToReladedPreValueString(JSON.stringify(relatedPreprocessValue))
+            const relatedPreprocessModelValue = getRelatedPreprocessModelValueByPath(sortedObjectPaths, lengthLimit, onlyNameLengthLimit)
+            return relatedPreprocessModelValue
         }
 
         const applyAliasToUUIDToQueries = (queries, aliasToUUIDDic) => {
@@ -1327,14 +1354,14 @@ ${JSON.stringify(inputObject)}
 
                 case "summaryPreprocessModelValue":
                     const sortedObjectNames = parseToJson(text).sortedObjectNames
-                    this.relatedPreProcessModelValueString = getRelatedPreprocecssModelValueString(this.preprocessModelValue, sortedObjectNames, this.modelInputLengthLimit, Math.floor(this.modelInputLengthLimit*0.8))
+                    this.relatedPreProcessModelValue = getRelatedPreprocecssModelValue(this.preprocessModelValue, sortedObjectNames, this.modelInputLengthLimit, Math.floor(this.modelInputLengthLimit*0.8))
 
                     outputResult = {
                         modelName: this.modelName,
                         modelMode: this.modelMode,
                         modelValue: {
                             sortedObjectNames: sortedObjectNames,
-                            relatedPreProcessModelValueString: this.relatedPreProcessModelValueString,
+                            relatedPreProcessModelValue: this.relatedPreProcessModelValue,
                             debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
                         },
                         modelRawValue: text
