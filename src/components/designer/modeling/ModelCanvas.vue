@@ -4190,6 +4190,11 @@
                             action: element.relationView ? 'relationDelete' : 'elementDelete',
                             STATUS_COMPLETE: true
                         })
+
+                        // uml delete 후처리
+                        if(element._type.includes('uml')){
+                            me.$EventBus.$emit('cascadeDelete', element)
+                        }
                     },
                     onFail(e){
                         console.log(`[Error] Remove Element: ${e}`)

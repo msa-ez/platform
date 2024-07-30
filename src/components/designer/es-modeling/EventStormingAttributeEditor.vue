@@ -448,6 +448,18 @@
                             }
                         })
                     }
+                    
+                    // vo field delete -> delete relation
+                    if(me.type.includes('uml') && val._type.includes('uml.model.FieldDescriptor')){
+                        var targetVo = Object.values(me.entities.elements).find(entity => entity !==null && entity.name.toLowerCase() === val.name.toLowerCase());
+                        Object.values(me.entities.relations).forEach(function(item) {
+                            if(item) {
+                                if(item.to == targetVo.elementView.id && item.from == me.elementId) {
+                                    me.entities.relations[item.relationView.id] = null
+                                }
+                            }
+                        })
+                    }
                 }
 
             },

@@ -537,6 +537,7 @@
                         me.$set(me.value.fieldDescriptors[idx], "name", changeCase.camelCase(name))
                         me.$set(me.value.fieldDescriptors[idx], "nameCamelCase", changeCase.camelCase(name))
                         me.$set(me.value.fieldDescriptors[idx], "namePascalCase", changeCase.pascalCase(name))
+                        me.$set(me.value.fieldDescriptors[idx], "className", changeCase.pascalCase(toName))
                         me.$set(me.value.fieldDescriptors[idx], "label", "- "+changeCase.camelCase(name)+": "+changeCase.pascalCase(toName))
                     }
                 }
