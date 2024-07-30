@@ -23,7 +23,9 @@
                                 v-if="value" 
                                 v-on:canvasReady="bindEvents" 
                                 v-on:connectShape="onConnectShape" 
-                                :imageBase="imageBase">
+                                :imageBase="imageBase"
+                                :key="openGraphRenderKey"
+                        >
                             <!--엘리먼트-->
                             <div v-for="elementId in Object.keys(value.elements)" :key="elementId">
                                 <component 
@@ -740,6 +742,8 @@
                 // unload
                 leaveSite: false,
 
+                openGraphRenderKey: 0
+
             }
         },
         beforeDestroy: function () {
@@ -827,6 +831,25 @@
 
             window.addEventListener("wheel", me.handScroll);
 
+            me.$EventBus.$on('cascadeDelete', (element) => {
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!element) return;
+                        if(element._type.includes('Relation')){
+                            let fromEle = me.value.elements[element.from]
+                            let fields = fromEle.fieldDescriptors
+                            me.value.elements[element.from].fieldDescriptors = fields.filter((field) => {
+                                return field.name.toLowerCase() !== element.name.toLowerCase()
+                            })
+                        }
+                    },
+                    onFail(e){
+                        console.log(`[Error] Remove Element: ${e}`)
+                    }
+                })
+            })
+
             // const channel = me.pusher.subscribe('paint');
             // // channel.bind('draw', function(data) {
             // //     // console.log(data)
@@ -871,6 +894,13 @@
             //
             //     }
             // });
+
+            // #region 처음 캔버스를 열 때, Dom이 로딩되기 전에 좌표 값을 얻어와서 렌더링에 버그가 생기기때문에 재렌더링 시킴
+            this.$nextTick(() => {
+                if(this.openGraphRenderKey === 0)
+                    this.openGraphRenderKey += 1
+            })
+            // #endregion
         },
         methods: {
             setCanvasType(){

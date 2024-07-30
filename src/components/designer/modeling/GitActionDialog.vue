@@ -432,8 +432,6 @@
     import ErrorLogGenerator from './generators/ErrorLogGenerator';
     import { VectorStorage } from "vector-storage";
 
-    const diff = require('diff');
-
     export default {
         name: 'git-action-dialog',
         mixins:[],

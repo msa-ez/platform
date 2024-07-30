@@ -6563,6 +6563,8 @@
             openEmbeddedCanvas(val, mode) {
                 var me = this;
 
+                me.closeEmbeddedCanvas();
+
                 me.closeSeparatePanel();
 
                 if (mode != "java-parse") {
