@@ -704,7 +704,7 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
         // 2. 커맨드를 호출하는 이유에 어떤 속성을 변경하기 위해서 커맨드를 호출하는지 명시해야 합니다.
         "outputCommandIds": [{
             "commandId": "<outputCommandId>", // 호출하는 커맨드 Id입니다.
-            "relatedAttribute": "<relatedAttribute>", // 어떠한 속성을 업데이트하기 위해서 커맨드를 호출하는지 명시합니다. 정확한 속성명을 지정해야 합니다.
+            "relatedAttribute": "<relatedAttribute>", // 어떠한 속성을 업데이트하기 위해서 커맨드를 호출하는지 명시합니다. 호출하는 커맨드에 속하는 Aggregate의 속성명을 작성해야 합니다.
             "reason": "<reason>" // 이 커맨드를 호출하는 이유를 명시합니다.
         }]
     }
