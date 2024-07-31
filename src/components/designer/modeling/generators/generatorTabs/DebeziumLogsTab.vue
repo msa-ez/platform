@@ -212,7 +212,7 @@ export default {
                 this.messageObj.modificationMessage = this.debeziumLogsToPrcess.shift()
 
                 this.isGenerationFinished = false
-                if(this.debeziumLogsGenerator) this.debeziumLogsGenerator.modelMode = "generateCommands"
+                if(this.debeziumLogsGenerator) this.debeziumLogsGenerator.modelMode = "generateCommandGuides"
                 this.$emit("generate")
             }
             catch(e) {
@@ -223,6 +223,11 @@ export default {
 
         onModelCreated(model) {
             switch(model.modelMode) {
+                case "generateCommandGuides":
+                    this.progressMessageOutput = model.modelRawValue
+                    this.progressMessage = `액션 생성에 대한 가이드 생성중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
+                    break
+
                 case "generateCommands":
                     this.progressMessageOutput = model.modelRawValue
                     this.progressMessage = `액션 생성중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
@@ -299,7 +304,7 @@ export default {
             }
 
             const processDebeziumLogsToPrcess = () => {
-                this.debeziumLogsGenerator.modelMode = "generateCommands"
+                this.debeziumLogsGenerator.modelMode = "generateCommandGuides"
                 if(this.debeziumLogsToPrcess.length > 0) {
                     this.messageObj.modificationMessage = this.debeziumLogsToPrcess.shift()
                     this.isGenerationFinished = false
@@ -321,6 +326,11 @@ export default {
             }
 
             switch(model.modelMode) {
+                case "generateCommandGuides":
+                    this.$emit("generate")
+                    this.progressMessage = `액션 생성 가이드를 토대로 액션 생성을 요청중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
+                    break
+
                 case "generateCommands":
                     this.responseQueries = this.debeziumTransactionManager.toStringObject()
 
