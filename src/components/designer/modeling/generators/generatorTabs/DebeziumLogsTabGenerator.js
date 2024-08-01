@@ -305,15 +305,20 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
 
         const getPreprocessInfos = (preprocessModelValue) => {
             let primaryKeysSet = new Set()
+            let aggregateNames = []
+            let commandNames = []
+            let eventNames = []
             
             Object.values(preprocessModelValue).forEach(boundary => {
                 if(boundary.aggregates){
                     Object.values(boundary.aggregates).forEach(aggregate => {
+                        aggregateNames.push(aggregate.name)
+          
                         aggregate.properties.forEach(property => {
                             if(property.isKey)
                                 primaryKeysSet.add(property.name)
                         })
-        
+          
                         if(aggregate.valueObjects) {
                             aggregate.valueObjects.forEach(valueObject => {
                                 valueObject.properties.forEach(property => {
@@ -322,12 +327,27 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                                 })
                             })
                         }
+                        
+                        if(aggregate.commands) {
+                            aggregate.commands.forEach(command => {
+                            commandNames.push(command.name)
+                            })
+                        }
+                        
+                        if(aggregate.events) {
+                            aggregate.events.forEach(event => {
+                                eventNames.push(event.name)
+                            })
+                        }
                     })
                 }
             })
-        
+          
             return {
-                "primaryKeys": Array.from(primaryKeysSet)
+                "primaryKeys": Array.from(primaryKeysSet),
+                "aggregateNames": aggregateNames,
+                "commandNames": commandNames,
+                "eventNames": eventNames
             }
         }
 
@@ -1220,6 +1240,7 @@ ${JSON.stringify(inputObject)}
         switch(this.modelMode) {
             case "generateCommandGuides":
                 systemPrompt = getSystemPromptForGenerateCommandGuides(preprocessModelValueString, this.messageObj.modificationMessage, preprocessInfos)
+                this.prevPreprocessInfos = preprocessInfos
                 this.prevPreprocessModelValueString = preprocessModelValueString
                 break
 
@@ -1468,7 +1489,16 @@ ${JSON.stringify(inputObject)}
             return queries
         }
 
-        const getCommandGuidesToUse = (commandGuides) => {
+        const getCommandGuidesToUse = (commandGuides, prevPreprocessInfos) => {
+            const correctGuides = (commandGuides, prevPreprocessInfos) => {
+                if(prevPreprocessInfos.aggregateNames && prevPreprocessInfos.aggregateNames.length > 0)
+                    commandGuides.isUsedExistingObject = prevPreprocessInfos.aggregateNames.map(aggName => aggName.toLowerCase()).includes(commandGuides.objectName.toLowerCase())
+                if(prevPreprocessInfos.commandNames && prevPreprocessInfos.commandNames.length > 0)
+                    commandGuides.isUsedExistingCommand = prevPreprocessInfos.commandNames.map(commandName => commandName.toLowerCase()).includes(commandGuides.debeziumLogCommandName.toLowerCase())
+                if(prevPreprocessInfos.eventNames && prevPreprocessInfos.eventNames.length > 0)
+                    commandGuides.isUsedExistingEvent = prevPreprocessInfos.eventNames.map(eventName => eventName.toLowerCase()).includes(commandGuides.debeziumLogEventName.toLowerCase())
+            }
+            
             const objectNameToString = (objectName, aggregateIdToIncludeAsValueObject, isUsedExistingObject) => {
                 if(!isUsedExistingObject && aggregateIdToIncludeAsValueObject && aggregateIdToIncludeAsValueObject !== "null" && aggregateIdToIncludeAsValueObject.length > 0)
                     return `'${aggregateIdToIncludeAsValueObject}' Aggregate 내부에 ValueObject로 '${objectName}' 이름으로 생성해주세요.`
@@ -1523,6 +1553,7 @@ Bounded Context를 생성할 필요가 있으면, 다음 이름을 사용해서 
                 return `생성하는 이벤트의 outputCommandIds를 수정해서 다음의 커맨드를 호출하도록 만들어주세요: ${JSON.stringify(uniqueObjects)}`
             }
         
+            correctGuides(commandGuides, prevPreprocessInfos)
             return `${objectNameToString(commandGuides.objectName, commandGuides.aggregateIdToIncludeAsValueObject, commandGuides.isUsedExistingObject)}
 ${debeziumLogCommandNameToString(commandGuides.debeziumLogCommandName, commandGuides.isUsedExistingCommand)}
 ${debeziumLogEventNameToString(commandGuides.debeziumLogEventName, commandGuides.isUsedExistingEvent)}
@@ -1549,7 +1580,7 @@ ${commandsToTriggerByDebeziumLogEventToString(commandGuides.commandsToTriggerByD
             switch(this.modelMode) {
                 case "generateCommandGuides":
                     let commandGuides = parseToJson(text)
-                    this.commandGuidesToUse = getCommandGuidesToUse(commandGuides)
+                    this.commandGuidesToUse = getCommandGuidesToUse(commandGuides, this.prevPreprocessInfos)
 
                     outputResult = {
                         modelName: this.modelName,
