@@ -76,8 +76,11 @@
                     </v-btn>
                 </template>
                 <span>
-                    A relationship like the example below should be formed. <br>
-                    <img width="504" alt="image" src="https://github.com/msa-ez/platform/assets/123912988/0b1f0855-11df-49b7-ad86-4588f05b34d2">
+                    The following steps are required to use the 'EXAMPLES'. <br>
+                    1. There must be a policy sticker that forms the event sticker and outgoingRelation. <br>
+                    2. A relationship with the event that occurs through the policy must be formed. <br>
+                    e.g.<br>
+                    <img width="795" alt="image" src="https://github.com/user-attachments/assets/dc66113d-516b-42a5-b717-c8365abecd7e">
                 </span>
             </v-tooltip>
         </template>

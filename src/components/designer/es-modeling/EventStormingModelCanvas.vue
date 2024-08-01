@@ -2000,6 +2000,12 @@
     });
     window.jp = require("jsonpath");
 
+    var jsondiffpatch = require('jsondiffpatch').create({
+        objectHash: function (obj, index) {
+            return '$$index:' + index;
+        }
+    });
+
     // const CodeGeneratorCore = require("../modeling/CodeGeneratorCore");
     // import json2yaml from "json2yaml";
     // import StorageBase from "../modeling/StorageBase";
@@ -2409,11 +2415,6 @@
             };
         },
         computed: {
-            currentDebeziumTransactionManager() {
-                var me = this
-                return me.tabs.find(tab => tab.component === 'DebeziumLogsTab').initValue.manager
-            },
-
             projectSendable(){
                 var me = this
                 if(!me.modelListOfassociatedProject().includes(me.projectId)) return false;
@@ -3072,6 +3073,10 @@
             forceRefreshCanvas() {
                 this.canvasRenderKey++;
             },
+            afterSnapshotLoad(){
+                // Debezium 챗봇의 채팅 내역을 불러오기 위해서
+                this.tabs[0].initValue.modelValue = this.value
+            },
             createModel(val, originModel) {
                 const generateGWT = (modelValue, requestValue, gwts) => {
                     const generateExamples = (gwts) => {
@@ -3090,7 +3095,7 @@
                                 const when = whens[0]
                                 return [
                                     {
-                                        "type": "Command",
+                                        "type": "Event",
                                         "name": when.name,
                                         "value": when.values
                                     }
@@ -3126,11 +3131,17 @@
 
                 if(val && val.modelName === "DebeziumLogsTabGenerator") {
                     if(val.modelValue) {
-                        if(val.modelMode === "modificationModelValue" || val.modelMode === "mockModelValue") {
+                        const oldModelValue = JSON.parse(JSON.stringify(me.value))
+
+                        if(val.modelMode === "generateCommands" || val.modelMode === "mockModelValue") {
                             try {
-                                me.currentDebeziumTransactionManager.addNewTransactionFromModelValue(val.modelValue)
-                                me.currentDebeziumTransactionManager.apply(me.value, me.userInfo)
-                                this.forceRefreshCanvas();
+                                const currentDebeziumTransactionManager = me.tabs.find(tab => tab.component === 'DebeziumLogsTab').initValue.manager
+                                currentDebeziumTransactionManager.addNewTransactionFromModelValue(val.modelValue)
+                                currentDebeziumTransactionManager.apply(me.value, me.userInfo)
+                                me.forceRefreshCanvas()
+
+                                me.value.debeziumChatSaveObject = currentDebeziumTransactionManager.toSaveObject()
+                                me.changedByMe = true
                             } catch(e) {
                                 console.error("[!] 출력 결과를 Debezium Manager에 전달해서 처리하는 과정에서 오류 발생")
                                 console.error(e)
@@ -3141,13 +3152,17 @@
                         if(val.modelMode === "generateGWT") {
                             try {
                                 generateGWT(me.value, val.modelValue.requestValue, val.modelValue.gwts)
-                                this.forceRefreshCanvas();
+                                me.forceRefreshCanvas()
+
+                                me.changedByMe = true
                             } catch(e) {
                                 console.error("[!] 출력 결과를 이용해서 GWT를 만드는 과정에서 오류 발생")
                                 console.error(e)
                                 alert("죄송합니다. AI를 통해서 테스트 케이스(GWT)를 생성하는데 실패했습니다. 해당 커맨드 객체를 더블클릭 > Examples 버튼으로 직접 Debezium Log를 넣어서 GWT를 생성해주시길 바랍니다. 에러 내용:" + e.message)
                             }
                         }
+
+                        this.pushChangedValueQueue(jsondiffpatch.diff(oldModelValue, me.value))
                     }
                     return
                 }
@@ -6560,6 +6575,8 @@
 
             openEmbeddedCanvas(val, mode) {
                 var me = this;
+
+                me.closeEmbeddedCanvas();
 
                 me.closeSeparatePanel();
 

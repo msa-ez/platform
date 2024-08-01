@@ -58,8 +58,10 @@
                     </v-btn>
                 </template>
                 <span>
-                    A relationship like the example below should be formed. <br>
-                    <img width="495" alt="image" src="https://github.com/msa-ez/platform/assets/123912988/0c4a988e-64a1-4a31-a368-613aa27e25c4">
+                    The following steps are required to use the 'EXAMPLES'. <br>
+                    1. A relationship with the event occurring through the command must be formed. <br>
+                    e.g.<br>
+                    <img width="366" alt="image" src="https://github.com/user-attachments/assets/2bf62154-0a8a-4269-867e-996ad90d2947">
                 </span>
             </v-tooltip>
         </template>

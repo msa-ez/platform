@@ -448,6 +448,18 @@
                             }
                         })
                     }
+                    
+                    // vo field delete -> delete relation
+                    if(me.type.includes('uml') && val._type.includes('uml.model.FieldDescriptor')){
+                        var targetVo = Object.values(me.entities.elements).find(entity => entity !==null && entity.name.toLowerCase() === val.name.toLowerCase());
+                        Object.values(me.entities.relations).forEach(function(item) {
+                            if(item) {
+                                if(item.to == targetVo.elementView.id && item.from == me.elementId) {
+                                    me.entities.relations[item.relationView.id] = null
+                                }
+                            }
+                        })
+                    }
                 }
 
             },
@@ -482,14 +494,23 @@
                     }
 
                     var hasKey = false
-                    me.value.forEach(function(attr) {
-                        if(attr.isKey){
+                    if(me.value.length == 0){
+                        hasKey = true
+                    } else {
+                        me.value.forEach(function(attr) {
+                            if(attr.isKey){
+                                hasKey = true
+                            }
+                        })
+                        if(!hasKey){
+                            me.value[0].isKey = true
                             hasKey = true
                         }
-                    })
+                    }
 
                     var check = false
-                    if (((tmpObject.name).toLowerCase() == 'id' && (tmpObject.className).toLowerCase() == 'long') && !hasKey && (!me.type.includes('uml') && !me.type.includes('Command'))) {
+                    // if (((tmpObject.name).toLowerCase() == 'id' && (tmpObject.className).toLowerCase() == 'long') && !hasKey && (!me.type.includes('uml') && !me.type.includes('Command'))) {
+                    if (!hasKey && (!me.type.includes('uml') && !me.type.includes('Command'))) {
                         check = true
                     } else {
                         me.value.forEach(function (agg) {

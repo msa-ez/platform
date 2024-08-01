@@ -349,7 +349,7 @@
                                 const when = whens[0]
                                 return [
                                     {
-                                        "type": "Command",
+                                        "type": "Event",
                                         "name": when.name,
                                         "value": when.values
                                     }
@@ -573,7 +573,9 @@
                                                 whenItems.push(me.canvas.value.elements[rel.sourceElement.elementView.id]);
                                             }
                                             if(!thenItems.find(x => x.elementView.id == rel.targetElement.elementView.id)){
-                                                thenItems.push(me.canvas.value.elements[rel.targetElement.elementView.id]);
+                                                let element = JSON.parse(JSON.stringify(me.canvas.value.elements[rel.targetElement.elementView.id]));
+                                                element.fieldDescriptors = element.queryParameters
+                                                thenItems.push(element);
                                             }
                                         }
                                     }

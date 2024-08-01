@@ -523,12 +523,14 @@
                 var isIncluded = me.value.aggregateRoot.fieldDescriptors.some((field) =>
                     field.className.includes(attr.className)
                 );
-                if (Object.values(me.value.aggregateRoot.entities.elements).length > 0) {
-                    isIncluded = Object.values(me.value.aggregateRoot.entities.elements).some((el) =>
-                        el != null &&
-                        el.referenceClass &&
-                        el.referenceClass === changeCase.pascalCase(toName)
-                    );
+                if(Object.values(me.value.aggregateRoot.entities).length > 0){
+                    if (Object.values(me.value.aggregateRoot.entities.elements).length > 0) {
+                        isIncluded = Object.values(me.value.aggregateRoot.entities.elements).some((el) =>
+                            el != null &&
+                            el.referenceClass &&
+                            el.referenceClass === changeCase.pascalCase(toName)
+                        );
+                    }
                 }
 
                 if(!isIncluded) {

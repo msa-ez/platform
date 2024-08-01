@@ -563,6 +563,19 @@
                                         me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]))
                                     }
                                 })
+
+                                // ele set name -> set to relation name
+                                let relations = Object.values(me.canvas.value.relations).filter(rel => rel!==null && rel.to===me.value.elementView.id)
+                                relations.forEach(rel => {
+                                    rel.name = me.value.name
+
+                                    const obj = {
+                                        action: "updateRelation",
+                                        relation: rel
+                                    }
+                                    me.$EventBus.$emit(`${rel.from}`, obj)
+                                })
+
                                 // re setting 값을 emit
                                 me.$emit('_value-change', me._value)
                             }

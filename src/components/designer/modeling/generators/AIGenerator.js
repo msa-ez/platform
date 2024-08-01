@@ -10,7 +10,7 @@ class AIGenerator {
         this.gptResponseId = null;
         this.openaiToken = null
         this.model = this.client && this.client.model ? this.client.model:"gpt-3.5-turbo-16k"
-        this.responseLimit = this.model == 'gpt-4' ? 0:15
+        this.responseLimit = this.model == 'gpt-4o' ? 0:15
 
         if(options){
             this.preferredLanguage = options.preferredLanguage;

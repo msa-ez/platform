@@ -73,8 +73,10 @@
                     </v-btn>
                 </template>
                 <span>
-                    A relationship like the example below should be formed. <br>
-                    <img width="495" alt="image" src="https://github.com/msa-ez/platform/assets/123912988/0c4a988e-64a1-4a31-a368-613aa27e25c4">
+                    The following steps are required to use the 'EXAMPLES'.<br>
+                    1. There must be a ReadModel Sticker in another bound Context that forms a sync call relationship with the command. <br>
+                    e.g.<br>
+                    <img width="794" alt="image" src="https://github.com/user-attachments/assets/b8a91e73-c806-4ad2-b668-1b1e04e1c3e9">
                 </span>
             </v-tooltip>
         </template>

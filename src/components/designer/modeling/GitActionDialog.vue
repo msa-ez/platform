@@ -495,9 +495,10 @@
                 successLog: null,
                 savedGeneratedErrorDetails: null,
                 generatedErrorDetails: null,
+                modifiedHistory: [],
 
                 generator: null,
-                model: 'gpt-4',
+                model: 'gpt-4o',
 
                 gitActionSnackBar: {
                     Text: '',
@@ -737,12 +738,47 @@
             async generate(){
                 var me = this
                 me.commitMsg = null
-                me.model = 'gpt-4'
+                me.model = 'gpt-4o'
                 me.startGitAction = true
                 me.generator = new SIGenerator(this);
                 if(!me.prompt){
                     await me.summaryCodeList()
                 }
+
+                if(me.siTestResults && me.siTestResults.length > 0){
+                    for(var i = 0; i < me.siTestResults.length; i++){
+                        let obj = {
+                            solution:'',
+                            error:[],
+                            codeChanges:{
+                                fileName: '',
+                                changes: []
+                            }
+                        }
+                        let result = me.siTestResults[i]
+
+                        if(result.solution){
+                            obj['solution'] = result.solution
+                        }
+
+                        if(result.errorLog && result.errorLog.length > 0){
+                            for(var j = 0; j < result.errorLog.length; j++){
+                                obj['error'].push(result.errorLog[j])
+                            }
+                        }
+
+                        if(result.codeChanges && result.codeChanges.length > 0){
+                            for(var j = 0; j < result.codeChanges.length; j++){
+                                obj['codeChanges'].fileName = result.codeChanges[j].fileName
+                                if(result.codeChanges[j].modifiedFile){
+                                    obj['codeChanges'].changes.push(result.codeChanges[j].modifiedFile[0].code)
+                                }
+                            }
+                        }
+                        me.modifiedHistory.push(obj)
+                    }
+                }
+
                 me.generator.generate();
             },
             regenerate(prompt){
@@ -751,20 +787,20 @@
                     context: me,
                     async action(me){
                         if(prompt){
-                            this.siTestResults[this.lastIndex].userMessage = prompt
+                            me.siTestResults[me.lastIndex].userMessage = prompt
                         } else {
-                            if(this.solutionCnt){
-                                for(var i = 0; i < this.solutionCnt; i++){
-                                    this.siTestResults.pop()
+                            if(me.solutionCnt){
+                                for(var i = 0; i < me.solutionCnt; i++){
+                                    me.siTestResults.pop()
                                 }
-                                this.lastIndex = this.siTestResults.lastIndex
-                                this.resultLength = this.siTestResults.length
+                                me.lastIndex = me.siTestResults.lastIndex
+                                me.resultLength = me.siTestResults.length
                             }
-                            if(this.savedGeneratedErrorDetails){
-                                this.generatedErrorDetails = this.savedGeneratedErrorDetails
+                            if(me.savedGeneratedErrorDetails){
+                                me.generatedErrorDetails = me.savedGeneratedErrorDetails
                             }
                         }
-                        this.generate()
+                        me.generate()
                     }
                 })
             },

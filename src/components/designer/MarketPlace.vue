@@ -346,7 +346,7 @@
             isToppingCompatible(selectedTopping) {
                 let polyglotMode = false;
                 for(var i = 0; i< this.templateList.length; i++){
-                    if(!selectedTopping.depends.includes(this.templateList[i].template.split('/').pop())){
+                    if(selectedTopping.depends && !selectedTopping.depends.includes(this.templateList[i].template.split('/').pop())){
                         polyglotMode = true
                     }
                 }
