@@ -512,14 +512,24 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
     // 3. 로그 데이터: 시스템 로그나 사용자 활동 로그의 일시적 불일치는 대부분의 경우 치명적이지 않습니다.
     // 4. 소셜 미디어 데이터: 팔로워 수나 좋아요 수의 일시적 불일치는 일반적으로 허용됩니다.
     // 5. 뉴스레터 구독 정보: 뉴스레터 구독 상태의 일시적 불일치는 즉각적인 비즈니스 영향이 적습니다.
+    // '<aggregateId>'에는 반드시 기존 이벤트 스토밍에 존재하는 Aggregate의 Id를 작성해야 합니다.
     "aggregateIdToIncludeAsValueObject": "<aggregateId>"|null,
 
     // aggregateIdToIncludeAsValueObject에 null이 아닌, aggregateId를 작성했을 경우, 작성한 이유를 적습니다.
     "aggregateIdToIncludeAsValueObejctReason": "<reason>",
 
     // 주어진 Debezium 로그와 관련되어서 생성될 수 있는 커맨드 명과 이벤트 명을 적습니다.
+    // 기존의 커맨드와 유사한 로그인 경우, 해당 이름을 그대로 활용하세요.
     "debeziumLogCommandName": "<debeziumLogCommandName>",
+
+    // 기존의 커맨드 이름을 그대로 활용했는지의 여부입니다.
+    "isUsedExistingCommand": <true|false>,
+
+    // 기존의 이벤트와 유사한 로그인 경우, 해당 이름을 그대로 활용하세요.
     "debeziumLogEventName": "<debeziumLogEventName>",
+       
+    // 기존의 이벤트 이름을 그대로 활용했는지의 여부입니다.
+    "isUsedExistingEvent": <true|false>,
 
     // 생성된 커맨드를 호출시킬 필요가 있는 이벤트가 기존 이벤트 스토밍 목록에 존재 할 경우, 관련 정보를 적습니다.
     // "objectName"이 기존에 존재하는 Aggregate를 활용할 경우, 해당 Aggregate에 속하는 이벤트가 커맨드를 호출하도록 작성하지 마세요.
@@ -554,7 +564,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
 따라서 aggregateIdToIncludeAsValueObejct에 전달된 이벤트 스토밍 데이터 중에서 고객 정보와 관련된 Aggregate Id를 적습니다.
 그렇다면, 다음과 같이 반환할 수 있습니다.
 \`\`\`json
-{"objectName":"PointUsing","aggregateIdToIncludeAsValueObject":"Customer","aggregateIdToIncludeAsValueObejctReason":"Immediate consistency is required for point usage and customer information update.","debeziumLogCommandName":"CreatePointUsing","debeziumLogEventName":"PointUsingCreated","eventsToTriggerDebeziumLogCommand":[],"commandsToTriggerByDebeziumLogEvent":[{"eventId":"cmd-update-customer","relatedAttribute":"point_balance","reason":"To update customers' point_balance information"}]}
+{"objectName":"PointUsing","isUsedExistingObject":false,"aggregateIdToIncludeAsValueObject":"Customer","aggregateIdToIncludeAsValueObejctReason":"Immediate consistency is required for point usage and customer information update.","debeziumLogCommandName":"CreatePointUsing","isUsedExistingCommand":false,"debeziumLogEventName":"PointUsingCreated","isUsedExistingEvent":false,"eventsToTriggerDebeziumLogCommand":[],"commandsToTriggerByDebeziumLogEvent":[{"eventId":"cmd-update-customer","relatedAttribute":"point_balance","reason":"To update customers' point_balance information"}]}
 \`\`\`
 
 `
@@ -1466,6 +1476,20 @@ ${JSON.stringify(inputObject)}
                     return `다음 Aggregate를 생성해서 그 안에 작성해주세요.: ${objectName}`
             }
 
+            const debeziumLogCommandNameToString = (debeziumLogCommandName, isUsedExistingCommand) => {
+                if(isUsedExistingCommand)
+                    return `커맨드를 새롭게 생성하지 마세요.`
+                else
+                    return `다음 커맨드 명을 활용해서 생성해주세요: ${debeziumLogCommandName}`
+            }
+
+            const debeziumLogEventNameToString = (debeziumLogEventName, isUsedExistingEvent) => {
+                if(isUsedExistingEvent)
+                    return `이벤트를 새롭게 생성하지 마세요.`
+                else
+                    return `다음 이벤트 명을 활용해서 생성해주세요: ${debeziumLogEventName}`
+            }
+
             const eventsToTriggerDebeziumLogCommandToString = (eventsToTriggerDebeziumLogCommand) => {
                 if(eventsToTriggerDebeziumLogCommand.length <= 0) return `기존 이벤트들의 outputCommandIds를 수정하지 마세요.`
                 return `다음의 이벤트들의 outputCommandIds를 수정해서 생성하는 커맨드를 호출하도록 만들어주세요: ${JSON.stringify(eventsToTriggerDebeziumLogCommand)}`
@@ -1477,8 +1501,8 @@ ${JSON.stringify(inputObject)}
             }
         
             return `${objectNameToString(commandGuides.objectName, commandGuides.aggregateIdToIncludeAsValueObject, commandGuides.isUsedExistingObject)}
-다음 커맨드 명을 활용해서 생성해주세요: ${commandGuides.debeziumLogCommandName}
-다음 이벤트 명을 활용해서 생성해주세요: ${commandGuides.debeziumLogEventName}
+${debeziumLogCommandNameToString(commandGuides.debeziumLogCommandName, commandGuides.isUsedExistingCommand)}
+${debeziumLogEventNameToString(commandGuides.debeziumLogEventName, commandGuides.isUsedExistingEvent)}
 ${eventsToTriggerDebeziumLogCommandToString(commandGuides.eventsToTriggerDebeziumLogCommand)}
 ${commandsToTriggerByDebeziumLogEventToString(commandGuides.commandsToTriggerByDebeziumLogEvent)}`
         }
