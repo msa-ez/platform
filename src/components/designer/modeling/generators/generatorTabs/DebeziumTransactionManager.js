@@ -1288,7 +1288,9 @@ class DebeziumTransactionQuery {
                 }
 
                 const getOutputEventNames = (modelValue, outputEventIds) => {
-                    return outputEventIds.map(eventId => {
+                    return outputEventIds.filter(eventId => {
+                        return modelValue.elements[eventId] !== undefined
+                    }).map(eventId => {
                         return modelValue.elements[eventId].name
                     })
                 }

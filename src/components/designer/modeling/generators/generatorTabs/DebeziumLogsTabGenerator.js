@@ -856,7 +856,7 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
     "args": {
         "commandName": "<commandName>",
         "api_verb": <"POST" | "DELETE" | "PUT">,
-        "outputEventIds": ["<outputEventId>"], // 이 커맨드로 인해서 발생되는 이벤트들의 id 리스트
+        "outputEventIds": ["<outputEventId>"], // 이 커맨드로 인해서 발생되는 이벤트들의 id 리스트. 반드시 존재하는 eventId를 작성해야 합니다.
         "actor": "<actorName>" // 해당 액션을 수행하는 액터명입니다. 사용자, 관리자등의 이름이 들어가야 합니다. 특정한 액터가 없을 경우, 빈값으로 넣어야 합니다.
     }
 }
@@ -887,7 +887,7 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
         // 1. 기본 키를 변경하기 위해서 커맨드를 호출하면 안 됩니다. 기본 키는 변경되지 않는 속성입니다.
         // 2. 커맨드를 호출하는 이유에 어떤 속성을 변경하기 위해서 커맨드를 호출하는지 명시해야 합니다.
         "outputCommandIds": [{
-            "commandId": "<outputCommandId>", // 호출하는 커맨드 Id입니다.
+            "commandId": "<outputCommandId>", // 호출하는 커맨드 Id입니다. 반드시 존재하는 commandId를 작성해야 합니다.
             "relatedAttribute": "<relatedAttribute>", // 어떠한 속성을 업데이트하기 위해서 커맨드를 호출하는지 명시합니다. 호출하는 커맨드에 속하는 Aggregate의 속성명을 작성해야 합니다.
             "reason": "<reason>" // 이 커맨드를 호출하는 이유를 명시합니다.
         }]
