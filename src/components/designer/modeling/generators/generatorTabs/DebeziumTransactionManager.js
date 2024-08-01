@@ -1340,6 +1340,7 @@ class DebeziumTransactionQuery {
                     callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
                         query.args.outputEventIds.forEach(eventId => {
                             const eventObject = modelValue.elements[eventId]
+                            if(!eventObject) return
                             const commandEventRelation = makeEventStormingRelationObjectBase(commandObject, eventObject)
                             modelValue.relations[commandEventRelation.id] = commandEventRelation
                         })
