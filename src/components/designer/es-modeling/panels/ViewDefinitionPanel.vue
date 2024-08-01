@@ -320,6 +320,7 @@
                 me.relatedAggregate = me.isPBCModel ? me.value.aggregate : me.canvas.getAttachedAggregate(me.value)
 
                 // Common
+                this.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#%EB%A9%94%EB%89%B4%EB%B3%84-%EC%83%81%EC%84%B8'
                 me.$super(EventStormingModelPanel).panelInit()// }
             },
             viewMainRowAdd(type) {

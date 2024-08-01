@@ -174,7 +174,7 @@
                 me.relatedAggregate = me.isPBCModel ? me.value.aggregate : me.canvas.getAttachedAggregate(me.value)
                 me.findCommandLists()
                 me.findPolicyLists()
-                me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#%C2%B7-event-sticker'
+                me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#event-sticker'
 
                 // Common
                 me.$super(EventStormingModelPanel).panelInit()
