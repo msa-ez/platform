@@ -119,7 +119,7 @@
             panelInit(){
                 var me = this
                 // Policy
-                this.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#%C2%B7-policy-sticker'
+                this.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#policy-sticker'
 
                 // Common
                 me.$super(EventStormingModelPanel).panelInit()

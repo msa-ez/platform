@@ -244,7 +244,7 @@
             panelInit(){
                 var me = this
                 // Element
-                me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#%C2%B7-bounded-context-sticker'
+                me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#bounded-context-sticker'
 
                 // Common
                 me.$super(EventStormingModelPanel).panelInit()

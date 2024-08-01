@@ -264,7 +264,7 @@
                 if (this.value.uiType === "Card" && this.value.card.subtitle !== "") {
                     this.useSubtitle =  true
                 }
-
+                this.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#%EB%A9%94%EB%89%B4%EB%B3%84-%EC%83%81%EC%84%B8'
                 // Common
                 me.$super(EventStormingModelPanel).panelInit();
             },
