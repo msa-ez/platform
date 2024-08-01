@@ -476,7 +476,10 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
 다음 규칙을 따라서 작성해 주세요.
 1. 출력되는 JSON 객체에는 주석을 절대로 작성하면 안 됩니다.
 2. 다른 Aggregate의 기본 키를 수정시키기 위해서 커맨드를 호출하는 경우는 없습니다. 기본 키는 수정할 수 없는 값입니다.
-3. 추가 요청을 반드시 따르세요.
+3. 동일한 Aggregate에 속하는 커맨드를 호출하지 마세요.
+4. 커맨드 호출로 주어진 Aggregate에 업데이트할 수 있을 만한 속성이 없다면 커맨드를 호출하지 마세요.
+5. 커맨드 명에 작성된 목적으로만 커맨드를 호출해 주세요.
+6. 추가 요청을 반드시 따르세요.
 
 `   
                 }
@@ -486,9 +489,13 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
 \`\`\`json
 {
     // 주어진 Debezium 로그와 관련되어서 Aggregate 혹은 ValueObject로 사용할 수 있는 이름을 작성합니다.
-    // 기존의 Aggregate나 ValueObject와 유사한 로그인 경우, 해당 이름을 그대로 활용할 수 있습니다.
+    // 기존의 Aggregate나 ValueObject와 유사한 로그인 경우, 해당 이름을 그대로 활용하세요.
     "objectName": "<objectName>",
 
+    // 기존 Aggregate 이름을 그대로 활용했는지의 여부입니다.
+    "isUsedExistingObject": <true|false>,
+    
+    // * 다음 두 속성인 aggregateIdToIncludeAsValueObject와 aggregateIdToIncludeAsValueObejctReason는 기존 Aggregate 이름을 그대로 활용했을 경우에는 필요없는 속성이므로, null로 작성하면 됩니다.
     // 만약 주어진 Debezium 로그와 관련된 Object가 기존의 Aggregate 내부에 ValueObject로 존재해야 할 경우, 해당 Aggregate의 Id를 작성합니다.
     // Aggregate 내부에 ValueObject로 존재해야 하는지는 해당 Aggregate와 생성하려는 오브젝트가 잠깐 데이터가 동기화하는 동안 생기는 데이터 불일치가 비즈니스적으로 매우 치명적인지의 여부에 따라 달라집니다.
     // 비즈니스적으로 치명적인 사례는 데이터 불일치가 즉각적인 금전적 손실이나 법적 문제를 야기할 수 있는 경우입니다.
@@ -505,13 +512,17 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
     // 3. 로그 데이터: 시스템 로그나 사용자 활동 로그의 일시적 불일치는 대부분의 경우 치명적이지 않습니다.
     // 4. 소셜 미디어 데이터: 팔로워 수나 좋아요 수의 일시적 불일치는 일반적으로 허용됩니다.
     // 5. 뉴스레터 구독 정보: 뉴스레터 구독 상태의 일시적 불일치는 즉각적인 비즈니스 영향이 적습니다.
-    "aggregateIdToIncludeAsValueObejct": "<aggregateId>"|null,
+    "aggregateIdToIncludeAsValueObject": "<aggregateId>"|null,
+
+    // aggregateIdToIncludeAsValueObject에 null이 아닌, aggregateId를 작성했을 경우, 작성한 이유를 적습니다.
+    "aggregateIdToIncludeAsValueObejctReason": "<reason>",
 
     // 주어진 Debezium 로그와 관련되어서 생성될 수 있는 커맨드 명과 이벤트 명을 적습니다.
     "debeziumLogCommandName": "<debeziumLogCommandName>",
     "debeziumLogEventName": "<debeziumLogEventName>",
 
     // 생성된 커맨드를 호출시킬 필요가 있는 이벤트가 기존 이벤트 스토밍 목록에 존재 할 경우, 관련 정보를 적습니다.
+    // "objectName"이 기존에 존재하는 Aggregate를 활용할 경우, 해당 Aggregate에 속하는 이벤트가 커맨드를 호출하도록 작성하지 마세요.
     "eventsToTriggerDebeziumLogCommand": [
         {
             "eventId": "<eventId>", // 생성시킨 커맨드를 호출하는 이벤트의 Id입니다.
@@ -521,6 +532,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
     ],
 
     // 생성된 커맨드가 호출시킬 필요가 있는 이벤트가 기존 이벤트 스토밍 목록에 존재 할 경우, 관련 정보를 적습니다.
+    // "objectName"이 기존에 존재하는 Aggregate를 활용할 경우, 해당 Aggregate에 속하는 커맨드는 호출하지 마세요.
     "commandsToTriggerByDebeziumLogEvent": [
         {
             "commandId": "<commandId>", // 생성시킨 이벤트가 호출하는 커맨드 Id입니다.
@@ -542,7 +554,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
 따라서 aggregateIdToIncludeAsValueObejct에 전달된 이벤트 스토밍 데이터 중에서 고객 정보와 관련된 Aggregate Id를 적습니다.
 그렇다면, 다음과 같이 반환할 수 있습니다.
 \`\`\`json
-{"objectName":"PointUsing","aggregateIdToIncludeAsValueObejct":"Customer","debeziumLogCommandName":"CreatePointUsing","debeziumLogEventName":"PointUsingCreated","eventsToTriggerDebeziumLogCommand":[],"commandsToTriggerByDebeziumLogEvent":[{"eventId":"cmd-update-customer","relatedAttribute":"point_balance","reason":"To update customers' point_balance information"}]}
+{"objectName":"PointUsing","aggregateIdToIncludeAsValueObject":"Customer","aggregateIdToIncludeAsValueObejctReason":"Immediate consistency is required for point usage and customer information update.","debeziumLogCommandName":"CreatePointUsing","debeziumLogEventName":"PointUsingCreated","eventsToTriggerDebeziumLogCommand":[],"commandsToTriggerByDebeziumLogEvent":[{"eventId":"cmd-update-customer","relatedAttribute":"point_balance","reason":"To update customers' point_balance information"}]}
 \`\`\`
 
 `
@@ -1445,11 +1457,13 @@ ${JSON.stringify(inputObject)}
         }
 
         const getCommandGuidesToUse = (commandGuides) => {
-            const objectNameToString = (objectName, aggregateIdToIncludeAsValueObejct) => {
-                if(aggregateIdToIncludeAsValueObejct && aggregateIdToIncludeAsValueObejct !== "null" && aggregateIdToIncludeAsValueObejct.length > 0)
-                    return `'${aggregateIdToIncludeAsValueObejct}' Aggregate 내부에 ValueObject로 '${objectName}' 이름으로 생성해주세요.`
+            const objectNameToString = (objectName, aggregateIdToIncludeAsValueObject, isUsedExistingObject) => {
+                if(!isUsedExistingObject && aggregateIdToIncludeAsValueObject && aggregateIdToIncludeAsValueObject !== "null" && aggregateIdToIncludeAsValueObject.length > 0)
+                    return `'${aggregateIdToIncludeAsValueObject}' Aggregate 내부에 ValueObject로 '${objectName}' 이름으로 생성해주세요.`
+                else if(isUsedExistingObject)
+                    return `다음 Aggregate 내부에 작성해주세요.: ${objectName}`
                 else
-                    return `다음 Aggregate 내부에 작성해주세요. 해당 Aggregate가 없을 경우, 생성해주세요.: ${objectName}`
+                    return `다음 Aggregate를 생성해서 그 안에 작성해주세요.: ${objectName}`
             }
 
             const eventsToTriggerDebeziumLogCommandToString = (eventsToTriggerDebeziumLogCommand) => {
@@ -1462,7 +1476,7 @@ ${JSON.stringify(inputObject)}
                 return `생성하는 이벤트의 outputCommandIds를 수정해서 다음의 커맨드를 호출하도록 만들어주세요: ${JSON.stringify(commandsToTriggerByDebeziumLogEvent)}`
             }
         
-            return `${objectNameToString(commandGuides.objectName, commandGuides.aggregateIdToIncludeAsValueObejct)}
+            return `${objectNameToString(commandGuides.objectName, commandGuides.aggregateIdToIncludeAsValueObject, commandGuides.isUsedExistingObject)}
 다음 커맨드 명을 활용해서 생성해주세요: ${commandGuides.debeziumLogCommandName}
 다음 이벤트 명을 활용해서 생성해주세요: ${commandGuides.debeziumLogEventName}
 ${eventsToTriggerDebeziumLogCommandToString(commandGuides.eventsToTriggerDebeziumLogCommand)}
