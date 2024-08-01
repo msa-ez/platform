@@ -533,6 +533,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
 
     // 생성된 커맨드를 호출시킬 필요가 있는 이벤트가 기존 이벤트 스토밍 목록에 존재 할 경우, 관련 정보를 적습니다.
     // "objectName"이 기존에 존재하는 Aggregate를 활용할 경우, 해당 Aggregate에 속하는 이벤트가 커맨드를 호출하도록 작성하지 마세요.
+    // 동일한 eventId에 대한 객체들은 가장 중요한 relatedAttribute만 언급해서 하나만 작성합니다.
     "eventsToTriggerDebeziumLogCommand": [
         {
             "eventId": "<eventId>", // 생성시킨 커맨드를 호출하는 이벤트의 Id입니다.
@@ -543,6 +544,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
 
     // 생성된 커맨드가 호출시킬 필요가 있는 이벤트가 기존 이벤트 스토밍 목록에 존재 할 경우, 관련 정보를 적습니다.
     // "objectName"이 기존에 존재하는 Aggregate를 활용할 경우, 해당 Aggregate에 속하는 커맨드는 호출하지 마세요.
+    // 동일한 commandId에 대한 객체들은 가장 중요한 relatedAttribute만 언급해서 하나만 작성합니다.
     "commandsToTriggerByDebeziumLogEvent": [
         {
             "commandId": "<commandId>", // 생성시킨 이벤트가 호출하는 커맨드 Id입니다.
@@ -1473,7 +1475,8 @@ ${JSON.stringify(inputObject)}
                 else if(isUsedExistingObject)
                     return `다음 Aggregate 내부에 작성해주세요.: ${objectName}`
                 else
-                    return `다음 Aggregate를 생성해서 그 안에 작성해주세요.: ${objectName}`
+                    return `다음 Aggregate를 생성해서 그 안에 작성해주세요.: ${objectName}
+Bounded Context를 생성할 필요가 있으면, 다음 이름을 사용해서 작성해 주세요: ${objectName}Service`
             }
 
             const debeziumLogCommandNameToString = (debeziumLogCommandName, isUsedExistingCommand) => {
@@ -1492,12 +1495,32 @@ ${JSON.stringify(inputObject)}
 
             const eventsToTriggerDebeziumLogCommandToString = (eventsToTriggerDebeziumLogCommand) => {
                 if(eventsToTriggerDebeziumLogCommand.length <= 0) return `기존 이벤트들의 outputCommandIds를 수정하지 마세요.`
-                return `다음의 이벤트들의 outputCommandIds를 수정해서 생성하는 커맨드를 호출하도록 만들어주세요: ${JSON.stringify(eventsToTriggerDebeziumLogCommand)}`
+
+                let uniqueObjects = []
+                let eventIdSet = new Set()
+                for(const connectObject of eventsToTriggerDebeziumLogCommand) {
+                    if(!eventIdSet.has(connectObject.eventId)) {
+                        uniqueObjects.push(connectObject)
+                        eventIdSet.add(connectObject.eventId)
+                    }
+                }
+
+                return `다음의 이벤트들의 outputCommandIds를 수정해서 생성하는 커맨드를 호출하도록 만들어주세요: ${JSON.stringify(uniqueObjects)}`
             }
         
             const commandsToTriggerByDebeziumLogEventToString = (commandsToTriggerByDebeziumLogEvent) => {
                 if(commandsToTriggerByDebeziumLogEvent.length <= 0) return `생성한 커맨드의 outputCommandIds는 빈 배열로 두세요.`
-                return `생성하는 이벤트의 outputCommandIds를 수정해서 다음의 커맨드를 호출하도록 만들어주세요: ${JSON.stringify(commandsToTriggerByDebeziumLogEvent)}`
+                
+                let uniqueObjects = []
+                let commandIdSet = new Set()
+                for(const connectObject of commandsToTriggerByDebeziumLogEvent) {
+                    if(!commandIdSet.has(connectObject.commandId)) {
+                        uniqueObjects.push(connectObject)
+                        commandIdSet.add(connectObject.commandId)
+                    }
+                }
+                
+                return `생성하는 이벤트의 outputCommandIds를 수정해서 다음의 커맨드를 호출하도록 만들어주세요: ${JSON.stringify(uniqueObjects)}`
             }
         
             return `${objectNameToString(commandGuides.objectName, commandGuides.aggregateIdToIncludeAsValueObject, commandGuides.isUsedExistingObject)}
