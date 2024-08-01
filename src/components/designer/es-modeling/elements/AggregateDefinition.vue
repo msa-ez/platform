@@ -526,14 +526,6 @@
 
                 if(Object.values(me.value.aggregateRoot.entities).length == 0){
                     me.value.aggregateRoot.entities = {elements: {}, relation: {}}
-                    // let esCanvas = me.getComponent('event-storming-model-canvas')
-                    // if(esCanvas){
-                    //     var aggList = [];
-                    //     me.value.aggregateRoot.entities = {elements: {}, relation: {}}
-                    //     aggList.push(me.value);
-                        
-                    //     esCanvas.$options.components["uml-class-model-canvas"].methods.addAggregateRootClass(aggList)
-                    // }
                 }
 
                 if (Object.values(me.value.aggregateRoot.entities.elements).length > 0) {
