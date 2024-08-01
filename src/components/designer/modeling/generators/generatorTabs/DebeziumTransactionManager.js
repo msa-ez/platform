@@ -1691,7 +1691,7 @@ class DebeziumTransactionQuery {
 
                     this.objectAlias = modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.enumerationId].name
                 } else
-                    callbacks.afterAllObjectAppliedCallBacks.push(() => {
+                    callbacks.afterAllRelationAppliedCallBacks.push(() => {
                         if(modelValue.elements[query.ids.aggregateId] &&
                             modelValue.elements[query.ids.aggregateId].aggregateRoot &&
                             modelValue.elements[query.ids.aggregateId].aggregateRoot.entities &&
@@ -1906,7 +1906,7 @@ class DebeziumTransactionQuery {
                  ) {
                     this.objectAlias = modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.valueObjectId].name
                 } else
-                    callbacks.afterAllObjectAppliedCallBacks.push(() => {
+                    callbacks.afterAllRelationAppliedCallBacks.push(() => {
                         if(modelValue.elements[query.ids.aggregateId] &&
                             modelValue.elements[query.ids.aggregateId].aggregateRoot &&
                             modelValue.elements[query.ids.aggregateId].aggregateRoot.entities &&
