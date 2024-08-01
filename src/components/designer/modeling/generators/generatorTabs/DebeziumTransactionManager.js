@@ -1288,7 +1288,9 @@ class DebeziumTransactionQuery {
                 }
 
                 const getOutputEventNames = (modelValue, outputEventIds) => {
-                    return outputEventIds.map(eventId => {
+                    return outputEventIds.filter(eventId => {
+                        return modelValue.elements[eventId] !== undefined
+                    }).map(eventId => {
                         return modelValue.elements[eventId].name
                     })
                 }
@@ -1338,6 +1340,7 @@ class DebeziumTransactionQuery {
                     callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
                         query.args.outputEventIds.forEach(eventId => {
                             const eventObject = modelValue.elements[eventId]
+                            if(!eventObject) return
                             const commandEventRelation = makeEventStormingRelationObjectBase(commandObject, eventObject)
                             modelValue.relations[commandEventRelation.id] = commandEventRelation
                         })
@@ -1691,7 +1694,7 @@ class DebeziumTransactionQuery {
 
                     this.objectAlias = modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.enumerationId].name
                 } else
-                    callbacks.afterAllObjectAppliedCallBacks.push(() => {
+                    callbacks.afterAllRelationAppliedCallBacks.push(() => {
                         if(modelValue.elements[query.ids.aggregateId] &&
                             modelValue.elements[query.ids.aggregateId].aggregateRoot &&
                             modelValue.elements[query.ids.aggregateId].aggregateRoot.entities &&
@@ -1906,7 +1909,7 @@ class DebeziumTransactionQuery {
                  ) {
                     this.objectAlias = modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.valueObjectId].name
                 } else
-                    callbacks.afterAllObjectAppliedCallBacks.push(() => {
+                    callbacks.afterAllRelationAppliedCallBacks.push(() => {
                         if(modelValue.elements[query.ids.aggregateId] &&
                             modelValue.elements[query.ids.aggregateId].aggregateRoot &&
                             modelValue.elements[query.ids.aggregateId].aggregateRoot.entities &&
