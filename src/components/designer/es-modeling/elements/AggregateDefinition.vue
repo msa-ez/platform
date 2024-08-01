@@ -8,6 +8,7 @@
             <div style="margin:5px 0px 0px 5px;">Creating Aggregate... <v-btn @click="stop" text>stop</v-btn></div>
         </v-row>
         <geometry-element
+                :key="renderKey"
                 :selectable="selectable"
                 :movable="movable"
                 :resizable="resizable"
@@ -362,6 +363,7 @@
                 generator: null,
                 originModel: null,
                 duplicatedFieldList: [],
+                renderKey: 0
             };
         },
         created: function () {
@@ -539,6 +541,7 @@
                 if(!isIncluded) {
                     me.value.aggregateRoot.fieldDescriptors.push(attr);
                 }
+                me.renderKey++;
             },
             deleteAggRelation(relation) {
                 var me = this
