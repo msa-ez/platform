@@ -175,77 +175,92 @@ class DebeziumTransaction {
 }
 
 class DebeziumTransactionQuery {
-    constructor(query, isApplied, objectAlias, lastOp) {
+    constructor(query, isApplied, objectAlias, lastOp, subObjectAlias) {
         this.query = query ? query : {};
         this.isApplied = isApplied ? isApplied : false;
         this.objectAlias = objectAlias ? objectAlias : null;
         this.lastOp = lastOp ? lastOp : null;
+        this.subObjectAlias = subObjectAlias ? subObjectAlias : null;
     }
 
     toStringObject() {
         const boundContextQueryToString = (query) => {
+            const objectName = this.objectAlias ? this.objectAlias : query.ids.boundedContextId
+
             switch(this.lastOp) {
                 case "create":
-                    return `Create New ${this.objectAlias ? this.objectAlias : query.ids.boundedContextId} Bounded Context`;
+                    return `Create New ${objectName} Bounded Context`;
                 case "update":
-                    return `Update ${this.objectAlias ? this.objectAlias : query.ids.boundedContextId} Bounded Context`;
+                    return `Update ${objectName} Bounded Context`;
                 case "delete":
-                    return `Delete ${this.objectAlias ? this.objectAlias : query.ids.boundedContextId} Bounded Context`;
+                    return `Delete ${objectName} Bounded Context`;
             }
         }
 
         const aggregateQueryToString = (query) => {
+            const objectName = this.objectAlias ? this.objectAlias : query.ids.aggregateId
+
             switch(this.lastOp) {
                 case "create":
-                    return `Create New ${this.objectAlias ? this.objectAlias : query.ids.aggregateId} Aggregate`;
+                    return `Create New ${objectName} Aggregate`;
                 case "update":
-                    return `Update ${this.objectAlias ? this.objectAlias : query.ids.aggregateId} Aggregate`;
+                    return `Update ${objectName} Aggregate`;
                 case "delete":
-                    return `Delete ${this.objectAlias ? this.objectAlias : query.ids.aggregateId} Aggregate ${(query.args && query.args.properties) ? "Property" : ""}`;
+                    return `Delete ${objectName} Aggregate ${(query.args && query.args.properties) ? "Property" : ""}`;
             }
         }
 
         const commandQueryToString = (query) => {
+            const objectName = this.objectAlias ? this.objectAlias : query.ids.commandId
+
             switch(this.lastOp) {
                 case "create":
-                    return `Create New ${this.objectAlias ? this.objectAlias : query.ids.commandId} Command`;
+                    return `Create New ${objectName} Command`;
                 case "update":
-                    return `Update ${this.objectAlias ? this.objectAlias : query.ids.commandId} Command`;
+                    return `Update ${objectName} Command`;
                 case "delete":
-                    return `Delete ${this.objectAlias ? this.objectAlias : query.ids.commandId} Command`;
+                    return `Delete ${objectName} Command`;
             }
         }
 
         const eventQueryToString = (query) => {
+            const objectName = this.objectAlias ? this.objectAlias : query.ids.eventId
+
             switch(this.lastOp) {
                 case "create":
-                    return `Create New ${this.objectAlias ? this.objectAlias : query.ids.eventId} Event`;
+                    return `Create New ${objectName} Event`;
                 case "update":
-                    return `Update ${this.objectAlias ? this.objectAlias : query.ids.eventId} Event`;
+                    return `Update ${objectName} Event`;
                 case "delete":
-                    return `Delete ${this.objectAlias ? this.objectAlias : query.ids.eventId} Event`;
+                    return `Delete ${objectName} Event`;
             }
         }
 
         const enumerationQueryToString = (query) => {
+            const objectName = this.objectAlias ? this.objectAlias : query.ids.enumerationId
+            const subObjectName = this.subObjectAlias ? this.subObjectAlias : query.ids.aggregateId
+
             switch(this.lastOp) {
                 case "create":
-                    return `Create New ${this.objectAlias ? this.objectAlias : query.ids.enumerationId} Enumeration in ${query.ids.aggregateId} Aggregate`;
+                    return `Create New ${objectName} Enumeration in ${subObjectName} Aggregate`;
                 case "update":
-                    return `Update ${this.objectAlias ? this.objectAlias : query.ids.enumerationId} Enumeration in ${query.ids.aggregateId} Aggregate`;
+                    return `Update ${objectName} Enumeration in ${subObjectName} Aggregate`;
                 case "delete":
-                    return `Delete ${this.objectAlias ? this.objectAlias : query.ids.enumerationId} Enumeration in ${query.ids.aggregateId} Aggregate`;
+                    return `Delete ${objectName} Enumeration in ${subObjectName} Aggregate`;
             }
         }
 
         const valueObjectQueryToString = (query) => {
+            const objectName = this.objectAlias ? this.objectAlias : query.ids.valueObjectId
+            const subObjectName = this.subObjectAlias ? this.subObjectAlias : query.ids.aggregateId
+
             switch(this.lastOp) {
                 case "create":
-                    return `Create New ${this.objectAlias ? this.objectAlias : query.ids.valueObjectId} Value Object in ${query.ids.aggregateId} Aggregate`;
+                    return `Create New ${objectName} Value Object in ${subObjectName} Aggregate`;
                 case "update":
-                    return `Update ${this.objectAlias ? this.objectAlias : query.ids.valueObjectId} Value Object in ${query.ids.aggregateId} Aggregate`;
+                    return `Update ${objectName} Value Object in ${subObjectName} Aggregate`;
                 case "delete":
-                    return `Delete ${this.objectAlias ? this.objectAlias : query.ids.valueObjectId} Value Object in ${query.ids.aggregateId} Aggregate`;
+                    return `Delete ${objectName} Value Object in ${subObjectName} Aggregate`;
             }
         }
 
@@ -1693,6 +1708,7 @@ class DebeziumTransactionQuery {
                  ) {
 
                     this.objectAlias = modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.enumerationId].name
+                    this.subObjectAlias = modelValue.elements[query.ids.aggregateId].name
                 } else
                     callbacks.afterAllRelationAppliedCallBacks.push(() => {
                         if(modelValue.elements[query.ids.aggregateId] &&
@@ -1700,8 +1716,10 @@ class DebeziumTransactionQuery {
                             modelValue.elements[query.ids.aggregateId].aggregateRoot.entities &&
                             modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements &&
                             modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.enumerationId]
-                         )
+                         ) {
                             this.objectAlias = modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.enumerationId].name
+                            this.subObjectAlias = modelValue.elements[query.ids.aggregateId].name
+                        }
                     })
             }
 
@@ -1908,6 +1926,7 @@ class DebeziumTransactionQuery {
                     modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.valueObjectId]
                  ) {
                     this.objectAlias = modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.valueObjectId].name
+                    this.subObjectAlias = modelValue.elements[query.ids.aggregateId].name
                 } else
                     callbacks.afterAllRelationAppliedCallBacks.push(() => {
                         if(modelValue.elements[query.ids.aggregateId] &&
@@ -1915,8 +1934,10 @@ class DebeziumTransactionQuery {
                             modelValue.elements[query.ids.aggregateId].aggregateRoot.entities &&
                             modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements &&
                             modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.valueObjectId]
-                         )
-                         this.objectAlias = modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.valueObjectId].name
+                         ) {
+                            this.objectAlias = modelValue.elements[query.ids.aggregateId].aggregateRoot.entities.elements[query.ids.valueObjectId].name
+                            this.subObjectAlias = modelValue.elements[query.ids.aggregateId].name
+                        }
                     })
             }
 
@@ -1986,7 +2007,8 @@ class DebeziumTransactionQuery {
             query: this.query,
             isApplied: this.isApplied,
             objectAlias: this.objectAlias,
-            lastOp: this.lastOp
+            lastOp: this.lastOp,
+            subObjectAlias: this.subObjectAlias
         }
     }
 
@@ -1996,6 +2018,7 @@ class DebeziumTransactionQuery {
         transactionQuery.isApplied = saveObject.isApplied;
         transactionQuery.objectAlias = saveObject.objectAlias;
         transactionQuery.lastOp = saveObject.lastOp;
+        transactionQuery.subObjectAlias = saveObject.subObjectAlias;
         return transactionQuery;
     }
 }
