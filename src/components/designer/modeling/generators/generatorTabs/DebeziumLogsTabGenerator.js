@@ -606,7 +606,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                     return `다음의 속성은 기본키이기 때문에 relatedAttribute로 사용할 수 없습니다.: ${primaryKeys.join(", ")}`
                 }
 
-                const getSummarizedDebeziumLogTableNameString = (debeziumLogStrings) => {
+                const getSummarizedDebeziumLogTableNameString = (debeziumLogStrings, aggregateNames) => {
                     const getDebeziumLogStringList = (logs) => {
                         return logs.match(/\{"schema":\{.*?"name":".*?\.Envelope".*?\},"payload":\{.*?\}\}/g)
                     }
@@ -631,7 +631,22 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                         const tableName = getSummarizedDebeziumLog(JSON.parse(debeziumLogString)).payload.source.table
                         return changeCase.pascalCase(tableName.replace("TB_", "").replace("Table", ""))
                     })
-                    return `다음 이름을 활용해서 객체 명을 생성해야 합니다.: ${tableNames.join(", ")}`
+
+                    const possibleAggregates = aggregateNames.filter((aggregateName) => {
+                        for(const tableName of tableNames) {
+                            if(changeCase.pascalCase(tableName).toLowerCase().includes(
+                                changeCase.pascalCase(aggregateName).toLowerCase())
+                            ) return true
+                        }
+                        return false
+                    })
+                    
+                    if(possibleAggregates.length <= 0)
+                        return `다음 이름을 활용해서 객체 명을 생성해야 합니다.: ${tableNames.join(", ")}`
+                    else
+                        return `다음 이름을 활용해서 객체 명을 생성해야 합니다.: ${tableNames.join(", ")}
+다음의 이름을 가진 기존 Aggregate안에 ValueObject로 생성할 수 있는지 검토해야 합니다.: ${possibleAggregates.join(", ")}`
+                    
                 }
 
                 return `[INPUT]
@@ -643,7 +658,7 @@ ${getSummarizedDebeziumLogStrings(debeziumLogs)}
 
 - 추가 요청
 ${primaryKeysToString(preprocessInfos.primaryKeys)}
-${getSummarizedDebeziumLogTableNameString(debeziumLogs)}
+${getSummarizedDebeziumLogTableNameString(debeziumLogs, preprocessInfos.aggregateNames)}
 
 [OUTPUT]
 \`\`\`json
