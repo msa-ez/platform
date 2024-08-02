@@ -308,11 +308,13 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
             let aggregateNames = []
             let commandNames = []
             let eventNames = []
+            let aggregateValueObjectNameDic = {}
             
             Object.values(preprocessModelValue).forEach(boundary => {
                 if(boundary.aggregates){
                     Object.values(boundary.aggregates).forEach(aggregate => {
                         aggregateNames.push(aggregate.name)
+                        aggregateValueObjectNameDic[aggregate.name] = [aggregate.name]
           
                         aggregate.properties.forEach(property => {
                             if(property.isKey)
@@ -321,6 +323,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
           
                         if(aggregate.valueObjects) {
                             aggregate.valueObjects.forEach(valueObject => {
+                                aggregateValueObjectNameDic[aggregate.name].push(valueObject.name)
                                 valueObject.properties.forEach(property => {
                                     if(property.isKey)
                                         primaryKeysSet.add(property.name)
@@ -347,7 +350,8 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                 "primaryKeys": Array.from(primaryKeysSet),
                 "aggregateNames": aggregateNames,
                 "commandNames": commandNames,
-                "eventNames": eventNames
+                "eventNames": eventNames,
+                "aggregateValueObjectNameDic": aggregateValueObjectNameDic
             }
         }
 
@@ -606,7 +610,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                     return `다음의 속성은 기본키이기 때문에 relatedAttribute로 사용할 수 없습니다.: ${primaryKeys.join(", ")}`
                 }
 
-                const getSummarizedDebeziumLogTableNameString = (debeziumLogStrings, aggregateNames) => {
+                const getSummarizedDebeziumLogTableNameString = (debeziumLogStrings, aggregateValueObjectNameDic) => {
                     const getDebeziumLogStringList = (logs) => {
                         return logs.match(/\{"schema":\{.*?"name":".*?\.Envelope".*?\},"payload":\{.*?\}\}/g)
                     }
@@ -624,6 +628,28 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                         }
                     }
 
+                    const getPossibleAggregates = (tableNames, aggregateValueObjectNameDic) => {
+                        let possibleAggregatesSet = new Set()
+
+                        for(let aggregateKey of Object.keys(aggregateValueObjectNameDic)) {
+                            let isFound = false
+                            for(let checkName of aggregateValueObjectNameDic[aggregateKey]) {
+                                for(const tableName of tableNames) {
+                                    if(changeCase.pascalCase(tableName).toLowerCase().includes(
+                                       changeCase.pascalCase(checkName).toLowerCase()) && 
+                                       !possibleAggregatesSet.has(aggregateKey)) {
+                                            possibleAggregatesSet.add(aggregateKey)
+                                            isFound = true
+                                            break
+                                    }
+                                }
+                                if(isFound) break
+                            }
+                        }
+
+                        return Array.from(possibleAggregatesSet)
+                    }
+
                     const debeziumLogStringList = getDebeziumLogStringList(debeziumLogStrings)
                     if(debeziumLogStringList.length <= 0) return ""
 
@@ -632,15 +658,8 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                         return changeCase.pascalCase(tableName.replace("TB_", "").replace("Table", ""))
                     })
 
-                    const possibleAggregates = aggregateNames.filter((aggregateName) => {
-                        for(const tableName of tableNames) {
-                            if(changeCase.pascalCase(tableName).toLowerCase().includes(
-                                changeCase.pascalCase(aggregateName).toLowerCase())
-                            ) return true
-                        }
-                        return false
-                    })
-                    
+
+                    const possibleAggregates = getPossibleAggregates(tableNames, aggregateValueObjectNameDic)
                     if(possibleAggregates.length <= 0)
                         return `다음 이름을 활용해서 객체 명을 생성해야 합니다.: ${tableNames.join(", ")}`
                     else
@@ -658,7 +677,7 @@ ${getSummarizedDebeziumLogStrings(debeziumLogs)}
 
 - 추가 요청
 ${primaryKeysToString(preprocessInfos.primaryKeys)}
-${getSummarizedDebeziumLogTableNameString(debeziumLogs, preprocessInfos.aggregateNames)}
+${getSummarizedDebeziumLogTableNameString(debeziumLogs, preprocessInfos.aggregateValueObjectNameDic)}
 
 [OUTPUT]
 \`\`\`json
