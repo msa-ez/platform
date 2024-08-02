@@ -745,7 +745,7 @@ class DebeziumTransactionQuery {
                         "elementView": {
                             "_type": "org.uengine.uml.model.Class",
                             "id": elementUUIDtoUse,
-                            "x": 350,
+                            "x": 200,
                             "y": 200,
                             "width": 200,
                             "height": 100,
@@ -1673,7 +1673,7 @@ class DebeziumTransactionQuery {
                     }
 
                     const relatedEnums = getRelatedEnumerations(modelValue, query)
-                    return {x: 350 + (relatedEnums.length * 250), y: 400}
+                    return {x: 700 + (relatedEnums.length * 250), y: 456}
                 }
     
                 callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
@@ -1873,7 +1873,7 @@ class DebeziumTransactionQuery {
                     }
 
                     const relatedValueObjects = getRelatedValueObjects(modelValue, query)
-                    return {x: 350 + (relatedValueObjects.length * 250), y: 600}
+                    return {x: 700 + (relatedValueObjects.length * 250), y: 152}
                 }
 
                 callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
