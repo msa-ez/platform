@@ -1580,6 +1580,60 @@ class DebeziumTransactionQuery {
             deleteElementInAggregate(aggregateRootObject, targetObject)
         }
 
+        const addEntityPropertyToAggregateIfNotExist = (modelValue, targetAggregateId, propertyName) => {
+            const getAggregateCommands = (modelValue, targetAggregateId) => {
+                return Object.values(modelValue.elements).filter((element) => {
+                    return element &&
+                        element._type === "org.uengine.modeling.model.Command" &&
+                        element.aggregate &&
+                        element.aggregate.id === targetAggregateId
+                })
+            }
+
+            const getAggregateEvents = (modelValue, targetAggregateId) => {
+                return Object.values(modelValue.elements).filter((element) => {
+                    return element &&
+                        element._type === "org.uengine.modeling.model.Event" &&
+                        element.aggregate &&
+                        element.aggregate.id === targetAggregateId
+                })
+            }
+
+            const addPropertyIfNotExist = (targetFileDescriptor, propertyName, isFromAggregate) => {
+                if(targetFileDescriptor.find(property => property.className === propertyName)) return
+
+                let fieldDescriptorToPush = {
+                    "className": propertyName,
+                    "isCopy": false,
+                    "isKey": false,
+                    "name": changeCase.camelCase(propertyName),
+                    "displayName": "",
+                    "nameCamelCase": changeCase.camelCase(propertyName),
+                    "namePascalCase": changeCase.pascalCase(propertyName),
+                    "_type": "org.uengine.model.FieldDescriptor"
+                }
+                if(isFromAggregate) {
+                    fieldDescriptorToPush["inputUI"] = null
+                    fieldDescriptorToPush["options"] = null
+                }
+                targetFileDescriptor.push(fieldDescriptorToPush)
+            }
+
+            const aggregate = modelValue.elements[targetAggregateId]
+            const aggregateRootObject = getAggregateRootObject(aggregate)
+            const aggregateCommands = getAggregateCommands(modelValue, targetAggregateId)
+            const aggregateEvents = getAggregateEvents(modelValue, targetAggregateId)
+
+            addPropertyIfNotExist(aggregate.aggregateRoot.fieldDescriptors, propertyName, true)
+            if(aggregateRootObject) addPropertyIfNotExist(aggregateRootObject.fieldDescriptors, propertyName, true)
+            aggregateCommands.map(command => {
+                addPropertyIfNotExist(command.fieldDescriptors, propertyName, false)
+            })
+            aggregateEvents.map(event => {
+                addPropertyIfNotExist(event.fieldDescriptors, propertyName, false)
+            })
+        }
+
         const applyToEnumeration = (modelValue, objectAliaToUUID, query) => {
             const createEnumeration = (query) => {
                 const getEnumerationBase = (name, items, x, y, elementUUID) => {
@@ -1636,6 +1690,7 @@ class DebeziumTransactionQuery {
 
                     let entities = getEntitiesForAggregate(modelValue, query.ids.aggregateId)
                     entities.elements[enumObject.id] = enumObject
+                    addEntityPropertyToAggregateIfNotExist(modelValue, query.ids.aggregateId, enumObject.name)
                 })
             }
 
@@ -1831,9 +1886,10 @@ class DebeziumTransactionQuery {
                     const VALID_POSITION = getValidPosition(modelValue, query)
                     valueObject.elementView.x = VALID_POSITION.x
                     valueObject.elementView.y = VALID_POSITION.y
-
+                    
                     let entities = getEntitiesForAggregate(modelValue, query.ids.aggregateId)
                     entities.elements[valueObject.id] = valueObject
+                    addEntityPropertyToAggregateIfNotExist(modelValue, query.ids.aggregateId, valueObject.name)
                 })
             }
 
