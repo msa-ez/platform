@@ -96,7 +96,8 @@ class DebeziumTransaction {
             rawTransaction: this.rawTransaction,
             usecase: this.usecase.displayName,
             actor: this.usecase.actor,
-            queries: this.queries.map(query => query.toStringObject())
+            queries: this.queries.map(query => query.toStringObject()),
+            errorMessage: this.queries.filter(query => query.errorMessage).map(query => query.errorMessage).join("\n")
         }
     }
 
@@ -175,12 +176,13 @@ class DebeziumTransaction {
 }
 
 class DebeziumTransactionQuery {
-    constructor(query, isApplied, objectAlias, lastOp, subObjectAlias) {
+    constructor(query, isApplied, objectAlias, lastOp, subObjectAlias, errorMessage) {
         this.query = query ? query : {};
         this.isApplied = isApplied ? isApplied : false;
         this.objectAlias = objectAlias ? objectAlias : null;
         this.lastOp = lastOp ? lastOp : null;
         this.subObjectAlias = subObjectAlias ? subObjectAlias : null;
+        this.errorMessage = errorMessage ? errorMessage : null;
     }
 
     toStringObject() {
@@ -288,7 +290,8 @@ class DebeziumTransactionQuery {
 
         return {
             summary: summary,
-            rawQuery: JSON.stringify(this.query, null, 2)
+            rawQuery: JSON.stringify(this.query, null, 2),
+            errorMessage: this.errorMessage
         }
     }
 
@@ -2033,29 +2036,34 @@ class DebeziumTransactionQuery {
         if(this.isApplied)
             return callbacks
 
-        switch(this.query.objectType) {
-            case "BoundedContext":
-                applyToBoundedContext(modelValue, userInfo, objectAliaToUUID, this.query);
-                break
-            case "Aggregate":
-                applyToAggregate(modelValue, userInfo, objectAliaToUUID, this.query);
-                break
-            case "Event":
-                applyToEvent(modelValue, userInfo, objectAliaToUUID, this.query);
-                break
-            case "Command":
-                applyToCommand(modelValue, userInfo, objectAliaToUUID, this.query);
-                break
-            case "Enumeration":
-                applyToEnumeration(modelValue, objectAliaToUUID, this.query);
-                break
-            case "ValueObject":
-                applyToValueObject(modelValue, objectAliaToUUID, this.query);
-                break
+        try {
+            switch(this.query.objectType) {
+                case "BoundedContext":
+                    applyToBoundedContext(modelValue, userInfo, objectAliaToUUID, this.query);
+                    break
+                case "Aggregate":
+                    applyToAggregate(modelValue, userInfo, objectAliaToUUID, this.query);
+                    break
+                case "Event":
+                    applyToEvent(modelValue, userInfo, objectAliaToUUID, this.query);
+                    break
+                case "Command":
+                    applyToCommand(modelValue, userInfo, objectAliaToUUID, this.query);
+                    break
+                case "Enumeration":
+                    applyToEnumeration(modelValue, objectAliaToUUID, this.query);
+                    break
+                case "ValueObject":
+                    applyToValueObject(modelValue, objectAliaToUUID, this.query);
+                    break
+            }
+    
+            this.isApplied = true;
+            return callbacks
+        } catch(e) {
+            this.errorMessage = e.message
+            throw e
         }
-
-        this.isApplied = true;
-        return callbacks
     }
 
     toSaveObject() {
@@ -2064,7 +2072,8 @@ class DebeziumTransactionQuery {
             isApplied: this.isApplied,
             objectAlias: this.objectAlias,
             lastOp: this.lastOp,
-            subObjectAlias: this.subObjectAlias
+            subObjectAlias: this.subObjectAlias,
+            errorMessage: this.errorMessage
         }
     }
 
@@ -2075,6 +2084,7 @@ class DebeziumTransactionQuery {
         transactionQuery.objectAlias = saveObject.objectAlias;
         transactionQuery.lastOp = saveObject.lastOp;
         transactionQuery.subObjectAlias = saveObject.subObjectAlias;
+        transactionQuery.errorMessage = saveObject.errorMessage;
         return transactionQuery;
     }
 }

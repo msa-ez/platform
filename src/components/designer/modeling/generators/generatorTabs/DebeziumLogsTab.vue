@@ -49,7 +49,7 @@
                             <pre style="font-size: small; text-align: left;">ACTOR: {{ reponseQuery.actor }}</pre>
                         </div>
 
-                        <div>
+                        <div v-if="!reponseQuery.errorMessage || reponseQuery.errorMessage.length === 0">
                             <div style="height: 18px;">
                                 <pre style="font-size: small; text-align: left;">EVENT STORMING UPDATES</pre>
                             </div>
@@ -59,6 +59,12 @@
                                     <v-icon>mdi-magnify</v-icon>
                                 </v-btn>     
                             </div>
+                        </div>
+                        <div v-else>
+                            <pre style="font-size: small; text-align: left;">AI 생성 결과를 처리하는 도중에 에러가 발생했습니다.</pre>
+                            <pre style="font-size: small; text-align: left;">다시 시도해 주시길 바랍니다.</pre>
+                            <pre style="font-size: small; text-align: left;">* 에러 메세지</pre>
+                            <pre style="font-size: small; text-align: left; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; max-width: 380px;">{{ reponseQuery.errorMessage }}</pre>
                         </div>
                     </v-sheet>
                 </div>                         
