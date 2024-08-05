@@ -999,6 +999,23 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
                     return `트랜젝션 로그에서 다음 필드들을 반드시 활용해서 액션을 작성하셔야 합니다.: ${Array.from(debeziumFieldsSet).join(", ")}`
                 }
 
+                const requestDebeziumEnumObject = (debeziumLogs) => {
+                    const searchedBeforeFields = JSON.parse(debeziumLogs).schema.fields.filter(field => field.field === "before")
+                    if(searchedBeforeFields.length <= 0) return ""
+
+                    const beforeFields = searchedBeforeFields[0].fields
+                    const enumFields = beforeFields.filter(field => field && field.name && field.name.toLowerCase().includes("enum") && field.parameters && field.parameters.allowed)
+                    if(enumFields.length <= 0) return ""
+
+                    const enumPrompt = enumFields.map(field => {
+                        return {
+                            "name": field.field,
+                            "enumValues": field.parameters.allowed
+                        }
+                    })
+                    return `다음 속성들은 열거형 객체입니다. 관련 객체가 Aggregate 내부에 없을 경우, 제시되는 데이터를 활용해서 열거형 객체에 대한 생성 액션을 작성하셔야 합니다.: ${JSON.stringify(enumPrompt)}`
+                }
+
                 return `[INPUT]
 - 기존 이벤트스토밍 모델 객체
 ${preprocessModelValueString}
@@ -1009,6 +1026,7 @@ ${getSummarizedDebeziumLogStrings(debeziumLogs)}
 - 추가 요청
 ${requestDebeziumFieldsPrompt(debeziumLogs)}
 ${commandGuidesToUse}
+${requestDebeziumEnumObject(debeziumLogs)}
 
 [OUTPUT]
 \`\`\`json
