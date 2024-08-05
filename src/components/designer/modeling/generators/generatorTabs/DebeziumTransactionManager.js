@@ -492,6 +492,55 @@ class DebeziumTransactionQuery {
             }
         }
 
+        const reseizeAggregateVertically = (modelValue, aggElementObject) => {
+            const RESIZE_HEIGHT = 150
+
+            const getAllBcBelowBc = (modelValue, bcObject) => {
+                let targetElements = []
+
+                for(const element of Object.values(modelValue.elements)) {
+                    if(element && element._type === "org.uengine.modeling.model.BoundedContext" &&
+                       element.id !== bcObject.id &&
+                       element.elementView.y >= bcObject.elementView.y &&
+                       element.elementView.x >= bcObject.elementView.x - Math.round(bcObject.elementView.width/2) && element.elementView.x <= bcObject.elementView.x + Math.round(bcObject.elementView.width/2))
+                        targetElements.push(element)
+                }
+
+                return targetElements
+            }
+
+            const getElementsInBoundedContext = (modelValue, bcObject) => {
+                return Object.values(modelValue.elements)
+                    .filter(element => element && element.boundedContext && element.boundedContext.id === bcObject.id)
+            }
+
+            const bcObject = modelValue.elements[aggElementObject.boundedContext.id]
+            const aggObject = modelValue.elements[aggElementObject.aggregate.id]
+            if(!bcObject || !aggObject) return
+            if(aggElementObject.elementView.y <= aggObject.elementView.y + Math.round(aggObject.elementView.height/2)) return
+
+            if(aggObject.elementView.y + Math.round(aggObject.elementView.height/2) + RESIZE_HEIGHT > bcObject.elementView.y + Math.round(bcObject.elementView.height/2)) {
+                const BC_RESIZE_HEIGHT = Math.round(RESIZE_HEIGHT * 0.90)
+                bcObject.elementView.height += BC_RESIZE_HEIGHT
+                bcObject.elementView.y += Math.round(BC_RESIZE_HEIGHT/2)
+                modelValue.elements[bcObject.id] = {...bcObject}
+            }
+
+            aggObject.elementView.height += RESIZE_HEIGHT
+            aggObject.elementView.y += Math.round(RESIZE_HEIGHT/2)
+            modelValue.elements[aggObject.id] = {...aggObject}
+
+            for(const bcElement of getAllBcBelowBc(modelValue, bcObject)) {
+                bcElement.elementView.y += RESIZE_HEIGHT
+                modelValue.elements[bcElement.id] = {...bcElement}
+
+                for(const elementInBc of getElementsInBoundedContext(modelValue, bcElement)) {
+                    elementInBc.elementView.y += RESIZE_HEIGHT
+                    modelValue.elements[elementInBc.id] = {...elementInBc}
+                }
+            }
+        }
+
         const applyToBoundedContext = (modelValue, userInfo, objectAliaToUUID, query, applyAliasDirectly) => {
             const createNewBoundedContext = (modelValue, userInfo, query) => {
                 const getBoundedContextBase = (userInfo, name, displayName, portNumber, x, y, elementUUID) => {
@@ -1164,6 +1213,7 @@ class DebeziumTransactionQuery {
 
                 eventObject.fieldDescriptors = getFileDescriptors(modelValue, query)
                 modelValue.elements[eventObject.id] = eventObject
+                reseizeAggregateVertically(modelValue, eventObject)
 
                 if(query.args.outputCommandIds) {
                     callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
@@ -1447,6 +1497,7 @@ class DebeziumTransactionQuery {
 
                 commandObject.fieldDescriptors = getFileDescriptors(modelValue, query)
                 modelValue.elements[commandObject.id] = commandObject
+                reseizeAggregateVertically(modelValue, commandObject)
             }
 
             const updateCommand = (modelValue, query) => {
