@@ -20,7 +20,7 @@ class DebeziumTransactionManager {
         return this.transactions.map(transaction => transaction.toStringObject())
     }
 
-    apply(modelValue, userInfo) {
+    apply(modelValue, userInfo, applyAliasDirectly = false) {
         let callbacks = {
             afterAllObjectAppliedCallBacks: [],
             afterAllRelationAppliedCallBacks: []
@@ -28,7 +28,7 @@ class DebeziumTransactionManager {
         let objectAliaToUUID = {}
 
         this.transactions.forEach(transaction => {
-            const transactionCallbacks = transaction.apply(modelValue, userInfo, objectAliaToUUID)
+            const transactionCallbacks = transaction.apply(modelValue, userInfo, objectAliaToUUID, applyAliasDirectly)
             callbacks.afterAllObjectAppliedCallBacks = callbacks.afterAllObjectAppliedCallBacks.concat(transactionCallbacks.afterAllObjectAppliedCallBacks)
             callbacks.afterAllRelationAppliedCallBacks = callbacks.afterAllRelationAppliedCallBacks.concat(transactionCallbacks.afterAllRelationAppliedCallBacks)
         })
@@ -101,7 +101,7 @@ class DebeziumTransaction {
         }
     }
 
-    apply(modelValue, userInfo, objectAliaToUUID) {
+    apply(modelValue, userInfo, objectAliaToUUID, applyAliasDirectly = false) {
         const fixTransactionQueryErrors = (modelValue, usecases, queries) => {
             const addBoundedContextQueryIfNotExist = (modelValue, usecases, queries) => {
                 const createNewBoundedContextQuery = (usecaseId, queryId, boundedContextId, boundedContextName) => {
@@ -146,7 +146,7 @@ class DebeziumTransaction {
 
         fixTransactionQueryErrors(modelValue, this.usecase, this.queries)
         this.queries.forEach(query => {
-            const queryCallbacks = query.apply(modelValue, userInfo, objectAliaToUUID)
+            const queryCallbacks = query.apply(modelValue, userInfo, objectAliaToUUID, applyAliasDirectly)
             callbacks.afterAllObjectAppliedCallBacks = callbacks.afterAllObjectAppliedCallBacks.concat(queryCallbacks.afterAllObjectAppliedCallBacks)
             callbacks.afterAllRelationAppliedCallBacks = callbacks.afterAllRelationAppliedCallBacks.concat(queryCallbacks.afterAllRelationAppliedCallBacks)
         })
@@ -295,7 +295,7 @@ class DebeziumTransactionQuery {
         }
     }
 
-    apply(modelValue, userInfo, objectAliaToUUID) {
+    apply(modelValue, userInfo, objectAliaToUUID, applyAliasDirectly = false) {
         let callbacks = {
             afterAllObjectAppliedCallBacks: [],
             afterAllRelationAppliedCallBacks: []
@@ -492,7 +492,7 @@ class DebeziumTransactionQuery {
             }
         }
 
-        const applyToBoundedContext = (modelValue, userInfo, objectAliaToUUID, query) => {
+        const applyToBoundedContext = (modelValue, userInfo, objectAliaToUUID, query, applyAliasDirectly) => {
             const createNewBoundedContext = (modelValue, userInfo, query) => {
                 const getBoundedContextBase = (userInfo, name, displayName, portNumber, x, y, elementUUID) => {
                     const elementUUIDtoUse = elementUUID ? elementUUID : getUUID();
@@ -618,7 +618,7 @@ class DebeziumTransactionQuery {
             }
 
             initObjectAlias(modelValue, query)
-            convertAliasToUUID(modelValue, objectAliaToUUID, query)
+            if(!applyAliasDirectly) convertAliasToUUID(modelValue, objectAliaToUUID, query)
             switch(query.action) {
                 case "update":
                     if(modelValue.elements[query.ids.boundedContextId]) {
@@ -638,7 +638,7 @@ class DebeziumTransactionQuery {
             }
         }
 
-        const applyToAggregate = (modelValue, userInfo, objectAliaToUUID, query) => {
+        const applyToAggregate = (modelValue, userInfo, objectAliaToUUID, query, applyAliasDirectly) => {
             const createNewAggregate = (modelValue, userInfo, query) => {
                 const getAggregateBase = (userInfo, name, displayName, boundedContextId, x, y, elementUUID) => {
                     const elementUUIDtoUse = elementUUID ? elementUUID : getUUID();
@@ -938,7 +938,7 @@ class DebeziumTransactionQuery {
             }
 
             initObjectAlias(modelValue, query)
-            convertAliasToUUID(modelValue, objectAliaToUUID, query)
+            if(!applyAliasDirectly) convertAliasToUUID(modelValue, objectAliaToUUID, query)
             switch(query.action) {
                 case "update":
                     if(modelValue.elements[query.ids.aggregateId]) {
@@ -958,7 +958,7 @@ class DebeziumTransactionQuery {
             }
         }
 
-        const applyToEvent = (modelValue, userInfo, objectAliaToUUID, query) => {
+        const applyToEvent = (modelValue, userInfo, objectAliaToUUID, query, applyAliasDirectly) => {
             const createNewPolicy = (modelValue, userInfo, eventObject, commandId, updateReason) => {
                 const getPolicyBase = (userInfo, name, displayName, boundedContextId, updateReason, x, y, elementUUID) => {
                     const elementUUIDtoUse = elementUUID ? elementUUID : getUUID()
@@ -1229,7 +1229,7 @@ class DebeziumTransactionQuery {
             }
 
             initObjectAlias(modelValue, query)
-            convertAliasToUUID(modelValue, objectAliaToUUID, query)
+            if(!applyAliasDirectly) convertAliasToUUID(modelValue, objectAliaToUUID, query)
             switch(query.action) {
                 case "update":
                     if(modelValue.elements[query.ids.eventId]) {
@@ -1249,7 +1249,7 @@ class DebeziumTransactionQuery {
             }
         }
 
-        const applyToCommand = (modelValue, userInfo, objectAliaToUUID, query) => {
+        const applyToCommand = (modelValue, userInfo, objectAliaToUUID, query, applyAliasDirectly) => {
             const createNewCommand = (modelValue, userInfo, query) => {
                 const getCommandBase = (userInfo, name, displayName, api_verb, outputEvents, boundedContextId, aggregateId, x, y, elementUUID) => {
                     const elementUUIDtoUse = elementUUID ? elementUUID : getUUID()
@@ -1511,7 +1511,7 @@ class DebeziumTransactionQuery {
             }
 
             initObjectAlias(modelValue, query)
-            convertAliasToUUID(modelValue, objectAliaToUUID, query)
+            if(!applyAliasDirectly) convertAliasToUUID(modelValue, objectAliaToUUID, query)
             switch(query.action) {
                 case "update":
                     if(modelValue.elements[query.ids.commandId]) {
@@ -1637,7 +1637,7 @@ class DebeziumTransactionQuery {
             })
         }
 
-        const applyToEnumeration = (modelValue, objectAliaToUUID, query) => {
+        const applyToEnumeration = (modelValue, objectAliaToUUID, query, applyAliasDirectly) => {
             const createEnumeration = (query) => {
                 const getEnumerationBase = (name, items, x, y, elementUUID) => {
                     const elementUUIDtoUse = elementUUID ? elementUUID : getUUID()
@@ -1787,7 +1787,7 @@ class DebeziumTransactionQuery {
             }
 
             initObjectAlias(modelValue, query)
-            convertAliasToUUID(modelValue, objectAliaToUUID, query)
+            if(!applyAliasDirectly) convertAliasToUUID(modelValue, objectAliaToUUID, query)
             switch(query.action) {
                 case "update":
                     const aggregateObject = modelValue.elements[query.ids.aggregateId]
@@ -1813,7 +1813,7 @@ class DebeziumTransactionQuery {
             }
         }
 
-        const applyToValueObject = (modelValue, objectAliaToUUID, query) => {
+        const applyToValueObject = (modelValue, objectAliaToUUID, query, applyAliasDirectly) => {
             const createValueObject = (query) => {
                 const getValueObjectBase = (name, fieldDescriptors, x, y, elementUUID) => {
                     const elementUUIDtoUse = elementUUID ? elementUUID : getUUID()
@@ -2006,7 +2006,7 @@ class DebeziumTransactionQuery {
             }
 
             initObjectAlias(modelValue, query)
-            convertAliasToUUID(modelValue, objectAliaToUUID, query)
+            if(!applyAliasDirectly) convertAliasToUUID(modelValue, objectAliaToUUID, query)
             switch(query.action) {
                 case "update":
                     const aggregateObject = modelValue.elements[query.ids.aggregateId]
@@ -2039,22 +2039,22 @@ class DebeziumTransactionQuery {
         try {
             switch(this.query.objectType) {
                 case "BoundedContext":
-                    applyToBoundedContext(modelValue, userInfo, objectAliaToUUID, this.query);
+                    applyToBoundedContext(modelValue, userInfo, objectAliaToUUID, this.query, applyAliasDirectly);
                     break
                 case "Aggregate":
-                    applyToAggregate(modelValue, userInfo, objectAliaToUUID, this.query);
+                    applyToAggregate(modelValue, userInfo, objectAliaToUUID, this.query, applyAliasDirectly);
                     break
                 case "Event":
-                    applyToEvent(modelValue, userInfo, objectAliaToUUID, this.query);
+                    applyToEvent(modelValue, userInfo, objectAliaToUUID, this.query, applyAliasDirectly);
                     break
                 case "Command":
-                    applyToCommand(modelValue, userInfo, objectAliaToUUID, this.query);
+                    applyToCommand(modelValue, userInfo, objectAliaToUUID, this.query, applyAliasDirectly);
                     break
                 case "Enumeration":
-                    applyToEnumeration(modelValue, objectAliaToUUID, this.query);
+                    applyToEnumeration(modelValue, objectAliaToUUID, this.query, applyAliasDirectly);
                     break
                 case "ValueObject":
-                    applyToValueObject(modelValue, objectAliaToUUID, this.query);
+                    applyToValueObject(modelValue, objectAliaToUUID, this.query, applyAliasDirectly);
                     break
             }
     

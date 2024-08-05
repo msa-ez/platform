@@ -3137,7 +3137,7 @@
                             try {
                                 const currentDebeziumTransactionManager = me.tabs.find(tab => tab.component === 'DebeziumLogsTab').initValue.manager
                                 currentDebeziumTransactionManager.addNewTransactionFromModelValue(val.modelValue)
-                                currentDebeziumTransactionManager.apply(me.value, me.userInfo)
+                                currentDebeziumTransactionManager.apply(me.value, me.userInfo, val.modelMode === "mockModelValue")
                                 me.forceRefreshCanvas()
 
                                 me.value.debeziumChatSaveObject = currentDebeziumTransactionManager.toSaveObject()
