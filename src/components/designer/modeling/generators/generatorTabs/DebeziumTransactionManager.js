@@ -611,6 +611,21 @@ class DebeziumTransactionQuery {
                         return boundContextsInMaxYRange.filter(bc => bc.elementView.x === maxXPos)[0]
                     }
 
+                    const getValidYPosition = (boundedContexts, xPosInMaxYRange) => {
+                        const BASE_BC_WIDTH = 560
+                        const BASE_BC_HEIGHT = 590
+
+                        const targetBoundedContexts = []
+                        for(const boundedContext of boundedContexts) {
+                            if(boundedContext.elementView.x >= xPosInMaxYRange - BASE_BC_WIDTH/2 && boundedContext.elementView.x <= xPosInMaxYRange + BASE_BC_WIDTH/2)
+                                targetBoundedContexts.push(boundedContext)
+                        }
+                        if(targetBoundedContexts.length <= 0) return 450
+
+                        const maxYHeightSum = Math.max(...targetBoundedContexts.map(bc => bc.elementView.y + Math.round(bc.elementView.height/2)))
+                        return maxYHeightSum + 25 + Math.round(BASE_BC_HEIGHT/2)
+                    }
+
                     const BOUNDED_CONTEXT_MAX_X_LIMIT = 1750
                     const boundedContexts = getAllBoundedContexts(modelValue)
                     if(boundedContexts.length <= 0) return {x: 450, y: 450}
@@ -620,9 +635,9 @@ class DebeziumTransactionQuery {
                                             boundedContextObject.elementView.width/2 + 25
                     
                     if(xPosInMaxYRange <= BOUNDED_CONTEXT_MAX_X_LIMIT)
-                        return {x: xPosInMaxYRange, y: maxXBoundedContextInMaxYRange.elementView.y}
+                        return {x: xPosInMaxYRange, y: getValidYPosition(boundedContexts, xPosInMaxYRange)}
                     else
-                        return {x: 450, y: maxXBoundedContextInMaxYRange.elementView.y + maxXBoundedContextInMaxYRange.elementView.height/2 + boundedContextObject.elementView.height/2 + 25}
+                        return {x: 450, y: getValidYPosition(boundedContexts, 450)}
                 }
 
                 
