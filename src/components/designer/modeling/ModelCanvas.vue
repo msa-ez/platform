@@ -2194,7 +2194,10 @@
                     }
 
                     if (loadedDefinition) {
-                        me.value = me.migrate(loadedDefinition)
+                        loadedDefinition = me.migrate(loadedDefinition)
+                        for(let key of Object.keys(loadedDefinition)) {
+                            me.$set(me.value, key, loadedDefinition[key])
+                        }
                     } else if (!me.value) {
                         me.value = {'elements': {}, 'relations': {}}
                         me.initLoad = true
