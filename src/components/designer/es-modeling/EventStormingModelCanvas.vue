@@ -3131,10 +3131,13 @@
 
                 if(val && val.modelName === "DebeziumLogsTabGenerator") {
                     if(val.modelValue) {
-                        let modelValueToModify = JSON.parse(JSON.stringify(me.value))
-
                         if(val.modelMode === "generateCommands" || val.modelMode === "mockModelValue") {
                             try {
+                                let modelValueToModify = JSON.parse(JSON.stringify({
+                                    elements: me.value.elements,
+                                    relations: me.value.relations
+                                }))
+
                                 const currentDebeziumTransactionManager = me.tabs.find(tab => tab.component === 'DebeziumLogsTab').initValue.manager
                                 currentDebeziumTransactionManager.addNewTransactionFromModelValue(val.modelValue)
                                 currentDebeziumTransactionManager.apply(modelValueToModify, me.userInfo, val.modelMode === "mockModelValue")
@@ -3153,6 +3156,10 @@
 
                         if(val.modelMode === "generateGWT") {
                             try {
+                                let modelValueToModify = JSON.parse(JSON.stringify({
+                                    elements: me.value.elements
+                                }))
+
                                 generateGWT(modelValueToModify, val.modelValue.requestValue, val.modelValue.gwts)
                                 me.forceRefreshCanvas()
 
