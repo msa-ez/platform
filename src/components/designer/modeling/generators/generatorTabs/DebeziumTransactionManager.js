@@ -617,7 +617,8 @@ class DebeziumTransactionQuery {
 
                         const targetBoundedContexts = []
                         for(const boundedContext of boundedContexts) {
-                            if(boundedContext.elementView.x >= xPosInMaxYRange - BASE_BC_WIDTH/2 && boundedContext.elementView.x <= xPosInMaxYRange + BASE_BC_WIDTH/2)
+                            if(boundedContext.elementView.x - boundedContext.elementView.width/2 <= xPosInMaxYRange + BASE_BC_WIDTH/2 && 
+                               boundedContext.elementView.x + boundedContext.elementView.width/2 >= xPosInMaxYRange - BASE_BC_WIDTH/2)
                                 targetBoundedContexts.push(boundedContext)
                         }
                         if(targetBoundedContexts.length <= 0) return 450
