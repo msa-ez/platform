@@ -89,7 +89,17 @@
                 </template>
                 <span>신규 강의 생성</span>
             </v-tooltip>
-            <v-dialog v-if="showNewButton"
+            <v-btn v-if="showNewButton"
+                class="main-nav-modeling-is-mobile"
+                text
+                style="font-size:16px; margin-top:8px; font-weight: 700; padding:0px;"
+                :style="isLogin ? 'margin-right:145px' : 'margin-right:130px;'"
+                @click.native="moveToModel('es')"
+            ><v-icon style="margin-top:-3px;">mdi-file-plus</v-icon>
+            {{$t('making.title')}}
+            </v-btn>
+            <!-- 만들기 클릭했을 때 열리던 다이얼로그 -->
+            <!-- <v-dialog v-if="showNewButton"
                 v-model="makingDialog"
                 max-width="90%"
             >
@@ -105,10 +115,10 @@
                     </v-btn>
                 </template>
                 <v-card style="padding:20px; height:85vh; overflow:auto;">
-                    <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('making.title')}}</div>
+                    <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('making.title')}}</div> -->
 
                     <!-- 만들기 기획(planning) -->
-                    <div class="making-sub-title">{{$t('making.planning')}}</div>
+                    <!-- <div class="making-sub-title">{{$t('making.planning')}}</div>
                     <v-row
                         style="margin:0px;"
                     >
@@ -154,10 +164,10 @@
                                 </v-card-actions>
                             </v-card>
                         </v-col>
-                    </v-row>
+                    </v-row> -->
 
                     <!-- 만들기 설계(design) -->
-                    <div class="making-sub-title">{{$t('making.design')}}</div>
+                    <!-- <div class="making-sub-title">{{$t('making.design')}}</div>
                     <v-row
                         style="margin:0px;"
                     >
@@ -204,7 +214,7 @@
                                 </v-card-actions>
                             </v-card>
                         </v-col>
-                    </v-row>
+                    </v-row> -->
 
 
                     <!-- <div class="making-sub-title">{{$t('making.migration')}}</div>
@@ -257,7 +267,7 @@
 
 
                     <!-- 만들기 개발(development) -->
-                    <div class="making-sub-title">{{$t('making.operation')}}</div>
+                    <!-- <div class="making-sub-title">{{$t('making.operation')}}</div>
                     <v-row
                         style="margin:0px;"
                     >
@@ -303,10 +313,10 @@
                                 </v-card-actions>
                             </v-card>
                         </v-col>
-                    </v-row>
+                    </v-row> -->
 
                     <!-- 만들기 프로젝트(project) -->
-                    <div class="making-sub-title">{{$t('making.project')}}</div>
+                    <!-- <div class="making-sub-title">{{$t('making.project')}}</div>
                     <v-row class="making-col"
                         style="margin:0px;"
                     >
@@ -354,7 +364,7 @@
                         </v-col>
                     </v-row>
                 </v-card>
-            </v-dialog>
+            </v-dialog> -->
             
             <v-btn
                 v-if="!(isLogin || isGuestLogin)"
