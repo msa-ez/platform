@@ -838,10 +838,12 @@
                         if(!element) return;
                         if(element._type.includes('Relation')){
                             let fromEle = me.value.elements[element.from]
-                            let fields = fromEle.fieldDescriptors
-                            me.value.elements[element.from].fieldDescriptors = fields.filter((field) => {
-                                return field.name.toLowerCase() !== element.name.toLowerCase()
-                            })
+                            if(fromEle.fieldDescriptors){
+                                let fields = fromEle.fieldDescriptors
+                                me.value.elements[element.from].fieldDescriptors = fields.filter((field) => {
+                                    return field.name.toLowerCase() !== element.name.toLowerCase()
+                                })
+                            }
                         }
                     },
                     onFail(e){
@@ -1935,6 +1937,7 @@
                     if (element && element.isAggregateRoot) {
                         me.setAggregateField(element)
                     }
+                    this.openGraphRenderKey += 1;
                 })
             },
             setAggregateField(element) {

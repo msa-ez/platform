@@ -249,7 +249,7 @@ class BoundedContextGenerator extends JsonAIGenerator {
                                         aggregateRoot: {
                                             _type: 'org.uengine.modeling.model.AggregateRoot', 
                                             fieldDescriptors: [],
-                                            entities: {}, 
+                                            entities: {elements: {}, relation: {}}, 
                                             operations: [],
                                         },
                                         author: me.userUid,

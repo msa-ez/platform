@@ -49,7 +49,7 @@
                             <pre style="font-size: small; text-align: left;">ACTOR: {{ reponseQuery.actor }}</pre>
                         </div>
 
-                        <div>
+                        <div v-if="!reponseQuery.errorMessage || reponseQuery.errorMessage.length === 0">
                             <div style="height: 18px;">
                                 <pre style="font-size: small; text-align: left;">EVENT STORMING UPDATES</pre>
                             </div>
@@ -59,6 +59,12 @@
                                     <v-icon>mdi-magnify</v-icon>
                                 </v-btn>     
                             </div>
+                        </div>
+                        <div v-else>
+                            <pre style="font-size: small; text-align: left;">AI 생성 결과를 처리하는 도중에 에러가 발생했습니다.</pre>
+                            <pre style="font-size: small; text-align: left;">다시 시도해 주시길 바랍니다.</pre>
+                            <pre style="font-size: small; text-align: left;">* 에러 메세지</pre>
+                            <pre style="font-size: small; text-align: left; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; max-width: 380px;">{{ reponseQuery.errorMessage }}</pre>
                         </div>
                     </v-sheet>
                 </div>                         
@@ -225,22 +231,22 @@ export default {
             switch(model.modelMode) {
                 case "generateCommandGuides":
                     this.progressMessageOutput = model.modelRawValue
-                    this.progressMessage = `액션 생성에 대한 가이드 생성중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
+                    this.progressMessage = `액션 생성에 대한 가이드 생성 중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
                     break
 
                 case "generateCommands":
                     this.progressMessageOutput = model.modelRawValue
-                    this.progressMessage = `액션 생성중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
+                    this.progressMessage = `액션 생성 중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
                     break
 
                 case "summaryPreprocessModelValue":
                     this.progressMessageOutput = model.modelRawValue
-                    this.progressMessage = `이벤트 스토밍 정보 요약중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
+                    this.progressMessage = `이벤트 스토밍 정보 요약 중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
                     break
                 
                 case "generateGWT":
                     this.progressMessageOutput = model.modelRawValue
-                    this.progressMessage = `생성된 커맨드에 대한 GWT 생성중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
+                    this.progressMessage = `생성된 커맨드에 대한 GWT 생성 중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length}, 생성된 문자 수: ${this.progressMessageOutput.length})`
                     break
             }
         },
@@ -309,7 +315,7 @@ export default {
                     this.messageObj.modificationMessage = this.debeziumLogsToPrcess.shift()
                     this.isGenerationFinished = false
                     this.$emit("generate")
-                    this.progressMessage = `다음 트렌젝션 관련 액션을 생성하는중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
+                    this.progressMessage = `액션 생성에 대한 가이드 생성을 요청 중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
                 } else {
                     this.isGenerationFinished = true
                     this.debeziumLogs = ""
@@ -328,7 +334,7 @@ export default {
             switch(model.modelMode) {
                 case "generateCommandGuides":
                     this.$emit("generate")
-                    this.progressMessage = `액션 생성 가이드를 토대로 액션 생성을 요청중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
+                    this.progressMessage = `액션 생성 가이드를 토대로 액션 생성을 요청 중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
                     break
 
                 case "generateCommands":
@@ -338,7 +344,7 @@ export default {
                     if(this.messageObj.gwtRequestValue !== null) {
                         this.debeziumLogsGenerator.modelMode = "generateGWT"
                         this.$emit("generate")
-                        this.progressMessage = `생성된 커맨드에 대한 GWT 생성 요청을 전송중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
+                        this.progressMessage = `생성된 커맨드에 대한 GWT 생성을 요청 중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
                     }
                     else 
                         processDebeziumLogsToPrcess()
@@ -346,7 +352,7 @@ export default {
 
                 case "summaryPreprocessModelValue":
                     this.$emit("generate")
-                    this.progressMessage = `이벤트 스토밍 모델 정보에 대한 요약을 요청하는중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
+                    this.progressMessage = `액션 생성에 대한 가이드 생성을 요청 중... (남은 트랜잭션 수: ${this.debeziumLogsToPrcess.length})`
                     break
                 
                 case "generateGWT":

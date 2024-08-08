@@ -3131,38 +3131,46 @@
 
                 if(val && val.modelName === "DebeziumLogsTabGenerator") {
                     if(val.modelValue) {
-                        const oldModelValue = JSON.parse(JSON.stringify(me.value))
-
                         if(val.modelMode === "generateCommands" || val.modelMode === "mockModelValue") {
                             try {
+                                let modelValueToModify = JSON.parse(JSON.stringify({
+                                    elements: me.value.elements,
+                                    relations: me.value.relations
+                                }))
+
                                 const currentDebeziumTransactionManager = me.tabs.find(tab => tab.component === 'DebeziumLogsTab').initValue.manager
                                 currentDebeziumTransactionManager.addNewTransactionFromModelValue(val.modelValue)
-                                currentDebeziumTransactionManager.apply(me.value, me.userInfo)
+                                currentDebeziumTransactionManager.apply(modelValueToModify, me.userInfo, val.modelMode === "mockModelValue")
                                 me.forceRefreshCanvas()
 
-                                me.value.debeziumChatSaveObject = currentDebeziumTransactionManager.toSaveObject()
                                 me.changedByMe = true
+                                this.$set(me.value, "elements", modelValueToModify.elements)
+                                this.$set(me.value, "relations", modelValueToModify.relations)
+                                this.$set(me.value, "debeziumChatSaveObject", currentDebeziumTransactionManager.toSaveObject())
                             } catch(e) {
                                 console.error("[!] 출력 결과를 Debezium Manager에 전달해서 처리하는 과정에서 오류 발생")
                                 console.error(e)
-                                alert("죄송합니다. AI가 출력한 결과가 올바르지 않아서 이벤트 스토밍 모델을 처리하는데 실패했습니다. 다시 시도해주시길 바랍니다. 에러 내용:" + e.message)
+                                alert("죄송합니다. AI가 출력한 결과가 올바르지 않아서 이벤트 스토밍 모델을 처리하는 데 실패했습니다. 다시 시도해 주시길 바랍니다. 에러 내용:" + e.message)
                             }
                         }
 
                         if(val.modelMode === "generateGWT") {
                             try {
-                                generateGWT(me.value, val.modelValue.requestValue, val.modelValue.gwts)
+                                let modelValueToModify = JSON.parse(JSON.stringify({
+                                    elements: me.value.elements
+                                }))
+
+                                generateGWT(modelValueToModify, val.modelValue.requestValue, val.modelValue.gwts)
                                 me.forceRefreshCanvas()
 
                                 me.changedByMe = true
+                                this.$set(me.value, "elements", modelValueToModify.elements)
                             } catch(e) {
                                 console.error("[!] 출력 결과를 이용해서 GWT를 만드는 과정에서 오류 발생")
                                 console.error(e)
-                                alert("죄송합니다. AI를 통해서 테스트 케이스(GWT)를 생성하는데 실패했습니다. 해당 커맨드 객체를 더블클릭 > Examples 버튼으로 직접 Debezium Log를 넣어서 GWT를 생성해주시길 바랍니다. 에러 내용:" + e.message)
+                                alert("죄송합니다. AI를 통해서 테스트 케이스(GWT)를 생성하는 데 실패했습니다. 해당 커맨드 객체를 더블클릭 > Examples 버튼으로 직접 Debezium Log를 넣어서 GWT를 생성해 주시길 바랍니다. 에러 내용:" + e.message)
                             }
                         }
-
-                        this.pushChangedValueQueue(jsondiffpatch.diff(oldModelValue, me.value))
                     }
                     return
                 }

@@ -1077,6 +1077,7 @@
 <script>
   import EventStormingModelCanvas from "../es-modeling/EventStormingModelCanvas";
   import ContextMappingModeling from './index'
+  import BoundedContext from '../es-modeling/elements/BoundedContext.vue';
 
   export default {
     name: "context-mapping-model-canvas",
@@ -1183,8 +1184,7 @@
           })
 
           if( me.storageCondition.type == 'es' ){
-            let vueComponent = me.getComponentByName('bounded-context-definition');
-            let element = vueComponent.computed.createNew(
+            let element = BoundedContext.computed.createNew(
                     null,
                     this.uuid(),
                     430, //x
