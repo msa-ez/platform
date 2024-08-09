@@ -13,13 +13,15 @@ export default class SIGenerator extends JsonAIGenerator {
         var summarizedCodeListWithLineNumbers = {}
         var scratchpad = ""
 
+        this.client.summarizedCodeList[this.client.testFile.name] = this.client.testFile.code
+
         for (const [fileName, code] of Object.entries(this.client.summarizedCodeList)) {
             summarizedCodeListWithLineNumbers[fileName] = this.addLineNumbers(code);
         }
 
         if(this.client.generatedErrorDetails){
             prompt = `user's request: ${clientPrompt}
-            
+
 An error occurred during testing.
 Error list: ${JSON.stringify(this.client.generatedErrorDetails)}
 The error list contains errors that occurred during mvn testing for the files in the code list and information about the file in which the error occurred.
@@ -81,6 +83,13 @@ Json format:
     }
 
     createModel(text){
+        if (text.startsWith('```json')) {
+            text = text.slice(7);
+        }
+        if (text.endsWith('```')) {
+            text = text.slice(0, -3);
+        }
+        
         return super.createModel(text + '"');
     }
 

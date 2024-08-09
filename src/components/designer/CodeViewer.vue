@@ -144,7 +144,7 @@
                                         </v-col>
                                     </v-row>
                                     <v-btn style="margin-bottom: 10px;" color="primary" @click="openImplDialog()">Auto implement</v-btn>
-                                    <v-dialog v-model="isOpenImplDialog" width="800">
+                                    <v-dialog v-model="isOpenImplDialog" width="800" persistent>
                                         <v-card class="mx-auto">
                                             <v-icon @click="isOpenImplDialog = false"
                                                 style="position:absolute; right:10px; top:10px;"
@@ -235,7 +235,7 @@
                 isOpenImplDialog: false,
                 startImpl: false,
                 isExistRules: false,
-                errormsg: null,
+                errorMsg: null,
                 selectedTestFile: null,
                 currentRange: null,
                 oldPrompt: null,
@@ -495,14 +495,15 @@
                 this.isOpenImplDialog = true
             },
             changedTestFile(){
-                // if(this.selectedTestFile.code.includes("test0")){
-                    this.isExistRules = true
-                    this.errorMsg = null
-                // } else {
-                    // this.isExistRules = false
-                    // this.errorMsg = 'The test function does not exist in the selected test file. To add a test function, add example'
-                // }
-
+                this.$nextTick(() => {
+                    // if(this.selectedTestFile.code.includes("test0")){
+                        this.isExistRules = true
+                        this.errorMsg = null
+                    // } else {
+                        // this.isExistRules = false
+                        // this.errorMsg = 'The test function does not exist in the selected test file. To add a test function, add example'
+                    // }
+                })
             },
             checkTopping(){
                 let codeGenerator = getParent(this.$parent, "code-generator")
