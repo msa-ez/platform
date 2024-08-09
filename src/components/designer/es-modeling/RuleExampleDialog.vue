@@ -9,6 +9,14 @@
                             style="position:absolute; right:10px; top:10px;"
                         >mdi-close</v-icon>
                     </tr>
+                    <tr>
+                        <td colspan="999">
+                            <v-text-field 
+                                v-model="rule.description"
+                                label="Describe your business logic"
+                            ></v-text-field>
+                        </td>
+                    </tr>
                     <tr class="tr-divider" style="text-align: center; font-size: 18px; font-weight: 500;">
                         <td :colspan="givenAttLength">Given</td>
                         <td :colspan="whenAttLength">When</td>
@@ -108,8 +116,7 @@
                         </tr>
                     </template>
                 </table>
-                <v-text-field v-model="rule.description"></v-text-field>
-                <v-layout>
+                <v-layout style="float: left; margin-top: 10px;">
                     <v-spacer/>
                     <v-icon @click="addExample()">mdi-plus</v-icon>
                     <v-icon @click="resetExampleDialog()">mdi-refresh</v-icon>
