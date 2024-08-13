@@ -7430,8 +7430,8 @@ jobs:
                         && Object.values(value.elements).filter(x => x && x._type.endsWith("PBC")).length == 0
                     ){
                         // 1 BC AND NO PBC.
-                        me.isOneBCModel = true
-                        me.onlyOneBcId = me.rootModelAndElementMap.modelForElements.BoundedContext[0].id
+                        // me.isOneBCModel = true
+                        // me.onlyOneBcId = me.rootModelAndElementMap.modelForElements.BoundedContext[0].id
                     }
 
 

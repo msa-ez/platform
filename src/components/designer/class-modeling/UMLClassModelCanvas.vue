@@ -1937,7 +1937,6 @@
                     if (element && element.isAggregateRoot) {
                         me.setAggregateField(element)
                     }
-                    this.openGraphRenderKey += 1;
                 })
             },
             setAggregateField(element) {
