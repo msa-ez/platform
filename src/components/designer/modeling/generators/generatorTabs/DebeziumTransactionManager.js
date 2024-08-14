@@ -20,7 +20,7 @@ class DebeziumTransactionManager {
         return this.transactions.map(transaction => transaction.toStringObject())
     }
 
-    apply(modelValue, userInfo, applyAliasDirectly = false) {
+    apply(modelValue, userInfo, information, applyAliasDirectly = false) {
         let callbacks = {
             afterAllObjectAppliedCallBacks: [],
             afterAllRelationAppliedCallBacks: []
@@ -28,7 +28,7 @@ class DebeziumTransactionManager {
         let objectAliaToUUID = {}
 
         this.transactions.forEach(transaction => {
-            const transactionCallbacks = transaction.apply(modelValue, userInfo, objectAliaToUUID, applyAliasDirectly)
+            const transactionCallbacks = transaction.apply(modelValue, userInfo, objectAliaToUUID, information, applyAliasDirectly)
             callbacks.afterAllObjectAppliedCallBacks = callbacks.afterAllObjectAppliedCallBacks.concat(transactionCallbacks.afterAllObjectAppliedCallBacks)
             callbacks.afterAllRelationAppliedCallBacks = callbacks.afterAllRelationAppliedCallBacks.concat(transactionCallbacks.afterAllRelationAppliedCallBacks)
         })
@@ -101,7 +101,7 @@ class DebeziumTransaction {
         }
     }
 
-    apply(modelValue, userInfo, objectAliaToUUID, applyAliasDirectly = false) {
+    apply(modelValue, userInfo, objectAliaToUUID, information, applyAliasDirectly = false) {
         const fixTransactionQueryErrors = (modelValue, usecases, queries) => {
             const addBoundedContextQueryIfNotExist = (modelValue, usecases, queries) => {
                 const createNewBoundedContextQuery = (usecaseId, queryId, boundedContextId, boundedContextName) => {
@@ -146,7 +146,7 @@ class DebeziumTransaction {
 
         fixTransactionQueryErrors(modelValue, this.usecase, this.queries)
         this.queries.forEach(query => {
-            const queryCallbacks = query.apply(modelValue, userInfo, objectAliaToUUID, applyAliasDirectly)
+            const queryCallbacks = query.apply(modelValue, userInfo, objectAliaToUUID, information, applyAliasDirectly)
             callbacks.afterAllObjectAppliedCallBacks = callbacks.afterAllObjectAppliedCallBacks.concat(queryCallbacks.afterAllObjectAppliedCallBacks)
             callbacks.afterAllRelationAppliedCallBacks = callbacks.afterAllRelationAppliedCallBacks.concat(queryCallbacks.afterAllRelationAppliedCallBacks)
         })
@@ -295,7 +295,7 @@ class DebeziumTransactionQuery {
         }
     }
 
-    apply(modelValue, userInfo, objectAliaToUUID, applyAliasDirectly = false) {
+    apply(modelValue, userInfo, objectAliaToUUID, information, applyAliasDirectly = false) {
         let callbacks = {
             afterAllObjectAppliedCallBacks: [],
             afterAllRelationAppliedCallBacks: []
@@ -581,7 +581,8 @@ class DebeziumTransactionQuery {
                         rotateStatus: false,
                         tempId: "",
                         templatePerElements: {},
-                        views: []
+                        views: [],
+                        definitionId: information.projectId
                     }
                 }
 
@@ -627,9 +628,9 @@ class DebeziumTransactionQuery {
                         return maxYHeightSum + 25 + Math.round(BASE_BC_HEIGHT/2)
                     }
 
-                    const BOUNDED_CONTEXT_MAX_X_LIMIT = 1750
+                    const BOUNDED_CONTEXT_MAX_X_LIMIT = 1950
                     const boundedContexts = getAllBoundedContexts(modelValue)
-                    if(boundedContexts.length <= 0) return {x: 450, y: 450}
+                    if(boundedContexts.length <= 0) return {x: 650, y: 450}
 
                     const maxXBoundedContextInMaxYRange = getMaxXBoundedContextInMaxYRange(boundedContexts)
                     const xPosInMaxYRange = maxXBoundedContextInMaxYRange.elementView.x + maxXBoundedContextInMaxYRange.elementView.width/2 + 
@@ -638,7 +639,7 @@ class DebeziumTransactionQuery {
                     if(xPosInMaxYRange <= BOUNDED_CONTEXT_MAX_X_LIMIT)
                         return {x: xPosInMaxYRange, y: getValidYPosition(boundedContexts, xPosInMaxYRange)}
                     else
-                        return {x: 450, y: getValidYPosition(boundedContexts, 450)}
+                        return {x: 600, y: getValidYPosition(boundedContexts, 450)}
                 }
 
                 

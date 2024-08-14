@@ -296,11 +296,25 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
         
                 return boundedContextInfo
             }
+        
+            const restoreAggregatesProperties = (boundedContext, modelValue) => {
+                let aggregates = []
+                for(let element of Object.values(modelValue.elements))
+                {
+                    if(element && element._type === "org.uengine.modeling.model.Aggregate" 
+                       && element.boundedContext && element.boundedContext.id === boundedContext.id)
+                        aggregates.push({id: element.id})
+                }
+                boundedContext.aggregates = aggregates
+            }
             
             let boundedContextInfos = {}
-            for(let boundedContext of getAllBoundedContexts(modelValue))
+            for(let boundedContext of getAllBoundedContexts(modelValue)) {
+                restoreAggregatesProperties(boundedContext, modelValue)
                 boundedContextInfos[getAliasIfExist(boundedContext.id)] = getBoundedContextInfo(boundedContext, modelValue)
+            }
             return boundedContextInfos;
+            
         }
 
         const getPreprocessInfos = (preprocessModelValue) => {
@@ -489,7 +503,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
 `
         }
 
-        const getSystemPromptForGenerateCommandGuides = (preprocessModelValueString, debeziumLogs, preprocessInfos) => {
+        const getSystemPromptForGenerateCommandGuides = (preprocessModelValueString, debeziumLogs, preprocessInfos, usableAggregateInfos) => {
             const getSystemPrompt = () => {
                 const getFrontGuidePrompt = () => {
                     return `당신은 특정 시스템의 데이터베이스에서 발생하는 Debezium CDC 트랜잭션 로그를 해석해서 다음과 같은 사항들을 도출해야 합니다.
@@ -604,7 +618,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                        getJsonCompressGuidePrompt()
             }
 
-            const getUserPrompt = (preprocessModelValueString, debeziumLogs, preprocessInfos) => {
+            const getUserPrompt = (preprocessModelValueString, debeziumLogs, preprocessInfos, usableAggregateInfos) => {
                 const primaryKeysToString = (primaryKeys) => {
                     if(primaryKeys.length <= 0) return ``
                     return `다음의 속성은 기본키이기 때문에 relatedAttribute로 사용할 수 없습니다.: ${primaryKeys.join(", ")}`
@@ -668,6 +682,17 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                     
                 }
 
+                const getUsableAggregateNamesGuides = (usableAggregateInfos) => {
+                    if(usableAggregateInfos === null) return ""
+
+                    const usableAggregateNames = usableAggregateInfos.map((aggregateInfo) => {
+                        return aggregateInfo.name
+                    })
+                    if(usableAggregateNames.length <= 0) return "기존의 이벤트 스토밍 모델의 Aggregate 이름으로 사용하지 않은 새로운 이름을 objectName에 작성해야 합니다. aggregateIdToIncludeAsValueObject에는 null을 작성합니다."
+
+                    return "다음의 이름을 가진 Aggregate의 이름만 objectName와 aggregateIdToIncludeAsValueObject의 속성으로 활용할 수 있습니다. 만약 objectName에서 사용할 만한 이름이 없다면, 기존의 이벤트 스토밍 모델의 Aggregate 이름으로 사용하지 않은 새로운 이름을 objectName에 작성해야 합니다. aggregateIdToIncludeAsValueObject는 사용할 만한 이름이 없다면, null로 작성합니다.: " + usableAggregateNames.join(", ")
+                }
+
                 return `[INPUT]
 - 기존 이벤트스토밍 모델 객체
 ${preprocessModelValueString}
@@ -678,16 +703,17 @@ ${getSummarizedDebeziumLogStrings(debeziumLogs)}
 - 추가 요청
 ${primaryKeysToString(preprocessInfos.primaryKeys)}
 ${getSummarizedDebeziumLogTableNameString(debeziumLogs, preprocessInfos.aggregateValueObjectNameDic)}
+${getUsableAggregateNamesGuides(usableAggregateInfos)}
 
 [OUTPUT]
 \`\`\`json
 `
             }
 
-            return getSystemPrompt() + getUserPrompt(preprocessModelValueString, debeziumLogs, preprocessInfos)
+            return getSystemPrompt() + getUserPrompt(preprocessModelValueString, debeziumLogs, preprocessInfos, usableAggregateInfos)
         }
 
-        const getSystemPromptForGenerateCommands = (preprocessModelValueString, debeziumLogs, commandGuidesToUse) => {
+        const getSystemPromptForGenerateCommands = (preprocessModelValueString, debeziumLogs, commandGuidesToUse, usableBoundedContextNames) => {
             const getSystemPrompt = () => {
                 const getFrontGuidePrompt = () => {
                     return `당신은 특정 시스템의 데이터베이스에서 발생하는 Debezium CDC 트랜잭션 로그를 해석해서 주어진 이벤트 스토밍 모델을 수정하기 위한 액션이 담긴 쿼리를 작성해야 합니다.
@@ -984,7 +1010,7 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
                         
             }
 
-            const getUserPrompt = (preprocessModelValueString, debeziumLogs, commandGuidesToUse) => {
+            const getUserPrompt = (preprocessModelValueString, debeziumLogs, commandGuidesToUse, usableBoundedContextNames) => {
                 const requestDebeziumFieldsPrompt = (debeziumLogs) => {
                     const debeziumFieldsSet = new Set()
                     
@@ -1016,6 +1042,14 @@ Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다
                     return `다음 속성들은 열거형 객체입니다. 관련 객체가 Aggregate 내부에 없을 경우, 제시되는 데이터를 활용해서 열거형 객체에 대한 생성 액션을 작성하셔야 합니다.: ${JSON.stringify(enumPrompt)}`
                 }
 
+                const getUsableBoundedContextNamesGuides = (usableBoundedContextNames) => {
+                    if(usableBoundedContextNames === null) return ""
+                    if(usableBoundedContextNames.length <= 0) return "관련있는 새로운 Bounded Context를 만들어야 합니다."
+
+                    return "다음의 이름을 가진 Bounded Context 혹은 내부의 요소들만 변경할 수 있습니다. 해당 요소 안에 사용할 수 있는 Bounded Context가 없으면, 새로 만드세요. 단, 이벤트인 경우에는 다른 Bounded Context에 속해있더라도 outputCommands가 제시된 Bounded Context에 속한 커맨드를 가리키도록 만들 수 있습니다.: " + usableBoundedContextNames.join(", ")
+                }
+
+
                 return `[INPUT]
 - 기존 이벤트스토밍 모델 객체
 ${preprocessModelValueString}
@@ -1027,13 +1061,14 @@ ${getSummarizedDebeziumLogStrings(debeziumLogs)}
 ${requestDebeziumFieldsPrompt(debeziumLogs)}
 ${commandGuidesToUse}
 ${requestDebeziumEnumObject(debeziumLogs)}
+${getUsableBoundedContextNamesGuides(usableBoundedContextNames)}
 
 [OUTPUT]
 \`\`\`json
 `
             }
 
-            return getSystemPrompt() + getUserPrompt(preprocessModelValueString, debeziumLogs, commandGuidesToUse)
+            return getSystemPrompt() + getUserPrompt(preprocessModelValueString, debeziumLogs, commandGuidesToUse, usableBoundedContextNames)
         }
 
         const getSystemPromptForSummaryPreProcessModelValue = (preProcessModelValue, debeziumLogs) => {
@@ -1294,14 +1329,82 @@ ${JSON.stringify(inputObject)}
                 getUserPrompt(gwtRequestValue, debeziumLogs)
         }
 
+        const getClientModelValue = (modelValue, mirrorValue) => {
+            const getMirrorElementIds = (modelValue) => {
+                let mirrorElementIds = []
+                for(const element of Object.values(modelValue.elements))
+                    if(element && element.mirrorElement)
+                        mirrorElementIds.push(element.mirrorElement)
+                return mirrorElementIds
+            }
+            
+            let clientModelValue = {
+                elements: {...modelValue.elements},
+                relations: {...modelValue.relations}
+            }
+            let mirrorElementIds = getMirrorElementIds(modelValue)
+
+            for(const element of Object.values(mirrorValue.elements)) {
+                if(element && !modelValue.elements[element.id] && !mirrorElementIds.includes(element.id))
+                    clientModelValue.elements[element.id] = element
+            }
+
+            return clientModelValue
+        }
+
+        const getUsableBoundedContextNames = (information, modelValue, prevPreprocessInfos) => {
+            if(!information || !information.associatedProject) return null
+
+            const currentBoundedContextNames = []
+            for(const element of Object.values(modelValue.elements)) {
+                if(element && element._type === "org.uengine.modeling.model.BoundedContext")
+                    currentBoundedContextNames.push(element.name)
+            }
+
+            const usableBoundedContextNames = []
+            for(const boundedContextInfo of Object.values(prevPreprocessInfos)) {
+                if(currentBoundedContextNames.includes(boundedContextInfo.name))
+                    usableBoundedContextNames.push(boundedContextInfo.name)
+            }
+            return usableBoundedContextNames
+        }
+
+        const getUsableAggregateInfos = (information, modelValue, prevPreprocessInfos) => {
+            if(!information || !information.associatedProject) return null
+
+            const currentAggregateNames = []
+            for(const element of Object.values(modelValue.elements)) {
+                if(element && element._type === "org.uengine.modeling.model.Aggregate")
+                    currentAggregateNames.push(element.name)
+            }
+
+            const usableAggregateInfos = []
+            for(const boundedContextInfo of Object.values(prevPreprocessInfos)) {
+                for(const aggregateInfo of Object.values(boundedContextInfo.aggregates)) {
+                    if(currentAggregateNames.includes(aggregateInfo.name))
+                        usableAggregateInfos.push({
+                            name: aggregateInfo.name,
+                            id: aggregateInfo.id
+                        })
+                }
+            }
+            return usableAggregateInfos
+        }
+
         let preprocessModelValueString = ""
         let preprocessInfos = {}
+        let usableBoundedContextNames = []
+        let usableAggregateInfos = []
         switch(this.modelMode) {
             case "generateCommandGuides":
-                this.UUIDAliasDic = getUUIDAliasDic(this.client.modelValue)
-                this.preprocessModelValue = getPreprocessModelValue(this.client.modelValue, this.UUIDAliasDic.UUIDToAlias)
+                const clientModelValue = (this.client.information && this.client.information.associatedProject) ? 
+                    getClientModelValue(this.client.modelValue, this.client.mirrorValue) : this.client.modelValue
+                this.UUIDAliasDic = getUUIDAliasDic(clientModelValue)
+                this.preprocessModelValue = getPreprocessModelValue(clientModelValue, this.UUIDAliasDic.UUIDToAlias)
                 preprocessInfos = getPreprocessInfos(this.preprocessModelValue)
                 preprocessModelValueString = JSON.stringify(this.preprocessModelValue)
+                usableBoundedContextNames = getUsableBoundedContextNames(this.client.information, this.client.modelValue, this.preprocessModelValue)
+                usableAggregateInfos = getUsableAggregateInfos(this.client.information, this.client.modelValue, this.preprocessModelValue)
 
                 if(preprocessModelValueString.length > this.modelInputLengthLimit)
                     this.modelMode = "summaryPreprocessModelValue"
@@ -1312,6 +1415,9 @@ ${JSON.stringify(inputObject)}
                 preprocessModelValueString = JSON.stringify(this.relatedPreProcessModelValue)
                     .replace(/\{\}/g, "{...}")
                     .replace(/\[\]/g, "[...]")
+                usableBoundedContextNames = getUsableBoundedContextNames(this.client.information, this.client.modelValue, this.relatedPreProcessModelValue)
+                usableAggregateInfos = getUsableAggregateInfos(this.client.information, this.client.modelValue, this.relatedPreProcessModelValue)
+
                 this.modelMode = "generateCommandGuides"
                 break
         }
@@ -1320,13 +1426,15 @@ ${JSON.stringify(inputObject)}
         let systemPrompt = ""
         switch(this.modelMode) {
             case "generateCommandGuides":
-                systemPrompt = getSystemPromptForGenerateCommandGuides(preprocessModelValueString, this.messageObj.modificationMessage, preprocessInfos)
+                systemPrompt = getSystemPromptForGenerateCommandGuides(preprocessModelValueString, this.messageObj.modificationMessage, preprocessInfos, usableAggregateInfos)
                 this.prevPreprocessInfos = preprocessInfos
                 this.prevPreprocessModelValueString = preprocessModelValueString
+                this.prevUsableAggregateInfos = usableAggregateInfos
+                this.prevUsableBoundedContextNames = usableBoundedContextNames
                 break
 
             case "generateCommands":
-                systemPrompt = getSystemPromptForGenerateCommands(this.prevPreprocessModelValueString, this.messageObj.modificationMessage, this.commandGuidesToUse)
+                systemPrompt = getSystemPromptForGenerateCommands(this.prevPreprocessModelValueString, this.messageObj.modificationMessage, this.commandGuidesToUse, this.prevUsableBoundedContextNames)
                 break
 
             case "summaryPreprocessModelValue":
@@ -1570,14 +1678,25 @@ ${JSON.stringify(inputObject)}
             return queries
         }
 
-        const getCommandGuidesToUse = (commandGuides, prevPreprocessInfos) => {
-            const correctGuides = (commandGuides, prevPreprocessInfos) => {
+        const getCommandGuidesToUse = (commandGuides, prevPreprocessInfos, prevUsableAggregateInfos) => {
+            const correctGuides = (commandGuides, prevPreprocessInfos, prevUsableAggregateInfos) => {
                 if(prevPreprocessInfos.aggregateNames && prevPreprocessInfos.aggregateNames.length > 0)
                     commandGuides.isUsedExistingObject = prevPreprocessInfos.aggregateNames.map(aggName => aggName.toLowerCase()).includes(commandGuides.objectName.toLowerCase())
                 if(prevPreprocessInfos.commandNames && prevPreprocessInfos.commandNames.length > 0)
                     commandGuides.isUsedExistingCommand = prevPreprocessInfos.commandNames.map(commandName => commandName.toLowerCase()).includes(commandGuides.debeziumLogCommandName.toLowerCase())
                 if(prevPreprocessInfos.eventNames && prevPreprocessInfos.eventNames.length > 0)
                     commandGuides.isUsedExistingEvent = prevPreprocessInfos.eventNames.map(eventName => eventName.toLowerCase()).includes(commandGuides.debeziumLogEventName.toLowerCase())
+                
+                if(prevUsableAggregateInfos != null && commandGuides.aggregateIdToIncludeAsValueObject != null) {
+                    const usableAggregateIds = prevUsableAggregateInfos.map((aggregateInfo) => {
+                        return aggregateInfo.id
+                    })
+
+                    if(!usableAggregateIds.includes(commandGuides.aggregateIdToIncludeAsValueObject)) {
+                        commandGuides.aggregateIdToIncludeAsValueObject = null
+                        commandGuides.aggregateIdToIncludeAsValueObjectReason = ""
+                    }
+                }
             }
             
             const objectNameToString = (objectName, aggregateIdToIncludeAsValueObject, isUsedExistingObject, reason) => {
@@ -1636,7 +1755,7 @@ Bounded Context를 생성할 필요가 있으면, 다음 이름을 사용해서 
                 return `생성하는 이벤트의 outputCommandIds를 수정해서 다음의 커맨드를 호출하도록 만들어주세요: ${JSON.stringify(uniqueObjects)}`
             }
         
-            correctGuides(commandGuides, prevPreprocessInfos)
+            correctGuides(commandGuides, prevPreprocessInfos, prevUsableAggregateInfos)
             return `${objectNameToString(commandGuides.objectName, commandGuides.aggregateIdToIncludeAsValueObject, commandGuides.isUsedExistingObject, commandGuides.aggregateIdToIncludeAsValueObjectReason)}
 ${debeziumLogCommandNameToString(commandGuides.debeziumLogCommandName, commandGuides.isUsedExistingCommand)}
 ${debeziumLogEventNameToString(commandGuides.debeziumLogEventName, commandGuides.isUsedExistingEvent)}
@@ -1663,7 +1782,7 @@ ${commandsToTriggerByDebeziumLogEventToString(commandGuides.commandsToTriggerByD
             switch(this.modelMode) {
                 case "generateCommandGuides":
                     let commandGuides = parseToJson(text)
-                    this.commandGuidesToUse = getCommandGuidesToUse(commandGuides, this.prevPreprocessInfos)
+                    this.commandGuidesToUse = getCommandGuidesToUse(commandGuides, this.prevPreprocessInfos, this.prevUsableAggregateInfos)
 
                     outputResult = {
                         modelName: this.modelName,

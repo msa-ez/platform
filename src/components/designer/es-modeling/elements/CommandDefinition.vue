@@ -383,6 +383,9 @@
                 }, 200)
             },
         },
+        mounted() {
+            this.setMirrorElementId()
+        },
         methods: {
             onChangedElementName(newVal, oldVal){
                 this.setMirrorElementId();

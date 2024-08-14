@@ -4248,13 +4248,24 @@
                 })
             },
             applyPatchValue(diff, value, options){
+                const extractOnlyValueKeyData = (value, diff) => {
+                    const result = {};
+                    for (const key of Object.keys(value))
+                        if (diff.hasOwnProperty(key))
+                            result[key] = diff[key];
+                    return result;
+                }
+
                 var me = this
                 me.$app.try({
                     context: me,
                     async action(me){
                         if(!value) value = me.value
 
-                        jsondiffpatch.patch(value, diff)
+                        let valueDiff = extractOnlyValueKeyData(value, diff)
+                        if(Object.keys(valueDiff).length === 0) return
+
+                        jsondiffpatch.patch(value, valueDiff)
                     }
                 })
             },
