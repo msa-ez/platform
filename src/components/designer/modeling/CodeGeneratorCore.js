@@ -228,7 +228,11 @@ class CodeGeneratorCore {
                     }
                 })
 
-                item.aggregateRoot.entities.relations = Object.values(item.aggregateRoot.entities.relations)
+                if(item.aggregateRoot.entities.relations){
+                    item.aggregateRoot.entities.relations = Object.values(item.aggregateRoot.entities.relations)
+                }else{
+                    item.aggregateRoot.entities.relations = {}
+                }
                 // console.log(modelForElements)
             }
         })

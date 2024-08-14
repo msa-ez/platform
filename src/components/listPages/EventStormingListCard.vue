@@ -27,7 +27,7 @@
                         style="cursor:pointer;"
                         :src="copyInformation.img"
                         max-width="800"
-                        max-height="300"
+                        max-height="200"
                 >
 
                     <slot name="chips">
@@ -209,7 +209,9 @@
                 me.copyInformation = JSON.parse(JSON.stringify(me.information))
                 let providerUid = localStorage.getItem('providerUid')
                 if (me.copyInformation && !me.set) {
-                    if (!me.copyInformation.img) me.copyInformation.img = me.defaultImage
+                    if (!me.copyInformation.img) {
+                        me.copyInformation.img = me.defaultImage
+                    }
                     me.copyInformation.authorId = me.information.authorId ? me.information.authorId : me.information.author
                     me.copyInformation.projectId = me.information.objectID ? me.information.objectID : me.information.projectId
                     me.copyInformation.createdTimeStamp = me.information.createdTimeStamp ? me.convertDate(me.information.createdTimeStamp) : me.convertDate(me.information.date)
@@ -276,7 +278,7 @@
                     if (me.copyInformation.type == 'k8s') {
                         return {display: 'KUBERNETES', color: 'blue'}
                     } else if (me.copyInformation.type == 'bm') {
-                        return {display: 'BusinessModel', color: '#bdc3c7'}
+                        return {display: 'BusinessModel', color: '#616161'}
                     } else if (me.copyInformation.type == 'es') {
                         return {display: 'EVENTSTORMING', color: 'green'}
                     } else if (me.copyInformation.type == 'sticky') {

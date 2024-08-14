@@ -110,7 +110,7 @@
             eventLists: function () {
                 var me = this
                 var designer = me.getComponent('event-storming-model-canvas')
-                return Object.values(designer.attachedLists.eventLists)
+                return Object.values(designer.attachedLists().eventLists)
             },
 
         },

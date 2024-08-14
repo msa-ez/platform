@@ -1,6 +1,6 @@
 <template>
     <v-card style="height: 100vh;">
-        <v-dialog v-model="openGitActionDialog" :key="gitActionDialogRenderKey">
+        <v-dialog v-model="openGitActionDialog" :key="gitActionDialogRenderKey" persistent>
             <GitActionDialog
                 @closeGitActionDialog="closeGitActionDialog"
                 :testFile="selectedTestFile"
@@ -104,7 +104,6 @@
                                     @settingDone="ShowCreateRepoTab = false"
                                     @closeGitMenu="closeGitMenu"
                                     @update:git-users="val => gitUsers = val"
-                                    @setActionId="setActionId"
                                     @setGitInfoToModel="setGitInfoToModel"
                                     :information="projectInformation"
                                     :isOnPrem="isOnPrem"
@@ -2903,9 +2902,23 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-    - name: Test
+    - name: Prepare Test Environment
       run: |
-        mvn test -f ./${me.openCode[0].name}`
+        cd ${me.openCode[0].name}
+        mkdir -p ignore_test_file
+        mv src/test/java/${me.projectName}/*.java ignore_test_file/
+        mv ignore_test_file/${me.selectedTestFile.name} src/test/java/${me.projectName}/
+    - name: Compile and Run Specific Test
+      run: |
+        cd ${me.openCode[0].name}
+        mvn test-compile
+        mvn test -Dtest=${me.projectName}.${me.selectedTestFile.name.replace('.java', '')}
+    - name: Restore Test Files
+      if: always()
+      run: |
+        cd ${me.openCode[0].name}
+        mv ignore_test_file/*.java src/test/java/${me.projectName}/
+        rm -rf ignore_test_file`
 
                 var actionFileIdx = me.codeLists.findIndex(x => x.fullPath == ".github/workflows/github-actions-test.yml")
                 if(!actionFileIdx || actionFileIdx == -1){
@@ -7417,8 +7430,8 @@ jobs:
                         && Object.values(value.elements).filter(x => x && x._type.endsWith("PBC")).length == 0
                     ){
                         // 1 BC AND NO PBC.
-                        me.isOneBCModel = true
-                        me.onlyOneBcId = me.rootModelAndElementMap.modelForElements.BoundedContext[0].id
+                        // me.isOneBCModel = true
+                        // me.onlyOneBcId = me.rootModelAndElementMap.modelForElements.BoundedContext[0].id
                     }
 
 
@@ -8642,8 +8655,8 @@ jobs:
                         }
     
                         var metadataAndSource = gen.split("---"); // 소스와 구분
-    
-                        var header = yamlpaser.load(metadataAndSource[0].replace(/\n\n/gi, "\n"))
+                        
+                        var header = yamlpaser.load(metadataAndSource[0].replace(/\n\n/gi, "\n"), {json: true})
                         var headerOptions = {}
                         Object.keys(header).forEach(function (keyValue, idx) {
                             var key = keyValue

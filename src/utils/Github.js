@@ -356,10 +356,16 @@ getUserInfo() {
                                 code = 'undefined'
                             }
 
-                            if(elData.fullPath.includes("Test.java") && options.testFile && !elData.fullPath.includes(options.testFile.name)){
-                                code = ""
-                            } 
-                            
+                            // if(elData.fullPath.includes("Test.java") && options.testFile){
+                            //     if(!elData.fullPath.includes(options.testFile.name)){
+                            //         code = "//ignore this file."
+                            //     }else{
+                            //         if(code.includes("//ignore this file.")){
+                            //             code = options.testFile.code
+                            //         }
+                            //     }
+                            // }
+
                             let data = {
                                 content: code,
                                 encoding: 'utf-8',

@@ -49,6 +49,8 @@ our business rule description is:
 
 ${rule.description}
 
+If there is a request for results based on conditions, all results must be provided.
+
 let's say we have this given, when, then :
 
 given aggregate has following fields:
@@ -98,7 +100,20 @@ please generate the example mappings as json format below:
 // please generate more than 3 example mappings as json format below:
 }
     createModel(text){
-        return super.createModel(text)
+        let model = super.createModel(text)
+        
+        for(let i = 0; i < model.length; i++){
+            if(!model[i].given){
+                model[i].given = [{value:{}}]
+            }
+            if(!model[i].when){
+                model[i].when = [{value:{}}]
+            }
+            if(!model[i].then){
+                model[i].then = [{value:{}}]
+            }
+        }
+        return model
     }
 
 

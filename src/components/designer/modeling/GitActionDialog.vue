@@ -523,7 +523,7 @@
                 } else {
                     this.testFile.subPath = ''
                 }
-                this.testFile.code = ''
+                // this.testFile.code = ''
             }
         },
         beforeDestroy: function () {
@@ -725,7 +725,7 @@
                         me.summarizedCodeList[me.testFile.name] = me.codeList[me.testFile.name]
                         Object.keys(me.codeList).some(function (key){
                             if(!me.summarizedCodeList[key]){
-                                if(JSON.stringify(me.summarizedCodeList).length < 21000){
+                                if(JSON.stringify(me.summarizedCodeList).length < 30000){
                                     me.summarizedCodeList[key] = me.codeList[key]
                                 } else {
                                     return true;
