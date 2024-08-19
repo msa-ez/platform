@@ -233,11 +233,16 @@
             this.exampleAvailable = this.validateRuleExample()
          },
         watch: {
-            "value.controllerInfo":{
-                deep: true,
-                handler: function (newVal, oldVal) {
-                    this.setHttpCommand()
-                }
+            // "value.controllerInfo":{
+            //     deep: true,
+            //     handler: function (newVal, oldVal) {
+            //         this.setHttpCommand()
+            //     }
+            // },
+
+            "value.name": function(newVal) {
+                this.setApiPath()
+                this.setHttpCommand()
             },
 
             "value.restRepositoryInfo.method":function(newVal){
@@ -277,7 +282,9 @@
                         me.value.controllerInfo.apiPath = lowerCase
                     }
                     else{
-                        me.value.controllerInfo.apiPath = '/'+lowerCase;
+                        if(me.value.controllerInfo.apiPath.toLowerCase()==lowerCase){
+                            me.value.controllerInfo.apiPath = '/'+lowerCase;
+                        }
                     }
                 } catch {
                     console.log('methods : setApiPath() Error')
