@@ -752,6 +752,7 @@
 .generator-ui-btn {
     bottom:20px;
     right:20px;
+    z-index: 2 !important;
 }
 .expanded {
   width: 200px;

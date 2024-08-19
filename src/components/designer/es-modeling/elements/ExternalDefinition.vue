@@ -138,6 +138,7 @@
                     _type: 'org.uengine.modeling.model.External',
                     id: elementId,
                     name: '',
+                    displayName: '',
                     oldName: '',
                     namePascalCase: '',
                     nameCamelCase: '',
@@ -225,9 +226,3 @@
         }
     }
 </script>
-<style scoped lang="scss" rel="stylesheet/scss">
-    .panel-title {
-        font-size: 25px;
-        color: #757575;
-    }
-</style>

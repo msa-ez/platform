@@ -315,9 +315,4 @@
   };
 </script>
 
-<style scoped lang="scss" rel="stylesheet/scss">
-.panel-title {
-  font-size: 25px;
-  color: #757575;
-}
-</style>
+

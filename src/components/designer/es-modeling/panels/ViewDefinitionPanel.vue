@@ -91,6 +91,15 @@
                         <v-radio label="Query For Aggregate" value="query-for-aggregate"></v-radio>
                         <v-radio disabled label="GraphQL" value="graphql"></v-radio>
                     </v-radio-group>
+                    <!-- <v-alert
+                        color="grey darken-1"
+                        text
+                        type="info"
+                        class="pa-2 alert-text"
+                        v-if="titleName != 'External' && titleName != 'Issue' && titleName != 'UI' "
+                    >
+                    ReadModel의 사용 목적을 설정하세요 <br>
+                    </v-alert> -->
 
                     <div v-if="value.dataProjection == 'query-for-aggregate'">
 
@@ -148,7 +157,7 @@
 
                     <div v-if="value.dataProjection == 'cqrs'">
                         <v-card flat>
-                            <v-card-text>
+                            <v-card-text class="pa-0">
                                 <event-storming-attribute
                                         label="Read Model Attributes"
                                         v-model="value.fieldDescriptors"
@@ -402,10 +411,6 @@
 </script>
 
 <style scoped lang="scss" rel="stylesheet/scss">
-    .panel-title {
-        font-size: 25px;
-        color: #757575;
-    }
     .cqrs-add-btn {
         margin:5px 30px 50px 0;
         color: #757575;

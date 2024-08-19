@@ -131,6 +131,7 @@
                     _type: 'org.uengine.modeling.model.UI',
                     id: elementId,
                     name: '',
+                    displayName: '',
                     oldName: '',
                     namePascalCase: '',
                     nameCamelCase: '',
