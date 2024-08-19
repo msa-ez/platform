@@ -278,6 +278,18 @@
                 default: function(){
                     return [];
                 }
+            },
+            information: {
+                type: Object,
+                default: function(){
+                    return {};
+                }
+            },
+            mirrorValue: {
+                type: Object,
+                default: function(){
+                    return {};
+                }
             }
         },
         components: {

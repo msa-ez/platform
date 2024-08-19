@@ -323,8 +323,8 @@ export default {
                 }
             }
 
-            if(model.errorMessage) {
-                alert("죄송합니다. 에러가 발생했습니다. 다시 시도해주세요.: " + model.errorMessage)
+            if(model.errorMessage || model.isApplyError) {
+                if(model.errorMessage) alert("죄송합니다. 에러가 발생했습니다. 다시 시도해주세요.: " + model.errorMessage)
                 this.isGenerationFinished = true
                 this.debeziumLogs = ""
                 this.progressMessage = "대기중..."

@@ -17,29 +17,34 @@ ${JSON.stringify(this.client.input.selectedElement)}
 Please refer to the request below to create {modifications: [..]} to be used to modify the information of the current model:  
 ${this.client.input.modificationMessage}
 
+Be sure to check the request and make sure which action among add, replace, or delete is appropriate.
+
 {modifications: [..]} should be created like this:
 - In the case of replace, all information that can be modified upon request must be modified and included in the value, and there must be a json path and query or index that is closest to the information to be modified.
 - In the case of add, the path where the value is added must be included in jsonPath.
 - In the case of add, data other than the information to be added upon request should not be included in the value.
-- In case of delete, no value is needed and only the id value and action must be included.
+- In the case of add, relations should not be added directly, nor should relations be created within elements.
+- In the case of add, jsonPath must accurately contain the location where the value will be added.
+- In the case of delete, no value is needed and only the id value and action must be included.
+- In case of delete or replace, the location of information to be modified or changed must be included as a query in jsonPath.
 
 - The data pointed to by jsonPath in the current model must already exist.
 - jsonPath does not include "entities".
 - name, namePascalCase, and nameCamelCase must be written in English and must be modified together to fit each format.
 - Class Name of must can be known java class or the Value object classes listed here: must be one of Address, Photo, User, Money, Email, Payment, Weather, File, Likes, Tags, Comment. use simple name reduce the package name if java class name.
-- If a Value Object is added to the field of the AggregateRoot, className is required.
-- In case of delete or replace, the location of information to be modified or changed must be included as a query in jsonPath
+- If a value object that was not previously mentioned is added, the className must be created appropriately and fieldDescriptors must be configured appropriately for the request.
 - JsonPath must not contain an array and must be written as a query.
 - The id in jsonPath must match what exists in the current model.
+- Never create comments.
 
 in this json format:
 
 {
     "modifications": [
         {
-            "jsonPath": "$.elements[?(@.id=='element id to be replaced or deleted')]", // action이 add인 경우는 id는 불필요.
-            "action": "replace" | "add" | "delete", // 요청을 고려하여 하나만 선택.
-            "value": {"element attributes to be replaced or added": "element values to be replaced or added"} // action이 delete인 경우는 불필요.
+            "jsonPath": "$.elements[?(@.id=='element id to be replaced or deleted')]", // If action is add, unnecessary
+            "action": "replace" | "add" | "delete", // Choose only one considering request.
+            "value": {"element attributes to be replaced or added": "element values to be replaced or added"} // If action is delete, unnecessary.
         }
     ]
 }
@@ -139,8 +144,21 @@ in this json format:
                                             modifications[idx].value['classId'] = id
                                         }
                                         modelValue.add.push(modifications[idx].value)
+
                                     }
                                 }
+
+                                if(modifications[idx].jsonPath === '$.elements'){
+                                    if(modifications[idx].value && modifications[idx].value.name){
+                                        const existingIndex = modelValue.add.findIndex(item => item.name.toLowerCase() === modifications[idx].value.name.toLowerCase() && item._type.includes('FieldDescriptor'));
+                                        if (existingIndex !== -1) {
+                                            modifications[idx].value['id'] = modelValue.add[existingIndex].id ? modelValue.add[existingIndex].id : modelValue.add[existingIndex].classId
+                                            modelValue.add.splice(existingIndex, 1);
+                                        }
+                                        modelValue.add.push(modifications[idx].value)
+                                    }
+                                }
+                                
                             }
                             
                             if(modifications[idx].action == 'delete'){

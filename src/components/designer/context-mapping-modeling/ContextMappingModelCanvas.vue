@@ -1078,6 +1078,7 @@
   import EventStormingModelCanvas from "../es-modeling/EventStormingModelCanvas";
   import ContextMappingModeling from './index'
   import BoundedContext from '../es-modeling/elements/BoundedContext.vue';
+  import BoundedContextCM from './elements/BoundedContextCM.vue';
 
   export default {
     name: "context-mapping-model-canvas",
@@ -1187,14 +1188,16 @@
             let element = BoundedContext.computed.createNew(
                     null,
                     this.uuid(),
-                    430, //x
-                    430, //y
-                    100, //width
-                    100, //height
+                    650, //x
+                    450, //y
+                    560, //width
+                    590, //height
                     '' , //description
                     ''   //label
             );
             element.name = contextBC.name
+            element.elementView.width = 560
+            element.elementView.height = 590
             let postObj = {
               action: "elementPush",
               editUid: me.userInfo.uid,
@@ -1285,6 +1288,85 @@
 
         return componentByClassName;
       },
+      onReceiveProjectQueue(queue, isNew){
+        const addNewSyncBoundedContextCM = (modelValue, name) => {
+          const isSameNameBoundedContextExists = (modelValue, name) => {
+            for(let element of Object.values(modelValue.elements)) {
+              if(element && element._type === "org.uengine.modeling.model.BoundedContext" && element.name === name)
+                return true
+            }
+            return false
+          }
+
+          const getValuePosition = (modelValue, boundedContextCM) => {
+              const getBoundedContexts = (modelValue) => {
+                  let boundedContexts = []
+                  Object.values(modelValue.elements).forEach(function (element) {
+                      if (element && element._type === "org.uengine.modeling.model.BoundedContext")
+                          boundedContexts.push(element)
+                  })
+                  return boundedContexts
+              }
+
+              const getMaxXBoundedContextInMaxY = (boundedContexts) => {
+                  const maxY = Math.max(...boundedContexts.map(bc => bc.elementView.y))
+                  const maxYBoundedContext = boundedContexts.find(bc => bc.elementView.y === maxY)
+
+                  let targetBoundedContexts = []
+                  boundedContexts.forEach(function (boundedContext) {
+                      if((boundedContext.elementView.y >= maxYBoundedContext.elementView.y - maxYBoundedContext.elementView.height/2) && 
+                          (boundedContext.elementView.y <= maxYBoundedContext.elementView.y + maxYBoundedContext.elementView.height/2))
+                          targetBoundedContexts.push(boundedContext)
+                  })
+                  
+                  const maxX = Math.max(...targetBoundedContexts.map(bc => bc.elementView.x))
+                  const maxXBoundedContext = targetBoundedContexts.find(bc => bc.elementView.x === maxX)
+                  return maxXBoundedContext
+              }
+
+              const getValidYPos = (boundedContexts, boundedContextCM) => {
+                  const maxY = Math.max(...boundedContexts.map(bc => bc.elementView.y + Math.round(bc.elementView.height/2)))
+                  return maxY + Math.round(boundedContextCM.elementView.height/2) + 25
+              }
+
+              const boundedContexts = getBoundedContexts(modelValue)
+              if(boundedContexts.length <= 0) return {x: 250, y: 250}
+              const maxXBoundedContextInMaxY = getMaxXBoundedContextInMaxY(boundedContexts)
+
+              const validXPos = maxXBoundedContextInMaxY.elementView.x + Math.round(maxXBoundedContextInMaxY.elementView.width/2) + 25 
+                                  + Math.round(boundedContextCM.elementView.width/2)
+              if(validXPos <= 1750) return {x: validXPos, y: maxXBoundedContextInMaxY.elementView.y}
+
+              return {x: 250, y: getValidYPos(boundedContexts, boundedContextCM)}
+          }
+
+          if(isSameNameBoundedContextExists(this.value, name)) return
+          let boundedContextCM = BoundedContextCM.computed.createNew(this, this.uuid(), 250, 250)
+          boundedContextCM.name = name
+
+          let validPosition = getValuePosition(modelValue, boundedContextCM)
+          boundedContextCM.elementView.x = validPosition.x
+          boundedContextCM.elementView.y = validPosition.y
+
+          this.addElementAction(boundedContextCM)     
+        }
+
+        if(!isNew) return
+
+        if(queue.action === 'elementPush') {
+          try {
+
+            let element = JSON.parse(queue.item)
+            if(element._type === 'org.uengine.modeling.model.BoundedContext')
+              addNewSyncBoundedContextCM(this.value, element.name)
+
+          } catch(e) {
+            console.error(e)
+          }
+        }
+
+        console.log(queue)
+      }
     }
   };
 </script>
