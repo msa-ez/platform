@@ -149,10 +149,15 @@
         return this.canvas.isEditable && !this.movingElement
       },
       innerAggregate(){
-        if(this.canvas && this.canvas.mirrorValue.elements){
-          return this.value.aggregates.filter(x=> x && x.id).map(x=> x = this.canvas.mirrorValue.elements[x.id]);
+        let innerAggregate = []
+        if(this.canvas && this.canvas.mirrorValue && this.canvas.mirrorValue.elements) {
+          for(let element of Object.values(this.canvas.mirrorValue.elements))
+            if(element && element._type === "org.uengine.modeling.model.Aggregate" &&
+               element.boundedContext && element.boundedContext.id === this.value.mirrorElement
+            )
+              innerAggregate.push(element)
         }
-        return [];
+        return innerAggregate;
       },
       defaultStyle() {
         return {};
@@ -234,7 +239,9 @@
       },
     },
     methods: {
-      init(){ },
+      init(){ 
+        this.setMirrorElementId()
+      },
       createDefinition(){
         var me = this
 

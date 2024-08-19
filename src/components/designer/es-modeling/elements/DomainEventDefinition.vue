@@ -357,6 +357,9 @@
                 this.validate()
             },
         },
+        mounted() {
+            this.setMirrorElementId()
+        },
         methods: {
             onChangedElementName(newVal, oldVal){
                 this.setMirrorElementId();
