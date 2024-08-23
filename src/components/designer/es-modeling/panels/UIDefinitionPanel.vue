@@ -12,9 +12,8 @@
             @close="closePanel"
             @changeTranslate="changeTranslate"
     >
-        <template slot="t-description-text"></template>
-
-        <template slot="t-generation-text"></template>
+        <template slot="t-description-text">UI 정보를 정의하는 스티커</template>
+        <!-- <template slot="t-generation-text"></template> -->
 
         <template slot="t-edit-user">
             <div
@@ -264,7 +263,7 @@
                 if (this.value.uiType === "Card" && this.value.card.subtitle !== "") {
                     this.useSubtitle =  true
                 }
-
+                this.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#%EB%A9%94%EB%89%B4%EB%B3%84-%EC%83%81%EC%84%B8'
                 // Common
                 me.$super(EventStormingModelPanel).panelInit();
             },

@@ -383,6 +383,9 @@
                 }, 200)
             },
         },
+        mounted() {
+            this.setMirrorElementId()
+        },
         methods: {
             onChangedElementName(newVal, oldVal){
                 this.setMirrorElementId();
@@ -533,7 +536,7 @@
                 if( !validateValue.isRestRepository && validateValue.controllerInfo.apiPath ){
                     // ESE_NOT_API_SPACING
                     var pattern = /\s/g;   // 공백 체크 정규표현식 - 탭, 스페이스
-                    var specialPattern = /[`~!@#$%^&*|\\\'\";:\/?]/gi; // 특수 문제 체크 정규표현식
+                    var specialPattern = /[`~!@#$%^&*|\\\'\";:?]/gi; // 특수 문제 체크 정규표현식
                     if( validateValue.controllerInfo.apiPath.match(pattern) ||  specialPattern.test(validateValue.controllerInfo.apiPath)){
                         var validationResultIndex = me.elementValidationResults.findIndex(x=> (x.code == me.ESE_API_PATH_ERROR) )
                         if( validationResultIndex == -1 ){
@@ -560,9 +563,3 @@
 
 
 
-<style scoped lang="scss" rel="stylesheet/scss">
-    .panel-title {
-        font-size: 25px;
-        color: #757575;
-    }
-</style>

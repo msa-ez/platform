@@ -184,7 +184,7 @@
             panelInit(){
                 var me = this
                 // Element
-                me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#%C2%B7-aggregate-sticker'
+                me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#aggregate-sticker'
                 me.setRootMethods();
 
                 // Common

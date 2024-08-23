@@ -559,7 +559,7 @@
         </v-dialog>
 
         <!-- 메인페이지 슬라이드 -->
-        <div v-if="selectedTabIndex == 0" class="d-flex flex-row mt-sm-8 mt-5 overflow-hidden main-page-slider-group-box">
+        <!-- <div v-if="selectedTabIndex == 0" class="d-flex flex-row mt-sm-8 mt-5 overflow-hidden main-page-slider-group-box">
             <div class="main-page-slider-group">
                 <img src="/static/image/main/mainSlide.png" />
             </div>
@@ -575,7 +575,7 @@
             <div class="main-page-slider-group">
                 <img src="/static/image/main/mainSlide.png" />
             </div>
-        </div>
+        </div> -->
         
         <v-footer
             padless

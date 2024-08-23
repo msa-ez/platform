@@ -176,6 +176,7 @@
                     _type: 'org.uengine.modeling.model.Issue',
                     id: elementId,
                     name: '',
+                    displayName: '',
                     oldName: '',
                     description: null,
                     author: null,
@@ -248,9 +249,3 @@
 
 
 
-<style scoped lang="scss" rel="stylesheet/scss">
-    .panel-title {
-        font-size: 25px;
-        color: #757575;
-    }
-</style>

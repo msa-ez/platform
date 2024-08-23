@@ -81,8 +81,8 @@
                     <v-col v-if="showGpt" cols="12">
                         <v-row>
                             <v-card class="pa-2" @scroll="handleScroll" id="scroll-text" style="width: 100%; max-height: 86vh; z-index: 1000; overflow-y: scroll; background-color: #FFFFFF; margin-top: -4px;">
-                                <v-row class="ma-0 pa-0">
-                                    <v-col :cols="11" class="ma-0 pa-0">
+                                <v-row class="ma-0 pa-0 pr-8">
+                                    <v-col class="ma-0 pa-0 ">
                                         <v-alert closable   
                                             title="Ask ChatGPT"
                                             icon="mdi-auto-fix"
@@ -101,9 +101,9 @@
                                             <v-btn @click="explainError = null">DISMISS</v-btn>
                                         </v-alert>
                                     </v-col>
-                                    <v-col :cols="1" class="ma-0 pa-0">
-                                        <v-btn class="cp-explain-project-close" v-if="showGpt" @click="closeExplainCode()" style="z-index:999; color: black;" icon><v-icon>mdi-close</v-icon></v-btn>
-                                    </v-col>
+                                    <v-icon v-if="showGpt" @click="closeExplainCode()"
+                                        style="position:absolute; right:10px; top:10px; z-index:999;"
+                                    >mdi-close</v-icon>
                                 </v-row>
                                 <vue-markdown
                                     class="markdown-body"
@@ -144,8 +144,11 @@
                                         </v-col>
                                     </v-row>
                                     <v-btn style="margin-bottom: 10px;" color="primary" @click="openImplDialog()">Auto implement</v-btn>
-                                    <v-dialog v-model="isOpenImplDialog" width="800">
+                                    <v-dialog v-model="isOpenImplDialog" width="800" persistent>
                                         <v-card class="mx-auto">
+                                            <v-icon @click="isOpenImplDialog = false"
+                                                style="position:absolute; right:10px; top:10px;"
+                                            >mdi-close</v-icon>
                                             <v-card-title>Choose the test to implement by AI</v-card-title>
                                             <v-card-text>
                                                 <v-autocomplete
@@ -232,7 +235,7 @@
                 isOpenImplDialog: false,
                 startImpl: false,
                 isExistRules: false,
-                errormsg: null,
+                errorMsg: null,
                 selectedTestFile: null,
                 currentRange: null,
                 oldPrompt: null,
@@ -492,14 +495,15 @@
                 this.isOpenImplDialog = true
             },
             changedTestFile(){
-                // if(this.selectedTestFile.code.includes("test0")){
-                    this.isExistRules = true
-                    this.errorMsg = null
-                // } else {
-                    // this.isExistRules = false
-                    // this.errorMsg = 'The test function does not exist in the selected test file. To add a test function, add example'
-                // }
-
+                this.$nextTick(() => {
+                    // if(this.selectedTestFile.code.includes("test0")){
+                        this.isExistRules = true
+                        this.errorMsg = null
+                    // } else {
+                        // this.isExistRules = false
+                        // this.errorMsg = 'The test function does not exist in the selected test file. To add a test function, add example'
+                    // }
+                })
             },
             checkTopping(){
                 let codeGenerator = getParent(this.$parent, "code-generator")
@@ -591,7 +595,7 @@
                 }
                 me.generator = new AIGenerator(this, {prompt: prompt});
                 
-                //me.generator.model = "gpt-4-32k" //payment issue
+                //me.generator.model = "gpt-4o-32k" //payment issue
                 me.generator.generate();
             },
             onReceived(result){

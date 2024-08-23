@@ -1300,7 +1300,8 @@
                             :defaultInputData="defaultGeneratorUiInputData"
                             :modelValue="value"
                             :tabs="tabs"
-                            :chatGenerators="chatGenerators"
+                            :information="information"
+                            :mirrorValue="mirrorValue"
                     >
                         <v-tooltip v-if="showContinue" slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
@@ -1333,7 +1334,6 @@
                             :generatorStep="generatorStep"
                             :modelValue="value"
                             :tabs="tabs"
-                            :chatGenerators="chatGenerators"
                     >
                         <!-- <v-tooltip slot="buttons" bottom>
                             <template v-slot:activator="{ on, attrs }">
@@ -1883,6 +1883,7 @@
                         :userInfo="userInfo"
                         @changedByMe="settingChangedByMe"
                         @editModelData="editModelData"
+                        @setInformation="setInformation"
                         canvas-name="event-storming-model-canvas"
                 ></CodeGenerator>
             </template>
@@ -1974,6 +1975,7 @@
     import Login from "../../oauth/Login";
     import isAttached from "../../../utils/isAttached";
     import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
+    import DebeziumTransactionManager from "../modeling/generators/generatorTabs/DebeziumTransactionManager"
 
     const prettier = require("prettier");
     const plugins = require("prettier-plugin-java");
@@ -1999,6 +2001,12 @@
         },
     });
     window.jp = require("jsonpath");
+
+    var jsondiffpatch = require('jsondiffpatch').create({
+        objectHash: function (obj, index) {
+            return '$$index:' + index;
+        }
+    });
 
     // const CodeGeneratorCore = require("../modeling/CodeGeneratorCore");
     // import json2yaml from "json2yaml";
@@ -2401,8 +2409,11 @@
                 },
                 createModelInBoundedContext: false,
                 createReadModel: false,
-                tabs: [{name: 'LOGS', component: 'DebeziumLogsTab'}],
-                chatGenerators: ['DebeziumLogsModificationGenerator']
+                tabs: [{
+                    name: 'LOGS', component: 'DebeziumLogsTab',
+                    isAlwaysActivated: true, isNotMoveToOutput: true, isClearModelValue: false, 
+                    initValue: {manager: new DebeziumTransactionManager()}
+                }]
             };
         },
         computed: {
@@ -2503,30 +2514,6 @@
                 }
                 return false;
             },
-            attachedLists() {
-                var me = this;
-                let result = {};
-
-                Object.values(me.value.elements).forEach(function (element) {
-                    if (me.validateElementFormat(element)) {
-                        if (!result[element._type]) result[element._type] = {};
-
-                        if( element._type && element.elementView){
-                            me.$set(result[element._type], element.elementView.id, element);
-                        }
-                    }
-                });
-
-                return {
-                    boundedContextLists: result["org.uengine.modeling.model.BoundedContext"]? result["org.uengine.modeling.model.BoundedContext"] : {},
-                    aggregateLists: result["org.uengine.modeling.model.Aggregate"] ? result["org.uengine.modeling.model.Aggregate"] : {},
-                    eventLists: result["org.uengine.modeling.model.Event"] ? result["org.uengine.modeling.model.Event"] : {},
-                    commandLists: result["org.uengine.modeling.model.Command"] ? result["org.uengine.modeling.model.Command"] : {},
-                    policyLists: result["org.uengine.modeling.model.Policy"] ? result["org.uengine.modeling.model.Policy"] : {},
-                    actorLists: result["org.uengine.modeling.model.Actor"] ? result["org.uengine.modeling.model.Actor"] : {},
-                };
-            },
-
             filteredPBCValue() {
                 var me = this;
                 var value = me.pbcValue ? me.pbcValue : { elements: {}, relations: {} };
@@ -2545,10 +2532,10 @@
                     Command: [],
                 };
 
-                modelForElements.Event = Object.values(me.attachedLists.eventLists).filter(x=>x)
+                modelForElements.Event = Object.values(me.attachedLists().eventLists).filter(x=>x)
                 modelForElements.Event = modelForElements.Event.map((element) => element = Object.assign({},element, {selectedPBC: element.visibility == "private" ? false:true}))
 
-                modelForElements.Command = Object.values(me.attachedLists.commandLists).filter(x=>x)
+                modelForElements.Command = Object.values(me.attachedLists().commandLists).filter(x=>x)
                 modelForElements.Command = modelForElements.Command.map((element) => element = Object.assign({},element, {selectedPBC: element.visibility == "private" ? false:true}))
                 return modelForElements;
             },
@@ -2711,6 +2698,29 @@
             },
         },
         methods: {
+            attachedLists() {
+                var me = this;
+                let result = {};
+
+                Object.values(me.value.elements).forEach(function (element) {
+                    if (me.validateElementFormat(element)) {
+                        if (!result[element._type]) result[element._type] = {};
+
+                        if( element._type && element.elementView){
+                            me.$set(result[element._type], element.elementView.id, element);
+                        }
+                    }
+                });
+
+                return {
+                    boundedContextLists: result["org.uengine.modeling.model.BoundedContext"]? result["org.uengine.modeling.model.BoundedContext"] : {},
+                    aggregateLists: result["org.uengine.modeling.model.Aggregate"] ? result["org.uengine.modeling.model.Aggregate"] : {},
+                    eventLists: result["org.uengine.modeling.model.Event"] ? result["org.uengine.modeling.model.Event"] : {},
+                    commandLists: result["org.uengine.modeling.model.Command"] ? result["org.uengine.modeling.model.Command"] : {},
+                    policyLists: result["org.uengine.modeling.model.Policy"] ? result["org.uengine.modeling.model.Policy"] : {},
+                    actorLists: result["org.uengine.modeling.model.Actor"] ? result["org.uengine.modeling.model.Actor"] : {},
+                };
+            },
             setCanvasType(){
                 Vue.use(EventStormingModeling);
                 this.canvasType = 'es'
@@ -2769,6 +2779,7 @@
                 }, waitingTime)
 
 
+                const watchStatedTimeStamp = Date.now();
                 // TODO: Qeuue Logic.
                 me.watch_added(`db://definitions/${associatedProjectId}/queue`, {
                     sort: null,
@@ -2777,6 +2788,8 @@
                     startAt: startKey,
                     endAt: null,
                 }, async function (queue) {
+                    if(me.onReceiveProjectQueue)
+                        me.onReceiveProjectQueue(queue, watchStatedTimeStamp < queue.timeStamp)
 
                     if( queue.action.includes('user') ){
                         return;
@@ -2916,7 +2929,7 @@
 
                 boundedLists = boundedLists
                     ? boundedLists
-                    : me.attachedLists.boundedContextLists;
+                    : me.attachedLists().boundedContextLists;
                 if (!(boundedLists && Object.values(boundedLists).length > 0))
                     return null;
 
@@ -2932,7 +2945,7 @@
 
                 aggregateList = aggregateList
                     ? aggregateList
-                    : me.attachedLists.aggregateLists;
+                    : me.attachedLists().aggregateLists;
                 if (!(aggregateList && Object.values(aggregateList).length > 0))
                     return null;
 
@@ -2948,7 +2961,7 @@
 
                 aggregateList = aggregateList
                     ? aggregateList
-                    : me.attachedLists.aggregateLists;
+                    : me.attachedLists().aggregateLists;
                 if (!(aggregateList && Object.values(aggregateList).length > 0))
                     return null;
 
@@ -3065,8 +3078,386 @@
             forceRefreshCanvas() {
                 this.canvasRenderKey++;
             },
+            afterSnapshotLoad(){
+                // Debezium 챗봇의 채팅 내역을 불러오기 위해서
+                this.tabs[0].initValue.modelValue = this.value
+            },
             createModel(val, originModel) {
+                const generateGWT = (modelValue, requestValue, gwts) => {
+                    const generateExamples = (gwts) => {
+                        const getExample = (gwt) => {
+                            const getGivens = (givens) => {
+                                const given = givens[0]
+                                return [
+                                    {
+                                    "type": "Aggregate",
+                                    "name": given.name,
+                                    "value": given.values
+                                }]
+                            }
+
+                            const getWhens = (whens) => {
+                                const when = whens[0]
+                                return [
+                                    {
+                                        "type": "Event",
+                                        "name": when.name,
+                                        "value": when.values
+                                    }
+                                ]
+                            }
+
+                            const getThens = (thens) => {
+                                return thens.map((then) => {
+                                    return {
+                                        "type": "Event",
+                                        "name": then.name,
+                                        "value": then.values
+                                    }
+                                })
+                            }
+
+                            return {
+                                "given": getGivens(gwt.givens),
+                                "when": getWhens(gwt.whens),
+                                "then": getThens(gwt.thens)
+                            }
+                        }
+
+                        return gwts.map((gwt) => {
+                            return getExample(gwt)
+                        })
+                    }
+
+                    modelValue.elements[requestValue.whenObjects[0].id].examples = generateExamples(gwts)
+                }
+
+                const makeBoundedContextPushQueueIfExists = (prevModelValue, nextModelValue) => {
+                    Object.keys(nextModelValue).forEach(key => {
+                        if(nextModelValue[key] && nextModelValue[key]._type && 
+                           nextModelValue[key]._type === "org.uengine.modeling.model.BoundedContext" && !prevModelValue[key]) {
+                            this.pushAppendedQueue(nextModelValue[key], {associatedProject: this.information.associatedProject})
+                        }
+                    })
+                }
+
+                const preProcessForProject = (value, mirrorValue, modelValue) => {
+                    const removeUneditableQueries = (value, modelValue) => {
+                        const getQueryIdsToRemoveByMirrorValue = (value, mirrorValue, modelValue) => {
+                            const isItHasMirrorValue = (value, mirrorValue, query) => {
+                                let idToCheck = null
+
+                                switch(query.objectType) {
+                                    case "BoundedContext":
+                                        idToCheck = query.ids.boundedContextId
+                                    case "Aggregate":
+                                        idToCheck = query.ids.aggregateId
+                                    case "Event":
+                                        idToCheck = query.ids.eventId
+                                    case "Command":
+                                        idToCheck = query.ids.commandId
+                                    case "Enumeration":
+                                        idToCheck = query.ids.enumerationId
+                                    case "ValueObject":
+                                        idToCheck = query.ids.valueObjectId
+                                }
+
+                                if(!value.elements[idToCheck]) return (mirrorValue.elements[idToCheck]) ? true : false
+                                return (value.elements[idToCheck].mirrorElement) ? true : false
+                            }
+
+                            let queryIdsToRemove = []
+                            for(let query of modelValue.queries){
+                                if(isItHasMirrorValue(value, mirrorValue, query) && query.objectType !== "Event") {
+                                    if(query.objectType === "Event" && query.args && query.args.name)
+                                        delete query.args.name
+                                    queryIdsToRemove.push(query.queryId)
+                                }
+                            }
+                            return queryIdsToRemove
+                        }
+
+                        const removeQueries = (modelValue, queryIdsToRemove) => {
+                            for(let usecase of modelValue.usecases){
+                                usecase.relatedBoundedContextQueryIds = usecase.relatedBoundedContextQueryIds
+                                    .filter(queryId => !queryIdsToRemove.includes(queryId))
+                                usecase.relatedAggregateQueryIds = usecase.relatedAggregateQueryIds
+                                    .filter(queryId => !queryIdsToRemove.includes(queryId))
+                                usecase.relatedEnumerationQueryIds = usecase.relatedEnumerationQueryIds
+                                    .filter(queryId => !queryIdsToRemove.includes(queryId))
+                                usecase.relatedValueObjectQueryIds = usecase.relatedValueObjectQueryIds
+                                    .filter(queryId => !queryIdsToRemove.includes(queryId))
+                                usecase.relatedCommandQueryIds = usecase.relatedCommandQueryIds
+                                    .filter(queryId => !queryIdsToRemove.includes(queryId))
+                                usecase.relatedEventQueryIds = usecase.relatedEventQueryIds
+                                    .filter(queryId => !queryIdsToRemove.includes(queryId))      
+                            }                       
+
+                            modelValue.queries = modelValue.queries.filter(query => !queryIdsToRemove.includes(query.queryId))
+                        }
+
+                        removeQueries(modelValue, getQueryIdsToRemoveByMirrorValue(value, mirrorValue, modelValue))
+                    }
+
+                    const getValidElementPosition = (value) => {
+                        const getTargetElements = (value) => {
+                            let targetElements = []
+                            for(let element of Object.values(value.elements)){
+                                if(element && 
+                                  (element._type == "org.uengine.modeling.model.Command" || 
+                                   element._type == "org.uengine.modeling.model.Event") &&
+                                   element.elementView.x >= 260 && element.elementView.x <= 360)
+                                    targetElements.push(element)
+                            }
+                            return targetElements
+                        }
+
+                        const targetElements = getTargetElements(value)
+                        if(targetElements.length == 0) return {
+                            x: 310,
+                            y: 200
+                        }
+
+                        return {
+                            x: 310,
+                            y: Math.max(...targetElements.map(element => element.elementView.y)) + 100 + 25
+                        }
+                    }
+
+                    const loadCommandsForExistedEvents = (value, mirrorValue, modelValue, queryIdChangeDic) => {
+                        const loadCommand = (value, mirrorValue, commandId) => {
+                            const getCommandBase = (name) => {
+                                const elementId = this.uuid()
+
+                                return {
+                                    _type: 'org.uengine.modeling.model.Command',
+                                    id: elementId,
+                                    name: name,
+                                    oldName: '',
+                                    namePlural: '',
+                                    namePascalCase: '',
+                                    nameCamelCase: '',
+                                    description: null,
+                                    author: null,
+                                    aggregate: {},
+                                    boundedContext: {},
+                                    mirrorElement: null,
+                                    elementView: {
+                                        '_type': 'org.uengine.modeling.model.Command',
+                                        'id': elementId,
+                                        'x': 250,
+                                        'y': 250,
+                                        'width': 100,
+                                        'height': 115,
+                                        'style': JSON.stringify({}),
+                                        'z-index': 999
+                                    },
+                                    hexagonalView:{
+                                        '_type': 'org.uengine.modeling.model.CommandHexagonal',
+                                        'id': elementId,
+                                        'x': 0,
+                                        'y': 0,
+                                        'subWidth': 100,
+                                        'width': 0,
+                                        'height': 0,
+                                        'style': JSON.stringify({})
+                                    },
+                                    isRestRepository: true,
+                                    controllerInfo: {
+                                        apiPath: '',
+                                        method: 'PUT'
+                                    },
+                                    restRepositoryInfo: {
+                                        method: 'POST'
+                                    },
+                                    relationEventInfo: [],
+                                    relationCommandInfo: [],
+                                    trigger: '@PostPersist',
+                                    fieldDescriptors: [],
+                                    visibility : 'public'
+                                }
+                            }
+
+                            if(value.elements[commandId] || !mirrorValue.elements[commandId]) return null
+                            for(let element of Object.values(value.elements))
+                                if(element && element.mirrorElement === commandId) return null
+
+                            let command = getCommandBase(mirrorValue.elements[commandId].name, commandId)
+
+                            let validPosition = getValidElementPosition(value)
+                            command.elementView.x = validPosition.x
+                            command.elementView.y = validPosition.y
+
+                            this.addElementAction(command)
+                            return command
+                        }
+
+                        for(let query of modelValue.queries){
+                            if(query.objectType == "Event" && query.action === "update" && 
+                               query.args && query.args.outputCommandIds && query.args.outputCommandIds.length > 0) {
+                                for(let outputCommandId of query.args.outputCommandIds) {
+                                    const command = loadCommand(value, mirrorValue, outputCommandId.commandId)
+                                    if(command) queryIdChangeDic[outputCommandId.commandId] = command.id
+                                }
+                            }
+                        }
+
+                    }
+
+                    const loadEventsForExistedCommands = (value, mirrorValue, modelValue, queryIdChangeDic) => {
+                        const loadEvent = (value, mirrorValue, eventId) => {
+                            const getEventBase = (name) => {
+                                const elementId = this.uuid()
+
+                                return {
+                                    _type: 'org.uengine.modeling.model.Event',
+                                    id: elementId,
+                                    visibility : 'public',
+                                    name: name,
+                                    oldName: '',
+                                    namePascalCase: '',
+                                    nameCamelCase: '',
+                                    namePlural: '',
+                                    description: null,
+                                    author: null,
+                                    aggregate: {},
+                                    boundedContext: {},
+                                    fieldDescriptors: [
+                                        {
+                                            _type: "org.uengine.model.FieldDescriptor",
+                                            name: "id",
+                                            className: "Long",
+                                            nameCamelCase: 'id',
+                                            namePascalCase: 'Id',
+                                            isKey: true
+                                        }
+                                    ],
+                                    mirrorElement: null,
+                                    elementView: {
+                                        '_type': 'org.uengine.modeling.model.Event',
+                                        'id': elementId,
+                                        'x': 250,
+                                        'y': 250,
+                                        'width': 100,
+                                        'height': 115,
+                                        'style': JSON.stringify({}),
+                                        'angle': 0,
+                                    },
+                                    hexagonalView:{
+                                        '_type': 'org.uengine.modeling.model.EventHexagonal',
+                                        'id': elementId,
+                                        'x': 0,
+                                        'y': 0,
+                                        'subWidth': 100,
+                                        'width': 0,
+                                        'height': 0,
+                                        'style': JSON.stringify({})
+                                    },
+                                    alertURL: location.pathname + ((location.pathname == '/' || location.pathname.lastIndexOf('/') > 0) ? '' : '/') + 'static/image/symbol/alert-icon.png',
+                                    checkAlert: true,
+                                    relationPolicyInfo: [],
+                                    relationCommandInfo: [],
+                                    trigger: '@PostPersist',
+                                }
+                            }
+
+                            if(value.elements[eventId] || !mirrorValue.elements[eventId]) return null
+                            for(let element of Object.values(value.elements))
+                                if(element && element.mirrorElement === eventId) return null
+
+                            let event = getEventBase(mirrorValue.elements[eventId].name, eventId)
+
+                            let validPosition = getValidElementPosition(value)
+                            event.elementView.x = validPosition.x
+                            event.elementView.y = validPosition.y
+
+                            this.addElementAction(event)
+                            return event
+                        }
+
+                        for(let query of modelValue.queries){
+                            if(query.objectType == "Event" && query.action === "update" && query.ids.eventId) {
+                                const event = loadEvent(value, mirrorValue, query.ids.eventId)
+                                if(event) queryIdChangeDic[query.ids.eventId] = event.id
+                            }
+                        }
+                    }
+
+                    const changeQueryElementIds = (modelValue, queryIdChangeDic) => {
+                        for(let query of modelValue.queries) {
+                            if(query.objectType == "Event" && query.action === "update") {
+                                if(query.ids.eventId && queryIdChangeDic[query.ids.eventId]) query.ids.eventId = queryIdChangeDic[query.ids.eventId]
+                                
+                                if(query.args && query.args.outputCommandIds) {
+                                    for(let arg of query.args.outputCommandIds)
+                                        if(arg.commandId && queryIdChangeDic[arg.commandId]) arg.commandId = queryIdChangeDic[arg.commandId]
+                                }
+                            }
+                        }
+                    }
+
+                    removeUneditableQueries(value, modelValue)
+
+                    let queryIdChangeDic = {}
+                    loadCommandsForExistedEvents(value, mirrorValue, modelValue, queryIdChangeDic)
+                    loadEventsForExistedCommands(value, mirrorValue, modelValue, queryIdChangeDic)
+
+                    changeQueryElementIds(modelValue, queryIdChangeDic)
+                }
+
                 var me = this;
+
+                if(val && val.modelName === "DebeziumLogsTabGenerator") {
+                    if(val.modelValue) {
+                        if(val.modelMode === "generateCommands" || val.modelMode === "mockModelValue") {
+                            try {
+                                if(me.information && me.information.associatedProject)
+                                    preProcessForProject(me.value, me.mirrorValue, val.modelValue);
+
+                                let modelValueToModify = JSON.parse(JSON.stringify({
+                                    elements: me.value.elements,
+                                    relations: me.value.relations
+                                }))
+
+                                const currentDebeziumTransactionManager = me.tabs.find(tab => tab.component === 'DebeziumLogsTab').initValue.manager
+                                currentDebeziumTransactionManager.addNewTransactionFromModelValue(val.modelValue)
+                                currentDebeziumTransactionManager.apply(modelValueToModify, me.userInfo, me.information, val.modelMode === "mockModelValue")
+                                me.forceRefreshCanvas()
+
+                                me.changedByMe = true
+                                makeBoundedContextPushQueueIfExists(me.value.elements, modelValueToModify.elements)
+                                me.$set(me.value, "elements", modelValueToModify.elements)
+                                me.$set(me.value, "relations", modelValueToModify.relations)
+                                me.$set(me.value, "debeziumChatSaveObject", currentDebeziumTransactionManager.toSaveObject())
+                            } catch(e) {
+                                val.isApplyError = true
+                                console.error("[!] 출력 결과를 Debezium Manager에 전달해서 처리하는 과정에서 오류 발생")
+                                console.error(e)
+                                alert("죄송합니다. AI가 출력한 결과가 올바르지 않아서 이벤트 스토밍 모델을 처리하는 데 실패했습니다. 다시 시도해 주시길 바랍니다. 에러 내용:" + e.message)
+                            }
+                        }
+
+                        if(val.modelMode === "generateGWT") {
+                            try {
+                                let modelValueToModify = JSON.parse(JSON.stringify({
+                                    elements: me.value.elements
+                                }))
+
+                                generateGWT(modelValueToModify, val.modelValue.requestValue, val.modelValue.gwts)
+                                me.forceRefreshCanvas()
+
+                                me.changedByMe = true
+                                me.$set(me.value, "elements", modelValueToModify.elements)
+                            } catch(e) {
+                                val.isApplyError = true
+                                console.error("[!] 출력 결과를 이용해서 GWT를 만드는 과정에서 오류 발생")
+                                console.error(e)
+                                alert("죄송합니다. AI를 통해서 테스트 케이스(GWT)를 생성하는 데 실패했습니다. 해당 커맨드 객체를 더블클릭 > Examples 버튼으로 직접 Debezium Log를 넣어서 GWT를 생성해 주시길 바랍니다. 에러 내용:" + e.message)
+                            }
+                        }
+                    }
+                    return
+                }
 
                 if (val && val.elements) {
                     if (val.projectName) me.projectName = val.projectName;
@@ -5651,9 +6042,9 @@
             //                     // Git URL 관련 처리 필요함..
             //                     // BoundedContext 찾기
             //                     var gitConnectedBoundedLists = []
-            //                     Object.keys(me.attachedLists.boundedContextLists).forEach(function (bounded) {
-            //                         if (me.attachedLists.boundedContextLists[bounded].gitURL) {
-            //                             gitConnectedBoundedLists.push(me.attachedLists.boundedContextLists[bounded].name)
+            //                     Object.keys(me.attachedLists().boundedContextLists).forEach(function (bounded) {
+            //                         if (me.attachedLists().boundedContextLists[bounded].gitURL) {
+            //                             gitConnectedBoundedLists.push(me.attachedLists().boundedContextLists[bounded].name)
             //                         }
             //                     })
             //                     await me.makeDir(`labs-eventstorming/running/${userGroup}/classes/users/labs/${localStorage.getItem("email")}/${projectId}`)
@@ -6477,6 +6868,12 @@
             openEmbeddedCanvas(val, mode) {
                 var me = this;
 
+                console.log("### Data ###")
+                console.log(this.value)
+                console.log(this.mirrorValue)
+
+                me.closeEmbeddedCanvas();
+
                 me.closeSeparatePanel();
 
                 if (mode != "java-parse") {
@@ -6782,6 +7179,15 @@
 
                 me.bpmnDialog = false;
             },
+            async setInformation(scm){
+                var me = this
+                
+                me.information['gitRepoName'] = scm.repo
+                me.information['gitOrgName'] = scm.org
+
+                await me.putObject(`db://definitions/${me.projectId}/information`, me.information)
+
+            }
         },
     };
 </script>

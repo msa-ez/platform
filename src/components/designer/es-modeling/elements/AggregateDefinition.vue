@@ -523,6 +523,11 @@
                 var isIncluded = me.value.aggregateRoot.fieldDescriptors.some((field) =>
                     field.className.includes(attr.className)
                 );
+
+                if(Object.values(me.value.aggregateRoot.entities).length == 0){
+                    me.value.aggregateRoot.entities = {elements: {}, relation: {}}
+                }
+
                 if (Object.values(me.value.aggregateRoot.entities.elements).length > 0) {
                     isIncluded = Object.values(me.value.aggregateRoot.entities.elements).some((el) =>
                         el != null &&
@@ -772,6 +777,17 @@
                 me.canvas.overlayText = 'Loading';
                 me.canvas.openEmbeddedCanvas(umlValue);
             },
+            getComponent(componentName) {
+                let component = null
+                let parent = this.$parent
+                while (parent && !component) {
+                    if (parent.$options.name === componentName) {
+                        component = parent
+                    }
+                    parent = parent.$parent
+                }
+                return component
+            },
         }
     }
 </script>
@@ -779,10 +795,6 @@
 <style scoped lang="scss" rel="stylesheet/scss">
     .discStyle {
         list-style-type: disc;
-    }
-    .panel-title {
-        font-size: 25px;
-        color: #757575;
     }
 </style>
 

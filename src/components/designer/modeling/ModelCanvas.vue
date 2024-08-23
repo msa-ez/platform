@@ -2194,7 +2194,10 @@
                     }
 
                     if (loadedDefinition) {
-                        me.value = me.migrate(loadedDefinition)
+                        loadedDefinition = me.migrate(loadedDefinition)
+                        for(let key of Object.keys(loadedDefinition)) {
+                            me.$set(me.value, key, loadedDefinition[key])
+                        }
                     } else if (!me.value) {
                         me.value = {'elements': {}, 'relations': {}}
                         me.initLoad = true
@@ -4190,6 +4193,11 @@
                             action: element.relationView ? 'relationDelete' : 'elementDelete',
                             STATUS_COMPLETE: true
                         })
+
+                        // uml delete 후처리
+                        if(element._type.includes('uml')){
+                            me.$EventBus.$emit('cascadeDelete', element)
+                        }
                     },
                     onFail(e){
                         console.log(`[Error] Remove Element: ${e}`)
@@ -4240,13 +4248,24 @@
                 })
             },
             applyPatchValue(diff, value, options){
+                const extractOnlyValueKeyData = (value, diff) => {
+                    const result = {};
+                    for (const key of Object.keys(value))
+                        if (diff.hasOwnProperty(key))
+                            result[key] = diff[key];
+                    return result;
+                }
+
                 var me = this
                 me.$app.try({
                     context: me,
                     async action(me){
                         if(!value) value = me.value
 
-                        jsondiffpatch.patch(value, diff)
+                        let valueDiff = extractOnlyValueKeyData(value, diff)
+                        if(Object.keys(valueDiff).length === 0) return
+
+                        jsondiffpatch.patch(value, valueDiff)
                     }
                 })
             },

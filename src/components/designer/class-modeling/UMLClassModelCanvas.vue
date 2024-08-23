@@ -10,6 +10,18 @@
                 :inBoundSeparatePanel="false"
             >
                 <template v-slot:one>
+                    <v-snackbar
+                        v-model="alertSnackbar.show"
+                        color="primary"
+                        multi-line
+                        :timeout="5000"
+                    >
+                            {{ alertSnackbar.message }}
+                            <v-btn dark @click="alertSnackbar.show = false">
+                                Close
+                            </v-btn>
+                    </v-snackbar>
+
                     <v-layout right>
                         <opengraph ref="opengraph" 
                                 focus-canvas-on-select wheelScalable 
@@ -23,7 +35,9 @@
                                 v-if="value" 
                                 v-on:canvasReady="bindEvents" 
                                 v-on:connectShape="onConnectShape" 
-                                :imageBase="imageBase">
+                                :imageBase="imageBase"
+                                :key="openGraphRenderKey"
+                        >
                             <!--엘리먼트-->
                             <div v-for="elementId in Object.keys(value.elements)" :key="elementId">
                                 <component 
@@ -740,6 +754,12 @@
                 // unload
                 leaveSite: false,
 
+                openGraphRenderKey: 0,
+                alertSnackbar: {
+                    show: false,
+                    message: '',
+                }
+
             }
         },
         beforeDestroy: function () {
@@ -827,6 +847,27 @@
 
             window.addEventListener("wheel", me.handScroll);
 
+            me.$EventBus.$on('cascadeDelete', (element) => {
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!element) return;
+                        if(element._type.includes('Relation')){
+                            let fromEle = me.value.elements[element.from]
+                            if(fromEle.fieldDescriptors){
+                                let fields = fromEle.fieldDescriptors
+                                me.value.elements[element.from].fieldDescriptors = fields.filter((field) => {
+                                    return field.name.toLowerCase() !== element.name.toLowerCase()
+                                })
+                            }
+                        }
+                    },
+                    onFail(e){
+                        console.log(`[Error] Remove Element: ${e}`)
+                    }
+                })
+            })
+
             // const channel = me.pusher.subscribe('paint');
             // // channel.bind('draw', function(data) {
             // //     // console.log(data)
@@ -871,6 +912,13 @@
             //
             //     }
             // });
+
+            // #region 처음 캔버스를 열 때, Dom이 로딩되기 전에 좌표 값을 얻어와서 렌더링에 버그가 생기기때문에 재렌더링 시킴
+            this.$nextTick(() => {
+                if(this.openGraphRenderKey === 0)
+                    this.openGraphRenderKey += 1
+            })
+            // #endregion
         },
         methods: {
             setCanvasType(){
@@ -1052,114 +1100,184 @@
                 })
                 
             },
+            checkPrimitiveType(className){
+                if(!className) return false;
+
+                if(className.includes("String") || className.includes("Integer") || className.includes("Long") || className.includes("Double") || className.includes("Float")
+                    || className.includes("Boolean") || className.includes("Date")){
+                    return true;
+                } else {
+                    return false;
+                }
+            },
             modificateModel(model){
                 var me = this;
-                if(model){
-                    Object.keys(model).forEach(function (key){
-                        if(key=="add"){
-                            model["add"].forEach(function (field) {
-                                if(!(field.className=='Integer' || field.className=='String' || field.className=='Boolean' || field.className=='Float' || 
-                                    field.className=='Double' || field.className=='Long' || field.className=='Date')){
+
+                try{
+                    if(model){
+                        Object.keys(model).forEach(function (key){
+                            if(key=="add"){
+                                for (var i = 0; i < model["add"].length; i++) {
                                     
-                                    let fieldVo = Object.values(me.value.elements).filter(element => element != null).find(element => element.name === field.className)
-                                    if(!fieldVo){
-                                        var componentInfo = {
-                                            'component': 'uml-vo-class-'+field.className.toLowerCase(),
-                                            'label': field.className,
-                                            'width': '100',
-                                            'height': '100',
-                                            'src': `${ window.location.protocol + "//" + window.location.host}/static/image/symbol/class_value.png`,
-                                            'isVO': true,
-                                            'description': field.className,
-                                            'x': 500 + Math.floor(Math.random()*200),
-                                            'y': 280 + Math.floor(Math.random()*150)
+                                    var field = model["add"][i];
+                                    if(!field.name || !field._type) return;
+    
+                                    if(field.isAggregateRoot){
+                                        if (!(me.value.elements[field.id].fieldDescriptors.find(x => x.name == field.name))) {
+                                            delete field.id
+                                            delete field.classId
+                                            me.value.elements[field.id].fieldDescriptors = Object.assign(me.value.elements[field.id].fieldDescriptors, field)
                                         }
-                                        
-                                        fieldVo = me.addElement(componentInfo)
-                                        // me.$nextTick(() => {
-                                        //     fieldVo = Object.values(me.value.elements).filter(element => element != null).find(element => element.name === field.className)
-                                        // });
+                                        return;
                                     }
-
-                                    let aggregateRoot = Object.values(me.value.elements).filter(element => element != null).find(element => element.isAggregateRoot === true)
-
-                                    if (aggregateRoot !== undefined && fieldVo !== undefined) {
-                                        var relationEl = {
-                                            from: aggregateRoot.elementView.id,
-                                            to: fieldVo.elementView.id,
-                                            _type: "org.uengine.uml.model.Relation",
-                                            fromLabel: "",
-                                            name: fieldVo.nameCamelCase,
-                                            relationType: "Association",
-                                            relationView: {
-                                                id: me.uuid(),
-                                                from: aggregateRoot.elementView.id,
-                                                to: fieldVo.elementView.id,
-                                            },
-                                            selected: false,
-                                            sourceElement: aggregateRoot,
-                                            sourceMultiplicity: "1",
-                                            targetElement: fieldVo,
-                                            targetMultiplicity: "1",
-                                            toLabel: ""
+    
+                                    // sourceElemt 찾기 > 없다면 aggregateRoot
+                                    let sourceElement = me.value.elements[field.id?field.id:field.classId];
+                                    if(!sourceElement){
+                                        sourceElement = Object.values(me.value.elements).filter(element => element != null).find(element => element.isAggregateRoot === true);
+                                    }
+    
+                                    // 미완성된 채로 그려진 클래스를 찾아 삭제하고 새로운 클래스를 그리기 위해 사용
+                                    let addedVo = Object.values(me.value.elements).find(element => element!=null && (element.name.toLowerCase() === field.name.toLowerCase()));;
+                                    if(addedVo){
+                                        // 이미 그려진 vo, rel, field를 삭제
+                                        delete me.value.elements[addedVo.elementView.id];
+                                        let relation = Object.values(me.value.relations).find(relation => relation!=null && relation.name.toLowerCase() == addedVo.name.toLowerCase());
+                                        if(relation){
+                                            delete me.value.relations[relation.relationView.id];
                                         }
-                                        
-                                        me.$set(me.value.relations, relationEl.relationView.id, relationEl)
+    
+                                        me.value.elements[sourceElement.elementView.id].fieldDescriptors = me.value.elements[sourceElement.elementView.id].fieldDescriptors.filter(x => x.name.toLowerCase() !== field.name.toLowerCase())
+                                        addedVo = null;
                                     }
-                                }  
-                            })
-
-                        }else if(key=="beforeReplace"){
-                            // for(var i=0; i<model["beforeReplace"].length; i++){
-                            //     if(model["beforeReplace"][i].isVO){ // Entity 일때만
-                            //         Object.keys(me.value.elements).forEach(function (ele){
-                            //             if(me.value.elements[ele]){
-                            //                 if(me.value.elements[ele].elementView.id == model["beforeReplace"][i].classId){ // 바뀔 field에 해당하는 entitiy를 value에서 get
-                            //                     Object.keys(me.value.elements[ele]).forEach(props => { // entity에 해당하는 elements의 field를 replace
-                            //                         if (model["replace"][i].hasOwnProperty(props) && props!="_type") {
-                            //                             me.value.elements[ele][props] = model["replace"][i][props];
-                            //                         }
-                            //                     });
-                            //                 }
-                            //             }
-                            //         })
-                            //     }
-                            // }
-
-                        }else if(key=="delete"){
-                            for(var i=0; i<model["delete"].length; i++){
-                                if(model["delete"][i].isVO){
-                                    // Object.keys(me.value.elements).forEach(function (ele){
-                                    //     if(me.value.elements[ele]){
-                                    //         if(me.value.elements[ele].name.toLowerCase() == model["delete"][i].name.toLowerCase()){
-                                    //             me.value.elements[ele] = null
-                                    //         }
-                                    //     }
-                                    // })
-
-                                    Object.keys(me.value.relations).forEach(function (rel){
-                                        if(me.value.relations[rel]){
-                                            if(me.value.relations[rel].to == model["delete"][i].classId){
-                                                me.value.relations[rel] = null
+    
+                                    if(field._type.includes('Class')){
+                                        // 새로운 클래스를 그리기 위해 사용
+                                        if(!addedVo && field.name){
+                                            var componentInfo = {
+                                                'component': 'uml-vo-class',
+                                                'label': field.name,
+                                                'name': field.name,
+                                                'width': '100',
+                                                'height': '100',
+                                                'src': `${ window.location.protocol + "//" + window.location.host}/static/image/symbol/class_value.png`,
+                                                'x': 500 + Math.floor(Math.random()*200),
+                                                'y': 280 + Math.floor(Math.random()*150)
                                             }
+                                            me.addElement(componentInfo);
+                                            addedVo = Object.values(me.value.elements).filter(element => element != null).find(element => element.name.toLowerCase() === field.name.toLowerCase());
+                                            me.value.elements[addedVo.elementView.id].fieldDescriptors = Object.assign(me.value.elements[addedVo.elementView.id].fieldDescriptors, field.fieldDescriptors);
+
+                                            let panel = me.getComponentByName('uml-class-panel');
+                                            let newType = {
+                                                text: changeCase.pascalCase(field.name),
+                                                value: changeCase.pascalCase(field.name)
+                                            };
+                                            if (!panel.data().returnTypeList.some(item => item.value === newType.value)) {
+                                                panel.data().returnTypeList.push(newType);
+                                            }
+                                        }
+                                    }
+    
+                                    // 기존의 언급된 vo를 그릴 때 사용
+                                    if(field._type.includes('FieldDescriptor')){
+                                        let isPrimitiveType = me.checkPrimitiveType(field.className? field.className : field.name)
+                                        
+                                        if(field.isVO || !isPrimitiveType){
+                                            if(!addedVo && field.name){
+                                                var componentInfo = {
+                                                    'component': 'uml-vo-class',
+                                                    'label': field.name,
+                                                    'name': field.name,
+                                                    'width': '100',
+                                                    'height': '100',
+                                                    'src': `${ window.location.protocol + "//" + window.location.host}/static/image/symbol/class_value.png`,
+                                                    'isVO': true,
+                                                    'description': field.className ? field.className : field.name,
+                                                    'x': 500 + Math.floor(Math.random()*200),
+                                                    'y': 280 + Math.floor(Math.random()*150)
+                                                };
+                                                
+                                                me.addElement(componentInfo);
+                                                addedVo = Object.values(me.value.elements).filter(element => element != null).find(element => element.name.toLowerCase() === field.name.toLowerCase());
+                                            }
+                                        }else{
+                                            // for (var i = 0; i < me.value.elements[field.id].fieldDescriptors.length; i++) {
+                                                if (!(me.value.elements[field.id].fieldDescriptors.find(x => x.name == field.name))) {
+                                                    let id = field.id
+                                                    delete field.id
+                                                    delete field.classId
+                                                    me.value.elements[id].fieldDescriptors.push(field)
+                                                }
+                                            // }
+                                        }
+                                    }
+    
+                                    if (sourceElement&& addedVo && addedVo.name) {
+                                        me.setRelations(sourceElement, addedVo, addedVo.name)
+                                        me.changedByMe = true
+    
+                                        setTimeout(() => {
+                                            let index = me.value.elements[sourceElement.elementView.id].fieldDescriptors.findIndex(x => x.name.toLowerCase() == field.name.toLowerCase())
+                                            if(index != -1){
+                                                me.value.elements[sourceElement.elementView.id].fieldDescriptors[index].className = field.name
+                                                if(me.value.elements[sourceElement.elementView.id].fieldDescriptors[index].label.endsWith(": ")){
+                                                    me.value.elements[sourceElement.elementView.id].fieldDescriptors[index].label += field.name
+                                                }
+                                            }
+                                            me.changedByMe = true
+                                        }, 500)
+                                    }
+                                }
+                            }else if(key=="delete"){
+                                for(var i=0; i<model["delete"].length; i++){
+                                    var id = model["delete"][i].id
+                                    var key = model["delete"][i].key
+                                    var value = model["delete"][i].value
+                                    var isVO = model["delete"][i].isVO
+    
+                                    me.value.elements[id].fieldDescriptors = me.value.elements[id].fieldDescriptors.filter(x => x[key] != value)
+    
+                                    if(isVO){
+    
+                                        Object.keys(me.value.relations).forEach(function (rel){
+                                            if(me.value.relations[rel]){
+                                                if(me.value.relations[rel].to == model["delete"][i].id){
+                                                    me.value.relations[rel] = null
+                                                }
+                                            }
+                                        })
+                                    }
+                                }
+                            }else if(key=="replace"){
+                                for(var i=0; i<model["replace"].length; i++){
+                                    var id = model["replace"][i].id
+                                    var key = model["replace"][i].key
+                                    var value = model["replace"][i].value
+                                    var isVO = model["replace"][i].isVO
+    
+                                    delete model["replace"][i].id
+                                    delete model["replace"][i].key
+                                    delete model["replace"][i].isVO
+                                    delete model["replace"][i].value
+    
+                                    me.value.elements[id].fieldDescriptors.forEach((x, index) => {
+                                        if (x[key] == value) {
+                                            me.$set(me.value.elements[id].fieldDescriptors, index, Object.assign(x, model["replace"][i]));
                                         }
                                     })
                                 }
                             }
-                        }
-
-                    })
-                    
-                    if(model.updateElement){
-                        if(model.replace.length > 0){
-                            // 일부 key의 value가 바뀐 것을 me.value에 반영할 때, Vue instance 상에 직접 변화를 주기위한 별도 처리
-                            Vue.set(me.value.elements, model.selectedElement.id, model.updateElement)
-                        }else{
-                            me.value.elements[model.selectedElement.id] = Object.assign(me.value.elements[model.selectedElement.id], model.updateElement)
-                        }
-                        me.$EventBus.$emit('selectedElement', {selected: true, id: me.value.elements[model.selectedElement.id].elementView.id, value: me.value.elements[model.selectedElement.id]})
-                        me.changedByMe = true
+    
+                        })
                     }
+                }catch(e){
+                    console.log(e)
+                    me.generator.stop()
+                    me.alertSnackbar.show = true
+                    me.alertSnackbar.message = "생성 도중 오류가 발생하였습니다.\n다시 시도해주시기 바랍니다."
+                }finally{
+                    me.changedByMe = true
                 }
             },
             onGenerationFinished(){

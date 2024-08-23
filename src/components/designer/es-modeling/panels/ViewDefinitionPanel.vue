@@ -57,8 +57,32 @@
             </span></div>
         </template>
 
-        <template slot="element">
+        <template slot="md-title-side">
+            <v-btn
+                    text
+                    color="primary"
+                    style="margin-left: 10px; margin-top: -12px;"
+                    :disabled="isReadOnly || !exampleAvailable || value.dataProjection != 'query-for-aggregate'"
+                    @click="openExampleDialog()"
+            >Examples</v-btn>
+            <v-tooltip bottom v-if="!exampleAvailable">
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn icon v-bind="attrs" v-on="on"
+                        style="margin-left: -8px; margin-top: -15px; width: 10px; height: 10px;">
+                        <v-icon color="grey lighten-1">mdi-help-circle</v-icon>
+                    </v-btn>
+                </template>
+                <span>
+                    The following steps are required to use the 'EXAMPLES'.<br>
+                    1. There must be a ReadModel Sticker in another bound Context that forms a sync call relationship with the command. <br>
+                    e.g.<br>
+                    <img width="794" alt="image" src="https://github.com/user-attachments/assets/b8a91e73-c806-4ad2-b668-1b1e04e1c3e9">
+                </span>
+            </v-tooltip>
+        </template>
 
+        <template slot="element">
+            <RuleExampleDialog v-if="openExample" v-model="value" @closeExampleDialog="closeExampleDialog()" />
             <v-card flat>
                 <v-card-text>
                     <v-radio-group :disabled="isReadOnly"
@@ -67,6 +91,15 @@
                         <v-radio label="Query For Aggregate" value="query-for-aggregate"></v-radio>
                         <v-radio disabled label="GraphQL" value="graphql"></v-radio>
                     </v-radio-group>
+                    <!-- <v-alert
+                        color="grey darken-1"
+                        text
+                        type="info"
+                        class="pa-2 alert-text"
+                        v-if="titleName != 'External' && titleName != 'Issue' && titleName != 'UI' "
+                    >
+                    ReadModel의 사용 목적을 설정하세요 <br>
+                    </v-alert> -->
 
                     <div v-if="value.dataProjection == 'query-for-aggregate'">
 
@@ -111,8 +144,8 @@
                                         :isReadOnly="isReadOnly"
                                         :type="value._type"
                                         :elementId="value.elementView.id"
-                                        :entities="relatedAggregate.aggregateRoot.entities"
-                                        :fields="relatedAggregate.aggregateRoot.fieldDescriptors"
+                                        :entities="relatedAggregate ? relatedAggregate.aggregateRoot.entities : null"
+                                        :fields="relatedAggregate ? relatedAggregate.aggregateRoot.fieldDescriptors : null"
                                 ></event-storming-attribute>
                             </v-card-text>
                         </v-card>
@@ -124,7 +157,7 @@
 
                     <div v-if="value.dataProjection == 'cqrs'">
                         <v-card flat>
-                            <v-card-text>
+                            <v-card-text class="pa-0">
                                 <event-storming-attribute
                                         label="Read Model Attributes"
                                         v-model="value.fieldDescriptors"
@@ -210,6 +243,7 @@
     import ViewCreate from "../../view-modeling/ViewCreate";
     import ViewUpdate from "../../view-modeling/ViewUpdate";
     import ViewDelete from "../../view-modeling/ViewDelete";
+    import RuleExampleDialog from "../RuleExampleDialog"
 
     export default {
         mixins: [EventStormingModelPanel],
@@ -226,7 +260,8 @@
             CommonPanel,
             ViewCreate,
             ViewUpdate,
-            ViewDelete
+            ViewDelete,
+            RuleExampleDialog
         },
         data() {
             return {
@@ -236,6 +271,7 @@
                     userStory: '',
                 },
                 // generateDone: true,
+                exampleAvailable: false,
 
             }
         },
@@ -276,7 +312,9 @@
             // },
 
         },
-        created: function () { },
+        created: function () { 
+            this.exampleAvailable = this.validateRuleExample()
+        },
         mounted(){
             var me = this;
             me.$EventBus.$on("onModelCreated", function (model) {
@@ -291,6 +329,7 @@
                 me.relatedAggregate = me.isPBCModel ? me.value.aggregate : me.canvas.getAttachedAggregate(me.value)
 
                 // Common
+                this.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#%EB%A9%94%EB%89%B4%EB%B3%84-%EC%83%81%EC%84%B8'
                 me.$super(EventStormingModelPanel).panelInit()// }
             },
             viewMainRowAdd(type) {
@@ -372,10 +411,6 @@
 </script>
 
 <style scoped lang="scss" rel="stylesheet/scss">
-    .panel-title {
-        font-size: 25px;
-        color: #757575;
-    }
     .cqrs-add-btn {
         margin:5px 30px 50px 0;
         color: #757575;

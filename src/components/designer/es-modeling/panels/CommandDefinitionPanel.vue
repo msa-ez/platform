@@ -47,9 +47,23 @@
                     text
                     color="primary"
                     style="margin-left: 10px; margin-top: -12px;"
-                    :disabled="isReadOnly"
+                    :disabled="isReadOnly || !exampleAvailable"
                     @click="openExampleDialog()"
             >Examples</v-btn>
+            <v-tooltip bottom v-if="!exampleAvailable">
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn icon v-bind="attrs" v-on="on"
+                        style="margin-left: -8px; margin-top: -15px; width: 10px; height: 10px;">
+                        <v-icon color="grey lighten-1">mdi-help-circle</v-icon>
+                    </v-btn>
+                </template>
+                <span>
+                    The following steps are required to use the 'EXAMPLES'. <br>
+                    1. A relationship with the event occurring through the command must be formed. <br>
+                    e.g.<br>
+                    <img width="366" alt="image" src="https://github.com/user-attachments/assets/2bf62154-0a8a-4269-867e-996ad90d2947">
+                </span>
+            </v-tooltip>
         </template>
 
         <template slot="element">
@@ -69,6 +83,16 @@
 
 
                             <span class="panel-title" style="margin-left:-10px;">Method</span>
+                            <!-- <v-alert
+                                color="grey darken-1"
+                                text
+                                type="info"
+                                class="pa-2 alert-text"
+                                style="margin-left: -10px;"
+                            >
+                            메소드의 목적을 설정하세요. <br>
+                            Default: 기본 RESTful API // Extend: 확장된 URI
+                            </v-alert> -->
                             <v-radio-group v-model="value.isRestRepository" :disabled="isReadOnly"
                                            style="margin-left:-13px;" row>
                                 <v-radio label="Default Verbs" :value="true"></v-radio>
@@ -105,6 +129,16 @@
                                         persistent-hint
                                         :items="getControllerList"
                                 ></v-autocomplete>
+                                <!-- <v-alert
+                                    color="grey darken-1"
+                                    text
+                                    type="info"
+                                    class="pa-2 alert-text"
+                                    style="margin-left: -20px;"
+                                >
+                                메소드의 타입을 설정하세요. <br>
+                                POST: 등록 // PUT, PATCH: 수정 // DELETE: 삭제
+                                </v-alert> -->
                                 <event-storming-attribute
                                         label="Request Body"
                                         v-model="value.fieldDescriptors"
@@ -171,6 +205,7 @@
                 httpCommand: null,
                 commandExample: null,
                 relatedAggregate: null,
+                exampleAvailable: false
             }
         },
         computed: {
@@ -214,13 +249,20 @@
         beforeDestroy() {
 
         },
-        created: function () { },
+        created: function () { 
+            this.exampleAvailable = this.validateRuleExample()
+         },
         watch: {
-            "value.controllerInfo":{
-                deep: true,
-                handler: function (newVal, oldVal) {
-                    this.setHttpCommand()
-                }
+            // "value.controllerInfo":{
+            //     deep: true,
+            //     handler: function (newVal, oldVal) {
+            //         this.setHttpCommand()
+            //     }
+            // },
+
+            "value.name": function(newVal) {
+                this.setApiPath()
+                this.setHttpCommand()
             },
 
             "value.restRepositoryInfo.method":function(newVal){
@@ -245,21 +287,24 @@
                 // Element
                 // me.relatedAggregate = me.canvas.getAttachedAggregate(me.value)
                 me.relatedAggregate = me.isPBCModel ? me.value.aggregate : me.canvas.getAttachedAggregate(me.value)
-                me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#%C2%B7-command-sticker'
+                me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#command-sticker'
 
                 // Common
                 me.$super(EventStormingModelPanel).panelInit()
             },
             setApiPath(){
                 var me = this
+                var getName = me.value.name
+                var lowerCase = JSON.parse(JSON.stringify(getName)).toLowerCase()
+                lowerCase = lowerCase.replace(' ', '');
                 try {
                     if(!me.value.controllerInfo.apiPath && me.value.controllerInfo.method != 'POST'){
-                        var getName = me.value.name
-                        var lowerCase = JSON.parse(JSON.stringify(getName)).toLowerCase()
-                        lowerCase = lowerCase.replace(' ', '');
                         me.value.controllerInfo.apiPath = lowerCase
-                    }else if(me.value.controllerInfo.apiPath && me.value.controllerInfo.method == 'POST'){
-                        me.value.controllerInfo.apiPath = null;
+                    }
+                    else{
+                        if(me.value.controllerInfo.apiPath.toLowerCase()==lowerCase){
+                            me.value.controllerInfo.apiPath = '/'+lowerCase;
+                        }
                     }
                 } catch {
                     console.log('methods : setApiPath() Error')
@@ -393,7 +438,7 @@
                 if (me.isEmptyObject(me.relatedAggregate)) {
                     alert("Attach 'Associated aggregate'. ")
                 } else {
-                    var aggLists = me.canvas.attachedLists.aggregateLists;
+                    var aggLists = me.canvas.attachedLists().aggregateLists;
 
                     if( Object.keys(aggLists).length > 0 ){
                         var eventFields = JSON.parse(JSON.stringify(me.value.fieldDescriptors));

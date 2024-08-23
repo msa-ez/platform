@@ -624,6 +624,179 @@ code[class*=language-]:nth-child(1) {
     padding-left:80px;
 }
 
+.gs-auto-modeling-text-box .v-text-field__details{
+    display:none;
+}
+
+.auto-modeling-dialog-textarea .v-input__control .v-text-field__details {
+    display:none;
+}
+.auto-modeling-dialog-textarea .v-input__control .v-input__slot .v-text-field__slot textarea{
+    height:75vh;
+}
+.auto-modeling-dialog .v-expansion-panel-content__wrap {
+    padding:0px;
+}
+
+.auto-modling-textarea {
+    max-height:100% !important;
+    overflow-y: auto !important;
+}
+
+.auto-modeling-btn {
+    margin-right: 10px !important;
+}
+
+.auto-modeling-btn-box {
+    float: right !important;
+    margin-top: -40px !important;
+}
+
+.auto-modeling-stop-loading-icon {
+    height:24px !important;
+    width:24px !important;
+    margin-right:5px !important;
+}
+
+.generator-ui-text-field .v-input__control .v-input__slot {
+    box-shadow: none !important;
+}
+
+.auto-modeling-message {
+    font-size: 16px !important;
+    color: #282828 !important;
+    font-weight: 400 !important;
+    padding: 10px !important;
+}
+
+.auto-modeling-message-card {
+    background-color: #DAF5FF !important;
+    display: inline-block !important;
+}
+
+.auto-modeling-message-box {
+    padding: 0px 0px 10px 0px !important;
+}
+
+.auto-modeling-message-border {
+    margin-left: 10px !important;
+    margin-right: 10px !important;
+}
+
+.auto-modeling-btn-icon {
+    margin-right: 5px !important;
+}
+
+.auto-modeling-user-story-card {
+    white-space: pre !important;
+    margin: 10px !important;
+    margin-bottom: -10px !important;
+    float: right !important;
+    width: 90% !important;
+}
+
+.lab-list-group-box .v-list-group__items{
+    overflow-x: auto;
+}
+
+.scrollable {
+    overflow-y: scroll;
+}
+
+
+/* code-viewer 관련 */
+.gs-code-previewer-code-viewer .gs-inside-monaco-editor, .gs-code-previewer-code-viewer .gs-inside-markdown-body {
+    height: calc(100vh - 80px);
+}
+
+/* edit template code-viewer 관련  */
+
+.gs-code-previewer-edit-template-left .gs-inside-monaco-editor, .gs-code-previewer-edit-template-left .gs-inside-markdown-body {
+    height: 79vh;
+    margin:12px;
+}
+
+.gs-code-previewer-edit-template-right .gs-inside-monaco-editor, .gs-code-previewer-edit-template-right .gs-inside-markdown-body {
+    height: 75vh;
+    margin-top:7px;
+}
+
+/* expectedTemplateTestDialog.vue code-viewer 관련 */
+.gs-expected-code-viewer1 .gs-inside-monaco-editor, .gs-expected-code-viewer1 .gs-inside-monaco-editor {
+    height: 86vh;
+    overflow:hidden;
+}
+
+/* GitActionDialog.vue code-viewer 관련 */
+.gs-git-action-code-viewer .gs-inside-monaco-editor {
+    /* height: 50vh; */
+    overflow-y: hidden;
+    overflow-x: hidden;
+}
+
+
+/* Usage Page Css*/
+.row-title {
+    font-size: medium;
+    font-weight: 500;
+    color: rgb(86 84 81)!important;
+    opacity: 1;
+}
+
+.row-detail {
+    font-size: .775rem!important;
+    font-weight: 400;
+    color: rgb(116 115 114)!important;
+}
+
+.mouse-cursor {
+    position: absolute;
+    top: 0; 
+    left: 0; 
+    width: 10px;
+    height: 10px; 
+    border-radius: 50%; 
+    background-color: #9bf50b;
+    transform: translate(-50%,-50%);
+    transition: all 300ms linear 0s;
+    opacity: 50%;
+    z-index: 9999;
+}
+.mouse-cursor::after {
+    width: 40px;
+    height: 40px;
+    border: 15px solid rgba(var(--white-rbg-color), 0.2);
+    border-radius: 50%;
+    position: absolute;
+    top: -25px;
+    left: -25px;
+    animation: cursor-animate-2 550ms infinite alternate;
+    z-index: 9998; 
+}
+.mouse-cursor-name {
+    position: absolute;
+    top: 5px;
+    left: 10px;
+    width: max-content;
+    text-align: center;
+    color: #9bf50b;
+    z-index: 9999;
+}
+
+.delet-input-detail .v-text-field__details {
+    display: none !important;
+}
+
+
+.alert-text .v-alert__wrapper .v-alert__content {
+    margin-left: -10px;
+}
+
+.panel-title {
+    font-size: 25px;
+    color: #757575;
+}
+
 @media only screen and (max-width:1409px) and (min-width:1298px){
     .gs-main-page-top-title {
         font-size:36px;
@@ -828,161 +1001,3 @@ code[class*=language-]:nth-child(1) {
     
 }
 
-.gs-auto-modeling-text-box .v-text-field__details{
-    display:none;
-}
-
-.auto-modeling-dialog-textarea .v-input__control .v-text-field__details {
-    display:none;
-}
-.auto-modeling-dialog-textarea .v-input__control .v-input__slot .v-text-field__slot textarea{
-    height:75vh;
-}
-.auto-modeling-dialog .v-expansion-panel-content__wrap {
-    padding:0px;
-}
-
-.auto-modling-textarea {
-    max-height:100% !important;
-    overflow-y: auto !important;
-}
-
-.auto-modeling-btn {
-    margin-right: 10px !important;
-}
-
-.auto-modeling-btn-box {
-    float: right !important;
-    margin-top: -40px !important;
-}
-
-.auto-modeling-stop-loading-icon {
-    height:24px !important;
-    width:24px !important;
-    margin-right:5px !important;
-}
-
-.generator-ui-text-field .v-input__control .v-input__slot {
-    box-shadow: none !important;
-}
-
-.auto-modeling-message {
-    font-size: 16px !important;
-    color: #282828 !important;
-    font-weight: 400 !important;
-    padding: 10px !important;
-}
-
-.auto-modeling-message-card {
-    background-color: #DAF5FF !important;
-    display: inline-block !important;
-}
-
-.auto-modeling-message-box {
-    padding: 0px 0px 10px 0px !important;
-}
-
-.auto-modeling-message-border {
-    margin-left: 10px !important;
-    margin-right: 10px !important;
-}
-
-.auto-modeling-btn-icon {
-    margin-right: 5px !important;
-}
-
-.auto-modeling-user-story-card {
-    white-space: pre !important;
-    margin: 10px !important;
-    margin-bottom: -10px !important;
-    float: right !important;
-    width: 90% !important;
-}
-
-.lab-list-group-box .v-list-group__items{
-    overflow-x: auto;
-}
-
-.scrollable {
-    overflow-y: scroll;
-}
-
-
-/* code-viewer 관련 */
-.gs-code-previewer-code-viewer .gs-inside-monaco-editor, .gs-code-previewer-code-viewer .gs-inside-markdown-body {
-    height: calc(100vh - 80px);
-}
-
-/* edit template code-viewer 관련  */
-
-.gs-code-previewer-edit-template-left .gs-inside-monaco-editor, .gs-code-previewer-edit-template-left .gs-inside-markdown-body {
-    height: 79vh;
-    margin:12px;
-}
-
-.gs-code-previewer-edit-template-right .gs-inside-monaco-editor, .gs-code-previewer-edit-template-right .gs-inside-markdown-body {
-    height: 75vh;
-    margin-top:7px;
-}
-
-/* expectedTemplateTestDialog.vue code-viewer 관련 */
-.gs-expected-code-viewer1 .gs-inside-monaco-editor, .gs-expected-code-viewer1 .gs-inside-monaco-editor {
-    height: 86vh;
-    overflow:hidden;
-}
-
-/* GitActionDialog.vue code-viewer 관련 */
-.gs-git-action-code-viewer .gs-inside-monaco-editor {
-    /* height: 50vh; */
-    overflow-y: hidden;
-    overflow-x: hidden;
-}
-
-
-/* Usage Page Css*/
-.row-title {
-    font-size: medium;
-    font-weight: 500;
-    color: rgb(86 84 81)!important;
-    opacity: 1;
-}
-
-.row-detail {
-    font-size: .775rem!important;
-    font-weight: 400;
-    color: rgb(116 115 114)!important;
-}
-
-.mouse-cursor {
-    position: absolute;
-    top: 0; 
-    left: 0; 
-    width: 10px;
-    height: 10px; 
-    border-radius: 50%; 
-    background-color: #9bf50b;
-    transform: translate(-50%,-50%);
-    transition: all 300ms linear 0s;
-    opacity: 50%;
-    z-index: 9999;
-}
-.mouse-cursor::after {
-    width: 40px;
-    height: 40px;
-    border: 15px solid rgba(var(--white-rbg-color), 0.2);
-    border-radius: 50%;
-    position: absolute;
-    top: -25px;
-    left: -25px;
-    animation: cursor-animate-2 550ms infinite alternate;
-    z-index: 9998; 
-}
-.mouse-cursor-name {
-    position: absolute;
-    top: 5px;
-    left: 10px;
-    width: max-content;
-    text-align: center;
-    color: #9bf50b;
-    z-index: 9999;
-}

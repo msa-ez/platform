@@ -206,6 +206,22 @@ class BoundedContextGenerator extends JsonAIGenerator {
         super.generate()
     }
 
+    removeDuplicateRelations(relations) {
+        const uniqueRelations = {};
+        
+        Object.entries(relations).forEach(([key, relation]) => {
+          const sourceId = relation.sourceElement.id;
+          const targetId = relation.targetElement.id;
+          const relationKey = `${sourceId}-${targetId}`;
+          
+          if (!uniqueRelations[relationKey]) {
+            uniqueRelations[relationKey] = relation;
+          }
+        });
+        
+        return uniqueRelations;
+      }
+
 
     createModel(text){
         var me = this
@@ -249,7 +265,7 @@ class BoundedContextGenerator extends JsonAIGenerator {
                                         aggregateRoot: {
                                             _type: 'org.uengine.modeling.model.AggregateRoot', 
                                             fieldDescriptors: [],
-                                            entities: {}, 
+                                            entities: {elements: {}, relation: {}}, 
                                             operations: [],
                                         },
                                         author: me.userUid,
@@ -880,6 +896,10 @@ class BoundedContextGenerator extends JsonAIGenerator {
                 // } else {
                 //     var elementsList = me.modelElements
                 // }
+
+                // remove duplicate relations
+                relations = me.removeDuplicateRelations(relations)
+
                 var obj = {
                     projectName: modelValue["serviceName"],
                     elements: me.modelElements,

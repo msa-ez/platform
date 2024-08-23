@@ -468,7 +468,7 @@
                                     </v-btn-toggle>
                 
                                     <span v-if="isPushing && (item.tabKey == 'push' || item.tabKey == 'setFirstRepo')">
-                                        <b :key="commitStep" v-if="commitStepText != null">{{ commitStepText }}({{commitStep}}%) ... </b>
+                                        <b :key="commitStep" v-if="commitStepText != null && commitStep != null">{{ commitStepText }}({{commitStep}}%) ... </b>
                                         <v-progress-circular
                                             indeterminate
                                             color="primary"
@@ -584,6 +584,7 @@ import CodeGeneratorCore from './modeling/CodeGeneratorCore';
             canvas: Object,
             usedTemplates: Array,
             usedToppings: Array,
+            projectVersion: Boolean,
         },
         data() {
             return {
@@ -927,62 +928,45 @@ import CodeGeneratorCore from './modeling/CodeGeneratorCore';
                 }
             }, 1000),
             commitStepText: function (newVal) {
-                var me = this
-                if(newVal == null){
-                    if(me.commitStepSetTimeout){
-                        clearTimeout(me.commitStepSetTimeout)
-                    }
-                    me.commitStep = 0
-                } else if(newVal == 'Started Commit'){
-                    me.commitStepSetTimeout = setTimeout(function () {
-                        if(me.commitStep < 30){
-                            me.commitStep++;
-                        } else {
-                            clearTimeout(me.commitStepSetTimeout)
-                        }
-                    }, 300)
-                } else if(newVal == 'Check Git Repo'){
-                    clearTimeout(me.commitStepSetTimeout)
-                    me.commitStep = 30
-                    me.commitStepSetTimeout = setTimeout(function () {
-                        if(me.commitStep < 50){
-                            me.commitStep++;
-                        } else {
-                            clearTimeout(me.commitStepSetTimeout)
-                        }
-                    }, 300)
-                } else if(newVal == 'Set Git Commit Tree'){
-                    clearTimeout(me.commitStepSetTimeout)
-                    me.commitStep = 50
-                    me.commitStepSetTimeout = setTimeout(function () {
-                        if(me.commitStep < 70){
-                            me.commitStep++;
-                        } else {
-                            clearTimeout(me.commitStepSetTimeout)
-                        }
-                    }, 300)
-                } else if(newVal == 'Commit to Git'){
-                    clearTimeout(me.commitStepSetTimeout)
-                    me.commitStep = 70
-                    me.commitStepSetTimeout = setTimeout(function () {
-                        if(me.commitStep < 90){
-                            me.commitStep++;
-                        } else {
-                            clearTimeout(me.commitStepSetTimeout)
-                        }
-                    }, 300)
-                } else if(newVal == 'Push to Git'){
-                    clearTimeout(me.commitStepSetTimeout)
-                    me.commitStep = 90
-                    me.commitStepSetTimeout = setTimeout(function () {
-                        if(me.commitStep < 100){
-                            me.commitStep++;
-                        } else {
-                            clearTimeout(me.commitStepSetTimeout)
-                        }
-                    }, 300)
+                var me = this;
+                if (me.commitStepSetInterval) {
+                    clearInterval(me.commitStepSetInterval);
                 }
-            },
+                if (newVal == null) {
+                    me.commitStep = 0;
+                } else {
+                    let targetStep;
+                    switch (newVal) {
+                        case 'Started Commit':
+                            me.commitStep = 0;
+                            targetStep = 10;
+                            break;
+                        case 'Check Git Repo':
+                            me.commitStep = 10;
+                            targetStep = 92;
+                            break;
+                        case 'Set Git Commit Tree':
+                            me.commitStep = 92;
+                            targetStep = 95;
+                            break;
+                        case 'Commit to Git':
+                            me.commitStep = 95;
+                            targetStep = 97;
+                            break;
+                        case 'Push to Git':
+                            me.commitStep = 97;
+                            targetStep = 100;
+                            break;
+                    }
+                    me.commitStepSetInterval = setInterval(function () {
+                        if (me.commitStep < targetStep) {
+                            me.commitStep++;
+                        } else {
+                            clearInterval(me.commitStepSetInterval);
+                        }
+                    }, 1500); 
+                }
+            }
         },
         methods: {
             selectTab(tabName) {
@@ -1866,6 +1850,11 @@ import CodeGeneratorCore from './modeling/CodeGeneratorCore';
                                 me.autoApplyTemplate = false
                             }
                         }
+
+                        if(me.information.gitRepoName){
+                            me.gitRepoName = me.information.gitRepoName
+                        }
+
                         if(me.ShowCreateRepoTab){
                             me.gitSnackBar.show = true
                             me.gitSnackBar.timeout = -1
@@ -2322,6 +2311,7 @@ import CodeGeneratorCore from './modeling/CodeGeneratorCore';
                                 }
                             }
                         })
+                        me.$emit("setGitInfoToModel", me.value)
                     }
                 })
             },
@@ -2436,6 +2426,7 @@ import CodeGeneratorCore from './modeling/CodeGeneratorCore';
                                 })
                             }
                         })
+                        me.$emit("setGitInfoToModel", me.value)
                     }
                 })
             },

@@ -1,6 +1,6 @@
 <template>
     <v-card style="height: 100vh;">
-        <v-dialog v-model="openGitActionDialog" :key="gitActionDialogRenderKey">
+        <v-dialog v-model="openGitActionDialog" :key="gitActionDialogRenderKey" persistent>
             <GitActionDialog
                 @closeGitActionDialog="closeGitActionDialog"
                 :testFile="selectedTestFile"
@@ -17,6 +17,9 @@
                 @applyTopping="applyToppingInMarket"
                 @closeMarketplaceDialog="marketplaceDialog = false"
                 :selectedBaseTemplateName="selectedBaseTemplateName"
+                :toppingPlatforms="toppingPlatforms"
+                :marketplaceType="marketplaceType"
+                :templateList="templateList"
             />
         </v-dialog>
         <v-card style="z-index:2; margin:0px; border-radius: 0px; height:100%;">
@@ -101,7 +104,7 @@
                                     @settingDone="ShowCreateRepoTab = false"
                                     @closeGitMenu="closeGitMenu"
                                     @update:git-users="val => gitUsers = val"
-                                    @setActionId="setActionId"
+                                    @setGitInfoToModel="setGitInfoToModel"
                                     :information="projectInformation"
                                     :isOnPrem="isOnPrem"
                                     :projectId="modelingProjectId"
@@ -541,7 +544,7 @@
                                         </template>
                                         <v-tabs>
                                             <v-tab> {{editableTemplate ? 'Change Template' : 'Cannot be changed.' }} </v-tab>
-                                            <v-btn style="margin: 5px 0px 0px 10px;" text @click="marketplaceDialog = true">
+                                            <v-btn style="margin: 5px 0px 0px 10px;" text @click="openMarketplaceDialog('BASE')">
                                                 <v-icon style="margin-right: 5px;" small>mdi-cart</v-icon>
                                                 Marketplace
                                             </v-btn>
@@ -696,7 +699,7 @@
 
                                                                     <v-tabs style="max-height:450px; overflow-x:scroll;">
                                                                         <v-tab> {{editableTemplate ? 'Change Template' : 'Cannot be changed.' }} </v-tab>
-                                                                        <v-btn style="margin: 5px 0px 0px 10px;" text @click="marketplaceDialog = true">
+                                                                        <v-btn style="margin: 5px 0px 0px 10px;" text @click="openMarketplaceDialog('TEMPLATE', item)">
                                                                             <v-icon style="margin-right: 5px;" small>mdi-cart</v-icon>
                                                                             Marketplace
                                                                         </v-btn>
@@ -1564,6 +1567,7 @@
                 isOneBCModel: false,
                 onlyOneBcId: null,
                 marketplaceDialog: false,
+                marketplaceType: 'BASE',
                 // tempTreeEditor
                 selectedTreeItemPath: null,
                 newTemplateType: 'template',
@@ -1651,6 +1655,7 @@
                     BASE: false,
                 },
                 gitAPI: null,
+                basePlatform: "",
                 baseToppingPlatforms:{
                     'Kubernetes':[
                         {label:'Vanilla Kubernetes', value: 'isVanillaK8s'}
@@ -1736,7 +1741,8 @@
                     show: false,
                     url: null,
                     division: 'BASE',
-                    elementId: null
+                    elementId: null,
+                    selectedValue: null
                 },
                 githubHeaders: null,
                 gitAccessToken: null,
@@ -1989,12 +1995,12 @@
                 }
                 return false;
             },
-            basePlatform(){
-                if(this.value && this.value.basePlatform){
-                    return this.value.basePlatform
-                }
-                return this.defaultTemplate;
-            },
+            // basePlatform(){
+            //     if(this.value && this.value.basePlatform){
+            //         return this.value.basePlatform
+            //     }
+            //     return this.defaultTemplate;
+            // },
             basePlatformConf(){
                 if(this.value && this.value.basePlatformConf){
                     return this.value.basePlatformConf
@@ -2604,6 +2610,12 @@
             //     this.value.toppingPlatforms.push('isVanillaK8s')
             // }
             // }
+
+            if(this.value && this.value.basePlatform){
+                this.basePlatform = this.value.basePlatform
+            }else{
+                this.basePlatform = this.defaultTemplate;
+            }
             
             this.openCodeGenerator()
             // this.settingGithub()
@@ -2890,9 +2902,23 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-    - name: Test
+    - name: Prepare Test Environment
       run: |
-        mvn test -f ./${me.openCode[0].name}`
+        cd ${me.openCode[0].name}
+        mkdir -p ignore_test_file
+        mv src/test/java/${me.projectName}/*.java ignore_test_file/
+        mv ignore_test_file/${me.selectedTestFile.name} src/test/java/${me.projectName}/
+    - name: Compile and Run Specific Test
+      run: |
+        cd ${me.openCode[0].name}
+        mvn test-compile
+        mvn test -Dtest=${me.projectName}.${me.selectedTestFile.name.replace('.java', '')}
+    - name: Restore Test Files
+      if: always()
+      run: |
+        cd ${me.openCode[0].name}
+        mv ignore_test_file/*.java src/test/java/${me.projectName}/
+        rm -rf ignore_test_file`
 
                 var actionFileIdx = me.codeLists.findIndex(x => x.fullPath == ".github/workflows/github-actions-test.yml")
                 if(!actionFileIdx || actionFileIdx == -1){
@@ -2967,11 +2993,15 @@ jobs:
                 }
 
             },
-            applyTemplateInMarket(val){
-                this.changePlatformToForkedRepo(`${val.templatePath}`, true, null)
+            applyTemplateInMarket(val, type, toppingInfo){
+                if(type == 'BASE'){
+                    this.changePlatformToForkedRepo(`${val.templatePath}`, true, null)
+                } else if(type == 'TEMPLATE'){
+                    this.changePlatformToForkedRepo(`${val.templatePath}`, false, this.templateDialog.selectedValue, toppingInfo)
+                }
                 this.marketplaceDialog = false
             },
-            applyToppingInMarket(val){
+            applyToppingInMarket(val, type){
                 this.changedTopping(`${val.toppingPath}`)
                 this.marketplaceDialog = false
                 this.closeToppingBox();
@@ -3674,6 +3704,10 @@ jobs:
                 let list = localStorage.getItem('customToppingLists')
                 list = list ? JSON.parse(list) : []
 
+                if(this.tempToppingPlatforms.length == 0){
+                    apply = true;
+                }
+
                 if (apply) {
                     let applyIndex = this.tempToppingPlatforms.indexOf(topping);
                     this.tempToppingPlatforms.splice(applyIndex, 1)
@@ -3869,6 +3903,7 @@ jobs:
                 me.$emit('changedByMe', true)
                 if(division == 'BASE'){
                     me.value.basePlatform = platform
+                    me.basePlatform = platform
                 } else if( division == 'TOPPING'){
                     me.value.toppingPlatforms = platform
                 } else if( division == 'TEMPLATE'){
@@ -4476,7 +4511,7 @@ jobs:
                             me.suffixValue = me.suffixValue.join("\n")
     
                             me.stopAutoGenerate = false;
-                            me.model = 'gpt-4'
+                            me.model = 'gpt-4o'
                             me.generator = new BusinessLogicGenerator(this);
                             await me.generator.generate();
                         } else {
@@ -5305,8 +5340,30 @@ jobs:
             // openForkedRepo(gitPath){
             //     window.open(gitPath, '_blank');
             // },
-            changePlatformToForkedRepo(repoPath, isChangeBaseTemplate, item){
+            changePlatformToForkedRepo(repoPath, isChangeBaseTemplate, item, toppingInfo){
                 var me = this
+                // for(var i = 0; i < toppingInfo.length; i++){
+                //     for(var j = 0; j < toppingInfo[i].depends.length; j++){
+                //         if(!toppingInfo[i].depends[j].includes(repoPath.split('/').pop())){
+                //             this.tempToppingPlatforms = [];
+                //             this.gitToppingList = null;
+                //             this.value.toppingPlatforms = [];
+                //             this.usedToppings = [];
+                //             this.filteredCustomToppingLists = null;
+                //             this.toppingPlatforms = [];
+                //             localStorage.removeItem('customToppingLists');
+                //         }
+                //     }
+                // }
+                if(!repoPath.includes("spring-boot")){
+                    me.tempToppingPlatforms = [];
+                    me.gitToppingList = null;
+                    me.value.toppingPlatforms = [];
+                    me.usedToppings = [];
+                    me.filteredCustomToppingLists = null;
+                    me.toppingPlatforms = [];
+                    localStorage.removeItem('customToppingLists');
+                }
                 if(isChangeBaseTemplate){
                     me.openTemplateDialog('BASE', repoPath);
                 } else {
@@ -5740,7 +5797,7 @@ jobs:
                                         // console.log(resultLists)
                                         Object.assign(me.$manifestsPerBaseTemplate, resultLists.manifestsPerBaseTemplate)
                                         me.$manifestsPerTemplate[templateUrl] = resultLists.manifestsPerTemplate[templateUrl]
-                                        me.templateFrameWorkList = resultLists.templateFrameWorkList
+                                        me.templateFrameWorkList = { ...me.templateFrameWorkList, ...resultLists.templateFrameWorkList }
                                         resolve()
                                     })
                                     .catch(e => {
@@ -7373,8 +7430,8 @@ jobs:
                         && Object.values(value.elements).filter(x => x && x._type.endsWith("PBC")).length == 0
                     ){
                         // 1 BC AND NO PBC.
-                        me.isOneBCModel = true
-                        me.onlyOneBcId = me.rootModelAndElementMap.modelForElements.BoundedContext[0].id
+                        // me.isOneBCModel = true
+                        // me.onlyOneBcId = me.rootModelAndElementMap.modelForElements.BoundedContext[0].id
                     }
 
 
@@ -7841,7 +7898,7 @@ jobs:
             generateTemplate(templateContext){
                 var me = this
                 // me.changedValueCustomTemplate = false
-                return new Promise( function (resolve, reject) {
+                return new Promise( async function (resolve, reject) {
                     try {
                         if( me.canvasName == 'context-mapping-model-canvas' ){
                             resolve()
@@ -7858,13 +7915,123 @@ jobs:
                         var xHttpSendCnt = -1
                         var xHttpDoneCnt = -1
 
-                        preferredPlatforms.forEach(async function (preferredPlatform ,index) {
+                        // preferredPlatforms.forEach(async function (preferredPlatform ,index) {
 
+                        //     var template = JSON.parse(JSON.stringify(preferredPlatform));
+                        //     if(template && !template.includes("http") && me.gitAccessToken){
+                        //         template = await me.gitAPI.getTemplateURL(template)
+                        //     }
+
+
+                        //     var manifestTemplate
+
+                        //     if(me.reGenerateOnlyModifiedTemplate && me.editTemplateFrameWorkList && me.editTemplateFrameWorkList[template]){
+                        //         manifestTemplate = Object.keys(me.editTemplateFrameWorkList[template])
+                        //     } else {
+                        //         // 아래 데이터는 npm 빌드때 파일시스템 tree 탐색을 통해 자동으로 생성하거나 일일이 작업해줘야 한다.
+                        //         let getTemplateURL = await me.gitAPI.getTemplateURL(basePlatform)
+                        //         manifestTemplate = me.$manifestsPerBaseTemplate[basePlatform] ? me.$manifestsPerBaseTemplate[basePlatform] : (me.$manifestsPerBaseTemplate[getTemplateURL] ? me.$manifestsPerBaseTemplate[getTemplateURL]:[]);
+                        //         manifestTemplate = JSON.parse(JSON.stringify(manifestTemplate))
+                        //         manifestTemplate =  manifestTemplate.filter(path => !path.includes('for-model/'))
+
+                        //     }
+
+                        //     let manifestTemplateLastIndex = manifestTemplate.length - 1
+
+                        //     if( manifestTemplateLastIndex == -1 ){
+                        //         if(preferredPlatforms.length - 1 == index){
+                        //             resolve()
+                        //         }
+                        //     }else{
+                        //         // 템플릿별 파일목록들
+                        //         manifestTemplate.forEach(async function (element, index) {
+                        //             element = element.replace('./', '')
+
+                        //             var processContext ={
+                        //                 element: element,
+                        //                 modelForElements: modelForElements,
+                        //                 filteredProjectName: filteredProjectName,
+                        //                 template: template,
+                        //                 rootModel: rootModel,
+                        //                 rootPath: rootPath,
+                        //                 basePlatform: basePlatform,
+                        //                 basePlatformConf: basePlatformConf,
+                        //                 generatedType: "MAIN",
+                        //             };
+
+                        //             var xhttp = new XMLHttpRequest();
+                        //             xhttp.onreadystatechange = function () {
+                        //                 if (this.readyState == 4 && this.status == 200) {
+                        //                     // DONE && SUCCESS
+                        //                     xHttpDoneCnt ++;
+                        //                     try {
+                        //                         var gitCodeObj = JSON.parse(this.responseText);
+                        //                         var gitCodeTmp = Base64.decode(gitCodeObj.content)
+                        //                     } catch(e) {
+                        //                         var gitCodeTmp = this.responseText
+                        //                     }
+                        //                     if (!this.responseText.includes("<!-- Is Not Template -->")) {
+                        //                         me.onLoadTemplateContent(gitCodeTmp, processContext)
+                        //                     }
+                        //                     if (xHttpSendCnt == xHttpDoneCnt) {
+                        //                         resolve()
+                        //                     }
+                        //                 }
+                        //             };
+
+                        //             if( xHttpSendCnt == -1 && (manifestTemplateLastIndex == index) ){
+                        //                 resolve()
+                        //             }
+
+                        //             if((localStorage.getItem("loginType") && localStorage.getItem("loginType") == "github") || me.gitAccessToken){
+                        //                 // var loadTemplate = localStorage.getItem(template)
+                        //                 var platformFullName = template
+                        //                 if(!platformFullName.includes("http")){
+                        //                     platformFullName = await me.gitAPI.getTemplateURL(basePlatform)
+                        //                 }
+                        //                 var loadTemplate = me.templateFrameWorkList[platformFullName];
+                        //                 if(loadTemplate){
+                        //                     // loadTemplate = JSON.parse(loadTemplate)
+                        //                     let content = null;
+                        //                     if(loadTemplate[element] && loadTemplate[element].content){
+                        //                         content = loadTemplate[element].content
+                        //                     }
+                        //                     if(content){
+                        //                         me.onLoadTemplateContent(content, processContext)
+                        //                         return;
+                        //                     }
+                        //                 }
+                        //                 // xhttp.open("GET", me.gitCodeUrl[element], true);
+                        //                 if(me.templateFrameWorkList[platformFullName] && me.templateFrameWorkList[platformFullName][element] && me.templateFrameWorkList[platformFullName][element].requestUrl){
+                        //                     xhttp.open("GET", me.templateFrameWorkList[platformFullName][element].requestUrl, true);
+                        //                     xhttp.setRequestHeader('Authorization', 'token ' + me.gitAccessToken);
+                        //                     xhttp.send();
+                        //                     xHttpSendCnt ++;
+                        //                 }
+                        //             } else {
+                        //                 if(template.includes("https://github.com/msa-ez/template-") || !template.includes("http")){
+                        //                     var platform = template.replaceAll("https://github.com/msa-ez/template-", "")
+
+                        //                     xhttp.open("GET", `/static/templates/${platform}/${element}`, true);
+                        //                     xhttp.setRequestHeader("Cache-Control", "no-cache");
+                        //                     xhttp.send();
+                        //                     xHttpSendCnt++;
+                        //                 }
+                        //                 // else {
+                        //                 //     // me.isCustomTemplateForLoad = true
+                        //                 //     // me.isListSettingDone = true
+                        //                 // }
+                        //             }
+
+                        //         });
+                        //     }
+
+                        // })
+                        for (const preferredPlatform of preferredPlatforms) {
                             var template = JSON.parse(JSON.stringify(preferredPlatform));
                             if(template && !template.includes("http") && me.gitAccessToken){
                                 template = await me.gitAPI.getTemplateURL(template)
                             }
-
 
                             var manifestTemplate
 
@@ -7872,26 +8039,33 @@ jobs:
                                 manifestTemplate = Object.keys(me.editTemplateFrameWorkList[template])
                             } else {
                                 // 아래 데이터는 npm 빌드때 파일시스템 tree 탐색을 통해 자동으로 생성하거나 일일이 작업해줘야 한다.
-                                let getTemplateURL = await me.gitAPI.getTemplateURL(basePlatform)
-                                manifestTemplate = me.$manifestsPerBaseTemplate[basePlatform] ? me.$manifestsPerBaseTemplate[basePlatform] : (me.$manifestsPerBaseTemplate[getTemplateURL] ? me.$manifestsPerBaseTemplate[getTemplateURL]:[]);
-                                manifestTemplate = JSON.parse(JSON.stringify(manifestTemplate))
-                                manifestTemplate =  manifestTemplate.filter(path => !path.includes('for-model/'))
-
+                                let getTemplateURL = null;
+                                if(basePlatform == preferredPlatform){
+                                    getTemplateURL = await me.gitAPI.getTemplateURL(basePlatform);
+                                    manifestTemplate = me.$manifestsPerBaseTemplate[basePlatform] ? me.$manifestsPerBaseTemplate[basePlatform] : (me.$manifestsPerBaseTemplate[getTemplateURL] ? me.$manifestsPerBaseTemplate[getTemplateURL] : []);
+                                    manifestTemplate = JSON.parse(JSON.stringify(manifestTemplate));
+                                    manifestTemplate = manifestTemplate.filter(path => !path.includes('for-model/'));
+                                } else {
+                                    getTemplateURL = await me.gitAPI.getTemplateURL(preferredPlatform)
+                                    manifestTemplate = me.$manifestsPerBaseTemplate[preferredPlatform] ? me.$manifestsPerBaseTemplate[preferredPlatform] : (me.$manifestsPerBaseTemplate[getTemplateURL] ? me.$manifestsPerBaseTemplate[getTemplateURL]:[]);
+                                    manifestTemplate = JSON.parse(JSON.stringify(manifestTemplate))
+                                    manifestTemplate =  manifestTemplate.filter(path => !path.includes('for-model/'))
+                                }
                             }
 
                             let manifestTemplateLastIndex = manifestTemplate.length - 1
 
                             if( manifestTemplateLastIndex == -1 ){
-                                if(preferredPlatforms.length - 1 == index){
+                                if(preferredPlatforms.indexOf(preferredPlatform) === preferredPlatforms.length - 1){
                                     resolve()
                                 }
-                            }else{
+                            } else {
                                 // 템플릿별 파일목록들
-                                manifestTemplate.forEach(async function (element, index) {
-                                    element = element.replace('./', '')
+                                for (const element of manifestTemplate) {
+                                    const elementPath = element.replace('./', '')
 
-                                    var processContext ={
-                                        element: element,
+                                    var processContext = {
+                                        element: elementPath,
                                         modelForElements: modelForElements,
                                         filteredProjectName: filteredProjectName,
                                         template: template,
@@ -7922,7 +8096,7 @@ jobs:
                                         }
                                     };
 
-                                    if( xHttpSendCnt == -1 && (manifestTemplateLastIndex == index) ){
+                                    if( xHttpSendCnt == -1 && (manifestTemplateLastIndex == manifestTemplate.indexOf(element)) ){
                                         resolve()
                                     }
 
@@ -7936,17 +8110,17 @@ jobs:
                                         if(loadTemplate){
                                             // loadTemplate = JSON.parse(loadTemplate)
                                             let content = null;
-                                            if(loadTemplate[element] && loadTemplate[element].content){
-                                                content = loadTemplate[element].content
+                                            if(loadTemplate[elementPath] && loadTemplate[elementPath].content){
+                                                content = loadTemplate[elementPath].content
                                             }
                                             if(content){
                                                 me.onLoadTemplateContent(content, processContext)
-                                                return;
+                                                continue;
                                             }
                                         }
                                         // xhttp.open("GET", me.gitCodeUrl[element], true);
-                                        if(me.templateFrameWorkList[platformFullName] && me.templateFrameWorkList[platformFullName][element] && me.templateFrameWorkList[platformFullName][element].requestUrl){
-                                            xhttp.open("GET", me.templateFrameWorkList[platformFullName][element].requestUrl, true);
+                                        if(me.templateFrameWorkList[platformFullName] && me.templateFrameWorkList[platformFullName][elementPath] && me.templateFrameWorkList[platformFullName][elementPath].requestUrl){
+                                            xhttp.open("GET", me.templateFrameWorkList[platformFullName][elementPath].requestUrl, true);
                                             xhttp.setRequestHeader('Authorization', 'token ' + me.gitAccessToken);
                                             xhttp.send();
                                             xHttpSendCnt ++;
@@ -7955,7 +8129,7 @@ jobs:
                                         if(template.includes("https://github.com/msa-ez/template-") || !template.includes("http")){
                                             var platform = template.replaceAll("https://github.com/msa-ez/template-", "")
 
-                                            xhttp.open("GET", `/static/templates/${platform}/${element}`, true);
+                                            xhttp.open("GET", `/static/templates/${platform}/${elementPath}`, true);
                                             xhttp.setRequestHeader("Cache-Control", "no-cache");
                                             xhttp.send();
                                             xHttpSendCnt++;
@@ -7965,11 +8139,9 @@ jobs:
                                         //     // me.isListSettingDone = true
                                         // }
                                     }
-
-                                });
+                                }
                             }
-
-                        })
+                        }
                     } catch(e) {
                         console.log(`Error] Generate Template : ${e}`)
                         reject()
@@ -8483,8 +8655,8 @@ jobs:
                         }
     
                         var metadataAndSource = gen.split("---"); // 소스와 구분
-    
-                        var header = yamlpaser.load(metadataAndSource[0].replace(/\n\n/gi, "\n"))
+                        
+                        var header = yamlpaser.load(metadataAndSource[0].replace(/\n\n/gi, "\n"), {json: true})
                         var headerOptions = {}
                         Object.keys(header).forEach(function (keyValue, idx) {
                             var key = keyValue
@@ -8575,6 +8747,7 @@ jobs:
                         }
                         if (headerOptions['except'] == true) {
                             return;
+                            // ??? template 수정 표시 처리 이전에 return 되어서 .. 수정이 안된것처럼 보이게 하는 
                         }
     
                         var source = ''
@@ -8981,8 +9154,17 @@ jobs:
                 yaml_text = yaml_text.replace(/ null/g, ' ')
                 // yaml_text = yaml_text.replace(/\"/g, '')
                 return yaml_text
+            },
+            setGitInfoToModel(scm){
+                var me = this
+                me.$emit("setInformation", scm)
+            },
+            openMarketplaceDialog(type, item){
+                var me = this
+                me.marketplaceType = type
+                me.templateDialog.selectedValue = item
+                me.marketplaceDialog = true
             }
-
         }
     }
 </script>

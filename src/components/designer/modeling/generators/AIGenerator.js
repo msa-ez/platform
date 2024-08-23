@@ -10,22 +10,26 @@ class AIGenerator {
         this.gptResponseId = null;
         this.openaiToken = null
         this.model = this.client && this.client.model ? this.client.model:"gpt-3.5-turbo-16k"
-        this.responseLimit = this.model == 'gpt-4' ? 0:15
+        this.responseLimit = this.model == 'gpt-4o' ? 0:15
 
         if(options){
             this.preferredLanguage = options.preferredLanguage;
             this.previousMessages = options.previousMessages;
             this.prompt = options.prompt;
             this.model = options.model || this.model;
-        } 
-
+        } else {
+            this.preferredLanguage = this.setPreferredLanguage();
+        }
+        
         if(!this.previousMessages)
             this.previousMessages = [];
-
+        
         
         if(!this.preferredLanguage){
             this.preferredLanguage="English"
         }
+
+        this.originalLanguage = this.preferredLanguage.toLowerCase();
     }
     
     setPreferredLanguage(){
@@ -135,7 +139,12 @@ class AIGenerator {
                     .filter(Boolean)
 
                     const newUpdatesParsed = newUpdates.map((update) => {
-                        const parsed = JSON.parse(update);
+                        let parsed = ""
+                        try {
+                            parsed = JSON.parse(update);
+                        } catch(e) {
+                            return ""
+                        }
 
                         if(parsed.error){
                             if(me.client.onError){
@@ -201,8 +210,12 @@ class AIGenerator {
                             let model = null;
                             if(me.client.onModelCreated){
                                 model = me.createModel(me.modelJson)
-                                if(me.client.input.associatedProject) model.associatedProject = me.client.input.associatedProject
-                                if(me.client.input.persona) model.persona = me.client.input.persona
+                                if(me.client.input && me.client.input.associatedProject) {
+                                    model.associatedProject = me.client.input.associatedProject
+                                }
+                                if(me.client.input && me.client.input.persona) {
+                                    model.persona = me.client.input.persona
+                                }
                                 me.client.onModelCreated(model);
                             } 
                             // else {

@@ -44,6 +44,7 @@ import CKEditor from 'ckeditor4-vue';
 require('dotenv').config();
 import JumpToModelLists from "./components/designer/modeling/generators/JumpToModelLists";
 import JumpToModelListCard from "./components/designer/modeling/generators/JumpToModelListCard";
+import DetailComponent from './components/ui/DetailComponent.vue';
 
 var JsonDiff = require('jsondiffpatch').create({
     objectHash: function (obj, index) {
@@ -82,6 +83,7 @@ Vue.component('vue-simplemde', VueSimplemde)
 Vue.component('vue-simple-context-menu', VueSimpleContextMenu)
 Vue.component('resize-observer', ResizeObserver)
 Vue.component('jump-to-model-lists-card', JumpToModelListCard)
+Vue.component('detail-component', DetailComponent)
 
 
 Vue.$cookies.config("7d");

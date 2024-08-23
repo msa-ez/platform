@@ -5,6 +5,17 @@
                 <table class="rules-table" cellspacing="0">
                     <tr>
                         <td style="font-size: 20px; font-weight: 500; padding-bottom: 12px;" colspan="999">{{ rule.ruleName }}</td>
+                        <v-icon @click="isOpenRules = false"
+                            style="position:absolute; right:10px; top:10px;"
+                        >mdi-close</v-icon>
+                    </tr>
+                    <tr>
+                        <td colspan="999">
+                            <v-text-field 
+                                v-model="rule.description"
+                                label="Describe your business logic"
+                            ></v-text-field>
+                        </td>
                     </tr>
                     <tr class="tr-divider" style="text-align: center; font-size: 18px; font-weight: 500;">
                         <td :colspan="givenAttLength">Given</td>
@@ -105,8 +116,7 @@
                         </tr>
                     </template>
                 </table>
-                <v-text-field v-model="rule.description"></v-text-field>
-                <v-layout>
+                <v-layout style="float: left; margin-top: 10px;">
                     <v-spacer/>
                     <v-icon @click="addExample()">mdi-plus</v-icon>
                     <v-icon @click="resetExampleDialog()">mdi-refresh</v-icon>
@@ -131,6 +141,7 @@
     import isAttached from '../../../utils/isAttached';
     import getParent from '../../../utils/getParent';
     import RuleExampleGenerator from '../modeling/generators/RuleExampleGenerator'
+    import DebeziumLogsTabGenerator from '../modeling/generators/generatorTabs/DebeziumLogsTabGenerator'
     import String from '../../primitives/String.vue'
     import Number from '../../primitives/Number.vue'
     import Boolean from '../../primitives/Boolean.vue'
@@ -155,6 +166,16 @@
                 exampleFrameWork: null,
                 isGenerating: false,
                 generatorComponent: null,
+                debeziumGeneratorComponent: null,
+                currentUsingGeneratorName: null,
+                debeziumMessageObj: {
+                    modificationMessage: "",
+                    gwtRequestValue: {
+                        givenObjects: null,
+                        whenObjects: null,
+                        thenObjects: null
+                    }
+                },
                 ruleExampleTableHeaders: {
                     given: null,
                     when: null,
@@ -196,6 +217,7 @@
             me.canvas = getParent(me.$parent, "event-storming-model-canvas");
             me.openExampleDialog()
             me.generatorComponent = new RuleExampleGenerator(this);
+            me.debeziumGeneratorComponent = new DebeziumLogsTabGenerator(this, this.debeziumMessageObj);
         },
         computed: {
             chipLabels() {
@@ -316,7 +338,64 @@
                 }
                 me.openExampleDialog()
             },
-            onGenerationFinished(){
+            onGenerationFinished(content){
+                const getRuleValues = (gwts) => {
+                    const generateExamples = (gwts) => {
+                        const getExample = (gwt) => {
+                            const getGivens = (givens) => {
+                                const given = givens[0]
+                                return [
+                                    {
+                                    "type": "Aggregate",
+                                    "name": given.name,
+                                    "value": given.values
+                                }]
+                            }
+
+                            const getWhens = (whens) => {
+                                const when = whens[0]
+                                return [
+                                    {
+                                        "type": "Event",
+                                        "name": when.name,
+                                        "value": when.values
+                                    }
+                                ]
+                            }
+
+                            const getThens = (thens) => {
+                                return thens.map((then) => {
+                                    return {
+                                        "type": "Event",
+                                        "name": then.name,
+                                        "value": then.values
+                                    }
+                                })
+                            }
+
+                            return {
+                                "given": getGivens(gwt.givens),
+                                "when": getWhens(gwt.whens),
+                                "then": getThens(gwt.thens)
+                            }
+                        }
+
+                        return gwts.map((gwt) => {
+                            return getExample(gwt)
+                        })
+                    }
+
+                    return generateExamples(gwts)
+                }
+
+                switch(this.currentUsingGeneratorName){
+                    case "DebeziumLogsTabGenerator":
+                        this.rule.values = getRuleValues(content.modelValue.gwts)
+                        break
+                    case "RuleExampleGenerator":
+                        break
+                }
+
                 var me = this
                 if(!me.exampleFrameWork){
                     me.setExampleFrameWork()
@@ -346,13 +425,43 @@
                 me.value.examples = me.rule.values
             },
             onModelCreated(content){
-                this.rule.values = content
+                switch(this.currentUsingGeneratorName){
+                    case "DebeziumLogsTabGenerator":
+                        break
+                    case "RuleExampleGenerator":
+                        this.rule.values = content
+                        break
+                }
             },
             startExampleGenerate(){
+                const isDebeziumLogMessage = (message) => {
+                    const getDebeziumLogStrings = (logs) => {
+                        return logs.match(/\{"schema":\{.*?"name":".*?\.Envelope".*?\},"payload":\{.*?\}\}/g)
+                    }
+
+                    let debeziumLogStrings = getDebeziumLogStrings(message)
+                    if(!debeziumLogStrings || debeziumLogStrings.length === 0) {
+                        return false
+                    }
+                    return true
+                }
+
                 var me = this
                 me.$EventBus.$emit('policyDescriptionUpdated', me.rule.description)
                 me.isGenerating = true
-                me.generatorComponent.generate()
+
+                if(me.rule.description && isDebeziumLogMessage(me.rule.description)){
+                    me.currentUsingGeneratorName = "DebeziumLogsTabGenerator"
+                    me.debeziumGeneratorComponent.modelMode = "generateGWT"
+                    me.debeziumMessageObj.modificationMessage = me.rule.description
+                    me.debeziumMessageObj.gwtRequestValue.givenObjects = me.rule.givenItems
+                    me.debeziumMessageObj.gwtRequestValue.whenObjects = me.rule.whenItems
+                    me.debeziumMessageObj.gwtRequestValue.thenObjects = me.rule.thenItems
+                    me.debeziumGeneratorComponent.generate()
+                } else {
+                    me.currentUsingGeneratorName = "RuleExampleGenerator"
+                    me.generatorComponent.generate()
+                }     
             },  
             stopExampleGenerate(){
                 var me = this
@@ -380,11 +489,11 @@
                 me.rule.whenItems = []
                 me.rule.thenItems = []
 
-                if(me.value && me.value._type.includes("Policy") || me.value && me.value._type.includes("Command")){
+                if(me.value && (me.value._type.includes("Policy") || me.value._type.includes("Command") || me.value._type.includes("View"))){
                     if(me.value.aggregate && me.value.aggregate.id && me.canvas.value.elements[me.value.aggregate.id]){
                         me.rule.givenItems.push(me.canvas.value.elements[me.value.aggregate.id])
-                    } else if (me.canvas.attachedLists.aggregateLists && Object.values(me.canvas.attachedLists.aggregateLists).length > 0) {
-                        Object.values(me.canvas.attachedLists.aggregateLists).forEach(function (aggregate, idx) {
+                    } else if (me.canvas.attachedLists().aggregateLists && Object.values(me.canvas.attachedLists().aggregateLists).length > 0) {
+                        Object.values(me.canvas.attachedLists().aggregateLists).forEach(function (aggregate, idx) {
                             if (isAttached(aggregate, me.value)) {
                                 me.rule.givenItems.push(aggregate)
                             }
@@ -451,7 +560,7 @@
                                             }
                                         }
                                     }
-                                } else {
+                                } else if(me.value._type.includes("Command")){
                                     // when
                                     if(rel.sourceElement._type == 'org.uengine.modeling.model.Command' && rel.targetElement._type == 'org.uengine.modeling.model.Event'){
                                         if(rel.sourceElement.elementView.id == me.value.elementView.id){
@@ -460,6 +569,20 @@
                                             }
                                             if(!thenItems.find(x => x.elementView.id == rel.targetElement.elementView.id)){
                                                 thenItems.push(me.canvas.value.elements[rel.targetElement.elementView.id]);
+                                            }
+                                        }
+                                    }
+                                } else if(me.value._type.includes("View")){
+                                    // when
+                                    if(rel.sourceElement._type == 'org.uengine.modeling.model.Command' && rel.targetElement._type == 'org.uengine.modeling.model.View'){
+                                        if(rel.targetElement.elementView.id == me.value.elementView.id){
+                                            if(!whenItems.find(x => x.elementView.id == rel.sourceElement.elementView.id)){
+                                                whenItems.push(me.canvas.value.elements[rel.sourceElement.elementView.id]);
+                                            }
+                                            if(!thenItems.find(x => x.elementView.id == rel.targetElement.elementView.id)){
+                                                let element = JSON.parse(JSON.stringify(me.canvas.value.elements[rel.targetElement.elementView.id]));
+                                                element.fieldDescriptors = element.queryParameters
+                                                thenItems.push(element);
                                             }
                                         }
                                     }
@@ -509,8 +632,13 @@
                     "then": [],
                 }
 
-                values['given'][0].name = me.rule.givenItems[0].name;
-                values['when'][0].name = me.rule.whenItems[0].name;
+                if (me.rule.givenItems.length > 0) {
+                    values['given'][0].name = me.rule.givenItems[0].name;
+                }
+
+                if (me.rule.whenItems.length > 0) {
+                    values['when'][0].name = me.rule.whenItems[0].name;
+                }
 
                 if(me.rule.whenItems[0]._type.includes("Event")){
                     values['when'][0].type = "Event";
@@ -534,9 +662,13 @@
                     values['given'][0].value[field.name] = givenObject;
                 });
 
-                me.rule.whenItems[0].fieldDescriptors.forEach(function (field){
-                    values['when'][0].value[field.name] = "N/A";
-                });
+                if(me.rule.whenItems[0].fieldDescriptors && me.rule.whenItems[0].fieldDescriptors.length > 0){
+                    me.rule.whenItems[0].fieldDescriptors.forEach(function (field){
+                        values['when'][0].value[field.name] = "N/A";
+                    });
+                } else {
+                    values['when'][0].value["N/A"] = "N/A";
+                }
 
                 me.rule.thenItems.forEach(function (item){
                     var obj = {

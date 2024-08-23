@@ -174,7 +174,7 @@
                 me.relatedAggregate = me.isPBCModel ? me.value.aggregate : me.canvas.getAttachedAggregate(me.value)
                 me.findCommandLists()
                 me.findPolicyLists()
-                me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#%C2%B7-event-sticker'
+                me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#event-sticker'
 
                 // Common
                 me.$super(EventStormingModelPanel).panelInit()
@@ -190,7 +190,7 @@
                                 if (rel.sourceElement._type.endsWith('Command') && rel.targetElement._type.endsWith('Event')) {
                                     if (me.value.elementView.id == rel.targetElement.elementView.id) {
                                         var coId = rel.sourceElement.elementView.id
-                                        var coVal = me.canvas.attachedLists.commandLists[coId]
+                                        var coVal = me.canvas.attachedLists().commandLists[coId]
 
                                         if (coVal) {
                                             if (coVal.isRestRepository) {
@@ -233,7 +233,7 @@
                                 if (rel.sourceElement._type.endsWith('Policy') && rel.targetElement._type.endsWith('Event')) {
                                     if (me.value.elementView.id == rel.targetElement.elementView.id) {
                                         var coId = rel.sourceElement.elementView.id
-                                        var coVal = me.canvas.attachedLists.policyLists[coId]
+                                        var coVal = me.canvas.attachedLists().policyLists[coId]
 
                                         if (coVal) {
                                             me.policyLists.push(coVal)
@@ -255,7 +255,7 @@
                 if (me.isEmptyObject(me.relatedAggregate)) {
                     alert("Attach 'Associated aggregate'. ")
                 } else {
-                    var aggLists = me.canvas.attachedLists.aggregateLists;
+                    var aggLists = me.canvas.attachedLists().aggregateLists;
 
                     if( Object.keys(aggLists).length > 0 ){
                         var eventFields = JSON.parse(JSON.stringify(me.value.fieldDescriptors));

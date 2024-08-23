@@ -1,6 +1,7 @@
 <template></template>
 
 <script>
+    import isAttached from '../../../utils/isAttached';
     import ModelPanel from "../modeling/ModelPanel";
     import getParent from "../../../utils/getParent";
     var jsondiffpatch = require('jsondiffpatch').create({
@@ -176,6 +177,70 @@
             openExampleDialog(){
                 this.openExample = true
             },
+            validateRuleExample(){
+                var me = this
+
+                let getAttachedAggregate = null
+                if(me.value && (me.value._type.includes("Policy") || me.value._type.includes("Command") || me.value._type.includes("View"))){
+                    if(me.value.aggregate && me.value.aggregate.id && me.canvas.value.elements[me.value.aggregate.id]){
+                        getAttachedAggregate = me.canvas.value.elements[me.value.aggregate.id]
+                    } else if (me.canvas.attachedLists().aggregateLists && Object.values(me.canvas.attachedLists().aggregateLists).length > 0) {
+                        Object.values(me.canvas.attachedLists().aggregateLists).forEach(function (aggregate, idx) {
+                            if (isAttached(aggregate, me.value)) {
+                                getAttachedAggregate = aggregate
+                            }
+                        })
+                    } 
+                }
+
+                if(getAttachedAggregate){
+                    let relations = me.canvas.value.relations
+    
+                    let sourceElements = null
+                    let targetElements = null
+    
+                    if (me.value._type.includes('Policy')) {
+                        Object.keys(relations).forEach(function (ele) {
+                            if(relations[ele]){
+                                if(relations[ele].sourceElement.id && relations[ele].sourceElement.id == me.value.id){
+                                    sourceElements = relations[ele].sourceElement
+                                }
+        
+                                if(relations[ele].targetElement.id && relations[ele].targetElement.id == me.value.id){
+                                    targetElements = relations[ele].targetElement
+                                }
+                            }
+                        })
+                    }
+    
+                    if(me.value._type.includes('Command')){
+                        Object.keys(relations).forEach(function (ele) {
+                            if(relations[ele]){
+                                if(relations[ele].sourceElement.id && relations[ele].sourceElement.id == me.value.id){
+                                    sourceElements = relations[ele].sourceElement
+                                    targetElements = relations[ele].sourceElement
+                                }
+                            }
+                        })
+                    }
+    
+                    if(me.value._type.includes('View')){
+                        Object.keys(relations).forEach(function (ele) {
+                            if(relations[ele]){
+                                if(relations[ele].targetElement.id && relations[ele].targetElement.id == me.value.id){
+                                    sourceElements = relations[ele].sourceElement
+                                    targetElements = relations[ele].targetElement
+                                }
+                            }
+                        })
+                    }
+                    
+                    if(sourceElements && targetElements){
+                        return true
+                    }
+                }
+                return false
+            },
             //<<<<<<<<<<<<<<<<<<<<<<<<<<< Panel Methods
             // stayOpenPanelCheck(){
             //     var me = this
@@ -319,9 +384,3 @@
 </script>
 
 
-<style scoped lang="scss" rel="stylesheet/scss">
-    .panel-title {
-        font-size: 25px;
-        color: #757575;
-    }
-</style>

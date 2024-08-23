@@ -9,34 +9,30 @@ export default class SIGenerator extends JsonAIGenerator {
     createPrompt(){
         var prompt 
         var generationRule
+        var clientPrompt = this.client.prompt
+        var summarizedCodeListWithLineNumbers = {}
+        var scratchpad = ""
 
-        if(this.client.prompt){
-            return this.client.prompt
-        } else if(this.client.generatedErrorDetails){
-            prompt = `An error occurred during testing.
+        this.client.summarizedCodeList[this.client.testFile.name] = this.client.testFile.code
+
+        for (const [fileName, code] of Object.entries(this.client.summarizedCodeList)) {
+            summarizedCodeListWithLineNumbers[fileName] = this.addLineNumbers(code);
+        }
+
+        if(this.client.generatedErrorDetails){
+            prompt = `user's request: ${clientPrompt}
+
+An error occurred during testing.
 Error list: ${JSON.stringify(this.client.generatedErrorDetails)}
 The error list contains errors that occurred during mvn testing for the files in the code list and information about the file in which the error occurred.
 It must identify a list of errors and provide appropriate solutions to the errors encountered in the file in which the error occurred.
 Identify the code parts of the file that need error correction and correct the errors to suit your business logic.
 After checking the error log, you should add a workaround for the file causing the error in "codeChanges".
 If multiple errors occur in the same file, you should create one workaround for multiple errors instead of showing a workaround for each error.`
-    } else {
-//         if(this.client.isFirstGenerate){
-//             prompt = `You are a junit test engineer.
-// You need to modify your code like this:
-// The current code listing contains a test file ${this.client.testFile.name} that may have errors or missing business logic.
-// First, understand this basic test and your overall business intent.
-// You need to rewrite your tests based on the business intent you identified.
-// If it is necessary to delete 'given', 'when', 'then', etc. during editing, delete them.
-// Add any business logic that needs to be added during editing.`
-//         } else {
+        } else {
             prompt = 'First, determine whether the business logic is lacking or not written, and if so, please suggest a way to write the logic in the aggregate file of the domain code. Write the business logic to pass this test.'
-        // }
-    }
+        }
 
-    // if(this.client.isFirstGenerate){
-    //     generationRule = prompt
-    // } else {
         generationRule = `You are a developer. To finally pass ${this.client.testFile.name} in the code list, you must modify the code as follows.
 ${prompt}
 Generation rules: 
@@ -54,11 +50,22 @@ Preserve existing class interfaces (methods, parameters, fields) as much as poss
 10. "codeChanges" are only created if it is a file.`
     // }
 
+        if(this.client.modifiedHistory.length > 0){
+            scratchpad = `
+You have already modified the code as follows:
+${JSON.stringify(this.client.modifiedHistory)}
+You must continue to modify the code based on the above modification.`
+
+        }
+
 
     return `Here is the code list:
-${JSON.stringify(this.client.summarizedCodeList)}
+${JSON.stringify(summarizedCodeListWithLineNumbers)}
+${scratchpad}
 ${generationRule}
 The solution must always be returned in the presented json format and must be generated according to all generation rules.
+When presenting modifiedFileCode, numbers for each line must be removed.
+Modifications unrelated to the error, such as comments or line removal, are unnecessary, and the code must be modified to resolve the error.
 Json format:
 [ 
     {
@@ -76,7 +83,22 @@ Json format:
     }
 
     createModel(text){
+        if (text.startsWith('```json')) {
+            text = text.slice(7);
+        }
+        if (text.endsWith('```')) {
+            text = text.slice(0, -3);
+        }
+        
         return super.createModel(text + '"');
+    }
+
+    addLineNumbers(code) {
+        if(code){
+            return code.split('\n').map((line, index) => `${index + 1}: ${line}`).join('\n');
+        } else {
+            return ""
+        }
     }
 
 }

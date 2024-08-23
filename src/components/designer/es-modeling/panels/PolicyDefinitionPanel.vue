@@ -65,9 +65,24 @@
                 text
                 color="primary"
                 style="margin-left: 10px; margin-top: -12px;"
-                :disabled="isReadOnly"
+                :disabled="isReadOnly || !exampleAvailable"
                 @click="openExampleDialog()"
             >Examples</v-btn>
+            <v-tooltip bottom v-if="!exampleAvailable">
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn icon v-bind="attrs" v-on="on"
+                        style="margin-left: -8px; margin-top: -15px; width: 10px; height: 10px;">
+                        <v-icon color="grey lighten-1">mdi-help-circle</v-icon>
+                    </v-btn>
+                </template>
+                <span>
+                    The following steps are required to use the 'EXAMPLES'. <br>
+                    1. There must be a policy sticker that forms the event sticker and outgoingRelation. <br>
+                    2. A relationship with the event that occurs through the policy must be formed. <br>
+                    e.g.<br>
+                    <img width="795" alt="image" src="https://github.com/user-attachments/assets/dc66113d-516b-42a5-b717-c8365abecd7e">
+                </span>
+            </v-tooltip>
         </template>
 
     </common-panel>
@@ -90,20 +105,24 @@
             RuleExampleDialog
         },
         data() {
-            return {}
+            return {
+                exampleAvailable: false
+            }
         },
         computed: {
 
         },
         beforeDestroy() {
         },
-        created: function () { },
+        created: function () { 
+            this.exampleAvailable = this.validateRuleExample()
+        },
         watch: {},
         methods: {
             panelInit(){
                 var me = this
                 // Policy
-                this.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#%C2%B7-policy-sticker'
+                this.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#policy-sticker'
 
                 // Common
                 me.$super(EventStormingModelPanel).panelInit()
