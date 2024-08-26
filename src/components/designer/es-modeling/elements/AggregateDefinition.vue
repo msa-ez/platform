@@ -796,9 +796,5 @@
     .discStyle {
         list-style-type: disc;
     }
-    .panel-title {
-        font-size: 25px;
-        color: #757575;
-    }
 </style>
 

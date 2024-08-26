@@ -83,6 +83,16 @@
 
 
                             <span class="panel-title" style="margin-left:-10px;">Method</span>
+                            <!-- <v-alert
+                                color="grey darken-1"
+                                text
+                                type="info"
+                                class="pa-2 alert-text"
+                                style="margin-left: -10px;"
+                            >
+                            메소드의 목적을 설정하세요. <br>
+                            Default: 기본 RESTful API // Extend: 확장된 URI
+                            </v-alert> -->
                             <v-radio-group v-model="value.isRestRepository" :disabled="isReadOnly"
                                            style="margin-left:-13px;" row>
                                 <v-radio label="Default Verbs" :value="true"></v-radio>
@@ -119,6 +129,16 @@
                                         persistent-hint
                                         :items="getControllerList"
                                 ></v-autocomplete>
+                                <!-- <v-alert
+                                    color="grey darken-1"
+                                    text
+                                    type="info"
+                                    class="pa-2 alert-text"
+                                    style="margin-left: -20px;"
+                                >
+                                메소드의 타입을 설정하세요. <br>
+                                POST: 등록 // PUT, PATCH: 수정 // DELETE: 삭제
+                                </v-alert> -->
                                 <event-storming-attribute
                                         label="Request Body"
                                         v-model="value.fieldDescriptors"
@@ -233,11 +253,16 @@
             this.exampleAvailable = this.validateRuleExample()
          },
         watch: {
-            "value.controllerInfo":{
-                deep: true,
-                handler: function (newVal, oldVal) {
-                    this.setHttpCommand()
-                }
+            // "value.controllerInfo":{
+            //     deep: true,
+            //     handler: function (newVal, oldVal) {
+            //         this.setHttpCommand()
+            //     }
+            // },
+
+            "value.name": function(newVal) {
+                this.setApiPath()
+                this.setHttpCommand()
             },
 
             "value.restRepositoryInfo.method":function(newVal){
@@ -277,7 +302,9 @@
                         me.value.controllerInfo.apiPath = lowerCase
                     }
                     else{
-                        me.value.controllerInfo.apiPath = '/'+lowerCase;
+                        if(me.value.controllerInfo.apiPath.toLowerCase()==lowerCase){
+                            me.value.controllerInfo.apiPath = '/'+lowerCase;
+                        }
                     }
                 } catch {
                     console.log('methods : setApiPath() Error')

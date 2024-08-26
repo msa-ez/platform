@@ -441,10 +441,6 @@
 
 
 <style scoped lang="scss" rel="stylesheet/scss">
-    .panel-title {
-        font-size: 25px;
-        color: #757575;
-    }
     .cqrs-add-btn {
         margin:5px 30px 50px 0;
         color: #757575;

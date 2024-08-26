@@ -58,7 +58,7 @@
                         <slot name="middle">
                             <v-list class="pt-0" dense flat>
                                 <v-divider></v-divider>
-                                <v-card outlined>
+                                <div>
                                     <v-card-text>
                                         <slot name="md-title">
                                             <div v-if="isValidationLists" style="margin-left: -17px;">
@@ -87,20 +87,51 @@
                                         <div>
                                             <slot name="md-name-panel">
                                                 <v-text-field
-                                                        v-model="value.name"
-                                                        :error="value.name == ''"
-                                                        id="elementName"
-                                                        :disabled="isReadOnly"
-                                                        label="Name"
-                                                        autofocus
+                                                    v-model="value.name"
+                                                    :error="value.name == ''"
+                                                    id="elementName"
+                                                    class="delet-input-detail"
+                                                    :disabled="isReadOnly"
+                                                    label="Name"
+                                                    autofocus
                                                 >
                                                 </v-text-field>
+                                                <!-- <v-alert
+                                                    color="grey darken-1"
+                                                    text
+                                                    type="info"
+                                                    class="pa-2 alert-text"
+                                                    v-if="titleName != 'Issue' && titleName != 'UI' "
+                                                >
+                                                    <v-row class="ma-0 pa-0">
+                                                        <div>{{ titleName }} 이름을 작성하세요.</div>
+                                                        <v-spacer></v-spacer>
+                                                        <v-icon 
+                                                            @click="infoStatus('infoName')" 
+                                                            color="black" 
+                                                            dense
+                                                        >
+                                                            {{ nameInfoStatus ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
+                                                        </v-icon>
+                                                    </v-row>
+                                                    <div v-if="nameInfoStatus" class="pt-1">{{ nameExample }}</div>
+                                                </v-alert> -->
                                                 <v-text-field
-                                                        v-model="value.displayName"
-                                                        :disabled="isReadOnly"
-                                                        label="Display Name"
+                                                    v-model="value.displayName"
+                                                    :disabled="isReadOnly"
+                                                    label="Display Name"
+                                                    class="delet-input-detail"
                                                 >
                                                 </v-text-field>
+                                                <!-- <v-alert
+                                                    color="grey darken-1"
+                                                    text
+                                                    type="info"
+                                                    class="pa-2 alert-text"
+                                                    v-if="titleName != 'External' && titleName != 'Issue' && titleName != 'UI' "
+                                                >
+                                                화면에 보여질 스티커의 이름을 작성하세요 ex) {{ displayNExample }}
+                                                </v-alert> -->
                                             </slot>
 
                                             <slot name="md-name-panel-translate">
@@ -131,7 +162,7 @@
                                             <slot name="generateWithAi"></slot>
                                         </div>
                                     </v-card-text>
-                                </v-card>
+                                </div>
                             </v-list>
                         </slot>
 
@@ -226,6 +257,7 @@
         },
         data: function () {
             return {
+                nameInfoStatus: false,
                 // openExample: false,
                 // common
                 namePanel: '',
@@ -281,6 +313,40 @@
                 }
                 return null;
             },
+            // nameExample(){
+            //     var name = null;
+            //     if(this.value){
+            //         name = this.value ? this.value._type.split('.')[4] : null
+            //         switch (name){
+            //             case 'BoundedContext' : return '도메인 자체를 나타내며, 고유한 이름으로 작성합니다. ex) order';
+            //             case 'Aggregate' : return '커맨드가 도메인 상태변화를 일으키는 비즈니스 로직 처리의 도메인 객체이며, 이벤트의 출처를 나타내도록 작성합니다. ex) Order';
+            //             case 'Command' : return '서비스에서 특정 주체가 요청하는 행위의 Input에 대해 작성하며, 현재형으로 작성합니다. ex) placeorder';
+            //             case 'Event' : return '서비스에서 발생한 사실, 결과, 특정행위의 Output에 대해 작성하며, 과거 분사형으로 작성합니다 ex) OrderPlaced';
+            //             case 'Policy' : return '이벤트 조건에 따라 발생하는 행위에 대해 작성합니다. ex) decrease stock';
+            //             case 'View' : return '행위와 결정을 하기 위하여 유저가 참고하는 데이터의 성격을 가지도록 작성합니다 ex) Dashboard';
+            //             case 'Actor' : return '커맨드를 발생시키는 주체에 대해 작성합니다. ex) User';
+            //             case 'External' : return '도메인 이벤트가 호출하거나 관계가 있는 외부 시스템에 대해 작성합니다. ex) CJ Logis';
+            //         }
+            //     }
+            //     return null;
+
+            // },
+            displayNExample(){
+                var displayName = null;
+                if(this.value){
+                    displayName = this.value ? this.value._type.split('.')[4] : null
+                    switch (displayName){
+                        case 'BoundedContext' : return '주문';
+                        case 'Aggregate' : return '주문정보';
+                        case 'Command' : return '주문';
+                        case 'Event' : return '주문됨';
+                        case 'Policy' : return '재고 감소';
+                        case 'View' : return '대시보드';
+                        case 'Actor' : return '사용자';
+                    }
+                }
+                return null;
+            }
         },
         watch:{
             'value.description': function (newVal, oldVal) {
@@ -295,6 +361,12 @@
             // openExampleDialog(){
             //     this.openExample = true
             // },
+            infoStatus(type) {
+                var me = this
+                if(type == 'infoName') {
+                    me.nameInfoStatus = !me.nameInfoStatus
+                }
+            },
             close(){
                 var me = this;
                 me.$emit('close')
@@ -316,10 +388,4 @@
     cursor: pointer;
     background-color:#E3F2FD;
 }
-</style>
-<style scoped lang="scss" rel="stylesheet/scss">
-    .panel-title {
-        font-size: 25px;
-        color: #757575;
-    }
 </style>
