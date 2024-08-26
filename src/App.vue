@@ -90,7 +90,7 @@
                 <span>신규 강의 생성</span>
             </v-tooltip>
             <v-btn v-if="showNewButton"
-                class="main-nav-modeling-is-mobile"
+                class="making-main-nav-modeling-is-mobile"
                 text
                 style="font-size:16px; margin-top:8px; font-weight: 700; padding:0px;"
                 :style="isLogin ? 'margin-right:145px' : 'margin-right:130px;'"
@@ -2216,6 +2216,10 @@
     @media only screen and (max-width: 1200px) { 
         .main-nav-modeling-is-mobile {
             display:none;
+        }
+        .making-main-nav-modeling-is-mobile {
+            margin-top:90px !important;
+            margin-right: 30px !important
         }
     }
 
