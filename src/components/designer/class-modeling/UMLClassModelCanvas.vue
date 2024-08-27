@@ -357,8 +357,7 @@
                                     append-icon="mdi-send"
                                     @click:append="generate()"
                                     @keypress.enter="debouncedGenerate()"
-                                >
-                                </v-text-field>                                     
+                                ></v-text-field>                                     
                             </v-card>
                         </v-card>
                     </v-layout>
@@ -778,7 +777,12 @@
                         me.$set(aggEl.aggregateRoot, "fieldDescriptors", rootClass.fieldDescriptors);
                         me.$set(aggEl.aggregateRoot, "operations", rootClass.operations);
                     }
-                    me.$set(aggEl.aggregateRoot, "entities", JSON.parse(JSON.stringify(me.value)));
+                    if (diff.elements) {
+                        me.$set(aggEl.aggregateRoot.entities, "elements", JSON.parse(JSON.stringify(me.value.elements)));
+                    }
+                    if (diff.relations) {
+                        me.$set(aggEl.aggregateRoot.entities, "relations", JSON.parse(JSON.stringify(me.value.relations)));
+                    }
                     parentCanvas.updateUMLClassValue(aggEl);
                 }
             }
