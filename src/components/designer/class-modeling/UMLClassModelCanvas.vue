@@ -1033,6 +1033,9 @@
                         })
 
                         if (!isExist) {
+                            entity.nameCamelCase = changeCase.camelCase(entity.name)
+                            entity.namePascalCase = changeCase.pascalCase(entity.name)
+                            entity.namePlural = pluralize(entity.nameCamelCase)
                             me.$set(me.value.elements, entity.elementView.id, entity)
                         }
                     })
