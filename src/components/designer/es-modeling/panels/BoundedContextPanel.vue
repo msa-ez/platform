@@ -12,6 +12,7 @@
             @changeTranslate="changeTranslate"
             @updateBCName="updateBCName()"
             v-on:update:members="value.members = $event"
+            class="pb-10"
     >
 
         <template slot="t-description-text">
@@ -52,18 +53,27 @@
         <template slot="generateWithAi">
             <div><span>
                 <div>
-                    <v-btn v-if="value.description && generateDone" class="auto-modeling-btn" color="primary" @click="generate()"><v-icon>mdi-auto-fix</v-icon>(RE)Generate Inside</v-btn>
-                    <v-btn v-if="value.description && !generateDone" class="auto-modeling-btn" color="primary" @click="stop()"><v-icon>mdi-auto-fix</v-icon>Stop Generation</v-btn>
-                    <v-btn v-if="!value.description" class="auto-modeling-btn" text @click="explain()"><v-icon>mdi-auto-fix</v-icon>Generate description</v-btn>
+                    <v-btn v-if="generateDone" :disabled="!value.description" class="auto-modeling-btn" color="primary" @click="generate()"><v-icon>mdi-auto-fix</v-icon>(RE)Generate Inside</v-btn>
+                    <v-btn v-if="!generateDone" class="auto-modeling-btn" color="primary" @click="stop()"><v-icon>mdi-auto-fix</v-icon>Stop Generation</v-btn>
+                    <!-- <v-btn v-if="!value.description" class="auto-modeling-btn" color="primary" @click="explain()"><v-icon>mdi-auto-fix</v-icon>Generate description</v-btn> -->
                 </div>
             </span></div>
         </template>
             
         <template slot="element">
-            <div>
-                <span class="panel-title" style="margin-left:15px;">Read/Write Authority</span>
+            <div class="pa-4 pb-0">
+                <span class="panel-title">Read/Write Authority</span>
+                <v-alert
+                    color="grey darken-1"
+                    text
+                    type="info"
+                    class="pa-2 mb-2 alert-text"
+                    v-if="titleName != 'External' && titleName != 'Issue' && titleName != 'UI' "
+                >
+                권한을 부여할 유저와 부여할 권한을 설정하세요
+                </v-alert>
                 <v-card flat>
-                    <v-card-text>
+                    <v-card-text class="pa-0">
                         <v-autocomplete
                                 v-if="selectedTemplateLists"
                                 v-model="value.preferredPlatform"
@@ -111,12 +121,12 @@
                 </v-card>
 
                 <v-card flat v-if="value.members">
-                    <v-card-text>
+                    <v-card-text class="pa-0">
                         <div>
                             <v-data-table
                                     :headers="userTableHeaders"
                                     :items="value.members"
-                                    class="elevation-1"
+                                    class="elevation-1 mb-8"
                             >
                                 <template v-slot:item.readable="{ item }">
                                     <v-simple-checkbox

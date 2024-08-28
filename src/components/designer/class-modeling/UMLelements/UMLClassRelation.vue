@@ -170,9 +170,9 @@
             var me = this
             if(me.value.name == '' && !me.value.relationType.includes('Generalization')) {
                 if(me.value.relationType.includes('Aggregation') || me.value.relationType.includes('Composition') ) {
-                    me.value.name = pluralize(me.value.targetElement.nameCamelCase)
+                    me.value.name = pluralize(changeCase.camelCase(me.value.targetElement.name))
                 } else {
-                    me.value.name = me.value.targetElement.nameCamelCase
+                    me.value.name = changeCase.camelCase(me.value.targetElement.name)
                 }
             }
 

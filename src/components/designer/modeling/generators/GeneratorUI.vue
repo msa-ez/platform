@@ -199,7 +199,7 @@
                                                     outlined
                                                     type="info"
                                                     style="text-align: left;"
-                                                >Please select any deployment model to modify settings
+                                                >{{ modifyInfo }}
                                                 </v-alert>
                                                 <v-col cols="12" class="pa-0">
                                                     <div v-for="(message, idx) in chatList" :key="idx">
@@ -408,6 +408,18 @@
             },
             canvasType() {
                 return this.$parent.$parent.$options.name
+            },
+            modifyInfo() {
+                const canvas = this.$parent.$parent.$options.name
+
+                switch(canvas){
+                    case "customer-journey-map" : return "Please select any journey map model to modify settings"
+                    case "business-model" : return "Please select any business model to modify settings"
+                    case "user-story-map" : return "Please select any user story map model to modify settings"
+                    case "event-storming-model-canvas" : return "Please select any modeling sticker to modify settings"
+                    case "uml-class-model-canvas" : return "Please enter requirements to modify settings"
+                    case "v-card" : return "Please select any deployment model to modify settings"
+                }
             }
         },
         mounted: async function () { 
@@ -807,6 +819,7 @@
 .generator-ui-btn {
     bottom:20px;
     right:20px;
+    z-index: 2 !important;
 }
 .expanded {
   width: 200px;
