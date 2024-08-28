@@ -176,6 +176,7 @@
                 :duplicatedFieldList="duplicatedFieldList"
                 @close="closePanel"
                 @changedPanelValue="changedPanelValue"
+                @generateAggregate="generate"
                 :generateDone.sync="generateDone"
                 :generator="generator"
                 :isPBCModel="isPBCModel"
@@ -332,23 +333,6 @@
                 }
 
             },
-            input(){
-                let parent = this.$parent;
-                while(parent.$vnode.tag.indexOf('event-storming-model-canvas') == -1) parent = parent.$parent;
-
-                let model = Object.assign([], parent.value)
-                let boundedContext = null
-                if(this.value && this.value.boundedContext){
-                    boundedContext = model.elements[this.value.boundedContext.id]
-                }
-
-                return{
-                    description: this.value.description,
-                    aggregate: this.value,
-                    boundedContext: boundedContext,
-                    model: model,
-                }
-            },
 
         },
         data: function () {
@@ -362,6 +346,12 @@
                 generator: null,
                 originModel: null,
                 duplicatedFieldList: [],
+                input: {
+                    description: '',
+                    aggregate: {},
+                    boundedContext: {},
+                    model: {},
+                },
             };
         },
         created: function () {
@@ -481,8 +471,24 @@
                 this.$EventBus.$emit('createAggregate', model, this.value, this.originModel);
             },
             generate(){
-                this.generator.generate();
-                this.generateDone = false;
+                var me = this
+
+                let parent = me.$parent;
+                while(parent.$vnode.tag.indexOf('event-storming-model-canvas') == -1) parent = parent.$parent;
+
+                let model = Object.assign([], parent.value)
+                let boundedContext = null
+                if(me.value && me.value.boundedContext){
+                    boundedContext = model.elements[me.value.boundedContext.id]
+                }
+
+                me.input.aggregate = me.value
+                me.input.boundedContext = boundedContext
+                me.input.model = model
+                me.input.description = me.value.description
+
+                me.generator.generate();
+                me.generateDone = false;
             },
             stop(){
                 this.generator.stop()
@@ -500,6 +506,14 @@
             addAggRelation(element) {
                 var me = this;
                 var toName = element.targetElement.name;
+
+                var hasClassId = me.value.aggregateRoot.fieldDescriptors.some((field) =>
+                    field.className.includes(changeCase.pascalCase(toName))
+                );
+
+                if(hasClassId){
+                    return
+                }
 
                 var attr = {
                     "_type": "org.uengine.model.FieldDescriptor",

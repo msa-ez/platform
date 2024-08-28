@@ -360,8 +360,8 @@
                 this.executeBeforeDestroy();
                 this.closePanel();
 
-                this.generator.generate();
                 this.state.startTemplateGenerate = true;
+                this.$emit('generateAggregate');
                 this.$emit('update:generateDone', false);
                 this.generateDone = false;
             },

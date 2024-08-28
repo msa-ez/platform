@@ -62,7 +62,7 @@ class BoundedContextGenerator extends JsonAIGenerator {
         The format must be as follows:
         {
             "boundedContext": {
-                "bounded-context-name": {  // Bounded Context names must be a lower-cases and spaces are not allowed, use hypen instead.
+                "bounded-context-name": {  // Bounded Context names must be a lower-cases and spaces are not allowed, use hypen instead. Also, a single Bounded Context can contain two or more aggregates.
                     "${this.originalLanguage.toLowerCase()}Name: "Name in ${this.originalLanguage}", 
                     "aggregates": [ 
                         {
@@ -220,7 +220,7 @@ class BoundedContextGenerator extends JsonAIGenerator {
         });
         
         return uniqueRelations;
-      }
+    }
 
 
     createModel(text){

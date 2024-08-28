@@ -30,10 +30,10 @@
                                 class="main-nav-tab"
                             >{{$t('mainNav.learn')}}
                             </v-tab>
-                            <v-tab @click="openMakingDialog()"
+                            <!-- <v-tab @click="openMakingDialog()"
                                 class="main-nav-tab main-nav-tab-display"
                             >{{$t('making.title')}}
-                            </v-tab>
+                            </v-tab> -->
                             <v-icon @click="searchOpen = !searchOpen"
                                 class="main-nav-tab"
                             >mdi-magnify
@@ -71,6 +71,8 @@
                             </v-list-item>
                         </v-list-group>
                     </v-hover>
+
+                    
 
                     <v-dialog v-model="learnNavDialog"
                         max-width="90%"

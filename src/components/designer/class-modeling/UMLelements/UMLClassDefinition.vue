@@ -461,7 +461,7 @@
                                 me.canvas.value.elements[relation.from].parentOperations = me.value.operations
                             } else {
                                 if(relation.name == '') {
-                                me.canvas.value.relations[id].name = me.value.name
+                                    me.canvas.value.relations[id].name = me.value.name
                                 }
                             }
                         }
