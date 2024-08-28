@@ -63,7 +63,7 @@
         <template slot="element">
             <div class="pa-4 pb-0">
                 <span class="panel-title">Read/Write Authority</span>
-                <v-alert
+                <!-- <v-alert
                     color="grey darken-1"
                     text
                     type="info"
@@ -71,7 +71,7 @@
                     v-if="titleName != 'External' && titleName != 'Issue' && titleName != 'UI' "
                 >
                 권한을 부여할 유저와 부여할 권한을 설정하세요
-                </v-alert>
+                </v-alert> -->
                 <v-card flat>
                     <v-card-text class="pa-0">
                         <v-autocomplete

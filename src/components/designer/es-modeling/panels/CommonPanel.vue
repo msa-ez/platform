@@ -96,9 +96,9 @@
                                                     autofocus
                                                 >
                                                 </v-text-field>
-                                                <detail-component
+                                                <!-- <detail-component
                                                     :title="nameExample"
-                                                />
+                                                /> -->
                                                 <v-text-field
                                                     v-model="value.displayName"
                                                     :disabled="isReadOnly"
