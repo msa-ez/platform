@@ -67,6 +67,7 @@ class DDLGenerator extends JsonAIGenerator{
                                 }
                             ],
                             "commands": [
+                            // Creation must be created.
                                 {
                                     "name": "Command Name",
                                     "${this.originalLanguage}Name: "Command name in ${this.originalLanguage}", 
@@ -87,6 +88,7 @@ class DDLGenerator extends JsonAIGenerator{
                             ],
                             
                             "events": [
+                            // Creation must be created.
                                 {
                                     "name": "Event Name", // PascalCase
                                     "${this.originalLanguage}Name: "Event name in ${this.originalLanguage}", 
@@ -137,7 +139,6 @@ class DDLGenerator extends JsonAIGenerator{
         - The result must split into two or more different bounded contexts.
         - Each bounded context interacts with each other, and domain events must flow into a service in a way that invokes the policies of other bounded context.
         
-        - Events and commands for creation must be created.
         - Except primary key, ID class name must be '[AggregateName]Id' format. For example, if the aggregate name is Customer, the ID class name is 'CustomerId'.
             ex) Customer Aggregate의 ID property:
                 {
