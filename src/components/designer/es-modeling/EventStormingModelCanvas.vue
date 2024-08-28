@@ -1294,6 +1294,7 @@
                             ref="generatorUI"
                             @createModel="createModel"
                             @modificateModel="modificateModel"
+                            @createModelFromDDL="createModelFromDDL"
                             @clearModelValue="clearModelValue"
                             @showContinueBtn="showContinue = true"
                             :generatorStep="generatorStep"
@@ -1329,6 +1330,7 @@
                             ref="aggregateGeneratorUI"
                             @createModel="createModel"
                             @modificateModel="modificateModel"
+                            @createModelFromDDL="createModelFromDDL"
                             @onGenerationFinished="onGenerationFinished"
                             @clearModelValue="clearModelValue"
                             :generatorStep="generatorStep"
@@ -2008,7 +2010,7 @@
         }
     });
 
-    // const CodeGeneratorCore = require("../modeling/CodeGeneratorCore");
+    const CodeGeneratorCore = require("../modeling/CodeGeneratorCore");
     // import json2yaml from "json2yaml";
     // import StorageBase from "../modeling/StorageBase";
     // import EventStormingModelList from "./EventStormingModelList";
@@ -3521,72 +3523,85 @@
             createAggregate(val, agg, originModel) {
                 var me = this;
 
+                // let codeGenerator = new CodeGeneratorCore({canvas: me})
+                // let convertedModel = codeGenerator.convertModelForCodeGen(me.value)
+
+                // let currentAggregate = convertedModel.modelForElements.Aggregate.find(x => x.id == agg.id && x._type !== "org.uengine.modeling.model.BoundedContext")
+                // let attachedElements
+                // if(currentAggregate){
+                //     attachedElements = currentAggregate.attached.filter(ele => ele._type !== "org.uengine.modeling.model.BoundedContext" && ele._type !== "org.uengine.modeling.model.Aggregate")
+
+                //     let attachedEvents = currentAggreate.events
+                //     let attachedCommands = currentAggreate.commands
+
+                // }
+
                 if (val && val.elements) {
-                    let elements = me.value.elements;
-                    let relations = me.value.relations;
+                    let elements = JSON.parse(JSON.stringify(me.value.elements));
+                    let relations = JSON.parse(JSON.stringify(me.value.relations));
 
                     var attachedElements = me.getAttachedElements(me.value.elements, agg);
                     var attachedRealtions = me.getAttachedRelations(me.value.relations, agg);
 
-                    // delete element
-                    Object.keys(me.value.elements).forEach(function (modelEle) {
-                        Object.keys(attachedElements).forEach(function (ele) {
-                            if(me.value.elements[modelEle]!=null && !me.value.elements[modelEle]._type.includes('BoundedContext')){
-                                if(me.value.elements[modelEle].boundedContext.id==agg.boundedContext.id){
-                                    delete me.value.elements[ele];
+                    me.value.elements = {}
+                    me.value.relations = {}
+
+                    if(attachedElements){
+                        // delete element
+                        Object.keys(elements).forEach(function (modelEle) {
+                            attachedElements.forEach(function (ele) {
+                                if(elements[modelEle]!=null && modelEle == ele.id){
+                                    delete elements[ele];
                                 }
-                            }
+                            });
                         });
-                    });
 
-                    // delete relations
-                    Object.keys(me.value.relations).forEach(function (modelEle) {
-                        Object.keys(attachedRealtions).forEach(function (ele) {
-                            if(me.value.relations[modelEle]!=null){
-                                delete me.value.relations[ele];
-                            }
+                        // delete relations
+                        Object.keys(relations).forEach(function (modelEle) {
+                            Object.keys(attachedRealtions).forEach(function (ele) {
+                                if(relations[modelEle]!=null){
+                                    delete relations[ele];
+                                }
+                            });
                         });
-                    });
+                    }
 
-                    me.value.elements = Object.assign({},elements, val.elements);
-                    me.value.relations = Object.assign({}, relations, val.relations);
+                    me.value.elements = Object.assign(elements, val.elements);
+                    me.value.relations = Object.assign(relations, val.relations);
 
                     if(originModel){
                         var diffElements = jsondiffpatch.diff(originModel, me.value);
                         me.changeValueAction(diffElements, me.value, {'forcePush': true});
                         me.value.__ob__.dep.notify();
                     }
+
+                    me.changedByMe = true
                 }
             },
             getAttachedElements(val, agg){
                 var me = this;
-                var attachedElements = {};
 
-                // find elements of attached aggregate
-                Object.keys(val).forEach(function (ele) {
-                    if (val[ele] != null) {
-                        if (isAttached(agg, val[ele])) {
-                            if(!val[ele]._type.includes('BoundedContext') && ele!=agg.id){
-                                attachedElements[ele] = val[ele];
+                let codeGenerator = new CodeGeneratorCore({canvas: me})
+                let convertedModel = codeGenerator.convertModelForCodeGen(me.value)
+
+                let currentAggregate = convertedModel.modelForElements.Aggregate.find(x => x.id == agg.id && x._type !== "org.uengine.modeling.model.BoundedContext")
+                let attachedElements
+                if(currentAggregate){
+                    let attachedEvents = currentAggregate.events
+                    let attachedCommands = currentAggregate.commands
+
+                    attachedElements = [...attachedEvents, ...attachedCommands]
+
+                    attachedCommands.forEach(command => {
+                        command.attached.forEach(ele => {
+                            if(ele._type.includes('Actor') && !attachedElements.find(e => e.id === ele.id)){
+                                attachedElements.push(ele)
                             }
-                        }
-                    }
-                });
+                        })
+                    })
+                }
 
-                //find actor of attached aggregate
-                Object.keys(attachedElements).forEach(function (attachedEle) {
-                    Object.keys(val).forEach(function (ele) {
-                        if (val[ele] != null) {
-                            if(val[ele]._type.includes('Actor')){
-                                if(isAttached(attachedElements[attachedEle], val[ele])){
-                                    attachedElements[ele] = val[ele]
-                                }
-                            }
-                        }
-                    });
-                });
-
-                return attachedElements;
+                return attachedElements
             },
             getAttachedRelations(val, agg){
                 var me = this;
@@ -3640,6 +3655,19 @@
 
                 if(model && model.updateElement){
                     me.value.elements[model.updateElement.id] = model.updateElement
+                    me.changedByMe = true
+                }
+            },
+            createModelFromDDL(model){
+                var me = this;
+                
+                if(model && model.elements){
+                    me.value.elements = {}
+                    me.value.relations = {}
+
+                    me.value.elements = Object.assign(me.value.elements, model.elements)
+                    me.value.relations = Object.assign(me.value.relations, model.relations)
+
                     me.changedByMe = true
                 }
             },

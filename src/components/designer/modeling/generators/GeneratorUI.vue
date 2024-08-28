@@ -13,7 +13,7 @@
         </v-btn>
         <v-row v-if="openGeneratorUI" style="position:absolute; right:30px; top:75px;">
             <v-card style="text-align: center; z-index: 2;" width="auto">
-                <v-card-text :style="(isExpanded && generationStopped) ? { width: '75px' } : isExpanded ? { width: '170px' } : { width: '450px' }" 
+                <v-card-text :style="(isExpanded && generationStopped) ? { width: '75px' } : isExpanded ? { width: '170px' } : { width: '500px' }" 
                     style="padding: 0px; ">
                     <v-progress-linear  :indeterminate="generationStopped" v-if="generationStopped"
                         style="margin-top: 10px; pointer-events: none;"
@@ -110,6 +110,7 @@
                     <v-tabs v-model="userPanel">
                         <v-tab v-for="tab in tabs" :key="tab.component" :disabled="hasElements&&(!tab.isAlwaysActivated)" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" 
                                @click="switchGenerator('tab', tab.isShowGenerateBtn, tab.isShowContinueBtn, tab.isShowStopBtn, tab.isShowRegenerateBtn)">{{tab.name}}</v-tab>
+                        <v-tab :disabled="!showGenerateBtn" v-if="canvasType === 'event-storming-model-canvas'" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('DDL', false, false, false, false)">DDL</v-tab>
                         <v-tab :disabled="hasElements && !showGenerateBtn" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('input', true, true, true, true)">Input</v-tab>
                         <v-tab :disabled="hasElements && !showGenerateBtn" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('output', false, true, true, true)">Output</v-tab>
                         <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('chat', false, false, false, false)">Chat</v-tab>
@@ -139,6 +140,27 @@
                                 <v-tabs-items v-model="userPanel">
                                     <v-tab-item v-for="tab in tabs" :key="tab.component" :disabled="hasElements">
                                         <component :is="tab.component" :ref="tab.component" @generate="generate()" :initValue="tab.initValue"></component>
+                                    </v-tab-item>
+
+                                    <v-tab-item v-if="canvasType === 'event-storming-model-canvas'">
+                                        <v-card style="padding: 10px;">
+                                            <v-textarea
+                                                v-model="DDL"
+                                                label="DDL"
+                                                rows="12"
+                                                no-resize
+                                            ></v-textarea>
+
+                                            <v-textarea
+                                                v-model="boundedContextLists"
+                                                label="Describe your Bounded Contexts"
+                                                rows="5"
+                                                no-resize
+                                            ></v-textarea>
+
+                                            <v-btn v-if="!generationStopped" class="prompt_field generator-ui-text-field" @click="generate()" block>Generate</v-btn>
+                                            <v-circular-progress indeterminate v-if="generationStopped"></v-circular-progress>
+                                        </v-card>
                                     </v-tab-item>
 
                                     <v-tab-item :disabled="hasElements">
@@ -245,6 +267,7 @@
     import KubernetesModificationGenerator from './KubernetesModificationGenerator.js'
     import Usage from '../../../../utils/Usage'
     import DebeziumLogsTab from "./generatorTabs/DebeziumLogsTab.vue"
+    import DDLGenerator from './DDLGenerator.js'
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
 
@@ -373,7 +396,10 @@
                 prevUsedGeneratorTabIndex: null,
                 showContinueBtn: true,
                 showStopBtn: true,
-                isShowRegenerateBtn: true
+                isShowRegenerateBtn: true,
+                DDL: "",
+                boundedContextLists: ""
+
             }
         },
         computed: {
@@ -435,7 +461,7 @@
                         localStorage["gen-state"] = null;
                     } else {
                         this.isAutoGen = false
-                        this.userPanel = 0 + this.tabs.length
+                        this.userPanel = 1 + this.tabs.length
                         this.generatorName = this.defaultInputData.generator
                     }
                 } else {
@@ -456,6 +482,7 @@
                         case "UserStoryMapGenerator": this.generatorComponent = new UserStoryMapGenerator(this); break;
                         case "AggregateMemberGenerator": this.generatorComponent = new AggregateMemberGenerator(this); break;
                         case "KubernetesGenerator": this.generatorComponent = new KubernetesGenerator(this); break;
+                        case "DDLGenerator": this.generatorComponent = new DDLGenerator(this); break;
 
                     }
 
@@ -502,7 +529,7 @@
                     issuedTimeStamp: issuedTimeStamp,
                     expiredTimeStamp: Date.now(),
                     metadata: {
-                        projectId: this.input.associatedProject ? this.input.associatedProject : null,
+                        projectId: this.input &&this.input.associatedProject ? this.input.associatedProject : null,
                         modelId: this.projectId
                     }
                 });
@@ -549,6 +576,14 @@
                     }
                     this.chatList.push(message);
                     this.chatMessage = ""
+                    this.generatorComponent.generate();
+                }else if(this.generatorName === "DDLGenerator"){
+                    if(!this.DDL || !this.boundedContextLists){
+                        return;
+                    }
+                    this.input = {}
+                    this.input['DDL'] = this.DDL
+                    this.input['boundedContextLists'] = this.boundedContextLists
                     this.generatorComponent.generate();
                 }else{
                     this.focusedTabComponent = (this.userPanel < this.tabs.length) ? this.$refs[this.tabs[this.userPanel].component][0] : null
@@ -640,9 +675,12 @@
                         }
 
                         this.generatorName = "ModelModificationGenerator"
-                }
-                else
+                }else if(mode && mode=='DDL'){
+                    this.generatorComponent = new DDLGenerator(this);
+                    this.generatorName = "DDLGenerator"
+                }else{
                     this.createGenerator();
+                }
             },
 
             async reGenerate(userStory){
@@ -706,7 +744,9 @@
 
                 if(this.generatorName === "ModelModificationGenerator"){
                     this.$emit("modificateModel", model)
-                } else{
+                }else if(this.generatorName === "DDLGenerator"){
+                    this.$emit("createModelFromDDL", model)
+                }else{
                     this.$emit("createModel", model)
                 }
                 callbackModelValueToTabComponent()
@@ -731,6 +771,9 @@
                         type: 'response'
                     }
                     this.chatList.push(response);
+                }else if(this.generatorName === "DDLGenerator"){
+                    console.log("[*] DDLGenerator에서 전달한 모델 값")
+                    console.log(model)
                 }else{
                     this.savedResult = this.result;
 

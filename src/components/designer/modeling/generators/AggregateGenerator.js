@@ -23,9 +23,6 @@ class AggregateGenerator extends JsonAIGenerator {
     }
     
     createPrompt(){
-        this.modelElements = {}
-        this.generateCnt = 0
-        
         let descriptionOfCommunicationStyle = '';
 
         let existingEventStormingModel
@@ -36,29 +33,40 @@ class AggregateGenerator extends JsonAIGenerator {
             // this.clientBC = convertedModel.modelForElements.BoundedContext.find(x => x.id == this.client.input.aggregate.boundedContext.id)
 
             var cache = []
-            const includingKeys = ["", "_type", "events", "aggregateRoot", "aggregates", "policies", "commands", "actors", "name"]
-            existingEventStormingModel = JSON.stringify(convertedModel.modelForElements.BoundedContext,
-                 (key, value) => {
-                  if (isNaN(key) && !includingKeys.includes(key)) return;
+            const includingKeys = ["", "_type", "events", "aggregateRoot", "aggregates", "policies", "commands", "actorName", "name"]
 
-                  //// shorten the type name
-                  if(key == "_type" && value && value.indexOf('.') > 1) value = value.split(".").pop()
-    
-                  if (typeof value === 'object' && value !== null) {
+            var cache = [];
+            existingEventStormingModel = JSON.stringify(convertedModel.modelForElements.BoundedContext,
+                (key, value) => {
+                if (isNaN(key) && !includingKeys.includes(key)) return undefined;
+
+                // Shorten the type name
+                if(key === "_type" && typeof value === 'string' && value.indexOf('.') > 1) {
+                    return value.split(".").pop();
+                }
+
+                if (typeof value === 'object' && value !== null) {
                     // Duplicate reference found, discard key
-                    if (cache.includes(value)) return;
+                    if (cache.indexOf(value) !== -1) return;
                 
                     // Store value in our collection
                     cache.push(value);
-                  }
-                  return value;
-                })
+                }
+                return value;
+                });
+            
+            // Clear the cache after use
+            cache = null;
         }
 
 
         return `
         ${existingEventStormingModel ? `There is an existing event storming model : ${existingEventStormingModel}`: ``}
         
+        The model should be created with reference to the existing model.
+        For information that can be used as-is, such as names and actors, use those names without modification.
+        Also, you make the aggregate only one.
+
         Please create a Bounded Context for event storming model in json for following description: 
         ${this.client.input.description}
         
@@ -186,6 +194,22 @@ class AggregateGenerator extends JsonAIGenerator {
     //     }
     // ]
 
+    removeDuplicateRelations(relations) {
+        const uniqueRelations = {};
+        
+        Object.entries(relations).forEach(([key, relation]) => {
+          const sourceId = relation.sourceElement.id;
+          const targetId = relation.targetElement.id;
+          const relationKey = `${sourceId}-${targetId}`;
+          
+          if (!uniqueRelations[relationKey]) {
+            uniqueRelations[relationKey] = relation;
+          }
+        });
+        
+        return uniqueRelations;
+    }
+
     uuid() {
         function s4() {
             return Math.floor((1 + Math.random()) * 0x10000)
@@ -203,12 +227,6 @@ class AggregateGenerator extends JsonAIGenerator {
         this.sequenceForUUID = 0;
     }
 
-    generate(){
-        this.modelElements = {}
-        super.generate()
-    }
-
-
     createModel(text){
         var me = this
         let modelValue 
@@ -225,7 +243,7 @@ class AggregateGenerator extends JsonAIGenerator {
                         throw new Error('No setting boundedContext.');
                     }
                     me.modelElements[bcUuid] = me.client.input.boundedContext
-                    if(!me.isResetElementView && me.client.input.boundedContext.aggregates.length<2){
+                    if(!me.isResetElementView && me.client.input.boundedContext.aggregates.length==0){
                         if(me.modelElements[bcUuid]["elementView"].width < 480){
                             me.modelElements[bcUuid]["elementView"].x = me.modelElements[bcUuid]["elementView"].x + 65 
                             me.bcXvalue = me.modelElements[bcUuid]["elementView"].x + 65 
@@ -249,12 +267,15 @@ class AggregateGenerator extends JsonAIGenerator {
     
                             if(agg["name"]){
                                 var aggUuid = me.client.input.aggregate.id
+                                if(!me.modelElements[bcUuid]['aggregates'].find(agg => agg.id === aggUuid)){
+                                    me.modelElements[bcUuid]['aggregates'].push({id: aggUuid})
+                                }
                                 if(me.generateCnt == bcIdx){
                                     me.modelElements[aggUuid] = {
                                         aggregateRoot: {
                                             _type: 'org.uengine.modeling.model.AggregateRoot', 
                                             fieldDescriptors: [],
-                                            entities: {elements: {}, relation: {}}, 
+                                            entities: {elements: {}, relations: {}}, 
                                             operations: [],
                                         },
                                         author: me.userUid,
@@ -882,7 +903,14 @@ class AggregateGenerator extends JsonAIGenerator {
                         }
                     });
                 }
-                
+
+                Object.keys(me.modelElements).forEach(key => {
+                    if (me.modelElements[key]._type === "org.uengine.modeling.model.BoundedContext") {
+                        delete me.modelElements[key];
+                    }
+                });
+                relations = me.removeDuplicateRelations(relations)
+
                 var obj = {
                     elements: me.modelElements,
                     relations: relations,
