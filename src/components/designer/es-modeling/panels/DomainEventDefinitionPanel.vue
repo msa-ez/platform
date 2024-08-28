@@ -59,17 +59,23 @@
                 </v-card>
 
                 <v-card flat>
-                    <v-card-text class="panel-title">Trigger By LifeCycle</v-card-text>
-                    <v-card-text>
-                        <v-radio-group v-model="value.trigger" style="width: 290px;" :disabled="isReadOnly">
-                            <v-row dense>
-                                <v-col dense>
+                    <div class="pa-4 pb-0">
+                        <v-card-text class="pa-0 pb-2 panel-title">Trigger By LifeCycle</v-card-text>
+                        <!-- <detail-component
+                            :title="'Event를 발생시키는 조건을 설정하세요'"
+                            :details="triggerText"
+                        /> -->
+                    </div>
+                    <v-card-text class="pt-0">
+                        <v-radio-group v-model="value.trigger" style="width: 290px;" :disabled="isReadOnly" class="mt-1">
+                            <v-row dense class="pa-0 ma-0">
+                                <v-col dense class="pa-0">
                                     <v-radio label="Pre Persist" value="@PrePersist" v-if="lifeCycleCommand.includes('POST')" style="width: 110px" ></v-radio>
                                     <v-radio label="Pre Update" value="@PreUpdate" v-if="lifeCycleCommand.includes('PATCH')"></v-radio>
                                     <v-radio label="Pre Update" value="@PreUpdate" v-if="lifeCycleCommand.includes('PUT')"></v-radio>
                                     <v-radio label="Pre Remove" value="@PreRemove" v-if="lifeCycleCommand.includes('DELETE')"></v-radio>
                                 </v-col>
-                                <v-col dense>
+                                <v-col dense class="pa-0">
                                     <v-radio label="Post Persist" value="@PostPersist" v-if="lifeCycleCommand.includes('POST')"></v-radio>
                                     <v-radio label="Post Update" value="@PostUpdate" v-if="lifeCycleCommand.includes('PATCH')"></v-radio>
                                     <v-radio label="Post Update" value="@PostUpdate" v-if="lifeCycleCommand.includes('PUT')"></v-radio>
@@ -147,7 +153,13 @@
                 policyLists: [],
                 lifeCycleCommand: "",
                 relatedAggregate: null,
-            }
+                triggerText: `Pre Persist: 데이터가 저장되기 직전에 실행됩니다. \n
+                            Post Persist: 데이터가 저장된 직후에 실행됩니다. \n
+                            Pre Update: 데이터가 업데이트되기 직전에 실행됩니다. \n
+                            Post Update: 데이터가 업데이트된 직후에 실행됩니다. \n
+                            Pre Remove: 데이터가 삭제되기 직전에 실행됩니다. \n
+                            Post Remove: 데이터가 삭제된 직후에 실행됩니다. \n`           
+            } 
         },
         created: function () { },
         beforeDestroy(){
@@ -314,3 +326,4 @@
         }
     }
 </script>
+
