@@ -100,7 +100,7 @@
             {{$t('making.title')}}
             </v-btn> -->
             <!-- 만들기 클릭했을 때 열리던 다이얼로그 -->
-            <v-dialog
+            <v-dialog v-if="showNewButton"
                 v-model="makingDialog"
                 max-width="90%"
             >
