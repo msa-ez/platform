@@ -3,12 +3,12 @@ const VODefinitions = require("./VODefinitions");
 //let partialParse = require('partial-json-parser');
 let changeCase = require('change-case');
 
-class ESGenerator extends JsonAIGenerator{
+class DDLGenerator extends JsonAIGenerator{
 
     constructor(client){
         super(client);
         
-        this.generateType = 'ES'
+        this.model = "gpt-4o"
         this.generateCnt = 0;
         this.modelElements = {}
         this.sequenceForUUID = 0;
@@ -28,17 +28,27 @@ class ESGenerator extends JsonAIGenerator{
 
 
 
-        return `Please create an event storming model in json for following service: 
-        ${this.client.input.userStory}
+        return `Please create an event storming model in json for following DDL: 
+        ${this.client.input.DDL}
 
-        ${this.describeEventOnlyModel()}
+        Generate bounded contexts and aggregates according to the following request:
+        ${this.client.input.boundedContextLists}
+
+        Extract DDD Aggregates and Bounded Contexts from the provided DDL, ensuring that:
+        1. All tables from the DDL are included without omission.
+        2. Tables are grouped into cohesive Aggregates based on their relationships and domain logic.
+        3. Aggregates are organized into appropriate Bounded Contexts.
+        4. Each Bounded Context may contain one or more Aggregates.
+        5. If specific management instructions for certain domains or tables are provided, follow them.
+        6. For any tables or domains not explicitly mentioned in the instructions, use your best judgment to place them in the most appropriate Bounded Context and Aggregate based on their purpose and relationships.
+        7. Normalize and combine related tables within each Aggregate where appropriate.
         
         The format must be as follows:
         {
             "serviceName": "Service Name",
             "actors": ["Actor Name"],
-            // The Bounded Context is must have aggregate over the one.
-            // Bounded Context names must be a lower-cases and spaces are not allowed, use hypen instead.
+            // The Bounded Context is must have aggregate over the one. Also, a single Bounded Context can contain two or more aggregates.
+            // Bounded Context names must be a lower-cases english and spaces are not allowed, use hypen instead.
             "boundedContext": {
                 "bounded-context-name": {  
                     "${this.originalLanguage}Name: "Bounded context name in ${this.originalLanguage}", 
@@ -46,31 +56,18 @@ class ESGenerator extends JsonAIGenerator{
                         {
                             "name": "AggregateName",  // Aggregate name must be Pascal-Case
                             "${this.originalLanguage}Name: "Aggregate name in ${this.originalLanguage}", 
-                            "${this.originalLanguage}Description: "Description about the aggregate in ${this.originalLanguage}", 
-                            ${this.generationOptions.ui ? `
-                            "uiStyle":{
-                                "layout": "CARD" | "GRID"  | "LIST-ITEM",
-                                "nameProperty": "property name for representing the object",
-                                "imageUrlProperty":"property name for representing image url if exists",
-                                "icon": "material design icon font name for representing this aggregate data",
-                                "isRepresentingUser": true | false
-                            },
-                            `: ``}
+                            "${this.originalLanguage}Description: "Description about the aggregate in ${this.originalLanguage}"
                             "properties": [
                                 {
                                     "name": "propertyName", // Property Name must be Camel-Case
                                     "${this.originalLanguage}Name: "Property name in ${this.originalLanguage}", 
                                     "type": "PropertyType", // Property Type can be known java class or the Value object classes listed here: must be one of Address, Portrait, Rating, Money, Email. use simple name reduce the package name if java class name.
                                     "isKey": "Must be true or not generated", // For each "properties", only one "isKey" must be true.
-                                    ${this.generationOptions.ui ? `
-                                    "uiStyle":{
-                                        "inputUI": "TEXT" | "SELECT" | "TEXTAREA" // proper user interface type for input this property value
-                                    }`:``}
-
                                     "options" : ["value1", "value2"] // optional. if there are selectable options for this value.
                                 }
                             ],
                             "commands": [
+                            // Creation must be created.
                                 {
                                     "name": "Command Name",
                                     "${this.originalLanguage}Name: "Command name in ${this.originalLanguage}", 
@@ -86,16 +83,12 @@ class ESGenerator extends JsonAIGenerator{
                                     "api_verb": "POST" | "DELETE" | "PUT",
                                     "isCreation": true | false, //true if this command creates new instance of the aggregate
                                     "actor": "Actor Name",
-                                    "outputEvents": ["Event Name"],
-                                    ${this.generationOptions.ui ? `
-                                    "uiStyle":{
-                                        "icon": "material design icon font name for representing this command"
-                                    }`:``}
-
+                                    "outputEvents": ["Event Name"]
                                 }
                             ],
                             
                             "events": [
+                            // Creation must be created.
                                 {
                                     "name": "Event Name", // PascalCase
                                     "${this.originalLanguage}Name: "Event name in ${this.originalLanguage}", 
@@ -140,53 +133,46 @@ class ESGenerator extends JsonAIGenerator{
         
         }
 
-        for generated aggregate objects, i want to set Value Object for each properties if possible.
-        Class name of Value Objects must be one of Address, Money, Email, Password, File, Photo, Rating, Likes, Tags, Payment, Weather, Comment.
+        - for generated aggregate objects, i want to set Value Object for each properties if possible.
+        - Class name of Value Objects must be one of Address, Money, Email, Password, File, Photo, Rating, Likes, Tags, Payment, Weather, Comment.
 
-        The result must split into two or more different bounded contexts.
-        Each bounded context interacts with each other, and domain events must flow into a service in a way that invokes the policies of other bounded context.
+        - The result must split into two or more different bounded contexts.
+        - Each bounded context interacts with each other, and domain events must flow into a service in a way that invokes the policies of other bounded context.
+        
+        - Except primary key, ID class name must be '[AggregateName]Id' format. For example, if the aggregate name is Customer, the ID class name is 'CustomerId'.
+            ex) Customer Aggregate의 ID property:
+                {
+                    "name": "id",
+                    "koreanName": "고객 ID",
+                    "type": "Long or String ...",
+                    "isKey": true
+                }
+                Order Aggregate에서 Customer를 참조하는 property:
+                {
+                    "name": "customerId",
+                    "koreanName": "고객 ID",
+                    "type": "CustomerId"
+                }
 
         ${this.describeCommunicationStyle()}
 
-        Please don't create the bounded context about user management or authentication.
+        - Please don't create the bounded context about user management or authentication.
 
-        The result is must be only json code without natural language.
+        - The result is must be only json code without natural language.
     `
-    }
-
-    describeEventOnlyModel(){
-        let eventList = []
-        if(this.client.input.model){
-            Object.keys(this.client.input.model.elements).forEach(key=>{
-                if(key){
-
-                    let event = this.client.input.model.elements[key]
-                    if(event && event._type==="org.uengine.modeling.model.Event")
-                        eventList.push(event.name)
-    
-                }
-            
-            })
-        }
-
-        if(eventList.length>0)
-            return "Don't forget to include following domain events: " + eventList.join(',')
-            
-        return ''
     }
 
     describeCommunicationStyle(){
 
         if(this.client.input.communicationStyle === 'Orchestration')
-            return `Since I prefer the Orchestration communication style for this case, the policies tend to be in the bounded context which is orchestrator role so that it can be a centralized collaboration.`;
+            return `- Since I prefer the Orchestration communication style for this case, the policies tend to be in the bounded context which is orchestrator role so that it can be a centralized collaboration.`;
         
         if(this.client.input.communicationStyle === 'Choreography')
-             return `Since I prefer the Choreography communication style for this case, the policies tend to be in the bounded context that will do the action so that it can be a distributed collaboration`;
+             return `- Since I prefer the Choreography communication style for this case, the policies tend to be in the bounded context that will do the action so that it can be a distributed collaboration`;
 
         return ''
 
     }
-
 
     uuid() {
         function s4() {
@@ -294,6 +280,14 @@ class ESGenerator extends JsonAIGenerator{
 
     createModel(text){
         var me = this
+
+        if (text.startsWith('```json')) {
+            text = text.slice(7);
+        }
+        if (text.endsWith('```')) {
+            text = text.slice(0, -3);
+        }
+
         let modelValue
         var voClassList = ["Payment", "Money", "Address", "Comment", "Email", "File", "Likes", "Photo", "Rating", "Tags", "User", "Weather"]
 
@@ -425,7 +419,17 @@ class ESGenerator extends JsonAIGenerator{
                                                 inputUI: ele.uiStyle ? ele.uiStyle.inputUI:null,
                                                 options: ele.options ? ele.options:null,
                                             }
+
+                                            // Class Id 참조 필드 처리
+                                            if(field.className){
+                                                if(!field.isKey && field.className.endsWith('Id')){
+                                                    field['isVO'] = true
+                                                    field['isOverrideField'] = true
+                                                    field['referenceClass'] = field.className.replace('Id', '')
+                                                }
+                                            }
                                             me.modelElements[aggUuid].aggregateRoot.fieldDescriptors.push(field)
+                                            
                                             if(ele.options && ele.options.length > 0) {
                                                 let enumItems = []
                                                 ele.options.forEach(function (item) {
@@ -512,6 +516,9 @@ class ESGenerator extends JsonAIGenerator{
                                     }
                                 } 
                                 modelValue["boundedContext"][key]["aggregates"][aggIdx].eleInfo = me.modelElements[aggUuid]
+                                if(!me.modelElements[bcUuid].aggregates.find(x => x.id == aggUuid)){
+                                    me.modelElements[bcUuid].aggregates.push({id: aggUuid})
+                                }
                             }
 
                             if(agg["uiStyle"]){
@@ -1042,39 +1049,72 @@ class ESGenerator extends JsonAIGenerator{
                     });
                 }
 
-                // if(option == 'end'){
-                //     var elementsList = {}
-                //     Object.keys(me.modelElements).forEach(function (key){
-                //         var eleUuid = me.uuid();
-                //         elementsList[eleUuid] = me.modelElements[key]
-                //     })
-                // } else {
-                //     var elementsList = me.modelElements
-                // }
+                // add relation aggregate foreign key
+                // Object.keys(me.modelElements).forEach(function (key){
+                //     if(me.modelElements[key]._type == "org.uengine.modeling.model.Aggregate"){
+                //         me.modelElements[key].aggregateRoot.fieldDescriptors.forEach(function (fieldDescriptor) {
+                //             Object.keys(me.modelElements).forEach(function (uuid){
+                //                 if(me.modelElements[uuid]._type == "org.uengine.modeling.model.Aggregate" && key != uuid){
+                //                     if(fieldDescriptor.className && fieldDescriptor.className.includes(me.modelElements[uuid].name)){
+                //                         var relUuidAtoA = me.uuid();
+                //                         relations[relUuidAtoA] = {
+                //                             _type: "org.uengine.modeling.model.Relation",
+                //                             from: key,
+                //                             hexagonalView: {
+                //                                 _type: "org.uengine.modeling.model.RelationHexagonal",
+                //                                 from: key,
+                //                                 id: relUuidAtoA,
+                //                                 needReconnect: true,
+                //                                 style: `{"arrow-start":"none","arrow-end":"none"}`,
+                //                                 to: uuid,
+                //                                 value: null
+                //                             },
+                //                             name: "",
+                //                             id: relUuidAtoA,
+                //                             relationView: {
+                //                                 from: key,
+                //                                 id: relUuidAtoA,
+                //                                 needReconnect: true,
+                //                                 style: `{"arrow-start":"none","arrow-end":"none"}`,
+                //                                 to: uuid,
+                //                                 value: "[]"
+                //                             },
+                //                             sourceElement: me.modelElements[key],
+                //                             sourceMultiplicity: 1,
+                //                             targetElement: me.modelElements[uuid],
+                //                             targetMultiplicity: 1,
+                //                             to: uuid
+                //                         }
+                //                     }
+                //                 }
+                //             });
+                //         });
+                //     }
+                // });
+
                 var obj = {
                     projectName: modelValue["serviceName"],
                     elements: me.modelElements,
-                    relations: relations,
-                    uiStyle: me.client.input.uiStyle
+                    relations: relations
                 }
 
                 return obj;
             } 
         } catch(e){
             console.log(e)
+
+            var obj = {
+                projectName: modelValue ? modelValue["serviceName"] : "untitle",
+                elements: me.modelElements ? me.modelElements : {},
+                relations: relations ? relations : {}
+            }
+
+            return obj;
         }
 
-        var obj = {
-            projectName: modelValue ? modelValue["serviceName"] : "untitle",
-            elements: me.modelElements ? me.modelElements : {},
-            relations: relations ? relations : {},
-            uiStyle: me.client.input.uiStyle
-        }
-
-        return obj;
     }
 
 }
 
 
-module.exports = ESGenerator;
+module.exports = DDLGenerator;

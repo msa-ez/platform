@@ -102,7 +102,7 @@
                     </div>
                 </v-list-item-content>
                 <div v-bind:style="isDelete ? 'text-decoration-line: line-through;': ''">
-                    <v-card-title style="margin:-10px 0 -10px; 0;">
+                    <v-card-title style="margin:-10px 0 -10px 0;">
                         <!--                        {{course}}-->
                         {{ copyInformation.projectName }}
                     </v-card-title>

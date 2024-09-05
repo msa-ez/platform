@@ -2906,19 +2906,26 @@ jobs:
       run: |
         cd ${me.openCode[0].name}
         mkdir -p ignore_test_file
-        mv src/test/java/${me.projectName}/*.java ignore_test_file/
-        mv ignore_test_file/${me.selectedTestFile.name} src/test/java/${me.projectName}/
+        mv src/test/java/${me.projectName}/*.java ignore_test_file/ || true
+        mv ignore_test_file/${me.selectedTestFile.name} src/test/java/${me.projectName}/ || true
     - name: Compile and Run Specific Test
       run: |
         cd ${me.openCode[0].name}
         mvn test-compile
-        mvn test -Dtest=${me.projectName}.${me.selectedTestFile.name.replace('.java', '')}
+        mvn test -Dtest=${me.projectName}.${me.selectedTestFile.name.replace('.java', '')} -Dsurefire.useFile=false
     - name: Restore Test Files
       if: always()
       run: |
         cd ${me.openCode[0].name}
-        mv ignore_test_file/*.java src/test/java/${me.projectName}/
-        rm -rf ignore_test_file`
+        if [ -d "ignore_test_file" ] && [ "$(ls -A ignore_test_file)" ]; then
+          mv ignore_test_file/*.java src/test/java/${me.projectName}/
+        fi
+        rm -rf ignore_test_file
+    - name: Print Test Results
+      if: always()
+      run: |
+        cd ${me.openCode[0].name}
+        cat target/surefire-reports/*.txt || true`
 
                 var actionFileIdx = me.codeLists.findIndex(x => x.fullPath == ".github/workflows/github-actions-test.yml")
                 if(!actionFileIdx || actionFileIdx == -1){

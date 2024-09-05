@@ -567,7 +567,9 @@
                                 // ele set name -> set to relation name
                                 let relations = Object.values(me.canvas.value.relations).filter(rel => rel!==null && rel.to===me.value.elementView.id)
                                 relations.forEach(rel => {
-                                    rel.name = me.value.name
+                                    if (rel.name == '') {
+                                        rel.name = me.value.name
+                                    }
 
                                     const obj = {
                                         action: "updateRelation",
