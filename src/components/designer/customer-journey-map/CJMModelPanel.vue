@@ -24,7 +24,7 @@
             <v-list class="pt-0" dense flat>
                 <v-divider></v-divider>
                 <v-card outlined>
-                    <v-card-text v-if="value._type != 'CJMTextElement' && value._type != 'CJMLineElement'">
+                    <v-card-text v-if="value._type != 'CJMTextElement' && value._type != 'CJMLineElement' && value._type != 'CJMEmotionElement'">
                         <div style="color: skyblue" v-if="isShowError">Notice: {{showError}}</div>
                         <v-text-field
                                 v-model="value.name"
@@ -49,6 +49,17 @@
                         ></v-text-field>
                     </v-card-text>
 
+                    <v-card-text v-if="value._type == 'CJMEmotionElement'">
+                        <v-row class="ma-0 pa-0" style="display: flex;">
+                            Emotion Change
+                        </v-row>
+                        <v-row class="ma-0 pa-0">
+                            <img v-for="(emotion, index) in emotionImages" :key="index" @click="changeEmotionImage(emotion)"
+                                class="emotion-style ma-2"
+                                :src="emotion" style="width: 50px; height: 50px;"
+                            >
+                        </v-row>
+                    </v-card-text>
                     <v-card-text v-if="value._type == 'CJMLineElement'">
                         <v-label>Color</v-label>
                         <div style="display: flex;">
@@ -218,6 +229,13 @@
         data: function () {
             return {
                 colorList: [ '#F1A746', '#5099F7', '#BB94BF', '#F8D454', '#ED73B6', '#5FC08B', '#8E24AA' ],
+                emotionImages: [
+                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion.png`,
+                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion1.png`,
+                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion2.png`,
+                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion3.png`,
+                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion4.png`,
+                ],
             }
         },
         methods: {
@@ -236,6 +254,10 @@
             changeDashStyle(val) {
                 var me = this;
                 me.value.dashStyle = val
+            },
+            changeEmotionImage(img) {
+                var me = this;
+                me.value.imgSrc = img;
             },
         }
     }
@@ -278,6 +300,10 @@
     }
 
     .list-group-item i {
+        cursor: pointer;
+    }
+
+    .emotion-style {
         cursor: pointer;
     }
 
