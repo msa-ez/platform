@@ -21,7 +21,6 @@ for persona:
 for scenario:
     ${this.client.input.scenario}
 
-
 Result Format JSON:
  {
    "persona": "Persona Name",
@@ -32,14 +31,14 @@ Result Format JSON:
          {
            "name": "User Action1",
            "touchPoint": "Touch Point Name",
+           "emotion": "You must choose one of the following:[{"value": -2,"description": "Very Negative"}, {"value": -1,"description": "Negative"}, {"value": 0,"description": "Neutral"}, {"value": 1,"description": "Positive"}, {"value": 2,"description": "Very Positive"}]"
            "painPoint": "Pain Point",
-           "possibleSolution": "solution1"
+           "possibleSolution": "solution1",
          }
        ]
      }
    ]
  }
-  
 `
     }
 
@@ -59,12 +58,12 @@ Result Format JSON:
         let model = super.createModel(text);
         
         var me = this 
-
+    
         let convertedModel = {
             elements: {},
             relations: {}
         }
-
+    
         let eleView = {}
         let phasePos = 0;
         
@@ -73,7 +72,7 @@ Result Format JSON:
         const START_Y = 180;
         let lastPhaseX = 200;
         const WIDTH = 170;
-
+    
         let textEleName = ['Phases', 'User Actions', 'Touch Points', 'Pain Points', 'PossibleSolutions']
         for(var i = 0; i < 5; i++){
             let textUuid = me.uuid();
@@ -97,7 +96,7 @@ Result Format JSON:
                 oldName: "Text"
             }
         }
-
+    
         let actorUUID = me.uuid();
         convertedModel.elements[actorUUID] = {
                     name: model.persona,
@@ -111,11 +110,11 @@ Result Format JSON:
                         y: START_Y - 50
                     }
                 };
-
-
+    
+    
         if(model.phases){
             model.phases.forEach(function (phase, index){
-
+    
                 let phaseUuid = me.uuid();
                 let width
                 if(phase.userActions && phase.userActions.length){
@@ -135,11 +134,11 @@ Result Format JSON:
                         y: START_Y
                     }
                 };
-
+    
                 phase.userActions.forEach((userAction, index) => {
                         
                     let userActionUuid = me.uuid();
-
+    
                     let view = 
                         {
                             height: HEIGHT,
@@ -149,49 +148,87 @@ Result Format JSON:
                             x: lastPhaseX + (BORDER + WIDTH) * index + WIDTH / 2,
                             y: START_Y + (HEIGHT + BORDER) * 1
                         }
-
+    
                     convertedModel.elements[userActionUuid] = {
                         name: userAction.name,
                         _type: me.forEventStorming ? 
                                 "org.uengine.modeling.model.Command": "UserAction",
                         elementView: view
                     };
-
+    
                     let uuid = me.uuid();
                     view = JSON.parse(JSON.stringify(view));
                     view.id = uuid;
                     view.y = START_Y + (HEIGHT + BORDER) * 2;
-
+    
                     convertedModel.elements[uuid] = {
                         name: userAction.touchPoint,
                         _type: me.forEventStorming ? 
                                 "org.uengine.modeling.model.View" : "TouchPoint",
                         elementView: view
                     };
+                    
+                    
+                    // 감정 영역 추가
+                    uuid = me.uuid();
+                    view = JSON.parse(JSON.stringify(view));
+                    view.id = uuid;
+                    view.y = START_Y + (HEIGHT + BORDER) * 3;
 
+                    let emotionImage = "";
+                    switch(userAction.emotion.value){
+                        case -2: 
+                            emotionImage = `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion5.svg`;
+                            break;
+                        case -1: 
+                            emotionImage = `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion4.svg`;
+                            break;
+                        case 0: 
+                            emotionImage = `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion3.svg`;
+                            break;
+                        case 1: 
+                            emotionImage = `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion2.svg`;
+                            break;
+                        case 2: 
+                            emotionImage = `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion1.svg`;
+                            break;
+                    }
+
+                    let emotionView = JSON.parse(JSON.stringify(view))
+                    emotionView.height = '70'
+                    emotionView.width = '70'
+
+                    convertedModel.elements[uuid] = {
+                        value: userAction.emotion.value,
+                        description: userAction.emotion.description,
+                        _type: "CJMEmotionElement",
+                        elementView: emotionView,
+                        imgSrc: emotionImage
+                    };
+    
                     let painPointAndpossibleSolution = {}
-
+    
                     uuid = me.uuid();
                     view = JSON.parse(JSON.stringify(view));
                     view.id = uuid;
                     view.height = HEIGHT + HEIGHT/2;
-                    view.y = START_Y + (HEIGHT + BORDER) * 3 + HEIGHT/2;
-
+                    view.y = START_Y + (HEIGHT + BORDER) * 3.8 + HEIGHT/2;
+    
                     convertedModel.elements[uuid] = {
                         name: userAction.painPoint,
                         _type: me.forEventStorming ? 
                                 "org.uengine.modeling.model.Issue" : "PainPoint",
                         elementView: view
                     };
-
+    
                     painPointAndpossibleSolution['painPoint'] = convertedModel.elements[uuid]
-
+    
                     uuid = me.uuid();
                     view = JSON.parse(JSON.stringify(view));
                     view.id = uuid;
                     view.height = HEIGHT * 2
-                    view.y = START_Y + (HEIGHT + BORDER) * 5;
-
+                    view.y = START_Y + (HEIGHT + BORDER) * 5.8;
+    
                     convertedModel.elements[uuid] = {
                         name: userAction.possibleSolution,
                         _type:  me.forEventStorming ? 
@@ -199,9 +236,9 @@ Result Format JSON:
                         elementView: view,
                         controllerInfo: {}
                     };
-
+    
                     painPointAndpossibleSolution['possibleSolution'] = convertedModel.elements[uuid]
-
+    
                     uuid = me.uuid();
                     let relationView = {
                         from: painPointAndpossibleSolution.painPoint.elementView.id,
@@ -211,7 +248,7 @@ Result Format JSON:
                         to: painPointAndpossibleSolution.possibleSolution.elementView.id,
                         value: "[]"
                     }
-
+    
                     convertedModel.relations[uuid] = {
                         _type: "cjm-relation",
                         sourceElement: painPointAndpossibleSolution.painPoint,
@@ -223,14 +260,14 @@ Result Format JSON:
                         targetMultiplicity: 1,
                     }
                 });
-
-
+    
+    
                 lastPhaseX = lastPhaseX + BORDER + width;
-
-
+    
+    
             });
         }
-
+    
         return convertedModel;
     }
 

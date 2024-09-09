@@ -760,7 +760,7 @@
                         'label': 'Emotion',
                         'width': 100,
                         'height': 100,
-                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion.png`,
+                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion3.svg`,
                     },
                 ],
 
