@@ -27,6 +27,22 @@
     }
 }
 
+/* 랩 내부 인스트럭션 code block copy 관련 스타일  */
+.markdown-body .pre-wrapper {
+    position: relative; /* 복사 버튼을 감싸는 요소로 pre 태그와 함께 배치 */
+}
+
+.markdown-body .instruction-copy-btn {
+    position: absolute;
+    top: 0px;
+    right: 2px;
+    display: none;
+    cursor: pointer;
+}
+
+.markdown-body .pre-wrapper:hover .instruction-copy-btn {
+    display: block;
+}
 
 /* 메인페이지 슬라이드 관련 끝 */
 

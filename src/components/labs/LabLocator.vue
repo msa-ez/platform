@@ -2054,28 +2054,50 @@
                 });
             },
             instructionCodeBlockClipBoard() {
-                const pres = document.getElementsByTagName("pre")
-                if (pres !== null) {
+                const pres = document.getElementsByTagName("pre");
+                if (pres.length > 0) {
                     for (let i = 0; i < pres.length; i++) {
+                        // opentextfield가 false일 때만 복사 버튼 추가
                         if (!this.opentextfield) {
-                            pres[i].innerHTML = `<div class="markdown-body instruction-copy-btn"><i class="instruction-copy-icon far fa-copy"></i><div class="success-clipboard">Copied</div></div></div>${pres[i].innerHTML}`
+                            const wrapper = document.createElement('div');
+                            wrapper.classList.add('pre-wrapper');
+                            
+                            // pre 태그의 부모 요소로 wrapper를 추가
+                            pres[i].parentNode.insertBefore(wrapper, pres[i]);
+                            wrapper.appendChild(pres[i]);
+
+                            // 복사 버튼을 동적으로 생성하여 pre 태그 외부에 삽입
+                            const copyBtn = document.createElement('div');
+                            copyBtn.classList.add('markdown-body', 'instruction-copy-btn');
+                            copyBtn.innerHTML = `
+                                <i class="instruction-copy-icon far fa-copy"></i>
+                                <div class="success-clipboard">Copied</div>
+                            `;
+                            
+                            wrapper.appendChild(copyBtn); // pre-wrapper 안에 복사 버튼 삽입
                         }
                     }
                 }
+
+                // Clipboard.js 설정
                 const clipboard = new Clipboard('.instruction-copy-btn', {
                     target: (trigger) => {
-                        return trigger.nextElementSibling;
+                        // 복사할 텍스트를 담고 있는 pre 태그를 target으로 설정
+                        return trigger.previousElementSibling; // pre 태그를 반환
                     }
                 });
-                // do stuff when copy is clicked
+
+                // 복사 버튼 클릭 시 동작 설정
                 clipboard.on('success', (event) => {
-                    $(".success-clipboard").fadeIn();
+                    // 복사 성공 메시지를 표시
+                    $(event.trigger).find(".success-clipboard").fadeIn();
                     setTimeout(() => {
                         event.clearSelection();
-                        $(".success-clipboard").fadeOut();
+                        $(event.trigger).find(".success-clipboard").fadeOut();
                     }, 700);
                 });
             },
+
             track() {
                 this.$gtag.pageview(
                     {
@@ -3257,17 +3279,6 @@
         text-align: center;
         color: white;
         display: none;
-    }
-
-    .instruction-copy-btn {
-        float: right;
-        margin: -15px -15px 0 0;
-        display: none;
-        cursor: pointer;
-    }
-
-    .markdown-body pre:hover .instruction-copy-btn {
-        display: block;
     }
 </style>
 

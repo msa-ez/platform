@@ -755,6 +755,13 @@
                         'height': 100,
                         'src': `${window.location.protocol + "//" + window.location.host}/static/image/symbol/text_element.png`,
                     },
+                    {
+                        'component': 'cjm-emotion-element',
+                        'label': 'Emotion',
+                        'width': 100,
+                        'height': 100,
+                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion.png`,
+                    },
                 ],
 
             }

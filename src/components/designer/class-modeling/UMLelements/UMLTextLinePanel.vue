@@ -96,33 +96,45 @@
                             </div>
                         </div>
                         <div class="my-5">
-                            <v-label>Style</v-label>
-                            <div style="display: flex;">
-                                <v-btn  class="mx-1 my-2"
-                                        depressed text
-                                        style="color:black;"
-                                        @click="changeDashStyle('')"
-                                        :disabled="isReadOnly"
-                                >Solid</v-btn>
-                                <v-btn  class="mx-1 my-2"
-                                        depressed text
-                                        style="color:black;"
-                                        @click="changeDashStyle('.')"
-                                        :disabled="isReadOnly"
-                                >Dotted</v-btn>
-                                <v-btn  class="mx-1 my-2"
-                                        depressed text
-                                        style="color:black;"
-                                        @click="changeDashStyle('- ')"
-                                        :disabled="isReadOnly"
-                                >Dashed</v-btn>
-                                <v-btn  class="mx-1 my-2"
-                                        depressed text
-                                        style="color:black;"
-                                        @click="changeDashStyle('--')"
-                                        :disabled="isReadOnly"
-                                >Long Dashed</v-btn>
-                            </div>
+                            <v-label>Line Style</v-label>
+                            <v-row class="ma-0 pa-0">
+                                <v-btn class="mx-1 my-2"
+                                    depressed tile
+                                    @click="changeDashStyle('')"
+                                    style="width: 100px; height: 10px; border-bottom: 10px solid black;"
+                                ></v-btn>
+                                <v-btn class="mx-1 my-2"
+                                    depressed tile
+                                    @click="changeDashStyle('.')"
+                                    style="width: 100px; height: 10px;"
+                                >
+                                    <svg width="100" height="10">
+                                        <rect x="0" y="0" width="8" height="10" fill="black" />
+                                        <rect x="14" y="0" width="8" height="10" fill="black" />
+                                        <rect x="28" y="0" width="8" height="10" fill="black" />
+                                        <rect x="42" y="0" width="8" height="10" fill="black" />
+                                        <rect x="56" y="0" width="8" height="10" fill="black" />
+                                        <rect x="70" y="0" width="8" height="10" fill="black" />
+                                        <rect x="84" y="0" width="8" height="10" fill="black" />
+                                    </svg>
+                                </v-btn>
+                                <v-btn class="mx-1 my-2"
+                                    depressed tile
+                                    @click="changeDashStyle('- ')"
+                                    style="width: 100px; height: 10px; border-bottom: 10px dashed black;"
+                                ></v-btn>
+                                <v-btn class="mx-1 my-2"
+                                    depressed tile
+                                    @click="changeDashStyle('--')"
+                                    style="width: 100px; height: 10px;"
+                                >
+                                    <svg width="100" height="10">
+                                        <line x1="0" y1="5" x2="30" y2="5" stroke="black" stroke-width="10" />
+                                        <line x1="35" y1="5" x2="65" y2="5" stroke="black" stroke-width="10" />
+                                        <line x1="70" y1="5" x2="100" y2="5" stroke="black" stroke-width="10" />
+                                    </svg>
+                                </v-btn>
+                            </v-row>
                         </div>
                     </v-card-text>
                 </v-card>

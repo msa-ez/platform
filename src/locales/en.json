@@ -42,7 +42,8 @@
     "planning" : "Planning",
     "design" : "Design",
     "operation" : "Operation",
-    "project" : "Project"
+    "project" : "Project",
+    "migration" : "migration"
   },
   "main": {
     "title": "Microservices Architecture made easy!",

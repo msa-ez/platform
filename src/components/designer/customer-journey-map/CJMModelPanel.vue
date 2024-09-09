@@ -24,7 +24,7 @@
             <v-list class="pt-0" dense flat>
                 <v-divider></v-divider>
                 <v-card outlined>
-                    <v-card-text v-if="value._type != 'CJMTextElement' && value._type != 'CJMLineElement'">
+                    <v-card-text v-if="value._type != 'CJMTextElement' && value._type != 'CJMLineElement' && value._type != 'CJMEmotionElement'">
                         <div style="color: skyblue" v-if="isShowError">Notice: {{showError}}</div>
                         <v-text-field
                                 v-model="value.name"
@@ -49,6 +49,17 @@
                         ></v-text-field>
                     </v-card-text>
 
+                    <v-card-text v-if="value._type == 'CJMEmotionElement'">
+                        <v-row class="ma-0 pa-0" style="display: flex;">
+                            Emotion Change
+                        </v-row>
+                        <v-row class="ma-0 pa-0">
+                            <img v-for="(emotion, index) in emotionImages" :key="index" @click="changeEmotionImage(emotion)"
+                                class="emotion-style ma-2"
+                                :src="emotion" style="width: 50px; height: 50px;"
+                            >
+                        </v-row>
+                    </v-card-text>
                     <v-card-text v-if="value._type == 'CJMLineElement'">
                         <v-label>Color</v-label>
                         <div style="display: flex;">
@@ -82,7 +93,7 @@
                         </div>
                         <div class="my-5">
                             <v-label>Size</v-label>
-                            <div style="display: flex;">
+                            <v-row class="ma-0 pa-0">
                                 <v-btn  class="mx-1 my-2" 
                                         depressed tile
                                         color="#212121"
@@ -107,28 +118,48 @@
                                         style="width: 100px; height: 20px;"
                                         @click="resizedEdge(20)"
                                 ></v-btn>
-                            </div>
+                            </v-row>
                         </div>
                         <div class="my-5">
                             <v-label>Line Style</v-label>
-                            <div style="display: flex;">
-                                <v-btn  class="mx-1 my-2"
-                                        depressed color="primary"
-                                        @click="changeDashStyle('')"
-                                >Solid</v-btn>
-                                <v-btn  class="mx-1 my-2" 
-                                        depressed color="primary"
-                                        @click="changeDashStyle('.')"
-                                >Dotted</v-btn>
-                                <v-btn  class="mx-1 my-2" 
-                                        depressed color="primary"
-                                        @click="changeDashStyle('- ')"
-                                >Dashed</v-btn>
-                                <v-btn  class="mx-1 my-2" 
-                                        depressed color="primary"
-                                        @click="changeDashStyle('--')"
-                                >Long Dashed</v-btn>
-                            </div>
+                            <v-row class="ma-0 pa-0">
+                                <v-btn class="mx-1 my-2"
+                                    depressed tile
+                                    @click="changeDashStyle('')"
+                                    style="width: 100px; height: 10px; border-bottom: 10px solid black;"
+                                ></v-btn>
+                                <v-btn class="mx-1 my-2"
+                                    depressed tile
+                                    @click="changeDashStyle('.')"
+                                    style="width: 100px; height: 10px;"
+                                >
+                                    <svg width="100" height="10">
+                                        <rect x="0" y="0" width="8" height="10" fill="black" />
+                                        <rect x="14" y="0" width="8" height="10" fill="black" />
+                                        <rect x="28" y="0" width="8" height="10" fill="black" />
+                                        <rect x="42" y="0" width="8" height="10" fill="black" />
+                                        <rect x="56" y="0" width="8" height="10" fill="black" />
+                                        <rect x="70" y="0" width="8" height="10" fill="black" />
+                                        <rect x="84" y="0" width="8" height="10" fill="black" />
+                                    </svg>
+                                </v-btn>
+                                <v-btn class="mx-1 my-2"
+                                    depressed tile
+                                    @click="changeDashStyle('- ')"
+                                    style="width: 100px; height: 10px; border-bottom: 10px dashed black;"
+                                ></v-btn>
+                                <v-btn class="mx-1 my-2"
+                                    depressed tile
+                                    @click="changeDashStyle('--')"
+                                    style="width: 100px; height: 10px;"
+                                >
+                                    <svg width="100" height="10">
+                                        <line x1="0" y1="5" x2="30" y2="5" stroke="black" stroke-width="10" />
+                                        <line x1="35" y1="5" x2="65" y2="5" stroke="black" stroke-width="10" />
+                                        <line x1="70" y1="5" x2="100" y2="5" stroke="black" stroke-width="10" />
+                                    </svg>
+                                </v-btn>
+                            </v-row>
                         </div>
                     </v-card-text>
                 </v-card>
@@ -198,6 +229,13 @@
         data: function () {
             return {
                 colorList: [ '#F1A746', '#5099F7', '#BB94BF', '#F8D454', '#ED73B6', '#5FC08B', '#8E24AA' ],
+                emotionImages: [
+                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion.png`,
+                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion1.png`,
+                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion2.png`,
+                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion3.png`,
+                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion4.png`,
+                ],
             }
         },
         methods: {
@@ -216,6 +254,10 @@
             changeDashStyle(val) {
                 var me = this;
                 me.value.dashStyle = val
+            },
+            changeEmotionImage(img) {
+                var me = this;
+                me.value.imgSrc = img;
             },
         }
     }
@@ -258,6 +300,10 @@
     }
 
     .list-group-item i {
+        cursor: pointer;
+    }
+
+    .emotion-style {
         cursor: pointer;
     }
 
