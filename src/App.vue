@@ -699,6 +699,23 @@
                 </v-stepper-header>
             </v-stepper>
         </v-alert>
+        <v-tooltip top v-if="showNewButton">
+            <template v-slot:activator="{ on }">
+                <v-btn @click="navigateToSlack"
+                    v-on="on"
+                    elevation="2"
+                    icon
+                    x-large
+                    style="position:absolute; bottom:10px; right:10px;"
+                    
+                >
+                    <v-img src="/static/image/main/question.svg" contain
+                        style="width:28px; height:28px;">
+                    </v-img>
+                </v-btn>
+            </template>
+            <span>{{ $t('inquiry.title') }}</span>
+        </v-tooltip>
     </v-app>
 </template>
 
@@ -1460,6 +1477,9 @@
         methods: {
             login() {
                 this.$EventBus.$emit('jumpToLab');
+            },
+            navigateToSlack() {
+                window.open("https://join.slack.com/t/uenginehq/shared_invite/zt-2qh7j779f-UWwa~p~OvAla7s8pjikWRw", "_blank");
             },
             goTutorials: function (type) {
                 if (type == 'es') {
