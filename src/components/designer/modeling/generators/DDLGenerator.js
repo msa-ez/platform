@@ -15,6 +15,7 @@ class DDLGenerator extends JsonAIGenerator{
         this.lastBCView = null;
         this.bcPosition = {};
         this.VODefinitionsFieldDescriptors = VODefinitions
+        this.canvasType = 'ES'
 
         // this.originalLanguage = this.preferredLanguage.toLowerCase();
         // this.preferredLanguage = "English";
@@ -26,6 +27,9 @@ class DDLGenerator extends JsonAIGenerator{
         this.modelElements = {}
         this.generateCnt = 0
 
+        if(this.client.$parent.$parent.$options.name === 'context-mapping-model-canvas'){
+            this.canvasType = 'CM'
+        }
 
 
         return `Please create an event storming model in json for following DDL: 
@@ -37,11 +41,24 @@ class DDLGenerator extends JsonAIGenerator{
         Extract DDD Aggregates and Bounded Contexts from the provided DDL, ensuring that:
         1. All tables from the DDL are included without omission.
         2. Tables are grouped into cohesive Aggregates based on their relationships and domain logic.
-        3. Aggregates are organized into appropriate Bounded Contexts.
+        3. Aggregates are organized into appropriate Bounded Contexts as specified (${this.client.input.boundedContextLists}).
         4. Each Bounded Context may contain one or more Aggregates.
-        5. If specific management instructions for certain domains or tables are provided, follow them.
-        6. For any tables or domains not explicitly mentioned in the instructions, use your best judgment to place them in the most appropriate Bounded Context and Aggregate based on their purpose and relationships.
+        5. All information from the DDL should be represented in the model, even if it means creating additional Aggregates within the specified Bounded Contexts.
+        6. If a table is closely related to multiple Bounded Contexts, consider creating a reference or summary in each relevant context.
         7. Normalize and combine related tables within each Aggregate where appropriate.
+
+        Additional requirements:
+        - Ensure that all tables from the original DDL are represented in the generated model, distributed across the specified Bounded Contexts.
+        - When grouping tables into Aggregates, consider their relationships and domain logic. Tables that are closely related or form a cohesive unit should be part of the same Aggregate.
+        - When organizing Aggregates into Bounded Contexts, adhere to the specified contexts (${this.client.input.boundedContextLists}) while ensuring all data is represented.
+        - If an Aggregate references entities from another Bounded Context, use the appropriate ID reference (e.g., CustomerId) instead of including the entire entity.
+        - Ensure that domain events flow between Bounded Contexts in a way that allows for policy invocation across contexts.
+    
+        Specific instructions:
+        - Do not omit any tables from the original DDL. If a table (e.g., stores) seems to not fit directly into the specified Bounded Contexts, consider how it relates to the existing contexts and include it in the most appropriate one.
+        - When creating Aggregates, combine closely related entities. For example, orders and payments could be part of the same Aggregate in the Order context, rather than separate Aggregates.
+        - Ensure that all fields from the original tables are represented in the Aggregates, even if they are combined or restructured.
+        - Create meaningful relationships between Aggregates across different Bounded Contexts using appropriate references (e.g., CustomerId in the Order Aggregate to reference the Customer Aggregate).
         
         The format must be as follows:
         {
@@ -744,6 +761,7 @@ class DDLGenerator extends JsonAIGenerator{
                         })
                     }
                 })
+
                 var relations = {}
                 Object.keys(me.modelElements).forEach(function (key){
                     if(me.modelElements[key]._type == "org.uengine.modeling.model.Command" && (me.modelElements[key].outputEvents && me.modelElements[key].outputEvents.length > 0)){
@@ -997,7 +1015,7 @@ class DDLGenerator extends JsonAIGenerator{
                                     to: policyUuid
                                 }
 
-                            } 
+                            }
                         })
                     }
 

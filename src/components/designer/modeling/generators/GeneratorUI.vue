@@ -110,7 +110,7 @@
                     <v-tabs v-model="userPanel">
                         <v-tab v-for="tab in tabs" :key="tab.component" :disabled="hasElements&&(!tab.isAlwaysActivated)" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" 
                                @click="switchGenerator('tab', tab.isShowGenerateBtn, tab.isShowContinueBtn, tab.isShowStopBtn, tab.isShowRegenerateBtn)">{{tab.name}}</v-tab>
-                        <v-tab :disabled="!showGenerateBtn" v-if="canvasType === 'event-storming-model-canvas'" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('DDL', false, false, false, false)">DDL</v-tab>
+                        <v-tab :disabled="!showGenerateBtn" v-if="canvasType === 'event-storming-model-canvas' || canvasType === 'context-mapping-model-canvas'" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('DDL', false, false, false, false)">DDL</v-tab>
                         <v-tab :disabled="hasElements && !showGenerateBtn" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('input', true, true, true, true)">Input</v-tab>
                         <v-tab :disabled="hasElements && !showGenerateBtn" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('output', false, true, true, true)">Output</v-tab>
                         <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('chat', false, false, false, false)">Chat</v-tab>
@@ -142,21 +142,21 @@
                                         <component :is="tab.component" :ref="tab.component" @generate="generate()" :initValue="tab.initValue"></component>
                                     </v-tab-item>
 
-                                    <v-tab-item v-if="canvasType === 'event-storming-model-canvas'">
+                                    <v-tab-item v-if="canvasType === 'event-storming-model-canvas' || canvasType === 'context-mapping-model-canvas'">
                                         <v-card style="padding: 10px;">
                                             <v-textarea
-                                                v-model="DDL"
-                                                label="DDL"
-                                                rows="12"
-                                                no-resize
+                                            v-model="DDL"
+                                            label="DDL"
+                                            rows="12"
+                                            no-resize
                                             ></v-textarea>
-
-                                            <v-textarea
-                                                v-model="boundedContextLists"
-                                                label="Describe your Bounded Contexts"
-                                                rows="5"
-                                                no-resize
-                                            ></v-textarea>
+                                            
+                                                    <v-textarea
+                                                        v-model="boundedContextLists"
+                                                        label="Describe your Bounded Contexts"
+                                                        rows="5"
+                                                        no-resize
+                                                    ></v-textarea>
 
                                             <v-btn v-if="!generationStopped" class="prompt_field generator-ui-text-field" @click="generate()" block>Generate</v-btn>
                                             <v-circular-progress indeterminate v-if="generationStopped"></v-circular-progress>
@@ -268,6 +268,7 @@
     import Usage from '../../../../utils/Usage'
     import DebeziumLogsTab from "./generatorTabs/DebeziumLogsTab.vue"
     import DDLGenerator from './DDLGenerator.js'
+    import DDLDraftGenerator from './DDLDraftGenerator.js'
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
 
@@ -495,7 +496,7 @@
                         case "AggregateMemberGenerator": this.generatorComponent = new AggregateMemberGenerator(this); break;
                         case "KubernetesGenerator": this.generatorComponent = new KubernetesGenerator(this); break;
                         case "DDLGenerator": this.generatorComponent = new DDLGenerator(this); break;
-
+                        case "DDLDraftGenerator": this.generatorComponent = new DDLDraftGenerator(this); break;
                     }
 
                     return this.generatorComponent;
@@ -589,7 +590,7 @@
                     this.chatList.push(message);
                     this.chatMessage = ""
                     this.generatorComponent.generate();
-                }else if(this.generatorName === "DDLGenerator"){
+                }else if(this.generatorName === "DDLGenerator" || this.generatorName === "DDLDraftGenerator"){
                     if(!this.DDL || !this.boundedContextLists){
                         return;
                     }
@@ -688,8 +689,13 @@
 
                         this.generatorName = "ModelModificationGenerator"
                 }else if(mode && mode=='DDL'){
-                    this.generatorComponent = new DDLGenerator(this);
-                    this.generatorName = "DDLGenerator"
+                    if(this.canvasType === "context-mapping-model-canvas"){
+                        this.generatorComponent = new DDLDraftGenerator(this);
+                        this.generatorName = "DDLDraftGenerator"
+                    }else{
+                        this.generatorComponent = new DDLGenerator(this);
+                        this.generatorName = "DDLGenerator"
+                    }
                 }else{
                     this.createGenerator();
                 }
@@ -773,7 +779,7 @@
                 }
                 
                 this.generationStopped = false;
-                this.$emit("onGenerationFinished")
+                this.$emit("onGenerationFinished", model)
                 this.publishModelChanges(model)
                 
                 // JSON Modification finished
@@ -783,7 +789,7 @@
                         type: 'response'
                     }
                     this.chatList.push(response);
-                }else if(this.generatorName === "DDLGenerator"){
+                }else if(this.generatorName === "DDLDraftGenerator" || this.generatorName === "DDLGenerator"){
                     console.log("[*] DDLGenerator에서 전달한 모델 값")
                     console.log(model)
                 }else{
