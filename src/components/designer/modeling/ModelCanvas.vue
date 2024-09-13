@@ -350,6 +350,7 @@
                 undoRedoIndex: 0,
                 changedByUndoRedo: false,
                 undoRedoState: null,
+                diffToUndo: null,
 
                 //rtc
                 rtcRoomId: 'room',
@@ -3582,6 +3583,7 @@
                                 }
                             } else if (typeof value == 'object') {
                                 jsondiffpatch.patch(me.value[type], jsondiffpatch.reverse(diff));
+                                me.diffToUndo = diff
                             }
                         }
                     }
@@ -3631,6 +3633,11 @@
                         if (me.changedByUndoRedo) {
                             me.changedByUndoRedo = false
                         } else {
+                            // Undo로 인한 변경사항을 다시 복구시키는 스크립트가 실행되었을 경우, Undo는 무한 루프에 빠지게 됨
+                            // 그러한 무한 루프를 방지하기 위한 조건 추가
+                            if(me.diffToUndo && diff && diff.elements &&
+                               JSON.stringify(me.diffToUndo) === JSON.stringify(diff.elements)) return;
+
                             var lastIndex = me.undoRedoArray.length
                             if (lastIndex != me.undoRedoIndex) {
                                 me.undoRedoArray.splice(me.undoRedoIndex, lastIndex - me.undoRedoIndex)

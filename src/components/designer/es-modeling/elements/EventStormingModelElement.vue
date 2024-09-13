@@ -276,6 +276,11 @@
                 this.onChangedElementName(newVal, oldVal);
                 this.validate(false)
             },
+            "value.boundedContext.id": function(newVal, oldVal){
+                if(newVal){
+                    this.validate(false)
+                }
+            },
             "value.description": function (newVal) {
                 this.descriptionPanel = newVal
                 this.refreshImg()
@@ -382,6 +387,7 @@
 
                 if( equalsElement ) {
                     me.value.mirrorElement = equalsElement.elementView.id;
+                    me.canvas.syncMirrorElements()
                     return;
                 }
 

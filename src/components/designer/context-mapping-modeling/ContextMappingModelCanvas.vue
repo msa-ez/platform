@@ -1222,7 +1222,7 @@
             let element = BoundedContext.computed.createNew(
                     null,
                     this.uuid(),
-                    650, //x
+                    800, //x
                     450, //y
                     560, //width
                     590, //height

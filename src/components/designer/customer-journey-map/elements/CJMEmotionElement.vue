@@ -84,7 +84,7 @@
                 return 'CJMEmotionElement'
             },
             imgSrc() {
-                return `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion.png`
+                return `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion3.svg`
             },
             createNew(elementId, x, y, width, height, description) {
                 return {

@@ -230,11 +230,11 @@
             return {
                 colorList: [ '#F1A746', '#5099F7', '#BB94BF', '#F8D454', '#ED73B6', '#5FC08B', '#8E24AA' ],
                 emotionImages: [
-                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion.png`,
-                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion1.png`,
-                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion2.png`,
-                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion3.png`,
-                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion4.png`,
+                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion1.svg`,
+                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion2.svg`,
+                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion3.svg`,
+                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion4.svg`,
+                    `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion5.svg`,
                 ],
             }
         },
