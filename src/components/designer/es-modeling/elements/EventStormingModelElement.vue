@@ -8,6 +8,7 @@
     import SubController from "../../../opengraph/shape/SubController";
     import getParent from "../../../../utils/getParent";
     import isAttached from '../../../../utils/isAttached';
+import { group } from "d3";
 
     var jsondiffpatch = require('jsondiffpatch').create({
         objectHash: function (obj, index) {
@@ -57,6 +58,7 @@
                 ESE_DUPLICATE_FIELD: 4,
                 ESE_API_PATH_ERROR: 5,
                 ESE_DUPLICATE_METHOD: 6,
+                ESE_MIS_MATCH: 7,
                 validationCodeLists: {
                     0: {
                         'level': 'error',
@@ -85,6 +87,10 @@
                     6: {
                         'level': 'warning',
                         'msg': 'Duplicate methods.'
+                    },
+                    7: {
+                        'level': 'warning',
+                        'msg': 'Match with the attributes registered in the Aggregate.'
                     }
                 },
                 /////////////////////////////////

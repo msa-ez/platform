@@ -361,7 +361,30 @@
             //     this.closePanel()
             // },
             onMoveAction(){
+                var me = this
+                if(me.value.mirrorElement ) return;
+                if(me.isPBCModel) return;
+
                 this.$super(Element).onMoveAction()
+
+                let attachedAggregate = me.canvas.getAttachedAggregate(me.value);
+                if(attachedAggregate){
+                    var newId = attachedAggregate.elementView.id
+
+                    // 움직일때 AGG 변화 파악.
+                    if( me.value.aggregate.id != newId ){
+                        // 서로 들다른 agg
+                        me.value.aggregate = { id: newId }
+                        if(me.canvas.initLoad) {
+                            me.canvas.changedByMe = true;
+                            me.canvas.changedTemplateCode = true
+                        }
+                    }
+
+                }else if(!me.value.aggregate || me.value.aggregate.id){
+                    me.value.aggregate = {};
+                    if(me.canvas.initLoad) me.canvas.changedByMe = true;
+                }
             },
             validate(executeRelateToValidate, panelValue) {
                 var me = this
@@ -407,6 +430,16 @@
                     }
                 }
 
+                // compare queryparameter, aggregate field
+                // var field = me.canvas.value.elements[me.value.aggregate.id].aggregateRoot.fieldDescriptors
+                // var query = me.value.queryParameters
+                
+                // for( var i = 0; i < query.length; i++){
+                //     var isExist = field.find(x => x.className != query[i].className || x.className != query[i].name)
+                //     if(isExist){
+                //         me.validationFromCode(me.ESE_MIS_MATCH)
+                //     }
+                // }
 
                 if(notPK){
                     var validationResultIndex = me.elementValidationResults.findIndex(x=> (x.code == me.ESE_NOT_PK) )
