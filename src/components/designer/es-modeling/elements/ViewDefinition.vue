@@ -83,7 +83,7 @@
                 </text-element>
 
                 <text-element
-                        v-if="getFieldDescriptors && value.dataProjection == 'cqrs'"
+                        v-if="getFieldDescriptors || getQueryParameterDescriptors"
                         :sub-width="'100%'"
                         :sub-height="subjectHeight"
                         :sub-top="subjectTop"
@@ -101,16 +101,6 @@
                         :sub-left="detailLeft"
                         :subStyle="{'font-size': '12px', 'text-anchor':'start'}"
                         :text="getFieldDescriptors"
-                ></text-element>
-
-                <text-element
-                        v-if="getQueryParameterDescriptors && value.dataProjection == 'query-for-aggregate'"
-                        :sub-width="'100%'"
-                        :sub-height="subjectHeight"
-                        :sub-top="subjectTop"
-                        :sub-left="0"
-                        :subStyle="{'font-size': '16px', 'font-weight': 'bold'}"
-                        :text="getNamePanel"
                 ></text-element>
 
                 <text-element
