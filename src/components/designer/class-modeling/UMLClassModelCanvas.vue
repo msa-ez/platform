@@ -1158,13 +1158,15 @@
                                         addedVo = null;
                                     }
     
+                                    // 새로운 클래스 vo를 그리기 위해 사용
                                     if(field._type.includes('Class')){
-                                        // 새로운 클래스를 그리기 위해 사용
                                         if(!addedVo && field.name){
                                             var componentInfo = {
                                                 'component': 'uml-vo-class',
                                                 'label': field.name,
                                                 'name': field.name,
+                                                'nameCamelCase': field.nameCamelCase,
+                                                'namePascalCase': field.namePascalCase,
                                                 'width': '100',
                                                 'height': '100',
                                                 'src': `${ window.location.protocol + "//" + window.location.host}/static/image/symbol/class_value.png`,
@@ -1175,14 +1177,6 @@
                                             addedVo = Object.values(me.value.elements).filter(element => element != null).find(element => element.name.toLowerCase() === field.name.toLowerCase());
                                             me.value.elements[addedVo.elementView.id].fieldDescriptors = Object.assign(me.value.elements[addedVo.elementView.id].fieldDescriptors, field.fieldDescriptors);
 
-                                            let panel = me.getComponentByName('uml-class-panel');
-                                            let newType = {
-                                                text: changeCase.pascalCase(field.name),
-                                                value: changeCase.pascalCase(field.name)
-                                            };
-                                            if (!panel.data().returnTypeList.some(item => item.value === newType.value)) {
-                                                panel.data().returnTypeList.push(newType);
-                                            }
                                         }
                                     }
     
@@ -1196,6 +1190,8 @@
                                                     'component': 'uml-vo-class',
                                                     'label': field.name,
                                                     'name': field.name,
+                                                    'nameCamelCase': field.nameCamelCase,
+                                                    'namePascalCase': field.namePascalCase,
                                                     'width': '100',
                                                     'height': '100',
                                                     'src': `${ window.location.protocol + "//" + window.location.host}/static/image/symbol/class_value.png`,
@@ -1219,17 +1215,28 @@
                                             // }
                                         }
                                     }
-    
+
+                                    // panel을 열여야 새로운 type이 추가되므로 수동 처리
+                                    let panel = me.getComponentByName('uml-class-panel');
+                                    let newType = {
+                                        text: changeCase.pascalCase(field.name),
+                                        value: changeCase.pascalCase(field.name)
+                                    };
+                                    if (!panel.data().returnTypeList.some(item => item.value === newType.value)) {
+                                        panel.data().returnTypeList.push(newType);
+                                    }
+                                    
+                                    // vo가 추가되어 그려짐에 따라 relation
                                     if (sourceElement&& addedVo && addedVo.name) {
-                                        me.setRelations(sourceElement, addedVo, addedVo.name)
+                                        me.setRelations(sourceElement, addedVo, changeCase.camelCase(addedVo.name))
                                         me.changedByMe = true
     
                                         setTimeout(() => {
                                             let index = me.value.elements[sourceElement.elementView.id].fieldDescriptors.findIndex(x => x.name.toLowerCase() == field.name.toLowerCase())
                                             if(index != -1){
-                                                me.value.elements[sourceElement.elementView.id].fieldDescriptors[index].className = field.name
+                                                me.value.elements[sourceElement.elementView.id].fieldDescriptors[index].className = field.className
                                                 if(me.value.elements[sourceElement.elementView.id].fieldDescriptors[index].label.endsWith(": ")){
-                                                    me.value.elements[sourceElement.elementView.id].fieldDescriptors[index].label += field.name
+                                                    me.value.elements[sourceElement.elementView.id].fieldDescriptors[index].label += field.className
                                                 }
                                             }
                                             me.changedByMe = true
@@ -2102,6 +2109,10 @@
                         } else if (!attr.isVO && 
                                 (attr.hasOwnProperty("items") || attr.hasOwnProperty("enumerationValues"))
                         ) {
+                            if(Object.values(me.value.elements).find(x => x.name === attr.namePascalCase)) {
+                                return
+                            }
+
                             componentInfo.component = 'enum-class-definition'
                             componentInfo.x += Math.floor(Math.random()*200)
                             componentInfo.y += Math.floor(Math.random()*150)

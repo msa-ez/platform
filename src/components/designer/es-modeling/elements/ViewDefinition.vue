@@ -83,7 +83,7 @@
                 </text-element>
 
                 <text-element
-                        v-if="getFieldDescriptors"
+                        v-if="getFieldDescriptors && value.dataProjection == 'cqrs'"
                         :sub-width="'100%'"
                         :sub-height="subjectHeight"
                         :sub-top="subjectTop"
@@ -94,13 +94,34 @@
 
                 <text-element
                         class="discStyle"
-                        v-if="getFieldDescriptors"
+                        v-if="getFieldDescriptors && value.dataProjection == 'cqrs'"
                         :sub-width="'120%'"
                         :sub-height="detailHeight"
                         :sub-top="detailTop"
                         :sub-left="detailLeft"
                         :subStyle="{'font-size': '12px', 'text-anchor':'start'}"
                         :text="getFieldDescriptors"
+                ></text-element>
+
+                <text-element
+                        v-if="getQueryParameterDescriptors && value.dataProjection == 'query-for-aggregate'"
+                        :sub-width="'100%'"
+                        :sub-height="subjectHeight"
+                        :sub-top="subjectTop"
+                        :sub-left="0"
+                        :subStyle="{'font-size': '16px', 'font-weight': 'bold'}"
+                        :text="getNamePanel"
+                ></text-element>
+
+                <text-element
+                        class="discStyle"
+                        v-if="getQueryParameterDescriptors && value.dataProjection == 'query-for-aggregate'"
+                        :sub-width="'120%'"
+                        :sub-height="detailHeight"
+                        :sub-top="detailTop"
+                        :sub-left="detailLeft"
+                        :subStyle="{'font-size': '12px', 'text-anchor':'start'}"
+                        :text="getQueryParameterDescriptors"
                 ></text-element>
 
                 <image-element
@@ -202,6 +223,41 @@
                         }
                     } else {
                         this.value.fieldDescriptors.forEach(function (field) {
+                            text = text + 'ㆍ ' + field.name + '\n'
+                        })
+                    }
+                    return text
+
+                }
+                return null
+            },
+            getQueryParameterDescriptors() {
+                if (this.value.queryParameters) {
+                    if (this.value.queryParameters.length == 1
+                        && this.value.queryParameters[0].name == 'id') {
+                        return false
+                    }
+
+                    var text = ''
+                    var value = 0
+                    if(this.value.elementView.height <= 100){
+                        value = 42
+                    } else if(this.value.elementView.height <= 150){
+                        value = 30
+                    } else if(this.value.elementView.height <= 270){
+                        value = 23
+                    } else if(this.value.elementView.height > 270){
+                        value = 17
+                    }
+                    var y = Math.ceil(this.value.elementView.height/value)
+                    this.viewfieldDescriptorsCount = y
+                    if(this.value.queryParameters.length > y){
+                        for(var i = 0; i <= y; i++){
+                            if(i == y) text = text + 'ㆍ ' + this.value.queryParameters[i].name + '  ...'
+                            else text = text + 'ㆍ ' + this.value.queryParameters[i].name + '\n'
+                        }
+                    } else {
+                        this.value.queryParameters.forEach(function (field) {
                             text = text + 'ㆍ ' + field.name + '\n'
                         })
                     }

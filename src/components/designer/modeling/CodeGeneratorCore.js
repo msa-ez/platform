@@ -286,7 +286,7 @@ class CodeGeneratorCore {
                 modelForElements.Aggregate.forEach(aggregateElement => {
                     if (aggregateElement) {
                         
-                        console.log(item.name, isAttached(aggregateElement, item))
+                        // console.log(item.name, isAttached(aggregateElement, item))
                         if ( isAttached(aggregateElement, item) && !aggregateElement.mirrorElement) {
                             
                             item.aggregate = aggregateElement

@@ -44,7 +44,15 @@ in this json format:
         {
             "jsonPath": "$.elements[?(@.id=='element id to be replaced or deleted')]", // If action is add, unnecessary
             "action": "replace" | "add" | "delete", // Choose only one considering request.
-            "value": {"element attributes to be replaced or added": "element values to be replaced or added"} // If action is delete, unnecessary.
+            "value": { // If action is delete, unnecessary. Also, never create a value whose type is not filedDescriptor 
+                "className":"class type in PascalCase",
+                "isKey":"true or false",
+                "name":"if className is one of java primitive type or String, use camelCase. If className is a custom type (e.g., Address, Photo, User...), use the className in pascalCase.",
+                "displayName":"class display name in Korean",
+                "nameCamelCase":"camel case name",
+                "namePascalCase":"pascal case name",
+                "_type":"org.uengine.model.FieldDescriptor",
+            }
         }
     ]
 }
@@ -60,11 +68,21 @@ in this json format:
             
             Modifications should be made by accessing only the data where direct changes occur in each element object using jsonPath.
             If a value object is added to the field of the AggregateRoot, an external domain object should be drawn, and the relation should be connected.
+
+            - name must follow these rules:
+                - If className is a Java primitive type or String, use camelCase.
+                - If className is a custom type (e.g., Address, Photo, User...), use the className itself in PascalCase.
+            - nameCamelCase should always be in camelCase format.
+            - namePascalCase should always be in PascalCase format.
+            - For custom types (e.g., Address, Photo, User...), name, nameCamelCase, and namePascalCase should be as follows:
+                - name: The className itself (e.g., "Photo")
+                - nameCamelCase: The className in camelCase (e.g., "photo")
+                - namePascalCase: The className itself, as it's already in PascalCase (e.g., "Photo")
             `
         }
 
         if(this.client.$parent.$parent.$options.name === 'uml-class-model-canvas'){
-            prompt = umlClassModelPrompt() + prompt;
+            prompt = prompt + umlClassModelPrompt();
         }
 
         return prompt
@@ -349,7 +367,12 @@ in this json format:
                 return modelValue;
             }
         } catch (error) {
+            let modelValue = {
+                updateElement: updateElement? updateElement : {},
+                selectedElement: selectedElement? selectedElement : {}
+            }
             console.log(error)
+            return modelValue
         }
     }
 

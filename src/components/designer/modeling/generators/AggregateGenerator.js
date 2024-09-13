@@ -237,6 +237,7 @@ class AggregateGenerator extends JsonAIGenerator {
             me.resetUUID();
     
             if(modelValue["boundedContext"]){
+                me.modelElements = {}
                 Object.keys(modelValue["boundedContext"]).forEach(function (key, bcIdx){
                     var bcUuid = me.client.input.aggregate.boundedContext.id
                     if(!bcUuid){
@@ -596,6 +597,7 @@ class AggregateGenerator extends JsonAIGenerator {
                         }
                     }
                 })
+
                 var relations = {}
                 Object.keys(me.modelElements).forEach(function (key){
                     if(me.modelElements[key]._type == "org.uengine.modeling.model.Command" && (me.modelElements[key].outputEvents && me.modelElements[key].outputEvents.length > 0)){

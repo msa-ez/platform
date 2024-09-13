@@ -71,10 +71,10 @@
                 ></text-element>
             </sub-elements>
 
-            <sub-elements>
+            <sub-elements v-if="value.items">
                 <rectangle-element
                         :sub-width="'100%'"
-                        :sub-height="value.elementView.height-value.elementView.titleH"
+                        :sub-height="value.elementView.itemH"
                         :sub-top="value.elementView.titleH"
                         :subStyle="{
                             'stroke': '#050038',
@@ -82,10 +82,18 @@
                             'fill-opacity': 1,
                         }"
                 ></rectangle-element>
+                <text-element
+                        :sub-width="'100%'"
+                        :sub-height="value.elementView.itemH"
+                        :sub-top="value.elementView.titleH"
+                        :sub-left="10"
+                        :subStyle="{'font-size': '14px', 'text-anchor':'start', 'font-color': '#FAFAFA'}"
+                        :text="attributeLabels"
+                ></text-element>
             </sub-elements>
         </group-element>
 
-        <div v-for="(item, index) in value.items" :key="'item'+index">
+        <!-- <div v-for="(item, index) in value.items" :key="'item'+index">
             <uml-class-text
                     :type="'item'"
                     :styles="{
@@ -99,7 +107,7 @@
                         'subEdgeH': value.elementView.subEdgeH,
                     }"
             ></uml-class-text>
-        </div>
+        </div> -->
 
         <uml-enum-panel
                 v-if="propertyPanel"
@@ -150,7 +158,8 @@
                         'style': JSON.stringify({}),
                         'angle': angle,
                         'titleH': 50,
-                        'subEdgeH': 50
+                        'itemH': 90,
+                        'subEdgeH': 120
                     },
                     selected: false,
                     items: [],
@@ -178,7 +187,30 @@
                     return "";
                 }
             },
-            
+            attributeLabels() {
+                try {
+                    // var me = this
+                    // var arr = []
+                    // if (me.value.fieldDescriptors.length > 0) {
+                    //     me.value.fieldDescriptors.forEach(function (item) {
+                    //         var labelName = item.displayName ? item.displayName : item.name;
+                    //         var label = item.label ? item.label : '- ' + labelName + ': ' + item.className;
+                    //         arr.push(label);
+                    //     });
+                    // }
+                    // return arr
+                    var me = this
+                    var text = '';
+                    me.value.items.forEach((item) => {
+                        var labelName = item.value;
+                        var label = item.value;
+                        text += label + '\n';
+                    })
+                    return text;
+                } catch (e) {
+                    return "";
+                }
+            },
         },
         data: function () {
             return {
@@ -196,6 +228,15 @@
                     }
                 }
             },
+            "value.elementView.height": {
+                deep: true,
+                handler(newVal, oldVal) {
+                    var me = this;
+                    if(newVal != oldVal) {
+                        me.setHeight();
+                    }
+                }
+            },
         },
         mounted: function () {
             var me = this
@@ -206,6 +247,13 @@
             }
         },
         methods: {
+            setHeight() {
+                var me = this
+                
+                me.value.elementView.itemH = me.value.elementView.height - me.value.elementView.titleH
+
+                me.refreshImg();
+            },
         }
     }
 </script>

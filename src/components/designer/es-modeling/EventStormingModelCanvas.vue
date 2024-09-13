@@ -3654,13 +3654,11 @@
 
                     if(attachedElements){
                         // delete element
-                        Object.keys(elements).forEach(function (modelEle) {
-                            attachedElements.forEach(function (ele) {
-                                if(elements[modelEle]!=null && modelEle == ele.id){
-                                    delete elements[ele];
-                                }
-                            });
-                        });
+                        attachedElements.forEach(ele => {
+                            if(elements[ele.id] != null){
+                                delete elements[ele.id]
+                            }
+                        })
 
                         // delete relations
                         Object.keys(relations).forEach(function (modelEle) {
@@ -3690,22 +3688,33 @@
                 let codeGenerator = new CodeGeneratorCore({canvas: me})
                 let convertedModel = codeGenerator.convertModelForCodeGen(me.value)
 
-                let currentAggregate = convertedModel.modelForElements.Aggregate.find(x => x.id == agg.id && x._type !== "org.uengine.modeling.model.BoundedContext")
-                let attachedElements
-                if(currentAggregate){
-                    let attachedEvents = currentAggregate.events
-                    let attachedCommands = currentAggregate.commands
+                let currentElements = convertedModel.modelForElements
+                let attachedElements = []
+                Object.keys(currentElements).forEach(key => {
+                    if(Array.isArray(currentElements[key]) && currentElements[key].length > 0){
+                        if(!key.includes('BoundedContext') && !key.includes('Actor')){
+                            currentElements[key].forEach(ele => {
+                                if(ele.aggregate && ele.aggregate.id == agg.id){
+                                    if(!attachedElements.find(e => e.id === ele.id)){
+                                        attachedElements.push(ele)
+                                    }
+                                }
+                            })
+                        }
+                    }
+                })
 
-                    attachedElements = [...attachedEvents, ...attachedCommands]
-
-                    attachedCommands.forEach(command => {
-                        command.attached.forEach(ele => {
-                            if(ele._type.includes('Actor') && !attachedElements.find(e => e.id === ele.id)){
-                                attachedElements.push(ele)
-                            }
+                Object.keys(currentElements).forEach(key => {
+                    if(key.includes('Actor')){
+                        currentElements[key].forEach(actor => {
+                            actor.attached.forEach(ele => {
+                                if(attachedElements.find(e => e.id === ele.id) && !attachedElements.find(e => e.id === actor.id)){
+                                    attachedElements.push(actor)
+                                }
+                            })
                         })
-                    })
-                }
+                    }
+                })
 
                 return attachedElements
             },
