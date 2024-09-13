@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "serve": "node --max_old_space_size=8192 node_modules/@vue/cli-service/bin/vue-cli-service.js serve --host 0.0.0.0 --disableHostCheck true",
-    "build": "node --max_old_space_size=8192 node_modules/@vue/cli-service/bin/vue-cli-service.js build --open",
+    "build": "node --max_old_space_size=8192 node_modules/@vue/cli-service/bin/vue-cli-service.js build --open && npm run copy-robots",
+    "copy-robots": "rm dist/robots.txt && cp robots-eventstorming.txt dist/robots-eventstorming.txt && cp robots-labs.txt dist/robots-labs.txt && cp robots-prod.txt dist/robots-prod.txt",
     "test:unit": "vue-cli-service test:unit",
     "test:debug": "node --inspect-brk node_modules/.bin/vue-cli-service test:unit --no-cache --watch --runInBand",
     "test": "jest",

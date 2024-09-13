@@ -3,7 +3,7 @@ const changeCase = require('change-case');
 const jp = require('jsonpath');
 
 class DebeziumLogsTabGenerator extends JsonAIGenerator{
-    constructor(client, messageObj){
+    constructor(client, messageObj, errorCallback){
         super(client);
 
         this.model = "gpt-4o"
@@ -11,13 +11,16 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
         this.originalLanguage = this.preferredLanguage.toLowerCase();
         this.messageObj = messageObj
         this.modelName = "DebeziumLogsTabGenerator"
+        this.errorCallback = errorCallback
 
-        this.modelMode = "generateCommandGuides"
+        this.modelMode = "generateGodTableDistributeGuidesPreStep"
         this.modelInputLengthLimit = 10000
         this.relatedPreProcessModelValueString = ""
         this.queryResultsToModificate = null
 
         this.UUIDAliasDic = {}
+        this.generatedGuideValues = {}
+        this.temperature = 0.3
     }
 
     createPrompt(userProps, modelValue){
@@ -317,58 +320,155 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
             
         }
 
-        const getPreprocessInfos = (preprocessModelValue) => {
-            let primaryKeysSet = new Set()
-            let aggregateNames = []
-            let commandNames = []
-            let eventNames = []
-            let aggregateValueObjectNameDic = {}
-            
-            Object.values(preprocessModelValue).forEach(boundary => {
-                if(boundary.aggregates){
-                    Object.values(boundary.aggregates).forEach(aggregate => {
-                        aggregateNames.push(aggregate.name)
-                        aggregateValueObjectNameDic[aggregate.name] = [aggregate.name]
-          
-                        aggregate.properties.forEach(property => {
-                            if(property.isKey)
-                                primaryKeysSet.add(property.name)
-                        })
-          
-                        if(aggregate.valueObjects) {
-                            aggregate.valueObjects.forEach(valueObject => {
-                                aggregateValueObjectNameDic[aggregate.name].push(valueObject.name)
-                                valueObject.properties.forEach(property => {
-                                    if(property.isKey)
-                                        primaryKeysSet.add(property.name)
-                                })
-                            })
-                        }
-                        
-                        if(aggregate.commands) {
-                            aggregate.commands.forEach(command => {
-                            commandNames.push(command.name)
-                            })
-                        }
-                        
-                        if(aggregate.events) {
-                            aggregate.events.forEach(event => {
-                                eventNames.push(event.name)
-                            })
-                        }
-                    })
+        const getPreprocessInfos = (preprocessModelValue, modelValue) => {
+            const getPreprocessInfos = (preprocessModelValue) => {
+                let primaryKeysSet = new Set()
+                let preProcessInfos = {
+                    boundedContextInfos: [],
+                    aggregateInfos: [],
+                    valueObjectInfos: [],
+                    commandInfos: [],
+                    eventInfos: [],
+                    aggregateValueObjectNameDic: {}
                 }
-            })
-          
-            return {
-                "primaryKeys": Array.from(primaryKeysSet),
-                "aggregateNames": aggregateNames,
-                "commandNames": commandNames,
-                "eventNames": eventNames,
-                "aggregateValueObjectNameDic": aggregateValueObjectNameDic
-            }
-        }
 
+
+                Object.values(preprocessModelValue).forEach(boundary => {
+                    preProcessInfos.boundedContextInfos.push({
+                        id: boundary.id,
+                        name: boundary.name
+                    })
+
+                    if(boundary.aggregates){
+                        Object.values(boundary.aggregates).forEach(aggregate => {
+                            let aggregateInfo = {
+                                boundedContextId: boundary.id,
+                                id: aggregate.id,
+                                name: aggregate.name,
+                                primaryKeys: []
+                            }
+
+                            aggregate.properties.forEach(property => {
+                                if(property.isKey) {
+                                    primaryKeysSet.add(property.name)
+                                    aggregateInfo.primaryKeys.push(property.name)
+                                }
+                            })
+
+                            preProcessInfos.aggregateInfos.push(aggregateInfo)
+                            
+
+                            preProcessInfos.aggregateValueObjectNameDic[aggregate.name] = [aggregate.name]
+                            if(aggregate.valueObjects) {
+                                aggregate.valueObjects.forEach(valueObject => {
+                                    preProcessInfos.aggregateValueObjectNameDic[aggregate.name].push(valueObject.name)
+
+                                    preProcessInfos.valueObjectInfos.push({
+                                        boundedContextId: boundary.id,
+                                        aggregateId: aggregate.id,
+                                        id: valueObject.id,
+                                        name: valueObject.name
+                                    })
+                                    
+                                    valueObject.properties.forEach(property => {
+                                        if(property.isKey)
+                                            primaryKeysSet.add(property.name)
+                                    })
+                                })
+                            }
+                            
+                            if(aggregate.commands) {
+                                aggregate.commands.forEach(command => {
+                                    preProcessInfos.commandInfos.push({
+                                        boundedContextId: boundary.id,
+                                        aggregateId: aggregate.id,
+                                        id: command.id,
+                                        name: command.name
+                                    })
+                                })
+                            }
+                            
+                            if(aggregate.events) {
+                                aggregate.events.forEach(event => {
+                                    preProcessInfos.eventInfos.push({
+                                        boundedContextId: boundary.id,
+                                        aggregateId: aggregate.id,
+                                        id: event.id,
+                                        name: event.name
+                                    })
+                                })
+                            }
+                        })
+                    }
+                })
+    
+
+                return {
+                    primaryKeys: Array.from(primaryKeysSet),
+                    ...preProcessInfos
+                }
+            }
+
+            const getUsableBoundedContextInfos = (modelValue, prevPreprocessInfos) => {
+                const currentBoundedContextNames = []
+                for(const element of Object.values(modelValue.elements)) {
+                    if(element && element._type === "org.uengine.modeling.model.BoundedContext")
+                        currentBoundedContextNames.push(element.name)
+                }
+    
+                const usableBoundedContextInfos = []
+                for(const boundedContextInfo of prevPreprocessInfos.boundedContextInfos) {
+                    if(currentBoundedContextNames.includes(boundedContextInfo.name))
+                        usableBoundedContextInfos.push(boundedContextInfo)
+                }
+
+                return usableBoundedContextInfos
+            }
+
+            const getUsableAggregateInfos = (modelValue, prevPreprocessInfos) => {
+                const currentAggregateNames = []
+                for(const element of Object.values(modelValue.elements)) {
+                    if(element && element._type === "org.uengine.modeling.model.Aggregate")
+                        currentAggregateNames.push(element.name)
+                }
+    
+                const usableAggregateInfos = []
+                for(const aggregateInfo of prevPreprocessInfos.aggregateInfos) {
+                    if(currentAggregateNames.includes(aggregateInfo.name))
+                        usableAggregateInfos.push(aggregateInfo)
+                }
+                
+                return usableAggregateInfos
+            }
+
+            const getUsableValueObjectInfos = (modelValue, prevPreprocessInfos) => {
+                const currentValueObjectNames = []
+                for(const element of Object.values(modelValue.elements)) {
+                    if(element && element._type === "org.uengine.modeling.model.Aggregate" && 
+                       element.aggregateRoot && element.aggregateRoot.entities && element.aggregateRoot.entities.elements
+                    ) {
+                        for(const entity of Object.values(element.aggregateRoot.entities.elements)) {
+                            if(entity && entity._type === "org.uengine.uml.model.vo.Class")
+                                currentValueObjectNames.push(entity.name)
+                        }
+                    }
+                }
+    
+                const usableValueObjectInfos = []
+                for(const valueObjectInfo of prevPreprocessInfos.valueObjectInfos) {
+                    if(currentValueObjectNames.includes(valueObjectInfo.name))
+                        usableValueObjectInfos.push(valueObjectInfo)
+                }
+                
+                return usableValueObjectInfos
+            }
+
+            let preProcessInfos = getPreprocessInfos(preprocessModelValue)
+            preProcessInfos.usableBoundedContextInfos = getUsableBoundedContextInfos(modelValue, preProcessInfos)
+            preProcessInfos.usableAggregateInfos = getUsableAggregateInfos(modelValue, preProcessInfos)
+            preProcessInfos.usableValueObjectInfos = getUsableValueObjectInfos(modelValue, preProcessInfos)
+            return preProcessInfos
+        }
 
         const getSummarizedDebeziumLogStrings = (debeziumLogStrings) => {
             const getDebeziumLogStringList = (logs) => {
@@ -395,11 +495,80 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
             return "".concat(summarizedDebeziumLogStrings)
         }
 
+        const getClientModelValue = (modelValue, mirrorValue) => {
+            const getMirrorElementIds = (modelValue) => {
+                let mirrorElementIds = []
+                for(const element of Object.values(modelValue.elements))
+                    if(element && element.mirrorElement)
+                        mirrorElementIds.push(element.mirrorElement)
+                return mirrorElementIds
+            }
+            
+            let clientModelValue = {
+                elements: {...modelValue.elements},
+                relations: {...modelValue.relations}
+            }
+            let mirrorElementIds = getMirrorElementIds(modelValue)
+
+            for(const element of Object.values(mirrorValue.elements)) {
+                if(element && !modelValue.elements[element.id] && !mirrorElementIds.includes(element.id))
+                    clientModelValue.elements[element.id] = element
+            }
+
+            return clientModelValue
+        }
+
+        const checkIsValidBoundedContexts = (preprocessInfos, errorCallback) => {
+            if(preprocessInfos.usableBoundedContextInfos.length <= 0) {
+                const errorObj = new Error("전달된 트랜잭션과 관련해서 현재 사용가능한 Bounded Context가 존재하지 않습니다. 해당 트랜잭션과 관련된 새로운 Bounded Context를 생성해주세요.")
+                errorCallback(errorObj)
+                throw errorObj
+            }
+
+            const invalidBoundedContextNames = preprocessInfos.usableBoundedContextInfos.filter((info) => info.name && info.name.match(/BoundedContext[\d\.]+/) !== null)
+            if(invalidBoundedContextNames.length > 0) {
+                const errorObj = new Error(`생성한 Bounded Context가 OrderSerivce, ShippingService와 같이 의미있는 이름을 가지도록 해주세요.: ${invalidBoundedContextNames.map((info) => info.name).join(", ")}`)
+                errorCallback(errorObj)
+                throw errorObj
+            }
+        }
+
+        const getGodTableDistributeGuideProperties = (godTableDistributeGuidesPreStep, godTableDistributeGuide, propertyKeys, actionsTypes, alwaysIncludeCommonProperty=true) => {
+            let properties = []
+            Object.keys(godTableDistributeGuide.tableActions).forEach((tableActionKey) => {
+                if(!actionsTypes.includes(godTableDistributeGuide.tableActions[tableActionKey].actionType))
+                    return
+
+
+                const targetTableInfo = godTableDistributeGuidesPreStep.tables.filter((table) => {
+                    return table.tableName === tableActionKey
+                })[0]
+
+                let tableProperties = []
+                if(alwaysIncludeCommonProperty)
+                    tableProperties = [godTableDistributeGuidesPreStep.commonProperty, ...targetTableInfo.properties]
+                else
+                    tableProperties = (targetTableInfo.isMainInfoTable ?  [godTableDistributeGuidesPreStep.commonProperty, ...targetTableInfo.properties] : targetTableInfo.properties)
+
+
+                let property = {tableName: tableActionKey, properties: tableProperties}
+
+                Object.keys(godTableDistributeGuide.tableActions[tableActionKey].args).forEach((argKey) => {
+                    if(propertyKeys.includes(argKey))
+                        property[argKey] = godTableDistributeGuide.tableActions[tableActionKey].args[argKey]
+                })
+
+                properties.push(property)
+            })
+            return properties
+        }
+
+
         const getInputEventStormingSyntaxGuidePrompt = () => {
-            return `당신은 수정을 수행 할 이벤트 스토밍 모델에 대한 요약된 정보가 담긴 JSON 객체를 얻습니다.
-대략적인 구조는 다음과 같습니다.
+            return `You will receive a JSON object containing summarized information about the event storming model on which you will perform your task.
+The approximate structure is as follows.
 {
-    // 이벤트 스토밍 모델은 여러개의 Bounded Context로 이루어져 있습니다.
+    // The event storming model consists of multiple Bounded Contexts.
     "<boundedContextId>": {
         "id": "<boundedContextId>",
         "name": "<boundedContextName>",
@@ -410,27 +579,27 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
             }
         ],
 
-        // Bounded Context는 여러개의 aggregate를 가지고 있습니다.
+        // A Bounded Context has multiple aggregates.
         "aggregates": {
             "<aggregateId>": {
                 "id": "<aggregateId>",
                 "name": "<aggregateName>",
                 
-                // aggregate는 Aggregate Root에 관한 속성들을 가지고 있습니다.
+                // The aggregate has properties related to the Aggregate Root.
                 "properties": [
                     {
                         "name": "<propertyName>",
                         
-                        // "<propertyType>"은 다음 3가지중 하나에 속해야합니다.
-                        // 1. 이미 잘 알려진 Java 클래스 이름을 사용할 수 있습니다. 이때, 패키지 전체 경로를 적지 말고, 클래스 명만 적어주세요. (ex. java.lang.String > String)
-                        // 2. 다음 같은 값 중 하나를 사용할 수 있습니다. : Address, Portrait, Rating, Money, Email
-                        // 3. enumerations, valueObjects에 정의된 name이 있는 경우, 해당 이름을 사용할 수 있습니다.
-                        ["type": "<propertyType>"], // type이 String인 경우, type을 명시하지 않습니다.
-                        ["isKey": true] // 기본키 여부입니다. properties 중 오직 하나만 isKey가 true로 설정되어야 합니다.
+                        // "<propertyType>" must belong to one of the following three categories:
+                        // 1. You can use well-known Java class names. In this case, write only the class name without the full package path. (e.g., java.lang.String > String)
+                        // 2. You can use one of the following values: Address, Portrait, Rating, Money, Email
+                        // 3. If there's a name defined in enumerations or valueObjects, you can use that name.
+                        ["type": "<propertyType>"], // If the type is String, do not specify the type.
+                        ["isKey": true] // Indicates whether it's a primary key. Only one of the properties should have isKey set to true.
                     }
                 ],
                 
-                // Aggregate Root에 관한 속성들에 사용되는 Enum 객체에 대한 정의입니다.
+                // Definitions of Enum objects used for the Aggregate Root properties.
                 "enumerations": [
                     {
                         "id": "<enumerationId>",
@@ -439,7 +608,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                     }
                 ],
                 
-                // Aggregate Root에 관한 속성들에 사용되는 ValueObject 객체에 대한 정의입니다.
+                // Definitions of ValueObject objects used for the Aggregate Root properties.
                 "valueObjects": [
                     {
                         "id": "<valueObjectId>",
@@ -447,15 +616,15 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                         "properties": [
                             {
                                 "name": "<propertyName>",
-                                ["type": "<propertyType>"], // type이 String인 경우, type을 명시하지 않습니다.
+                                ["type": "<propertyType>"], // If the type is String, do not specify the type.
                                 ["isKey": true],
-                                ["isForeignProperty": true] // 외래키 여부입니다. 이 속성이 다른 테이블의 속성을 참조하는 경우, 이 값은 true로 설정해야 합니다.
+                                ["isForeignProperty": true] // Indicates whether it's a foreign key. If this property references a property in another table, this value should be set to true.
                             }
                         ]
                     }
                 ],
                 
-                // REST API를 통해서 요청할 경우를 나타내는 command 목록입니다.
+                // List of commands representing requests through REST API.
                 "commands": [
                     {
                         "id": "<commandId>",
@@ -465,11 +634,11 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                             "relationId": "<relationId>",
                             "id": "<eventId>",
                             "name": "<eventName>"
-                        }] // 이 command에 요청한 경우, 발생하게 되는 event에 대한 정보가 적힙니다.
+                        }] // Information about the event that occurs when this command is requested.
                     }
                 ],
                 
-                // command에 의해서 발생한 event 목록입니다.
+                // List of events triggered by commands.
                 "events": [
                     {
                         "id": "<eventId>",
@@ -478,7 +647,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
                             "relationId": "<relationId>",
                             "id": "<commandId>",
                             "name": "<commandName>"
-                        }] // 이 event에 요청한 경우, 발생하게 되는 command에 대한 정보가 적힙니다.
+                        }] // Information about the command that occurs when this event is requested.
                     }
                 ]
             }
@@ -490,7 +659,7 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
         }
 
         const getJsonCompressGuidePrompt = () => {
-            return `- Json 반환시에는 아래의 예시처럼 모든 공백을 제거하고, 압축된 형태로 반환해주세요.
+            return `- When returning JSON, please remove all whitespace and return it in a compressed format, as shown in the example below.
 # BEFORE
 {
     "a": 1,
@@ -503,573 +672,6 @@ class DebeziumLogsTabGenerator extends JsonAIGenerator{
 `
         }
 
-        const getSystemPromptForGenerateCommandGuides = (preprocessModelValueString, debeziumLogs, preprocessInfos, usableAggregateInfos) => {
-            const getSystemPrompt = () => {
-                const getFrontGuidePrompt = () => {
-                    return `당신은 특정 시스템의 데이터베이스에서 발생하는 Debezium CDC 트랜잭션 로그를 해석해서 다음과 같은 사항들을 도출해야 합니다.
-1. Debezium 트랜잭션 로그와 관련된 이벤트 스토밍 커맨드 명, 이벤트 명을 적습니다.
-2. 해당 이벤트 발생 시에 연쇄적으로 기존 이벤트 스토밍의 다른 커맨드를 호출시킬 필요가 있는지 적습니다.
-3. 해당 커맨드를 기존 이벤트 스토밍의 다른 이벤트가 호출시킬 필요가 있는지 적습니다.
-
-다음 규칙을 따라서 작성해 주세요.
-1. 출력되는 JSON 객체에는 주석을 절대로 작성하면 안 됩니다.
-2. 다른 Aggregate의 기본 키를 수정시키기 위해서 커맨드를 호출하는 경우는 없습니다. 기본 키는 수정할 수 없는 값입니다.
-3. 동일한 Aggregate에 속하는 커맨드를 호출하지 마세요.
-4. 커맨드 호출로 주어진 Aggregate에 업데이트할 수 있을 만한 속성이 없다면 커맨드를 호출하지 마세요.
-5. 커맨드 명에 작성된 목적으로만 커맨드를 호출해 주세요.
-6. 추가 요청을 반드시 따르세요.
-
-`   
-                }
-
-                const getOutputSyntaxGuidePrompt = () => {
-                    return `당신은 다음과 같은 JSON 객체를 반환하면 됩니다.
-\`\`\`json
-{
-    // 주어진 Debezium 로그와 관련되어서 Aggregate 혹은 ValueObject로 사용할 수 있는 이름을 작성합니다.
-    // 기존의 Aggregate나 ValueObject와 유사한 로그인 경우, 해당 이름을 그대로 활용하세요.
-    "objectName": "<objectName>",
-
-    // 기존 Aggregate 이름을 그대로 활용했는지의 여부입니다.
-    "isUsedExistingObject": <true|false>,
-    
-    // * 다음 두 속성인 aggregateIdToIncludeAsValueObject와 aggregateIdToIncludeAsValueObjectReason는 기존 Aggregate 이름을 그대로 활용했을 경우에는 필요없는 속성이므로, null로 작성하면 됩니다.
-    // 만약 주어진 Debezium 로그와 관련된 Object가 기존의 Aggregate 내부에 ValueObject로 존재해야 할 경우, 해당 Aggregate의 Id를 작성합니다.
-    // Aggregate 내부에 ValueObject로 존재해야 하는지는 해당 Aggregate와 생성하려는 오브젝트가 잠깐 데이터가 동기화하는 동안 생기는 데이터 불일치가 비즈니스적으로 매우 치명적인지의 여부에 따라 달라집니다.
-    // 비즈니스적으로 치명적인 사례는 데이터 불일치가 즉각적인 금전적 손실이나 법적 문제를 야기할 수 있는 경우입니다.
-    // 반면, 치명적이지 않은 사례는 일시적인 데이터 불일치가 허용되거나 나중에 쉽게 수정할 수 있는 경우입니다.
-    // 비즈니스적으로 치명적인 사례:
-    // 1. 금융 거래: 계좌 잔액과 거래 내역의 불일치는 금전적 손실로 이어질 수 있습니다.
-    // 2. 재고 관리: 실제 재고와 시스템상의 재고 불일치는 과다 판매나 기회 손실을 초래할 수 있습니다.
-    // 3. 의료 기록: 환자의 진료 기록이나 투약 정보의 불일치는 치명적인 의료 사고로 이어질 수 있습니다.
-    // 4. 법적 문서: 계약서나 법적 문서의 내용 불일치는 법적 분쟁을 야기할 수 있습니다.
-    // 5. 항공 예약: 좌석 예약 정보의 불일치는 초과 예약이나 고객 불만으로 이어질 수 있습니다.
-    // 비즈니스적으로 치명적이지 않은 사례:
-    // 1. 사용자 프로필: 사용자의 프로필 정보(예: 닉네임, 프로필 사진)의 일시적 불일치는 크게 문제 되지 않습니다.
-    // 2. 제품 리뷰: 제품 리뷰나 평점의 일시적 불일치는 즉각적인 비즈니스 영향이 적습니다.
-    // 3. 로그 데이터: 시스템 로그나 사용자 활동 로그의 일시적 불일치는 대부분의 경우 치명적이지 않습니다.
-    // 4. 소셜 미디어 데이터: 팔로워 수나 좋아요 수의 일시적 불일치는 일반적으로 허용됩니다.
-    // 5. 뉴스레터 구독 정보: 뉴스레터 구독 상태의 일시적 불일치는 즉각적인 비즈니스 영향이 적습니다.
-    // '<aggregateId>'에는 반드시 기존 이벤트 스토밍에 존재하는 Aggregate의 Id를 작성해야 합니다.
-    "aggregateIdToIncludeAsValueObject": "<aggregateId>"|null,
-
-    // aggregateIdToIncludeAsValueObject에 null이 아닌, aggregateId를 작성했을 경우, 작성한 이유를 적습니다.
-    // Aggregate의 속성이 변경되었을 때, ValueObject의 어떠한 속성을 변경시키는 게 비즈니스적으로 치명적인 사례가 될 수 있는지 작성합니다.
-    "aggregateIdToIncludeAsValueObjectReason": "<reason>",
-
-    // 주어진 Debezium 로그와 관련되어서 생성될 수 있는 커맨드 명과 이벤트 명을 적습니다.
-    // 기존의 커맨드와 유사한 로그인 경우, 해당 이름을 그대로 활용하세요.
-    "debeziumLogCommandName": "<debeziumLogCommandName>",
-
-    // 기존의 커맨드 이름을 그대로 활용했는지의 여부입니다.
-    "isUsedExistingCommand": <true|false>,
-
-    // 기존의 이벤트와 유사한 로그인 경우, 해당 이름을 그대로 활용하세요.
-    "debeziumLogEventName": "<debeziumLogEventName>",
-       
-    // 기존의 이벤트 이름을 그대로 활용했는지의 여부입니다.
-    "isUsedExistingEvent": <true|false>,
-
-    // 생성된 커맨드를 호출시킬 필요가 있는 이벤트가 기존 이벤트 스토밍 목록에 존재 할 경우, 관련 정보를 적습니다.
-    // "objectName"이 기존에 존재하는 Aggregate를 활용할 경우, 해당 Aggregate에 속하는 이벤트가 커맨드를 호출하도록 작성하지 마세요.
-    // 동일한 eventId에 대한 객체들은 가장 중요한 relatedAttribute만 언급해서 하나만 작성합니다.
-    "eventsToTriggerDebeziumLogCommand": [
-        {
-            "eventId": "<eventId>", // 생성시킨 커맨드를 호출하는 이벤트의 Id입니다.
-            "relatedAttribute": "<relatedAttribute>", // 어떠한 속성을 업데이트하기 위해서 커맨드를 호출하는지 명시합니다. 전달된 Debezium Log에 포함된 속성명을 작성해야 합니다.
-            "reason": "<reason>" // 이 커맨드를 호출하는 이유를 명시합니다.
-        }
-    ],
-
-    // 생성된 커맨드가 호출시킬 필요가 있는 이벤트가 기존 이벤트 스토밍 목록에 존재 할 경우, 관련 정보를 적습니다.
-    // "objectName"이 기존에 존재하는 Aggregate를 활용할 경우, 해당 Aggregate에 속하는 커맨드는 호출하지 마세요.
-    // 동일한 commandId에 대한 객체들은 가장 중요한 relatedAttribute만 언급해서 하나만 작성합니다.
-    "commandsToTriggerByDebeziumLogEvent": [
-        {
-            "commandId": "<commandId>", // 생성시킨 이벤트가 호출하는 커맨드 Id입니다.
-            "relatedAttribute": "<relatedAttribute>", // 어떠한 속성을 업데이트하기 위해서 커맨드를 호출하는지 명시합니다. 호출하는 커맨드에 속하는 Aggregate의 속성명을 작성해야 합니다.
-            "reason": "<reason>" // 이 커맨드를 호출하는 이유를 명시합니다.
-        }
-    ]
-}
-\`\`\`
-
-`
-                }
-
-                const getExamplePrompt = () => {
-                    return `예시를 들어보겠습니다.
-남은 포인트 정보를 가진 고객 정보가 있고, 고객 정보를 업데이트하는 cmd-update-customer 커맨드가 존재한다고 가정해 보겠습니다.
-해당 포인트를 사용하는 Debezium 로그가 전달되었다면, 포인트 사용 내역과 관련된 Command, Event를 생성할 수 있을 것이고, 해당 포인트 사용 내역만큼 고객 정보를 업데이트할 수 있을 겁니다.
-이 경우는 비즈니스적으로 치명적일 수 있습니다. 포인트 사용과 고객 정보 업데이트는 즉각적인 일관성이 필요한 중요한 비즈니스 로직이기 때문입니다.
-따라서 aggregateIdToIncludeAsValueObejct에 전달된 이벤트 스토밍 데이터 중에서 고객 정보와 관련된 Aggregate Id를 적습니다.
-그렇다면, 다음과 같이 반환할 수 있습니다.
-\`\`\`json
-{"objectName":"PointUsing","isUsedExistingObject":false,"aggregateIdToIncludeAsValueObject":"Customer","aggregateIdToIncludeAsValueObjectReason":"Immediate consistency is required for point usage and customer information update.","debeziumLogCommandName":"CreatePointUsing","isUsedExistingCommand":false,"debeziumLogEventName":"PointUsingCreated","isUsedExistingEvent":false,"eventsToTriggerDebeziumLogCommand":[],"commandsToTriggerByDebeziumLogEvent":[{"eventId":"cmd-update-customer","relatedAttribute":"point_balance","reason":"To update customers' point_balance information"}]}
-\`\`\`
-
-`
-                }
-                
-                return getFrontGuidePrompt() +
-                       getInputEventStormingSyntaxGuidePrompt() +
-                       getOutputSyntaxGuidePrompt() +
-                       getExamplePrompt() +
-                       getJsonCompressGuidePrompt()
-            }
-
-            const getUserPrompt = (preprocessModelValueString, debeziumLogs, preprocessInfos, usableAggregateInfos) => {
-                const primaryKeysToString = (primaryKeys) => {
-                    if(primaryKeys.length <= 0) return ``
-                    return `다음의 속성은 기본키이기 때문에 relatedAttribute로 사용할 수 없습니다.: ${primaryKeys.join(", ")}`
-                }
-
-                const getSummarizedDebeziumLogTableNameString = (debeziumLogStrings, aggregateValueObjectNameDic) => {
-                    const getDebeziumLogStringList = (logs) => {
-                        return logs.match(/\{"schema":\{.*?"name":".*?\.Envelope".*?\},"payload":\{.*?\}\}/g)
-                    }
-                
-                    const getSummarizedDebeziumLog = (debeziumLog) => {
-                        return {
-                            payload: {
-                                before: debeziumLog.payload.before,
-                                after: debeziumLog.payload.after,
-                                source: {
-                                    db: debeziumLog.payload.source.db,
-                                    table: debeziumLog.payload.source.table
-                                }
-                            }
-                        }
-                    }
-
-                    const getPossibleAggregates = (tableNames, aggregateValueObjectNameDic) => {
-                        let possibleAggregatesSet = new Set()
-
-                        for(let aggregateKey of Object.keys(aggregateValueObjectNameDic)) {
-                            let isFound = false
-                            for(let checkName of aggregateValueObjectNameDic[aggregateKey]) {
-                                for(const tableName of tableNames) {
-                                    if(changeCase.pascalCase(tableName).toLowerCase().includes(
-                                       changeCase.pascalCase(checkName).toLowerCase()) && 
-                                       !possibleAggregatesSet.has(aggregateKey)) {
-                                            possibleAggregatesSet.add(aggregateKey)
-                                            isFound = true
-                                            break
-                                    }
-                                }
-                                if(isFound) break
-                            }
-                        }
-
-                        return Array.from(possibleAggregatesSet)
-                    }
-
-                    const debeziumLogStringList = getDebeziumLogStringList(debeziumLogStrings)
-                    if(debeziumLogStringList.length <= 0) return ""
-
-                    const tableNames = debeziumLogStringList.map((debeziumLogString) => {
-                        const tableName = getSummarizedDebeziumLog(JSON.parse(debeziumLogString)).payload.source.table
-                        return changeCase.pascalCase(tableName.replace("TB_", "").replace("Table", ""))
-                    })
-
-
-                    const possibleAggregates = getPossibleAggregates(tableNames, aggregateValueObjectNameDic)
-                    if(possibleAggregates.length <= 0)
-                        return `다음 이름을 활용해서 객체 명을 생성해야 합니다.: ${tableNames.join(", ")}`
-                    else
-                        return `다음 이름을 활용해서 객체 명을 생성해야 합니다.: ${tableNames.join(", ")}
-다음의 이름을 가진 기존 Aggregate안에 ValueObject로 생성할 수 있는지 검토해야 합니다.: ${possibleAggregates.join(", ")}`
-                    
-                }
-
-                const getUsableAggregateNamesGuides = (usableAggregateInfos) => {
-                    if(usableAggregateInfos === null) return ""
-
-                    const usableAggregateNames = usableAggregateInfos.map((aggregateInfo) => {
-                        return aggregateInfo.name
-                    })
-                    if(usableAggregateNames.length <= 0) return "기존의 이벤트 스토밍 모델의 Aggregate 이름으로 사용하지 않은 새로운 이름을 objectName에 작성해야 합니다. aggregateIdToIncludeAsValueObject에는 null을 작성합니다."
-
-                    return "다음의 이름을 가진 Aggregate의 이름만 objectName와 aggregateIdToIncludeAsValueObject의 속성으로 활용할 수 있습니다. 만약 objectName에서 사용할 만한 이름이 없다면, 기존의 이벤트 스토밍 모델의 Aggregate 이름으로 사용하지 않은 새로운 이름을 objectName에 작성해야 합니다. aggregateIdToIncludeAsValueObject는 사용할 만한 이름이 없다면, null로 작성합니다.: " + usableAggregateNames.join(", ")
-                }
-
-                return `[INPUT]
-- 기존 이벤트스토밍 모델 객체
-${preprocessModelValueString}
-
-- Debezium 트랜잭션 로그
-${getSummarizedDebeziumLogStrings(debeziumLogs)}
-
-- 추가 요청
-${primaryKeysToString(preprocessInfos.primaryKeys)}
-${getSummarizedDebeziumLogTableNameString(debeziumLogs, preprocessInfos.aggregateValueObjectNameDic)}
-${getUsableAggregateNamesGuides(usableAggregateInfos)}
-
-[OUTPUT]
-\`\`\`json
-`
-            }
-
-            return getSystemPrompt() + getUserPrompt(preprocessModelValueString, debeziumLogs, preprocessInfos, usableAggregateInfos)
-        }
-
-        const getSystemPromptForGenerateCommands = (preprocessModelValueString, debeziumLogs, commandGuidesToUse, usableBoundedContextNames) => {
-            const getSystemPrompt = () => {
-                const getFrontGuidePrompt = () => {
-                    return `당신은 특정 시스템의 데이터베이스에서 발생하는 Debezium CDC 트랜잭션 로그를 해석해서 주어진 이벤트 스토밍 모델을 수정하기 위한 액션이 담긴 쿼리를 작성해야 합니다.
-Debezium CDC 트랜잭션 로그에서 기존 이벤트 모델에 반영되어 있지 않은 유즈케이스들을 찾아서 그에 맞춰서 이벤트 스토밍 모델에 반영하기 위한 액션이 담긴 쿼리들을 작성하시면 됩니다.
-
-다음 규칙을 따라서 작성해 주세요.
-1. 제공된 Debezium CDC 트랜잭션에서 발견된 속성 및 Bounded Context에 대해서만 수정 사항들을 생성해 주세요. 그 외의 추가적인 속성을 추측하지 마세요.
-2. 각 Bounded Context는 서로 상호작용 할 수 있습니다. 특정 Bounded Context의 이벤트가 발생하면, 해당 이벤트는 다른 Bounded Context의 커맨드를 호출할 수 있습니다.
-3. 출력되는 JSON 객체에는 주석을 절대로 작성하면 안 됩니다.
-4. 자바에서 제공하는 기본 데이터타입 혹은 Address, Portrait, Rating, Money, Email을 제외한 속성들은 enumerations나 valueObjects로 직접 정의해야 합니다.
-5. event.block이나 hibernate_sequence와 같이 비즈니스 로직과 직접적으로 관련이 없는 트랜잭션은 무시해야 합니다.
-6. id 속성은 고유해야 하며, 수정하면 안 됩니다.
-7. 필수적인 상황이 아니라면, 하나의 Bounded Context 안에 하나의 Aggregate가 속하도록 해주세요.
-8. '<해당 Bounded Context에 속하게 될 Aggregate의 이름> + Service'와 같이 Bounded Context의 이름을 작성해 주세요.
-9. 트랜젝션의 속성 및 유즈 케이스가 다르다면, 관련된 새로운 Aggregate를 생성해야 합니다. 기존의 Aggregate를 덮어쓰면 안됩니다.
-10. 추가 요청을 반드시 따르세요.
-
-`
-                }
-    
-                const getOutputSyntaxGuidePrompt = () => {
-                    return `당신은 리스트를 반환하며, 그 리스트에는 특정 액션을 수행하기 위한 JSON 객체들이 담겨야 합니다.
-다음과 같은 형태로 반환하면 됩니다.
-\`\`\`json
-{
-    // 먼저, 당신은 Debezium 트랜잭션 로그의 내용을 바탕으로 트랜잭션 별로 id와 description을 적어야 합니다.
-    // 전달된 트랜잭션 로그들의 순서와 일치해야 합니다.
-    "transactions": [
-        {
-            "id": "<transactionId>",
-            "description": "<transactionDescription>",
-
-            // 해당하는 트랜잭션의 payload에 작성된 모든 필드를 적여야 합니다.
-            // etc1, etc2와 같이 순번에 매겨져 있는 경우에도 통합시키지 않고, 모두 작성하세요.
-            "properties": [
-                {
-                    "name": "<propertyName>",
-                    ["type": "<propertyType>"], // type이 String인 경우, type을 명시하지 않습니다.
-                    ["isKey": true], // 기본키가 존재하는 경우에만 작성해주세요.
-                    ["isForeignProperty": true] // 외래키가 존재하는 경우에만 작성해주세요.
-                }
-            ]
-        }
-    ],
-
-    // 위에서 정의한 transactions를 바탕으로 당신은 Debezium 로그에서 기존의 이벤트 모델링에 반영되지 않는 유즈케이스들을 최대한 식별해서 적어야 합니다.
-    // 예를 들어서 위의 transactions에 주어진 이벤트 스토밍 정보에는 없는 상품 추가와 관련된 트랜잭션이 있으면, 해당 트랜잭션 id와 함께 유즈케이스를 적으면 됩니다.
-    "usecases": [
-        {
-            // 어떤 트랜잭션 id와 관계가 있는 유즈케이스인지 적습니다.
-            // 여기에 적힌 트랜잭션에서 선언된 속성들은 이 유즈케이스에서 활용하게 됩니다.
-            "relatedTransactionId": "<transactionId>",
-
-            "id": "<usecaseId>",
-            "name": "<usecaseName>",
-            "displayName": "<usecaseAlias>",
-            "actor": "<actorName>", // 이 유즈케이스와 관련된 액터 이름을 적습니다.
-
-            // 해당 유즈케이스에 대해서 수행할 쿼리들의 ID를 미리 작성합니다.
-            // 해당 쿼리 ID들은 추후에 queries에서 전부 구현되어야 합니다.
-            "relatedBoundedContextQueryIds": ["<queryId>"], // 이 유즈케이스에서 사용할 있는 BoundedContext를 INPUT으로 제공한 이벤트 스토밍 모델에서 발견할 수 없을 경우, 쿼리를 추가합니다.
-
-            "relatedAggregateQueryIds": ["<queryId>"], 
-            "relatedEnumerationQueryIds": ["<queryId>"], // 주어진 Aggregate에서 열거형 객체를 선언 했을 경우, 그 열거형 객체에 대한 구체적인 정보를 추가하기 위한 쿼리를 추가합니다.
-
-            // 주어진 Aggregate에서 ValueObject 객체를 선언 했을 경우, 그 ValueObject 객체에 대한 구체적인 정보를 추가하기 위한 쿼리를 추가합니다.
-            // 혹은, 특정 테이블이 주어진 Aggregate를 외래키로 참조하는 경우, 당신은 데이터의 불일치에 대한 비즈니스의 치명성을 판단해서 치명적이라고 판단되면 Aggregate가 아닌, ValueObject에 해당 트랙젝션 테이블을 추가할 수 있습니다.
-            "relatedValueObjectQueryIds": ["<queryId>"],  
-
-            "relatedCommandQueryIds": ["<queryId>"], // 이 유즈케이스를 사용한 커맨드 관련 쿼리의 ID이며, 최소한 하나 이상 존재해야 합니다.
-            "relatedEventQueryIds": ["<queryId>"] // 이 유즈케이스를 사용한 이벤트 관련 쿼리의 ID이며, 최소한 하나 이상 존재해야 합니다.
-        }
-    ],
-
-    // 여기에 위에서 제시한 usecase의 내용을 반영하기 위한 쿼리들을 작성하면 됩니다. 
-    "queries": [
-        {
-            // 어느 유즈케이스의 내용을 반영하기 위한 쿼리인지 적어주세요.
-            "fromUsecaseId": "<usecaseId>",
-
-            // 이 쿼리를 식별하기 위한 고유 ID 입니다.
-            "queryId": "<queryId>",
-
-            // 어떤 유형의 객체에 대한 정보를 수정하는지 나타내는 속성입니다.
-            // BoundedContext, Aggregate, Enumeration, ValueObject, Command, Event 중 하나를 선택해야 합니다.
-            "objectType": "<objectType>",
-
-            // 수행할 액션을 나타내는 속성입니다.
-            // update, delete 중 하나를 선택해야 합니다.
-            "action": "<action>",
-
-            // 주어진 액션이 수행되는 객체의 ID 정보들이 담기는 속성입니다.
-            "ids": {
-                "<idName>": "<idValue>"
-            },
-
-            // 액션에 필요한 파라미터를 담는 속성입니다.
-            "args": {
-                "<argName>": "<argValue>"
-            }
-        }
-    ]
-}
-\`\`\`
-
-각각의 action에 대한 규칙은 다음과 같습니다.
-- update 액션
-    새롭게 생성하는 경우, ids와 args에 나열된 모든 속성을 반드시 작성해야 합니다.
-    수정할려고 하는 경우, 수정시킬 대상의 ids를 반드시 작성해야 하고, args에는 변경시킬 속성들만 작성해야 합니다.
-    properties인 경우, 변경시킬 name 속성이 담긴 객체만 작성하면 됩니다.
-    만약, 그 name이 없으면 새롭게 생성될 것이고, 그렇지 않을 때는 기존의 속성을 수정하는 것으로 합니다.
-
-- delete 액션
-    삭제시킬 대상의 ids를 반드시 작성해야 합니다.
-    properties의 일부 속성을 삭제하고 싶을 경우, 해당 properties 속성에서 삭제시킬 객체를 작성하면 됩니다.
-    properties 내부에서 작성된 name 속성과 매칭되는 속성이 삭제됩니다.
-
-각각의 objectType에서 활용하는 ids와 args에 관해서 설명하겠습니다.
-이 설명에서 작성하지 않은 임의의 파리미터를 ids나 args에서 활용할 수 없습니다.
-
-# objectType: BoundedContext
-- 설명
-모든 액션은 전달된 Bounded Context안에서 수행됩니다.
-
-- 반환 형태
-{
-    "objectType": "BoundedContext",
-    "action": "<update | delete>",
-    "ids": {
-        "boundedContextId": "<boundedContextId>"
-    },
-    "args": {
-        "boundedContextName": "<boundedContextName>"
-    }
-}
-
-# objectType: Aggregate
-- 설명
-Debezium 트랜잭션 로그는 특정 테이블에 대한 액션이 포함되어 있습니다.
-해당 Aggregate가 속할 수 있는 적절한 Bounded Context가 없을 경우에는 쿼리를 통해서 새롭게 만들어야 합니다.
-
-- 반환 형태
-{
-    "objectType": "Aggregate",
-    "action": "<update | delete>",
-    "ids": {
-        "boundedContextId": "<boundedContextId>",
-        "aggregateId": "<aggregateId>"
-    },
-    "args": {
-        "aggregateName": "<aggregateName>",
-
-        // 해당 트랜잭션에서 사용한 속성들을 최대한 다 적어주세요.
-        "properties": [
-            {
-                "name": "<propertyName>",
-                ["type": "<propertyType>"], // type이 String인 경우, type을 명시하지 않습니다.
-                ["isKey": true] // 기본키가 존재하는 경우에만 작성해주세요.
-            }
-        ]
-    }
-}
-
-# objectType: Enumeration
-- 설명
-Aggreage에서 사용할 수 있는 열거형 정보를 담는 객체입니다.
-해당 Enumeration이 속할 수 있는 적절한 Bounded Context나 Aggregate가 없을 경우에는 쿼리를 통해서 새롭게 만들어야 합니다.
-
-- 반환 형태
-{
-    "objectType": "Enumeration",
-    "action": "<update | delete>",
-    "ids": {
-        "boundedContextId": "<boundedContextId>",
-        "aggregateId": "<aggregateId>",
-        "enumerationId": "<enumerationId>"
-    },
-    "args": {
-        "enumerationName": "<enumerationName>",
-        "properties": [
-            {
-                "name": "<propertyName>"
-            }
-        ]
-    }
-}
-
-# objectType: ValueObject
-- 설명
-Aggreage에서 사용할 수 있는 ValueObject 정보를 담는 객체입니다.
-해당 ValueObject가 속할 수 있는 적절한 Bounded Context나 Aggregate가 없을 경우에는 쿼리를 통해서 새롭게 만들어야 합니다.
-
-- 반환 형태
-{
-    "objectType": "ValueObject",
-    "action": "<update | delete>",
-    "ids": {
-        "boundedContextId": "<boundedContextId>",
-        "aggregateId": "<aggregateId>",
-        "valueObjectId": "<valueObjectId>"
-    },
-    "args": {
-        "valueObjectName": "<valueObjectName>",
-        "properties": [
-            {
-                "name": "<propertyName>",
-                ["type": "<propertyType>"], // type이 String인 경우, type을 명시하지 않습니다.
-                ["isKey": true], // 기본키가 존재하는 경우에만 작성해주세요.
-                ["isForeignProperty": true] // 외래키 여부입니다. 이 속성이 다른 테이블의 속성을 참조하는 경우에만 작성해주세요.
-            }
-        ],
-    }
-}
-
-# objectType: Command
-- 설명
-주어진 트랜잭션에서 의해서 수행되는 커맨드에 대한 정보를 담는 객체입니다.
-해당 커맨드가 속할 수 있는 적절한 Bounded Context나 Aggregate가 없을 경우에는 쿼리를 통해서 새롭게 만들어야 합니다.
-
-- 반환 형태
-{
-    "objectType": "Command",
-    "action": "<update | delete>",
-    "ids": {
-        "boundedContextId": "<boundedContextId>",
-        "aggregateId": "<aggregateId>",
-        "commandId": "<commandId>"
-    },
-    "args": {
-        "commandName": "<commandName>",
-        "api_verb": <"POST" | "DELETE" | "PUT">,
-        "outputEventIds": ["<outputEventId>"], // 이 커맨드로 인해서 발생되는 이벤트들의 id 리스트. 반드시 존재하는 eventId를 작성해야 합니다.
-        "actor": "<actorName>" // 해당 액션을 수행하는 액터명입니다. 사용자, 관리자등의 이름이 들어가야 합니다. 특정한 액터가 없을 경우, 빈값으로 넣어야 합니다.
-    }
-}
-
-# objectType: Event
-- 설명
-특정 커맨드나 정책에 의해서 발생하는 이벤트에 대한 정보를 담는 객체입니다.
-해당 이벤트가 속할 수 있는 적절한 Bounded Context나 Aggregate가 없을 경우에는 쿼리를 통해서 새롭게 만들어야 합니다.
-
-- 반환 형태
-{
-    "objectType": "Event",
-    "action": "<update | delete>",
-    "ids": {
-        "boundedContextId": "<boundedContextId>",
-        "aggregateId": "<aggregateId>",
-        "eventId": "<eventId>"
-    },
-    "args": {
-        "eventName": "<eventName>",
-
-        // 특정한 이벤트는 다른 BoundedContext 내부의 커맨드를 호출시켜서 상태를 변경할 수 있습니다.
-        // 이러한 호출 정보를 작성해야하는 예시들은 다음과 같습니다.
-        // 1. 환자의 선호도 정보가 변경되었고, 환자 정보에 환자의 선호도 정보가 업데이트된 최신 날짜가 있다고 가정하면 이를 반영하기 위해 작성해야 합니다.
-        // 2. 주문 상품의 수량이 변경되었고, 주문 상품 정보에 주문 상품의 총 수량과 관련된 정보가 있다고 가정하면 이를 반영하기 위해 작성해야 합니다.
-        // 3. 고객이 포인트로 새로운 상품을 구매했고, 고객 정보에 남은 포인트가 있으면, 포인트가 감소해야 하므로 이를 반영하기 위해 작성해야 합니다.
-        // 주의 사항은 다음과 같습니다.
-        // 1. 기본 키를 변경하기 위해서 커맨드를 호출하면 안 됩니다. 기본 키는 변경되지 않는 속성입니다.
-        // 2. 커맨드를 호출하는 이유에 어떤 속성을 변경하기 위해서 커맨드를 호출하는지 명시해야 합니다.
-        "outputCommandIds": [{
-            "commandId": "<outputCommandId>", // 호출하는 커맨드 Id입니다. 반드시 존재하는 commandId를 작성해야 합니다.
-            "relatedAttribute": "<relatedAttribute>", // 어떠한 속성을 업데이트하기 위해서 커맨드를 호출하는지 명시합니다. 호출하는 커맨드에 속하는 Aggregate의 속성명을 작성해야 합니다.
-            "reason": "<reason>" // 이 커맨드를 호출하는 이유를 명시합니다.
-        }]
-    }
-}
-    
-`
-                }
-    
-                const getExamplePrompt = () => {
-                    return `예시를 들어보겠습니다.
-이 예시에서는 환자 정보, 환자 진료 기록, 환자 선호도 정보 업데이트와 관련된 Debezium 트랜잭션 로그가 전달되었다고 가정해서 출력된 결과입니다.
-이 예시에서 환자 진료 기록, 환자 선호도 정보는 환자 정보를 외래키로 가지고 있기 때문에 ValueObject 혹은 Aggregate로 정의될 수 있습니다.
-환자 진료 기록이 환자 정보와 데이터 불일치가 발생하면 비즈니스적으로 치명적이기 때문에 ValueObject로 환자 정보에 포함했고,
-환자 선호도 정보는 환자 정보와 데이터 불일치가 발생해도 비즈니스적으로 큰 문제가 되지 않기 때문에 Aggregate로 정의하였습니다.
-환자 선호도 정보 업데이트 이벤트가 발생했을 경우, outputCommandIds 속성에 환자 정보 업데이트 커맨드 Id를 전달해서 환자 정보의 데이터도 업데이트한다는 점도 확인해 주세요.
-반환 결과는 다음과 같습니다.
-- 이것은 단지 예시일 뿐입니다. 실제로 제가 제공하는 이벤트 스토밍 모델링 데이터는 추후에 INPUT으로 제공될 겁니다.
-\`\`\`json
-{"transactions":[{"description":"Update Patient Information","id":"patient-update-transaction","properties":[{"isKey":true,"name":"id","type":"Long"},{"name":"name"},{"name":"phoneNumber"},{"name":"bloodType","type":"EnumBloodType"},{"name":"isPreferenceInputed","type":"Boolean"}]},{"description":"Update medicalRecord Information","id":"medicalRecord-update-transaction","properties":[{"isKey":true,"name":"id","type":"Long"},{"isForeignProperty":true,"name":"patientId"},{"name":"medicalRecord"}]},{"description":"Update patientPreference Information","id":"patientPreference-update-transaction","properties":[{"isKey":true,"name":"id","type":"Long"},{"isForeignProperty":true,"name":"patientId"},{"name":"PreferenceValue"}]}],"usecases":[{"relatedTransactionId":"patient-update-transaction","id":"usecase-update-patient","name":"UpdatePatient","displayName":"Update Patient","actor":"User","relatedBoundedContextQueryIds":["query-bc-update-patient"],"relatedAggregateQueryIds":["query-agg-update-patient"],"relatedEnumerationQueryIds":["query-enum-blood-type"],"relatedValueObjectQueryIds":[],"relatedCommandQueryIds":["query-cmd-update-patient"],"relatedEventQueryIds":["query-evt-update-patient"]},{"relatedTransactionId":"medicalRecord-update-transaction","id":"usecase-update-medical-record","name":"UpdateMedicalRecord","displayName":"Update Record Record","actor":"User","relatedBoundedContextQueryIds":[],"relatedAggregateQueryIds":[],"relatedEnumerationQueryIds":[],"relatedValueObjectQueryIds":["query-vo-update-medical-record"],"relatedCommandQueryIds":["query-cmd-update-medical-record"],"relatedEventQueryIds":["query-evt-update-medical-record"]},{"relatedTransactionId":"patientPreference-update-transaction","id":"usecase-update-patient-preference","name":"UpdatePatientPreference","displayName":"Update Patient Preference","actor":"User","relatedBoundedContextQueryIds":["query-bc-update-patient-preference"],"relatedAggregateQueryIds":["query-agg-update-patient-preference"],"relatedEnumerationQueryIds":[],"relatedValueObjectQueryIds":[],"relatedCommandQueryIds":["query-cmd-update-patient-preference"],"relatedEventQueryIds":["query-evt-update-patient-preference"]}],"queries":[{"fromUsecaseId":"usecase-update-patient","queryId":"query-bc-update-patient","objectType":"BoundedContext","action":"update","ids":{"boundedContextId":"bc-patient"},"args":{"boundedContextName":"PatientService"}},{"fromUsecaseId":"usecase-update-patient","queryId":"query-agg-update-patient","objectType":"Aggregate","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient"},"args":{"aggregateName":"Patient","properties":[{"isKey":true,"name":"id","type":"Long"},{"name":"name"},{"name":"phoneNumber"},{"name":"bloodType","type":"EnumBloodType"},{"name":"isPreferenceInputed","type":"Boolean"}]}},{"fromUsecaseId":"usecase-update-patient","queryId":"query-cmd-update-patient","objectType":"Command","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","commandId":"cmd-update-patient"},"args":{"commandName":"UpdatePatient","api_verb":"PUT","outputEventIds":["evt-patient-updated"],"actor":"User"}},{"fromUsecaseId":"usecase-update-patient","queryId":"query-evt-update-patient","objectType":"Event","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","eventId":"evt-patient-updated"},"args":{"eventName":"PatientUpdated"}},{"fromUsecaseId":"usecase-update-patient","queryId":"query-enum-blood-type","objectType":"Enumeration","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","enumerationId":"enum-blood-type"},"args":{"enumerationName":"EnumBloodType","properties":[{"name":"A"},{"name":"B"},{"name":"AB"},{"name":"O"}]}},{"fromUsecaseId":"usecase-update-medical-record","queryId":"query-vo-update-medical-record","objectType":"ValueObject","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","valueObjectId":"vo-medical-record"},"args":{"valueObjectName":"MedicalRecord","properties":[{"isKey":true,"name":"id","type":"Long"},{"isForeignProperty":true,"name":"patientId","type":"String"},{"name":"medicalRecord"}]}},{"fromUsecaseId":"usecase-update-medical-record","queryId":"query-cmd-update-medical-record","objectType":"Command","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","commandId":"cmd-update-medical-record"},"args":{"commandName":"UpdateMedicalRecord","api_verb":"PUT","outputEventIds":["evt-medical-record-updated"],"actor":"User"}},{"fromUsecaseId":"usecase-update-medical-record","queryId":"query-evt-update-medical-record","objectType":"Event","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","eventId":"evt-medical-record-updated"},"args":{"eventName":"MedicalRecordUpdated"}},{"fromUsecaseId":"usecase-update-patient-preference","queryId":"query-bc-update-patient-preference","objectType":"BoundedContext","action":"update","ids":{"boundedContextId":"bc-patient-preference"},"args":{"boundedContextName":"PatientPreferenceService"}},{"fromUsecaseId":"usecase-update-patient-preference","queryId":"query-agg-update-patient-preference","objectType":"Aggregate","action":"update","ids":{"boundedContextId":"bc-patient-preference","aggregateId":"agg-patient-preference"},"args":{"aggregateName":"PatientPreference","properties":[{"isKey":true,"name":"id","type":"Long"},{"name":"patientId"},{"name":"PreferenceValue"}]}},{"fromUsecaseId":"usecase-update-patient-preference","queryId":"query-cmd-update-patient-preference","objectType":"Command","action":"update","ids":{"boundedContextId":"bc-patient-preference","aggregateId":"agg-patient-preference","commandId":"cmd-update-patient-preference"},"args":{"commandName":"UpdatePatientPreference","api_verb":"PUT","outputEventIds":["evt-patient-preference-updated"],"actor":"User"}},{"fromUsecaseId":"usecase-update-patient-preference","queryId":"query-evt-update-patient-preference","objectType":"Event","action":"update","ids":{"boundedContextId":"bc-patient-preference","aggregateId":"agg-patient-preference","eventId":"evt-patient-preference-updated"},"args":{"eventName":"PatientPreferenceUpdated","outputCommandIds":[{"commandId":"cmd-update-patient","relatedAttribute":"isPreferenceInputed","reason":"To update isPreferenceInputed attribute when patient preference is updated"}]}}]}
-\`\`\`
-
-`
-                }
-        
-                return  getFrontGuidePrompt() +
-                        getInputEventStormingSyntaxGuidePrompt() +
-                        getOutputSyntaxGuidePrompt() +
-                        getExamplePrompt() +
-                        getJsonCompressGuidePrompt()
-                        
-            }
-
-            const getUserPrompt = (preprocessModelValueString, debeziumLogs, commandGuidesToUse, usableBoundedContextNames) => {
-                const requestDebeziumFieldsPrompt = (debeziumLogs) => {
-                    const debeziumFieldsSet = new Set()
-                    
-                    const beforePayload = JSON.parse(debeziumLogs).payload.before
-                    if(beforePayload && typeof beforePayload === "object") 
-                        Object.keys(beforePayload).forEach(key => debeziumFieldsSet.add(key))
-                
-                    const afterPayload = JSON.parse(debeziumLogs).payload.after
-                    if(afterPayload && typeof afterPayload === "object")
-                        Object.keys(afterPayload).forEach(key => debeziumFieldsSet.add(key))
-                    
-                    return `트랜젝션 로그에서 다음 필드들을 반드시 활용해서 액션을 작성하셔야 합니다.: ${Array.from(debeziumFieldsSet).join(", ")}`
-                }
-
-                const requestDebeziumEnumObject = (debeziumLogs) => {
-                    const searchedBeforeFields = JSON.parse(debeziumLogs).schema.fields.filter(field => field.field === "before")
-                    if(searchedBeforeFields.length <= 0) return ""
-
-                    const beforeFields = searchedBeforeFields[0].fields
-                    const enumFields = beforeFields.filter(field => field && field.name && field.name.toLowerCase().includes("enum") && field.parameters && field.parameters.allowed)
-                    if(enumFields.length <= 0) return ""
-
-                    const enumPrompt = enumFields.map(field => {
-                        return {
-                            "name": field.field,
-                            "enumValues": field.parameters.allowed
-                        }
-                    })
-                    return `다음 속성들은 열거형 객체입니다. 관련 객체가 Aggregate 내부에 없을 경우, 제시되는 데이터를 활용해서 열거형 객체에 대한 생성 액션을 작성하셔야 합니다.: ${JSON.stringify(enumPrompt)}`
-                }
-
-                const getUsableBoundedContextNamesGuides = (usableBoundedContextNames) => {
-                    if(usableBoundedContextNames === null) return ""
-                    if(usableBoundedContextNames.length <= 0) return "관련있는 새로운 Bounded Context를 만들어야 합니다."
-
-                    return "다음의 이름을 가진 Bounded Context 혹은 내부의 요소들만 변경할 수 있습니다. 해당 요소 안에 사용할 수 있는 Bounded Context가 없으면, 새로 만드세요. 단, 이벤트인 경우에는 다른 Bounded Context에 속해있더라도 outputCommands가 제시된 Bounded Context에 속한 커맨드를 가리키도록 만들 수 있습니다.: " + usableBoundedContextNames.join(", ")
-                }
-
-
-                return `[INPUT]
-- 기존 이벤트스토밍 모델 객체
-${preprocessModelValueString}
-
-- Debezium 트랜잭션 로그
-${getSummarizedDebeziumLogStrings(debeziumLogs)}
-
-- 추가 요청
-${requestDebeziumFieldsPrompt(debeziumLogs)}
-${commandGuidesToUse}
-${requestDebeziumEnumObject(debeziumLogs)}
-${getUsableBoundedContextNamesGuides(usableBoundedContextNames)}
-
-[OUTPUT]
-\`\`\`json
-`
-            }
-
-            return getSystemPrompt() + getUserPrompt(preprocessModelValueString, debeziumLogs, commandGuidesToUse, usableBoundedContextNames)
-        }
 
         const getSystemPromptForSummaryPreProcessModelValue = (preProcessModelValue, debeziumLogs) => {
             const getEventStormingNames = (preProcessModelValue) => {
@@ -1102,9 +704,9 @@ ${getUsableBoundedContextNamesGuides(usableBoundedContextNames)}
             }
 
             const getSystemPrompt = (eventStormingNames, debeziumLogs) => {
-                return `당신은 특정 시스템의 데이터베이스에서 발생하는 Debezium CDC 트랜잭션 로그를 해석해서 전달된 이벤트 스토밍 객체의 이름들을 가장 관련성이 높은 이름부터 순서대로 나열해야 합니다.
+                return `You need to interpret the Debezium CDC transaction logs occurring in a specific system's database and list the names of the transmitted event storming objects in order of highest relevance.
 
-반환 형식은 다음과 같은 JSON 객체만 반환하세요.
+Please return only a JSON object in the following format.
 {
     "sortedObjectNames": [
         "<objectName1>",
@@ -1112,7 +714,7 @@ ${getUsableBoundedContextNamesGuides(usableBoundedContextNames)}
     ]
 }
 
-입출력 예시를 보여드리겠습니다.
+I will show you an input/output example.
 [INPUT]
 - Debezium Logs
 {"payload":{"before":null,"after":{"order_number":10005,"order_date":19848,"purchaser":1001,"quantity":3,"product_id":104},"source":{"db":"inventory","table":"orders"}}}
@@ -1143,16 +745,1049 @@ ${eventStormingNames.join(", ")}
             return getSystemPrompt(eventStormingNames, debeziumLogs)
         }
 
-        const getSystemPromptForGenerateGWT = (gwtRequestValue, debeziumLogs) => {        
+        const getSystemPromptForGenerateGodTableDistributeGuidesPreStep = (debeziumLogs, preprocessInfos) => {
             const getSystemPrompt = () => {
-                return `당신은 주어진 Debezium 정보와 이벤트 스토밍 정보를 바탕으로 GWT(Given, When, Then) 형식으로 JSON 객체를 생성해야 합니다.
+                const getFrontGuidePrompt = () => {
+                    return `You will receive a list of attributes from a God table of a specific system, and you need to perform the following tasks:
 
-당신은 다음과 같은 형식으로 정보를 제공받습니다.
+1. Utilize Bounded Context to split a given transaction into multiple tables to fit each problem domain. Follow these guidelines:
+   a) Single Responsibility Principle: Each table should represent one clear concept or entity.
+   b) Normalization: Separate to minimize data redundancy and maintain data integrity.
+   c) Business Logic: Separate to reflect business processes and domain models.
+   d) Scalability: Separate considering future changes or expansions
+   e) Avoid Excessive Separation: Be cautious as too many tables can increase complexity.
+   f) Consider Integration: If a related entity only has an ID reference (e.g., author_id for Author), it may be more reasonable to keep it integrated rather than separating it into a new table (e.g., BookAuthor).
+
+Please follow these rules when writing:
+1. The output JSON object must not contain any comments.
+2. Common attributes (e.g., ID) should be indicated separately and not included in each table.
+3. Create the table name by prefixing given table name.
+    ex) given tableName: Customer, tableNames: Customer, CustomerAddress, CustomerOrder
+4. When deciding whether to separate or integrate tables, consider the amount and nature of the related data. If only an ID reference exists, integration might be more appropriate than separation.
+5. Utilize all attributes provided in the transaction when decomposing tables. Ensure that every attribute from the original transaction is accounted for and properly placed in the resulting table structure.
+
+`   
+                }
+
+                const getOutputSyntaxGuidePrompt = () => {
+                    return `You should return a JSON object as follows:
+\`\`\`json
+{   
+    // This is a property shared by all tables that have been split from the original properties.
+    // If there's no suitable property from the provided list, write "<TableName>_id".
+    "commonProperty": "<commonProperty>",
+
+    // This is a list of tables created by dividing the provided properties.
+    "tables": [
+        {
+            "tableName": "<tableName>",
+            "properties": ["<property1>", "<property2>"],
+
+            // Indicate whether this table is the primary table containing core information.
+            // Set to true for the main table (e.g., CustomerTransaction), and false for related detail tables 
+            // (e.g., CustomerTransactionAccount, CustomerTransactionAccountBalance).
+            "isMainInfoTable": "<true|false>",
+            
+            // If some table has immediate consistency requirement with current table, write the table name in this field.
+            // Written table should be value object of current table later.
+            // Consider adding a table to this list if:
+            // 1. Financial impact: Inconsistency could lead to financial losses or errors.
+            // 2. Legal and compliance: Immediate consistency is necessary for regulatory compliance.
+            // 3. Security implications: Delayed consistency could create security vulnerabilities.
+            // 4. Critical user experience: Inconsistency would result in a poor or confusing user experience.
+            // 5. Data integrity: The data is critical for maintaining the overall integrity of the system.
+            // 6. Business logic dependencies: Other processes rely on this data being immediately consistent.
+            // 7. Transactional boundaries: The data must be updated within the same transaction as the current table.
+            // Examples: AccountBalance for Account, OrderItems for Order, UserCredentials for UserProfile.
+            "immediateConsistencyRequirementTables": [
+                {
+                    "tableName": "<tableName>",
+                    "reason": "<reason>"
+                }
+            ]
+        }
+    ]
+}
+\`\`\`
+
+`
+                }
+
+                const getExamplePrompt = () => {
+                    return `I will show you an input/output example.
+[INPUT]
+- Bounded Context Names
+BankingService
+
+- Table Name
+CustomerTransaction
+
+- Attributes
+accountId, accountNumber, accountType, transactionId, amount, transactionType, timestamp, balance, lastUpdated
+
+[OUTPUT]
+\`\`\`json
+{"commonProperty":"transactionId","tables":[{"tableName":"CustomerTransactionAccount","isMainInfoTable":false,"properties":["accountId","accountNumber","accountType"],"immediateConsistencyRequirementTables":[{"tableName":"CustomerTransactionAccountBalance","reason":"Account balance needs to be immediately consistent with the account to ensure accurate financial reporting and prevent overdrafts."}]},{"tableName":"CustomerTransaction","isMainInfoTable":true,"properties":["amount","transactionType","timestamp"]},{"tableName":"CustomerTransactionAccountBalance","isMainInfoTable":false,"properties":["balance","lastUpdated"]}]}
+\`\`\`
+
+[INPUT]
+- Bounded Context Names
+ProductCatalogService
+
+- Table Name
+Product
+
+- Attributes
+productId, name, description, price, categoryId, categoryName, stockQuantity, supplierId, supplierName, supplierContact, createdAt, updatedAt, isActive
+
+[OUTPUT]
+\`\`\`json
+{"commonProperty":"productId","tables":[{"tableName":"Product","properties":["name","description","price","createdAt","updatedAt","isActive"],"isMainInfoTable":true,"immediateConsistencyRequirementTables":[{"tableName":"ProductInventory","reason":"Stock quantity needs to be immediately consistent with the product to prevent overselling and ensure accurate inventory management."}]},{"tableName":"ProductCategory","properties":["categoryId","categoryName"],"isMainInfoTable":false},{"tableName":"ProductInventory","properties":["stockQuantity"],"isMainInfoTable":false},{"tableName":"ProductSupplier","properties":["supplierId","supplierName","supplierContact"],"isMainInfoTable":false}]}
+\`\`\`
+
+[INPUT]
+- Bounded Context Names
+OrderService
+
+- Table Name
+Order
+
+- Attributes
+orderId, customerId, orderDate, totalAmount, status, paymentMethod
+
+[OUTPUT]
+\`\`\`json
+{"commonProperty":"orderId","tables":[{"tableName":"Order","properties":["customerId","orderDate","totalAmount","status","paymentMethod"],"isMainInfoTable":true}]}
+\`\`\`
+
+`
+                }
+                
+                return getFrontGuidePrompt() +
+                       getOutputSyntaxGuidePrompt() +
+                       getExamplePrompt() +
+                       getJsonCompressGuidePrompt()
+            }
+
+            const getUserPrompt = (debeziumLogs, preprocessInfos) => {
+                const getDebeziumMetadatas = (debeziumLogs) => {
+                    const getDebeziumLogInfo = (debeziumLogs) => {
+                        const getDebeziumLogStringList = (logs) => {
+                            return logs.match(/\{"schema":\{.*?"name":".*?\.Envelope".*?\},"payload":\{.*?\}\}/g)
+                        }
+
+                        const debeziumLogStringList = getDebeziumLogStringList(debeziumLogs)
+                        if(debeziumLogStringList === null || 
+                            debeziumLogStringList.length <= 0
+                        ) return null
+
+                        return JSON.parse(debeziumLogStringList[0])    
+                    }
+
+                    const getDebeziumFields = (debeziumLogInfo) => {
+                        let debeziumFieldsSet = new Set()
+                        if(debeziumLogInfo.payload.before) {
+                            for(const field of Object.keys(debeziumLogInfo.payload.before))
+                                debeziumFieldsSet.add(field)
+                        }
+                        if(debeziumLogInfo.payload.after) {
+                            for(const field of Object.keys(debeziumLogInfo.payload.after))
+                                debeziumFieldsSet.add(field)
+                        }
+                        return Array.from(debeziumFieldsSet)
+                    }
+
+                    const debeziumMetadatas = {tableName: "", fields: []}
+
+                    const debeziumLogInfo = getDebeziumLogInfo(debeziumLogs)
+                    if(debeziumLogInfo === null) return debeziumMetadatas
+
+                    debeziumMetadatas.fields = getDebeziumFields(debeziumLogInfo)
+                    debeziumMetadatas.tableName = debeziumLogInfo.payload.source.table
+                    return debeziumMetadatas
+                }
+
+                const debeziumMetadatas = getDebeziumMetadatas(debeziumLogs)
+
+                return `Now let's process the user's input.
+[INPUT]
+- Bounded Context Names
+${preprocessInfos.usableBoundedContextInfos.map((usableBoundedContextInfo) => {
+    return usableBoundedContextInfo.name
+}).join(", ")}
+
+- Table Name
+${debeziumMetadatas.tableName.replace("TB_", "").replace("Table_", "").replace("Table", "")}
+
+- Attributes
+${debeziumMetadatas.fields.join(", ")}
+
+[OUTPUT]
+\`\`\`json
+
+`
+            }
+
+            return getSystemPrompt() + getUserPrompt(debeziumLogs, preprocessInfos)
+        }
+
+        const getSystemPromptForGodTableDistributeGuides = (preprocessModelValueString, preprocessInfos, godTableDistributeGuidesPreStep) => {
+            const getSystemPrompt = () => {
+                const getFrontGuidePrompt = () => {
+                    return `You will receive a list of tables that is already divided from god table of a specific system, and you need to perform the following tasks:
+
+1. For each divided table, perform one of four actions (UseExistingAggregateId, UseExistingValueObjectId, CreateNewAggregate, CreateNewValueObject):
+
+1-1. If a related table is already defined in the existing event storming model, you can perform UseExistingAggregateId or UseExistingValueObjectId action. Consider the following:
+    a) If it makes sense to reuse the attribute in its current context, use UseExistingAggregateId or UseExistingValueObjectId action.
+    b) If the attribute would be more appropriate in a new context or if its meaning changes significantly, create it using CreateNewAggregate or CreateNewValueObject action.
+    c) Use your judgment to determine whether reusing or creating a new attribute would better serve the domain model and maintain clear boundaries between different contexts.
+
+1-2. If you need to create a new Aggregate or ValueObject, perform CreateNewAggregate or CreateNewValueObject action. Consider the following:
+    a) Identifying Aggregate Roots:
+        - Choose entities with independent lifecycles as Aggregate Roots.
+        - Consider entities directly referenced by other entities as Aggregate Roots.
+        - Select representatives of entity groups that must maintain consistency of business rules as Aggregate Roots.
+
+    b) Identifying Value Objects:
+        - Model groups of attributes that form a conceptual whole as Value Objects.
+        - Consider objects with immutability as Value Objects.
+        - Model objects without identifiers and compared by equality as Value Objects.
+
+    c) Composing Aggregates:
+        - Group related entities and Value Objects around the Aggregate Root.
+        - Design so that all objects within an Aggregate always maintain a consistent state.
+        - Ensure references between Aggregates are made only through IDs.
+
+    d) Considerations:
+        - Be cautious of overly large Aggregates as they can cause performance issues.
+        - Set Aggregate boundaries considering concurrency issues.
+        - Design flexible models considering the possibility of changing business requirements.
+
+2. When deciding between creating a new Aggregate or a ValueObject within an existing Aggregate, consider the following:
+    a) Tight Coupling: If an entity is business-critical and cannot afford to have data inconsistencies with its parent entity, even for a moment, it should be modeled as a ValueObject within the parent Aggregate.
+
+    b) Independent Lifecycle: If an entity has an independent lifecycle or can exist without the parent entity, it may be better modeled as a separate Aggregate.
+
+    c) Scalability and Performance: Consider whether the entity needs to be managed and scaled independently from its parent. If so, it might be better as a separate Aggregate.
+
+    d) Consistency Requirements: If immediate consistency is required between the entity and its parent, it should be a ValueObject. If eventual consistency is acceptable, it can be a separate Aggregate.
+
+3. If it's ambiguous which action should be taken for a table, list multiple possible actions in possibleActions so that the user can choose from them.
+
+Please follow these rules when writing:
+1. The output JSON object must not contain any comments.
+2. tableActions attribute should contain all defined table names.
+3. Always follow additional requests.
+
+`   
+                }
+
+                const getOutputSyntaxGuidePrompt = () => {
+                    return `You should return a JSON object as follows:
+\`\`\`json
+{   
+    // This is a list of possible actions that can be taken for the table.
+    // If multiple possible cases exist, you need to write them all.
+    "possibleActions": [
+        {
+            "description": "<description>", // Describe your action with arguments. This will be viewed as possible options for user.
+            "isRecommended": "<true|false>", // Only one possibleActions item can to be true.
+            "isRecommendedReason": "<isRecommendedReason>", // You need to write reason why you setted isRecommended to true or false.
+
+            // This is a list of actions that can be taken for tables of Distributed Table Information.
+            // You should define all tableActions for each table.
+            "tableActions": {
+                "<tableName>": {
+                    "actionType": "<UseExistingAggregateId|UseExistingValueObjectId|CreateNewAggregate|CreateNewValueObject>",
+                    "args": {
+                        "<property>": "<value>"
+                    } // Arguments for actiontype. It can be different for each actionType.
+                }
+            }
+        }
+    ]
+}
+\`\`\`
+
+Arguments for each actionType:
+
+UseExistingAggregateId:
+{
+    "existingBoundedContextId": "<existingBoundedContextId>", // Bounded Context Id from existing event storming model.
+    "existingAggregateId": "<existingAggregateId>" // Aggregate Id from existing event storming model.
+}
+
+UseExistingValueObjectId:
+{
+    "existingBoundedContextId": "<existingBoundedContextId>", // Bounded Context Id from existing event storming model.
+    "existingValueObjectId": "<existingValueObjectId>" // valueObject Id from existing event storming model.
+}
+
+CreateNewAggregate:
+{
+    "existingBoundedContextId": "<existingBoundedContextId>", // Bounded Context Id from existing event storming model.
+    "newAggregateId": "<newAggregateId>", // Must not exist in an existing Aggregate, and must be defined as something like 'agg-<Name>'.
+    "newAggregateName": "<newAggregateName>" // unique aggregate name like 'Order' or 'Customer'.
+}
+
+CreateNewValueObject:
+{
+    "existingBoundedContextId": "<existingBoundedContextId>", // Bounded Context Id from existing event storming model.
+    "existingAggregateId": "<existingAggregateId>", // Aggregate Id from existing event storming model.
+    "newValueObjectId": "<newValueObjectId>", // Must not exist in an existing ValueObject, and must be defined as something like 'vo-<Name>'.
+    "newValueObjectName": "<newValueObjectName>" // unique valueObject name like 'Address' or 'CustomerInfo'.
+}
+
+`
+                }
+
+                const getExamplePrompt = () => {
+                    return `I will show you an input/output example.
+[INPUT]
+- Event Storming Information
+{"bc-banking":{"id":"bc-banking","name":"Banking","aggregates":{"agg-account":{"id":"agg-account","name":"Account","properties":[{"name":"accountId","type":"String","isKey":true},{"name":"accountNumber","type":"String"},{"name":"accountType","type":"AccountType"}],"enumerations":[{"id":"enum-account-type","name":"AccountType","items":["CHECKING","SAVINGS","INVESTMENT"]}]}}}}
+
+- Distributed Table Information
+{"commonProperty":"accountId","tables":[{"tableName":"Account","properties":["accountNumber","accountType"],"immediateConsistencyRequirementTables":[{"tableName":"AccountBalance","reason":"Account balance needs to be immediately consistent with the account to ensure accurate financial reporting and prevent overdrafts."}]},{"tableName":"Transaction","properties":["transactionId","amount","transactionType","timestamp"]},{"tableName":"AccountBalance","properties":["balance","lastUpdated"]}]}
+
+[OUTPUT]
+\`\`\`json
+{"possibleActions":[{"description":"Model Account as an Aggregate, Transaction as a separate Aggregate, and AccountBalance as a ValueObject within the Account Aggregate","isRecommended":true,"isRecommendedReason":"This approach balances data consistency with scalability. AccountBalance is tightly coupled with Account and requires immediate consistency, while Transaction can be managed independently.","tableActions":{"Account":{"actionType":"UseExistingAggregateId","args":{"existingBoundedContextId":"bc-banking","existingAggregateId":"agg-account"}},"Transaction":{"actionType":"CreateNewAggregate","args":{"existingBoundedContextId":"bc-banking","newAggregateId":"agg-transaction","newAggregateName":"Transaction"}},"AccountBalance":{"actionType":"CreateNewValueObject","args":{"existingBoundedContextId":"bc-banking","existingAggregateId":"agg-account","newValueObjectId":"vo-account-balance","newValueObjectName":"AccountBalance"}}}},{"description":"Model Account as an Aggregate, with both Transaction and AccountBalance as ValueObjects within the Account Aggregate","isRecommended":false,"isRecommendedReason":"While this ensures strong consistency, it may limit scalability for high-volume transaction processing.","tableActions":{"Account":{"actionType":"UseExistingAggregateId","args":{"existingBoundedContextId":"bc-banking","existingAggregateId":"agg-account"}},"Transaction":{"actionType":"CreateNewValueObject","args":{"existingBoundedContextId":"bc-banking","existingAggregateId":"agg-account","newValueObjectId":"vo-transaction","newValueObjectName":"Transaction"}},"AccountBalance":{"actionType":"CreateNewValueObject","args":{"existingBoundedContextId":"bc-banking","existingAggregateId":"agg-account","newValueObjectId":"vo-account-balance","newValueObjectName":"AccountBalance"}}}}]}
+\`\`\`
+
+`
+                }
+                
+                return getFrontGuidePrompt() +
+                       getInputEventStormingSyntaxGuidePrompt() +
+                       getOutputSyntaxGuidePrompt() +
+                       getExamplePrompt() +
+                       getJsonCompressGuidePrompt()
+            }
+
+            const getUserPrompt = (preprocessModelValueString, preprocessInfos, godTableDistributeGuidesPreStep) => {
+                const getExistingGuides = (preprocessInfos) => {
+                    let existingGuides = {
+                        boundedContextInfoIds: "",
+                        aggregateInfoIds: "You can not use UseExistingAggregateId actionType because there is no usable existingAggregateId. Instead, you can use CreateNewAggregate actionType.",
+                        valueObjectInfoIds: "You can not use UseExistingValueObjectId actionType because there is no usable existingValueObjectId. Instead, you can use CreateNewValueObject actionType.",
+                        usableBoundedContextInfoIds: "",
+                        usableAggregateInfoIds: ""
+                    }
+
+                    if(preprocessInfos.boundedContextInfos && preprocessInfos.boundedContextInfos.length > 0) {
+                        const boundedContextInfoIds = preprocessInfos.boundedContextInfos.map((boundedContextInfo) => {
+                            return boundedContextInfo.id
+                        })
+
+                        existingGuides.boundedContextInfoIds = "The value of existingBoundedContextId in UseExistingAggregateId or UseExistingValueObjectId actionType must be one of the following values.: " + boundedContextInfoIds.join(", ")
+                    }
+
+                    if(preprocessInfos.aggregateInfos && preprocessInfos.aggregateInfos.length > 0) {
+                        const aggregateInfoIds = preprocessInfos.aggregateInfos.map((aggregateInfo) => {
+                            return aggregateInfo.id
+                        })
+
+                        existingGuides.aggregateInfoIds = "The value of existingAggregateId in UseExistingAggregateId actionType must be one of the following values.: " + aggregateInfoIds.join(", ")
+                    }
+
+                    if(preprocessInfos.valueObjectInfos && preprocessInfos.valueObjectInfos.length > 0) {
+                        const valueObjectInfoIds = preprocessInfos.valueObjectInfos.map((valueObjectInfo) => {
+                            return valueObjectInfo.id
+                        })
+
+                        existingGuides.existingValueObjectId = "The value of existingValueObjectId in UseExistingValueObjectId actionType must be one of the following values.: " + valueObjectInfoIds.join(", ")
+                    }
+
+
+                    if(preprocessInfos.usableBoundedContextInfos && preprocessInfos.usableBoundedContextInfos.length > 0) {
+                        const usableBoundedContextInfoIds = preprocessInfos.usableBoundedContextInfos.map((usableBoundedContextInfo) => {
+                            return usableBoundedContextInfo.id
+                        })
+
+                        existingGuides.usableBoundedContextInfoIds = "The value of existingBoundedContextId in CreateNewAggregate or CreateNewValueObject actionType must be one of the following values.: " + usableBoundedContextInfoIds.join(", ")
+                    }
+
+                    if(preprocessInfos.usableAggregateInfos && preprocessInfos.usableAggregateInfos.length > 0) {
+                        const usableAggregateInfoIds = preprocessInfos.usableAggregateInfos.map((usableAggregateInfo) => {
+                            return usableAggregateInfo.id
+                        })
+
+                        existingGuides.usableAggregateInfoIds = "The value of existingAggregateId in CreateNewValueObject actionType must be one of the following values.: " + usableAggregateInfoIds.join(", ")
+                    }
+
+
+                    return existingGuides
+                }
+                const existingGuides = getExistingGuides(preprocessInfos)
+
+                return `Now let's process the user's input.
+[INPUT]
+- Event Storming Information
+${preprocessModelValueString}
+
+- Distributed Table Information
+${JSON.stringify(godTableDistributeGuidesPreStep)}
+
+- Additional requests
+${existingGuides.boundedContextInfoIds}
+${existingGuides.aggregateInfoIds}
+${existingGuides.valueObjectInfoIds}
+${existingGuides.usableBoundedContextInfoIds}
+${existingGuides.usableAggregateInfoIds}
+
+[OUTPUT]
+\`\`\`json
+`
+            }
+
+            return getSystemPrompt() + getUserPrompt(preprocessModelValueString, preprocessInfos, godTableDistributeGuidesPreStep)
+        }
+
+        const getSystemPromptForGenerateEventCommandRelationGuides = (preprocessModelValueString, debeziumLogs, preprocessInfos, godTableDistributeGuidesPreStep, godTableDistributeGuide) => {
+            const getSystemPrompt = () => {
+                const getFrontGuidePrompt = () => {
+                    return `You need to interpret the Debezium CDC transaction logs from a specific system's database and derive the following.
+1. Generate new event or command names that can be added to event storming based on the given transaction logs.
+2. Determine if the generated events can trigger other commands.
+3. Determine if the generated commands can trigger other events.
+
+Please follow these rules.
+1. The output JSON object must not contain any comments.
+2. Do not create separate entries if related events or commands already exist.
+3. Always follow additional requests.
+
+`   
+                }
+
+                const getOutputSyntaxGuidePrompt = () => {
+                    return `You should return a JSON object as follows.
 \`\`\`json
 {
-    "debeziumLog": "<debeziumLog>", // 당신은 전달된 Debezium CDC 로그와 관련된 GWT를 생성해야 합니다.
+    // Extract and create new events from use cases in the Debezium Log that are not present in the existing event storming model.
+    "newEvents": [
+        {
+            "aggregateId": "<aggregateId>", // Write the Id of an Aggregate Root that exists in the current event storming.
+            "eventId": "<eventId>", // Write a unique event Id starting with "evt-".
+            "eventName": "<eventName>",
+            "outputCommands": [{
+                "id": "<commandId>", // If this event needs to call another command, write the Id of that command.
+                "reason": "<reason>" // rite the reason why this event needs to call another command.
+            }]
+        }
+    ],
+
+    "newCommands": [
+        {
+            "aggregateId": "<aggregateId>", // Write the Id of an Aggregate Root that exists in the current event storming.
+            "commandId": "<commandId>", // Write a unique command Id starting with "cmd-".
+            "commandName": "<commandName>",
+            "outputEvents": [{
+                "id": "<eventId>" // If this command needs to call another event, write the Id of that event. If the event doesn't exist in the given event storming model, it must be added to newEvents.
+            }]
+        }
+    ],
+
+    // If existing events need to call newly created commands, write them here.
+    "newRelations": [
+        {
+            "fromEventId": "<fromEventId>",
+            "toCommandId": "<toCommandId>",
+            "reason": "<reason>" // Write the reason why an existing event needs to call another command.
+        }
+    ]
+}
+\`\`\`
+
+`
+                }
+
+                const getExamplePrompt = () => {
+                    return `I'll show you an example.
+The following example has three Bounded Contexts: Order, Shipping, and Payment. Shipping and Payment have Order's id, so we can see that they reference it. We receive a transaction log that generates Order content, create related commands and events called by those commands, and since Shipping and Payment have additional information about the Order, we can see that related command IDs are added to outputCommands to add them sequentially when additional requests are made to Order.
+[INPUT]
+- Existing event storming model object
+{"bc-order":{"id":"bc-order","name":"OrderService","actors":[],"aggregates":{"agg-order":{"id":"agg-order","name":"Order","properties":[{"name":"order_id","type":"Long","isKey":true},{"name":"customer_id","type":"Long"},{"name":"order_date"},{"name":"total_amount","type":"Double"},{"name":"status"}],"enumerations":[],"valueObjects":[],"commands":[],"events":[]}}},"bc-shipping":{"id":"bc-shipping","name":"ShippingService","actors":[],"aggregates":{"agg-shipping":{"id":"agg-shipping","name":"Shipping","properties":[{"name":"order_id","type":"Long","isKey":true},{"name":"shipping_id","type":"Long"},{"name":"shipping_method"},{"name":"tracking_number"},{"name":"estimated_delivery_date"}],"enumerations":[],"valueObjects":[],"commands":[{"id":"cmd-create-shipping","name":"CreateShipping","api_verb":"POST","outputEvents":[{"relationId":"rl-to-shipping-created","id":"evt-shipping-created","name":"ShippingCreated"}]}],"events":[{"id":"evt-shipping-created","name":"ShippingCreated"}]}}},"bc-payment":{"id":"bc-payment","name":"PaymentService","actors":[],"aggregates":{"agg-payment":{"id":"agg-payment","name":"Payment","properties":[{"name":"order_id","type":"Long","isKey":true},{"name":"payment_id","type":"Long"},{"name":"payment_method"},{"name":"payment_date"},{"name":"payment_status"}],"enumerations":[],"valueObjects":[],"commands":[{"id":"cmd-create-payment","name":"CreatePayment","api_verb":"POST","outputEvents":[{"relationId":"rl-to-payment-created","id":"evt-payment-created","name":"PaymentCreated"}]}],"events":[{"id":"evt-payment-created","name":"PaymentCreated"}]}}}}
+
+- Debezium transaction log
+{"payload":{"before":null,"after":{"order_id":1001,"customer_id":5001,"order_date":"2023-04-15T10:30:00Z","total_amount":"150.75","status":"PROCESSING"},"source":"Inventory","table":"order"}}
+
+[OUTPUT]
+\`\`\`json
+{"newEvents":[{"aggregateId":"agg-order","eventId":"evt-order-created","eventName":"OrderCreated","outputCommands":[{"id":"cmd-create-shipping","reason":"When an order is created, shipping information must be created"},{"id":"cmd-create-payment","reason":"When an order is created, payment information must be created"}]}],"newCommands":[{"aggregateId":"agg-order","commandId":"cmd-create-order","commandName":"CreateOrder","outputEvents":[{"id":"evt-order-created"}]}],"newRelations":[]}
+\`\`\`
+
+I'll show you another example.
+The following example has three Bounded Contexts: Customer, Order, and Preference. Preference has Customer's id, so it can be updated sequentially when Customer is updated. Also, Customer has order_count, so when the existing OrderCreated event occurs and an Order is added, Customer's order_count can be increased by adding the related relationship to newRelations.
+[INPUT]
+- Existing event storming model object
+{"bc-customer":{"id":"bc-customer","name":"CustomerService","actors":[],"aggregates":{"agg-customer":{"id":"agg-customer","name":"Customer","properties":[{"name":"id","type":"long","isKey":true},{"name":"name"},{"name":"order_count","type":"long"}],"enumerations":[],"valueObjects":[],"commands":[],"events":[]}}},"bc-order":{"id":"bc-order","name":"OrderService","actors":[],"aggregates":{"agg-order":{"id":"agg-order","name":"Order","properties":[{"name":"id","type":"long","isKey":true},{"name":"product_id","type":"long"},{"name":"qty","type":"long"}],"enumerations":[],"valueObjects":[],"commands":[{"id":"cmd-create-order","name":"CreateOrder","api_verb":"POST","outputEvents":[{"relationId":"rl-to-order-created","id":"evt-order-created","name":"OrderCreated"}]}],"events":[{"id":"evt-order-created","name":"OrderCreated"}]}}},"bc-preference":{"id":"bc-preference","name":"PreferenceService","actors":[],"aggregates":{"agg-preference":{"id":"agg-preference","name":"Preference","properties":[{"name":"customer_id","type":"long","isKey":true},{"name":"preference"}],"enumerations":[],"valueObjects":[],"commands":[{"id":"cmd-update-preference","name":"UpdatePreference","api_verb":"POST","outputEvents":[{"relationId":"rl-to-preference-updated","id":"evt-preference-updated","name":"PreferenceUpdated"}]}],"events":[{"id":"evt-preference-updated","name":"PreferenceUpdated"}]}}}}
+
+- Debezium transaction log
+{"payload":{"before":{"id":5001,"first_name":"John Doe","orderCount":5},"after":{"id":5001,"first_name":"John Doe","orderCount":6}}}
+
+[OUTPUT]
+\`\`\`json
+{"newEvents":[{"aggregateId":"agg-customer","eventId":"evt-customer-updated","eventName":"CustomerUpdated","outputCommands":[{"id":"cmd-update-preference","reason":"When an customer is updated, preference information must be updated"}]}],"newCommands":[{"aggregateId":"agg-customer","commandId":"cmd-update-customer","commandName":"UpdateCustomer","outputEvents":[{"id":"evt-customer-updated"}]}],"newRelations":[{"fromEventId":"evt-order-created","toCommandId":"cmd-update-customer","reason":"When order is created, the order_count property in customer must be updated"}]}
+\`\`\`
+
+`
+                }
+                
+                return getFrontGuidePrompt() +
+                       getInputEventStormingSyntaxGuidePrompt() +
+                       getOutputSyntaxGuidePrompt() +
+                       getExamplePrompt() +
+                       getJsonCompressGuidePrompt()
+            }
+
+            const getUserPrompt = (preprocessModelValueString, debeziumLogs, preprocessInfos, godTableDistributeGuidesPreStep, godTableDistributeGuide) => {
+                const getGodTableDistributeGuideObj = (preprocessInfos, godTableDistributeGuidesPreStep, godTableDistributeGuide) => {
+                    const getNewAggregateRootsGuide = (godTableDistributeGuidesPreStep, godTableDistributeGuide) => {
+                        let godGuideProperties = getGodTableDistributeGuideProperties(godTableDistributeGuidesPreStep, godTableDistributeGuide, ["newAggregateName", "newAggregateId"], ["CreateNewAggregate"], true)
+                        if(godGuideProperties.length <= 0) return ""
+
+                        const guide = godGuideProperties.map((newAggregateIdInfo) => {
+                            return {
+                                "id": newAggregateIdInfo.newAggregateId,
+                                "name": newAggregateIdInfo.newAggregateName,
+                                "properties": newAggregateIdInfo.properties
+                            }
+                        })
+
+                        return `The following Aggregates will be newly added. Please generate new events and commands for these.: ${JSON.stringify(guide)}`
+                    }
+
+                    const getExistingAggregateRootsGuide = (godTableDistributeGuidesPreStep, godTableDistributeGuide, preprocessInfos) => {
+                        let godGuideProperties = getGodTableDistributeGuideProperties(godTableDistributeGuidesPreStep, godTableDistributeGuide, ["existingAggregateId"], ["UseExistingAggregateId"])
+                        if(godGuideProperties.length <= 0) return ""
+
+                        const guide = godGuideProperties
+                            .filter((newAggregateIdInfo) => preprocessInfos.usableAggregateInfos.some((usableAggregateInfo) =>  usableAggregateInfo.id === newAggregateIdInfo.existingAggregateId))
+                            .map((newAggregateIdInfo) => {
+                                return {
+                                    "id": newAggregateIdInfo.existingAggregateId
+                            }
+                        })
+                        if(guide.length <= 0) return ""
+
+                        return `Please generate events and commands related to the transaction logs passed to the following Aggregate Roots.: ${JSON.stringify(guide)}`
+                    }
+
+                    const getTableChainGuide = (godTableDistributeGuidesPreStep, godTableDistributeGuide) => {
+                        const godGuideProperties = getGodTableDistributeGuideProperties(godTableDistributeGuidesPreStep, godTableDistributeGuide, ["newAggregateId", "existingAggregateId"], ["UseExistingAggregateId", "CreateNewAggregate"])
+                        if(godGuideProperties.length <= 0) return ""
+
+                        const allAggregateIds = new Set()
+                        godGuideProperties.forEach((newAggregateIdInfo) => {
+                            if(newAggregateIdInfo.newAggregateId)
+                                allAggregateIds.add(newAggregateIdInfo.newAggregateId)
+                            if(newAggregateIdInfo.existingAggregateId)
+                                allAggregateIds.add(newAggregateIdInfo.existingAggregateId)
+                        })
+                        if(allAggregateIds.size <= 0) return ""
+
+                        return `Please add to the outputCommands property in the ${godTableDistributeGuidesPreStep.commonProperty.replace("_id", "").replace("Id", "").replace("Id", "")} related events to call commands with different ${godTableDistributeGuidesPreStep.commonProperty} properties, as in the previous example, so that creation or updates occur in a chain.`
+                    }
+
+                    const getUsableAggregateIdGuide = (preprocessInfos, godTableDistributeGuidesPreStep, godTableDistributeGuide) => {
+                        const godGuideProperties = getGodTableDistributeGuideProperties(godTableDistributeGuidesPreStep, godTableDistributeGuide, ["newAggregateId", "existingAggregateId"], ["UseExistingAggregateId", "CreateNewAggregate"])
+
+                        let usableAggregateIds = new Set()
+
+                        for(const usableAggregateInfo of preprocessInfos.usableAggregateInfos)
+                            usableAggregateIds.add(usableAggregateInfo.id)
+    
+                        for(const godGuideProperty of godGuideProperties) {
+                            if(godGuideProperty.newAggregateId)
+                                usableAggregateIds.add(godGuideProperty.newAggregateId)
+                            if(godGuideProperty.existingAggregateId && preprocessInfos.usableAggregateInfos.some((usableAggregateInfo) => usableAggregateInfo.id === godGuideProperty.existingAggregateId))
+                                usableAggregateIds.add(godGuideProperty.existingAggregateId)
+                        }
+    
+                        if(usableAggregateIds.size <= 0)
+                            return ""
+    
+                        return "The value of aggregateId must be one of the following values.: " + Array.from(usableAggregateIds).join(", ")
+                    }
+
+
+                    return {
+                        newAggregateRootsGuide: getNewAggregateRootsGuide(godTableDistributeGuidesPreStep, godTableDistributeGuide),
+                        existingAggregateRootsGuide: getExistingAggregateRootsGuide(godTableDistributeGuidesPreStep, godTableDistributeGuide, preprocessInfos),
+                        tableChainGuide: getTableChainGuide(godTableDistributeGuidesPreStep, godTableDistributeGuide),
+                        usableAggregateIdGuide: getUsableAggregateIdGuide(preprocessInfos, godTableDistributeGuidesPreStep, godTableDistributeGuide)
+                    }
+                }
+                
+                const getDebeziumOpGuides = (debeziumLogs) => {
+                    const getDebeziumLogStringList = (logs) => {
+                        return logs.match(/\{"schema":\{.*?"name":".*?\.Envelope".*?\},"payload":\{.*?\}\}/g)
+                    }
+                
+                    const debeziumLogStringList = getDebeziumLogStringList(debeziumLogs)
+                    if(debeziumLogStringList.length <= 0) return ""
+
+                    const op = JSON.parse(debeziumLogStringList[0]).payload.op
+                    if(op === "c")
+                        return "The transmitted transaction log is creating a new property. Check if there's a related Create event or command, and if not, please create one."
+                    else if(op === "u")
+                        return "The transmitted transaction log is updating the given property. Check if there's a related Update event or command, and if not, please create one."
+                    else if(op === "d")
+                        return "The transmitted transaction log is deleting the given property. Check if there's a related Delete event or command, and if not, please create one."
+                    return ""
+                }
+
+                const godTableDistributeGuideObj = getGodTableDistributeGuideObj(preprocessInfos, godTableDistributeGuidesPreStep, godTableDistributeGuide)
+
+                return `Now let's process the user's input.
+[INPUT]
+- Existing event storming model object
+${preprocessModelValueString}
+
+- Debezium transaction log
+${getSummarizedDebeziumLogStrings(debeziumLogs)}
+
+- Additional requests
+${godTableDistributeGuideObj.newAggregateRootsGuide}
+${godTableDistributeGuideObj.existingAggregateRootsGuide}
+${godTableDistributeGuideObj.tableChainGuide}
+${godTableDistributeGuideObj.usableAggregateIdGuide}
+${getDebeziumOpGuides(debeziumLogs)}
+A command must always have an event related to its execution. For example, when adding a CreateOrder command, you should add an OrderCreated event to newEvents and make it so that this event is called.
+
+[OUTPUT]
+\`\`\`json
+`
+            }
+
+            return getSystemPrompt() + getUserPrompt(preprocessModelValueString, debeziumLogs, preprocessInfos, godTableDistributeGuidesPreStep, godTableDistributeGuide)
+        }
+
+        const getSystemPromptForGenerateCommands = (preprocessModelValueString, debeziumLogs, prevPreprocessInfos, godTableDistributeGuidesPreStep, godTableDistributeGuide, eventCommandRelationGuides) => {
+            const getSystemPrompt = () => {
+                const getFrontGuidePrompt = () => {
+                    return `You need to interpret the Debezium CDC transaction logs occurring in a specific system's database and write queries containing actions to modify the given event storming model.
+You should find use cases in the Debezium CDC transaction logs that are not reflected in the existing event model and write queries containing actions to reflect them in the event storming model.
+
+Please follow these rules.
+1. Generate modifications only for the attributes and Bounded Contexts found in the provided Debezium CDC transactions. Do not speculate additional attributes.
+2. Each Bounded Context can interact with each other. When an event occurs in a specific Bounded Context, that event can call commands in other Bounded Contexts.
+3. Do not write comments in the output JSON object.
+4. Attributes other than the basic data types provided by Java or Address, Portrait, Rating, Money, Email should be directly defined as enumerations or valueObjects.
+5. Ignore transactions that are not directly related to business logic, such as event.block or hibernate_sequence.
+6. The id attribute must be unique and should not be modified.
+7. Write the name of the Bounded Context as '<Name of the Aggregate that will belong to the Bounded Context> + Service'.
+8. If the attributes and use cases of the transaction are different, create a new related Aggregate. Do not overwrite the existing Aggregate.
+9. Always follow additional requests.
+
+`
+                }
+    
+                const getOutputSyntaxGuidePrompt = () => {
+                    return `You should return a list containing JSON objects for performing specific actions.
+The returned format should be as follows.
+\`\`\`json
+{
+    // First, based on the contents of the Debezium transaction logs, you should write the id and description for each transaction.
+    // The order should match the sequence of the provided transaction logs.
+    "transactions": [
+        {
+            "id": "<transactionId>",
+            "description": "<transactionDescription>",
+
+            // You should list all fields written in the payload of the corresponding transaction.
+            // Even if they are numbered like etc1, etc2, do not merge them; list them all.
+            "properties": [
+                {
+                    "name": "<propertyName>",
+                    ["type": "<propertyType>"], // If the type is String, do not specify the type.
+                    ["isKey": true], // Write this only if there is a primary key.
+                    ["isForeignProperty": true] // Write this only if there is a foreign key.
+                }
+            ]
+        }
+    ],
+
+    // Based on the defined transactions above, you should identify and write as many use cases as possible that are not reflected in the existing event modeling from the Debezium logs.
+    // For example, if there is a transaction related to adding a product that is not in the event storming information given in the transactions above, write the transaction id and the use case.
+    "usecases": [
+        {
+            // Write which transaction id this use case is related to.
+            // The properties declared in the transaction written here will be used in this use case.
+            "relatedTransactionId": "<transactionId>",
+
+            "id": "<usecaseId>",
+            "name": "<usecaseName>",
+            "displayName": "<usecaseAlias>",
+            "actor": "<actorName>", // Write the name of the actor related to this use case.
+
+            // Pre-write the IDs of the queries to be performed for this use case.
+            // All these query IDs must be implemented in the queries section later.
+            "relatedAggregateQueryIds": ["<queryId>"], 
+            "relatedEnumerationQueryIds": ["<queryId>"], // If an enumeration object is declared in the given Aggregate, add a query to add specific information about the enumeration object.
+
+            // If a ValueObject object is declared in the given Aggregate, add a query to add specific information about the ValueObject object.
+            // Or, if a specific table references the given Aggregate as a foreign key, you can add the transaction table to the ValueObject instead of the Aggregate if you judge the business criticality of data inconsistency to be fatal.
+            "relatedValueObjectQueryIds": ["<queryId>"],  
+
+            "relatedCommandQueryIds": ["<queryId>"], // The ID of the command-related query using this use case
+            "relatedEventQueryIds": ["<queryId>"] // The ID of the event-related query using this use case
+        }
+    ],
+
+    // Write the queries to reflect the contents of the use case presented above here.
+    "queries": [
+        {
+            // Write which use case this query is to reflect.
+            "fromUsecaseId": "<usecaseId>",
+
+            // This is a unique ID to identify this query.
+            "queryId": "<queryId>",
+
+            // This attribute indicates what type of object information is being modified.
+            // Choose one from Aggregate, Enumeration, ValueObject, Command, Event.
+            "objectType": "<objectType>",
+
+            // This attribute indicates the action to be performed.
+            // Currently, only update can be written in action.
+            "action": "update",
+
+            // This attribute contains the ID information of the object on which the action is performed.
+            "ids": {
+                "<idName>": "<idValue>"
+            },
+
+            // This attribute contains the parameters required for the action.
+            "args": {
+                "<argName>": "<argValue>"
+            }
+        }
+    ]
+}
+\`\`\`
+
+The rules for each action are as follows.
+- update action
+    When creating a new one, all attributes listed in ids and args must be written.
+    When modifying, the ids of the target to be modified must be written, and only the attributes to be changed should be written in args.
+    In the case of properties, only the object containing the name attribute to be changed should be written.
+    If that name does not exist, it will be newly created, otherwise, it will modify the existing attribute.
+
+I will explain the ids and args used in each objectType.
+You cannot use any arbitrary parameters not described in this explanation in ids or args.
+
+# objectType: Aggregate
+- Description
+Debezium transaction logs contain actions for a specific table.
+
+- Return format
+{
+    "objectType": "Aggregate",
+    "action": "update",
+    "ids": {
+        "boundedContextId": "<boundedContextId>",
+        "aggregateId": "<aggregateId>"
+    },
+    "args": {
+        "aggregateName": "<aggregateName>",
+
+        // Please list as many attributes used in the transaction as possible.
+        "properties": [
+            {
+                "name": "<propertyName>",
+                ["type": "<propertyType>"], // If the type is String, do not specify the type.
+                ["isKey": true] // Write only if there is a primary key.
+            }
+        ]
+    }
+}
+
+# objectType: Enumeration
+- Description
+An object containing enumeration information that can be used in an Aggregate.
+If there is no appropriate Aggregate that this Enumeration can belong to, it must be newly created through a query.
+
+- Return format
+{
+    "objectType": "Enumeration",
+    "action": "update",
+    "ids": {
+        "boundedContextId": "<boundedContextId>",
+        "aggregateId": "<aggregateId>",
+        "enumerationId": "<enumerationId>"
+    },
+    "args": {
+        "enumerationName": "<enumerationName>",
+        "properties": [
+            {
+                "name": "<propertyName>"
+            }
+        ]
+    }
+}
+
+# objectType: ValueObject
+- Description
+An object containing ValueObject information that can be used in an Aggregate.
+If there is no appropriate Aggregate that this ValueObject can belong to, it must be newly created through a query.
+
+- Return format
+{
+    "objectType": "ValueObject",
+    "action": "update",
+    "ids": {
+        "boundedContextId": "<boundedContextId>",
+        "aggregateId": "<aggregateId>",
+        "valueObjectId": "<valueObjectId>"
+    },
+    "args": {
+        "valueObjectName": "<valueObjectName>",
+        "properties": [
+            {
+                "name": "<propertyName>",
+                ["type": "<propertyType>"], // If the type is String, do not specify the type.
+                ["isKey": true], // Write only if there is a primary key.
+                ["isForeignProperty": true] // Whether it is a foreign key. Write only if this attribute references another table's attribute.
+            }
+        ],
+    }
+}
+
+# objectType: Command
+- Description
+An object containing information about the command executed by the given transaction.
+If there is no appropriate Aggregate that this command can belong to, it must be newly created through a query.
+
+- Return format
+{
+    "objectType": "Command",
+    "action": "update",
+    "ids": {
+        "boundedContextId": "<boundedContextId>",
+        "aggregateId": "<aggregateId>",
+        "commandId": "<commandId>"
+    },
+    "args": {
+        "commandName": "<commandName>",
+        "api_verb": <"POST" | "DELETE" | "PUT">,
+        "outputEventIds": ["<outputEventId>"], // List of event IDs generated by this command. Must write existing event IDs.
+        "actor": "<actorName>" // The name of the actor performing the action. Should include names like user, admin, etc. If there is no specific actor, leave it empty.
+    }
+}
+
+# objectType: Event
+- Description
+An object containing information about events generated by a specific command or policy.
+If there is no appropriate Aggregate that this event can belong to, it must be newly created through a query.
+
+- Return format
+{
+    "objectType": "Event",
+    "action": "update",
+    "ids": {
+        "boundedContextId": "<boundedContextId>",
+        "aggregateId": "<aggregateId>",
+        "eventId": "<eventId>"
+    },
+    "args": {
+        "eventName": "<eventName>",
+
+        // Specific events can call commands within other BoundedContexts to change states.
+        // Examples of such call information are as follows.
+        // 1. If the patient's preference information has changed and there is an updated latest date of the patient's preference information in the patient information, it should be written to reflect this.
+        // 2. If the quantity of ordered products has changed and there is information related to the total quantity of ordered products in the order product information, it should be written to reflect this.
+        // 3. If a customer has purchased a new product with points and there are remaining points in the customer information, the points should be reduced to reflect this.
+        // Notes are as follows.
+        // 1. Do not call a command to change the primary key. The primary key is an unchanging attribute.
+        // 2. Specify which attribute is being changed by calling the command.
+        "outputCommandIds": [{
+            "commandId": "<outputCommandId>", // The ID of the command being called. Must write existing command IDs.
+            "relatedAttribute": "<relatedAttribute>", // Specify which attribute is being updated by calling the command. Write the attribute name of the Aggregate to which the called command belongs.
+            "reason": "<reason>" // Specify the reason for calling this command.
+        }]
+    }
+}
+    
+`
+                }
+    
+                const getExamplePrompt = () => {
+                    return `Let me give you an example.
+In this example, it is assumed that Debezium transaction logs related to patient information, patient medical records, and patient preference information updates have been delivered, and the output is based on this assumption.
+In this example, since patient medical records and patient preference information have foreign keys to patient information, they can be defined as ValueObjects or Aggregates.
+Since data inconsistency between patient medical records and patient information can be critical from a business perspective, patient medical records are included as ValueObjects in patient information.
+On the other hand, since data inconsistency between patient preference information and patient information is not a significant business issue, patient preference information is defined as an Aggregate.
+Please also note that when a patient preference information update event occurs, the 'outputCommandIds' property includes the patient information update command Id to ensure that the patient information data is also updated.
+The output result is as follows.
+- This is just an example. The actual event storming modeling data I provide will be given as INPUT later.
+\`\`\`json
+{"transactions":[{"description":"Update Patient Information","id":"patient-update-transaction","properties":[{"isKey":true,"name":"id","type":"Long"},{"name":"name"},{"name":"phoneNumber"},{"name":"bloodType","type":"EnumBloodType"},{"name":"isPreferenceInputed","type":"Boolean"}]},{"description":"Update medicalRecord Information","id":"medicalRecord-update-transaction","properties":[{"isKey":true,"name":"id","type":"Long"},{"isForeignProperty":true,"name":"patientId"},{"name":"medicalRecord"}]},{"description":"Update patientPreference Information","id":"patientPreference-update-transaction","properties":[{"isKey":true,"name":"id","type":"Long"},{"isForeignProperty":true,"name":"patientId"},{"name":"PreferenceValue"}]}],"usecases":[{"relatedTransactionId":"patient-update-transaction","id":"usecase-update-patient","name":"UpdatePatient","displayName":"Update Patient","actor":"User","relatedAggregateQueryIds":["query-agg-update-patient"],"relatedEnumerationQueryIds":["query-enum-blood-type"],"relatedValueObjectQueryIds":[],"relatedCommandQueryIds":["query-cmd-update-patient"],"relatedEventQueryIds":["query-evt-update-patient"]},{"relatedTransactionId":"medicalRecord-update-transaction","id":"usecase-update-medical-record","name":"UpdateMedicalRecord","displayName":"Update Record Record","actor":"User","relatedAggregateQueryIds":[],"relatedEnumerationQueryIds":[],"relatedValueObjectQueryIds":["query-vo-update-medical-record"],"relatedCommandQueryIds":["query-cmd-update-medical-record"],"relatedEventQueryIds":["query-evt-update-medical-record"]},{"relatedTransactionId":"patientPreference-update-transaction","id":"usecase-update-patient-preference","name":"UpdatePatientPreference","displayName":"Update Patient Preference","actor":"User","relatedAggregateQueryIds":["query-agg-update-patient-preference"],"relatedEnumerationQueryIds":[],"relatedValueObjectQueryIds":[],"relatedCommandQueryIds":["query-cmd-update-patient-preference"],"relatedEventQueryIds":["query-evt-update-patient-preference"]}],"queries":[{"fromUsecaseId":"usecase-update-patient","queryId":"query-agg-update-patient","objectType":"Aggregate","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient"},"args":{"aggregateName":"Patient","properties":[{"isKey":true,"name":"id","type":"Long"},{"name":"name"},{"name":"phoneNumber"},{"name":"bloodType","type":"EnumBloodType"},{"name":"isPreferenceInputed","type":"Boolean"}]}},{"fromUsecaseId":"usecase-update-patient","queryId":"query-cmd-update-patient","objectType":"Command","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","commandId":"cmd-update-patient"},"args":{"commandName":"UpdatePatient","api_verb":"PUT","outputEventIds":["evt-patient-updated"],"actor":"User"}},{"fromUsecaseId":"usecase-update-patient","queryId":"query-evt-update-patient","objectType":"Event","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","eventId":"evt-patient-updated"},"args":{"eventName":"PatientUpdated"}},{"fromUsecaseId":"usecase-update-patient","queryId":"query-enum-blood-type","objectType":"Enumeration","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","enumerationId":"enum-blood-type"},"args":{"enumerationName":"EnumBloodType","properties":[{"name":"A"},{"name":"B"},{"name":"AB"},{"name":"O"}]}},{"fromUsecaseId":"usecase-update-medical-record","queryId":"query-vo-update-medical-record","objectType":"ValueObject","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","valueObjectId":"vo-medical-record"},"args":{"valueObjectName":"MedicalRecord","properties":[{"isKey":true,"name":"id","type":"Long"},{"isForeignProperty":true,"name":"patientId","type":"String"},{"name":"medicalRecord"}]}},{"fromUsecaseId":"usecase-update-medical-record","queryId":"query-cmd-update-medical-record","objectType":"Command","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","commandId":"cmd-update-medical-record"},"args":{"commandName":"UpdateMedicalRecord","api_verb":"PUT","outputEventIds":["evt-medical-record-updated"],"actor":"User"}},{"fromUsecaseId":"usecase-update-medical-record","queryId":"query-evt-update-medical-record","objectType":"Event","action":"update","ids":{"boundedContextId":"bc-patient","aggregateId":"agg-patient","eventId":"evt-medical-record-updated"},"args":{"eventName":"MedicalRecordUpdated"}},{"fromUsecaseId":"usecase-update-patient-preference","queryId":"query-agg-update-patient-preference","objectType":"Aggregate","action":"update","ids":{"boundedContextId":"bc-patient-preference","aggregateId":"agg-patient-preference"},"args":{"aggregateName":"PatientPreference","properties":[{"isKey":true,"name":"id","type":"Long"},{"name":"patientId"},{"name":"PreferenceValue"}]}},{"fromUsecaseId":"usecase-update-patient-preference","queryId":"query-cmd-update-patient-preference","objectType":"Command","action":"update","ids":{"boundedContextId":"bc-patient-preference","aggregateId":"agg-patient-preference","commandId":"cmd-update-patient-preference"},"args":{"commandName":"UpdatePatientPreference","api_verb":"PUT","outputEventIds":["evt-patient-preference-updated"],"actor":"User"}},{"fromUsecaseId":"usecase-update-patient-preference","queryId":"query-evt-update-patient-preference","objectType":"Event","action":"update","ids":{"boundedContextId":"bc-patient-preference","aggregateId":"agg-patient-preference","eventId":"evt-patient-preference-updated"},"args":{"eventName":"PatientPreferenceUpdated","outputCommandIds":[{"commandId":"cmd-update-patient","relatedAttribute":"isPreferenceInputed","reason":"To update isPreferenceInputed attribute when patient preference is updated"}]}}]}
+\`\`\`
+
+`
+                }
+        
+                return  getFrontGuidePrompt() +
+                        getInputEventStormingSyntaxGuidePrompt() +
+                        getOutputSyntaxGuidePrompt() +
+                        getExamplePrompt() +
+                        getJsonCompressGuidePrompt()
+                        
+            }
+
+            const getUserPrompt = (preprocessModelValueString, debeziumLogs, prevPreprocessInfos, godTableDistributeGuidesPreStep, godTableDistributeGuide, eventCommandRelationGuides) => {
+
+                const usableBoundedContextInfosRequest = (usableBoundedContextInfos) => {
+                    if(usableBoundedContextInfos.length <= 0)
+                        return ""
+
+                    return `The boundedContextId in a query can have only one of the following values.: ${usableBoundedContextInfos.map(usableBoundedContextInfo => usableBoundedContextInfo.id).join(", ")}`
+                }
+
+                const usableAggregateInfosRequest = (usableAggregateInfos, usableValueObjectInfos, godTableDistributeGuidesPreStep, godTableDistributeGuide) => {
+                    const godGuideProperties = getGodTableDistributeGuideProperties(godTableDistributeGuidesPreStep, godTableDistributeGuide, ["newAggregateId", "existingAggregateId"], ["UseExistingAggregateId", "CreateNewAggregate"])
+
+                    if(usableAggregateInfos.length <= 0 && usableValueObjectInfos.length <= 0 && godGuideProperties.length <= 0)
+                        return ""
+
+                    let usableAggregateIds = new Set()
+
+                    usableAggregateInfos.forEach(usableAggregateInfo => usableAggregateIds.add(usableAggregateInfo.id))
+                    usableValueObjectInfos.forEach(usableValueObjectInfo => usableAggregateIds.add(usableValueObjectInfo.aggregateId))
+
+                    for(const godGuideProperty of godGuideProperties) {
+                        if(godGuideProperty.newAggregateId)
+                            usableAggregateIds.add(godGuideProperty.newAggregateId)
+                        if(godGuideProperty.existingAggregateId && prevPreprocessInfos.usableAggregateInfos.some((aggregateInfo) => aggregateInfo.id === godGuideProperty.existingAggregateId))
+                            usableAggregateIds.add(godGuideProperty.existingAggregateId)
+                    }
+
+                    return `The aggregateId in a query can have only one of the following values.: ${Array.from(usableAggregateIds).join(", ")}`
+                }
+
+
+                const godTableDistributeGuidesAggregateRequest = (godTableDistributeGuidesPreStep, godTableDistributeGuide) => {
+                    let godGuideProperties = getGodTableDistributeGuideProperties(godTableDistributeGuidesPreStep, godTableDistributeGuide, ["existingBoundedContextId", "newAggregateName", "newAggregateId"], ["CreateNewAggregate"], false)
+                    if(godGuideProperties.length <= 0) return ""
+
+                    const guide = godGuideProperties.map((newAggregateIdInfo) => {
+                        return {
+                            "boundedContextId": newAggregateIdInfo.existingBoundedContextId,
+                            "id": newAggregateIdInfo.newAggregateId,
+                            "name": newAggregateIdInfo.newAggregateName,
+                            "properties": newAggregateIdInfo.properties
+                        }
+                    })
+
+                    return `Create Aggregates with the following properties for the passed transaction based on the given information.:${JSON.stringify(guide)}`
+                }
+
+                const godTableDistributeGuidesValueObjectRequest = (godTableDistributeGuidesPreStep, godTableDistributeGuide) => {
+                    let godGuideProperties = getGodTableDistributeGuideProperties(godTableDistributeGuidesPreStep, godTableDistributeGuide, ["existingBoundedContextId", "existingAggregateId", "newValueObjectId", "newValueObjectName"], ["CreateNewValueObject"])
+                    if(godGuideProperties.length <= 0) return ""
+
+                    const guide = godGuideProperties.map((newAggregateIdInfo) => {
+                        return {
+                            "boundedContextId": newAggregateIdInfo.existingBoundedContextId,
+                            "aggregateId": newAggregateIdInfo.existingAggregateId,
+                            "id": newAggregateIdInfo.newValueObjectId,
+                            "name": newAggregateIdInfo.newValueObjectName,
+                            "properties": newAggregateIdInfo.properties
+                        }
+                    })
+
+                    return `Create ValueObjects with the following properties for the passed transaction based on the given information.:${JSON.stringify(guide)}`
+                }
+
+                const godTableDistributeGuideAggregateLimitRequest = (godTableDistributeGuidesPreStep, godTableDistributeGuide) => {
+                    let godGuideProperties = getGodTableDistributeGuideProperties(godTableDistributeGuidesPreStep, godTableDistributeGuide, ["existingAggregateId"], ["UseExistingAggregateId"])
+                    if(godGuideProperties.length <= 0) return ""
+
+                    const guide = godGuideProperties.map((newAggregateIdInfo) => {
+                        return {
+                            "id": newAggregateIdInfo.existingAggregateId
+                        }
+                    })
+
+                    return `Do not create an update action for an Aggregate with the following Aggregate Id.: ${JSON.stringify(guide)}`
+                }
+
+                const godTableDistributeGuideValueObjectLimitRequest = (godTableDistributeGuidesPreStep, godTableDistributeGuide) => {
+                    let godGuideProperties = getGodTableDistributeGuideProperties(godTableDistributeGuidesPreStep, godTableDistributeGuide, ["existingValueObjectId"], ["UseExistingValueObjectId"])
+                    if(godGuideProperties.length <= 0) return ""
+
+                    const guide = godGuideProperties.map((newValueObjectIdInfo) => {
+                        return {
+                            "id": newValueObjectIdInfo.existingValueObjectId
+                        }
+                    })
+
+                    return `Do not create an update action for a ValueObject with the following ValueObject Id.: ${JSON.stringify(guide)}`
+                }
+
+
+                const eventCommandRelationGuidesEventRequest = (newEvents) => {
+                    if(newEvents.length <= 0)
+                        return ""
+
+                    return `Generate Events with the following properties for the passed transaction based on the given information.: ${JSON.stringify(newEvents)}`
+                }
+
+                const eventCommandRelationGuidesCommandRequest = (newCommands) => {
+                    if(newCommands.length <= 0)
+                        return ""
+
+                    return `Generate commands with the following properties for the passed transaction based on the given information.: ${JSON.stringify(newCommands)}`
+                }
+
+                const eventCommandRelationGuidesRelationsQueryRequest = (newRelations) => {
+                    if(newRelations.length <= 0)
+                        return ""
+
+                    return `Generate a modification query to link the following events to commands for the given transaction.: ${JSON.stringify(newRelations)}`
+                }
+
+
+                return `[INPUT]
+- Existing Event Storming Model Object
+${preprocessModelValueString}
+
+- Debezium Transaction Log
+${getSummarizedDebeziumLogStrings(debeziumLogs)}
+
+- Additional Requests
+${usableBoundedContextInfosRequest(prevPreprocessInfos.usableBoundedContextInfos)}
+${usableAggregateInfosRequest(prevPreprocessInfos.usableAggregateInfos, prevPreprocessInfos.usableValueObjectInfos, godTableDistributeGuidesPreStep, godTableDistributeGuide)}
+${godTableDistributeGuidesAggregateRequest(godTableDistributeGuidesPreStep, godTableDistributeGuide)}
+${godTableDistributeGuidesValueObjectRequest(godTableDistributeGuidesPreStep, godTableDistributeGuide)}
+${godTableDistributeGuideAggregateLimitRequest(godTableDistributeGuidesPreStep, godTableDistributeGuide)}
+${godTableDistributeGuideValueObjectLimitRequest(godTableDistributeGuidesPreStep, godTableDistributeGuide)}
+${eventCommandRelationGuidesEventRequest(eventCommandRelationGuides.newEvents)}
+${eventCommandRelationGuidesCommandRequest(eventCommandRelationGuides.newCommands)}
+${eventCommandRelationGuidesRelationsQueryRequest(eventCommandRelationGuides.newRelations)}
+Ensure that only one transaction content is included in transactions.
+Ensure that all query values are included in one use case.
+
+[OUTPUT]
+\`\`\`json
+`
+            }
+
+            return getSystemPrompt() + getUserPrompt(preprocessModelValueString, debeziumLogs, prevPreprocessInfos, godTableDistributeGuidesPreStep, godTableDistributeGuide, eventCommandRelationGuides)
+        }
+
+        const getSystemPromptForGenerateGWT = (gwtRequestValue, debeziumLogs) => {        
+            const getSystemPrompt = () => {
+                return `You need to generate a JSON object in the GWT (Given, When, Then) format based on the provided Debezium information and event storming information.
+
+You will be provided with information in the following format.
+\`\`\`json
+{
+    "debeziumLog": "<debeziumLog>", // You need to generate GWT related to the provided Debezium CDC log.
     "eventStorming": {
-        // Given과 관련된 Aggregate의 이름과 관련 속성입니다.
+        // The name and related attributes of the Aggregate related to Given.
         "givens": [
             {
                 "name": "<aggregateName>",
@@ -1165,7 +1800,7 @@ ${eventStormingNames.join(", ")}
             }
         ],
 
-        // When과 관련된 Command의 이름과 관련 속성입니다.
+        // The name and related attributes of the Command related to When.
         "whens": [
             {
                 "name": "<commandName>",
@@ -1178,7 +1813,7 @@ ${eventStormingNames.join(", ")}
             }
         ],
 
-        // Then과 관련된 Event의 이름과 관련 속성입니다.
+        // The name and related attributes of the Event related to Then.
         "thens": [
             {
                 "name": "<eventName>",
@@ -1194,41 +1829,41 @@ ${eventStormingNames.join(", ")}
 }
 \`\`\`
 
-당신이 반환해야 하는 형식은 다음과 같습니다.
+The format you should return is as follows.
 \`\`\`json
 {
-    // 첫 번째로 당신은 GWT를 생성하기 위한 유즈케이스를 생성해야 합니다.
-    // 유즈케이스는 제시된 Command와 관련되어서 액터가 어떠한 행위를 수행할지를 고려해서 작성하시면 됩니다.
+    // First, you need to create a use case to generate the GWT..
+    // The use case should be written considering what actions the actor will perform in relation to the given Command.
     "usecases": [
         {
             "usecaseId": "<usecaseId>",
-            "gwtId": "<gwtId>", // 이 유즈케이스를 활용한 GWT의 ID입니다.
-            "name": "<usecaseName>", // 해당 유즈케이스를 설명하는 일반적인 이름입니다.
-            "description": "<usecaseDescription>", // 해당 유즈케이스를 설명하는 상세한 설명입니다.
-            "actor": "<actor>" // 해당 유즈케이스를 수행하는 액터의 이름입니다.
+            "gwtId": "<gwtId>", // The ID of the GWT that uses this use case.
+            "name": "<usecaseName>", // A general name describing this use case.
+            "description": "<usecaseDescription>", // A detailed description of this use case.
+            "actor": "<actor>" // The name of the actor performing this use case.
         }
     ],
 
-    // 위에서 제시한 유즈케이스를 활용해서 GWT를 생성하시면 됩니다.
+    // Using the use case presented above, you should generate the GWT.
     "gwts": [
         {   
             "gwtId": "<gwtId>",
-            "usecaseId": "<usecaseId>", // 이 GWT를 생성하기 위해서 사용한 유즈케이스의 ID입니다.
+            "usecaseId": "<usecaseId>", // The ID of the use case used to generate this GWT.
             "givens": [
                 {
-                    "name": "<givenName>", // 위에서 제시한 given의 이름입니다.
+                    "name": "<givenName>", // The name of the given presented above.
                     "values": {
-                        // 작성할 수 있는 속성값에는 3가지 종류가 있습니다.
-                        // 1. 실제로 존재할 수 있는 값을 작성합니다.
-                        // 2. 현재 값이 비어있는 상태라면 null을 작성합니다.
-                        // 3. 해당 GWT와 관련성이 없어 보이는 속성이라면 "N/A"를 작성합니다.
+                        // There are three types of attribute values you can write.
+                        // 1. Write an actual possible value.
+                        // 2. If the current value is empty, write null.
+                        // 3. If the attribute seems unrelated to this GWT, write "N/A".
                         "<attributeName>": <attributeValue|null|"N/A">
                     }
                 }
             ],
             "whens": [
                 {
-                    "name": "<whenName>", // 위에서 제시한 when의 이름입니다.
+                    "name": "<whenName>", // The name of the when presented above.
                     "values": {
                         "<attributeName>": <attributeValue|null|"N/A">
                     }
@@ -1236,7 +1871,7 @@ ${eventStormingNames.join(", ")}
             ],
             "thens": [
                 {
-                    "name": "<thenName>", // 위에서 제시한 then의 이름입니다.
+                    "name": "<thenName>", // The name of the then presented above.
                     "values": {
                         "<attributeName>": <attributeValue|null|"N/A">
                     }
@@ -1247,9 +1882,9 @@ ${eventStormingNames.join(", ")}
 }
 \`\`\`
 
-예시는 다음과 같습니다.
-여기서는 주문 생성과 관련된 트랜잭션과 관련 Aggregate, Command, Event가 주어지고 있습니다.
-출력된 GWT는 처음에는 주문과 관련된 정보가 없어서 null이라는 값이 입력되었지만, 주문을 생성한 Command에 의해서 최종적으로는 Event에 사용자가 입력한 주문 정보가 담긴 상태를 나타내고 있습니다.
+The example is as follows.
+Here, transactions related to order creation and the associated Aggregate, Command, and Event are given.
+The output GWT initially has no information related to the order, so a value of null is entered, but ultimately, the Command to create the order results in the Event containing the order information entered by the user.
 [INPUT]
 \`\`\`json
 {"debeziumLog":"{\"payload\":{\"before\":null,\"after\":{\"order_number\":10005,\"order_date\":19848,\"purchaser\":1001,\"quantity\":3,\"product_id\":104},\"source\":{\"db\":\"inventory\",\"table\":\"orders\"}}}","eventStorming":{"givens":[{"name":"orders","attributes":[{"name":"orderNumber","type":"Integer"},{"name":"orderDate","type":"Integer"},{"name":"purchaser","type":"Integer"},{"name":"quantity","type":"Integer"},{"name":"productId","type":"Integer"}]}],"whens":[{"name":"CreateOrder","attributes":[{"name":"orderNumber","type":"Integer"},{"name":"orderDate","type":"Integer"},{"name":"purchaser","type":"Integer"},{"name":"quantity","type":"Integer"},{"name":"productId","type":"Integer"}]}],"thens":[{"name":"OrderCreated","attributes":[{"name":"orderNumber","type":"Integer"},{"name":"orderDate","type":"Integer"},{"name":"purchaser","type":"Integer"},{"name":"quantity","type":"Integer"},{"name":"productId","type":"Integer"}]}]}}
@@ -1257,11 +1892,11 @@ ${eventStormingNames.join(", ")}
 
 [OUTPUT]
 \`\`\`json
-{"usecases":[{"usecaseId":"UC001","gwtId":"GWT001","name":"고객이 주문을 생성함","description":"고객이 제품을 선택하고 주문 수량을 지정하여 새로운 주문을 생성합니다.","actor":"고객"}],"gwts":[{"gwtId":"GWT001","usecaseId":"UC001","givens":[{"name":"orders","values":{"orderNumber":null,"orderDate":null,"purchaser":null,"quantity":null,"productId":null}}],"whens":[{"name":"CreateOrder","values":{"orderNumber":10005,"orderDate":19848,"purchaser":1001,"quantity":3,"productId":104}}],"thens":[{"name":"OrderCreated","values":{"orderNumber":10005,"orderDate":19848,"purchaser":1001,"quantity":3,"productId":104}}]}]}
+{"usecases":[{"usecaseId":"UC001","gwtId":"GWT001","name":"Customer creates an order","description":"The customer selects a product and specifies the order quantity to create a new order.","actor":"Customer"}],"gwts":[{"gwtId":"GWT001","usecaseId":"UC001","givens":[{"name":"orders","values":{"orderNumber":null,"orderDate":null,"purchaser":null,"quantity":null,"productId":null}}],"whens":[{"name":"CreateOrder","values":{"orderNumber":10005,"orderDate":19848,"purchaser":1001,"quantity":3,"productId":104}}],"thens":[{"name":"OrderCreated","values":{"orderNumber":10005,"orderDate":19848,"purchaser":1001,"quantity":3,"productId":104}}]}]}
 \`\`\`
 
 ${getJsonCompressGuidePrompt()}
-이제 실제로 유저의 입력을 받아서 처리해보겠습니다.
+Now, let's actually process the user's input.
 `
             }
 
@@ -1329,125 +1964,77 @@ ${JSON.stringify(inputObject)}
                 getUserPrompt(gwtRequestValue, debeziumLogs)
         }
 
-        const getClientModelValue = (modelValue, mirrorValue) => {
-            const getMirrorElementIds = (modelValue) => {
-                let mirrorElementIds = []
-                for(const element of Object.values(modelValue.elements))
-                    if(element && element.mirrorElement)
-                        mirrorElementIds.push(element.mirrorElement)
-                return mirrorElementIds
-            }
+        try {
             
-            let clientModelValue = {
-                elements: {...modelValue.elements},
-                relations: {...modelValue.relations}
+            let preprocessInfos = {}
+            let preprocessModelValueString = ""
+            switch(this.modelMode) {
+                case "summaryPreprocessModelValue":
+                    preprocessInfos = getPreprocessInfos(this.relatedPreProcessModelValue, this.client.modelValue)
+                    preprocessModelValueString = JSON.stringify(this.relatedPreProcessModelValue)
+                        .replace(/\{\}/g, "{...}")
+                        .replace(/\[\]/g, "[...]")
+    
+                    this.modelMode = "generateGodTableDistributeGuidesPreStep"
+                    break
+    
+                case "generateGodTableDistributeGuidesPreStep":
+                    const clientModelValue = (this.client.information && this.client.information.associatedProject) ? 
+                        getClientModelValue(this.client.modelValue, this.client.mirrorValue) : this.client.modelValue
+    
+                    this.UUIDAliasDic = getUUIDAliasDic(clientModelValue)
+                    this.preprocessModelValue = getPreprocessModelValue(clientModelValue, this.UUIDAliasDic.UUIDToAlias)
+    
+                    preprocessInfos = getPreprocessInfos(this.preprocessModelValue, this.client.modelValue)
+                    preprocessModelValueString = JSON.stringify(this.preprocessModelValue)
+    
+                    if(preprocessModelValueString.length > this.modelInputLengthLimit)
+                        this.modelMode = "summaryPreprocessModelValue"
+                    break
             }
-            let mirrorElementIds = getMirrorElementIds(modelValue)
-
-            for(const element of Object.values(mirrorValue.elements)) {
-                if(element && !modelValue.elements[element.id] && !mirrorElementIds.includes(element.id))
-                    clientModelValue.elements[element.id] = element
+    
+    
+            let systemPrompt = ""
+            switch(this.modelMode) {
+                case "summaryPreprocessModelValue":
+                    systemPrompt = getSystemPromptForSummaryPreProcessModelValue(this.preprocessModelValue, this.messageObj.modificationMessage)
+                    break
+    
+                case "generateGodTableDistributeGuidesPreStep":
+                    checkIsValidBoundedContexts(preprocessInfos, this.errorCallback)
+                    systemPrompt = getSystemPromptForGenerateGodTableDistributeGuidesPreStep(this.messageObj.modificationMessage, preprocessInfos)
+                    this.prevPreprocessInfos = preprocessInfos
+                    this.prevPreprocessModelValueString = preprocessModelValueString
+                    this.generatedGuideValues = {}
+                    break
+    
+                case "generateGodTableDistributeGuides":
+                    systemPrompt = getSystemPromptForGodTableDistributeGuides(this.prevPreprocessModelValueString, this.prevPreprocessInfos, this.generatedGuideValues.godTableDistributeGuidesPreStep)
+                    break
+                
+                case "generateEventCommandRelationGuides":
+                    systemPrompt = getSystemPromptForGenerateEventCommandRelationGuides(this.prevPreprocessModelValueString, this.messageObj.modificationMessage, this.prevPreprocessInfos, this.generatedGuideValues.godTableDistributeGuidesPreStep, this.generatedGuideValues.godTableDistributeGuide)
+                    break
+    
+                case "generateCommands":
+                    systemPrompt = getSystemPromptForGenerateCommands(this.prevPreprocessModelValueString, this.messageObj.modificationMessage, this.prevPreprocessInfos, this.generatedGuideValues.godTableDistributeGuidesPreStep, this.generatedGuideValues.godTableDistributeGuide, this.generatedGuideValues.eventCommandRelationGuides
+                    )
+                    break
+                
+                case "generateGWT":
+                    systemPrompt = getSystemPromptForGenerateGWT(this.messageObj.gwtRequestValue, this.messageObj.modificationMessage)
+                    break
             }
+    
+            console.log("[*] 전달된 시스템 프롬프트 \n" + systemPrompt)
+            return systemPrompt
 
-            return clientModelValue
+        } catch(e) {
+            console.error(e)
+            const errorObj = new Error(`AI에 지시할 프롬프트 생성 도중에 오류가 발생했습니다. 다시 시도해 주세요.: ${e.message}`)
+            this.errorCallback(errorObj)
+            throw e
         }
-
-        const getUsableBoundedContextNames = (information, modelValue, prevPreprocessInfos) => {
-            if(!information || !information.associatedProject) return null
-
-            const currentBoundedContextNames = []
-            for(const element of Object.values(modelValue.elements)) {
-                if(element && element._type === "org.uengine.modeling.model.BoundedContext")
-                    currentBoundedContextNames.push(element.name)
-            }
-
-            const usableBoundedContextNames = []
-            for(const boundedContextInfo of Object.values(prevPreprocessInfos)) {
-                if(currentBoundedContextNames.includes(boundedContextInfo.name))
-                    usableBoundedContextNames.push(boundedContextInfo.name)
-            }
-            return usableBoundedContextNames
-        }
-
-        const getUsableAggregateInfos = (information, modelValue, prevPreprocessInfos) => {
-            if(!information || !information.associatedProject) return null
-
-            const currentAggregateNames = []
-            for(const element of Object.values(modelValue.elements)) {
-                if(element && element._type === "org.uengine.modeling.model.Aggregate")
-                    currentAggregateNames.push(element.name)
-            }
-
-            const usableAggregateInfos = []
-            for(const boundedContextInfo of Object.values(prevPreprocessInfos)) {
-                for(const aggregateInfo of Object.values(boundedContextInfo.aggregates)) {
-                    if(currentAggregateNames.includes(aggregateInfo.name))
-                        usableAggregateInfos.push({
-                            name: aggregateInfo.name,
-                            id: aggregateInfo.id
-                        })
-                }
-            }
-            return usableAggregateInfos
-        }
-
-        let preprocessModelValueString = ""
-        let preprocessInfos = {}
-        let usableBoundedContextNames = []
-        let usableAggregateInfos = []
-        switch(this.modelMode) {
-            case "generateCommandGuides":
-                const clientModelValue = (this.client.information && this.client.information.associatedProject) ? 
-                    getClientModelValue(this.client.modelValue, this.client.mirrorValue) : this.client.modelValue
-                this.UUIDAliasDic = getUUIDAliasDic(clientModelValue)
-                this.preprocessModelValue = getPreprocessModelValue(clientModelValue, this.UUIDAliasDic.UUIDToAlias)
-                preprocessInfos = getPreprocessInfos(this.preprocessModelValue)
-                preprocessModelValueString = JSON.stringify(this.preprocessModelValue)
-                usableBoundedContextNames = getUsableBoundedContextNames(this.client.information, this.client.modelValue, this.preprocessModelValue)
-                usableAggregateInfos = getUsableAggregateInfos(this.client.information, this.client.modelValue, this.preprocessModelValue)
-
-                if(preprocessModelValueString.length > this.modelInputLengthLimit)
-                    this.modelMode = "summaryPreprocessModelValue"
-                break
-            
-            case "summaryPreprocessModelValue":
-                preprocessInfos = getPreprocessInfos(this.relatedPreProcessModelValue)
-                preprocessModelValueString = JSON.stringify(this.relatedPreProcessModelValue)
-                    .replace(/\{\}/g, "{...}")
-                    .replace(/\[\]/g, "[...]")
-                usableBoundedContextNames = getUsableBoundedContextNames(this.client.information, this.client.modelValue, this.relatedPreProcessModelValue)
-                usableAggregateInfos = getUsableAggregateInfos(this.client.information, this.client.modelValue, this.relatedPreProcessModelValue)
-
-                this.modelMode = "generateCommandGuides"
-                break
-        }
-
-
-        let systemPrompt = ""
-        switch(this.modelMode) {
-            case "generateCommandGuides":
-                systemPrompt = getSystemPromptForGenerateCommandGuides(preprocessModelValueString, this.messageObj.modificationMessage, preprocessInfos, usableAggregateInfos)
-                this.prevPreprocessInfos = preprocessInfos
-                this.prevPreprocessModelValueString = preprocessModelValueString
-                this.prevUsableAggregateInfos = usableAggregateInfos
-                this.prevUsableBoundedContextNames = usableBoundedContextNames
-                break
-
-            case "generateCommands":
-                systemPrompt = getSystemPromptForGenerateCommands(this.prevPreprocessModelValueString, this.messageObj.modificationMessage, this.commandGuidesToUse, this.prevUsableBoundedContextNames)
-                break
-
-            case "summaryPreprocessModelValue":
-                systemPrompt = getSystemPromptForSummaryPreProcessModelValue(this.preprocessModelValue, this.messageObj.modificationMessage)
-                break
-            
-            case "generateGWT":
-                systemPrompt = getSystemPromptForGenerateGWT(this.messageObj.gwtRequestValue, this.messageObj.modificationMessage)
-                break
-        }
-
-        console.log("[*] 전달된 시스템 프롬프트 \n" + systemPrompt)
-        return systemPrompt
     }
 
     createModel(text){
@@ -1648,6 +2235,102 @@ ${JSON.stringify(inputObject)}
             return relatedPreprocessModelValue
         }
 
+        const applyAggregateRelationToQueries = (queryResults, godTableDistributeGuidesPreStep, godTableDistributeGuide, prevPreprocessInfos) => {
+            const getAggregateRelationItems = (godTableDistributeGuidesPreStep, godTableDistributeGuide) => {
+                const tableNameToAggregateInfo = (tableName, godTableDistributeGuide) => {
+                    const tagetTableAction = godTableDistributeGuide.tableActions[tableName]
+                    if(tagetTableAction.actionType === "CreateNewAggregate") {
+                        return {
+                            "boundedContextId": tagetTableAction.args.existingBoundedContextId,
+                            "aggregateId": tagetTableAction.args.newAggregateId
+                        }
+                    }
+                    else if(tagetTableAction.actionType === "UseExistingAggregateId") {
+                        return {
+                            "boundedContextId": tagetTableAction.args.existingBoundedContextId,
+                            "aggregateId": tagetTableAction.args.existingAggregateId
+                        }
+                    }
+                    return null
+                }
+        
+                const getMainInfoTableAggregateInfo = (godTableDistributeGuidesPreStep, godTableDistributeGuide) => {
+                    for(const table of godTableDistributeGuidesPreStep.tables) {
+                        if(table.isMainInfoTable) {
+                            return tableNameToAggregateInfo(table.tableName, godTableDistributeGuide)
+                        }
+                    }
+                    return null
+                }
+        
+                const mainInfoTableAggregateInfo = getMainInfoTableAggregateInfo(godTableDistributeGuidesPreStep, godTableDistributeGuide)
+                if(!mainInfoTableAggregateInfo) return null
+        
+                let aggregateRelationItems = []
+                for(const table of godTableDistributeGuidesPreStep.tables) {
+                    if(!table.isMainInfoTable) {
+                        const fromTableAggregateInfo = tableNameToAggregateInfo(table.tableName, godTableDistributeGuide)
+                        if(!fromTableAggregateInfo) continue
+        
+                        aggregateRelationItems.push({
+                            from: fromTableAggregateInfo,
+                            to: mainInfoTableAggregateInfo
+                        })
+                    }
+                }
+                return aggregateRelationItems
+            }
+        
+            const applyToUpdateAggregateQueries = (queryResults, aggregateRelationItems) => {
+                let appliedRelationItems = []
+                for(const aggregateRelationItem of aggregateRelationItems) {
+                    for(const query of queryResults.queries) {
+                        if(query.objectType === "Aggregate" && 
+                           query.action === "update" && 
+                           query.ids.boundedContextId === aggregateRelationItem.from.boundedContextId && 
+                           query.ids.aggregateId === aggregateRelationItem.from.aggregateId) {
+                            query.args.toAggregateIds = [aggregateRelationItem.to.aggregateId]
+                            appliedRelationItems.push(aggregateRelationItem)
+                        }
+                    }
+                }
+                return appliedRelationItems
+            }
+        
+            const applyToExistingAggregateQueries = (queryResults, aggregateRelationItems, appliedRelationItems, prevPreprocessInfos) => {
+                const addUpdateAggregateQuery = (queryResults, boundedContextId, aggregateId, toAggregateId) => {
+                    const newQueryId = `query-agg-update-${aggregateId}`
+        
+                    queryResults.usecases[0].relatedAggregateQueryIds.push(newQueryId)
+                    queryResults.queries.push({
+                        "fromUsecaseId": queryResults.usecases[0].id,
+                        "queryId": newQueryId,
+                        "objectType": "Aggregate",
+                        "action": "update",
+                        "ids": {
+                            "boundedContextId": boundedContextId,
+                            "aggregateId": aggregateId
+                        },
+                        "args": {
+                            "toAggregateIds": [toAggregateId]
+                        }
+                    })
+                }
+        
+                const notAppliedRelationItems = aggregateRelationItems.filter(item => !appliedRelationItems.includes(item))
+                for(const aggregateRelationItem of notAppliedRelationItems) {
+                    if(prevPreprocessInfos.usableAggregateInfos.some((aggregateInfo) => aggregateInfo.id === aggregateRelationItem.from.aggregateId))
+                        addUpdateAggregateQuery(queryResults, aggregateRelationItem.from.boundedContextId, aggregateRelationItem.from.aggregateId, aggregateRelationItem.to.aggregateId)
+                }
+            }
+        
+            const aggregateRelationItems = getAggregateRelationItems(godTableDistributeGuidesPreStep, godTableDistributeGuide)
+            if(!aggregateRelationItems || aggregateRelationItems.length === 0) return
+        
+            const appliedRelationItems = applyToUpdateAggregateQueries(queryResults, aggregateRelationItems)
+            applyToExistingAggregateQueries(queryResults, aggregateRelationItems, appliedRelationItems, prevPreprocessInfos)
+        }
+
         const applyAliasToUUIDToQueries = (queries, aliasToUUIDDic) => {
             const getUUIDIfExist = (alias) => {
                 return aliasToUUIDDic[alias] ? aliasToUUIDDic[alias] : alias
@@ -1663,10 +2346,10 @@ ${JSON.stringify(inputObject)}
                     if(query.ids.enumerationId) query.ids.enumerationId = getUUIDIfExist(query.ids.enumerationId)
                 }
         
-                if(query.args.outputEventIds)
+                if(query.args && query.args.outputEventIds)
                     query.args.outputEventIds = query.args.outputEventIds.map(eventId => getUUIDIfExist(eventId))
             
-                if(query.args.outputCommandIds)
+                if(query.args && query.args.outputCommandIds)
                     query.args.outputCommandIds = query.args.outputCommandIds.map(outputCommandId => {
                         return {
                             commandId: getUUIDIfExist(outputCommandId.commandId),
@@ -1674,95 +2357,161 @@ ${JSON.stringify(inputObject)}
                             reason: outputCommandId.reason
                         }
                     })
+                
+                if(query.args && query.args.toAggregateIds)
+                    query.args.toAggregateIds = query.args.toAggregateIds.map(toAggregateId => getUUIDIfExist(toAggregateId))
             }
             return queries
         }
 
-        const getCommandGuidesToUse = (commandGuides, prevPreprocessInfos, prevUsableAggregateInfos) => {
-            const correctGuides = (commandGuides, prevPreprocessInfos, prevUsableAggregateInfos) => {
-                if(prevPreprocessInfos.aggregateNames && prevPreprocessInfos.aggregateNames.length > 0)
-                    commandGuides.isUsedExistingObject = prevPreprocessInfos.aggregateNames.map(aggName => aggName.toLowerCase()).includes(commandGuides.objectName.toLowerCase())
-                if(prevPreprocessInfos.commandNames && prevPreprocessInfos.commandNames.length > 0)
-                    commandGuides.isUsedExistingCommand = prevPreprocessInfos.commandNames.map(commandName => commandName.toLowerCase()).includes(commandGuides.debeziumLogCommandName.toLowerCase())
-                if(prevPreprocessInfos.eventNames && prevPreprocessInfos.eventNames.length > 0)
-                    commandGuides.isUsedExistingEvent = prevPreprocessInfos.eventNames.map(eventName => eventName.toLowerCase()).includes(commandGuides.debeziumLogEventName.toLowerCase())
-                
-                if(prevUsableAggregateInfos != null && commandGuides.aggregateIdToIncludeAsValueObject != null) {
-                    const usableAggregateIds = prevUsableAggregateInfos.map((aggregateInfo) => {
+        const applyPostProcessToEventCommandRelationGuides = (eventCommandRelationGuides, prevPreprocessInfos) => {
+            const getExistingEventIds = (eventCommandRelationGuides, prevPreprocessInfos) => {
+                let existingEventIds = new Set()
+                for(const eventInfo of prevPreprocessInfos.eventInfos)
+                    existingEventIds.add(eventInfo.id)
+                for(const newEvent of eventCommandRelationGuides.newEvents)
+                    existingEventIds.add(newEvent.eventId)
+                return Array.from(existingEventIds)
+            }
+
+            const existingEventIds = getExistingEventIds(eventCommandRelationGuides, prevPreprocessInfos)
+            for(const newCommand of eventCommandRelationGuides.newCommands) {
+                for(const outputEvent of newCommand.outputEvents)
+                    if(!existingEventIds.includes(outputEvent.id)) {
+                        eventCommandRelationGuides.newEvents.push({
+                            "aggregateId": newCommand.aggregateId,
+                            "eventId": outputEvent.id,
+                            "eventName": changeCase.pascalCase(outputEvent.id),
+                            "outputCommands": []
+                         })
+                    }
+            }
+        }
+
+        const filterInvalidPossibleActions = (possibleActions, prevPreprocessInfos) => {
+            const isValidPossibleAction = (possibleAction, prevPreprocessInfos) => {
+                const getExistingCheckLists = (possibleAction, prevPreprocessInfos) => {
+                    const boundedContextIds = prevPreprocessInfos.boundedContextInfos.map((boundedContextInfo) => {
+                        return boundedContextInfo.id
+                    })
+                    const aggregateIds = prevPreprocessInfos.aggregateInfos.map((aggregateInfo) => {
+                        return aggregateInfo.id
+                    })
+                    const valueObjectIds = prevPreprocessInfos.valueObjectInfos.map((valueObjectInfo) => {
+                        return valueObjectInfo.id
+                    })
+                    const usableBoundedContextIds = prevPreprocessInfos.usableBoundedContextInfos.map((boundedContextInfo) => {
+                        return boundedContextInfo.id
+                    })
+                    const usableAggregateIds = prevPreprocessInfos.usableAggregateInfos.map((aggregateInfo) => {
                         return aggregateInfo.id
                     })
 
-                    if(!usableAggregateIds.includes(commandGuides.aggregateIdToIncludeAsValueObject)) {
-                        commandGuides.aggregateIdToIncludeAsValueObject = null
-                        commandGuides.aggregateIdToIncludeAsValueObjectReason = ""
+                    let existingCheckLists = {
+                        "UseExistingAggregateId": {
+                            "existingBoundedContextId": [...boundedContextIds],
+                            "existingAggregateId": [...aggregateIds]
+                        },
+                        "UseExistingValueObjectId": {
+                            "existingBoundedContextId": [...boundedContextIds],
+                            "existingValueObjectId": [...valueObjectIds]
+                        },
+                        "CreateNewAggregate": {
+                            "existingBoundedContextId": [...usableBoundedContextIds]
+                        },
+                        "CreateNewValueObject": {
+                            "existingBoundedContextId": [...usableBoundedContextIds],
+                            "existingAggregateId": [...usableAggregateIds]
+                        }
                     }
-                }
-            }
-            
-            const objectNameToString = (objectName, aggregateIdToIncludeAsValueObject, isUsedExistingObject, reason) => {
-                if(!isUsedExistingObject && aggregateIdToIncludeAsValueObject && 
-                   aggregateIdToIncludeAsValueObject !== "null" && aggregateIdToIncludeAsValueObject.length > 0 && 
-                   reason && reason.length > 0)
-                    return `'${aggregateIdToIncludeAsValueObject}' Aggregate 내부에 ValueObject로 '${objectName}' 이름으로 생성해주세요. 이는 다음 이유로 생성합니다: ${reason}`
-                else if(isUsedExistingObject)
-                    return `다음 Aggregate 내부에 작성해주세요.: ${objectName}`
-                else
-                    return `다음 Aggregate를 생성해서 그 안에 작성해주세요.: ${objectName}
-Bounded Context를 생성할 필요가 있으면, 다음 이름을 사용해서 작성해 주세요: ${objectName}Service`
-            }
 
-            const debeziumLogCommandNameToString = (debeziumLogCommandName, isUsedExistingCommand) => {
-                if(isUsedExistingCommand)
-                    return `커맨드를 새롭게 생성하지 마세요.`
-                else
-                    return `다음 커맨드 명을 활용해서 생성해주세요: ${debeziumLogCommandName}`
-            }
-
-            const debeziumLogEventNameToString = (debeziumLogEventName, isUsedExistingEvent) => {
-                if(isUsedExistingEvent)
-                    return `이벤트를 새롭게 생성하지 마세요.`
-                else
-                    return `다음 이벤트 명을 활용해서 생성해주세요: ${debeziumLogEventName}`
-            }
-
-            const eventsToTriggerDebeziumLogCommandToString = (eventsToTriggerDebeziumLogCommand) => {
-                if(eventsToTriggerDebeziumLogCommand.length <= 0) return `기존 이벤트들의 outputCommandIds를 수정하지 마세요.`
-
-                let uniqueObjects = []
-                let eventIdSet = new Set()
-                for(const connectObject of eventsToTriggerDebeziumLogCommand) {
-                    if(!eventIdSet.has(connectObject.eventId)) {
-                        uniqueObjects.push(connectObject)
-                        eventIdSet.add(connectObject.eventId)
+                    for(const tableAction of Object.values(possibleAction.tableActions)) {
+                        if(tableAction.args.newAggregateId) {
+                            existingCheckLists.UseExistingAggregateId.existingAggregateId.push(tableAction.args.newAggregateId)
+                            existingCheckLists.CreateNewValueObject.existingAggregateId.push(tableAction.args.newAggregateId)
+                        }
+                        if(tableAction.args.newValueObjectId) {
+                            existingCheckLists.UseExistingValueObjectId.existingValueObjectId.push(tableAction.args.newValueObjectId)
+                        }
                     }
+
+                    return existingCheckLists
                 }
 
-                return `다음의 이벤트들의 outputCommandIds를 수정해서 생성하는 커맨드를 호출하도록 만들어주세요: ${JSON.stringify(uniqueObjects)}`
-            }
-        
-            const commandsToTriggerByDebeziumLogEventToString = (commandsToTriggerByDebeziumLogEvent) => {
-                if(commandsToTriggerByDebeziumLogEvent.length <= 0) return `생성한 커맨드의 outputCommandIds는 빈 배열로 두세요.`
-                
-                let uniqueObjects = []
-                let commandIdSet = new Set()
-                for(const connectObject of commandsToTriggerByDebeziumLogEvent) {
-                    if(!commandIdSet.has(connectObject.commandId)) {
-                        uniqueObjects.push(connectObject)
-                        commandIdSet.add(connectObject.commandId)
+                const existingCheckLists = getExistingCheckLists(possibleAction, prevPreprocessInfos)
+                for(const tableAction of Object.values(possibleAction.tableActions)) {
+                    const existingCheckList = existingCheckLists[tableAction.actionType]
+                    if(!existingCheckList) return false
+
+                    for(const argKey of Object.keys(tableAction.args)) {
+                        if(existingCheckList[argKey] && !existingCheckList[argKey].includes(tableAction.args[argKey]))
+                            return false
                     }
                 }
-                
-                return `생성하는 이벤트의 outputCommandIds를 수정해서 다음의 커맨드를 호출하도록 만들어주세요: ${JSON.stringify(uniqueObjects)}`
+                return true
             }
-        
-            correctGuides(commandGuides, prevPreprocessInfos, prevUsableAggregateInfos)
-            return `${objectNameToString(commandGuides.objectName, commandGuides.aggregateIdToIncludeAsValueObject, commandGuides.isUsedExistingObject, commandGuides.aggregateIdToIncludeAsValueObjectReason)}
-${debeziumLogCommandNameToString(commandGuides.debeziumLogCommandName, commandGuides.isUsedExistingCommand)}
-${debeziumLogEventNameToString(commandGuides.debeziumLogEventName, commandGuides.isUsedExistingEvent)}
-${eventsToTriggerDebeziumLogCommandToString(commandGuides.eventsToTriggerDebeziumLogCommand)}
-${commandsToTriggerByDebeziumLogEventToString(commandGuides.commandsToTriggerByDebeziumLogEvent)}`
+
+            const checkIsRecommendExist = (possibleActions) => {
+                return possibleActions.some((possibleAction) => {
+                    return possibleAction.isRecommended
+                })
+            }
+
+            let filteredPossibleActions = possibleActions.filter((possibleAction) => {
+                return isValidPossibleAction(possibleAction, prevPreprocessInfos)
+            })
+            if(filteredPossibleActions.length === 0)
+                throw new Error("죄송합니다. 현재 조건에 맞는 가능한 모델링 옵션이 없습니다. 다시 시도해주시길 바랍니다.")
+
+            if(!checkIsRecommendExist(filteredPossibleActions)) {
+                filteredPossibleActions[0].isRecommended = true
+            }
+
+            return filteredPossibleActions
         }
-        
+
+        const checkIsValidGodTableDistributeGuidesPreStep = (godTableDistributeGuidesPreStep) => {
+            const allTableNames = godTableDistributeGuidesPreStep.tables.map((table) => table.tableName)
+
+            for(const table of godTableDistributeGuidesPreStep.tables) {
+                if(table.immediateConsistencyRequirementTables) {
+                    for(const imTable of table.immediateConsistencyRequirementTables) {
+                        if(!allTableNames.includes(imTable.tableName))
+                            throw new Error("테이블 분해로 생성된 AI 결과가 올바르지 않습니다. 다시 시도해주시길 바립니다.")
+                    }
+                }
+            }
+        }
+
+        const applyPostProcessToGodTableDistributeGuidesPreStep = (godTableDistributeGuidesPreStep) => {
+            let tablesToInclude = []
+            for (const table of godTableDistributeGuidesPreStep.tables) {
+               if(table.isMainInfoTable ||
+                  (table.immediateConsistencyRequirementTables && table.immediateConsistencyRequirementTables.length > 0) ||
+                  table.properties.length !== 1
+               ) continue
+         
+               if(changeCase.camelCase(table.properties[0]).includes('id') || changeCase.camelCase(table.properties[0]).includes('Id'))
+                  tablesToInclude.push(table)
+            }
+            if(tablesToInclude.length === 0) return
+            
+         
+            const mainInfoTable = godTableDistributeGuidesPreStep.tables.find(table => table.isMainInfoTable)
+            for (const table of tablesToInclude) {
+               mainInfoTable.properties.push(table.properties[0])
+            }
+         
+         
+            godTableDistributeGuidesPreStep.tables = godTableDistributeGuidesPreStep.tables.filter(table => !tablesToInclude.includes(table))
+            for (const table of godTableDistributeGuidesPreStep.tables) {
+               if(table.immediateConsistencyRequirementTables) {
+                  table.immediateConsistencyRequirementTables = table.immediateConsistencyRequirementTables.filter(requirement => tablesToInclude.includes(requirement.tableName))
+                  if(table.immediateConsistencyRequirementTables.length === 0) delete table.immediateConsistencyRequirementTables
+               }
+            }
+        }
+
 
         if(this.state !== 'end') {
             console.log(`[*] DebeziumLogsTabGenerator에서 결과 생성중... (현재 모드: ${this.modelMode}, 현재 출력된 문자 수: ${text.length})`)
@@ -1780,38 +2529,6 @@ ${commandsToTriggerByDebeziumLogEventToString(commandGuides.commandsToTriggerByD
 
             let outputResult = {}
             switch(this.modelMode) {
-                case "generateCommandGuides":
-                    let commandGuides = parseToJson(text)
-                    this.commandGuidesToUse = getCommandGuidesToUse(commandGuides, this.prevPreprocessInfos, this.prevUsableAggregateInfos)
-
-                    outputResult = {
-                        modelName: this.modelName,
-                        modelMode: this.modelMode,
-                        modelValue: {
-                            commandGuides: commandGuides,
-                            commandGuidesToUse: this.commandGuidesToUse,
-                            debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
-                        },
-                        modelRawValue: text
-                    }
-                    this.modelMode = "generateCommands"
-                    break
-
-                case "generateCommands":
-                    let queryResults = parseToJson(text)
-                    applyAliasToUUIDToQueries(queryResults.queries, this.UUIDAliasDic.aliasToUUID)
-
-                    outputResult = {
-                        modelName: this.modelName,
-                        modelMode: this.modelMode,
-                        modelValue: {
-                            ...queryResults,
-                            debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
-                        },
-                        modelRawValue: text
-                    }
-                    break
-
                 case "summaryPreprocessModelValue":
                     const sortedObjectNames = parseToJson(text).sortedObjectNames
                     this.relatedPreProcessModelValue = getRelatedPreprocecssModelValue(this.preprocessModelValue, sortedObjectNames, this.modelInputLengthLimit, Math.floor(this.modelInputLengthLimit*0.8))
@@ -1822,6 +2539,73 @@ ${commandsToTriggerByDebeziumLogEventToString(commandGuides.commandsToTriggerByD
                         modelValue: {
                             sortedObjectNames: sortedObjectNames,
                             relatedPreProcessModelValue: this.relatedPreProcessModelValue,
+                            debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
+                        },
+                        modelRawValue: text
+                    }
+                    break
+
+                case "generateGodTableDistributeGuidesPreStep":
+                    this.generatedGuideValues.godTableDistributeGuidesPreStep = parseToJson(text)
+                    checkIsValidGodTableDistributeGuidesPreStep(this.generatedGuideValues.godTableDistributeGuidesPreStep)
+                    applyPostProcessToGodTableDistributeGuidesPreStep(this.generatedGuideValues.godTableDistributeGuidesPreStep)
+                    outputResult = {
+                        modelName: this.modelName,
+                        modelMode: this.modelMode,
+                        modelValue: {
+                            godTableDistributeGuidesPreStep: this.generatedGuideValues.godTableDistributeGuidesPreStep,
+                            debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
+                        },
+                        modelRawValue: text
+                    }
+                    this.modelMode = "generateGodTableDistributeGuides"
+                    break
+
+                case "generateGodTableDistributeGuides":
+                    this.generatedGuideValues.godTableDistributeGuides = parseToJson(text)
+                    this.generatedGuideValues.godTableDistributeGuides.possibleActions = filterInvalidPossibleActions(this.generatedGuideValues.godTableDistributeGuides.possibleActions, this.prevPreprocessInfos)
+                    this.generatedGuideValues.godTableDistributeGuide = this.generatedGuideValues.godTableDistributeGuides.possibleActions.filter((possibleAction) => {
+                        return possibleAction.isRecommended
+                    })[0]
+
+                    outputResult = {
+                        modelName: this.modelName,
+                        modelMode: this.modelMode,
+                        modelValue: {
+                            godTableDistributeGuides: this.generatedGuideValues.godTableDistributeGuides,
+                            debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
+                        },
+                        modelRawValue: text
+                    }
+                    this.modelMode = "generateEventCommandRelationGuides"
+                    break
+                
+                case "generateEventCommandRelationGuides":
+                    this.generatedGuideValues.eventCommandRelationGuides = parseToJson(text)
+                    applyPostProcessToEventCommandRelationGuides(this.generatedGuideValues.eventCommandRelationGuides, this.prevPreprocessInfos)
+
+                    outputResult = {
+                        modelName: this.modelName,
+                        modelMode: this.modelMode,
+                        modelValue: {
+                            eventCommandRelationGuides: this.generatedGuideValues.eventCommandRelationGuides,
+                            debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
+                        },
+                        modelRawValue: text
+                    }
+                    this.modelMode = "generateCommands"
+                    break
+
+                case "generateCommands":
+                    let queryResults = parseToJson(text)
+                    applyAggregateRelationToQueries(queryResults, this.generatedGuideValues.godTableDistributeGuidesPreStep, this.generatedGuideValues.godTableDistributeGuide, this.prevPreprocessInfos)
+                    applyAliasToUUIDToQueries(queryResults.queries, this.UUIDAliasDic.aliasToUUID)
+
+                    outputResult = {
+                        modelName: this.modelName,
+                        modelMode: this.modelMode,
+                        modelValue: {
+                            ...queryResults,
                             debeziumLogStrings: getDebeziumLogStrings(this.messageObj.modificationMessage)
                         },
                         modelRawValue: text
@@ -1839,7 +2623,7 @@ ${commandsToTriggerByDebeziumLogEventToString(commandGuides.commandsToTriggerByD
                         },
                         modelRawValue: text
                     }
-                    this.modelMode = "generateCommandGuides"
+                    this.modelMode = "generateGodTableDistributeGuides"
                     break
             }
 
@@ -1849,14 +2633,14 @@ ${commandsToTriggerByDebeziumLogEventToString(commandGuides.commandsToTriggerByD
         catch(e) {
             console.error("[!] DebeziumLogsTabGenerator에서 에러가 발생함! \n" + text)
             console.error(e)
-            alert("죄송합니다. AI가 출력한 결과가 올바르지 않아서 이벤트 스토밍 모델을 처리하는데 실패했습니다. 다시 시도해주시길 바랍니다. 에러 내용:" + e.message)
 
             return {
                 modelName: this.modelName,
                 modelMode: this.modelMode,
                 modelValue: null,
                 modelRawValue: text,
-                errorMessage: e.message
+                errorMessage: e.message,
+                isJsonParseError: (e instanceof SyntaxError && e.message.includes('JSON'))
             }
         }
     }

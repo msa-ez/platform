@@ -3180,19 +3180,13 @@
                         }
 
                         const removeQueries = (modelValue, queryIdsToRemove) => {
+                            const RELATED_PROPERTIES_TO_FILTER = ["relatedBoundedContextQueryIds", "relatedAggregateQueryIds", "relatedEnumerationQueryIds", "relatedValueObjectQueryIds", "relatedCommandQueryIds", "relatedEventQueryIds"]
+
                             for(let usecase of modelValue.usecases){
-                                usecase.relatedBoundedContextQueryIds = usecase.relatedBoundedContextQueryIds
-                                    .filter(queryId => !queryIdsToRemove.includes(queryId))
-                                usecase.relatedAggregateQueryIds = usecase.relatedAggregateQueryIds
-                                    .filter(queryId => !queryIdsToRemove.includes(queryId))
-                                usecase.relatedEnumerationQueryIds = usecase.relatedEnumerationQueryIds
-                                    .filter(queryId => !queryIdsToRemove.includes(queryId))
-                                usecase.relatedValueObjectQueryIds = usecase.relatedValueObjectQueryIds
-                                    .filter(queryId => !queryIdsToRemove.includes(queryId))
-                                usecase.relatedCommandQueryIds = usecase.relatedCommandQueryIds
-                                    .filter(queryId => !queryIdsToRemove.includes(queryId))
-                                usecase.relatedEventQueryIds = usecase.relatedEventQueryIds
-                                    .filter(queryId => !queryIdsToRemove.includes(queryId))      
+                                for(const filterProperty of RELATED_PROPERTIES_TO_FILTER) {
+                                    if(!usecase[filterProperty]) continue
+                                    usecase[filterProperty] = usecase[filterProperty].filter(queryId => !queryIdsToRemove.includes(queryId))
+                                }   
                             }                       
 
                             modelValue.queries = modelValue.queries.filter(query => !queryIdsToRemove.includes(query.queryId))
@@ -3284,7 +3278,7 @@
                             for(let element of Object.values(value.elements))
                                 if(element && element.mirrorElement === commandId) return null
 
-                            let command = getCommandBase(mirrorValue.elements[commandId].name, commandId)
+                            let command = getCommandBase(mirrorValue.elements[commandId].name)
 
                             let validPosition = getValidElementPosition(value)
                             command.elementView.x = validPosition.x
@@ -3367,7 +3361,7 @@
                             for(let element of Object.values(value.elements))
                                 if(element && element.mirrorElement === eventId) return null
 
-                            let event = getEventBase(mirrorValue.elements[eventId].name, eventId)
+                            let event = getEventBase(mirrorValue.elements[eventId].name)
 
                             let validPosition = getValidElementPosition(value)
                             event.elementView.x = validPosition.x
@@ -3385,6 +3379,112 @@
                         }
                     }
 
+                    const loadAggregates = (value, mirrorValue, modelValue, queryIdChangeDic) => {
+                        const loadAggregate = (value, mirrorValue, aggregateId) => {
+                            const getAggregateBase = (name) => {
+                                const elementId = this.uuid()
+
+                                return {
+                                    aggregateRoot: {
+                                        _type: 'org.uengine.modeling.model.AggregateRoot', 
+                                        fieldDescriptors: [],
+                                        entities: {
+                                            elements: {},
+                                            relations: {}
+                                        }, 
+                                        operations: [],
+                                    },
+                                    author: null,
+                                    boundedContext: {
+                                        name: null,
+                                        id: null
+                                    },
+                                    commands: [],
+                                    description: null,
+                                    id: elementId, 
+                                    elementView: {
+                                        _type: 'org.uengine.modeling.model.Aggregate', 
+                                        id: elementId, 
+                                        x: 250, 
+                                        y: 250,
+                                        width: 130,
+                                        height: 400,
+                                        _type: "org.uengine.modeling.model.Aggregate"
+                                    },
+                                    events: [],
+                                    hexagonalView: {
+                                        _type: 'org.uengine.modeling.model.AggregateHexagonal', 
+                                        id: elementId, 
+                                        x: 0, 
+                                        y: 0, 
+                                        subWidth: 0,
+                                        width: 0,
+                                        x: 0,
+                                        y: 0,
+                                        _type: "org.uengine.modeling.model.AggregateHexagonal"
+                                    },
+                                    name: name,
+                                    displayName: name,
+                                    nameCamelCase: changeCase.camelCase(name),
+                                    namePascalCase: changeCase.pascalCase(name),
+                                    namePlural: "",
+                                    rotateStatus: false,
+                                    selected: false,
+                                    _type: "org.uengine.modeling.model.Aggregate"
+                                }
+                            }
+
+                            const getValidAggregatePosition = (value, aggregateToMake) => {
+                                const getTargetElements = (value) => {
+                                    let targetElements = []
+                                    for(let element of Object.values(value.elements)){
+                                        if(element && 
+                                            (element._type == "org.uengine.modeling.model.Aggregate") &&
+                                            element.elementView.x >= 360 && element.elementView.x <= 460)
+                                            targetElements.push(element)
+                                    }
+                                    return targetElements
+                                }
+
+                                const targetElements = getTargetElements(value)
+                                if(targetElements.length == 0) return {
+                                    x: 438,
+                                    y: 340
+                                }
+
+                                const maxY = Math.max(...targetElements.map(element => element.elementView.y))
+                                const maxYElement = targetElements.find(element => element.elementView.y == maxY)
+                                return {
+                                    x: 438,
+                                    y: maxY + Math.round(maxYElement.elementView.height/2) + 25 +
+                                    Math.round(aggregateToMake.elementView.height/2)
+                                }
+                            }
+
+                            if(value.elements[aggregateId] || !mirrorValue.elements[aggregateId]) return null
+                            for(let element of Object.values(value.elements))
+                                if(element && element.mirrorElement === aggregateId) return null
+
+                            let aggregate = getAggregateBase(mirrorValue.elements[aggregateId].name)
+
+                            let validPosition = getValidAggregatePosition(value, aggregate)
+                            aggregate.elementView.x = validPosition.x
+                            aggregate.elementView.y = validPosition.y
+
+                            this.addElementAction(aggregate)
+                            return aggregate
+                        }
+
+                        for(let query of modelValue.queries){
+                            if(query.objectType == "Aggregate" && query.action === "update" && query.args && query.args.toAggregateIds) {
+                                query.args.toAggregateIds.forEach(toAggregateId => {
+                                    const aggregate = loadAggregate(value, mirrorValue, toAggregateId)
+                                    if(aggregate) queryIdChangeDic[toAggregateId] = aggregate.id
+                                })
+                            }
+                        }
+                    }
+
                     const changeQueryElementIds = (modelValue, queryIdChangeDic) => {
                         for(let query of modelValue.queries) {
                             if(query.objectType == "Event" && query.action === "update") {
@@ -3395,6 +3495,13 @@
                                         if(arg.commandId && queryIdChangeDic[arg.commandId]) arg.commandId = queryIdChangeDic[arg.commandId]
                                 }
                             }
+
+                            if(query.objectType == "Aggregate" && query.action === "update" && query.args && query.args.toAggregateIds) {
+                                query.args.toAggregateIds = query.args.toAggregateIds.map(toAggregateId => {
+                                    if(queryIdChangeDic[toAggregateId]) return queryIdChangeDic[toAggregateId]
+                                    return toAggregateId
+                                })
+                            }
                         }
                     }
 
@@ -3403,6 +3510,7 @@
                     let queryIdChangeDic = {}
                     loadCommandsForExistedEvents(value, mirrorValue, modelValue, queryIdChangeDic)
                     loadEventsForExistedCommands(value, mirrorValue, modelValue, queryIdChangeDic)
+                    loadAggregates(value, mirrorValue, modelValue, queryIdChangeDic)
 
                     changeQueryElementIds(modelValue, queryIdChangeDic)
                 }
@@ -3435,7 +3543,6 @@
                                 val.isApplyError = true
                                 console.error("[!] 출력 결과를 Debezium Manager에 전달해서 처리하는 과정에서 오류 발생")
                                 console.error(e)
-                                alert("죄송합니다. AI가 출력한 결과가 올바르지 않아서 이벤트 스토밍 모델을 처리하는 데 실패했습니다. 다시 시도해 주시길 바랍니다. 에러 내용:" + e.message)
                             }
                         }
 
@@ -3454,7 +3561,6 @@
                                 val.isApplyError = true
                                 console.error("[!] 출력 결과를 이용해서 GWT를 만드는 과정에서 오류 발생")
                                 console.error(e)
-                                alert("죄송합니다. AI를 통해서 테스트 케이스(GWT)를 생성하는 데 실패했습니다. 해당 커맨드 객체를 더블클릭 > Examples 버튼으로 직접 Debezium Log를 넣어서 GWT를 생성해 주시길 바랍니다. 에러 내용:" + e.message)
                             }
                         }
                     }
