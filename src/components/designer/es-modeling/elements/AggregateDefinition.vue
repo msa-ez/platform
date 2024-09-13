@@ -451,6 +451,8 @@
                     me.deleteAggRelation(obj.element)
                 }
             })
+
+            this.setMirrorElementId()
         },
         methods: {
             init(){

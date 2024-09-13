@@ -382,6 +382,7 @@
 
                 if( equalsElement ) {
                     me.value.mirrorElement = equalsElement.elementView.id;
+                    me.canvas.syncMirrorElements()
                     return;
                 }
 

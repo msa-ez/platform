@@ -11,6 +11,7 @@ class AIGenerator {
         this.openaiToken = null
         this.model = this.client && this.client.model ? this.client.model:"gpt-3.5-turbo-16k"
         this.responseLimit = this.model == 'gpt-4o' ? 0:15
+        this.temperature = 1
 
         if(options){
             this.preferredLanguage = options.preferredLanguage;
@@ -246,7 +247,7 @@ class AIGenerator {
                 const data = JSON.stringify({
                     model: this.model,
                     messages: messages,
-                    temperature: 1,
+                    temperature: this.temperature,
                     frequency_penalty: 0,
                     presence_penalty: 0,
                     stream: true,

@@ -54,7 +54,7 @@ class DebeziumTransactionManager {
 }
 
 class DebeziumTransaction {
-    constructor(rawTransaction, transaction, usecases, queries) {
+    constructor(rawTransaction, transaction, usecases, queries, isApplied) {
         const getReleatedUsecase = (transaction, usecases) => {
             return usecases.filter(usecase => usecase.relatedTransactionId === transaction.id)[0];
         }
@@ -88,6 +88,7 @@ class DebeziumTransaction {
         this.usecase = usecases ? getReleatedUsecase(transaction, usecases) : {}
         this.queries = queries ? getRelatedQueries(this.usecase, queries)
             .map(query => new DebeziumTransactionQuery(query)) : []
+        this.isApplied = isApplied ? isApplied : false
     }
 
     toStringObject() {
@@ -97,7 +98,8 @@ class DebeziumTransaction {
             usecase: this.usecase.displayName,
             actor: this.usecase.actor,
             queries: this.queries.map(query => query.toStringObject()),
-            errorMessage: this.queries.filter(query => query.errorMessage).map(query => query.errorMessage).join("\n")
+            errorMessage: this.queries.filter(query => query.errorMessage).map(query => query.errorMessage).join("\n"),
+            isApplied: this.isApplied
         }
     }
 
@@ -136,7 +138,7 @@ class DebeziumTransaction {
                 })
             }
 
-            addBoundedContextQueryIfNotExist(modelValue, usecases, queries)
+            // addBoundedContextQueryIfNotExist(modelValue, usecases, queries)
         }
 
         let callbacks = {
@@ -144,12 +146,16 @@ class DebeziumTransaction {
             afterAllRelationAppliedCallBacks: []
         }
 
-        fixTransactionQueryErrors(modelValue, this.usecase, this.queries)
-        this.queries.forEach(query => {
-            const queryCallbacks = query.apply(modelValue, userInfo, objectAliaToUUID, information, applyAliasDirectly)
-            callbacks.afterAllObjectAppliedCallBacks = callbacks.afterAllObjectAppliedCallBacks.concat(queryCallbacks.afterAllObjectAppliedCallBacks)
-            callbacks.afterAllRelationAppliedCallBacks = callbacks.afterAllRelationAppliedCallBacks.concat(queryCallbacks.afterAllRelationAppliedCallBacks)
-        })
+        if(!this.isApplied) {
+            this.isApplied = true
+            
+            fixTransactionQueryErrors(modelValue, this.usecase, this.queries)
+            this.queries.forEach(query => {
+                const queryCallbacks = query.apply(modelValue, userInfo, objectAliaToUUID, information, applyAliasDirectly)
+                callbacks.afterAllObjectAppliedCallBacks = callbacks.afterAllObjectAppliedCallBacks.concat(queryCallbacks.afterAllObjectAppliedCallBacks)
+                callbacks.afterAllRelationAppliedCallBacks = callbacks.afterAllRelationAppliedCallBacks.concat(queryCallbacks.afterAllRelationAppliedCallBacks)
+            })
+        }
 
         return callbacks
     }
@@ -308,7 +314,7 @@ class DebeziumTransactionQuery {
                 .substring(1);
             }
         
-            return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4()
+            return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4()
         }
 
         const getUUIDFromAlias = (modelValue, objectAliaToUUID, targetObject, targetProperty) => {        
@@ -317,6 +323,109 @@ class DebeziumTransactionQuery {
             if(!objectAliaToUUID[targetObject[targetProperty]])
                 objectAliaToUUID[targetObject[targetProperty]] = getUUID()
             targetObject[targetProperty] = objectAliaToUUID[targetObject[targetProperty]]
+        }
+
+        const resizeShortBoundedContexts = (modelValue) => {
+            const LIMIT_WIDTH = 560
+            const LIMIT_HEIGHT = 590
+            
+
+            const getTargetBoundedContexts = (modelValue) => {
+                let targetBoundedContexts = []
+                for(let element of Object.values(modelValue.elements)){
+                    if(element && element._type === "org.uengine.modeling.model.BoundedContext" &&
+                        (element.elementView.width < LIMIT_WIDTH || element.elementView.height < LIMIT_HEIGHT)
+                    ){
+                        targetBoundedContexts.push(element)
+                    }
+                }
+                targetBoundedContexts.sort((a, b) => a.elementView.x - b.elementView.x)
+                return targetBoundedContexts
+            }
+
+            const resizeBoundedContext = (modelValue, boundedContext) => {
+                const changeSizeAndPosition = (modelValue, boundedContext) => {
+                    const prevUIInfos = {
+                        x: boundedContext.elementView.x,
+                        y: boundedContext.elementView.y,
+                        width: boundedContext.elementView.width,
+                        height: boundedContext.elementView.height
+                    }
+                    
+                    boundedContext.elementView.x += (LIMIT_WIDTH - boundedContext.elementView.width) / 2
+                    boundedContext.elementView.y += (LIMIT_HEIGHT - boundedContext.elementView.height) / 2
+                    boundedContext.elementView.width = LIMIT_WIDTH
+                    boundedContext.elementView.height = LIMIT_HEIGHT
+                    modelValue.elements[boundedContext.elementView.id] = {...boundedContext}
+
+                    return prevUIInfos
+                }
+
+                const changeOtherElementPoses = (modelValue, boundedContext, prevUIInfos) => {
+                    const getBoundedContextUIRelocateInfos = (modelValue, boundedContext, prevUIInfos) => {
+                        const otherBoundedContexts = []
+                        for(let element of Object.values(modelValue.elements)) {
+                            if(element && element.id !== boundedContext.id && element._type === "org.uengine.modeling.model.BoundedContext")
+                            otherBoundedContexts.push(element)
+                        }
+
+                        let boundedContextUIRelocateInfos = []
+                        for(let otherBoundedContext of otherBoundedContexts) {
+                            const mX = boundedContext.elementView.x
+                            const mW = boundedContext.elementView.width
+                            const mY = boundedContext.elementView.y
+                            const mH = boundedContext.elementView.height
+                            
+                            const oX = otherBoundedContext.elementView.x
+                            const oW = otherBoundedContext.elementView.width
+                            const oY = otherBoundedContext.elementView.y
+                            const oH = otherBoundedContext.elementView.height
+
+                            if((mX < oX) && (mY-(mH/2) <= oY) && (mY+(mH/2) >= oY)) {
+                                boundedContextUIRelocateInfos.push({
+                                    boundedContext: otherBoundedContext,
+                                    relocateTarget: "x",
+                                    degree: LIMIT_WIDTH - prevUIInfos.width
+                                })
+                            }
+
+                            if((mY < oY) && (mX-(mW/2) <= oX) && (mX+(mW/2) >= oX)) {
+                                boundedContextUIRelocateInfos.push({
+                                    boundedContext: otherBoundedContext,
+                                    relocateTarget: "y",
+                                    degree: LIMIT_HEIGHT - prevUIInfos.height
+                                })
+                            }
+                        }
+
+                        return boundedContextUIRelocateInfos
+                    }
+
+                    const changePosesWithinBoundedContext = (modelValue, boundedContextUIRelocateInfo) => {
+                        const {boundedContext, relocateTarget, degree} = boundedContextUIRelocateInfo
+
+                        if(relocateTarget === "x") {
+                            boundedContext.elementView.x = boundedContext.elementView.x + degree
+                        } else if(relocateTarget === "y") {
+                            boundedContext.elementView.y = boundedContext.elementView.y + degree
+                        }
+
+                        modelValue.elements[boundedContext.elementView.id] = {...boundedContext}
+                    }
+
+                    getBoundedContextUIRelocateInfos(modelValue, boundedContext, prevUIInfos).map(
+                        boundedContextUIRelocateInfo => changePosesWithinBoundedContext(modelValue, boundedContextUIRelocateInfo)
+                    )
+                }
+
+                const prevUIInfos = changeSizeAndPosition(modelValue, boundedContext)
+                changeOtherElementPoses(modelValue, boundedContext, prevUIInfos)
+            }
+
+
+            getTargetBoundedContexts(modelValue).map(
+                targetBoundedContext => resizeBoundedContext(modelValue, targetBoundedContext)
+            )
         }
 
 
@@ -705,6 +814,21 @@ class DebeziumTransactionQuery {
         }
 
         const applyToAggregate = (modelValue, userInfo, objectAliaToUUID, query, applyAliasDirectly) => {
+            const createNewAggregateRelation = (modelValue, aggregateObject, toAggregateId) => {
+                const isAggregateRelationAlreadyExists = (modelValue, aggregateObject, toAggregateId) => {
+                    return Object.values(modelValue.relations).find(relation => 
+                        relation.sourceElement.id === aggregateObject.id && 
+                        relation.targetElement.id === toAggregateId)
+                }
+
+                if(isAggregateRelationAlreadyExists(modelValue, aggregateObject, toAggregateId)) return
+                if(!modelValue.elements[aggregateObject.id] || !modelValue.elements[toAggregateId]) return
+                
+                const aggregateRelation = makeEventStormingRelationObjectBase(
+                    modelValue.elements[aggregateObject.id], modelValue.elements[toAggregateId])
+                modelValue.relations[aggregateRelation.id] = aggregateRelation
+            }
+
             const createNewAggregate = (modelValue, userInfo, query) => {
                 const getAggregateBase = (userInfo, name, displayName, boundedContextId, x, y, elementUUID) => {
                     const elementUUIDtoUse = elementUUID ? elementUUID : getUUID();
@@ -880,18 +1004,18 @@ class DebeziumTransactionQuery {
                     const currentBoundedContext = modelValue.elements[query.ids.boundedContextId]
                     for(const boundedContextId of getTargetBoundedContextIds(modelValue, currentBoundedContext)) {
                         const boundedContext = modelValue.elements[boundedContextId]
-                        boundedContext.elementView.x = boundedContext.elementView.x + 400
+                        boundedContext.elementView.x = boundedContext.elementView.x + 450
                         modelValue.elements[boundedContextId] = {...boundedContext}
 
                         for(const elementId of getElementIdsInBoundedContext(modelValue, boundedContextId)) {
                             const element = modelValue.elements[elementId]
-                            element.elementView.x = element.elementView.x + 400
+                            element.elementView.x = element.elementView.x + 450
                             modelValue.elements[elementId] = {...element}
                         }
                     }
 
-                    currentBoundedContext.elementView.x = currentBoundedContext.elementView.x + 200
-                    currentBoundedContext.elementView.width = currentBoundedContext.elementView.width + 400
+                    currentBoundedContext.elementView.x = currentBoundedContext.elementView.x + 225
+                    currentBoundedContext.elementView.width = currentBoundedContext.elementView.width + 450
                     currentBoundedContext.aggregates = [...currentBoundedContext.aggregates, {"id": aggregateObject.id}]
                     modelValue.elements[query.ids.boundedContextId] = {...currentBoundedContext}
                 }
@@ -915,6 +1039,14 @@ class DebeziumTransactionQuery {
                     getFileDescriptorsForRootAggegate(query.args.properties)
                 )
                 aggregateObject.aggregateRoot.entities.elements[rootAggregateObject.id] = rootAggregateObject
+
+                if(query.args.toAggregateIds) {
+                    callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
+                        query.args.toAggregateIds.forEach(toAggregateId => {
+                            createNewAggregateRelation(modelValue, aggregateObject, toAggregateId)
+                        })
+                    })
+                }
             }
 
             const updateAggregate = (modelValue, query) => {
@@ -984,9 +1116,19 @@ class DebeziumTransactionQuery {
                 }
 
                 const aggregateObject = modelValue.elements[query.ids.aggregateId]
+                if(!aggregateObject) return
+
                 const aggregateRoot = getAggregateRootObject(aggregateObject)
                 if(query.args.aggregateName) updateName(aggregateObject, aggregateRoot, query.args.aggregateName)
                 if(query.args.properties) updateProperties(modelValue, aggregateObject, aggregateRoot, query.args.properties)
+
+                if(query.args.toAggregateIds) {
+                    callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
+                        query.args.toAggregateIds.forEach(toAggregateId => {
+                            createNewAggregateRelation(modelValue, aggregateObject, toAggregateId)
+                        })
+                    })
+                }
             }
 
             const initObjectAlias = (modelValue, query) => {
@@ -1001,6 +1143,16 @@ class DebeziumTransactionQuery {
             const convertAliasToUUID = (modelValue, objectAliaToUUID, query) => {
                 getUUIDFromAlias(modelValue, objectAliaToUUID, query.ids, "boundedContextId")
                 getUUIDFromAlias(modelValue, objectAliaToUUID, query.ids, "aggregateId")
+
+                if(query.args && query.args.toAggregateIds) {
+                    query.args.toAggregateIds = query.args.toAggregateIds.map(toAggregateId => {
+                        if(modelValue.elements[toAggregateId]) return toAggregateId
+
+                        if(!objectAliaToUUID[toAggregateId])
+                            objectAliaToUUID[toAggregateId] = getUUID()
+                        return objectAliaToUUID[toAggregateId]
+                    })
+                }
             }
 
             initObjectAlias(modelValue, query)
@@ -1099,12 +1251,16 @@ class DebeziumTransactionQuery {
                 }
 
                 const makeEventToPolicyRelation = (modelValue, eventObject, policyObject) => {
+                    if(!modelValue.elements[eventObject.id] || !modelValue.elements[policyObject.id]) return
+
                     const eventPolicyRelation = makeEventStormingRelationObjectBase(
                         modelValue.elements[eventObject.id], modelValue.elements[policyObject.id])
                     modelValue.relations[eventPolicyRelation.id] = eventPolicyRelation
                 }
 
                 const makePolicyToCommandRelation = (modelValue, policyObject, commandObject) => {
+                    if(!modelValue.elements[policyObject.id] || !modelValue.elements[commandObject.id]) return
+
                     const policyCommandRelation = makeEventStormingRelationObjectBase(
                         modelValue.elements[policyObject.id], modelValue.elements[commandObject.id])
                     modelValue.relations[policyCommandRelation.id] = policyCommandRelation
@@ -1425,7 +1581,8 @@ class DebeziumTransactionQuery {
                     callbacks.afterAllObjectAppliedCallBacks.push((modelValue) => {
                         query.args.outputEventIds.forEach(eventId => {
                             const eventObject = modelValue.elements[eventId]
-                            if(!eventObject) return
+                            if(!commandObject || !eventObject) return
+
                             const commandEventRelation = makeEventStormingRelationObjectBase(commandObject, eventObject)
                             modelValue.relations[commandEventRelation.id] = commandEventRelation
                         })
@@ -1535,6 +1692,8 @@ class DebeziumTransactionQuery {
 
                     outputEventIds.forEach(eventId => {
                         const eventObject = modelValue.elements[eventId]
+                        if(!commandObject || !eventObject) return
+
                         const commandEventRelation = makeEventStormingRelationObjectBase(commandObject, eventObject)
                         modelValue.relations[commandEventRelation.id] = commandEventRelation
                     })
@@ -1550,7 +1709,10 @@ class DebeziumTransactionQuery {
                     const relatedActor = getRelatedActor(modelValue, commandObject.id)
                     if(relatedActor) relatedActor.name = query.args.actor
                 }
-                if(query.args.outputEventIds) updateOutputEventIds(commandObject, query.args.outputEventIds)
+
+                callbacks.afterAllObjectAppliedCallBacks.push(() => {
+                    if(query.args.outputEventIds) updateOutputEventIds(commandObject, query.args.outputEventIds)
+                })
             }
 
             const initObjectAlias = (modelValue, query) => {
@@ -2105,6 +2267,7 @@ class DebeziumTransactionQuery {
             return callbacks
 
         try {
+            resizeShortBoundedContexts(modelValue)
             switch(this.query.objectType) {
                 case "BoundedContext":
                     applyToBoundedContext(modelValue, userInfo, objectAliaToUUID, this.query, applyAliasDirectly);
