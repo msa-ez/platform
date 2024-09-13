@@ -100,7 +100,7 @@
                         'font-size': 14,
                         'z-index': '998'
                     }
-                } else if ( this.value.sourceElement._type.endsWith('Policy') && (this.value.targetElement._type.endsWith('Aggregate')  || this.value.targetElement._type.endsWith('View'))) {
+                } else if ( (this.value.sourceElement._type.endsWith('Policy') || this.value.sourceElement._type.endsWith('Command')) &&  this.value.targetElement._type.endsWith('View')) {
                     this.value.name = this.value.name ? this.value.name : 'Req/Res'
                     style = {
                         "arrow-end": "block",
@@ -132,18 +132,7 @@
                         "stroke": "grey",
                         'font-size': 14,
                     }
-                } else if (this.value.sourceElement._type.endsWith('Command') && this.value.targetElement._type.endsWith('View')) { 
-                    this.value.name = this.value.name ? this.value.name : 'Req/Res'
-                    style = {
-                        "arrow-end": "block",
-                        'font-size': 14,
-                    }
-                    if (!this.value.fallback)
-                        this.value.fallback = false;
-
-                    if (!this.value.circuitBreaker)
-                        this.value.circuitBreaker = false
-                } else if(this.value.sourceElement._type.endsWith('Command') && this.value.targetElement._type.endsWith('Aggregate')){
+                } else if((this.value.sourceElement._type.endsWith('Command') || this.value.sourceElement._type.endsWith('Policy')) && this.value.targetElement._type.endsWith('Aggregate')){
                     return
                 }
 

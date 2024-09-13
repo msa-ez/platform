@@ -360,6 +360,8 @@
             },
             onMoveAction(executeRecursion){
                 var me = this
+                let id = me.value.id;
+                
                 if(me.value.mirrorElement) return;
 
                 let attachedAggregate = me.canvas.getAllAttachedAggregate(me.value);
@@ -381,16 +383,29 @@
                         }
                     }
                 }
-
-                let attachedElement = me.canvas.getAttachedElements(me.canvas.value.elements, me.value);
-                if(Object.keys(attachedElement).length > 0 ){
-                    Object.keys(attachedElement).forEach(function(id){
-                        var component = me.canvas.$refs[`${id}`] ? me.canvas.$refs[`${id}`][0] : null
-                        if (component && !executeRecursion) component.onMoveAction(true)
-                    })
+                let elements = me.canvas.value.elements;
+                let attachedElements = Array.isArray(elements)  ? elements.filter(x => x !== null && isAttached(x, me.value)) : Object.values(elements).filter(x => x !== null).filter(x => isAttached(x, me.value));
+                let attachedElement = []
+                
+                attachedElements = attachedElements.map(element => {
+                    if (element._type !== "org.uengine.modeling.model.BoundedContext") {
+                        element.boundedContext = { id: me.value.id };
+                        attachedElement.push(element);
+                    }
+                });
+                if (me.canvas && me.canvas.value && me.canvas.value.elements){
+                    Object.values(me.canvas.value.elements).forEach(element => {
+                        if(element && element.id){
+                            attachedElement.forEach(attached => {
+                                if (attached && attached.id && element.id === attached.id) {
+                                    Object.assign(element, attached);
+                                }
+                            });
+                        }
+                    });
                 }
-
-
+                var component = me.canvas.$refs[`${id}`] ? me.canvas.$refs[`${id}`][0] : null
+                if (component && !executeRecursion) component.onMoveAction(true)
             },
             validate(executeRelateToValidate, panelValue){
                 var me = this
