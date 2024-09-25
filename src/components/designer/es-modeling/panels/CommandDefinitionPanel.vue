@@ -264,7 +264,9 @@
                 this.setApiPath()
                 this.setHttpCommand()
             },
-
+            "value.controllerInfo.method": function(newVal) {
+                this.setApiPath()
+            },
             "value.restRepositoryInfo.method":function(newVal){
                 this.setHttpCommand()
             },
@@ -298,13 +300,13 @@
                 var lowerCase = JSON.parse(JSON.stringify(getName)).toLowerCase()
                 lowerCase = lowerCase.replace(' ', '');
                 try {
-                    if(!me.value.controllerInfo.apiPath && me.value.controllerInfo.method != 'POST'){
+                    if(!me.value.controllerInfo.apiPath){
                         me.value.controllerInfo.apiPath = lowerCase
                     }
-                    else{
-                        if(me.value.controllerInfo.apiPath.toLowerCase()==lowerCase){
-                            me.value.controllerInfo.apiPath = '/'+lowerCase;
-                        }
+                    if(me.value.controllerInfo.method != 'POST'){
+                        me.value.controllerInfo.apiPath = lowerCase
+                    }else{
+                        me.value.controllerInfo.apiPath = '/'+lowerCase;
                     }
                 } catch {
                     console.log('methods : setApiPath() Error')
