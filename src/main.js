@@ -168,7 +168,7 @@ window.$HandleBars = handleBars;
 // TrackJS -- Error Logging
 var firebaseConfig = {
     apiKey: process.env.VUE_APP_FIREBASE_apiKey,
-    authDomain: 'www.msaez.io',
+    authDomain: window.location.host,
     databaseURL: process.env.VUE_APP_FIREBASE_databaseURL,
     projectId: process.env.VUE_APP_FIREBASE_projectId,
     storageBucket: process.env.VUE_APP_FIREBASE_storageBucket,
