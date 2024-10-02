@@ -331,14 +331,14 @@
             operationLabels() {
                 try {
                     var me = this
-                    var arr = []
+                    var text = ''
                     if (me.value.operations.length > 0) {
                         me.value.operations.forEach(function (item) {
                             var label = item.label ? item.label : '+' + item.name + '()'
-                            arr.push(label)
+                            text += label + '\n';
                         })
                     }
-                    return arr
+                    return text;
                 } catch (e) {
                     return "";
                 }
