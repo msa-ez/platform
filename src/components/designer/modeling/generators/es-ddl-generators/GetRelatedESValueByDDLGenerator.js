@@ -1,7 +1,7 @@
 const JsonAIGenerator = require("../JsonAIGenerator");
-const ESValueSummarizeUtil = require("./ESValueSummarizeUtil");
-const GlobalPromptUtil = require("./GlobalPromptUtil");
-const ESAliasTransManager = require("./ESAliasTransManager");
+const ESValueSummarizeUtil = require("./modules/ESValueSummarizeUtil");
+const GlobalPromptUtil = require("./modules/GlobalPromptUtil");
+const ESAliasTransManager = require("./modules/ESAliasTransManager");
 
 class GetRelatedESValueByDDLGenerator extends JsonAIGenerator {
     constructor(client, maxLengthLimit=10000, onlyNameLengthRatio=0.8, parameterOptions={}){
@@ -9,7 +9,7 @@ class GetRelatedESValueByDDLGenerator extends JsonAIGenerator {
 
         this.model = "gpt-4o-2024-08-06"
         this.temperature = 0.3
-        this.modelName = "GetRelatedESGenerator"
+        this.modelName = "GetRelatedESValueByDDLGenerator"
 
         this.maxLengthLimit = maxLengthLimit
         this.onlyNameLengthRatio = onlyNameLengthRatio
@@ -92,7 +92,7 @@ ${eventStormingIdNameList.join(", ")}
 
             this.summarizedESValue = ESValueSummarizeUtil.getSummarizedESValue(esValue)
             this.ESAliasTransManager = new ESAliasTransManager(esValue)
-            this.ESAliasTransManager.transToAliasInSummarizedESValue(this.summarizedESValue)
+            this.summarizedESValue = this.ESAliasTransManager.transToAliasInSummarizedESValue(this.summarizedESValue)
 
             const prompt = getSystemPrompt() + getUserPrompt(this.summarizedESValue, ddl)
 
@@ -123,8 +123,8 @@ ${eventStormingIdNameList.join(", ")}
 
             console.log(`[*] ${this.modelName}에서 결과 파싱중...`, {text})
             const sortedObjectNames = GlobalPromptUtil.parseToJson(text).sortedObjectNames
-            const relatedSummarizedESValue = this._getRelatedSummarizedESValue(this.summarizedESValue, sortedObjectNames, this.maxLengthLimit, this.onlyNameLengthRatio)
-            this.ESAliasTransManager.transToUUIDInSummarizedESValue(relatedSummarizedESValue)
+            let relatedSummarizedESValue = this._getRelatedSummarizedESValue(this.summarizedESValue, sortedObjectNames, this.maxLengthLimit, this.onlyNameLengthRatio)
+            relatedSummarizedESValue = this.ESAliasTransManager.transToUUIDInSummarizedESValue(relatedSummarizedESValue)
             
             const outputResult = {
                 modelName: this.modelName,
