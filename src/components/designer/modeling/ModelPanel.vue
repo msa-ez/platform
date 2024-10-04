@@ -94,6 +94,35 @@
             closePanel(){
                 this.$emit('close')
             },
+            updatePanel(isClose) {
+                var me = this;
+                me.$app.try({
+                    context: me,
+                    async action(me) {
+                        if (!me.value) return;
+
+                        var diff = jsondiffpatch.diff(me._value, me.value);
+                        if (diff) {
+                            if (!me.isReadOnly) {
+                                me.canvas.changedByMe = true;
+                                Object.keys(me.value).forEach(function (itemKey) {
+                                    if (me.canvas.isCustomMoveExist) {
+                                        if (!(itemKey == 'elementView' || itemKey == 'relationView')) {
+                                            me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]));
+                                        }
+                                    } else {
+                                        me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]));
+                                    }
+                                });
+                                me.$emit('_value-change', me._value);
+                            }
+                        }
+                        if (isClose) {
+                            me.closePanelAction();
+                        }
+                    }
+                });
+            },
               /**
              * Create() > panelInit
              **/
@@ -110,37 +139,7 @@
              * BeforeEvent: Close Panel
              **/
             executeBeforeDestroy(){
-                var me = this
-                me.$app.try({
-                    context: me,
-                    async action(me){
-                        /*
-                            _value : 기존 값.
-                            value  : Panel 사용되는 값,
-                        */
-                        if(!me.value) return;
-                        
-                        var diff = jsondiffpatch.diff(me._value, me.value)
-                        if (diff) {
-                            if (!me.isReadOnly) {
-                                me.canvas.changedByMe = true
-                                Object.keys(me.value).forEach(function (itemKey) {
-                                    if( me.canvas.isCustomMoveExist ){
-                                        if(!(itemKey == 'elementView' || itemKey == 'relationView')){
-                                            // Exception: 위치정보
-                                            me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]))
-                                        }
-                                    } else {
-                                        me._value[itemKey] = JSON.parse(JSON.stringify(me.value[itemKey]))
-                                    }
-
-                                })
-                                me.$emit('_value-change', me.value)
-                            }
-                        }
-                        me.closePanelAction()
-                    }
-                })
+                this.updatePanel(true)
             },
             /**
              * panelInit > openPanelAction

@@ -130,10 +130,10 @@
             imgSrc() {
                 return `${window.location.protocol + "//" + window.location.host}/static/image/event/actor.png`
             },
-            createNew(elementId, x, y, width, height, description) {
+            createNew(elementId, x, y, width, height, description, name) {
                 return {
                     _type: this.className(),
-                    name: '',
+                    name: name || '',
                     description: description,
                     author: null,
                     elementView: {

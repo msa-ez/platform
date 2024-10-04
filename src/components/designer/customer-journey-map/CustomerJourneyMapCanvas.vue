@@ -730,6 +730,13 @@
                         'src': `${window.location.protocol + "//" + window.location.host}/static/image/event/CJM-TouchPoints.png`,
                     },
                     {
+                        'component': 'cjm-emotion-element',
+                        'label': 'Emotion',
+                        'width': 60,
+                        'height': 60,
+                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion3.svg`,
+                    },
+                    {
                         'component': 'pain-point-element',
                         'label': 'Pain Points',
                         'width': 170,
@@ -755,15 +762,7 @@
                         'height': 100,
                         'src': `${window.location.protocol + "//" + window.location.host}/static/image/symbol/text_element.png`,
                     },
-                    {
-                        'component': 'cjm-emotion-element',
-                        'label': 'Emotion',
-                        'width': 100,
-                        'height': 100,
-                        'src': `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion3.svg`,
-                    },
                 ],
-
             }
         },
         computed: {
@@ -788,9 +787,130 @@
             }
         },
         methods: {
+            createElements() {
+                var me = this;
+                var currentPath = this.$route.path; // 현재 경로를 가져옵니다.
+
+                // URL에서 필요한 부분을 추출합니다.
+                var urlParts = currentPath.split('/');
+                var projectId = urlParts[urlParts.length - 1]; // URL의 마지막 부분을 추출합니다.
+
+                // localStorage의 모든 키를 가져옵니다.
+                var allKeys = Object.keys(localStorage);
+
+                // localStorage에 추출한 projectId를 포함하는 키가 있는지 확인합니다.
+                var isProjectIdStored = allKeys.some(key => key.includes(projectId));
+
+                if (!isProjectIdStored) {
+                    setTimeout(() => {
+                        const phaseNames = ['Awareness', 'Consideration', 'Acquisition', 'Service', 'Loyalty'];
+                        var personaElement = {
+                            'component': 'persona-element',
+                            'name': 'Actor',
+                            'description': '',
+                            'author': null,
+                            '_type': 'Persona',
+                            'x': 300,
+                            'y': 200,
+                            'width': 80,
+                            'height': 70,
+                            'angle': 0,
+                            'imgSrc': `${window.location.protocol + "//" + window.location.host}/static/image/event/actor.png`,
+                        };
+                        me.addElement(personaElement);
+                        for (let i = 0; i < phaseNames.length; i++) {
+                            var phaseElement = {
+                                'component': 'phase-element',
+                                'name': phaseNames[i],
+                                'description': '',
+                                'author': null,
+                                '_type': 'Phase',
+                                'x': 300 + i * 240,
+                                'y': 300,
+                                'width': 170,
+                                'height': 70,
+                                'angle': 0,
+                                'imgSrc': `${window.location.protocol + "//" + window.location.host}/static/image/event/issue.png`,
+                            };
+                            var userActionElement = {
+                                'component': 'user-action-element',
+                                'name': '',
+                                'description': '',
+                                'author': null,
+                                '_type': 'UserAction',
+                                'x': 300 + i * 240,
+                                'y': 400,
+                                'width': 171,
+                                'height': 71,
+                                'angle': 0,
+                                'imgSrc': `${window.location.protocol + "//" + window.location.host}/static/image/event/command.png`,
+                            };
+                            var touchPointElement = {
+                                'component': 'touch-point-element',
+                                'name': '',
+                                'description': '',
+                                'author': null,
+                                '_type': 'TouchPoint',
+                                'x': 300 + i * 240,
+                                'y': 500,
+                                'width': 171,
+                                'height': 71,
+                                'angle': 0,
+                                'imgSrc': `${window.location.protocol + "//" + window.location.host}/static/image/event/view.png`,
+                            };
+                            var emotionElement = {
+                                'component': 'cjm-emotion-element',
+                                'name': '',
+                                'description': '',
+                                'author': null,
+                                '_type': 'CJMEmotionElement',
+                                'x': 300 + i * 240,
+                                'y': 600,
+                                'width': 60,
+                                'height': 60,
+                                'angle': 0,
+                                'imgSrc': `${window.location.protocol + "//" + window.location.host}/static/image/symbol/emotion3.svg`,
+                            };
+                            var painPointElement = {
+                                'component': 'pain-point-element',
+                                'name': '',
+                                'description': '',
+                                'author': null,
+                                '_type': 'PainPoint',
+                                'x': 300 + i * 240,
+                                'y': 700,
+                                'width': 171,
+                                'height': 71,
+                                'angle': 0,
+                                'imgSrc': `${window.location.protocol + "//" + window.location.host}/static/image/event/error.png`,
+                            };
+                            var possibleSolutionElement = {
+                                'component': 'possible-solution-element',
+                                'name': '',
+                                'description': '',
+                                'author': null,
+                                '_type': 'PossibleSolution',
+                                'x': 300 + i * 240,
+                                'y': 800,
+                                'width': 171,
+                                'height': 71,
+                                'angle': 0,
+                                'imgSrc': `${window.location.protocol + "//" + window.location.host}/static/image/event/external.png`,
+                            };
+                            me.addElement(phaseElement);
+                            me.addElement(userActionElement);
+                            me.addElement(touchPointElement);
+                            me.addElement(emotionElement);
+                            me.addElement(painPointElement);
+                            me.addElement(possibleSolutionElement);
+                        }
+                    }, 3000); // 3000ms 딜레이 유지
+                }
+            },
             setCanvasType(){
                 Vue.use(CustomerJourneyMapModeling);
                 this.canvasType = 'cjm'
+                this.createElements()
             },
             clearModelValue(){
                 var me = this
@@ -925,7 +1045,6 @@
                 var vueComponent = me.getComponentByName(componentInfo.component);
                 var element;
 
-
                 if (componentInfo.isRelation && componentInfo.component.includes('relation')) {
                     /* make Relation */
                     element = vueComponent.computed.createNew(
@@ -963,7 +1082,8 @@
                         componentInfo.width,
                         componentInfo.height,
                         componentInfo.description,
-                        componentInfo.src
+                        componentInfo.name,
+                        componentInfo.src,
                     );
                 }
 

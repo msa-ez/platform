@@ -245,19 +245,23 @@
             },
             changeColor(color) {
                 var me = this;
-                me.value.color = color
+                me.value.color = color;
+                me.updatePanel();
             },
             resizedEdge(val) {
                 var me = this;
-                me.value.size = val
+                me.value.size = val;
+                me.updatePanel();
             },
             changeDashStyle(val) {
                 var me = this;
-                me.value.dashStyle = val
+                me.value.dashStyle = val;
+                me.updatePanel();
             },
             changeEmotionImage(img) {
                 var me = this;
                 me.value.imgSrc = img;
+                me.updatePanel();
             },
         }
     }

@@ -31,7 +31,7 @@ Result Format JSON:
          {
            "name": "User Action1",
            "touchPoint": "Touch Point Name",
-           "emotion": "You must choose one of the following:[{"value": -2,"description": "Very Negative"}, {"value": -1,"description": "Negative"}, {"value": 0,"description": "Neutral"}, {"value": 1,"description": "Positive"}, {"value": 2,"description": "Very Positive"}]"
+           "emotion": "You must select one of the following:[{"value": -2,"description": "Very Negative"}, {"value": -1,"description": "Negative"}, {"value": 0,"description": "Neutral"}, {"value": 1,"description": "Positive"}, {"value": 2,"description": "Very Positive"}]"
            "painPoint": "Pain Point",
            "possibleSolution": "solution1",
          }
