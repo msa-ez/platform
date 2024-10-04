@@ -1044,20 +1044,10 @@
           </v-dialog>
 
           <v-dialog v-model="showDDLDraftDialog" max-width="1200" max-height="800" overflow="scroll">
-            <v-card>
-              <v-card-title>DDL Draft</v-card-title>
-              <v-card-text>
-                <div v-for="(table, boundedContext) in DDLDraftTable" :key="boundedContext">
-                <h3>{{ boundedContext }}</h3>
-                <v-data-table
-                  :headers="table.headers"
-                  :items="table.items"
-                  :items-per-page="5"
-                  class="elevation-1 mb-4"
-                  ></v-data-table>
-                </div>
-              </v-card-text>
-            </v-card>
+            <ModelDraftDialog
+                :DDLDraftTable="DDLDraftTable"
+                :defaultGeneratorUiInputData="defaultGeneratorUiInputData"
+            ></ModelDraftDialog>
           </v-dialog>
 
 
@@ -1099,11 +1089,15 @@
   import BoundedContextCM from './elements/BoundedContextCM.vue';
   import GeneratorUI from "../modeling/generators/GeneratorUI";
   import DDLGenerator from "../modeling/generators/DDLGenerator";
-
+  import DDLDraftGenerator from "../modeling/generators/DDLDraftGenerator";
+  import ModelDraftDialog from "../modeling/ModelDraftDialog";
   export default {
     name: "context-mapping-model-canvas",
     mixins: [EventStormingModelCanvas],
-    components: { GeneratorUI },
+    components: { 
+      GeneratorUI,
+      ModelDraftDialog
+    },
     data() {
       return {
         /////////////////////////////////
@@ -1124,14 +1118,16 @@
             //   src: `${window.location.protocol + "//" + window.location.host}/static/image/event/pbc.png`,
             // },
         ],
-        input: {
+        generator: null,
+        input: null,
+        defaultGeneratorUiInputData: {
+          processingDDL: '',
+          processedDDLs: [],
+          numberRemainingDDLs: 0,
           DDL: '',
           boundedContextLists: '',
         },
-        DDLDraftTable: {
-          headers: [],
-          items: [],
-        },
+        DDLDraftTable: {},
         showDDLDraftDialog: false,
       };
     },
@@ -1155,6 +1151,9 @@
               me.syncMirrorElements();
           }
         },
+    },
+    created(){
+      this.generator = new DDLDraftGenerator();
     },
     methods: {
       setCanvasType(){
@@ -1479,13 +1478,23 @@
         // me.changedByMe = true
 
         if(model){
-          me.DDLDraftTable = model
+          me.DDLDraftTable = Object.assign(me.DDLDraftTable, model.tables)
           me.showDDLDraftDialog = true
+
+          me.defaultGeneratorUiInputData.processedDDLs = me.defaultGeneratorUiInputData.processedDDLs.concat(model.processingDDL)
+          me.defaultGeneratorUiInputData.numberRemainingDDLs = model.numberRemainingDDLs
+          me.defaultGeneratorUiInputData.DDL = model.DDL
+          me.defaultGeneratorUiInputData.boundedContextLists = model.boundedContextLists
+
+          me.input = me.defaultGeneratorUiInputData
+          if(model.numberRemainingDDLs > 0){
+            me.generate()
+          }
         }
 
 
       },
-      createmodel(model){
+      onModelCreated(model){
       },
       setBCinAggregate(bc, model){
         Object.values(model.elements).forEach(function (element) {
@@ -1495,8 +1504,8 @@
         })
       },
       generate(){
-        // this.generator = new DDLGenerator(this);
-        // this.generator.generate();
+        this.generator = new DDLDraftGenerator(this);
+        this.generator.generate();
       }
     },
   };

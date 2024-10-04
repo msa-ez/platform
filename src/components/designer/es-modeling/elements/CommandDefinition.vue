@@ -332,7 +332,8 @@
                     isRestRepository: true,
                     controllerInfo: {
                         apiPath: '',
-                        method: 'PUT'
+                        method: 'PUT',
+                        fullApiPath: ''
                     },
                     restRepositoryInfo: {
                         method: 'POST'

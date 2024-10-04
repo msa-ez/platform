@@ -33,7 +33,7 @@ class JsonAIGenerator extends AIGenerator{
             return model;
         }catch(e){
             console.log("error to parse:" + text);
-            return false;
+            return null;
             // throw e;
         }
     }

@@ -1942,6 +1942,12 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
+        <v-dialog v-model="showDDLDraftDialog" max-width="1200" max-height="800" overflow="scroll">
+            <ModelDraftDialog
+                :DDLDraftTable="DDLDraftTable"
+            ></ModelDraftDialog>
+        </v-dialog>
         <!-- <gitAPIMenu></gitAPIMenu> -->
     </div>
 </template>
@@ -1978,7 +1984,8 @@
     import isAttached from "../../../utils/isAttached";
     import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
     import DebeziumTransactionManager from "../modeling/generators/generatorTabs/DebeziumTransactionManager"
-
+    import DDLDraftGenerator from "../modeling/generators/DDLDraftGenerator"
+    import ModelDraftDialog from "../modeling/ModelDraftDialog"
     const prettier = require("prettier");
     const plugins = require("prettier-plugin-java");
     const axios = require("axios");
@@ -2045,7 +2052,8 @@
             "uml-class-model-canvas": UMLClassDiagram,
             CodeGenerator,
             PBCModelList,
-            MouseCursorComponent
+            MouseCursorComponent,
+            ModelDraftDialog
             // ModelCodeGenerator
         },
         props: {
@@ -2415,7 +2423,14 @@
                     name: 'LOGS', component: 'DebeziumLogsTab',
                     isAlwaysActivated: true, isNotMoveToOutput: true, isClearModelValue: false, 
                     initValue: {manager: new DebeziumTransactionManager()}
-                }]
+                }],
+
+                // DDL
+                input: null,
+                generatorName: '',
+                showDDLDraftDialog: false,
+                DDLDraftTable: null,
+                selectedOptionItem: {},
             };
         },
         computed: {
@@ -2638,6 +2653,10 @@
             this.broadcastChannel = new BroadcastChannel(
                 "event-storming-model-canvas"
             ); //this.$vnode.tag);
+
+            me.$EventBus.$on('repairBoundedContext', function (boundedContext) {
+                me.repairBoundedContext(boundedContext)
+            })
         },
         watch: {
             "initLoad":function(newVal){
@@ -3056,8 +3075,11 @@
                 console.log(this.value, val);
                 this.value.description = val;
             },
-            onGenerationFinished() {
+            onGenerationFinished(model) {
                 this.forceRefreshCanvas();
+                if(model.DDL){
+                    this.setDDLDraftDialog(model)
+                }
                 // this.openCodeViewer()
             },
             generateAggregate() {
@@ -7330,6 +7352,29 @@
 
                 await me.putObject(`db://definitions/${me.projectId}/information`, me.information)
 
+            },
+            repairBoundedContext(boundedContext) {
+                var me = this
+                
+                me.generatorName = 'DDLDraftGenerator'
+                let generator = new DDLDraftGenerator(me)
+
+                let aggregates = boundedContext.aggregates.map(agg => me.value.elements[agg.id])
+                                    .filter(el => el != null);
+
+                me.input = {
+                    DDL: JSON.stringify(aggregates),
+                    boundedContextLists: 'Please reconstruct the following aggregates within a single bounded context.',
+                    boundedContextName: boundedContext.name
+                }
+
+                generator.generate()
+            },
+            onModelCreated(model){
+                this.showDDLDraftDialog = true
+            },
+            setDDLDraftDialog(model){
+                this.DDLDraftTable = model.tables
             }
         },
     };

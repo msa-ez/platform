@@ -63,6 +63,13 @@
             ></sub-controller>
         </div>
 
+        <div v-if="value.aggregates && value.aggregates.length > 0">
+            <sub-controller
+                    :image="'repair.png'"
+                    v-on:click="repairBoundedContext"
+            ></sub-controller>
+        </div>
+
         <div v-if="canvasType == 'cm'">
             <sub-controller
                     :image="'../event/link-box-variant-primary.png'"
@@ -487,6 +494,10 @@
                     me.canvas.settingHexagonal(values)
                 }
             },
+            repairBoundedContext() {
+                var me = this
+                me.$EventBus.$emit('repairBoundedContext', me.value)
+            }
         }
     }
 </script>
