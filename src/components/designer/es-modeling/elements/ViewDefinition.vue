@@ -28,7 +28,7 @@
                 v-on:dblclick="openPanel"
                 v-on:rotateShape="onRotateShape"
                 v-on:addedToGroup="onAddedToGroup"
-                :label="getFieldDescriptors ? '': getNamePanel"
+                :label="getFieldDescriptors || getQueryParameterDescriptors ? '': getNamePanel"
                 :_style="{
                 'label-angle':value.elementView.angle,
                 'font-weight': 'bold','font-size': '16'
@@ -83,7 +83,27 @@
                 </text-element>
 
                 <text-element
-                        v-if="getFieldDescriptors || getQueryParameterDescriptors"
+                        v-if="value.dataProjection == 'query-for-aggregate' && getQueryParameterDescriptors && !value.queryOption.useDefaultUri && value.queryOption.apiPath"
+                        :sub-width="'100%'"
+                        :sub-height="subjectHeight"
+                        :sub-top="subjectTop"
+                        :sub-left="0"
+                        :subStyle="{'font-size': '16px', 'font-weight': 'bold'}"
+                        :text="value.queryOption.apiPath"
+                ></text-element>
+
+                <text-element
+                        v-else-if="value.dataProjection == 'query-for-aggregate' && getQueryParameterDescriptors && !value.queryOption.useDefaultUri && !value.queryOption.apiPath"
+                        :sub-width="'100%'"
+                        :sub-height="subjectHeight"
+                        :sub-top="subjectTop"
+                        :sub-left="0"
+                        :subStyle="{'font-size': '16px', 'font-weight': 'bold'}"
+                        :text="getNamePanel"
+                ></text-element>
+
+                <text-element
+                        v-else-if="value.dataProjection == 'cqrs' && getFieldDescriptors"
                         :sub-width="'100%'"
                         :sub-height="subjectHeight"
                         :sub-top="subjectTop"
