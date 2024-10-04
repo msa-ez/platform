@@ -9,47 +9,33 @@ class DDLDraftGenerator extends JsonAIGenerator{
         super(client);
         
         this.model = "gpt-4o"
-        this.DDL = this.client.input.DDL
     }
     
     createPrompt(){
-        return `Please create an event storming model in json for following DDL: 
+        return `You are a DDD architecture transition consultant. 
+        Given the following existing DDL, create a proposal for how to define them into several aggregates.
+        Or suggest a way to reorganize the given aggregates into a single bounded context.
+        
+        There must be no omissions in the following DDL or Aggregates: 
         ${this.client.input.DDL}
 
         Generate bounded contexts and aggregates according to the following request:
         ${this.client.input.boundedContextLists}
-
-        Extract DDD Aggregates and Bounded Contexts from the provided DDL, ensuring that:
-        1. All tables from the DDL are included without omission.
-        2. Tables are grouped into cohesive Aggregates based on their relationships and domain logic.
-        3. Aggregates are organized into appropriate Bounded Contexts as specified (${this.client.input.boundedContextLists}).
-        4. Each Bounded Context may contain one or more Aggregates.
-        5. All information from the DDL should be represented in the model, even if it means creating additional Aggregates within the specified Bounded Contexts.
-        6. If a table is closely related to multiple Bounded Contexts, consider creating a reference or summary in each relevant context.
-        7. Normalize and combine related tables within each Aggregate where appropriate.
-
-        Additional requirements:
-        - Ensure that all tables from the original DDL are represented in the generated model, distributed across the specified Bounded Contexts.
-        - When grouping tables into Aggregates, consider their relationships and domain logic. Tables that are closely related or form a cohesive unit should be part of the same Aggregate.
-        - When organizing Aggregates into Bounded Contexts, adhere to the specified contexts (${this.client.input.boundedContextLists}) while ensuring all data is represented.
-        - If an Aggregate references entities from another Bounded Context, use the appropriate ID reference (e.g., CustomerId) instead of including the entire entity.
-        - Ensure that domain events flow between Bounded Contexts in a way that allows for policy invocation across contexts.
-    
-        Specific instructions:
-        - Do not omit any tables from the original DDL. If a table (e.g., stores) seems to not fit directly into the specified Bounded Contexts, consider how it relates to the existing contexts and include it in the most appropriate one.
-        - When creating Aggregates, combine closely related entities. For example, orders and payments could be part of the same Aggregate in the Order context, rather than separate Aggregates.
-        - Ensure that all fields from the original tables are represented in the Aggregates, even if they are combined or restructured.
-        - Create meaningful relationships between Aggregates across different Bounded Contexts using appropriate references (e.g., CustomerId in the Order Aggregate to reference the Customer Aggregate).
+        
+        ${this.processDDL()}
         
         Recommendation Instructions:
         - The aggregates to be created in each Bounded Context can have value objects as entity information and have relationships with the aggregate root, or they can have multiple aggregate roots themselves.
         - Accordingly, I want to create aggregate information for each bounded context with multiple recommended domain entities so that one can be chosen from several options.
-        - There should be at least three recommendations per BoundedContext.
+        - Perspectives on consistency, scalability, performance, concurrency, complexity, etc. must be fundamentally included.
         - For each recommendation option, you should present AggregateRoots or value objects for each BoundedContext. Attributes are not necessary.
-
+        - We also draw conclusions about recommended options by considering each point of view.
 
         The format must be as follows:
         {
+            "processingDDL": Currently processing one DDL table name,
+            "processedDDLs": [processed DDL table name],
+            "numberRemainingDDLs": Number of remaining DDLs,
             "boundedContexts": [
                 {
                 "name": "BoundedContext-name",
@@ -62,17 +48,50 @@ class DDLDraftGenerator extends JsonAIGenerator{
                             "entities": ["entity-name"],
                             "valueObjects": ["value-object-name"]
                             },
-                        "merit": "merit for this entity",
-                        "disadvantage": "disadvantage for this entity"
+                        "pros": "keyword: pros for this entity",
+                        "cons": "keyword: cons for this entity"
                         ]
                     },
-                ]
+                ],
+                "conclusions": "reason of choice: Write a conclusion for each option, explaining in which cases it would be best to choose that option."
                 }
             ]
         }
+        
+        - pros and cons examples:
+          Balanced Complexity: This design keeps order and order details together, which simplifies handling things like cancellations or refunds where you need to manage the entire order in one go.
+          Low Cohesion: The design spreads the responsibilities for order management across multiple aggregates, which might lead to inconsistencies or difficulties in maintaining a single consistent view of an order across different parts of the application.
+          ....
     `
     }
 
+    processDDL(){
+        let text = ''
+        
+        if(this.client.canvasType == 'cm' || this.client.canvasType == 'context-mapping-model-canvas'){
+            text += `
+            We will process the DDL sequentially, also we will create bounded contexts for only one DDL at a time.
+            Add the currently processed DDL to processedDDLs.
+            Ignore DDLs that have already been processed.
+            
+            The current processing status is as follows:
+            Processed DDLs: ${this.client.input.processedDDLs}
+            Number of remaining DDLs: ${this.client.input.numberRemainingDDLs}
+            `
+        }else if(this.client.canvasType == 'es'){
+            text += `
+            Reconstruct the Aggregates into various Entities and Value Objects within a single bounded context.
+
+            
+            The current processing status is as follows:
+            boundedContextName: ${this.client.input.boundedContextName}
+            Processed DDLs: null
+            Number of remaining DDLs: 0
+            `
+        }
+
+        return text
+    }
 
     createModel(text){
         try{
@@ -86,11 +105,6 @@ class DDLDraftGenerator extends JsonAIGenerator{
             }
 
             let parsedJson = super.createModel(text);
-        
-            // 파싱에 실패했거나 결과가 예상한 형식이 아니면 null을 반환합니다.
-            if (!parsedJson || !parsedJson.boundedContexts) {
-                return null;
-            }
 
             let tables = {};
 
@@ -99,33 +113,71 @@ class DDLDraftGenerator extends JsonAIGenerator{
                     headers: [
                         { text: 'Option', value: 'option' },
                         { text: 'Aggregates', value: 'aggregates' },
-                        { text: 'Merit', value: 'merit' },
-                        { text: 'Disadvantage', value: 'disadvantage' }
+                        { text: 'Pros', value: 'pros' },
+                        { text: 'Cons', value: 'cons' }
                     ],
                     items: []
                 };
 
-                bc.recommendations.forEach(rec => {
-                    let aggregatesStr = rec.aggregates.map(agg => 
-                        `${agg.name} (Entities: ${agg.entities.join(', ')}, ValueObjects: ${agg.valueObjects.join(', ')})`
-                    ).join('\n');
-
-                    table.items.push({
-                        option: rec.option,
-                        aggregates: aggregatesStr,
-                        merit: rec.merit,
-                        disadvantage: rec.disadvantage
+                if (Array.isArray(bc.recommendations)) {
+                    bc.recommendations.forEach(rec => {
+                        let aggregatesStr = '';
+                        if (Array.isArray(rec.aggregates) && rec.aggregates.length > 0) {
+                            aggregatesStr = rec.aggregates.map(agg => {
+                                const entities = Array.isArray(agg.entities) ? agg.entities.join(', ') : '';
+                                const valueObjects = Array.isArray(agg.valueObjects) ? agg.valueObjects.join(', ') : '';
+                                if(entities && valueObjects){
+                                    return `${agg.name || ''} (Entities: ${entities}, ValueObjects: ${valueObjects})`;
+                                }else if(entities){
+                                    return `${agg.name || ''} (Entities: ${entities})`;
+                                }else if(valueObjects){
+                                    return `${agg.name || ''} (ValueObjects: ${valueObjects})`;
+                                }
+                            }).join(' / ');
+                        }
+        
+                        table.items.push({
+                            option: rec.option || '',
+                            aggregates: aggregatesStr,
+                            pros: rec.pros || '',
+                            cons: rec.cons || ''
+                        });
                     });
-                });
 
+                    if (bc.conclusions) {
+                        table.items.push({
+                            option: 'Conclusion',
+                            aggregates: bc.conclusions,
+                            pros: '',
+                            cons: '',
+                            isConclusion: true
+                        });
+                    }
+                }
+
+    
                 tables[bc.name] = table;
             });
 
-            return tables;
+            return {
+                processingDDL: parsedJson.processingDDL,
+                processedDDLs: parsedJson.processedDDLs,
+                numberRemainingDDLs: parsedJson.numberRemainingDDLs,
+                tables: tables,
+                DDL: this.client.input.DDL,
+                boundedContextLists: this.client.input.boundedContextLists
+            };
         } catch(e){
             console.log(e)
             let tables = {};
-            return tables;
+            return {
+                processingDDL: null,
+                processedDDLs: [],
+                numberRemainingDDLs: 0,
+                tables: tables,
+                DDL: this.client.input.DDL,
+                boundedContextLists: this.client.input.boundedContextLists
+            };
         }
     }
 

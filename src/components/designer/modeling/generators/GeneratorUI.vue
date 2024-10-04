@@ -108,11 +108,11 @@
                     </div>
 
                     <v-tabs v-model="userPanel">
-                        <v-tab v-for="tab in tabs" :key="tab.component" :disabled="hasElements&&(!tab.isAlwaysActivated)" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" 
+                        <v-tab v-show="!hasElements" v-for="tab in tabs" :key="tab.component" :disabled="hasElements&&(!tab.isAlwaysActivated)" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" 
                                @click="switchGenerator('tab', tab.isShowGenerateBtn, tab.isShowContinueBtn, tab.isShowStopBtn, tab.isShowRegenerateBtn)">{{tab.name}}</v-tab>
-                        <v-tab :disabled="!showGenerateBtn" v-if="canvasType === 'event-storming-model-canvas' || canvasType === 'context-mapping-model-canvas'" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('DDL', false, false, false, false)">DDL</v-tab>
-                        <v-tab :disabled="hasElements && !showGenerateBtn" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('input', true, true, true, true)">Input</v-tab>
-                        <v-tab :disabled="hasElements && !showGenerateBtn" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('output', false, true, true, true)">Output</v-tab>
+                        <v-tab v-show="!hasElements && (canvasType === 'event-storming-model-canvas' || canvasType === 'context-mapping-model-canvas')" :disabled="!showGenerateBtn" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('DDL', false, false, false, false)">DDL</v-tab>
+                        <v-tab :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('input', true, true, true, true)">Input</v-tab>
+                        <v-tab :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('output', false, true, true, true)">Output</v-tab>
                         <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('chat', false, false, false, false)">Chat</v-tab>
                     </v-tabs>
 
@@ -138,11 +138,11 @@
                             </v-expansion-panel-header>
                             <v-expansion-panel-content class="auto-modeling-dialog pa-0" >
                                 <v-tabs-items v-model="userPanel">
-                                    <v-tab-item v-for="tab in tabs" :key="tab.component" :disabled="hasElements">
+                                    <v-tab-item v-show="!hasElements" v-for="tab in tabs" :key="tab.component" :disabled="hasElements">
                                         <component :is="tab.component" :ref="tab.component" @generate="generate()" :initValue="tab.initValue"></component>
                                     </v-tab-item>
 
-                                    <v-tab-item v-if="canvasType === 'event-storming-model-canvas' || canvasType === 'context-mapping-model-canvas'">
+                                    <v-tab-item v-show="!hasElements && (canvasType === 'event-storming-model-canvas' || canvasType === 'context-mapping-model-canvas')">
                                         <v-card style="padding: 10px;">
                                             <v-textarea
                                             v-model="DDL"
@@ -804,6 +804,9 @@
                     }
                     else
                         this.userPanel = 1 + this.tabs.length
+
+                    this.isShowRegenerateBtn = true
+                    this.showContinueBtn = true
                 }
 
                 callbackModelValueToTabComponent()
