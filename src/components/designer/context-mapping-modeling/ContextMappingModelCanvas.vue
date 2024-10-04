@@ -1126,6 +1126,7 @@
           numberRemainingDDLs: 0,
           DDL: '',
           boundedContextLists: '',
+          DDLDraftTable: {},
         },
         DDLDraftTable: {},
         showDDLDraftDialog: false,
@@ -1481,6 +1482,7 @@
           me.DDLDraftTable = Object.assign(me.DDLDraftTable, model.tables)
           me.showDDLDraftDialog = true
 
+          me.defaultGeneratorUiInputData.DDLDraftTable = JSON.stringify(me.DDLDraftTable)
           me.defaultGeneratorUiInputData.processedDDLs = me.defaultGeneratorUiInputData.processedDDLs.concat(model.processingDDL)
           me.defaultGeneratorUiInputData.numberRemainingDDLs = model.numberRemainingDDLs
           me.defaultGeneratorUiInputData.DDL = model.DDL

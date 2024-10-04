@@ -19,7 +19,8 @@ class DDLDraftGenerator extends JsonAIGenerator{
         There must be no omissions in the following DDL or Aggregates: 
         ${this.client.input.DDL}
 
-        Generate bounded contexts and aggregates according to the following request:
+        Generate bounded contexts and aggregates according to the following request.
+        Create bounded context only that corresponds to the request:
         ${this.client.input.boundedContextLists}
         
         ${this.processDDL()}
@@ -73,6 +74,11 @@ class DDLDraftGenerator extends JsonAIGenerator{
             We will process the DDL sequentially, also we will create bounded contexts for only one DDL at a time.
             Add the currently processed DDL to processedDDLs.
             Ignore DDLs that have already been processed.
+
+            These are the aggregate Object and Value Object for each Bounded Context processed so far.
+            Determine which Bounded Context the Aggregate to be newly created in DDL should belong to.
+            Then, determine whether the newly added Aggregate can be entered into the entity or value object of the existing Aggregate, or whether it should be added together as a new aggregate, and create it:
+            ${this.client.input.DDLDraftTable}
             
             The current processing status is as follows:
             Processed DDLs: ${this.client.input.processedDDLs}

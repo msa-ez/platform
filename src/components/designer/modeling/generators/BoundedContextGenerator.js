@@ -56,6 +56,9 @@ class BoundedContextGenerator extends JsonAIGenerator {
         return `
         ${existingEventStormingModel ? `There is an existing event storming model : ${existingEventStormingModel}`: ``}
         
+        Refer to the Bounded Context information of the current state and make the most of it:
+        ${this.client.input.boundedContext}
+
         Please create a Bounded Context for event storming model in json for following description: 
         ${this.client.input.description}
         

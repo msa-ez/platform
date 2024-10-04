@@ -67,6 +67,9 @@ class AggregateGenerator extends JsonAIGenerator {
         For information that can be used as-is, such as names and actors, use those names without modification.
         Also, you make the aggregate only one.
 
+        When creating aggregates, refer to the current state information and utilize it:
+        ${JSON.stringify(this.client.input.aggregate.aggregateRoot)}
+
         Please create a Bounded Context for event storming model in json for following description: 
         ${this.client.input.description}
         
