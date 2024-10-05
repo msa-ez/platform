@@ -103,6 +103,16 @@
                 ></text-element>
 
                 <text-element
+                        v-else-if="value.dataProjection == 'query-for-aggregate' && getQueryParameterDescriptors && value.queryOption.useDefaultUri"
+                        :sub-width="'100%'"
+                        :sub-height="subjectHeight"
+                        :sub-top="subjectTop"
+                        :sub-left="0"
+                        :subStyle="{'font-size': '16px', 'font-weight': 'bold'}"
+                        :text="getNamePanel"
+                ></text-element>
+
+                <text-element
                         v-else-if="value.dataProjection == 'cqrs' && getFieldDescriptors"
                         :sub-width="'100%'"
                         :sub-height="subjectHeight"
