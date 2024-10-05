@@ -191,6 +191,7 @@
     import StormingSubController from "../../modeling/StormingSubController";
     import Generator from "../../modeling/generators/AggregateGenerator";
     import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
+    import isAttached from "../../../../utils/isAttached";
 
     var changeCase = require('change-case');
     var _ = require('lodash')
@@ -783,6 +784,8 @@
                 if (me.value.aggregateRoot.entities == undefined) {
                     me.value.aggregateRoot['entities'] = {'elements': {}, 'relations': {}}
                 }
+                
+                me.setRootMethods();
 
                 var umlValue = {
                     type: 'Domain Class Modeling',
@@ -792,6 +795,44 @@
 
                 me.canvas.overlayText = 'Loading';
                 me.canvas.openEmbeddedCanvas(umlValue);
+            },
+            setRootMethods() {
+                var me = this;
+                me.value.aggregateRoot.operations = [];
+                
+                Object.values(me.canvas.value.elements).forEach((element) => {
+                    if (me.canvas.validateElementFormat(element) && element._type.endsWith("Command")) {
+
+                        if (isAttached(me.value, element)) {
+                            if(!element.isRestRepository && element.name) {
+                                var method = {
+                                    "name": element.name,
+                                    "class": me.value.name,
+                                    "returnType": "void",
+                                    "parameters": [],
+                                    "label": '+ ' + element.name + "(): void",
+                                    "isOverride": false,
+                                    "isRootMethod": false,
+                                }
+                                if(me.value.aggregateRoot.operations.length > 0) {
+                                    me.value.aggregateRoot.operations.forEach(function(item, idx) {
+                                        if(item.name == method.name) {
+                                            item.isRootMethod = true
+                                            method.isRootMethod = true
+                                        }
+                                    })
+                                    if(!method.isRootMethod) {
+                                        method.isRootMethod = true
+                                        me.value.aggregateRoot.operations.push(method)
+                                    }
+                                } else {
+                                    me.value.aggregateRoot.operations.push(method)
+                                }
+                            }
+                        }
+                    }
+                })
+                // me.copyValue = me.value;
             },
             getComponent(componentName) {
                 let component = null
