@@ -259,7 +259,8 @@
             },
             setRootMethods() {
                 var me = this;
-
+                me.value.aggregateRoot.operations = [];
+                
                 Object.values(me.canvas.value.elements).forEach((element) => {
                     if (me.canvas.validateElementFormat(element) && element._type.endsWith("Command")) {
 
