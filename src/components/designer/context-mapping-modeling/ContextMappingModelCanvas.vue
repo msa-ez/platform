@@ -1047,6 +1047,7 @@
             <ModelDraftDialog
                 :DDLDraftTable="DDLDraftTable"
                 :defaultGeneratorUiInputData="defaultGeneratorUiInputData"
+                @generateFromDraft="generateFromDraft"
             ></ModelDraftDialog>
           </v-dialog>
 
@@ -1119,6 +1120,7 @@
             // },
         ],
         generator: null,
+        currentGeneratorName: "",
         input: null,
         defaultGeneratorUiInputData: {
           processingDDL: '',
@@ -1130,6 +1132,7 @@
         },
         DDLDraftTable: {},
         showDDLDraftDialog: false,
+        createEventStormingInputs: []
       };
     },
     watch: {
@@ -1154,7 +1157,6 @@
         },
     },
     created(){
-      this.generator = new DDLDraftGenerator();
     },
     methods: {
       setCanvasType(){
@@ -1412,92 +1414,6 @@
           me.value.elements = {}
           me.eleCnt = 0
       },
-      onGenerationFinished(model){
-        var me = this
-
-        // // model에서 도출된 bc 별 모델 elements 반복 필요
-        // let boundedContexts = "test2222"
-
-        // let id = boundedContexts+Math.floor(Math.random()*1000000)
-        // var componentInfo = {
-        //     '_type': 'org.uengine.modeling.model.BoundedContext',
-        //     'id': id,
-        //     'component': 'bounded-context-cm',
-        //     'name': boundedContexts,
-        //     'elementView': {
-        //       '_type': "org.uengine.modeling.model.BoundedContext",
-        //       'id': id,
-        //       'x': 500 + Math.floor(Math.random()*200),
-        //       'y': 280 + Math.floor(Math.random()*150),
-        //       'width': 250,
-        //       'height': 300,
-        //       'style': JSON.stringify({}),
-        //     },
-        //     'hexagonalView': {
-        //       '_type': "org.uengine.modeling.model.BoundedContextHexagonal",
-        //       'id': id,
-        //       'x': 0,
-        //       'y': 0,
-        //       'width': 0,
-        //       'height': 0
-        //     },
-        // }
-        // this.addElementAction(componentInfo);
-
-        // let contextBC = Object.values(me.value.elements).find(element => element!=null && element.name === boundedContexts)
-        
-        // // project 하위 멀티 canvas를 생성하기 위한 세팅
-        // me.storageCondition = {
-        //   action: 'save',
-        //   title: 'Edit BoundedContext',
-        //   comment: '',
-        //   projectName: `${me.information.associatedProject}-${boundedContexts}`,
-        //   projectId: `${me.information.associatedProject}-${boundedContexts}`,
-        //   version: 'v0.0.1',
-        //   error: null,
-        //   loading: false,
-        //   type: 'es',
-        //   associatedProject: me.information.associatedProject,
-        //   connectedAssociatedProject : me.information.associatedProject ? true : false,
-        //   element: contextBC
-        // }
-  
-        // let testModel = {
-        //   "elements" : JSON.parse(JSON.stringify(`{"e3b6c7be-4094-4dcb-45df-377fc7344c09":{"aggregateRoot":{"_type":"org.uengine.modeling.model.AggregateRoot","fieldDescriptors":[{"className":"String","isCopy":false,"isKey":true,"name":"orderId","displayName":"주문 ID","nameCamelCase":"orderId","namePascalCase":"OrderId","_type":"org.uengine.model.FieldDescriptor","inputUI":"TEXT"},{"className":"Date","isCopy":false,"isKey":false,"name":"orderDate","displayName":"주문 날짜","nameCamelCase":"orderDate","namePascalCase":"OrderDate","_type":"org.uengine.model.FieldDescriptor","inputUI":"TEXT"},{"className":"Money","isCopy":false,"isKey":false,"name":"totalAmount","displayName":"총 금액","nameCamelCase":"totalAmount","namePascalCase":"TotalAmount","_type":"org.uengine.model.FieldDescriptor","inputUI":"TEXT"},{"className":"Address","isCopy":false,"isKey":false,"name":"shippingAddress","displayName":"배송 주소","nameCamelCase":"shippingAddress","namePascalCase":"ShippingAddress","_type":"org.uengine.model.FieldDescriptor","inputUI":"TEXTAREA"}],"entities":{"elements":{},"relations":{}},"operations":[]},"boundedContext":{"id":"${contextBC.id}"},"commands":[],"description":"주문 관리","id":"e3b6c7be-4094-4dcb-45df-377fc7344c09","definitionId":"test20240905-order","elementView":{"_type":"org.uengine.modeling.model.Aggregate","id":"e3b6c7be-4094-4dcb-45df-377fc7344c09","x":650,"y":450,"width":130,"height":400},"events":[],"hexagonalView":{"_type":"org.uengine.modeling.model.AggregateHexagonal","id":"${contextBC.id}","x":0,"y":0,"subWidth":0,"width":0},"name":"Order","displayName":"주문","nameCamelCase":"order","namePascalCase":"Order","namePlural":"","rotateStatus":false,"selected":false,"_type":"org.uengine.modeling.model.Aggregate","uiStyle":{"layout":"CARD","nameProperty":"property name for representing the object","imageUrlProperty":"property name for representing image url if exists","icon":"material design icon font name for representing this aggregate data","isRepresentingUser":false}},"${contextBC.id}-event-OrderCreated":{"aggregate":{"id":"e3b6c7be-4094-4dcb-45df-377fc7344c09"},"alertURL":"/static/image/symbol/alert-icon.png","boundedContext":{"id":"${contextBC.id}"},"checkAlert":true,"description":null,"id":"${contextBC.id}-event-OrderCreated","definitionId":"test20240905-order","elementView":{"angle":0,"height":115,"id":"${contextBC.id}-event-OrderCreated","style":"{}","width":100,"x":740,"y":250,"_type":"org.uengine.modeling.model.Event"},"fieldDescriptors":[{"className":"String","isCopy":false,"isKey":true,"name":"orderId","nameCamelCase":"orderId","namePascalCase":"OrderId","_type":"org.uengine.model.FieldDescriptor"},{"className":"Date","isCopy":false,"isKey":false,"name":"orderDate","nameCamelCase":"orderDate","namePascalCase":"OrderDate","_type":"org.uengine.model.FieldDescriptor"}],"hexagonalView":{"height":0,"id":"${contextBC.id}-event-OrderCreated","style":"{}","width":0,"x":0,"y":0,"_type":"org.uengine.modeling.model.EventHexagonal"},"name":"OrderCreated","nameCamelCase":"orderCreated","namePascalCase":"OrderCreated","namePlural":"","relationCommandInfo":[],"relationPolicyInfo":[],"rotateStatus":false,"selected":false,"trigger":"@PostPersist","_type":"org.uengine.modeling.model.Event"},"${contextBC.id}-event-OrderCancelled":{"aggregate":{"id":"e3b6c7be-4094-4dcb-45df-377fc7344c09"},"alertURL":"/static/image/symbol/alert-icon.png","boundedContext":{"id":"${contextBC.id}"},"checkAlert":true,"description":null,"id":"${contextBC.id}-event-OrderCancelled","definitionId":"test20240905-order","elementView":{"angle":0,"height":115,"id":"${contextBC.id}-event-OrderCancelled","style":"{}","width":100,"x":740,"y":370,"_type":"org.uengine.modeling.model.Event"},"fieldDescriptors":[{"className":"String","isCopy":false,"isKey":true,"name":"orderId","nameCamelCase":"orderId","namePascalCase":"OrderId","_type":"org.uengine.model.FieldDescriptor"}],"hexagonalView":{"height":0,"id":"${contextBC.id}-event-OrderCancelled","style":"{}","width":0,"x":0,"y":0,"_type":"org.uengine.modeling.model.EventHexagonal"},"name":"OrderCancelled","nameCamelCase":"orderCancelled","namePascalCase":"OrderCancelled","namePlural":"","relationCommandInfo":[],"relationPolicyInfo":[],"rotateStatus":false,"selected":false,"trigger":"@PostPersist","_type":"org.uengine.modeling.model.Event","displayName":null},"${contextBC.id}-command-CreateOrder":{"_type":"org.uengine.modeling.model.Command","outputEvents":["OrderCreated"],"aggregate":{"id":"e3b6c7be-4094-4dcb-45df-377fc7344c09"},"boundedContext":{"id":"${contextBC.id}"},"controllerInfo":{"apiPath":"uri","method":"POST"},"fieldDescriptors":[{"className":"String","isCopy":false,"isKey":true,"name":"orderId","nameCamelCase":"orderId","namePascalCase":"OrderId","_type":"org.uengine.model.FieldDescriptor"},{"className":"Date","isCopy":false,"isKey":false,"name":"orderDate","nameCamelCase":"orderDate","namePascalCase":"OrderDate","_type":"org.uengine.model.FieldDescriptor"},{"className":"Money","isCopy":false,"isKey":false,"name":"totalAmount","nameCamelCase":"totalAmount","namePascalCase":"TotalAmount","_type":"org.uengine.model.FieldDescriptor"},{"className":"Address","isCopy":false,"isKey":false,"name":"shippingAddress","nameCamelCase":"shippingAddress","namePascalCase":"ShippingAddress","_type":"org.uengine.model.FieldDescriptor"}],"description":null,"id":"${contextBC.id}-command-CreateOrder","definitionId":"test20240905-order","elementView":{"_type":"org.uengine.modeling.model.Command","height":115,"id":"${contextBC.id}-command-CreateOrder","style":"{}","width":100,"x":560,"y":250,"z-index":999},"hexagonalView":{"_type":"org.uengine.modeling.model.CommandHexagonal","height":0,"id":"${contextBC.id}-command-CreateOrder","style":"{}","width":0,"x":0,"y":0},"isRestRepository":true,"name":"CreateOrder","displayName":"주문 생성","nameCamelCase":"createOrder","namePascalCase":"CreateOrder","namePlural":"","relationCommandInfo":[],"relationEventInfo":[],"restRepositoryInfo":{"method":"POST"},"rotateStatus":false,"selected":false,"trigger":"@PrePersist"},"${contextBC.id}-${contextBC.id}-command-CreateOrder-actor-Actor-Name":{"_type":"org.uengine.modeling.model.Actor","boundedContext":{"id":"${contextBC.id}"},"description":null,"id":"${contextBC.id}-${contextBC.id}-command-CreateOrder-actor-Actor-Name","definitionId":"test20240905-order","elementView":{"_type":"org.uengine.modeling.model.Actor","height":100,"id":"${contextBC.id}-${contextBC.id}-command-CreateOrder-actor-Actor-Name","style":"{}","width":100,"x":480,"y":210},"innerAggregate":{"command":[],"event":[],"external":[],"policy":[],"view":[]},"name":"Actor Name","oldName":"","rotateStatus":false,"displayName":null},"${contextBC.id}-command-CancelOrder":{"_type":"org.uengine.modeling.model.Command","outputEvents":["OrderCancelled"],"aggregate":{"id":"e3b6c7be-4094-4dcb-45df-377fc7344c09"},"boundedContext":{"id":"${contextBC.id}"},"controllerInfo":{"apiPath":"uri","method":"DELETE"},"fieldDescriptors":[{"className":"String","isCopy":false,"isKey":true,"name":"orderId","nameCamelCase":"orderId","namePascalCase":"OrderId","_type":"org.uengine.model.FieldDescriptor"}],"description":null,"id":"${contextBC.id}-command-CancelOrder","definitionId":"test20240905-order","elementView":{"_type":"org.uengine.modeling.model.Command","height":115,"id":"${contextBC.id}-command-CancelOrder","style":"{}","width":100,"x":560,"y":370,"z-index":999},"hexagonalView":{"_type":"org.uengine.modeling.model.CommandHexagonal","height":0,"id":"${contextBC.id}-command-CancelOrder","style":"{}","width":0,"x":0,"y":0},"isRestRepository":true,"name":"CancelOrder","displayName":"주문 취소","nameCamelCase":"cancelOrder","namePascalCase":"CancelOrder","namePlural":"","relationCommandInfo":[],"relationEventInfo":[],"restRepositoryInfo":{"method":"DELETE"},"rotateStatus":false,"selected":false,"trigger":"@PrePersist"},"${contextBC.id}-${contextBC.id}-command-CancelOrder-actor-Actor-Name":{"_type":"org.uengine.modeling.model.Actor","boundedContext":{"id":"${contextBC.id}"},"description":null,"id":"${contextBC.id}-${contextBC.id}-command-CancelOrder-actor-Actor-Name","definitionId":"test20240905-order","elementView":{"_type":"org.uengine.modeling.model.Actor","height":100,"id":"${contextBC.id}-${contextBC.id}-command-CancelOrder-actor-Actor-Name","style":"{}","width":100,"x":480,"y":330},"innerAggregate":{"command":[],"event":[],"external":[],"policy":[],"view":[]},"name":"Actor Name","oldName":"","rotateStatus":false,"displayName":null}}`)), 
-        // }       
-        // testModel.elements = JSON.parse(testModel.elements)
-        // let aggregates = Object.values(testModel.elements)
-        //   .filter(element => element != null && element._type == 'org.uengine.modeling.model.Aggregate')
-        //   .map(aggregate => ({ id: aggregate.id }));
-
-        // me.value.elements[contextBC.id]['aggregates'] = aggregates;
-        // aggregates.forEach(aggregate => {
-        //   me.mirrorValue.elements[aggregate.id]=testModel.elements[aggregate.id]
-        // })
-
-        // this.saveModel(boundedContexts, testModel)
-        // me.changedByMe = true
-
-        if(model){
-          me.DDLDraftTable = Object.assign(me.DDLDraftTable, model.tables)
-          me.showDDLDraftDialog = true
-
-          me.defaultGeneratorUiInputData.DDLDraftTable = JSON.stringify(me.DDLDraftTable)
-          me.defaultGeneratorUiInputData.processedDDLs = me.defaultGeneratorUiInputData.processedDDLs.concat(model.processingDDL)
-          me.defaultGeneratorUiInputData.numberRemainingDDLs = model.numberRemainingDDLs
-          me.defaultGeneratorUiInputData.DDL = model.DDL
-          me.defaultGeneratorUiInputData.boundedContextLists = model.boundedContextLists
-
-          me.input = me.defaultGeneratorUiInputData
-          if(model.numberRemainingDDLs > 0){
-            me.generate()
-          }
-        }
-
-
-      },
-      onModelCreated(model){
-      },
       setBCinAggregate(bc, model){
         Object.values(model.elements).forEach(function (element) {
           if (element && element._type === "org.uengine.modeling.model.Aggregate") {
@@ -1505,10 +1421,101 @@
           }
         })
       },
-      generate(){
-        this.generator = new DDLDraftGenerator(this);
-        this.generator.generate();
-      }
+
+
+
+      onGenerationFinished(model){
+        var me = this
+
+        if(!model) return
+        switch(model.generatorName) {
+          case 'DDLDraftGenerator':
+            me._processDDLDraftGenerator(model)
+            break;
+
+          case 'DDLGenerator':
+            me._processDDLGenerator(model)
+            break;
+        }
+      },
+
+      _processDDLDraftGenerator(model) {
+        var me = this
+        me.showDDLDraftDialog = true
+
+        me.DDLDraftTable = Object.assign(me.DDLDraftTable, model.tables)
+        me.defaultGeneratorUiInputData = {
+          ...me.defaultGeneratorUiInputData,
+          DDLDraftTable: JSON.stringify(me.DDLDraftTable),
+          processedDDLs: me.defaultGeneratorUiInputData.processedDDLs.concat(model.processingDDL),
+          numberRemainingDDLs: model.numberRemainingDDLs,
+          DDL: model.DDL,
+          boundedContextLists: model.boundedContextLists
+        }
+
+        if(model.numberRemainingDDLs > 0)
+          me.__generate('DDLDraftGenerator', me.defaultGeneratorUiInputData)
+      },
+
+      _processDDLGenerator(model) {
+        var me = this
+        if(me.createEventStormingInputs.length > 0)
+            me.__generate('DDLGenerator', me.createEventStormingInputs.shift())
+          else
+            me.showDDLDraftDialog = false
+      },
+
+
+      generateFromDraft(selectedOptionItem){
+        var me = this
+        console.log("[*] Draft를 기반으로 이벤트 캔버스 모델 생성중...", {selectedOptionItem, ddl:me.defaultGeneratorUiInputData.DDL})
+
+        me.createEventStormingInputs = me._getCreateEventStormingInputs(selectedOptionItem, me.defaultGeneratorUiInputData.DDL)
+        me.__generate('DDLGenerator', me.createEventStormingInputs.shift())
+      },
+
+      _getCreateEventStormingInputs(selectedOptionItem, ddl) {
+        let eventStormingInputs = []
+
+        for(let boundedContextKey of Object.keys(selectedOptionItem)){
+          let boundedContextInfo = selectedOptionItem[boundedContextKey][0]
+
+          eventStormingInputs.push({
+            DDL: ddl,
+            boundedContextLists: [boundedContextKey],
+            additionalPrompt: `Create an event stemming model in that Bounded Context with the following structure: ${boundedContextInfo.aggregates}
+Utilize only the relevant DDLs from the given DDL information.
+
+`
+          })
+        }
+
+        return eventStormingInputs
+      },
+
+      
+      __generate(generatorName, inputObj){
+        var me = this
+        me.currentGeneratorName = generatorName
+
+        switch(generatorName) {
+          case 'DDLDraftGenerator':
+            me.generator = new DDLDraftGenerator(me);
+            break;
+
+          case 'DDLGenerator':
+            me.generator = new DDLGenerator(me);
+            break;
+
+          default:
+            me.generator = null
+            me.currentGeneratorName = ''
+            throw new Error(`Invalid generator name: ${generatorName}`)
+        }
+
+        me.input = inputObj
+        me.generator.generate()
+      },
     },
   };
 </script>

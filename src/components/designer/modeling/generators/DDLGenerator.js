@@ -8,7 +8,8 @@ class DDLGenerator extends JsonAIGenerator{
     constructor(client){
         super(client);
         
-        this.model = "gpt-4o"
+        this.model = "gpt-4o-2024-08-06"
+        this.temperature = 0.3
         this.generateCnt = 0;
         this.modelElements = {}
         this.sequenceForUUID = 0;
@@ -21,9 +22,13 @@ class DDLGenerator extends JsonAIGenerator{
         // this.preferredLanguage = "English";
 
         this.generationOptions = {policy: true, ui: false, properties: true}
+        this.generatorName = 'DDLGenerator'
     }
     
     createPrompt(){
+
+        console.log("[*] 전달된 DDL을 기반으로 이벤트스토밍 모델을 생성하기 위한 프롬프트 생성중...", {ddl: this.client.input.DDL, boundedContextLists: this.client.input.boundedContextLists, additionalPrompt: this.client.input.additionalPrompt})
+
         this.modelElements = {}
         this.generateCnt = 0
 
@@ -31,152 +36,157 @@ class DDLGenerator extends JsonAIGenerator{
             this.canvasType = 'CM'
         }
 
+        const prompt = `Please create an event storming model in json for following DDL: 
+${this.client.input.DDL}
 
-        return `Please create an event storming model in json for following DDL: 
-        ${this.client.input.DDL}
+Generate bounded contexts and aggregates according to the following request:
+${this.client.input.boundedContextLists}
 
-        Generate bounded contexts and aggregates according to the following request:
-        ${this.client.input.boundedContextLists}
+Extract DDD Aggregates and Bounded Contexts from the provided DDL, ensuring that:
+1. All tables from the DDL are included without omission.
+2. Tables are grouped into cohesive Aggregates based on their relationships and domain logic.
+3. Aggregates are organized into appropriate Bounded Contexts as specified (${this.client.input.boundedContextLists}).
+4. Each Bounded Context may contain one or more Aggregates.
+5. All information from the DDL should be represented in the model, even if it means creating additional Aggregates within the specified Bounded Contexts.
+6. If a table is closely related to multiple Bounded Contexts, consider creating a reference or summary in each relevant context.
+7. Normalize and combine related tables within each Aggregate where appropriate.
 
-        Extract DDD Aggregates and Bounded Contexts from the provided DDL, ensuring that:
-        1. All tables from the DDL are included without omission.
-        2. Tables are grouped into cohesive Aggregates based on their relationships and domain logic.
-        3. Aggregates are organized into appropriate Bounded Contexts as specified (${this.client.input.boundedContextLists}).
-        4. Each Bounded Context may contain one or more Aggregates.
-        5. All information from the DDL should be represented in the model, even if it means creating additional Aggregates within the specified Bounded Contexts.
-        6. If a table is closely related to multiple Bounded Contexts, consider creating a reference or summary in each relevant context.
-        7. Normalize and combine related tables within each Aggregate where appropriate.
+Additional requirements:
+- Ensure that all tables from the original DDL are represented in the generated model, distributed across the specified Bounded Contexts.
+- When grouping tables into Aggregates, consider their relationships and domain logic. Tables that are closely related or form a cohesive unit should be part of the same Aggregate.
+- When organizing Aggregates into Bounded Contexts, adhere to the specified contexts (${this.client.input.boundedContextLists}) while ensuring all data is represented.
+- If an Aggregate references entities from another Bounded Context, use the appropriate ID reference (e.g., CustomerId) instead of including the entire entity.
+- Ensure that domain events flow between Bounded Contexts in a way that allows for policy invocation across contexts.
 
-        Additional requirements:
-        - Ensure that all tables from the original DDL are represented in the generated model, distributed across the specified Bounded Contexts.
-        - When grouping tables into Aggregates, consider their relationships and domain logic. Tables that are closely related or form a cohesive unit should be part of the same Aggregate.
-        - When organizing Aggregates into Bounded Contexts, adhere to the specified contexts (${this.client.input.boundedContextLists}) while ensuring all data is represented.
-        - If an Aggregate references entities from another Bounded Context, use the appropriate ID reference (e.g., CustomerId) instead of including the entire entity.
-        - Ensure that domain events flow between Bounded Contexts in a way that allows for policy invocation across contexts.
-    
-        Specific instructions:
-        - Do not omit any tables from the original DDL. If a table (e.g., stores) seems to not fit directly into the specified Bounded Contexts, consider how it relates to the existing contexts and include it in the most appropriate one.
-        - When creating Aggregates, combine closely related entities. For example, orders and payments could be part of the same Aggregate in the Order context, rather than separate Aggregates.
-        - Ensure that all fields from the original tables are represented in the Aggregates, even if they are combined or restructured.
-        - Create meaningful relationships between Aggregates across different Bounded Contexts using appropriate references (e.g., CustomerId in the Order Aggregate to reference the Customer Aggregate).
-        
-        The format must be as follows:
-        {
-            "serviceName": "Service Name",
-            "actors": ["Actor Name"],
-            // The Bounded Context is must have aggregate over the one. Also, a single Bounded Context can contain two or more aggregates.
-            // Bounded Context names must be a lower-cases english and spaces are not allowed, use hypen instead.
-            "boundedContext": {
-                "bounded-context-name": {  
-                    "${this.originalLanguage}Name: "Bounded context name in ${this.originalLanguage}", 
-                    "aggregates": [ 
+Specific instructions:
+- Do not omit any tables from the original DDL. If a table (e.g., stores) seems to not fit directly into the specified Bounded Contexts, consider how it relates to the existing contexts and include it in the most appropriate one.
+- When creating Aggregates, combine closely related entities. For example, orders and payments could be part of the same Aggregate in the Order context, rather than separate Aggregates.
+- Ensure that all fields from the original tables are represented in the Aggregates, even if they are combined or restructured.
+- Create meaningful relationships between Aggregates across different Bounded Contexts using appropriate references (e.g., CustomerId in the Order Aggregate to reference the Customer Aggregate).
+
+The format must be as follows:
+{
+    "serviceName": "Service Name",
+    "actors": ["Actor Name"],
+    // The Bounded Context is must have aggregate over the one. Also, a single Bounded Context can contain two or more aggregates.
+    // Bounded Context names must be a lower-cases english and spaces are not allowed, use hypen instead.
+    "boundedContext": {
+        "bounded-context-name": {  
+            "${this.originalLanguage}Name: "Bounded context name in ${this.originalLanguage}", 
+            "aggregates": [ 
+                {
+                    "name": "AggregateName",  // Aggregate name must be Pascal-Case
+                    "${this.originalLanguage}Name: "Aggregate name in ${this.originalLanguage}", 
+                    "${this.originalLanguage}Description: "Description about the aggregate in ${this.originalLanguage}"
+                    "properties": [
                         {
-                            "name": "AggregateName",  // Aggregate name must be Pascal-Case
-                            "${this.originalLanguage}Name: "Aggregate name in ${this.originalLanguage}", 
-                            "${this.originalLanguage}Description: "Description about the aggregate in ${this.originalLanguage}"
+                            "name": "propertyName", // Property Name must be Camel-Case
+                            "${this.originalLanguage}Name: "Property name in ${this.originalLanguage}", 
+                            "type": "PropertyType", // Property Type can be known java class or the Value object classes listed here: must be one of Address, Portrait, Rating, Money, Email. use simple name reduce the package name if java class name.
+                            "isKey": "Must be true or not generated", // For each "properties", only one "isKey" must be true.
+                            "options" : ["value1", "value2"] // optional. if there are selectable options for this value.
+                        }
+                    ],
+                    "commands": [
+                    // Creation must be created.
+                        {
+                            "name": "Command Name",
+                            "${this.originalLanguage}Name: "Command name in ${this.originalLanguage}", 
+                            ${this.generationOptions.properties ? `
                             "properties": [
                                 {
                                     "name": "propertyName", // Property Name must be Camel-Case
-                                    "${this.originalLanguage}Name: "Property name in ${this.originalLanguage}", 
                                     "type": "PropertyType", // Property Type can be known java class or the Value object classes listed here: must be one of Address, Portrait, Rating, Money, Email. use simple name reduce the package name if java class name.
-                                    "isKey": "Must be true or not generated", // For each "properties", only one "isKey" must be true.
-                                    "options" : ["value1", "value2"] // optional. if there are selectable options for this value.
+                                    "isKey": "Must be true or not generated" // For each "properties", only one "isKey" must be true.
                                 }
                             ],
-                            "commands": [
-                            // Creation must be created.
-                                {
-                                    "name": "Command Name",
-                                    "${this.originalLanguage}Name: "Command name in ${this.originalLanguage}", 
-                                    ${this.generationOptions.properties ? `
-                                    "properties": [
-                                        {
-                                            "name": "propertyName", // Property Name must be Camel-Case
-                                            "type": "PropertyType", // Property Type can be known java class or the Value object classes listed here: must be one of Address, Portrait, Rating, Money, Email. use simple name reduce the package name if java class name.
-                                            "isKey": "Must be true or not generated" // For each "properties", only one "isKey" must be true.
-                                        }
-                                    ],
-                                    `:``}
-                                    "api_verb": "POST" | "DELETE" | "PUT",
-                                    "isCreation": true | false, //true if this command creates new instance of the aggregate
-                                    "actor": "Actor Name",
-                                    "outputEvents": ["Event Name"]
-                                }
-                            ],
-                            
-                            "events": [
-                            // Creation must be created.
-                                {
-                                    "name": "Event Name", // PascalCase
-                                    "${this.originalLanguage}Name: "Event name in ${this.originalLanguage}", 
-                                    ${this.generationOptions.properties ? `
-                                    "properties": [
-                                        {
-                                            "name": "propertyName", // Property Name must be Camel-Case
-                                            "type": "PropertyType", // Property Type can be known java class or the Value object classes listed here: must be one of Address, Portrait, Rating, Money, Email. use simple name reduce the package name if java class name.
-                                            "isKey": "Must be true or not generated" // For each "properties", only one "isKey" must be true.
-                                        }
-                                    ]
-                                    `:``}
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-            ${this.generationOptions.policy ? `
-            ,
-            "policies": [
-                {
-                    "boundedContext": "Bounded Context Name that includes this policy",
-                    "name": "Policy Name",
-                    "${this.originalLanguage}Name": "display Name",
-                    "triggerEvents":[
-                        {
-                            "boundedContext": "Bounded Context Name",
-                            "aggregate": "Aggregate Name",
-                            "event": "Event Name"
+                            `:``}
+                            "api_verb": "POST" | "DELETE" | "PUT",
+                            "isCreation": true | false, //true if this command creates new instance of the aggregate
+                            "actor": "Actor Name",
+                            "outputEvents": ["Event Name"]
                         }
                     ],
-                    "commands":[
+                    
+                    "events": [
+                    // Creation must be created.
                         {
-                            "boundedContext": "Bounded Context Name",
-                            "aggregate": "Aggregate Name",
-                            "command": "Command Name"
+                            "name": "Event Name", // PascalCase
+                            "${this.originalLanguage}Name: "Event name in ${this.originalLanguage}", 
+                            ${this.generationOptions.properties ? `
+                            "properties": [
+                                {
+                                    "name": "propertyName", // Property Name must be Camel-Case
+                                    "type": "PropertyType", // Property Type can be known java class or the Value object classes listed here: must be one of Address, Portrait, Rating, Money, Email. use simple name reduce the package name if java class name.
+                                    "isKey": "Must be true or not generated" // For each "properties", only one "isKey" must be true.
+                                }
+                            ]
+                            `:``}
                         }
                     ]
                 }
-            ]`:``}
-        
+            ]
+        }
+    }
+    ${this.generationOptions.policy ? `
+    ,
+    "policies": [
+        {
+            "boundedContext": "Bounded Context Name that includes this policy",
+            "name": "Policy Name",
+            "${this.originalLanguage}Name": "display Name",
+            "triggerEvents":[
+                {
+                    "boundedContext": "Bounded Context Name",
+                    "aggregate": "Aggregate Name",
+                    "event": "Event Name"
+                }
+            ],
+            "commands":[
+                {
+                    "boundedContext": "Bounded Context Name",
+                    "aggregate": "Aggregate Name",
+                    "command": "Command Name"
+                }
+            ]
+        }
+    ]`:``}
+
+}
+
+- for generated aggregate objects, i want to set Value Object for each properties if possible.
+- Class name of Value Objects must be one of Address, Money, Email, Password, File, Photo, Rating, Likes, Tags, Payment, Weather, Comment.
+
+- The result must split into two or more different bounded contexts.
+- Each bounded context interacts with each other, and domain events must flow into a service in a way that invokes the policies of other bounded context.
+
+- Except primary key, ID class name must be '[AggregateName]Id' format. For example, if the aggregate name is Customer, the ID class name is 'CustomerId'.
+    ex) Customer Aggregate의 ID property:
+        {
+            "name": "id",
+            "koreanName": "고객 ID",
+            "type": "Long or String ...",
+            "isKey": true
+        }
+        Order Aggregate에서 Customer를 참조하는 property:
+        {
+            "name": "customerId",
+            "koreanName": "고객 ID",
+            "type": "CustomerId"
         }
 
-        - for generated aggregate objects, i want to set Value Object for each properties if possible.
-        - Class name of Value Objects must be one of Address, Money, Email, Password, File, Photo, Rating, Likes, Tags, Payment, Weather, Comment.
+${this.describeCommunicationStyle()}
 
-        - The result must split into two or more different bounded contexts.
-        - Each bounded context interacts with each other, and domain events must flow into a service in a way that invokes the policies of other bounded context.
-        
-        - Except primary key, ID class name must be '[AggregateName]Id' format. For example, if the aggregate name is Customer, the ID class name is 'CustomerId'.
-            ex) Customer Aggregate의 ID property:
-                {
-                    "name": "id",
-                    "koreanName": "고객 ID",
-                    "type": "Long or String ...",
-                    "isKey": true
-                }
-                Order Aggregate에서 Customer를 참조하는 property:
-                {
-                    "name": "customerId",
-                    "koreanName": "고객 ID",
-                    "type": "CustomerId"
-                }
+- Please don't create the bounded context about user management or authentication.
 
-        ${this.describeCommunicationStyle()}
+- The result is must be only json code without natural language.
 
-        - Please don't create the bounded context about user management or authentication.
+${(this.client.input.additionalPrompt) ? `- Additional Requests
+${this.client.input.additionalPrompt}` : ``}
+`
 
-        - The result is must be only json code without natural language.
-    `
+        console.log("[*] 전달된 DDL을 기반으로 이벤트스토밍 모델을 생성하기 위한 프롬프트 생성중...", {prompt})
+        return prompt
     }
 
     describeCommunicationStyle(){
@@ -297,6 +307,9 @@ class DDLGenerator extends JsonAIGenerator{
 
     createModel(text){
         var me = this
+
+        if(this.state === 'end')
+            console.log("[*] 전달된 프롬프트를 기반으로 이벤트스토밍 모델을 생성중...", {text})
 
         if (text.startsWith('```json')) {
             text = text.slice(7);
@@ -1113,9 +1126,12 @@ class DDLGenerator extends JsonAIGenerator{
                 var obj = {
                     projectName: modelValue["serviceName"],
                     elements: me.modelElements,
-                    relations: relations
+                    relations: relations,
+                    generatorName: me.generatorName
                 }
 
+                if(this.state === 'end')
+                    console.log("[*] 이벤트스토밍 모델 생성 완료", {obj})
                 return obj;
             } 
         } catch(e){
@@ -1124,7 +1140,9 @@ class DDLGenerator extends JsonAIGenerator{
             var obj = {
                 projectName: modelValue ? modelValue["serviceName"] : "untitle",
                 elements: me.modelElements ? me.modelElements : {},
-                relations: relations ? relations : {}
+                relations: relations ? relations : {},
+                generatorName: me.generatorName,
+                error: e
             }
 
             return obj;
