@@ -172,6 +172,23 @@
                               style="margin-right: 15px"
                       >
                         <slot name="menu-buttons">
+                          <v-menu class="pa-2" open-on-hover offset-y left v-if="isDevModeEnabled">
+                            <template v-slot:activator="{ on }">
+                              <div>
+                                <v-btn
+                                        class="gs-model-z-index-1"
+                                        color="primary"
+                                        text
+                                        style="margin-right: 5px"
+                                        :disabled="disableBtn"
+                                        @click="distinstTest()"
+                                >
+                                  <v-icon>mdi-ab-testing</v-icon>
+                                </v-btn>
+                              </div>
+                            </template>
+                          </v-menu>
+
                           <v-menu class="pa-2" open-on-hover offset-y left>
                             <template v-slot:activator="{ on }">
                               <div>
@@ -1089,9 +1106,10 @@
   import BoundedContext from '../es-modeling/elements/BoundedContext.vue';
   import BoundedContextCM from './elements/BoundedContextCM.vue';
   import GeneratorUI from "../modeling/generators/GeneratorUI";
-  import DDLGenerator from "../modeling/generators/DDLGenerator";
+  import DDLCreateESActionsGenerator from "../modeling/generators/es-ddl-generators/DDLCreateESActionsGenerator";
   import DDLDraftGenerator from "../modeling/generators/DDLDraftGenerator";
   import ModelDraftDialog from "../modeling/ModelDraftDialog";
+
   export default {
     name: "context-mapping-model-canvas",
     mixins: [EventStormingModelCanvas],
@@ -1156,9 +1174,33 @@
           }
         },
     },
+    computed: {
+      isDevModeEnabled() {
+        return typeof window !== 'undefined' && 
+              window.localStorage && 
+              window.localStorage.getItem('isDevMode') === 'true';
+      }
+    },
     created(){
     },
     methods: {
+      distinstTest(){
+        var me = this
+
+        me.__generate('DDLCreateESActionsGenerator', {
+          ddl: `CREATE TABLE customers (
+customer_id INT PRIMARY KEY AUTO_INCREMENT,
+name VARCHAR(100) NOT NULL,
+phone VARCHAR(20) NOT NULL,
+address VARCHAR(255) NOT NULL,
+total_points INT DEFAULT 0
+);`,
+          selectedOption: `고객 (Entities: 고객, ValueObjects: 연락처, 주소)`,
+          boundedContexts: [`고객`],
+          userInfo: me.userInfo,
+          information: me.information
+        })
+      },
       setCanvasType(){
           Vue.use(ContextMappingModeling);
           this.canvasType = 'cm'
@@ -1433,8 +1475,8 @@
             me._processDDLDraftGenerator(model)
             break;
 
-          case 'DDLGenerator':
-            me._processDDLGenerator(model)
+          case 'DDLCreateESActionsGenerator':
+            me._processDDLCreateESActionsGenerator(model)
             break;
         }
       },
@@ -1457,10 +1499,10 @@
           me.__generate('DDLDraftGenerator', me.defaultGeneratorUiInputData)
       },
 
-      _processDDLGenerator(model) {
+      _processDDLCreateESActionsGenerator(model) {
         var me = this
         if(me.createEventStormingInputs.length > 0)
-            me.__generate('DDLGenerator', me.createEventStormingInputs.shift())
+            me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())
           else
             me.showDDLDraftDialog = false
       },
@@ -1471,22 +1513,22 @@
         console.log("[*] Draft를 기반으로 이벤트 캔버스 모델 생성중...", {selectedOptionItem, ddl:me.defaultGeneratorUiInputData.DDL})
 
         me.createEventStormingInputs = me._getCreateEventStormingInputs(selectedOptionItem, me.defaultGeneratorUiInputData.DDL)
-        me.__generate('DDLGenerator', me.createEventStormingInputs.shift())
+        me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())
       },
 
       _getCreateEventStormingInputs(selectedOptionItem, ddl) {
+        let me = this
         let eventStormingInputs = []
 
         for(let boundedContextKey of Object.keys(selectedOptionItem)){
           let boundedContextInfo = selectedOptionItem[boundedContextKey][0]
 
           eventStormingInputs.push({
-            DDL: ddl,
-            boundedContextLists: [boundedContextKey],
-            additionalPrompt: `Create an event stemming model in that Bounded Context with the following structure: ${boundedContextInfo.aggregates}
-Utilize only the relevant DDLs from the given DDL information.
-
-`
+            ddl: ddl,
+            selectedOption: boundedContextInfo.aggregates,
+            boundedContexts: [boundedContextKey],
+            userInfo: me.userInfo,
+            information: me.information
           })
         }
 
@@ -1503,8 +1545,8 @@ Utilize only the relevant DDLs from the given DDL information.
             me.generator = new DDLDraftGenerator(me);
             break;
 
-          case 'DDLGenerator':
-            me.generator = new DDLGenerator(me);
+          case 'DDLCreateESActionsGenerator':
+            me.generator = new DDLCreateESActionsGenerator(me);
             break;
 
           default:
