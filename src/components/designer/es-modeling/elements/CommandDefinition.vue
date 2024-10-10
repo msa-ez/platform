@@ -493,8 +493,8 @@
                     }
                 }
 
-                if(me.canvas.attachedLists && me.canvas.attachedLists.commandLists){
-                    let sameAggregate = Object.values(me.canvas.attachedLists.commandLists).find(function(command) {
+                if(me.canvas.attachedLists() && me.canvas.attachedLists().commandLists){
+                    let sameAggregate = Object.values(me.canvas.attachedLists().commandLists).find(function(command) {
                         if(attachedAggregate && command.elementView.id != validateValue.elementView.id && isAttached(attachedAggregate, command)){
                             if(command.isRestRepository && validateValue.isRestRepository && (command.restRepositoryInfo.method == validateValue.restRepositoryInfo.method)){
                                 return true;
