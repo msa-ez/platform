@@ -1152,7 +1152,8 @@
         },
         DDLDraftTable: {},
         showDDLDraftDialog: false,
-        createEventStormingInputs: []
+        createEventStormingInputs: [],
+        DDLCreateESActionsGeneratorRetryCount: 3
       };
     },
     watch: {
@@ -1199,6 +1200,9 @@
             break
           case "makeNewEventStormingProject":
             this._test__makeNewEventStormingProject()
+            break
+          case "generateFromDraft":
+            this._test_generateFromDraft()
             break
         }
       },
@@ -1633,6 +1637,72 @@ total_points INT DEFAULT 0
         this.__makeNewEventStormingProject(modelValue.modelValue.createdESValue)
       },
 
+      _test_generateFromDraft() {
+        const mock_selectedOptionItem = {
+            "고객": [
+                {
+                    "option": 1,
+                    "aggregates": "고객 (Entities: 고객, ValueObjects: 고객 정보)",
+                    "pros": "고객 중심의 설계: 고객 정보를 중심으로 모든 고객 관련 데이터를 관리할 수 있습니다.",
+                    "cons": "확장성 제한: 고객 정보에 새로운 기능을 추가할 때 복잡할 수 있습니다.",
+                    "ddl": "customers"
+                }
+            ],
+            "상점": [
+                {
+                    "option": 2,
+                    "aggregates": "상점 카테고리 (Entities: 상점, ValueObjects: 카테고리 정보)",
+                    "pros": "카테고리 관리 최적화: 상점의 카테고리 정보를 별도로 관리하여 카테고리 관련 기능을 확장하기 용이합니다.",
+                    "cons": "상점 정보 분리: 상점의 기본 정보와 카테고리 정보가 분리되어 있어 관리가 복잡할 수 있습니다.",
+                    "ddl": "stores"
+                }
+            ],
+            "etc": [
+                {
+                    "option": 1,
+                    "aggregates": "리뷰 (Entities: 리뷰, ValueObjects: 리뷰 정보)",
+                    "pros": "리뷰 중심의 설계: 리뷰 정보를 중심으로 모든 리뷰 관련 데이터를 관리할 수 있습니다.",
+                    "cons": "확장성 제한: 리뷰 정보에 새로운 기능을 추가할 때 복잡할 수 있습니다.",
+                    "ddl": "reviews, store_categories"
+                }
+            ]
+        }
+
+        this.defaultGeneratorUiInputData.DDL = `-- 고객 테이블
+CREATE TABLE customers (
+    customer_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    total_points INT DEFAULT 0
+);
+-- 상점 테이블
+CREATE TABLE stores (
+    store_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NOT NULL
+);
+-- 리뷰 테이블
+CREATE TABLE reviews (
+    review_id INT PRIMARY KEY AUTO_INCREMENT,
+    customer_id INT,
+    order_id INT,
+    rating INT CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    review_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id),
+    FOREIGN KEY (order_id) REFERENCES orders(order_id)
+);
+-- 상점 카테고리 테이블
+CREATE TABLE store_categories (
+    category_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(50) NOT NULL
+);`
+
+        this.generateFromDraft(mock_selectedOptionItem)
+      },
+
 
       setCanvasType(){
           Vue.use(ContextMappingModeling);
@@ -1872,11 +1942,30 @@ total_points INT DEFAULT 0
 
       _processDDLCreateESActionsGenerator(model) {
         var me = this
+
+        if(model.isError) {
+          if(me.DDLCreateESActionsGeneratorRetryCount > 0) {
+            me.DDLCreateESActionsGeneratorRetryCount -= 1
+            me.__generate('DDLCreateESActionsGenerator', model.inputedParams)
+          } else
+            me.__processNextCreateEventStormingInput()
+          
+          return
+        }
+
+        if(!model.modelValue || !model.modelValue.createdESValue) return
         me.__makeNewEventStormingProject(model.modelValue.createdESValue)
-        if(me.createEventStormingInputs.length > 0)
+        me.__processNextCreateEventStormingInput()
+      },
+
+      __processNextCreateEventStormingInput() {
+        var me = this
+        if(me.createEventStormingInputs.length > 0) {
+            me.DDLCreateESActionsGeneratorRetryCount = 3
             me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())
-          else
-            me.showDDLDraftDialog = false
+        }
+        else
+          me.showDDLDraftDialog = false
       },
 
 
@@ -1885,6 +1974,7 @@ total_points INT DEFAULT 0
         console.log("[*] Draft를 기반으로 이벤트 캔버스 모델 생성중...", {selectedOptionItem, ddl:me.defaultGeneratorUiInputData.DDL})
 
         me.createEventStormingInputs = me._getCreateEventStormingInputs(selectedOptionItem, me.defaultGeneratorUiInputData.DDL)
+        me.DDLCreateESActionsGeneratorRetryCount = 3
         me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())
       },
 
@@ -1895,8 +1985,9 @@ total_points INT DEFAULT 0
         for(let boundedContextKey of Object.keys(selectedOptionItem)){
           let boundedContextInfo = selectedOptionItem[boundedContextKey][0]
 
+          const usedDDL = (boundedContextInfo.ddl) ? this.__getDDLsFromTableNames(boundedContextInfo.ddl.split(", "), ddl) : ""
           eventStormingInputs.push({
-            ddl: ddl,
+            ddl: usedDDL,
             selectedOption: boundedContextInfo.aggregates,
             boundedContexts: [boundedContextKey],
             userInfo: me.userInfo,
@@ -1907,6 +1998,15 @@ total_points INT DEFAULT 0
         return eventStormingInputs
       },
 
+      __getDDLsFromTableNames(tableNames, ddl){
+        let usedDDL = ""
+        for(let tableName of tableNames){
+          const matchedDDL = ddl.match(new RegExp(`CREATE\\s+TABLE\\s+${tableName.trim()}[\\s\\S]*?\\);`))
+          if(matchedDDL) usedDDL += matchedDDL[0] + "\n"
+        }
+        return usedDDL
+      },
+      
       
       __generate(generatorName, inputObj){
         var me = this
