@@ -20,12 +20,11 @@ class DDLDraftGenerator extends JsonAIGenerator{
 Given the following existing DDL, create a proposal for how to define them into several aggregates.
 Or suggest a way to reorganize the given aggregates into a single bounded context.
 
-There must be no omissions in the following DDL or Aggregates: 
+There must be no omissions in the following table DDLs or Aggregates: 
 ${this.client.input.DDL}
 
-Generate bounded contexts and aggregates according to the following request.
-Create bounded context only that corresponds to the request:
-${this.client.input.boundedContextLists}
+Generate only the Bounded Context requested below, and do not create any other Bounded Contexts:
+${this.client.input.boundedContextLists ? this.client.input.boundedContextLists : 'Define only the minimum bounded context'}
 
 ${this.processDDL()}
 
@@ -38,27 +37,28 @@ Recommendation Instructions:
 
 The format must be as follows:
 {
-    "processingDDL": Currently processing one DDL table name,
+    "processingDDL": [Currently processing DDL table names],
     "processedDDLs": [processed DDL table name],
     "numberRemainingDDLs": Number of remaining DDLs,
     "boundedContexts": [
         {
-        "name": "BoundedContext-name",
-        "recommendations": [
-            {
-                "option": option number,
-                "aggregates": [
-                    {
-                    "name": "aggregate-name",
-                    "entities": ["entity-name"],
-                    "valueObjects": ["value-object-name"]
-                    },
-                "pros": "keyword: pros for this entity",
-                "cons": "keyword: cons for this entity"
-                ]
-            },
-        ],
-        "conclusions": "reason of choice: Write a conclusion for each option, explaining in which cases it would be best to choose that option."
+            "name": "BoundedContext-name",
+            "recommendations": [
+                {
+                    "option": option number,
+                    "aggregates": [
+                        {
+                        "name": "aggregate-name",
+                        "entities": ["entity-name"],
+                        "valueObjects": ["value-object-name"]
+                        },
+                    "pros": "props keyword: pros for this entity",
+                    "cons": "cons keyword: cons for this entity"
+                    ]
+                },
+            ],
+            "conclusions": "keyword of conclusion: Write a conclusion for each option, explaining in which cases it would be best to choose that option.",
+            "ddl": "used ddl table names for this option"
         }
     ]
 }
@@ -78,16 +78,12 @@ The format must be as follows:
         
         if(this.client.canvasType == 'cm' || this.client.canvasType == 'context-mapping-model-canvas'){
             text += `
-            We will process the DDL sequentially, also we will create bounded contexts for only one DDL at a time.
-            Add the currently processed DDL to processedDDLs.
-            Ignore DDLs that have already been processed.
+            Process only the DDLs related to the recommendations of the boundedContexts currently being generated, and add them to processedDDLs when processing is complete.
+            Ignore the DDLs that have been processed.
+            Handle ddl tables that are difficult to define in a certain bounded context with 'etc' bounded context.
 
-            These are the aggregate Object and Value Object for each Bounded Context processed so far.
-            Determine which Bounded Context the Aggregate to be newly created in DDL should belong to.
-            Then, determine whether the newly added Aggregate can be entered into the entity or value object of the existing Aggregate, or whether it should be added together as a new aggregate, and create it:
-            ${this.client.input.DDLDraftTable}
-            
             The current processing status is as follows:
+            Status of Current Bounded Context and Aggregates: ${this.client.input.DDLDraftTable}
             Processed DDLs: ${this.client.input.processedDDLs}
             Number of remaining DDLs: ${this.client.input.numberRemainingDDLs}
             `
@@ -132,7 +128,8 @@ The format must be as follows:
                         { text: 'Pros', value: 'pros' },
                         { text: 'Cons', value: 'cons' }
                     ],
-                    items: []
+                    items: [],
+                    ddl: ''
                 };
 
                 if (Array.isArray(bc.recommendations)) {
@@ -168,6 +165,10 @@ The format must be as follows:
                             cons: '',
                             isConclusion: true
                         });
+                    }
+
+                    if (bc.ddl) {
+                        table.ddl = bc.ddl || ''
                     }
                 }
 

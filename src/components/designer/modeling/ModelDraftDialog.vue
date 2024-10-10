@@ -3,6 +3,9 @@
         <v-card-title>BoundedContext Reconstruction Draft</v-card-title>
         <v-card-subtitle>
             <v-progress-circular v-if="!DDLDraftTable || defaultGeneratorUiInputData.numberRemainingDDLs>0" color="primary" indeterminate ></v-progress-circular>
+            <div v-if="defaultGeneratorUiInputData.numberRemainingDDLs > 0">
+                <p>{{ defaultGeneratorUiInputData.numberRemainingDDLs }} DDLs remaining...</p>
+            </div>
         </v-card-subtitle>
         <v-card-text v-if="DDLDraftTable && Object.keys(DDLDraftTable).length > 0">
             <div v-for="(table, boundedContext) in DDLDraftTable" :key="boundedContext">
