@@ -7,8 +7,9 @@ class DDLCreateESActionsGenerator extends JsonAIGenerator{
         super(client);
         
         this.model = "gpt-4o-2024-08-06"
-        this.temperature = 0.3
+        this.temperature = 0.6
         this.generatorName = 'DDLCreateESActionsGenerator'
+        this.inputedParams = null
     }
     
 
@@ -18,11 +19,19 @@ class DDLCreateESActionsGenerator extends JsonAIGenerator{
             for(let optionKey of ["ddl", "selectedOption", "boundedContexts", "userInfo", "information"])
                 if(this.client.input[optionKey] === null) 
                     throw new Error(`${optionKey} 파라미터가 전달되지 않았습니다.`)
+            this.inputedParams = {
+                ddl: this.client.input.ddl,
+                selectedOption: this.client.input.selectedOption,
+                boundedContexts: this.client.input.boundedContexts,
+                userInfo: this.client.input.userInfo,
+                information: this.client.input.information
+            }
             
-            console.log(`[*] ${this.generatorName}에 대한 프롬프트 생성중...`, {ddl: this.client.input.ddl, selectedOption: this.client.input.selectedOption, boundedContexts: this.client.input.boundedContexts})
+            console.log(`[*] ${this.generatorName}에 대한 프롬프트 생성중...`, {inputedParams: this.inputedParams})
+
 
             const prompt = this._getSystemPrompt() + this._getUserPrompt(
-                this.client.input.ddl, this.client.input.selectedOption, this.client.input.boundedContexts
+                this.inputedParams.ddl, this.inputedParams.selectedOption, this.inputedParams.boundedContexts
             )
 
             console.log(`[*] LLM에게 ${this.generatorName}에서 생성된 프롬프트 전달중...`, {prompt})
@@ -260,7 +269,7 @@ ${boundedContexts.join(", ")}
 
             console.log(`[*] ${this.generatorName}에서 결과 파싱중...`, {text})
             const actions = GlobalPromptUtil.parseToJson(text).actions
-            const createdESValue = ESActionUtil.getActionAppliedESValue(actions, this.client.input.userInfo, this.client.input.information)
+            const createdESValue = ESActionUtil.getActionAppliedESValue(actions, this.inputedParams.userInfo, this.inputedParams.information)
             
             const outputResult = {
                 generatorName: this.generatorName,
@@ -268,7 +277,8 @@ ${boundedContexts.join(", ")}
                     actions: actions,
                     createdESValue: createdESValue
                 },
-                modelRawValue: text
+                modelRawValue: text,
+                inputedParams: this.inputedParams
             }
             console.log(`[*] ${this.generatorName}에서 결과 파싱 완료!`, {outputResult})
 
@@ -282,6 +292,7 @@ ${boundedContexts.join(", ")}
                 generatorName: this.generatorName,
                 modelValue: null,
                 modelRawValue: text,
+                inputedParams: this.inputedParams,
                 isError: true
             }
 
