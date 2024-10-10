@@ -34,7 +34,7 @@ Recommendation Instructions:
 - Create options based on different perspectives in DDD.
 - For each recommendation option, you should present AggregateRoots or value objects for each BoundedContext. Attributes are not necessary.
 - We also draw conclusions about recommended options by considering each point of view.
-- Option creates a variety of possible cases.
+- Option creates a variety of possible cases and at least two options are recommended.
 
 
 The format must be as follows:

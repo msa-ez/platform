@@ -1064,6 +1064,7 @@
             <ModelDraftDialog
                 :DDLDraftTable="DDLDraftTable"
                 :defaultGeneratorUiInputData="defaultGeneratorUiInputData"
+                @reGenerate="reGenerate"
                 @generateFromDraft="generateFromDraft"
             ></ModelDraftDialog>
           </v-dialog>
@@ -1212,7 +1213,7 @@ phone VARCHAR(20) NOT NULL,
 address VARCHAR(255) NOT NULL,
 total_points INT DEFAULT 0
 );`,
-          selectedOption: JSON.stringify({"고객":[{"option":1,"aggregates":"고객 (Entities: 고객, 고객 쿠폰, 고객 주소, 고객 결제 수단, 고객 선호 상점, 고객 문의, 알림, 리뷰)","pros":"Balanced Complexity: 고객과 관련된 모든 정보를 하나의 집계로 관리하여 단순화된 데이터 접근을 제공","cons":"Low Cohesion: 고객과 관련된 다양한 기능을 하나의 집계에 포함시켜 응집도가 낮아질 수 있음"}],"상점":[{"option":1,"aggregates":"상점 (Entities: 상점, 상점 카테고리, 상점별 카테고리 연결, 상점 근무자, 상점 운영시간, 아이템, 할인 이벤트, 배송구역, 상점 리뷰, 상품 재고)","pros":"Balanced Complexity: 상점과 관련된 모든 정보를 하나의 집계로 관리하여 단순화된 데이터 접근을 제공","cons":"Low Cohesion: 상점과 관련된 다양한 기능을 하나의 집계에 포함시켜 응집도가 낮아질 수 있음"}],"주문":[{"option":1,"aggregates":"주문 (Entities: 주문, 주문 아이템, 결제, 결제 기록)","pros":"Balanced Complexity: 주문과 관련된 모든 정보를 하나의 집계로 관리하여 단순화된 데이터 접근을 제공","cons":"Low Cohesion: 주문과 관련된 다양한 기능을 하나의 집계에 포함시켜 응집도가 낮아질 수 있음"}],"배달":[{"option":1,"aggregates":"배달 (Entities: 배달, ValueObjects: 배달 상태) / 라이더 (Entities: 라이더, ValueObjects: 위치 정보)","pros":"Balanced Complexity: 배달과 라이더 정보를 분리하여 각 기능에 대한 명확한 경계를 제공","cons":"Low Cohesion: 배달과 라이더의 상호작용이 빈번한 경우, 두 집계 간의 연관성을 관리하기 어려울 수 있음"}],"etc":[{"option":1,"aggregates":"프로모션 (Entities: 쿠폰, 프로모션 코드)","pros":"Balanced Complexity: 프로모션과 관련된 모든 정보를 하나의 집계로 관리하여 단순화된 데이터 접근을 제공","cons":"Low Cohesion: 프로모션과 관련된 다양한 기능을 하나의 집계에 포함시켜 응집도가 낮아질 수 있음"}]}),
+          selectedOption: JSON.stringify({"고객":[{"option":1,"aggregates":"고객관리 (Entities: 고객, 고객쿠폰, 고객주소, 고객문의, 고객결제수단, 선호상점, ValueObjects: 알림) / 리뷰관리 (Entities: 리뷰, 라이더리뷰, 상점리뷰)","pros":"Balanced Complexity: 고객과 관련된 모든 정보를 한 곳에서 관리할 수 있어 일관된 고객 경험을 제공할 수 있습니다.","cons":"Low Cohesion: 고객과 관련된 모든 정보를 한 곳에 모으다 보니, 특정 기능에 대한 변경이 전체 시스템에 영향을 미칠 수 있습니다.","ddl":"customers, customer_coupons, customer_addresses, customer_inquiries, customer_payment_methods, favorite_stores, notifications, reviews, rider_reviews, store_reviews"}],"주문":[{"option":1,"aggregates":"주문관리 (Entities: 주문, 주문아이템, 결제, 결제기록, ValueObjects: 프로모션코드)","pros":"Balanced Complexity: 주문과 관련된 모든 정보를 한 곳에서 관리할 수 있어 일관된 주문 처리가 가능합니다.","cons":"Low Cohesion: 주문과 결제, 프로모션 코드까지 모두 한 곳에 모으다 보니, 특정 기능에 대한 변경이 전체 시스템에 영향을 미칠 수 있습니다.","ddl":"orders, order_items, payments, payment_history, promotion_codes"}],"상점":[{"option":1,"aggregates":"상점관리 (Entities: 상점, 상점직원, 상점카테고리, 상점카테고리매핑, 상점운영시간, 아이템, 할인이벤트, 배송구역, 상품재고)","pros":"Balanced Complexity: 상점과 관련된 모든 정보를 한 곳에서 관리할 수 있어 일관된 상점 운영이 가능합니다.","cons":"Low Cohesion: 상점과 관련된 모든 정보를 한 곳에 모으다 보니, 특정 기능에 대한 변경이 전체 시스템에 영향을 미칠 수 있습니다.","ddl":"stores, store_employees, store_categories, store_category_mapping, store_hours, items, discount_events, delivery_zones, item_inventory"}],"배달":[{"option":1,"aggregates":"배달관리 (Entities: 배달)","pros":"Balanced Complexity: 배달과 관련된 모든 정보를 한 곳에서 관리할 수 있어 일관된 배달 처리가 가능합니다.","cons":"Low Cohesion: 배달과 관련된 모든 정보를 한 곳에 모으다 보니, 특정 기능에 대한 변경이 전체 시스템에 영향을 미칠 수 있습니다.","ddl":"deliveries"}],"etc":[{"option":1,"aggregates":"쿠폰관리 (Entities: 쿠폰, 고객쿠폰) / 라이더관리 (Entities: 라이더, 라이더리뷰)","pros":"Balanced Complexity: 쿠폰과 라이더 관련 정보를 각각의 애그리게이트로 관리하여 복잡성을 줄일 수 있습니다.","cons":"Low Cohesion: 쿠폰과 라이더 관련 정보가 별도의 애그리게이트로 관리되어, 관련된 기능을 통합적으로 관리하기 어려울 수 있습니다.","ddl":"coupons, customer_coupons, riders, rider_reviews"}]}),
           boundedContexts: [`고객`],
           userInfo: me.userInfo,
           information: me.information
@@ -1970,6 +1971,10 @@ total_points INT DEFAULT 0
         const createdBoundedContextCM = BoundedContextCMUtil.getNewBoundedContextCM(name, me.value)
         me.addElementAction(createdBoundedContextCM)
         return createdBoundedContextCM
+      },
+      
+      reGenerate(table){
+        console.log("[*] Re-generate", table)
       }
     },
   };

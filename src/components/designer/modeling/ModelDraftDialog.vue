@@ -9,7 +9,18 @@
         </v-card-subtitle>
         <v-card-text v-if="DDLDraftTable && Object.keys(DDLDraftTable).length > 0">
             <div v-for="(table, boundedContext) in DDLDraftTable" :key="boundedContext">
-            <h3>{{ boundedContext }}</h3>
+                <div class="d-flex align-center mb-2">
+                    <h3>{{ boundedContext }}</h3>
+                    <v-btn @click="reGenerate(table)"
+                        v-if="defaultGeneratorUiInputData.numberRemainingDDLs === 0"
+                        icon small
+                        v-on="on"
+                        style="margin-right: 5px; z-index:2"
+                        class="gs-es-auto-modling-btn"
+                    >
+                        <v-icon>mdi-refresh</v-icon>
+                    </v-btn>
+                </div>
             <v-data-table
                 :headers="table.headers"
                 :items="table.items"
@@ -20,6 +31,7 @@
                 v-model="selectedOptionItem[boundedContext]"
                 @item-selected="onOptionSelected(boundedContext, $event)"
                 class="elevation-1 mb-4"
+                :hide-default-footer="true"
             >
                 <template v-slot:item.data-table-select="{ item, isSelected }">
                     <v-checkbox
@@ -61,11 +73,14 @@
             }
         },
         methods: {
+            reGenerate(boundedContext){
+                this.$emit('reGenerate', boundedContext);
+            },
             onOptionSelected(boundedContext, { item, value }) {
                 if(this.DDLDraftTable[boundedContext].ddl){
                     item['ddl'] = this.DDLDraftTable[boundedContext].ddl
                 }
-                
+
                 if (value) {
                     this.$set(this.selectedOptionItem, boundedContext, [item]);
                 } else {
