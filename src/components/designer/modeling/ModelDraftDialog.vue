@@ -62,18 +62,26 @@
         },
         methods: {
             onOptionSelected(boundedContext, { item, value }) {
+                if(this.DDLDraftTable[boundedContext].ddl){
+                    item['ddl'] = this.DDLDraftTable[boundedContext].ddl
+                }
+                
                 if (value) {
-                this.$set(this.selectedOptionItem, boundedContext, [item]);
+                    this.$set(this.selectedOptionItem, boundedContext, [item]);
                 } else {
-                this.$set(this.selectedOptionItem, boundedContext, []);
+                    this.$set(this.selectedOptionItem, boundedContext, []);
                 }
             },
 
             selectOptionItem(boundedContext, item, isSelected) {
+                if(this.DDLDraftTable[boundedContext].ddl){
+                    item['ddl'] = this.DDLDraftTable[boundedContext].ddl
+                }
+
                 if (isSelected) {
-                this.$set(this.selectedOptionItem, boundedContext, [item]);
+                    this.$set(this.selectedOptionItem, boundedContext, [item]);
                 } else {
-                this.$set(this.selectedOptionItem, boundedContext, []);
+                    this.$set(this.selectedOptionItem, boundedContext, []);
                 }
             },
 

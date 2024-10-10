@@ -1212,7 +1212,7 @@ phone VARCHAR(20) NOT NULL,
 address VARCHAR(255) NOT NULL,
 total_points INT DEFAULT 0
 );`,
-          selectedOption: `고객 (Entities: 고객, ValueObjects: 연락처, 주소)`,
+          selectedOption: JSON.stringify({"고객":[{"option":1,"aggregates":"고객 (Entities: 고객, 고객 쿠폰, 고객 주소, 고객 결제 수단, 고객 선호 상점, 고객 문의, 알림, 리뷰)","pros":"Balanced Complexity: 고객과 관련된 모든 정보를 하나의 집계로 관리하여 단순화된 데이터 접근을 제공","cons":"Low Cohesion: 고객과 관련된 다양한 기능을 하나의 집계에 포함시켜 응집도가 낮아질 수 있음"}],"상점":[{"option":1,"aggregates":"상점 (Entities: 상점, 상점 카테고리, 상점별 카테고리 연결, 상점 근무자, 상점 운영시간, 아이템, 할인 이벤트, 배송구역, 상점 리뷰, 상품 재고)","pros":"Balanced Complexity: 상점과 관련된 모든 정보를 하나의 집계로 관리하여 단순화된 데이터 접근을 제공","cons":"Low Cohesion: 상점과 관련된 다양한 기능을 하나의 집계에 포함시켜 응집도가 낮아질 수 있음"}],"주문":[{"option":1,"aggregates":"주문 (Entities: 주문, 주문 아이템, 결제, 결제 기록)","pros":"Balanced Complexity: 주문과 관련된 모든 정보를 하나의 집계로 관리하여 단순화된 데이터 접근을 제공","cons":"Low Cohesion: 주문과 관련된 다양한 기능을 하나의 집계에 포함시켜 응집도가 낮아질 수 있음"}],"배달":[{"option":1,"aggregates":"배달 (Entities: 배달, ValueObjects: 배달 상태) / 라이더 (Entities: 라이더, ValueObjects: 위치 정보)","pros":"Balanced Complexity: 배달과 라이더 정보를 분리하여 각 기능에 대한 명확한 경계를 제공","cons":"Low Cohesion: 배달과 라이더의 상호작용이 빈번한 경우, 두 집계 간의 연관성을 관리하기 어려울 수 있음"}],"etc":[{"option":1,"aggregates":"프로모션 (Entities: 쿠폰, 프로모션 코드)","pros":"Balanced Complexity: 프로모션과 관련된 모든 정보를 하나의 집계로 관리하여 단순화된 데이터 접근을 제공","cons":"Low Cohesion: 프로모션과 관련된 다양한 기능을 하나의 집계에 포함시켜 응집도가 낮아질 수 있음"}]}),
           boundedContexts: [`고객`],
           userInfo: me.userInfo,
           information: me.information
