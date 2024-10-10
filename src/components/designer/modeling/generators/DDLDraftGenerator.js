@@ -31,9 +31,11 @@ ${this.processDDL()}
 Recommendation Instructions:
 - The aggregates to be created in each Bounded Context can have value objects as entity information and have relationships with the aggregate root, or they can have multiple aggregate roots themselves.
 - Accordingly, I want to create aggregate information for each bounded context with multiple recommended domain entities so that one can be chosen from several options.
-- Perspectives on consistency, scalability, performance, concurrency, complexity, etc. must be fundamentally included.
+- Create options based on different perspectives in DDD.
 - For each recommendation option, you should present AggregateRoots or value objects for each BoundedContext. Attributes are not necessary.
 - We also draw conclusions about recommended options by considering each point of view.
+- Option creates a variety of possible cases.
+
 
 The format must be as follows:
 {
@@ -57,16 +59,11 @@ The format must be as follows:
                     ]
                 },
             ],
-            "conclusions": "keyword of conclusion: Write a conclusion for each option, explaining in which cases it would be best to choose that option.",
+            "conclusions": "Write a conclusion for each option, explaining in which cases it would be best to choose that option.",
             "ddl": "used ddl table names for this option"
         }
     ]
 }
-
-- pros and cons examples:
-    Balanced Complexity: This design keeps order and order details together, which simplifies handling things like cancellations or refunds where you need to manage the entire order in one go.
-    Low Cohesion: The design spreads the responsibilities for order management across multiple aggregates, which might lead to inconsistencies or difficulties in maintaining a single consistent view of an order across different parts of the application.
-    ....
 `
 
         console.log("[*] DDL 기반 초안 생성을 위한 프롬프트를 LLM에게 전달중...", {prompt: prompt})
