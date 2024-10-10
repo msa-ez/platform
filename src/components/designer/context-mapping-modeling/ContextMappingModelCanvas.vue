@@ -1104,11 +1104,12 @@
   import EventStormingModelCanvas from "../es-modeling/EventStormingModelCanvas";
   import ContextMappingModeling from './index'
   import BoundedContext from '../es-modeling/elements/BoundedContext.vue';
-  import BoundedContextCM from './elements/BoundedContextCM.vue';
   import GeneratorUI from "../modeling/generators/GeneratorUI";
   import DDLCreateESActionsGenerator from "../modeling/generators/es-ddl-generators/DDLCreateESActionsGenerator";
   import DDLDraftGenerator from "../modeling/generators/DDLDraftGenerator";
   import ModelDraftDialog from "../modeling/ModelDraftDialog";
+  import BoundedContextCMUtil from './modules/BoundedContextCMUtil'
+  import EventStormingUtil from './modules/EventStormingUtil'
 
   export default {
     name: "context-mapping-model-canvas",
@@ -1185,8 +1186,24 @@
     },
     methods: {
       distinstTest(){
-        var me = this
+        const COMMAND = prompt("커맨드 입력")
+        if(!COMMAND) return
 
+        switch(COMMAND) {
+          case "DDLCreateESActionsGenerator":
+            this._test_DDLCreateESActionsGenerator()
+            break
+          case "BoundedContextCMUtil":
+            this._test_BoundedContextCMUtil()
+            break
+          case "makeNewEventStormingProject":
+            this._test__makeNewEventStormingProject()
+            break
+        }
+      },
+
+      _test_DDLCreateESActionsGenerator(){
+        var me = this
         me.__generate('DDLCreateESActionsGenerator', {
           ddl: `CREATE TABLE customers (
 customer_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -1201,6 +1218,421 @@ total_points INT DEFAULT 0
           information: me.information
         })
       },
+
+      _test_BoundedContextCMUtil(){
+        this.__addNewBoundedContextCM('TEST CONTEXT 1')
+        this.__addNewBoundedContextCM('TEST CONTEXT 2')
+        this.__addNewBoundedContextCM('TEST CONTEXT 3')
+        this.__addNewBoundedContextCM('TEST CONTEXT 4')
+        this.__addNewBoundedContextCM('TEST CONTEXT 5')
+      },
+
+      _test__makeNewEventStormingProject() {
+        let modelValue = {
+    "generatorName": "DDLCreateESActionsGenerator",
+    "modelValue": {
+        "actions": [
+            {
+                "objectType": "BoundedContext",
+                "ids": {
+                    "boundedContextId": "9592fb5e-9f70-c8c5-fad7-562c92ccf464"
+                },
+                "args": {
+                    "boundedContextName": "CustomerService"
+                },
+                "type": "create"
+            },
+            {
+                "objectType": "Aggregate",
+                "ids": {
+                    "boundedContextId": "9592fb5e-9f70-c8c5-fad7-562c92ccf464",
+                    "aggregateId": "73226824-f6fa-7c8d-01a9-1d75f32c2ca3"
+                },
+                "args": {
+                    "aggregateName": "Customer",
+                    "properties": [
+                        {
+                            "name": "customerId",
+                            "type": "Long",
+                            "isKey": true
+                        },
+                        {
+                            "name": "name"
+                        },
+                        {
+                            "name": "totalPoints",
+                            "type": "Long"
+                        },
+                        {
+                            "name": "phone",
+                            "type": "Contact"
+                        },
+                        {
+                            "name": "address",
+                            "type": "Address"
+                        }
+                    ]
+                },
+                "type": "create"
+            },
+            {
+                "objectType": "ValueObject",
+                "ids": {
+                    "boundedContextId": "9592fb5e-9f70-c8c5-fad7-562c92ccf464",
+                    "aggregateId": "73226824-f6fa-7c8d-01a9-1d75f32c2ca3",
+                    "valueObjectId": "4b7f1194-bf69-7e92-b20e-72a04afb75b7"
+                },
+                "args": {
+                    "valueObjectName": "Contact",
+                    "properties": [
+                        {
+                            "name": "phone"
+                        }
+                    ]
+                },
+                "type": "create"
+            },
+            {
+                "objectType": "ValueObject",
+                "ids": {
+                    "boundedContextId": "9592fb5e-9f70-c8c5-fad7-562c92ccf464",
+                    "aggregateId": "73226824-f6fa-7c8d-01a9-1d75f32c2ca3",
+                    "valueObjectId": "22f1f105-8d87-98a1-56be-68f0a34d028c"
+                },
+                "args": {
+                    "valueObjectName": "Address",
+                    "properties": [
+                        {
+                            "name": "address"
+                        }
+                    ]
+                },
+                "type": "create"
+            }
+        ],
+        "createdESValue": {
+            "elements": {
+                "9592fb5e-9f70-c8c5-fad7-562c92ccf464": {
+                    "_type": "org.uengine.modeling.model.BoundedContext",
+                    "aggregates": [],
+                    "author": "mLINTrncgFPMvUhzG7kULDmGOpa2",
+                    "description": null,
+                    "id": "9592fb5e-9f70-c8c5-fad7-562c92ccf464",
+                    "elementView": {
+                        "_type": "org.uengine.modeling.model.BoundedContext",
+                        "height": 590,
+                        "id": "9592fb5e-9f70-c8c5-fad7-562c92ccf464",
+                        "style": "{}",
+                        "width": 560,
+                        "x": 650,
+                        "y": 450
+                    },
+                    "gitURL": null,
+                    "hexagonalView": {
+                        "_type": "org.uengine.modeling.model.BoundedContextHexagonal",
+                        "height": 350,
+                        "id": "9592fb5e-9f70-c8c5-fad7-562c92ccf464",
+                        "style": "{}",
+                        "width": 350,
+                        "x": 235,
+                        "y": 365
+                    },
+                    "members": [],
+                    "name": "CustomerService",
+                    "displayName": "",
+                    "oldName": "",
+                    "policies": [],
+                    "portGenerated": null,
+                    "preferredPlatform": "template-spring-boot",
+                    "preferredPlatformConf": {},
+                    "rotateStatus": false,
+                    "tempId": "",
+                    "templatePerElements": {},
+                    "views": []
+                },
+                "73226824-f6fa-7c8d-01a9-1d75f32c2ca3": {
+                    "aggregateRoot": {
+                        "_type": "org.uengine.modeling.model.AggregateRoot",
+                        "fieldDescriptors": [
+                            {
+                                "className": "Long",
+                                "isCopy": false,
+                                "isKey": true,
+                                "name": "customerId",
+                                "nameCamelCase": "customerId",
+                                "namePascalCase": "CustomerId",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "name",
+                                "nameCamelCase": "name",
+                                "namePascalCase": "Name",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "Long",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "totalPoints",
+                                "nameCamelCase": "totalPoints",
+                                "namePascalCase": "TotalPoints",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "Contact",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "phone",
+                                "nameCamelCase": "phone",
+                                "namePascalCase": "Phone",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "Address",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "address",
+                                "nameCamelCase": "address",
+                                "namePascalCase": "Address",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            }
+                        ],
+                        "entities": {
+                            "elements": {
+                                "336ff226-62cb-e147-219b-7028eb21b4b4": {
+                                    "_type": "org.uengine.uml.model.Class",
+                                    "id": "336ff226-62cb-e147-219b-7028eb21b4b4",
+                                    "name": "Customer",
+                                    "namePascalCase": "Customer",
+                                    "nameCamelCase": "customer",
+                                    "namePlural": "Customers",
+                                    "fieldDescriptors": [
+                                        {
+                                            "className": "Long",
+                                            "isCopy": false,
+                                            "isKey": true,
+                                            "name": "customerId",
+                                            "displayName": "",
+                                            "nameCamelCase": "customerId",
+                                            "namePascalCase": "CustomerId",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
+                                        },
+                                        {
+                                            "className": "String",
+                                            "isCopy": false,
+                                            "isKey": false,
+                                            "name": "name",
+                                            "displayName": "",
+                                            "nameCamelCase": "name",
+                                            "namePascalCase": "Name",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
+                                        },
+                                        {
+                                            "className": "Long",
+                                            "isCopy": false,
+                                            "isKey": false,
+                                            "name": "totalPoints",
+                                            "displayName": "",
+                                            "nameCamelCase": "totalPoints",
+                                            "namePascalCase": "TotalPoints",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
+                                        },
+                                        {
+                                            "className": "Contact",
+                                            "isCopy": false,
+                                            "isKey": false,
+                                            "name": "phone",
+                                            "displayName": "",
+                                            "nameCamelCase": "phone",
+                                            "namePascalCase": "Phone",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
+                                        },
+                                        {
+                                            "className": "Address",
+                                            "isCopy": false,
+                                            "isKey": false,
+                                            "name": "address",
+                                            "displayName": "",
+                                            "nameCamelCase": "address",
+                                            "namePascalCase": "Address",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
+                                        }
+                                    ],
+                                    "operations": [],
+                                    "elementView": {
+                                        "_type": "org.uengine.uml.model.Class",
+                                        "id": "336ff226-62cb-e147-219b-7028eb21b4b4",
+                                        "x": 200,
+                                        "y": 200,
+                                        "width": 200,
+                                        "height": 100,
+                                        "style": "{}",
+                                        "titleH": 50,
+                                        "subEdgeH": 120,
+                                        "fieldH": 90,
+                                        "methodH": 30
+                                    },
+                                    "selected": false,
+                                    "relations": [],
+                                    "parentOperations": [],
+                                    "relationType": null,
+                                    "isVO": false,
+                                    "isAbstract": false,
+                                    "isInterface": false,
+                                    "isAggregateRoot": true,
+                                    "parentId": "73226824-f6fa-7c8d-01a9-1d75f32c2ca3"
+                                },
+                                "4b7f1194-bf69-7e92-b20e-72a04afb75b7": {
+                                    "_type": "org.uengine.uml.model.vo.Class",
+                                    "id": "4b7f1194-bf69-7e92-b20e-72a04afb75b7",
+                                    "name": "Contact",
+                                    "namePascalCase": "Contact",
+                                    "nameCamelCase": "contact",
+                                    "fieldDescriptors": [
+                                        {
+                                            "className": "String",
+                                            "isKey": false,
+                                            "label": "- phone: String",
+                                            "name": "phone",
+                                            "nameCamelCase": "Phone",
+                                            "namePascalCase": "phone",
+                                            "_type": "org.uengine.model.FieldDescriptor"
+                                        }
+                                    ],
+                                    "operations": [],
+                                    "elementView": {
+                                        "_type": "org.uengine.uml.model.vo.address.Class",
+                                        "id": "4b7f1194-bf69-7e92-b20e-72a04afb75b7",
+                                        "x": 700,
+                                        "y": 152,
+                                        "width": 200,
+                                        "height": 100,
+                                        "style": "{}",
+                                        "titleH": 50,
+                                        "subEdgeH": 170,
+                                        "fieldH": 150,
+                                        "methodH": 30
+                                    },
+                                    "selected": false,
+                                    "parentOperations": [],
+                                    "relationType": null,
+                                    "isVO": true,
+                                    "relations": [],
+                                    "groupElement": null,
+                                    "isAggregateRoot": false,
+                                    "namePlural": "Contacts",
+                                    "isAbstract": false,
+                                    "isInterface": false
+                                },
+                                "22f1f105-8d87-98a1-56be-68f0a34d028c": {
+                                    "_type": "org.uengine.uml.model.vo.Class",
+                                    "id": "22f1f105-8d87-98a1-56be-68f0a34d028c",
+                                    "name": "Address",
+                                    "namePascalCase": "Address",
+                                    "nameCamelCase": "address",
+                                    "fieldDescriptors": [
+                                        {
+                                            "className": "String",
+                                            "isKey": false,
+                                            "label": "- address: String",
+                                            "name": "address",
+                                            "nameCamelCase": "Address",
+                                            "namePascalCase": "address",
+                                            "_type": "org.uengine.model.FieldDescriptor"
+                                        }
+                                    ],
+                                    "operations": [],
+                                    "elementView": {
+                                        "_type": "org.uengine.uml.model.vo.address.Class",
+                                        "id": "22f1f105-8d87-98a1-56be-68f0a34d028c",
+                                        "x": 950,
+                                        "y": 152,
+                                        "width": 200,
+                                        "height": 100,
+                                        "style": "{}",
+                                        "titleH": 50,
+                                        "subEdgeH": 170,
+                                        "fieldH": 150,
+                                        "methodH": 30
+                                    },
+                                    "selected": false,
+                                    "parentOperations": [],
+                                    "relationType": null,
+                                    "isVO": true,
+                                    "relations": [],
+                                    "groupElement": null,
+                                    "isAggregateRoot": false,
+                                    "namePlural": "Addresss",
+                                    "isAbstract": false,
+                                    "isInterface": false
+                                }
+                            },
+                            "relations": {}
+                        },
+                        "operations": []
+                    },
+                    "author": "mLINTrncgFPMvUhzG7kULDmGOpa2",
+                    "boundedContext": {
+                        "name": "9592fb5e-9f70-c8c5-fad7-562c92ccf464",
+                        "id": "9592fb5e-9f70-c8c5-fad7-562c92ccf464"
+                    },
+                    "commands": [],
+                    "description": null,
+                    "id": "73226824-f6fa-7c8d-01a9-1d75f32c2ca3",
+                    "elementView": {
+                        "_type": "org.uengine.modeling.model.Aggregate",
+                        "id": "73226824-f6fa-7c8d-01a9-1d75f32c2ca3",
+                        "x": 650,
+                        "y": 450,
+                        "width": 130,
+                        "height": 400
+                    },
+                    "events": [],
+                    "hexagonalView": {
+                        "_type": "org.uengine.modeling.model.AggregateHexagonal",
+                        "id": "73226824-f6fa-7c8d-01a9-1d75f32c2ca3",
+                        "x": 0,
+                        "y": 0,
+                        "subWidth": 0,
+                        "width": 0
+                    },
+                    "name": "Customer",
+                    "displayName": "",
+                    "nameCamelCase": "customer",
+                    "namePascalCase": "Customer",
+                    "namePlural": "",
+                    "rotateStatus": false,
+                    "selected": false,
+                    "_type": "org.uengine.modeling.model.Aggregate"
+                }
+            },
+            "relations": {}
+        }
+    },
+    "modelRawValue": "```json\n{\"actions\":[{\"objectType\":\"BoundedContext\",\"ids\":{\"boundedContextId\":\"bc-customer\"},\"args\":{\"boundedContextName\":\"CustomerService\"}},{\"objectType\":\"Aggregate\",\"ids\":{\"boundedContextId\":\"bc-customer\",\"aggregateId\":\"agg-customer\"},\"args\":{\"aggregateName\":\"Customer\",\"properties\":[{\"name\":\"customerId\",\"type\":\"Long\",\"isKey\":true},{\"name\":\"name\"},{\"name\":\"totalPoints\",\"type\":\"Long\"},{\"name\":\"phone\",\"type\":\"Contact\"},{\"name\":\"address\",\"type\":\"Address\"}]}},{\"objectType\":\"ValueObject\",\"ids\":{\"boundedContextId\":\"bc-customer\",\"aggregateId\":\"agg-customer\",\"valueObjectId\":\"vo-customer-contact\"},\"args\":{\"valueObjectName\":\"Contact\",\"properties\":[{\"name\":\"phone\"}]}},{\"objectType\":\"ValueObject\",\"ids\":{\"boundedContextId\":\"bc-customer\",\"aggregateId\":\"agg-customer\",\"valueObjectId\":\"vo-customer-address\"},\"args\":{\"valueObjectName\":\"Address\",\"properties\":[{\"name\":\"address\"}]}}]}\n```"
+}
+        this.__makeNewEventStormingProject(modelValue.modelValue.createdESValue)
+      },
+
+
       setCanvasType(){
           Vue.use(ContextMappingModeling);
           this.canvasType = 'cm'
@@ -1372,69 +1804,8 @@ total_points INT DEFAULT 0
 
         return componentByClassName;
       },
+
       onReceiveProjectQueue(queue, isNew){
-        const addNewSyncBoundedContextCM = (modelValue, name) => {
-          const isSameNameBoundedContextExists = (modelValue, name) => {
-            for(let element of Object.values(modelValue.elements)) {
-              if(element && element._type === "org.uengine.modeling.model.BoundedContext" && element.name === name)
-                return true
-            }
-            return false
-          }
-
-          const getValuePosition = (modelValue, boundedContextCM) => {
-              const getBoundedContexts = (modelValue) => {
-                  let boundedContexts = []
-                  Object.values(modelValue.elements).forEach(function (element) {
-                      if (element && element._type === "org.uengine.modeling.model.BoundedContext")
-                          boundedContexts.push(element)
-                  })
-                  return boundedContexts
-              }
-
-              const getMaxXBoundedContextInMaxY = (boundedContexts) => {
-                  const maxY = Math.max(...boundedContexts.map(bc => bc.elementView.y))
-                  const maxYBoundedContext = boundedContexts.find(bc => bc.elementView.y === maxY)
-
-                  let targetBoundedContexts = []
-                  boundedContexts.forEach(function (boundedContext) {
-                      if((boundedContext.elementView.y >= maxYBoundedContext.elementView.y - maxYBoundedContext.elementView.height/2) && 
-                          (boundedContext.elementView.y <= maxYBoundedContext.elementView.y + maxYBoundedContext.elementView.height/2))
-                          targetBoundedContexts.push(boundedContext)
-                  })
-                  
-                  const maxX = Math.max(...targetBoundedContexts.map(bc => bc.elementView.x))
-                  const maxXBoundedContext = targetBoundedContexts.find(bc => bc.elementView.x === maxX)
-                  return maxXBoundedContext
-              }
-
-              const getValidYPos = (boundedContexts, boundedContextCM) => {
-                  const maxY = Math.max(...boundedContexts.map(bc => bc.elementView.y + Math.round(bc.elementView.height/2)))
-                  return maxY + Math.round(boundedContextCM.elementView.height/2) + 25
-              }
-
-              const boundedContexts = getBoundedContexts(modelValue)
-              if(boundedContexts.length <= 0) return {x: 250, y: 250}
-              const maxXBoundedContextInMaxY = getMaxXBoundedContextInMaxY(boundedContexts)
-
-              const validXPos = maxXBoundedContextInMaxY.elementView.x + Math.round(maxXBoundedContextInMaxY.elementView.width/2) + 25 
-                                  + Math.round(boundedContextCM.elementView.width/2)
-              if(validXPos <= 1750) return {x: validXPos, y: maxXBoundedContextInMaxY.elementView.y}
-
-              return {x: 250, y: getValidYPos(boundedContexts, boundedContextCM)}
-          }
-
-          if(isSameNameBoundedContextExists(this.value, name)) return
-          let boundedContextCM = BoundedContextCM.computed.createNew(this, this.uuid(), 250, 250)
-          boundedContextCM.name = name
-
-          let validPosition = getValuePosition(modelValue, boundedContextCM)
-          boundedContextCM.elementView.x = validPosition.x
-          boundedContextCM.elementView.y = validPosition.y
-
-          this.addElementAction(boundedContextCM)     
-        }
-
         if(!isNew) return
 
         if(queue.action === 'elementPush') {
@@ -1442,7 +1813,7 @@ total_points INT DEFAULT 0
 
             let element = JSON.parse(queue.item)
             if(element._type === 'org.uengine.modeling.model.BoundedContext')
-              addNewSyncBoundedContextCM(this.value, element.name)
+              this.__addNewBoundedContextCM(element.name)
 
           } catch(e) {
             console.error(e)
@@ -1463,7 +1834,6 @@ total_points INT DEFAULT 0
           }
         })
       },
-
 
 
       onGenerationFinished(model){
@@ -1501,6 +1871,7 @@ total_points INT DEFAULT 0
 
       _processDDLCreateESActionsGenerator(model) {
         var me = this
+        me.__makeNewEventStormingProject(model.modelValue.createdESValue)
         if(me.createEventStormingInputs.length > 0)
             me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())
           else
@@ -1558,6 +1929,48 @@ total_points INT DEFAULT 0
         me.input = inputObj
         me.generator.generate()
       },
+
+      __makeNewEventStormingProject(esValue) {
+        var me = this
+
+        EventStormingUtil.getAllBoundedContexts(esValue).forEach(boundedContext => {
+
+          const createdBoundedContextCM = me.__addNewBoundedContextCM(boundedContext.name)
+          const relatedAggregates = EventStormingUtil.getOnlyRelatedAggregates(boundedContext, esValue)
+          me.value.elements[createdBoundedContextCM.id]['aggregates'] = relatedAggregates.map(aggregate => aggregate.id)
+
+          const relatedElements = EventStormingUtil.getOnlyRelatedElements(boundedContext, esValue)
+          relatedElements.forEach(element => { me.mirrorValue.elements[element.id] = element })
+
+          me.storageCondition = {
+            action: 'save',
+            title: 'Edit BoundedContext',
+            comment: '',
+            projectName: `${me.information.associatedProject}-${createdBoundedContextCM.name}`,
+            projectId: `${me.information.associatedProject}-${createdBoundedContextCM.name}`,
+            version: 'v0.0.1',
+            error: null,
+            loading: false,
+            type: 'es',
+            associatedProject: me.information.associatedProject,
+            connectedAssociatedProject : me.information.associatedProject ? true : false,
+            element: createdBoundedContextCM
+          }
+          const relatedESValue = EventStormingUtil.getOnlyRelatedESValue(boundedContext, esValue)
+          me.saveModel(createdBoundedContextCM.name, relatedESValue)
+          me.changedByMe = true
+
+        })
+      },
+
+      __addNewBoundedContextCM(name){
+        let me = this
+        if(BoundedContextCMUtil.isSameNameBoundedContextCMExists(name, me.value)) return
+        
+        const createdBoundedContextCM = BoundedContextCMUtil.getNewBoundedContextCM(name, me.value)
+        me.addElementAction(createdBoundedContextCM)
+        return createdBoundedContextCM
+      }
     },
   };
 </script>

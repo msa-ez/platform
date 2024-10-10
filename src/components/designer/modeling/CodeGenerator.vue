@@ -161,6 +161,37 @@
                         </v-menu>
                     </div> -->
 
+                    <v-tooltip bottom>
+                        <template v-slot:activator="{ on, attrs }">
+                            <div>
+                                <v-btn v-on="on" class="code-preview-btn cp-download-btn"
+                                        icon fab @click="downloadArchive()"
+                                >
+                                    <slot name="downloadArchive">
+                                        <v-icon size="22">
+                                            mdi-folder-download
+                                        </v-icon>
+                                    </slot>
+                                </v-btn>
+                            </div>
+                        </template>
+                        <span>Download Archive</span>
+                    </v-tooltip>
+
+                    <v-tooltip bottom>
+                        <template v-slot:activator="{ on, attrs }">
+                            <v-btn v-on="on" class="code-preview-btn"
+                                    icon fab @click="searchForContent.onOff = !searchForContent.onOff"
+                            >
+                                <div>
+                                    <v-icon size="22"
+                                    >mdi-magnify</v-icon>
+                                </div>
+                            </v-btn>
+                        </template>
+                        <span>Search</span>
+                    </v-tooltip>
+
                     <v-tooltip bottom v-if="editableTemplate">
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn v-on="on" class="code-preview-btn cp-edit-template-btn"
@@ -219,37 +250,6 @@
 
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
-                            <div>
-                                <v-btn v-on="on" class="code-preview-btn cp-download-btn"
-                                        icon fab @click="downloadArchive()"
-                                >
-                                    <slot name="downloadArchive">
-                                        <v-icon size="22">
-                                            mdi-folder-download
-                                        </v-icon>
-                                    </slot>
-                                </v-btn>
-                            </div>
-                        </template>
-                        <span>Download Archive</span>
-                    </v-tooltip>
-
-                    <v-tooltip bottom>
-                        <template v-slot:activator="{ on, attrs }">
-                            <v-btn v-on="on" class="code-preview-btn"
-                                    icon fab @click="searchForContent.onOff = !searchForContent.onOff"
-                            >
-                                <div>
-                                    <v-icon size="22"
-                                    >mdi-magnify</v-icon>
-                                </div>
-                            </v-btn>
-                        </template>
-                        <span>Search</span>
-                    </v-tooltip>
-
-                    <v-tooltip bottom>
-                        <template v-slot:activator="{ on, attrs }">
                             <v-btn v-on="on" class="code-preview-btn"
                                     icon fab @click="onDiffMode()"
                             >
@@ -257,19 +257,6 @@
                             </v-btn>
                         </template>
                         <span>Diff Mode</span>
-                    </v-tooltip>
-                    <v-tooltip bottom>
-                        <template v-slot:activator="{ on, attrs }">
-                            <v-btn v-on="on" class="code-preview-btn"
-                                    icon fab @click="showGptDialog()"
-                            >
-                                <div>
-                                    <v-icon size="22"
-                                    >mdi-file-send</v-icon>
-                                </div>
-                            </v-btn>
-                        </template>
-                        <span>Explain Project</span>
                     </v-tooltip>
                     <v-spacer />
                     <v-menu left :close-on-content-click="false" :close-on-click="false" @input="onClickToppingBox(true)"
