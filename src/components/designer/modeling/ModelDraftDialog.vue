@@ -29,6 +29,10 @@
                 </template>
             </v-data-table>
             </div>
+
+            <v-btn v-if="defaultGeneratorUiInputData.numberRemainingDDLs === 0" @click="generateFromDraft"
+                :disabled="!selectedOptionItem || Object.keys(selectedOptionItem).length !== Object.keys(DDLDraftTable).length"
+                block>Generate From Draft</v-btn>
         </v-card-text>
     </v-card>
 </template>
@@ -69,6 +73,10 @@
                 this.$set(this.selectedOptionItem, boundedContext, []);
                 }
             },
+
+            generateFromDraft(){
+                this.$emit('generateFromDraft', this.selectedOptionItem);
+            }
         }
     }
 </script>
