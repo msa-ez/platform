@@ -1047,6 +1047,7 @@
             <ModelDraftDialog
                 :DDLDraftTable="DDLDraftTable"
                 :defaultGeneratorUiInputData="defaultGeneratorUiInputData"
+                :isGeneratorButtonEnabled="isDraftGeneratorButtonEnabled"
                 @reGenerate="reGenerate"
                 @generateFromDraft="generateFromDraft"
             ></ModelDraftDialog>
@@ -1137,7 +1138,8 @@
         DDLDraftTable: {},
         showDDLDraftDialog: false,
         createEventStormingInputs: [],
-        DDLCreateESActionsGeneratorRetryCount: 3
+        DDLCreateESActionsGeneratorRetryCount: 3,
+        isDraftGeneratorButtonEnabled: true
       };
     },
     watch: {
@@ -1160,13 +1162,6 @@
               me.syncMirrorElements();
           }
         },
-    },
-    computed: {
-      isDevModeEnabled() {
-        return typeof window !== 'undefined' && 
-              window.localStorage && 
-              window.localStorage.getItem('isDevMode') === 'true';
-      }
     },
     created(){
     },
@@ -1196,6 +1191,7 @@
 
           if(boundedContext && model){
             defaultValue.elements = model.elements
+            defaultValue.relations = model.relations
           }
 
           await me.putObject(`db://definitions/${settingProjectId}/information`, {
@@ -1400,6 +1396,7 @@
       _processDDLDraftGenerator(model) {
         var me = this
         me.showDDLDraftDialog = true
+        me.isDraftGeneratorButtonEnabled = true
 
         me.DDLDraftTable = Object.assign(me.DDLDraftTable, model.tables)
         me.defaultGeneratorUiInputData = {
@@ -1448,6 +1445,7 @@
         var me = this
         console.log("[*] Draft를 기반으로 이벤트 캔버스 모델 생성중...", {selectedOptionItem, ddl:me.defaultGeneratorUiInputData.DDL})
 
+        me.isDraftGeneratorButtonEnabled = false
         me.createEventStormingInputs = me._getCreateEventStormingInputs(selectedOptionItem, me.defaultGeneratorUiInputData.DDL)
         me.DDLCreateESActionsGeneratorRetryCount = 3
         me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())
@@ -1461,10 +1459,12 @@
           let boundedContextInfo = selectedOptionItem[boundedContextKey][0]
 
           const usedDDL = (boundedContextInfo.ddl) ? this.__getDDLsFromTableNames(boundedContextInfo.ddl.split(", "), ddl) : ""
+          const functionRequests = (boundedContextInfo.scenario) ? boundedContextInfo.scenario : "Add the appropriate CRUD operations for the given ddl."
           eventStormingInputs.push({
             ddl: usedDDL,
             selectedOption: boundedContextInfo.aggregates,
             boundedContexts: [boundedContextKey],
+            functionRequests: functionRequests,
             userInfo: me.userInfo,
             information: me.information
           })

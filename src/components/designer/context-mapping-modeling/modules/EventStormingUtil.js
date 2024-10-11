@@ -28,15 +28,24 @@ class EventStormingUtil {
             element.boundedContext.id === boundedContext.id)
     }
 
-    static getOnlyRelatedESValue(boundedContext, esValue) {
-        let relatedElements = {}
-        for (const element of EventStormingUtil.getOnlyRelatedElements(boundedContext, esValue))
-            relatedElements[element.id] = element
+    static getOnlyRelatedRelations(boundedContext, esValue) {
+        return Object.values(esValue.relations).filter(relation => relation && relation.sourceElement && relation.sourceElement.boundedContext && 
+            relation.sourceElement.boundedContext.id === boundedContext.id)
+    }
 
-        return {
-            elements: relatedElements,
+    static getOnlyRelatedESValue(boundedContext, esValue) {
+        let relatedESValue = {
+            elements: {},
             relations: {}
         }
+
+        for (const element of EventStormingUtil.getOnlyRelatedElements(boundedContext, esValue))
+            relatedESValue.elements[element.id] = element
+
+        for (const relation of EventStormingUtil.getOnlyRelatedRelations(boundedContext, esValue))
+            relatedESValue.relations[relation.id] = relation
+
+        return relatedESValue
     }
 }
 

@@ -3,6 +3,8 @@ const BoundedContextActionsProcessor = require('./ESActionsUtilProcessors/Bounde
 const AggregateActionsProcessor = require('./ESActionsUtilProcessors/AggregateActionsProcessor')
 const ValueObjectActionsProcessor = require('./ESActionsUtilProcessors/ValueObjectActionsProcessor')
 const EnumerationActionsProcessor = require('./ESActionsUtilProcessors/EnumerationActionsProcessor')
+const EventActionsProcessor = require('./ESActionsUtilProcessors/EventActionsProcessor')
+const CommandActionsProcessor = require('./ESActionsUtilProcessors/CommandActionsProcessor')
 
 class ESActionsUtil {
     static getActionAppliedESValue(actions, userInfo, information, prevESValue=null) {
@@ -45,6 +47,19 @@ class ESActionsUtil {
                 for(let idKey of Object.keys(action.ids))
                     action.ids[idKey] = ESActionsUtil.__getOrCreateUUID(action.ids[idKey], idToUUIDDic)
             }
+
+            if(action.args) {
+                if(action.args.outputEventIds)
+                    action.args.outputEventIds = action.args.outputEventIds.map(id => ESActionsUtil.__getOrCreateUUID(id, idToUUIDDic))
+
+                if(action.args.outputCommandIds)
+                    action.args.outputCommandIds = action.args.outputCommandIds.map(idObj => {
+                        return {
+                            ...idObj,
+                            commandId: ESActionsUtil.__getOrCreateUUID(idObj.commandId, idToUUIDDic)
+                        }
+                    })
+            }
         }
     }
 
@@ -67,6 +82,12 @@ class ESActionsUtil {
                 break
             case "Enumeration":
                 EnumerationActionsProcessor.getActionAppliedESValue(action, callbacks);
+                break
+            case "Event":
+                EventActionsProcessor.getActionAppliedESValue(action, userInfo, esValue, callbacks);
+                break
+            case "Command":
+                CommandActionsProcessor.getActionAppliedESValue(action, userInfo, esValue, callbacks);
                 break
         }
     }

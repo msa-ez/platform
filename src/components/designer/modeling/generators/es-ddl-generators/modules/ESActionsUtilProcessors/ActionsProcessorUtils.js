@@ -1,14 +1,18 @@
 const changeCase = require('change-case');
+const GlobalPromptUtil = require('../GlobalPromptUtil');
 
 class ActionsProcessorUtils {
     static getAllBoundedContexts(esValue) {
         return Object.values(esValue.elements).filter(element => element && element._type === "org.uengine.modeling.model.BoundedContext")
     }
 
-    static getElementIdsInBoundedContext(esValue, boundedContextId) {
+    static getAllElementsInBoundedContext(esValue, boundedContextId) {
         return Object.values(esValue.elements)
             .filter(element => element && element.boundedContext && element.boundedContext.id === boundedContextId)
-            .map(element => element.id)
+    }
+
+    static getElementIdsInBoundedContext(esValue, boundedContextId) {
+        return ActionsProcessorUtils.getAllElementsInBoundedContext(esValue, boundedContextId).map(element => element.id)
     }
 
     static getAllAggregatesInBoundedContext(esValue, boundedContextId) {
@@ -100,6 +104,89 @@ class ActionsProcessorUtils {
             fieldDescriptorToPush["options"] = null
         }
         targetFileDescriptor.push(fieldDescriptorToPush)
+    }
+
+
+    /**
+     * 주어진 Aggregate 내부의 Element가 Aggregate나 Bounded Context를 벗어나지 않도록 수직으로 크기를 재조정 함
+     */
+    static reseizeAggregateVertically(esValue, aggElementObject) {
+        const RESIZE_HEIGHT = 150
+
+        const bcObject = esValue.elements[aggElementObject.boundedContext.id]
+        const aggObject = esValue.elements[aggElementObject.aggregate.id]
+        if(!bcObject || !aggObject) return
+        if(aggElementObject.elementView.y <= aggObject.elementView.y + Math.round(aggObject.elementView.height/2)) return
+
+        if(aggObject.elementView.y + Math.round(aggObject.elementView.height/2) + RESIZE_HEIGHT > bcObject.elementView.y + Math.round(bcObject.elementView.height/2)) {
+            const BC_RESIZE_HEIGHT = Math.round(RESIZE_HEIGHT * 0.90)
+            bcObject.elementView.height += BC_RESIZE_HEIGHT
+            bcObject.elementView.y += Math.round(BC_RESIZE_HEIGHT/2)
+            esValue.elements[bcObject.id] = {...bcObject}
+        }
+
+        aggObject.elementView.height += RESIZE_HEIGHT
+        aggObject.elementView.y += Math.round(RESIZE_HEIGHT/2)
+        esValue.elements[aggObject.id] = {...aggObject}
+
+        for(const bcElement of ActionsProcessorUtils._getAllBcBelowBc(esValue, bcObject)) {
+            bcElement.elementView.y += RESIZE_HEIGHT
+            esValue.elements[bcElement.id] = {...bcElement}
+
+            for(const elementInBc of ActionsProcessorUtils.getAllElementsInBoundedContext(esValue, bcElement.id)) {
+                elementInBc.elementView.y += RESIZE_HEIGHT
+                esValue.elements[elementInBc.id] = {...elementInBc}
+            }
+        }
+    }
+
+    static _getAllBcBelowBc(esValue, bcObject) {
+        let targetElements = []
+
+        for(const element of Object.values(esValue.elements)) {
+            if(element && element._type === "org.uengine.modeling.model.BoundedContext" &&
+               element.id !== bcObject.id &&
+               element.elementView.y >= bcObject.elementView.y &&
+               element.elementView.x >= bcObject.elementView.x - Math.round(bcObject.elementView.width/2) && element.elementView.x <= bcObject.elementView.x + Math.round(bcObject.elementView.width/2))
+                targetElements.push(element)
+        }
+
+        return targetElements
+    }
+
+
+    static getEventStormingRelationObjectBase(fromObject, toObject) {
+        const elementUUIDtoUse = GlobalPromptUtil.getUUID()
+        const FROM_OBJECT_ID = fromObject.id ? fromObject.id : fromObject.elementView.id
+        const TO_OBJECT_ID = toObject.id ? toObject.id : toObject.elementView.id
+        return {
+            "_type": "org.uengine.modeling.model.Relation",
+            "name": "",
+            "id": elementUUIDtoUse,
+            "sourceElement": fromObject,
+            "targetElement": toObject,
+            "from": FROM_OBJECT_ID,
+            "to": TO_OBJECT_ID,
+            "relationView": {
+                "id": elementUUIDtoUse,
+                "style": `{"arrow-start":"none","arrow-end":"none"}`,
+                "from": FROM_OBJECT_ID,
+                "to": TO_OBJECT_ID,
+                "needReconnect": true,
+                "value": "[]"
+            },
+            "hexagonalView": {
+                "_type": "org.uengine.modeling.model.RelationHexagonal",
+                "from": FROM_OBJECT_ID,
+                "id": elementUUIDtoUse,
+                "needReconnect": true,
+                "style": `{"arrow-start":"none","arrow-end":"none"}`,
+                "to": TO_OBJECT_ID,
+                "value": null
+            },
+            "sourceMultiplicity": "1",
+            "targetMultiplicity": "1",
+        }
     }
 }
 
