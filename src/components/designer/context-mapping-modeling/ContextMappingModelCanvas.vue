@@ -1401,6 +1401,9 @@
         var me = this
         me.showDDLDraftDialog = true
 
+        if(me.defaultGeneratorUiInputData['reGenerate'])
+        me.defaultGeneratorUiInputData['reGenerate'] = false
+
         me.DDLDraftTable = Object.assign(me.DDLDraftTable, model.tables)
         me.defaultGeneratorUiInputData = {
           ...me.defaultGeneratorUiInputData,
@@ -1549,8 +1552,18 @@
         return createdBoundedContextCM
       },
       
-      reGenerate(table){
-        console.log("[*] Re-generate", table)
+      reGenerate(table, boundedContext){
+        console.log("[*] Re-generate", table, boundedContext)
+        let me = this
+
+        me.defaultGeneratorUiInputData['reGenerate'] = true;
+        me.defaultGeneratorUiInputData['reGenerateTable'] = {[boundedContext]: table}
+
+        me.defaultGeneratorUiInputData['boundedContextLists'] = boundedContext
+        me.defaultGeneratorUiInputData['processedDDLs'] = []
+        me.defaultGeneratorUiInputData.numberRemainingDDLs = 0
+
+        me.__generate('DDLDraftGenerator', me.defaultGeneratorUiInputData)
       }
     },
   };

@@ -77,8 +77,19 @@ The format must be as follows:
 
     processDDL(){
         let text = ''
-        
-        if(this.client.canvasType == 'cm' || this.client.canvasType == 'context-mapping-model-canvas'){
+
+        if(this.client.input.reGenerate){
+            text += `
+            You previously provided recommendations for a Bounded Context based on the DDL:
+            ${JSON.stringify(this.client.input.reGenerateTable)}
+
+            Please create new recommendations, excluding the results you've already given.
+            Use only the bounded context names exactly as they appear above and generate them.
+            Since newly generated Recommendations will overwrite the results, start the option numbers from 1.
+            `
+            return text;
+
+        }else if(this.client.canvasType == 'cm' || this.client.canvasType == 'context-mapping-model-canvas'){
             text += `
             Process only the DDLs related to the recommendations of the boundedContexts currently being generated, and add them to processedDDLs when processing is complete.
             Ignore the DDLs that have been processed.

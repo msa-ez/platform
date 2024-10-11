@@ -2,17 +2,28 @@
     <v-card>
         <v-card-title>BoundedContext Reconstruction Draft</v-card-title>
         <v-card-subtitle>
-            <v-progress-circular v-if="!DDLDraftTable || defaultGeneratorUiInputData.numberRemainingDDLs>0" color="primary" indeterminate ></v-progress-circular>
-            <div v-if="defaultGeneratorUiInputData.numberRemainingDDLs > 0">
-                <p>{{ defaultGeneratorUiInputData.numberRemainingDDLs }} DDLs remaining...</p>
+            <div class="d-flex align-center">
+                <div v-if="defaultGeneratorUiInputData.numberRemainingDDLs > 0">
+                    <p class="mb-0">{{ defaultGeneratorUiInputData.numberRemainingDDLs }} DDLs remaining...</p>
+                </div>
+                <div v-if="defaultGeneratorUiInputData.reGenerate">
+                    <p class="mb-0">{{ defaultGeneratorUiInputData.boundedContextLists }} Re-generating...</p>
+                </div>
+                <v-progress-circular
+                    v-if="(!DDLDraftTable || defaultGeneratorUiInputData.numberRemainingDDLs > 0) || defaultGeneratorUiInputData.reGenerate"
+                    color="primary"
+                    indeterminate
+                    size="24"
+                    class="ml-2"
+                ></v-progress-circular>
             </div>
         </v-card-subtitle>
         <v-card-text v-if="DDLDraftTable && Object.keys(DDLDraftTable).length > 0">
             <div v-for="(table, boundedContext) in DDLDraftTable" :key="boundedContext">
                 <div class="d-flex align-center mb-2">
                     <h3>{{ boundedContext }}</h3>
-                    <v-btn @click="reGenerate(table)"
-                        v-if="defaultGeneratorUiInputData.numberRemainingDDLs === 0"
+                    <v-btn @click="reGenerate(table, boundedContext)"
+                        v-if="defaultGeneratorUiInputData.numberRemainingDDLs === 0 && !defaultGeneratorUiInputData.reGenerate"
                         icon small
                         v-on="on"
                         style="margin-right: 5px; z-index:2"
@@ -96,8 +107,8 @@
             }
         },
         methods: {
-            reGenerate(boundedContext){
-                this.$emit('reGenerate', boundedContext);
+            reGenerate(table, boundedContext){
+                this.$emit('reGenerate', table, boundedContext);
             },
             onOptionSelected(boundedContext, { item, value }) {
                 if(this.DDLDraftTable[boundedContext].ddl){
