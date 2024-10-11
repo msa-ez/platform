@@ -80,7 +80,7 @@
             </div>
 
             <v-btn v-if="defaultGeneratorUiInputData.numberRemainingDDLs === 0" @click="generateFromDraft"
-                :disabled="!selectedOptionItem || Object.keys(selectedOptionItem).length !== Object.keys(DDLDraftTable).length"
+                :disabled="!isGeneratorButtonEnabled || (!selectedOptionItem || Object.keys(selectedOptionItem).length !== Object.keys(DDLDraftTable).length)"
                 block>Generate From Draft</v-btn>
         </v-card-text>
     </v-card>
@@ -99,11 +99,16 @@
                 type: Object,
                 default: () => ({}),
                 required: false
+            },
+            isGeneratorButtonEnabled: {
+                type: Boolean,
+                default: true,
+                required: false
             }
         },
         data() {
             return {
-                selectedOptionItem: {},
+                selectedOptionItem: {}
             }
         },
         methods: {
@@ -111,10 +116,6 @@
                 this.$emit('reGenerate', table, boundedContext);
             },
             onOptionSelected(boundedContext, { item, value }) {
-                if(this.DDLDraftTable[boundedContext].ddl){
-                    item['ddl'] = this.DDLDraftTable[boundedContext].ddl
-                }
-
                 if (value) {
                     this.$set(this.selectedOptionItem, boundedContext, [item]);
                 } else {
@@ -123,19 +124,11 @@
             },
 
             selectOptionItem(boundedContext, item, isSelected) {
-                if(this.DDLDraftTable[boundedContext].ddl){
-                    item['ddl'] = this.DDLDraftTable[boundedContext].ddl
-                }
-
                 if (isSelected) {
                     this.$set(this.selectedOptionItem, boundedContext, [item]);
                 } else {
                     this.$set(this.selectedOptionItem, boundedContext, []);
                 }
-            },
-
-            generateFromDraft(){
-                this.$emit('generateFromDraft', this.selectedOptionItem);
             },
 
             updateScenario(boundedContext, value) {
@@ -171,6 +164,21 @@
                     };
                 });
             },
+
+
+            generateFromDraft(){
+                this._updateMissedInfos()
+                this.$emit('generateFromDraft', this.selectedOptionItem);
+            },
+
+            _updateMissedInfos(){
+                for(const boundedContext of Object.keys(this.selectedOptionItem)){
+                    if(this.DDLDraftTable[boundedContext].ddl)
+                        this.selectedOptionItem[boundedContext][0].ddl = this.DDLDraftTable[boundedContext].ddl
+                    if(this.DDLDraftTable[boundedContext].scenario)
+                        this.selectedOptionItem[boundedContext][0].scenario = this.DDLDraftTable[boundedContext].scenario
+                }
+            }
         }
     }
 </script>
