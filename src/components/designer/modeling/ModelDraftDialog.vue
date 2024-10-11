@@ -21,28 +21,51 @@
                         <v-icon>mdi-refresh</v-icon>
                     </v-btn>
                 </div>
-            <v-data-table
-                :headers="table.headers"
-                :items="table.items"
-                :items-per-page="5"
-                item-key="option"
-                show-select
-                single-select
-                v-model="selectedOptionItem[boundedContext]"
-                @item-selected="onOptionSelected(boundedContext, $event)"
-                class="elevation-1 mb-4"
-                :hide-default-footer="true"
-            >
-                <template v-slot:item.data-table-select="{ item, isSelected }">
-                    <v-checkbox
-                        v-if="!item.isConclusion"
-                        :input-value="isSelected"
-                        :true-value="item"
-                        :false-value="null"
-                        @change="selectOptionItem(boundedContext, item, $event)"
-                    ></v-checkbox>
-                </template>
-            </v-data-table>
+                <v-data-table
+                    :headers="table.headers"
+                    :items="table.items"
+                    :items-per-page="5"
+                    item-key="option"
+                    show-select
+                    single-select
+                    v-model="selectedOptionItem[boundedContext]"
+                    @item-selected="onOptionSelected(boundedContext, $event)"
+                    class="elevation-1 mb-4"
+                    :hide-default-footer="true"
+                >
+                    <template v-slot:item.data-table-select="{ item, isSelected }">
+                        <v-checkbox
+                            v-if="!item.isConclusion"
+                            :input-value="isSelected"
+                            :true-value="item"
+                            :false-value="null"
+                            @change="selectOptionItem(boundedContext, item, $event)"
+                        ></v-checkbox>
+                    </template>
+                    <template v-slot:item.aggregates="{ item }">
+                        <div v-if="item.isConclusion">{{ item.aggregates }}</div>
+                        <div v-else>
+                            <div v-for="(aggregate, index) in parseAggregates(item.aggregates)" :key="index" class="mb-2">
+                                <strong>{{ aggregate.name }}</strong>
+                                <div class="ml-3">
+                                    <div v-if="aggregate.entities.length">
+                                        Entities: {{ aggregate.entities.join(', ') }}
+                                    </div>
+                                    <div v-if="aggregate.valueObjects.length">
+                                        Value Objects: {{ aggregate.valueObjects.join(', ') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </v-data-table>
+                <v-textarea 
+                    :value="DDLDraftTable[boundedContext].scenario" 
+                    @input="updateScenario(boundedContext, $event)" 
+                    :label="`${boundedContext} Business Scenario`"
+                    :placeholder="`입력이 없을 경우, CRUD 기능을 수행하는 시나리오를 자동으로 생성합니다.`"
+                    :rows="3"
+                ></v-textarea><br><br>
             </div>
 
             <v-btn v-if="defaultGeneratorUiInputData.numberRemainingDDLs === 0" @click="generateFromDraft"
@@ -102,7 +125,41 @@
 
             generateFromDraft(){
                 this.$emit('generateFromDraft', this.selectedOptionItem);
-            }
+            },
+
+            updateScenario(boundedContext, value) {
+                if (!this.DDLDraftTable[boundedContext].hasOwnProperty('scenario')) {
+                    this.$set(this.DDLDraftTable[boundedContext], 'scenario', value);
+                } else {
+                    this.DDLDraftTable[boundedContext].scenario = value;
+                }
+            },
+
+            parseAggregates(aggregatesString) {
+                return aggregatesString.split('/').map(aggregate => {
+                    const [name, details] = aggregate.split('(');
+                    const entitiesMatch = details.match(/Entities: ([^)]+)/);
+                    const valueObjectsMatch = details.match(/ValueObjects: ([^)]+)/);
+                    
+                    let entities = entitiesMatch ? entitiesMatch[1].split(',').map(e => e.trim()) : [];
+                    let valueObjects = valueObjectsMatch ? valueObjectsMatch[1].split(',').map(vo => vo.trim()) : [];
+                    
+                    // Remove duplicates
+                    valueObjects = [...new Set(valueObjects)];
+                    
+                    // Remove ValueObjects from entities
+                    entities = entities.filter(entity => !valueObjects.includes(entity));
+                    
+                    // Additional step: Remove any remaining ValueObjects from entities
+                    entities = entities.filter(entity => !entity.includes('ValueObjects:'));
+                    
+                    return {
+                        name: name.trim(),
+                        entities: entities,
+                        valueObjects: valueObjects
+                    };
+                });
+            },
         }
     }
 </script>
