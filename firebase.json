@@ -34,7 +34,7 @@
       "headers": [
         {
           "key": "Cache-Control", 
-          "value": "max-age=0, no-cache"
+          "value": "no-store"
         }
       ]
     },
@@ -43,7 +43,7 @@
       "headers": [
         {
           "key": "Cache-Control", 
-          "value": "max-age=0, no-cache"
+          "value": "max-age=31536000, immutable"
         }
       ]
     },
@@ -52,7 +52,7 @@
       "headers": [
         {
           "key": "Cache-Control", 
-          "value": "max-age=3300"
+          "value": "max-age=31536000, immutable"
         }
       ]
     }
