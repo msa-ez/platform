@@ -79,10 +79,12 @@ class ActionsProcessorUtils {
         ActionsProcessorUtils._addPropertyIfNotExist(aggregate.aggregateRoot.fieldDescriptors, propertyName, true)
         if(aggregateRootObject) ActionsProcessorUtils._addPropertyIfNotExist(aggregateRootObject.fieldDescriptors, propertyName, true)
         aggregateCommands.map(command => {
-            ActionsProcessorUtils._addPropertyIfNotExist(command.fieldDescriptors, propertyName, false)
+            if(command.controllerInfo.method != "DELETE")
+                ActionsProcessorUtils._addPropertyIfNotExist(command.fieldDescriptors, propertyName, false)
         })
         aggregateEvents.map(event => {
-            ActionsProcessorUtils._addPropertyIfNotExist(event.fieldDescriptors, propertyName, false)
+            if(!ActionsProcessorUtils.isRelatedByDeleteCommand(esValue, event))
+                ActionsProcessorUtils._addPropertyIfNotExist(event.fieldDescriptors, propertyName, false)
         })
     }
 
@@ -107,6 +109,19 @@ class ActionsProcessorUtils {
     }
 
 
+    static isRelatedByDeleteCommand(esValue, event) {
+        return Object.values(esValue.relations).some(relation => {
+            return relation &&
+                relation._type === "org.uengine.modeling.model.Relation" &&
+                relation.sourceElement &&
+                relation.sourceElement._type === "org.uengine.modeling.model.Command" &&
+                relation.sourceElement.controllerInfo.method === "DELETE" &&
+                relation.targetElement &&
+                relation.targetElement.id === event.id
+        })
+    }
+
+    
     /**
      * 주어진 Aggregate 내부의 Element가 Aggregate나 Bounded Context를 벗어나지 않도록 수직으로 크기를 재조정 함
      */

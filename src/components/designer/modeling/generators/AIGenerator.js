@@ -12,6 +12,7 @@ class AIGenerator {
         this.model = this.client && this.client.model ? this.client.model:"gpt-3.5-turbo-16k"
         this.responseLimit = this.model == 'gpt-4o' ? 0:15
         this.temperature = 1
+        this.top_p = 1.0
 
         if(options){
             this.preferredLanguage = options.preferredLanguage;
@@ -250,6 +251,7 @@ class AIGenerator {
                     temperature: this.temperature,
                     frequency_penalty: 0,
                     presence_penalty: 0,
+                    top_p: this.top_p,
                     stream: true,
                 });
 

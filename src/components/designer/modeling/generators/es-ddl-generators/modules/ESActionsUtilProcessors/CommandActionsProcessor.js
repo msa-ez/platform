@@ -136,7 +136,11 @@ class CommandActionsProcessor {
     }
 
     static __getFileDescriptors(esValue, action) {
-        return esValue.elements[action.ids.aggregateId].aggregateRoot.fieldDescriptors.map((property) => {
+        let targetFieldDescriptors = esValue.elements[action.ids.aggregateId].aggregateRoot.fieldDescriptors
+        if(action.args.api_verb == "DELETE")
+            targetFieldDescriptors = targetFieldDescriptors.filter(fieldDescriptor => fieldDescriptor.isKey)
+
+        return targetFieldDescriptors.map((property) => {
             return {
                 "className": property.className,
                 "isCopy": false,

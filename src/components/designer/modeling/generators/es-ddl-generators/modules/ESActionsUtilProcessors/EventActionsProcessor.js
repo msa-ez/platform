@@ -22,7 +22,6 @@ class EventActionsProcessor {
         eventObject.elementView.x = VALID_POSITION.x
         eventObject.elementView.y = VALID_POSITION.y
 
-        eventObject.fieldDescriptors = EventActionsProcessor.__getAggregateFileDescriptors(esValue, action)
         esValue.elements[eventObject.id] = eventObject
         ActionsProcessorUtils.reseizeAggregateVertically(esValue, eventObject)
 
@@ -33,6 +32,10 @@ class EventActionsProcessor {
                 })
             })
         }
+
+        callbacks.afterAllRelationAppliedCallBacks.push((esValue) => {
+            eventObject.fieldDescriptors = EventActionsProcessor.__getAggregateFileDescriptors(esValue, action, eventObject)
+        })
     }
 
     static __getEventBase(userInfo, name, displayName, boundedContextId, aggregateId, x, y, elementUUID) {
@@ -104,8 +107,12 @@ class EventActionsProcessor {
         }
     }
 
-    static __getAggregateFileDescriptors(esValue, action) {
-        return esValue.elements[action.ids.aggregateId].aggregateRoot.fieldDescriptors.map((property) => {
+    static __getAggregateFileDescriptors(esValue, action, eventObject) {
+        let targetFieldDescriptors = esValue.elements[action.ids.aggregateId].aggregateRoot.fieldDescriptors
+        if(ActionsProcessorUtils.isRelatedByDeleteCommand(esValue, eventObject))
+            targetFieldDescriptors = targetFieldDescriptors.filter(fieldDescriptor => fieldDescriptor.isKey)
+
+        return targetFieldDescriptors.map((property) => {
             return {
                 "className": property.className,
                 "isCopy": false,

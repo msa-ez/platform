@@ -1461,8 +1461,14 @@
         for(let boundedContextKey of Object.keys(selectedOptionItem)){
           let boundedContextInfo = selectedOptionItem[boundedContextKey][0]
 
-          const usedDDL = (boundedContextInfo.ddl) ? this.__getDDLsFromTableNames(boundedContextInfo.ddl.split(", "), ddl) : ""
-          const functionRequests = (boundedContextInfo.scenario) ? boundedContextInfo.scenario : "Add the appropriate CRUD operations for the given ddl."
+          let usedDDL = ""
+          if(boundedContextInfo.ddl) {
+            if(typeof boundedContextInfo.ddl === "object") 
+              boundedContextInfo.ddl = Object.values(boundedContextInfo.ddl).join(", ")
+            usedDDL = this.__getDDLsFromTableNames(boundedContextInfo.ddl.split(", "), ddl)
+          }
+
+          const functionRequests = (boundedContextInfo.scenario) ? boundedContextInfo.scenario : "Add the appropriate Create and Delete operations for the given DDL."
           eventStormingInputs.push({
             ddl: usedDDL,
             selectedOption: boundedContextInfo.aggregates,

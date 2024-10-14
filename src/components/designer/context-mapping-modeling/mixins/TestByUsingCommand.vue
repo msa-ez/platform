@@ -64,7 +64,7 @@ total_points INT DEFAULT 0
 );`,
                 selectedOption: "고객 (Entities: 고객, ValueObjects: 연락처, 주소)",
                 boundedContexts: [`고객`],
-                functionRequests: "Add the appropriate CRUD operations for the given ddl.",
+                functionRequests: "Add the appropriate Create and Delete operations for the given DDL.",
                 userInfo: me.userInfo,
                 information: me.information
             })
