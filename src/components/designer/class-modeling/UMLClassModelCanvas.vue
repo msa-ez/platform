@@ -119,13 +119,6 @@
                                 <Icon icon="arcticons:openai-chatgpt" style="margin-right:5px; stroke-width: 3px;" width="24" height="24"/>
                                 <div>Chat</div>
                             </v-btn> -->
-                            <v-btn
-                                    color="primary"
-                                    @click="openCommandViewer()"
-                            >
-                                <v-icon>mdi-code-greater-than</v-icon>
-                                <div>code</div>
-                            </v-btn>
                         </div>
 
                         <v-flex v-if="!embedded" style="justify:end; align:start;">
@@ -171,7 +164,7 @@
                                         <div v-else>
                                             <v-btn class="uml-btn"
                                                 v-if="isOwnModel || isClazzModeling"
-                                                color="primary" text
+                                                text
                                                 v-on="on"
                                                 :disabled="disableBtn"
                                                 @click="saveComposition('save')"
@@ -187,6 +180,13 @@
                                             >
                                                 <v-icon>{{icon.fork}}</v-icon>
                                                 <div class="uml-btn-text">FORK</div>
+                                            </v-btn>
+                                            <v-btn  color="primary" 
+                                                text
+                                                @click="openCommandViewer()"
+                                            >
+                                                <v-icon>mdi-code-greater-than</v-icon>
+                                                <div>code</div>
                                             </v-btn>
                                         </div>                                
                                     </template>
