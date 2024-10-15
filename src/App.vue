@@ -78,17 +78,20 @@
                 </participant-icons>
             </div>
 
-            <v-tooltip v-if="inCourse && !showNewButton" bottom>
-                <template v-slot:activator="{ on, attrs }">
-                    <v-btn style="margin-right:10px;" v-bind="attrs" v-on="on" @click="addNewClass()"
-                        icon large
-                        color="black"
-                    >
-                        <v-icon>mdi-file-plus</v-icon>
-                    </v-btn>
-                </template>
-                <span>신규 강의 생성</span>
-            </v-tooltip>
+            <v-btn v-if="inCourse && !showNewButton"
+                @click="addNewClass()"
+                v-on="on"
+                v-bind="attrs"
+                text
+                elevation="0"
+                style="
+                font-weight: 700;
+                margin:27px 110px 0px 0px;
+                padding:0px 5px 0px 5px !important;"
+            >
+                <v-icon style="margin:-3px 1px 0px 0px;" :size="26">mdi-file-plus</v-icon>
+                신규 강의 생성
+            </v-btn>
             <!-- 이벤트 스토밍만 열던 기존 버튼 -->
             <!-- <v-btn v-if="showNewButton"
                 class="making-main-nav-modeling-is-mobile"
@@ -109,9 +112,8 @@
                         v-on="on"
                         v-bind="attrs"
                         text
-                        style="font-size:16px; margin-top:8px; font-weight: 700; padding:0px;"
-                        :style="isLogin ? 'margin-right:145px' : 'margin-right:130px;'"
-                    ><v-icon style="margin-top:-3px;">mdi-file-plus</v-icon>
+                        :style="isLogin ? 'margin-right:210px' : 'margin-right:200px;'"
+                    ><v-icon style="margin:-3px 1px 0px 0px;" :size="26">mdi-file-plus</v-icon>
                     {{$t('making.title')}}
                     </v-btn>
                 </template>
@@ -366,6 +368,19 @@
                     </v-row>
                 </v-card>
             </v-dialog>
+
+            <v-btn @click="navigateToSlack"
+                class="question-btn"
+                v-on="on"
+                v-bind="attrs"
+                text
+                elevation="0"
+            >
+                <v-img src="/static/image/main/question.svg" contain
+                    style="width:22px; height:22px; margin-right:5px;">
+                </v-img>
+                {{ $t('inquiry.title') }}
+            </v-btn>
             
             <v-btn
                 v-if="!(isLogin || isGuestLogin)"
@@ -699,23 +714,6 @@
                 </v-stepper-header>
             </v-stepper>
         </v-alert>
-        <v-tooltip top v-if="showNewButton">
-            <template v-slot:activator="{ on }">
-                <v-btn @click="navigateToSlack"
-                    v-on="on"
-                    elevation="2"
-                    icon
-                    x-large
-                    style="position:absolute; bottom:10px; right:10px;"
-                    
-                >
-                    <v-img src="/static/image/main/question.svg" contain
-                        style="width:28px; height:28px;">
-                    </v-img>
-                </v-btn>
-            </template>
-            <span>{{ $t('inquiry.title') }}</span>
-        </v-tooltip>
     </v-app>
 </template>
 
@@ -2156,6 +2154,12 @@
 
 </script>
 <style>
+    .question-btn {
+        position: absolute;
+        top:15px; right:70px;
+        font-weight: 700;
+        padding:0px 5px 0px 5px !important;
+    }
     .making-col {
         padding:20px;
     }
@@ -2232,15 +2236,25 @@
     .list-type-btn:hover {
         border: 0.1px solid rgba(255, 255, 255) !important;
     }
+
+    .making-main-nav-modeling-is-mobile {
+        font-size:16px;
+        margin-top:5px;
+        font-weight: 700;
+        padding:0px 5px 0px 5px !important;
+    }
     
     /* 추가 */
-    @media only screen and (max-width: 1200px) { 
+    @media only screen and (max-width: 1250px) { 
         .main-nav-modeling-is-mobile {
             display:none;
         }
         .making-main-nav-modeling-is-mobile {
-            margin-top:90px !important;
-            margin-right: 30px !important
+            margin-top:160px !important;
+            margin-right: 22px !important
+        }
+        .question-btn {
+            top:7px;
         }
     }
 

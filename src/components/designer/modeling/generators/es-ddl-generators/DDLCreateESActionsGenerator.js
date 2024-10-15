@@ -7,9 +7,11 @@ class DDLCreateESActionsGenerator extends JsonAIGenerator{
         super(client);
         
         this.model = "gpt-4o-2024-08-06"
-        this.temperature = 0.6
         this.generatorName = 'DDLCreateESActionsGenerator'
         this.inputedParams = null
+
+        this.temperature = 1.0
+        this.top_p = 0.6
     }
     
 
@@ -65,7 +67,8 @@ Please follow these rules.
 5. If the names of Aggregate, ValueObject, and Enumeration used in the user-supplied structure are not English, you must change them to appropriate English names.
 6. Create events, commands, and actions as appropriate to satisfy the functional requirements communicated.
 7. You must create and utilize only the Bounded Contexts provided in “Bounded Contexts to Create and Utilize”; do not create any additional Bounded Contexts.
-8. Do not write comments in the output JSON object.
+8. When the value of a ValueObject or Enumeration is utilised by the Aggregate Root, the corresponding material type must be used, not String. Ex) String > OrderStatus
+9. Do not write comments in the output JSON object.
 
 `
     }

@@ -43,15 +43,14 @@
                     <v-hover v-slot="{ hover }">
                         <v-list-group class="nav-storage-list"
                             :value="hover"
-                            style="background-color:white; position:fixed; top:7px; z-index:1; width:100px;"
-                            :style="isLogin ? 'right:85px;' : 'right:70px;'"
+                            :style="isLogin ? 'right:170px;' : 'right:160px;'"
                             :append-icon="null"
                         >
                             <template v-slot:activator>
                                 <v-list-item-title style="margin:5px 0px 0px 10px; font-weight: 700;">
                                     <div style="display: flex;">
                                         <Icon icon="material-symbols:home-storage" width="28" height="28" style="margin-right:3px;" />
-                                        <div class="cp-storage" style="margin-top:5px;">{{$t('mainNav.Storage')}}</div>
+                                        <div class="cp-storage" style="margin-top:5px; font-size:14px;">{{$t('mainNav.Storage')}}</div>
                                     </div>
                                 </v-list-item-title>
                             </template>
@@ -1846,11 +1845,27 @@
     .main-nav-tabs .v-tabs-slider-wrapper {
         display: none;
     }
+
+    .nav-storage-list {
+        background-color:white;
+        position:fixed;
+        top:13px;
+        z-index:1;
+        width:100px;
+    }
     .nav-storage-list .v-list-item {
         padding:0px 5px;
+        min-height:36px;
     }
     .main-nav-tab:hover {
         color: #2C81D5 !important; /* Vuetify의 primary 색상 */
+    }
+
+    @media only screen and (max-width: 1250px) { 
+        .nav-storage-list {
+            top:45px !important;
+            right:78px !important;
+        }
     }
 </style>
 

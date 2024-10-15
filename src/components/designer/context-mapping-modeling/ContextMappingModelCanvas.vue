@@ -1446,13 +1446,24 @@
 
 
       generateFromDraft(selectedOptionItem){
-        var me = this
-        console.log("[*] Draft를 기반으로 이벤트 캔버스 모델 생성중...", {selectedOptionItem, ddl:me.defaultGeneratorUiInputData.DDL})
+        try {
 
-        me.isDraftGeneratorButtonEnabled = false
-        me.createEventStormingInputs = me._getCreateEventStormingInputs(selectedOptionItem, me.defaultGeneratorUiInputData.DDL)
-        me.DDLCreateESActionsGeneratorRetryCount = 3
-        me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())
+          var me = this
+          console.log("[*] Draft를 기반으로 이벤트 캔버스 모델 생성중...", {selectedOptionItem, ddl:me.defaultGeneratorUiInputData.DDL})
+
+          me.isDraftGeneratorButtonEnabled = false
+          me.createEventStormingInputs = me._getCreateEventStormingInputs(selectedOptionItem, me.defaultGeneratorUiInputData.DDL)
+          me.DDLCreateESActionsGeneratorRetryCount = 3
+          me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())
+
+        }
+        catch(e) {
+
+          console.error("[!] DDL 초안에서 이벤트 스토밍 생성 요청도중 에러 발생 !", e)
+          alert("DDL 초안에서 이벤트 스토밍 생성 요청도중 에러가 발생했습니다. 잠시 후 다시 시도해주세요.\n" + e.message)
+          me.isDraftGeneratorButtonEnabled = true
+          
+        }
       },
 
       _getCreateEventStormingInputs(selectedOptionItem, ddl) {
@@ -1462,8 +1473,14 @@
         for(let boundedContextKey of Object.keys(selectedOptionItem)){
           let boundedContextInfo = selectedOptionItem[boundedContextKey][0]
 
-          const usedDDL = (boundedContextInfo.ddl) ? this.__getDDLsFromTableNames(boundedContextInfo.ddl.split(", "), ddl) : ""
-          const functionRequests = (boundedContextInfo.scenario) ? boundedContextInfo.scenario : "Add the appropriate CRUD operations for the given ddl."
+          let usedDDL = ""
+          if(boundedContextInfo.ddl) {
+            if(typeof boundedContextInfo.ddl === "object") 
+              boundedContextInfo.ddl = Object.values(boundedContextInfo.ddl).join(", ")
+            usedDDL = this.__getDDLsFromTableNames(boundedContextInfo.ddl.split(", "), ddl)
+          }
+
+          const functionRequests = (boundedContextInfo.scenario) ? boundedContextInfo.scenario : "Add the appropriate Create and Delete operations for the given DDL."
           eventStormingInputs.push({
             ddl: usedDDL,
             selectedOption: boundedContextInfo.aggregates,
