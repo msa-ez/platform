@@ -172,23 +172,6 @@
                               style="margin-right: 15px"
                       >
                         <slot name="menu-buttons">
-                          <v-menu class="pa-2" open-on-hover offset-y left v-if="isDevModeEnabled">
-                            <template v-slot:activator="{ on }">
-                              <div>
-                                <v-btn
-                                        class="gs-model-z-index-1"
-                                        color="primary"
-                                        text
-                                        style="margin-right: 5px"
-                                        :disabled="disableBtn"
-                                        @click="distinstTest()"
-                                >
-                                  <v-icon>mdi-ab-testing</v-icon>
-                                </v-btn>
-                              </div>
-                            </template>
-                          </v-menu>
-
                           <v-menu class="pa-2" open-on-hover offset-y left>
                             <template v-slot:activator="{ on }">
                               <div>
@@ -1064,6 +1047,8 @@
             <ModelDraftDialog
                 :DDLDraftTable="DDLDraftTable"
                 :defaultGeneratorUiInputData="defaultGeneratorUiInputData"
+                :isGeneratorButtonEnabled="isDraftGeneratorButtonEnabled"
+                @reGenerate="reGenerate"
                 @generateFromDraft="generateFromDraft"
             ></ModelDraftDialog>
           </v-dialog>
@@ -1104,15 +1089,17 @@
   import EventStormingModelCanvas from "../es-modeling/EventStormingModelCanvas";
   import ContextMappingModeling from './index'
   import BoundedContext from '../es-modeling/elements/BoundedContext.vue';
-  import BoundedContextCM from './elements/BoundedContextCM.vue';
   import GeneratorUI from "../modeling/generators/GeneratorUI";
   import DDLCreateESActionsGenerator from "../modeling/generators/es-ddl-generators/DDLCreateESActionsGenerator";
   import DDLDraftGenerator from "../modeling/generators/DDLDraftGenerator";
   import ModelDraftDialog from "../modeling/ModelDraftDialog";
+  import BoundedContextCMUtil from './modules/BoundedContextCMUtil'
+  import EventStormingUtil from './modules/EventStormingUtil'
+  import TestByUsingCommand from './mixins/TestByUsingCommand'
 
   export default {
     name: "context-mapping-model-canvas",
-    mixins: [EventStormingModelCanvas],
+    mixins: [EventStormingModelCanvas, TestByUsingCommand],
     components: { 
       GeneratorUI,
       ModelDraftDialog
@@ -1150,7 +1137,9 @@
         },
         DDLDraftTable: {},
         showDDLDraftDialog: false,
-        createEventStormingInputs: []
+        createEventStormingInputs: [],
+        DDLCreateESActionsGeneratorRetryCount: 3,
+        isDraftGeneratorButtonEnabled: true
       };
     },
     watch: {
@@ -1174,33 +1163,9 @@
           }
         },
     },
-    computed: {
-      isDevModeEnabled() {
-        return typeof window !== 'undefined' && 
-              window.localStorage && 
-              window.localStorage.getItem('isDevMode') === 'true';
-      }
-    },
     created(){
     },
     methods: {
-      distinstTest(){
-        var me = this
-
-        me.__generate('DDLCreateESActionsGenerator', {
-          ddl: `CREATE TABLE customers (
-customer_id INT PRIMARY KEY AUTO_INCREMENT,
-name VARCHAR(100) NOT NULL,
-phone VARCHAR(20) NOT NULL,
-address VARCHAR(255) NOT NULL,
-total_points INT DEFAULT 0
-);`,
-          selectedOption: `고객 (Entities: 고객, ValueObjects: 연락처, 주소)`,
-          boundedContexts: [`고객`],
-          userInfo: me.userInfo,
-          information: me.information
-        })
-      },
       setCanvasType(){
           Vue.use(ContextMappingModeling);
           this.canvasType = 'cm'
@@ -1226,6 +1191,7 @@ total_points INT DEFAULT 0
 
           if(boundedContext && model){
             defaultValue.elements = model.elements
+            defaultValue.relations = model.relations
           }
 
           await me.putObject(`db://definitions/${settingProjectId}/information`, {
@@ -1263,7 +1229,12 @@ total_points INT DEFAULT 0
           })
 
           if( me.storageCondition.type == 'es' ){
-            let element = BoundedContext.computed.createNew(
+            let element  = null
+            if(boundedContext && boundedContext._type === "org.uengine.modeling.model.BoundedContext") {
+              element = boundedContext
+            } else {
+
+              element = BoundedContext.computed.createNew(
                     null,
                     this.uuid(),
                     800, //x
@@ -1272,10 +1243,13 @@ total_points INT DEFAULT 0
                     590, //height
                     '' , //description
                     ''   //label
-            );
-            element.name = contextBC.name
-            element.elementView.width = 560
-            element.elementView.height = 590
+              );
+              element.name = contextBC.name
+              element.elementView.width = 560
+              element.elementView.height = 590
+
+            }
+
 
             // 하위 캔버스에 그려질 모델 aggregates에 bc 정보 추가
             if(boundedContext && model){
@@ -1372,69 +1346,8 @@ total_points INT DEFAULT 0
 
         return componentByClassName;
       },
+
       onReceiveProjectQueue(queue, isNew){
-        const addNewSyncBoundedContextCM = (modelValue, name) => {
-          const isSameNameBoundedContextExists = (modelValue, name) => {
-            for(let element of Object.values(modelValue.elements)) {
-              if(element && element._type === "org.uengine.modeling.model.BoundedContext" && element.name === name)
-                return true
-            }
-            return false
-          }
-
-          const getValuePosition = (modelValue, boundedContextCM) => {
-              const getBoundedContexts = (modelValue) => {
-                  let boundedContexts = []
-                  Object.values(modelValue.elements).forEach(function (element) {
-                      if (element && element._type === "org.uengine.modeling.model.BoundedContext")
-                          boundedContexts.push(element)
-                  })
-                  return boundedContexts
-              }
-
-              const getMaxXBoundedContextInMaxY = (boundedContexts) => {
-                  const maxY = Math.max(...boundedContexts.map(bc => bc.elementView.y))
-                  const maxYBoundedContext = boundedContexts.find(bc => bc.elementView.y === maxY)
-
-                  let targetBoundedContexts = []
-                  boundedContexts.forEach(function (boundedContext) {
-                      if((boundedContext.elementView.y >= maxYBoundedContext.elementView.y - maxYBoundedContext.elementView.height/2) && 
-                          (boundedContext.elementView.y <= maxYBoundedContext.elementView.y + maxYBoundedContext.elementView.height/2))
-                          targetBoundedContexts.push(boundedContext)
-                  })
-                  
-                  const maxX = Math.max(...targetBoundedContexts.map(bc => bc.elementView.x))
-                  const maxXBoundedContext = targetBoundedContexts.find(bc => bc.elementView.x === maxX)
-                  return maxXBoundedContext
-              }
-
-              const getValidYPos = (boundedContexts, boundedContextCM) => {
-                  const maxY = Math.max(...boundedContexts.map(bc => bc.elementView.y + Math.round(bc.elementView.height/2)))
-                  return maxY + Math.round(boundedContextCM.elementView.height/2) + 25
-              }
-
-              const boundedContexts = getBoundedContexts(modelValue)
-              if(boundedContexts.length <= 0) return {x: 250, y: 250}
-              const maxXBoundedContextInMaxY = getMaxXBoundedContextInMaxY(boundedContexts)
-
-              const validXPos = maxXBoundedContextInMaxY.elementView.x + Math.round(maxXBoundedContextInMaxY.elementView.width/2) + 25 
-                                  + Math.round(boundedContextCM.elementView.width/2)
-              if(validXPos <= 1750) return {x: validXPos, y: maxXBoundedContextInMaxY.elementView.y}
-
-              return {x: 250, y: getValidYPos(boundedContexts, boundedContextCM)}
-          }
-
-          if(isSameNameBoundedContextExists(this.value, name)) return
-          let boundedContextCM = BoundedContextCM.computed.createNew(this, this.uuid(), 250, 250)
-          boundedContextCM.name = name
-
-          let validPosition = getValuePosition(modelValue, boundedContextCM)
-          boundedContextCM.elementView.x = validPosition.x
-          boundedContextCM.elementView.y = validPosition.y
-
-          this.addElementAction(boundedContextCM)     
-        }
-
         if(!isNew) return
 
         if(queue.action === 'elementPush') {
@@ -1442,7 +1355,7 @@ total_points INT DEFAULT 0
 
             let element = JSON.parse(queue.item)
             if(element._type === 'org.uengine.modeling.model.BoundedContext')
-              addNewSyncBoundedContextCM(this.value, element.name)
+              this.__addNewBoundedContextCM(element.name)
 
           } catch(e) {
             console.error(e)
@@ -1465,7 +1378,6 @@ total_points INT DEFAULT 0
       },
 
 
-
       onGenerationFinished(model){
         var me = this
 
@@ -1484,6 +1396,10 @@ total_points INT DEFAULT 0
       _processDDLDraftGenerator(model) {
         var me = this
         me.showDDLDraftDialog = true
+        me.isDraftGeneratorButtonEnabled = true
+
+        if(me.defaultGeneratorUiInputData['reGenerate'])
+        me.defaultGeneratorUiInputData['reGenerate'] = false
 
         me.DDLDraftTable = Object.assign(me.DDLDraftTable, model.tables)
         me.defaultGeneratorUiInputData = {
@@ -1501,19 +1417,52 @@ total_points INT DEFAULT 0
 
       _processDDLCreateESActionsGenerator(model) {
         var me = this
-        if(me.createEventStormingInputs.length > 0)
+
+        if(model.isError) {
+          if(me.DDLCreateESActionsGeneratorRetryCount > 0) {
+            me.DDLCreateESActionsGeneratorRetryCount -= 1
+            me.__generate('DDLCreateESActionsGenerator', model.inputedParams)
+          } else
+            me.__processNextCreateEventStormingInput()
+          
+          return
+        }
+
+        if(!model.modelValue || !model.modelValue.createdESValue) return
+        me.__makeNewEventStormingProject(model.modelValue.createdESValue)
+        me.__processNextCreateEventStormingInput()
+      },
+
+      __processNextCreateEventStormingInput() {
+        var me = this
+        if(me.createEventStormingInputs.length > 0) {
+            me.DDLCreateESActionsGeneratorRetryCount = 3
             me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())
-          else
-            me.showDDLDraftDialog = false
+        }
+        else
+          me.showDDLDraftDialog = false
       },
 
 
       generateFromDraft(selectedOptionItem){
-        var me = this
-        console.log("[*] Draft를 기반으로 이벤트 캔버스 모델 생성중...", {selectedOptionItem, ddl:me.defaultGeneratorUiInputData.DDL})
+        try {
 
-        me.createEventStormingInputs = me._getCreateEventStormingInputs(selectedOptionItem, me.defaultGeneratorUiInputData.DDL)
-        me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())
+          var me = this
+          console.log("[*] Draft를 기반으로 이벤트 캔버스 모델 생성중...", {selectedOptionItem, ddl:me.defaultGeneratorUiInputData.DDL})
+
+          me.isDraftGeneratorButtonEnabled = false
+          me.createEventStormingInputs = me._getCreateEventStormingInputs(selectedOptionItem, me.defaultGeneratorUiInputData.DDL)
+          me.DDLCreateESActionsGeneratorRetryCount = 3
+          me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())
+
+        }
+        catch(e) {
+
+          console.error("[!] DDL 초안에서 이벤트 스토밍 생성 요청도중 에러 발생 !", e)
+          alert("DDL 초안에서 이벤트 스토밍 생성 요청도중 에러가 발생했습니다. 잠시 후 다시 시도해주세요.\n" + e.message)
+          me.isDraftGeneratorButtonEnabled = true
+          
+        }
       },
 
       _getCreateEventStormingInputs(selectedOptionItem, ddl) {
@@ -1523,10 +1472,19 @@ total_points INT DEFAULT 0
         for(let boundedContextKey of Object.keys(selectedOptionItem)){
           let boundedContextInfo = selectedOptionItem[boundedContextKey][0]
 
+          let usedDDL = ""
+          if(boundedContextInfo.ddl) {
+            if(typeof boundedContextInfo.ddl === "object") 
+              boundedContextInfo.ddl = Object.values(boundedContextInfo.ddl).join(", ")
+            usedDDL = this.__getDDLsFromTableNames(boundedContextInfo.ddl.split(", "), ddl)
+          }
+
+          const functionRequests = (boundedContextInfo.scenario) ? boundedContextInfo.scenario : "Add the appropriate Create and Delete operations for the given DDL."
           eventStormingInputs.push({
-            ddl: ddl,
+            ddl: usedDDL,
             selectedOption: boundedContextInfo.aggregates,
             boundedContexts: [boundedContextKey],
+            functionRequests: functionRequests,
             userInfo: me.userInfo,
             information: me.information
           })
@@ -1535,6 +1493,15 @@ total_points INT DEFAULT 0
         return eventStormingInputs
       },
 
+      __getDDLsFromTableNames(tableNames, ddl){
+        let usedDDL = ""
+        for(let tableName of tableNames){
+          const matchedDDL = ddl.match(new RegExp(`CREATE\\s+TABLE\\s+${tableName.trim()}[\\s\\S]*?\\);`))
+          if(matchedDDL) usedDDL += matchedDDL[0] + "\n"
+        }
+        return usedDDL
+      },
+      
       
       __generate(generatorName, inputObj){
         var me = this
@@ -1558,6 +1525,63 @@ total_points INT DEFAULT 0
         me.input = inputObj
         me.generator.generate()
       },
+
+      __makeNewEventStormingProject(esValue) {
+        var me = this
+
+        EventStormingUtil.getAllBoundedContexts(esValue).forEach(boundedContext => {
+
+          const createdBoundedContextCM = me.__addNewBoundedContextCM(boundedContext.name)
+          const relatedAggregates = EventStormingUtil.getOnlyRelatedAggregates(boundedContext, esValue)
+          me.value.elements[createdBoundedContextCM.id]['aggregates'] = relatedAggregates.map(aggregate => aggregate.id)
+
+          const relatedElements = EventStormingUtil.getOnlyRelatedElements(boundedContext, esValue)
+          relatedElements.forEach(element => { me.mirrorValue.elements[element.id] = element })
+
+          const projectId = `${me.information.associatedProject}-${createdBoundedContextCM.name}-${(new Date()).getTime()}`
+          me.storageCondition = {
+            action: 'save',
+            title: 'Edit BoundedContext',
+            comment: '',
+            projectName: projectId,
+            projectId: projectId,
+            version: 'v0.0.1',
+            error: null,
+            loading: false,
+            type: 'es',
+            associatedProject: me.information.associatedProject,
+            connectedAssociatedProject : me.information.associatedProject ? true : false,
+            element: createdBoundedContextCM
+          }
+          const relatedESValue = EventStormingUtil.getOnlyRelatedESValue(boundedContext, esValue)
+          me.saveModel(boundedContext, relatedESValue)
+          me.changedByMe = true
+
+        })
+      },
+
+      __addNewBoundedContextCM(name){
+        let me = this
+        if(BoundedContextCMUtil.isSameNameBoundedContextCMExists(name, me.value)) return
+        
+        const createdBoundedContextCM = BoundedContextCMUtil.getNewBoundedContextCM(name, me.value)
+        me.addElementAction(createdBoundedContextCM)
+        return createdBoundedContextCM
+      },
+      
+      reGenerate(table, boundedContext){
+        console.log("[*] Re-generate", table, boundedContext)
+        let me = this
+
+        me.defaultGeneratorUiInputData['reGenerate'] = true;
+        me.defaultGeneratorUiInputData['reGenerateTable'] = {[boundedContext]: table}
+
+        me.defaultGeneratorUiInputData['boundedContextLists'] = boundedContext
+        me.defaultGeneratorUiInputData['processedDDLs'] = []
+        me.defaultGeneratorUiInputData.numberRemainingDDLs = 0
+
+        me.__generate('DDLDraftGenerator', me.defaultGeneratorUiInputData)
+      }
     },
   };
 </script>

@@ -591,7 +591,7 @@
                     this.chatMessage = ""
                     this.generatorComponent.generate();
                 }else if(this.generatorName === "DDLGenerator" || this.generatorName === "DDLDraftGenerator"){
-                    if(!this.DDL || !this.boundedContextLists){
+                    if(!this.DDL){
                         return;
                     }
                     this.input = {}

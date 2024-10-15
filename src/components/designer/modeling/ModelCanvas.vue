@@ -4272,7 +4272,13 @@
                         let valueDiff = extractOnlyValueKeyData(value, diff)
                         if(Object.keys(valueDiff).length === 0) return
 
-                        jsondiffpatch.patch(value, valueDiff)
+                        try {
+
+                            jsondiffpatch.patch(value, valueDiff)
+                            
+                        } catch (error) {
+                            console.log(error)
+                        }
                     }
                 })
             },
