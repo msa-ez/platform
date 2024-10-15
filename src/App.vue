@@ -699,15 +699,14 @@
                 </v-stepper-header>
             </v-stepper>
         </v-alert>
-        <v-tooltip top v-if="showNewButton">
+        <v-tooltip top>
             <template v-slot:activator="{ on }">
                 <v-btn @click="navigateToSlack"
                     v-on="on"
                     elevation="2"
                     icon
                     x-large
-                    style="position:absolute; bottom:10px; right:10px;"
-                    
+                    style="position:absolute; bottom:20px; right:20px;"
                 >
                     <v-img src="/static/image/main/question.svg" contain
                         style="width:28px; height:28px;">
