@@ -50,7 +50,7 @@ The format must be as follows:
     "processingDDL": [Currently processing DDL table names],
     "processedDDLs": [Currently Processing DDL and previously processed DDL table name],
     "numberRemainingDDLs": From the total number of DDLs, the number of DDLs that have not been processed,
-    "boundedContexts": [
+    "boundedContexts": [ // create only one of the requested boundedContexts or etc boundedContext
         {
             "name": "BoundedContext-name",
             "recommendations": [
