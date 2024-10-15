@@ -1128,7 +1128,7 @@
         currentGeneratorName: "",
         input: null,
         defaultGeneratorUiInputData: {
-          processingDDL: '',
+          processingDDL: [],
           processedDDLs: [],
           numberRemainingDDLs: 0,
           DDL: '',
@@ -1405,7 +1405,8 @@
         me.defaultGeneratorUiInputData = {
           ...me.defaultGeneratorUiInputData,
           DDLDraftTable: JSON.stringify(me.DDLDraftTable),
-          processedDDLs: me.defaultGeneratorUiInputData.processedDDLs.concat(model.processingDDL),
+          processingDDL: [],
+          processedDDLs: model.processedDDLs,
           numberRemainingDDLs: model.numberRemainingDDLs,
           DDL: model.DDL,
           boundedContextLists: model.boundedContextLists
