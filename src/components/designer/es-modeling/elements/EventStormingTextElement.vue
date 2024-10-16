@@ -83,6 +83,7 @@
                     name: 'Text',
                     author: null,
                     oldName: '',
+                    displayName: '',
                     elementView: {
                         '_type': 'org.uengine.modeling.model.Text',
                         'id': elementId,

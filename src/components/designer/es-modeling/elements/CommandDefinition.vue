@@ -300,6 +300,7 @@
                     id: elementId,
                     name: '',
                     oldName: '',
+                    displayName: '',
                     namePlural: '',
                     namePascalCase: '',
                     nameCamelCase: '',

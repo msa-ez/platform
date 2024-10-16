@@ -287,6 +287,7 @@
                     visibility : 'public',
                     name: '',
                     oldName: '',
+                    displayName: '',
                     namePascalCase: '',
                     nameCamelCase: '',
                     namePlural: '',
