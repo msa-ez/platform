@@ -977,7 +977,15 @@
 
             },
             getElementById: function (id) {
-                return this.elements[id];
+                if (this.elements[id]) {
+                    return this.elements[id];
+                } else {
+                    for (const eleId of Object.keys(this.elements)) {
+                        if (id === this.elements[eleId].$parent.value.id) {
+                            return this.elements[eleId];
+                        }
+                    }
+                }
             },
             render: function () {
                 var me = this;

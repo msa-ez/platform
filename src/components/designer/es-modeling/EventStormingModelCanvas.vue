@@ -3648,7 +3648,28 @@
                     //                    me.value.__ob__.dep.notify();
                 }
             },
+
+
             createAggregate(val, agg, originModel) {
+                var me = this;
+                
+                switch(val.generatorName) {
+                    case 'AggregateInsideGenerator':
+                        me._createAggregateByAggreateInsideGenerator(val)
+                        break;
+                    default:
+                        me._createAggregateByAggreateGenerator(val, agg, originModel)
+                        break;
+                }
+            },
+
+            _createAggregateByAggreateInsideGenerator(model) {
+                if(model.from !== "onGenerationFinished" || model.modelValue === null) return
+
+                console.log("[*] AggregateInsideGenerator 후처리 로직 Mock", model)
+            },
+
+            _createAggregateByAggreateGenerator(val, agg, originModel) {
                 var me = this;
 
                 // let codeGenerator = new CodeGeneratorCore({canvas: me})
@@ -3704,6 +3725,8 @@
                     me.changedByMe = true
                 }
             },
+
+
             getAttachedElements(val, agg){
                 var me = this;
 

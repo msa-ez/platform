@@ -142,6 +142,7 @@
                 return {
                     _type: 'org.uengine.modeling.model.Relation',
                     name: '',
+                    displayName: '',
                     id: elementId,
                     sourceElement: from,
                     targetElement: to,

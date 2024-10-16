@@ -101,9 +101,6 @@ import { group } from "d3";
             var me = this
             //필수
             try {
-                if (me.value && me.value.displayName === undefined) {
-                    me.$set(me.value, 'displayName', null);
-                }
                 me.setUserInfo()
                 me.setInitElement()
 
@@ -438,6 +435,7 @@ import { group } from "d3";
                     let component = me.canvas.elementTypes.find(x => x.component == me.canvas.getComponentByClassName(me.value._type).name)
                     me.image = component ? component.src : me.image
 
+                    if(!me.value.displayName) me.value.displayName = '';
                     // init panel value.
                     me.namePanel = me.value.name;
                     me.descriptionPanel = me.value.description;

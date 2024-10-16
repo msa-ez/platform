@@ -176,8 +176,8 @@
                     _type: 'org.uengine.modeling.model.Issue',
                     id: elementId,
                     name: '',
-                    displayName: '',
                     oldName: '',
+                    displayName: '',
                     description: null,
                     author: null,
                     elementView: {
