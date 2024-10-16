@@ -20,11 +20,19 @@ class DDLDraftGenerator extends JsonAIGenerator{
 Given the following existing DDL, create a proposal for how to define them into several aggregates.
 Or suggest a way to reorganize the given aggregates into a single bounded context.
 
-There must be no omissions in the following table DDLs or Aggregates: 
+There must be no omissions in the following all DDL tables or Aggregates: 
 ${this.client.input.DDL}
 
 Generate only the Bounded Context requested below, and do not create any other Bounded Contexts:
 ${this.client.input.boundedContextLists ? this.client.input.boundedContextLists : 'Define only the minimum bounded context'}
+
+Generate commands and events at scenario only for the mentioned domains as requested below:
+${this.client.input.scenario ? this.client.input.scenario : ''}
+
+Scenario Instructions:
+1. Only generate commands and events that are directly mentioned domain in the given request.
+2. Never create for a domain that is not mentioned.
+3. If no scenario is provided domain, do not generate any commands or events.
 
 ${this.processDDL()}
 
@@ -33,16 +41,16 @@ Recommendation Instructions:
 - Accordingly, I want to create aggregate information for each bounded context with multiple recommended domain entities so that one can be chosen from several options.
 - Create options based on different perspectives in DDD.
 - For each recommendation option, you should present AggregateRoots or value objects for each BoundedContext. Attributes are not necessary.
-- We also draw conclusions about recommended options by considering each point of view.
-- Option creates a variety of possible cases and at least two options are recommended.
+- Draw conclusions about recommended options by considering each point of view.
+- There must be at least two options for each Bounded context.
 
 
 The format must be as follows:
 {
     "processingDDL": [Currently processing DDL table names],
-    "processedDDLs": [processed DDL table name],
-    "numberRemainingDDLs": Number of remaining DDLs,
-    "boundedContexts": [
+    "processedDDLs": [Currently Processing DDL and previously processed DDL table name],
+    "numberRemainingDDLs": From the total number of DDLs, the number of DDLs that have not been processed,
+    "boundedContexts": [ // create only one of the requested boundedContexts or etc boundedContext
         {
             "name": "BoundedContext-name",
             "recommendations": [
@@ -60,7 +68,8 @@ The format must be as follows:
                 },
             ],
             "conclusions": "Write a conclusion for each option, explaining in which cases it would be best to choose that option.",
-            "ddl": "used ddl table names for this option"
+            "ddl": [processing ddl table names for this bounded context],
+            "scenario": [Commands and events mentioned in the request]
         }
     ]
 }
@@ -91,9 +100,13 @@ The format must be as follows:
 
         }else if(this.client.canvasType == 'cm' || this.client.canvasType == 'context-mapping-model-canvas'){
             text += `
-            Process only the DDLs related to the recommendations of the boundedContexts currently being generated, and add them to processedDDLs when processing is complete.
-            Ignore the DDLs that have been processed.
-            Handle ddl tables that are difficult to define in a certain bounded context with 'etc' bounded context.
+            Important Instructions:
+            1. Create boundedContexts one by one in order.
+            2. Process DDL tables related to the recommendations of the boundedContexts currently being generated.
+            3. Never handle DDL that has already been processed, as it is contained in ProcessedDDLs.
+            4. For DDL tables that are difficult to include in certain boundedContexts, create and include 'etc' boundedContext.
+            5. When creating an 'etc' boundedContext, DDL tables that have not yet been processed are included.
+            6. All DDL must be included without omission in the requested bounded contexts list and etc bounded context.
 
             The current processing status is as follows:
             Status of Current Bounded Context and Aggregates: ${this.client.input.DDLDraftTable}
@@ -135,13 +148,8 @@ The format must be as follows:
 
             parsedJson.boundedContexts.forEach(bc => {
                 let table = {
-                    headers: [
-                        { text: 'Option', value: 'option' },
-                        { text: 'Aggregates', value: 'aggregates' },
-                        { text: 'Pros', value: 'pros' },
-                        { text: 'Cons', value: 'cons' }
-                    ],
-                    items: [],
+                    recommendations: [],
+                    conclusions: '',
                     ddl: ''
                 };
 
@@ -152,17 +160,14 @@ The format must be as follows:
                             aggregatesStr = rec.aggregates.map(agg => {
                                 const entities = Array.isArray(agg.entities) ? agg.entities.join(', ') : '';
                                 const valueObjects = Array.isArray(agg.valueObjects) ? agg.valueObjects.join(', ') : '';
-                                if(entities && valueObjects){
-                                    return `${agg.name || ''} (Entities: ${entities}, ValueObjects: ${valueObjects})`;
-                                }else if(entities){
-                                    return `${agg.name || ''} (Entities: ${entities})`;
-                                }else if(valueObjects){
-                                    return `${agg.name || ''} (ValueObjects: ${valueObjects})`;
-                                }
-                            }).join(' / ');
+                                let result = `${agg.name || ''}`;
+                                if(entities) result += ` / Entities: ${entities}`;
+                                if(valueObjects) result += ` / ValueObjects: ${valueObjects}`;
+                                return result;
+                            }).join('|||');
                         }
         
-                        table.items.push({
+                        table.recommendations.push({
                             option: rec.option || '',
                             aggregates: aggregatesStr,
                             pros: rec.pros || '',
@@ -171,20 +176,17 @@ The format must be as follows:
                     });
 
                     if (bc.conclusions) {
-                        table.items.push({
-                            option: 'Conclusion',
-                            aggregates: bc.conclusions,
-                            pros: '',
-                            cons: '',
-                            isConclusion: true
-                        });
+                        table.conclusions = bc.conclusions;
                     }
 
                     if (bc.ddl) {
-                        table.ddl = bc.ddl || ''
+                        table.ddl = bc.ddl || '';
+                    }
+
+                    if (bc.scenario) {
+                        table.scenario = bc.scenario || '';
                     }
                 }
-
     
                 tables[bc.name] = table;
             });
@@ -207,7 +209,7 @@ The format must be as follows:
             console.log(e)
             let tables = {};
             return {
-                processingDDL: null,
+                processingDDL: [],
                 processedDDLs: [],
                 numberRemainingDDLs: 0,
                 tables: tables,

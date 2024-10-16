@@ -18,68 +18,65 @@
                 ></v-progress-circular>
             </div>
         </v-card-subtitle>
+
         <v-card-text v-if="DDLDraftTable && Object.keys(DDLDraftTable).length > 0">
-            <div v-for="(table, boundedContext) in DDLDraftTable" :key="boundedContext">
+        <v-tabs v-model="activeTab">
+            <v-tab v-for="(table, boundedContext) in DDLDraftTable" :key="boundedContext">
+            {{ boundedContext }}<br>
+            </v-tab>
+        </v-tabs>
+
+        <v-tabs-items v-model="activeTab">
+            <v-tab-item v-for="(table, boundedContext) in DDLDraftTable" :key="boundedContext">
                 <div class="d-flex align-center mb-2">
-                    <h3>{{ boundedContext }}</h3>
+                    <h3>Bounded Context: {{ boundedContext }}</h3>
                     <v-btn @click="reGenerate(table, boundedContext)"
                         v-if="defaultGeneratorUiInputData.numberRemainingDDLs === 0 && !defaultGeneratorUiInputData.reGenerate"
                         icon small
-                        v-on="on"
-                        style="margin-right: 5px; z-index:2"
+                        style="margin-left: 10px; z-index:2"
                         class="gs-es-auto-modling-btn"
                     >
                         <v-icon>mdi-refresh</v-icon>
                     </v-btn>
                 </div>
-                <v-data-table
-                    :headers="table.headers"
-                    :items="table.items"
-                    :items-per-page="5"
-                    item-key="option"
-                    show-select
-                    single-select
-                    v-model="selectedOptionItem[boundedContext]"
-                    @item-selected="onOptionSelected(boundedContext, $event)"
-                    class="elevation-1 mb-4"
-                    :hide-default-footer="true"
-                >
-                    <template v-slot:item.data-table-select="{ item, isSelected }">
-                        <v-checkbox
-                            v-if="!item.isConclusion"
-                            :input-value="isSelected"
-                            :true-value="item"
-                            :false-value="null"
-                            @change="selectOptionItem(boundedContext, item, $event)"
-                        ></v-checkbox>
-                    </template>
-                    <template v-slot:item.aggregates="{ item }">
-                        <div v-if="item.isConclusion">{{ item.aggregates }}</div>
-                        <div v-else>
-                            <div v-for="(aggregate, index) in parseAggregates(item.aggregates)" :key="index" class="mb-2">
-                                <strong>{{ aggregate.name }}</strong>
-                                <div class="ml-3">
-                                    <div v-if="aggregate.entities.length">
-                                        Entities: {{ aggregate.entities.join(', ') }}
-                                    </div>
-                                    <div v-if="aggregate.valueObjects.length">
-                                        Value Objects: {{ aggregate.valueObjects.join(', ') }}
-                                    </div>
+                    <v-card v-for="(recommendation, index) in table.recommendations" :key="index" class="mb-4">
+                        <v-card-title class="d-flex justify-space-between">
+                            <span>Option {{ recommendation.option }}</span>
+                            <v-checkbox
+                                :input-value="isSelected(boundedContext, recommendation)"
+                                @change="selectOptionItem(boundedContext, recommendation, $event)"
+                            ></v-checkbox>
+                        </v-card-title>
+                        <v-card-text>
+                            <div v-if="recommendation.aggregates">
+                                <div v-for="(aggregate, name) in parseAggregates(recommendation.aggregates)" :key="name">
+                                    <strong>{{ name }}</strong>
+                                    <div class="ml-3">
+                                        <div v-if="aggregate.entities.length > 0"><span class="font-weight-medium">Entities:</span> {{ aggregate.entities.join(', ') }}</div>
+                                        <div v-if="aggregate.valueObjects.length > 0"><span class="font-weight-medium">ValueObjects:</span> {{ aggregate.valueObjects.join(', ') }}</div>
+                                    </div><br>
                                 </div>
                             </div>
-                        </div>
-                    </template>
-                </v-data-table>
-                <v-textarea 
-                    :value="DDLDraftTable[boundedContext].scenario" 
+                            <h4>Pros:</h4>
+                            <p>{{ recommendation.pros }}</p>
+
+                            <h4>Cons:</h4>
+                            <p>{{ recommendation.cons }}</p>
+                        </v-card-text>
+                    </v-card>
+                <h4 class="mt-4">Conclusions:</h4>
+                <p>{{ table.conclusions }}</p>
+                <!-- <v-textarea 
+                    :value="table.scenario" 
                     @input="updateScenario(boundedContext, $event)" 
                     :label="`${boundedContext} Business Scenario`"
                     :placeholder="`입력이 없을 경우, CRUD 기능을 수행하는 시나리오를 자동으로 생성합니다.`"
                     :rows="3"
-                ></v-textarea><br><br>
-            </div>
+                ></v-textarea><br><br> -->
+            </v-tab-item>
+        </v-tabs-items>
 
-            <v-btn v-if="defaultGeneratorUiInputData.numberRemainingDDLs === 0" @click="generateFromDraft"
+        <v-btn v-if="defaultGeneratorUiInputData.numberRemainingDDLs === 0" @click="generateFromDraft"
                 :disabled="!isGeneratorButtonEnabled || (!selectedOptionItem || Object.keys(selectedOptionItem).length !== Object.keys(DDLDraftTable).length)"
                 block>Generate From Draft</v-btn>
         </v-card-text>
@@ -108,29 +105,25 @@
         },
         data() {
             return {
-                selectedOptionItem: {}
+                selectedOptionItem: {},
+                activeTab: null
             }
         },
         methods: {
             reGenerate(table, boundedContext){
-                this.$emit('reGenerate', table, boundedContext);
+            this.$emit('reGenerate', table, boundedContext);
             },
-            onOptionSelected(boundedContext, { item, value }) {
-                if (value) {
-                    this.$set(this.selectedOptionItem, boundedContext, [item]);
-                } else {
-                    this.$set(this.selectedOptionItem, boundedContext, []);
-                }
+            isSelected(boundedContext, recommendation) {
+                return this.selectedOptionItem[boundedContext] && 
+                    this.selectedOptionItem[boundedContext][0] === recommendation;
             },
-
-            selectOptionItem(boundedContext, item, isSelected) {
+            selectOptionItem(boundedContext, recommendation, isSelected) {
                 if (isSelected) {
-                    this.$set(this.selectedOptionItem, boundedContext, [item]);
+                    this.$set(this.selectedOptionItem, boundedContext, [recommendation]);
                 } else {
-                    this.$set(this.selectedOptionItem, boundedContext, []);
+                    this.$delete(this.selectedOptionItem, boundedContext);
                 }
             },
-
             updateScenario(boundedContext, value) {
                 if (!this.DDLDraftTable[boundedContext].hasOwnProperty('scenario')) {
                     this.$set(this.DDLDraftTable[boundedContext], 'scenario', value);
@@ -138,45 +131,48 @@
                     this.DDLDraftTable[boundedContext].scenario = value;
                 }
             },
-
-            parseAggregates(aggregatesString) {
-                return aggregatesString.split('/').map(aggregate => {
-                    const [name, details] = aggregate.split('(');
-                    const entitiesMatch = details.match(/Entities: ([^)]+)/);
-                    const valueObjectsMatch = details.match(/ValueObjects: ([^)]+)/);
-                    
-                    let entities = entitiesMatch ? entitiesMatch[1].split(',').map(e => e.trim()) : [];
-                    let valueObjects = valueObjectsMatch ? valueObjectsMatch[1].split(',').map(vo => vo.trim()) : [];
-                    
-                    // Remove duplicates
-                    valueObjects = [...new Set(valueObjects)];
-                    
-                    // Remove ValueObjects from entities
-                    entities = entities.filter(entity => !valueObjects.includes(entity));
-                    
-                    // Additional step: Remove any remaining ValueObjects from entities
-                    entities = entities.filter(entity => !entity.includes('ValueObjects:'));
-                    
-                    return {
-                        name: name.trim(),
-                        entities: entities,
-                        valueObjects: valueObjects
-                    };
-                });
-            },
-
-
             generateFromDraft(){
-                this._updateMissedInfos()
+                this._updateMissedInfos();
                 this.$emit('generateFromDraft', this.selectedOptionItem);
             },
+            parseAggregates(aggregatesString) {
+                if (!aggregatesString) {
+                    return {};
+                }
+                const aggregates = {};
+                const lines = aggregatesString.split('|||'); // '|||'로 구분된 aggregate들을 분리
 
+                lines.forEach(line => {
+                    const parts = line.split('/');
+                    if (parts.length < 2) return;
+
+                    const [name, ...rest] = parts;
+                    const aggregateName = name.trim();
+                    
+                    if (!aggregates[aggregateName]) {
+                    aggregates[aggregateName] = { entities: [], valueObjects: [] };
+                    }
+
+                    rest.forEach(part => {
+                    const [entityType, entityList] = part.split(':').map(s => s.trim());
+                    const entities = entityList.split(',').map(e => e.trim());
+
+                    if (entityType.toLowerCase() === 'entities') {
+                        aggregates[aggregateName].entities = entities;
+                    } else if (entityType.toLowerCase() === 'valueobjects') {
+                        aggregates[aggregateName].valueObjects = entities;
+                    }
+                    });
+                });
+
+                return aggregates;
+            },
             _updateMissedInfos(){
                 for(const boundedContext of Object.keys(this.selectedOptionItem)){
                     if(this.DDLDraftTable[boundedContext].ddl)
-                        this.selectedOptionItem[boundedContext][0].ddl = this.DDLDraftTable[boundedContext].ddl
+                        this.selectedOptionItem[boundedContext][0].ddl = this.DDLDraftTable[boundedContext].ddl;
                     if(this.DDLDraftTable[boundedContext].scenario)
-                        this.selectedOptionItem[boundedContext][0].scenario = this.DDLDraftTable[boundedContext].scenario
+                        this.selectedOptionItem[boundedContext][0].scenario = this.DDLDraftTable[boundedContext].scenario;
                 }
             }
         }
