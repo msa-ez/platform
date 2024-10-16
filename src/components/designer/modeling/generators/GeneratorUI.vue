@@ -145,18 +145,46 @@
                                     <v-tab-item v-show="canvasType === 'event-storming-model-canvas' || canvasType === 'context-mapping-model-canvas'">
                                         <v-card style="padding: 10px;">
                                             <v-textarea
-                                            v-model="DDL"
-                                            label="DDL"
-                                            rows="12"
-                                            no-resize
+                                                v-model="DDL"
+                                                label="DDL"
+                                                rows="12"
+                                                no-resize
                                             ></v-textarea>
                                             
-                                                    <v-textarea
-                                                        v-model="boundedContextLists"
-                                                        label="Describe your Bounded Contexts"
-                                                        rows="5"
-                                                        no-resize
-                                                    ></v-textarea>
+                                            <v-row align="center" no-gutters>
+                                                <v-col cols="10">
+                                                    <v-text-field
+                                                        v-model="boundedContextInput"
+                                                        label="Add a Bounded Context"
+                                                        dense
+                                                        outlined
+                                                        @keyup.enter="addBoundedContext"
+                                                    ></v-text-field>
+                                                </v-col>
+                                                <v-col cols="2">
+                                                    <v-btn icon @click="addBoundedContext" color="primary" class="ml-2" style="margin-bottom:40%; margin-right:70%;">
+                                                        <v-icon>mdi-plus</v-icon>
+                                                    </v-btn>
+                                                </v-col>
+                                            </v-row>
+                                            <v-sheet class="d-flex flex-wrap mt-2">
+                                                <v-chip
+                                                    v-for="(context, index) in boundedContextLists"
+                                                    :key="index"
+                                                    class="ma-1"
+                                                    close
+                                                    @click:close="removeBoundedContext(index)"
+                                                >
+                                                    {{ context }}
+                                                </v-chip>
+                                            </v-sheet>
+                                            <v-textarea
+                                                v-model="scenario"
+                                                label="Business Scenario"
+                                                rows="4"
+                                                no-resize
+                                                class="mt-4"
+                                            ></v-textarea>
 
                                             <v-btn v-if="!generationStopped" class="prompt_field generator-ui-text-field" @click="generate()" block>Generate</v-btn>
                                             <v-circular-progress indeterminate v-if="generationStopped"></v-circular-progress>
@@ -399,7 +427,9 @@
                 showStopBtn: true,
                 isShowRegenerateBtn: true,
                 DDL: "",
-                boundedContextLists: ""
+                boundedContextLists: [],
+                boundedContextInput: "",
+                scenario: "",
 
             }
         },
@@ -597,6 +627,7 @@
                     this.input = {}
                     this.input['DDL'] = this.DDL
                     this.input['boundedContextLists'] = this.boundedContextLists
+                    this.input['scenario'] = this.scenario
                     this.generatorComponent.generate();
                 }else{
                     this.focusedTabComponent = (this.userPanel < this.tabs.length) ? this.$refs[this.tabs[this.userPanel].component][0] : null
@@ -820,7 +851,18 @@
                     generator: this.generatorName,
                     model: model
                 });
-            }
+            },
+
+            addBoundedContext() {
+                if (this.boundedContextInput.trim()) {
+                    this.boundedContextLists.push(this.boundedContextInput.trim());
+                    this.boundedContextInput = "";
+                }
+            },
+            
+            removeBoundedContext(index) {
+                this.boundedContextLists.splice(index, 1);
+            },
         }
     }
 </script>

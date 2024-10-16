@@ -172,23 +172,6 @@
                               style="margin-right: 15px"
                       >
                         <slot name="menu-buttons">
-                          <v-menu class="pa-2" open-on-hover offset-y left v-if="isDevModeEnabled">
-                            <template v-slot:activator="{ on }">
-                              <div>
-                                <v-btn
-                                        class="gs-model-z-index-1"
-                                        color="primary"
-                                        text
-                                        style="margin-right: 5px"
-                                        :disabled="disableBtn"
-                                        @click="distinstTest()"
-                                >
-                                  <v-icon>mdi-ab-testing</v-icon>
-                                </v-btn>
-                              </div>
-                            </template>
-                          </v-menu>
-
                           <v-menu class="pa-2" open-on-hover offset-y left>
                             <template v-slot:activator="{ on }">
                               <div>
@@ -1064,6 +1047,7 @@
             <ModelDraftDialog
                 :DDLDraftTable="DDLDraftTable"
                 :defaultGeneratorUiInputData="defaultGeneratorUiInputData"
+                :isGeneratorButtonEnabled="isDraftGeneratorButtonEnabled"
                 @reGenerate="reGenerate"
                 @generateFromDraft="generateFromDraft"
             ></ModelDraftDialog>
@@ -1111,10 +1095,11 @@
   import ModelDraftDialog from "../modeling/ModelDraftDialog";
   import BoundedContextCMUtil from './modules/BoundedContextCMUtil'
   import EventStormingUtil from './modules/EventStormingUtil'
+  import TestByUsingCommand from './mixins/TestByUsingCommand'
 
   export default {
     name: "context-mapping-model-canvas",
-    mixins: [EventStormingModelCanvas],
+    mixins: [EventStormingModelCanvas, TestByUsingCommand],
     components: { 
       GeneratorUI,
       ModelDraftDialog
@@ -1143,7 +1128,7 @@
         currentGeneratorName: "",
         input: null,
         defaultGeneratorUiInputData: {
-          processingDDL: '',
+          processingDDL: [],
           processedDDLs: [],
           numberRemainingDDLs: 0,
           DDL: '',
@@ -1153,7 +1138,8 @@
         DDLDraftTable: {},
         showDDLDraftDialog: false,
         createEventStormingInputs: [],
-        DDLCreateESActionsGeneratorRetryCount: 3
+        DDLCreateESActionsGeneratorRetryCount: 3,
+        isDraftGeneratorButtonEnabled: true
       };
     },
     watch: {
@@ -1177,533 +1163,9 @@
           }
         },
     },
-    computed: {
-      isDevModeEnabled() {
-        return typeof window !== 'undefined' && 
-              window.localStorage && 
-              window.localStorage.getItem('isDevMode') === 'true';
-      }
-    },
     created(){
     },
     methods: {
-      distinstTest(){
-        const COMMAND = prompt("커맨드 입력")
-        if(!COMMAND) return
-
-        switch(COMMAND) {
-          case "DDLCreateESActionsGenerator":
-            this._test_DDLCreateESActionsGenerator()
-            break
-          case "BoundedContextCMUtil":
-            this._test_BoundedContextCMUtil()
-            break
-          case "makeNewEventStormingProject":
-            this._test__makeNewEventStormingProject()
-            break
-          case "generateFromDraft":
-            this._test_generateFromDraft()
-            break
-        }
-      },
-
-      _test_DDLCreateESActionsGenerator(){
-        var me = this
-        me.__generate('DDLCreateESActionsGenerator', {
-          ddl: `CREATE TABLE customers (
-customer_id INT PRIMARY KEY AUTO_INCREMENT,
-name VARCHAR(100) NOT NULL,
-phone VARCHAR(20) NOT NULL,
-address VARCHAR(255) NOT NULL,
-total_points INT DEFAULT 0
-);`,
-          selectedOption: JSON.stringify({"고객":[{"option":1,"aggregates":"고객관리 (Entities: 고객, 고객쿠폰, 고객주소, 고객문의, 고객결제수단, 선호상점, ValueObjects: 알림) / 리뷰관리 (Entities: 리뷰, 라이더리뷰, 상점리뷰)","pros":"Balanced Complexity: 고객과 관련된 모든 정보를 한 곳에서 관리할 수 있어 일관된 고객 경험을 제공할 수 있습니다.","cons":"Low Cohesion: 고객과 관련된 모든 정보를 한 곳에 모으다 보니, 특정 기능에 대한 변경이 전체 시스템에 영향을 미칠 수 있습니다.","ddl":"customers, customer_coupons, customer_addresses, customer_inquiries, customer_payment_methods, favorite_stores, notifications, reviews, rider_reviews, store_reviews"}],"주문":[{"option":1,"aggregates":"주문관리 (Entities: 주문, 주문아이템, 결제, 결제기록, ValueObjects: 프로모션코드)","pros":"Balanced Complexity: 주문과 관련된 모든 정보를 한 곳에서 관리할 수 있어 일관된 주문 처리가 가능합니다.","cons":"Low Cohesion: 주문과 결제, 프로모션 코드까지 모두 한 곳에 모으다 보니, 특정 기능에 대한 변경이 전체 시스템에 영향을 미칠 수 있습니다.","ddl":"orders, order_items, payments, payment_history, promotion_codes"}],"상점":[{"option":1,"aggregates":"상점관리 (Entities: 상점, 상점직원, 상점카테고리, 상점카테고리매핑, 상점운영시간, 아이템, 할인이벤트, 배송구역, 상품재고)","pros":"Balanced Complexity: 상점과 관련된 모든 정보를 한 곳에서 관리할 수 있어 일관된 상점 운영이 가능합니다.","cons":"Low Cohesion: 상점과 관련된 모든 정보를 한 곳에 모으다 보니, 특정 기능에 대한 변경이 전체 시스템에 영향을 미칠 수 있습니다.","ddl":"stores, store_employees, store_categories, store_category_mapping, store_hours, items, discount_events, delivery_zones, item_inventory"}],"배달":[{"option":1,"aggregates":"배달관리 (Entities: 배달)","pros":"Balanced Complexity: 배달과 관련된 모든 정보를 한 곳에서 관리할 수 있어 일관된 배달 처리가 가능합니다.","cons":"Low Cohesion: 배달과 관련된 모든 정보를 한 곳에 모으다 보니, 특정 기능에 대한 변경이 전체 시스템에 영향을 미칠 수 있습니다.","ddl":"deliveries"}],"etc":[{"option":1,"aggregates":"쿠폰관리 (Entities: 쿠폰, 고객쿠폰) / 라이더관리 (Entities: 라이더, 라이더리뷰)","pros":"Balanced Complexity: 쿠폰과 라이더 관련 정보를 각각의 애그리게이트로 관리하여 복잡성을 줄일 수 있습니다.","cons":"Low Cohesion: 쿠폰과 라이더 관련 정보가 별도의 애그리게이트로 관리되어, 관련된 기능을 통합적으로 관리하기 어려울 수 있습니다.","ddl":"coupons, customer_coupons, riders, rider_reviews"}]}),
-          boundedContexts: [`고객`],
-          userInfo: me.userInfo,
-          information: me.information
-        })
-      },
-
-      _test_BoundedContextCMUtil(){
-        this.__addNewBoundedContextCM('TEST CONTEXT 1')
-        this.__addNewBoundedContextCM('TEST CONTEXT 2')
-        this.__addNewBoundedContextCM('TEST CONTEXT 3')
-        this.__addNewBoundedContextCM('TEST CONTEXT 4')
-        this.__addNewBoundedContextCM('TEST CONTEXT 5')
-      },
-
-      _test__makeNewEventStormingProject() {
-        let modelValue = {
-    "generatorName": "DDLCreateESActionsGenerator",
-    "modelValue": {
-        "actions": [
-            {
-                "objectType": "BoundedContext",
-                "ids": {
-                    "boundedContextId": "9592fb5e-9f70-c8c5-fad7-562c92ccf464"
-                },
-                "args": {
-                    "boundedContextName": "CustomerService"
-                },
-                "type": "create"
-            },
-            {
-                "objectType": "Aggregate",
-                "ids": {
-                    "boundedContextId": "9592fb5e-9f70-c8c5-fad7-562c92ccf464",
-                    "aggregateId": "73226824-f6fa-7c8d-01a9-1d75f32c2ca3"
-                },
-                "args": {
-                    "aggregateName": "Customer",
-                    "properties": [
-                        {
-                            "name": "customerId",
-                            "type": "Long",
-                            "isKey": true
-                        },
-                        {
-                            "name": "name"
-                        },
-                        {
-                            "name": "totalPoints",
-                            "type": "Long"
-                        },
-                        {
-                            "name": "phone",
-                            "type": "Contact"
-                        },
-                        {
-                            "name": "address",
-                            "type": "Address"
-                        }
-                    ]
-                },
-                "type": "create"
-            },
-            {
-                "objectType": "ValueObject",
-                "ids": {
-                    "boundedContextId": "9592fb5e-9f70-c8c5-fad7-562c92ccf464",
-                    "aggregateId": "73226824-f6fa-7c8d-01a9-1d75f32c2ca3",
-                    "valueObjectId": "4b7f1194-bf69-7e92-b20e-72a04afb75b7"
-                },
-                "args": {
-                    "valueObjectName": "Contact",
-                    "properties": [
-                        {
-                            "name": "phone"
-                        }
-                    ]
-                },
-                "type": "create"
-            },
-            {
-                "objectType": "ValueObject",
-                "ids": {
-                    "boundedContextId": "9592fb5e-9f70-c8c5-fad7-562c92ccf464",
-                    "aggregateId": "73226824-f6fa-7c8d-01a9-1d75f32c2ca3",
-                    "valueObjectId": "22f1f105-8d87-98a1-56be-68f0a34d028c"
-                },
-                "args": {
-                    "valueObjectName": "Address",
-                    "properties": [
-                        {
-                            "name": "address"
-                        }
-                    ]
-                },
-                "type": "create"
-            }
-        ],
-        "createdESValue": {
-            "elements": {
-                "9592fb5e-9f70-c8c5-fad7-562c92ccf464": {
-                    "_type": "org.uengine.modeling.model.BoundedContext",
-                    "aggregates": [],
-                    "author": "mLINTrncgFPMvUhzG7kULDmGOpa2",
-                    "description": null,
-                    "id": "9592fb5e-9f70-c8c5-fad7-562c92ccf464",
-                    "elementView": {
-                        "_type": "org.uengine.modeling.model.BoundedContext",
-                        "height": 590,
-                        "id": "9592fb5e-9f70-c8c5-fad7-562c92ccf464",
-                        "style": "{}",
-                        "width": 560,
-                        "x": 650,
-                        "y": 450
-                    },
-                    "gitURL": null,
-                    "hexagonalView": {
-                        "_type": "org.uengine.modeling.model.BoundedContextHexagonal",
-                        "height": 350,
-                        "id": "9592fb5e-9f70-c8c5-fad7-562c92ccf464",
-                        "style": "{}",
-                        "width": 350,
-                        "x": 235,
-                        "y": 365
-                    },
-                    "members": [],
-                    "name": "CustomerService",
-                    "displayName": "",
-                    "oldName": "",
-                    "policies": [],
-                    "portGenerated": null,
-                    "preferredPlatform": "template-spring-boot",
-                    "preferredPlatformConf": {},
-                    "rotateStatus": false,
-                    "tempId": "",
-                    "templatePerElements": {},
-                    "views": []
-                },
-                "73226824-f6fa-7c8d-01a9-1d75f32c2ca3": {
-                    "aggregateRoot": {
-                        "_type": "org.uengine.modeling.model.AggregateRoot",
-                        "fieldDescriptors": [
-                            {
-                                "className": "Long",
-                                "isCopy": false,
-                                "isKey": true,
-                                "name": "customerId",
-                                "nameCamelCase": "customerId",
-                                "namePascalCase": "CustomerId",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            },
-                            {
-                                "className": "String",
-                                "isCopy": false,
-                                "isKey": false,
-                                "name": "name",
-                                "nameCamelCase": "name",
-                                "namePascalCase": "Name",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            },
-                            {
-                                "className": "Long",
-                                "isCopy": false,
-                                "isKey": false,
-                                "name": "totalPoints",
-                                "nameCamelCase": "totalPoints",
-                                "namePascalCase": "TotalPoints",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            },
-                            {
-                                "className": "Contact",
-                                "isCopy": false,
-                                "isKey": false,
-                                "name": "phone",
-                                "nameCamelCase": "phone",
-                                "namePascalCase": "Phone",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            },
-                            {
-                                "className": "Address",
-                                "isCopy": false,
-                                "isKey": false,
-                                "name": "address",
-                                "nameCamelCase": "address",
-                                "namePascalCase": "Address",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            }
-                        ],
-                        "entities": {
-                            "elements": {
-                                "336ff226-62cb-e147-219b-7028eb21b4b4": {
-                                    "_type": "org.uengine.uml.model.Class",
-                                    "id": "336ff226-62cb-e147-219b-7028eb21b4b4",
-                                    "name": "Customer",
-                                    "namePascalCase": "Customer",
-                                    "nameCamelCase": "customer",
-                                    "namePlural": "Customers",
-                                    "fieldDescriptors": [
-                                        {
-                                            "className": "Long",
-                                            "isCopy": false,
-                                            "isKey": true,
-                                            "name": "customerId",
-                                            "displayName": "",
-                                            "nameCamelCase": "customerId",
-                                            "namePascalCase": "CustomerId",
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "inputUI": null,
-                                            "options": null
-                                        },
-                                        {
-                                            "className": "String",
-                                            "isCopy": false,
-                                            "isKey": false,
-                                            "name": "name",
-                                            "displayName": "",
-                                            "nameCamelCase": "name",
-                                            "namePascalCase": "Name",
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "inputUI": null,
-                                            "options": null
-                                        },
-                                        {
-                                            "className": "Long",
-                                            "isCopy": false,
-                                            "isKey": false,
-                                            "name": "totalPoints",
-                                            "displayName": "",
-                                            "nameCamelCase": "totalPoints",
-                                            "namePascalCase": "TotalPoints",
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "inputUI": null,
-                                            "options": null
-                                        },
-                                        {
-                                            "className": "Contact",
-                                            "isCopy": false,
-                                            "isKey": false,
-                                            "name": "phone",
-                                            "displayName": "",
-                                            "nameCamelCase": "phone",
-                                            "namePascalCase": "Phone",
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "inputUI": null,
-                                            "options": null
-                                        },
-                                        {
-                                            "className": "Address",
-                                            "isCopy": false,
-                                            "isKey": false,
-                                            "name": "address",
-                                            "displayName": "",
-                                            "nameCamelCase": "address",
-                                            "namePascalCase": "Address",
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "inputUI": null,
-                                            "options": null
-                                        }
-                                    ],
-                                    "operations": [],
-                                    "elementView": {
-                                        "_type": "org.uengine.uml.model.Class",
-                                        "id": "336ff226-62cb-e147-219b-7028eb21b4b4",
-                                        "x": 200,
-                                        "y": 200,
-                                        "width": 200,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "titleH": 50,
-                                        "subEdgeH": 120,
-                                        "fieldH": 90,
-                                        "methodH": 30
-                                    },
-                                    "selected": false,
-                                    "relations": [],
-                                    "parentOperations": [],
-                                    "relationType": null,
-                                    "isVO": false,
-                                    "isAbstract": false,
-                                    "isInterface": false,
-                                    "isAggregateRoot": true,
-                                    "parentId": "73226824-f6fa-7c8d-01a9-1d75f32c2ca3"
-                                },
-                                "4b7f1194-bf69-7e92-b20e-72a04afb75b7": {
-                                    "_type": "org.uengine.uml.model.vo.Class",
-                                    "id": "4b7f1194-bf69-7e92-b20e-72a04afb75b7",
-                                    "name": "Contact",
-                                    "namePascalCase": "Contact",
-                                    "nameCamelCase": "contact",
-                                    "fieldDescriptors": [
-                                        {
-                                            "className": "String",
-                                            "isKey": false,
-                                            "label": "- phone: String",
-                                            "name": "phone",
-                                            "nameCamelCase": "Phone",
-                                            "namePascalCase": "phone",
-                                            "_type": "org.uengine.model.FieldDescriptor"
-                                        }
-                                    ],
-                                    "operations": [],
-                                    "elementView": {
-                                        "_type": "org.uengine.uml.model.vo.address.Class",
-                                        "id": "4b7f1194-bf69-7e92-b20e-72a04afb75b7",
-                                        "x": 700,
-                                        "y": 152,
-                                        "width": 200,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "titleH": 50,
-                                        "subEdgeH": 170,
-                                        "fieldH": 150,
-                                        "methodH": 30
-                                    },
-                                    "selected": false,
-                                    "parentOperations": [],
-                                    "relationType": null,
-                                    "isVO": true,
-                                    "relations": [],
-                                    "groupElement": null,
-                                    "isAggregateRoot": false,
-                                    "namePlural": "Contacts",
-                                    "isAbstract": false,
-                                    "isInterface": false
-                                },
-                                "22f1f105-8d87-98a1-56be-68f0a34d028c": {
-                                    "_type": "org.uengine.uml.model.vo.Class",
-                                    "id": "22f1f105-8d87-98a1-56be-68f0a34d028c",
-                                    "name": "Address",
-                                    "namePascalCase": "Address",
-                                    "nameCamelCase": "address",
-                                    "fieldDescriptors": [
-                                        {
-                                            "className": "String",
-                                            "isKey": false,
-                                            "label": "- address: String",
-                                            "name": "address",
-                                            "nameCamelCase": "Address",
-                                            "namePascalCase": "address",
-                                            "_type": "org.uengine.model.FieldDescriptor"
-                                        }
-                                    ],
-                                    "operations": [],
-                                    "elementView": {
-                                        "_type": "org.uengine.uml.model.vo.address.Class",
-                                        "id": "22f1f105-8d87-98a1-56be-68f0a34d028c",
-                                        "x": 950,
-                                        "y": 152,
-                                        "width": 200,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "titleH": 50,
-                                        "subEdgeH": 170,
-                                        "fieldH": 150,
-                                        "methodH": 30
-                                    },
-                                    "selected": false,
-                                    "parentOperations": [],
-                                    "relationType": null,
-                                    "isVO": true,
-                                    "relations": [],
-                                    "groupElement": null,
-                                    "isAggregateRoot": false,
-                                    "namePlural": "Addresss",
-                                    "isAbstract": false,
-                                    "isInterface": false
-                                }
-                            },
-                            "relations": {}
-                        },
-                        "operations": []
-                    },
-                    "author": "mLINTrncgFPMvUhzG7kULDmGOpa2",
-                    "boundedContext": {
-                        "name": "9592fb5e-9f70-c8c5-fad7-562c92ccf464",
-                        "id": "9592fb5e-9f70-c8c5-fad7-562c92ccf464"
-                    },
-                    "commands": [],
-                    "description": null,
-                    "id": "73226824-f6fa-7c8d-01a9-1d75f32c2ca3",
-                    "elementView": {
-                        "_type": "org.uengine.modeling.model.Aggregate",
-                        "id": "73226824-f6fa-7c8d-01a9-1d75f32c2ca3",
-                        "x": 650,
-                        "y": 450,
-                        "width": 130,
-                        "height": 400
-                    },
-                    "events": [],
-                    "hexagonalView": {
-                        "_type": "org.uengine.modeling.model.AggregateHexagonal",
-                        "id": "73226824-f6fa-7c8d-01a9-1d75f32c2ca3",
-                        "x": 0,
-                        "y": 0,
-                        "subWidth": 0,
-                        "width": 0
-                    },
-                    "name": "Customer",
-                    "displayName": "",
-                    "nameCamelCase": "customer",
-                    "namePascalCase": "Customer",
-                    "namePlural": "",
-                    "rotateStatus": false,
-                    "selected": false,
-                    "_type": "org.uengine.modeling.model.Aggregate"
-                }
-            },
-            "relations": {}
-        }
-    },
-    "modelRawValue": "```json\n{\"actions\":[{\"objectType\":\"BoundedContext\",\"ids\":{\"boundedContextId\":\"bc-customer\"},\"args\":{\"boundedContextName\":\"CustomerService\"}},{\"objectType\":\"Aggregate\",\"ids\":{\"boundedContextId\":\"bc-customer\",\"aggregateId\":\"agg-customer\"},\"args\":{\"aggregateName\":\"Customer\",\"properties\":[{\"name\":\"customerId\",\"type\":\"Long\",\"isKey\":true},{\"name\":\"name\"},{\"name\":\"totalPoints\",\"type\":\"Long\"},{\"name\":\"phone\",\"type\":\"Contact\"},{\"name\":\"address\",\"type\":\"Address\"}]}},{\"objectType\":\"ValueObject\",\"ids\":{\"boundedContextId\":\"bc-customer\",\"aggregateId\":\"agg-customer\",\"valueObjectId\":\"vo-customer-contact\"},\"args\":{\"valueObjectName\":\"Contact\",\"properties\":[{\"name\":\"phone\"}]}},{\"objectType\":\"ValueObject\",\"ids\":{\"boundedContextId\":\"bc-customer\",\"aggregateId\":\"agg-customer\",\"valueObjectId\":\"vo-customer-address\"},\"args\":{\"valueObjectName\":\"Address\",\"properties\":[{\"name\":\"address\"}]}}]}\n```"
-}
-        this.__makeNewEventStormingProject(modelValue.modelValue.createdESValue)
-      },
-
-      _test_generateFromDraft() {
-        const mock_selectedOptionItem = {
-            "고객": [
-                {
-                    "option": 1,
-                    "aggregates": "고객 (Entities: 고객, ValueObjects: 고객 정보)",
-                    "pros": "고객 중심의 설계: 고객 정보를 중심으로 모든 고객 관련 데이터를 관리할 수 있습니다.",
-                    "cons": "확장성 제한: 고객 정보에 새로운 기능을 추가할 때 복잡할 수 있습니다.",
-                    "ddl": "customers"
-                }
-            ],
-            "상점": [
-                {
-                    "option": 2,
-                    "aggregates": "상점 카테고리 (Entities: 상점, ValueObjects: 카테고리 정보)",
-                    "pros": "카테고리 관리 최적화: 상점의 카테고리 정보를 별도로 관리하여 카테고리 관련 기능을 확장하기 용이합니다.",
-                    "cons": "상점 정보 분리: 상점의 기본 정보와 카테고리 정보가 분리되어 있어 관리가 복잡할 수 있습니다.",
-                    "ddl": "stores"
-                }
-            ],
-            "etc": [
-                {
-                    "option": 1,
-                    "aggregates": "리뷰 (Entities: 리뷰, ValueObjects: 리뷰 정보)",
-                    "pros": "리뷰 중심의 설계: 리뷰 정보를 중심으로 모든 리뷰 관련 데이터를 관리할 수 있습니다.",
-                    "cons": "확장성 제한: 리뷰 정보에 새로운 기능을 추가할 때 복잡할 수 있습니다.",
-                    "ddl": "reviews, store_categories"
-                }
-            ]
-        }
-
-        this.defaultGeneratorUiInputData.DDL = `-- 고객 테이블
-CREATE TABLE customers (
-    customer_id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    phone VARCHAR(20) NOT NULL,
-    address VARCHAR(255) NOT NULL,
-    total_points INT DEFAULT 0
-);
--- 상점 테이블
-CREATE TABLE stores (
-    store_id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    address VARCHAR(255) NOT NULL,
-    phone VARCHAR(20) NOT NULL
-);
--- 리뷰 테이블
-CREATE TABLE reviews (
-    review_id INT PRIMARY KEY AUTO_INCREMENT,
-    customer_id INT,
-    order_id INT,
-    rating INT CHECK (rating >= 1 AND rating <= 5),
-    comment TEXT,
-    review_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (customer_id) REFERENCES customers(customer_id),
-    FOREIGN KEY (order_id) REFERENCES orders(order_id)
-);
--- 상점 카테고리 테이블
-CREATE TABLE store_categories (
-    category_id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(50) NOT NULL
-);`
-
-        this.generateFromDraft(mock_selectedOptionItem)
-      },
-
-
       setCanvasType(){
           Vue.use(ContextMappingModeling);
           this.canvasType = 'cm'
@@ -1729,6 +1191,7 @@ CREATE TABLE store_categories (
 
           if(boundedContext && model){
             defaultValue.elements = model.elements
+            defaultValue.relations = model.relations
           }
 
           await me.putObject(`db://definitions/${settingProjectId}/information`, {
@@ -1766,7 +1229,12 @@ CREATE TABLE store_categories (
           })
 
           if( me.storageCondition.type == 'es' ){
-            let element = BoundedContext.computed.createNew(
+            let element  = null
+            if(boundedContext && boundedContext._type === "org.uengine.modeling.model.BoundedContext") {
+              element = boundedContext
+            } else {
+
+              element = BoundedContext.computed.createNew(
                     null,
                     this.uuid(),
                     800, //x
@@ -1775,10 +1243,13 @@ CREATE TABLE store_categories (
                     590, //height
                     '' , //description
                     ''   //label
-            );
-            element.name = contextBC.name
-            element.elementView.width = 560
-            element.elementView.height = 590
+              );
+              element.name = contextBC.name
+              element.elementView.width = 560
+              element.elementView.height = 590
+
+            }
+
 
             // 하위 캔버스에 그려질 모델 aggregates에 bc 정보 추가
             if(boundedContext && model){
@@ -1925,12 +1396,17 @@ CREATE TABLE store_categories (
       _processDDLDraftGenerator(model) {
         var me = this
         me.showDDLDraftDialog = true
+        me.isDraftGeneratorButtonEnabled = true
+
+        if(me.defaultGeneratorUiInputData['reGenerate'])
+        me.defaultGeneratorUiInputData['reGenerate'] = false
 
         me.DDLDraftTable = Object.assign(me.DDLDraftTable, model.tables)
         me.defaultGeneratorUiInputData = {
           ...me.defaultGeneratorUiInputData,
           DDLDraftTable: JSON.stringify(me.DDLDraftTable),
-          processedDDLs: me.defaultGeneratorUiInputData.processedDDLs.concat(model.processingDDL),
+          processingDDL: [],
+          processedDDLs: model.processedDDLs,
           numberRemainingDDLs: model.numberRemainingDDLs,
           DDL: model.DDL,
           boundedContextLists: model.boundedContextLists
@@ -1970,12 +1446,24 @@ CREATE TABLE store_categories (
 
 
       generateFromDraft(selectedOptionItem){
-        var me = this
-        console.log("[*] Draft를 기반으로 이벤트 캔버스 모델 생성중...", {selectedOptionItem, ddl:me.defaultGeneratorUiInputData.DDL})
+        try {
 
-        me.createEventStormingInputs = me._getCreateEventStormingInputs(selectedOptionItem, me.defaultGeneratorUiInputData.DDL)
-        me.DDLCreateESActionsGeneratorRetryCount = 3
-        me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())
+          var me = this
+          console.log("[*] Draft를 기반으로 이벤트 캔버스 모델 생성중...", {selectedOptionItem, ddl:me.defaultGeneratorUiInputData.DDL})
+
+          me.isDraftGeneratorButtonEnabled = false
+          me.createEventStormingInputs = me._getCreateEventStormingInputs(selectedOptionItem, me.defaultGeneratorUiInputData.DDL)
+          me.DDLCreateESActionsGeneratorRetryCount = 3
+          me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())
+
+        }
+        catch(e) {
+
+          console.error("[!] DDL 초안에서 이벤트 스토밍 생성 요청도중 에러 발생 !", e)
+          alert("DDL 초안에서 이벤트 스토밍 생성 요청도중 에러가 발생했습니다. 잠시 후 다시 시도해주세요.\n" + e.message)
+          me.isDraftGeneratorButtonEnabled = true
+          
+        }
       },
 
       _getCreateEventStormingInputs(selectedOptionItem, ddl) {
@@ -1985,11 +1473,19 @@ CREATE TABLE store_categories (
         for(let boundedContextKey of Object.keys(selectedOptionItem)){
           let boundedContextInfo = selectedOptionItem[boundedContextKey][0]
 
-          const usedDDL = (boundedContextInfo.ddl) ? this.__getDDLsFromTableNames(boundedContextInfo.ddl.split(", "), ddl) : ""
+          let usedDDL = ""
+          if(boundedContextInfo.ddl) {
+            if(typeof boundedContextInfo.ddl === "object") 
+              boundedContextInfo.ddl = Object.values(boundedContextInfo.ddl).join(", ")
+            usedDDL = this.__getDDLsFromTableNames(boundedContextInfo.ddl.split(", "), ddl)
+          }
+
+          const functionRequests = (boundedContextInfo.scenario) ? boundedContextInfo.scenario : "Add the appropriate Create and Delete operations for the given DDL."
           eventStormingInputs.push({
             ddl: usedDDL,
             selectedOption: boundedContextInfo.aggregates,
             boundedContexts: [boundedContextKey],
+            functionRequests: functionRequests,
             userInfo: me.userInfo,
             information: me.information
           })
@@ -2043,12 +1539,13 @@ CREATE TABLE store_categories (
           const relatedElements = EventStormingUtil.getOnlyRelatedElements(boundedContext, esValue)
           relatedElements.forEach(element => { me.mirrorValue.elements[element.id] = element })
 
+          const projectId = `${me.information.associatedProject}-${createdBoundedContextCM.name}-${(new Date()).getTime()}`
           me.storageCondition = {
             action: 'save',
             title: 'Edit BoundedContext',
             comment: '',
-            projectName: `${me.information.associatedProject}-${createdBoundedContextCM.name}`,
-            projectId: `${me.information.associatedProject}-${createdBoundedContextCM.name}`,
+            projectName: projectId,
+            projectId: projectId,
             version: 'v0.0.1',
             error: null,
             loading: false,
@@ -2058,7 +1555,7 @@ CREATE TABLE store_categories (
             element: createdBoundedContextCM
           }
           const relatedESValue = EventStormingUtil.getOnlyRelatedESValue(boundedContext, esValue)
-          me.saveModel(createdBoundedContextCM.name, relatedESValue)
+          me.saveModel(boundedContext, relatedESValue)
           me.changedByMe = true
 
         })
@@ -2073,8 +1570,18 @@ CREATE TABLE store_categories (
         return createdBoundedContextCM
       },
       
-      reGenerate(table){
-        console.log("[*] Re-generate", table)
+      reGenerate(table, boundedContext){
+        console.log("[*] Re-generate", table, boundedContext)
+        let me = this
+
+        me.defaultGeneratorUiInputData['reGenerate'] = true;
+        me.defaultGeneratorUiInputData['reGenerateTable'] = {[boundedContext]: table}
+
+        me.defaultGeneratorUiInputData['boundedContextLists'] = boundedContext
+        me.defaultGeneratorUiInputData['processedDDLs'] = []
+        me.defaultGeneratorUiInputData.numberRemainingDDLs = 0
+
+        me.__generate('DDLDraftGenerator', me.defaultGeneratorUiInputData)
       }
     },
   };
