@@ -182,6 +182,7 @@
                     _type: 'org.uengine.modeling.model.PBC',
                     id: elementId,
                     name: 'PBC' + x,
+                    displayName: '',
                     description: null,
                     author: null,
                     boundedContextes: [],

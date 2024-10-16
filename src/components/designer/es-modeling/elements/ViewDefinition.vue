@@ -310,6 +310,7 @@
                     visibility : 'public',
                     name: '',
                     oldName: '',
+                    displayName: '',
                     namePascalCase: '',
                     namePlural: '',
                     aggregate: {},

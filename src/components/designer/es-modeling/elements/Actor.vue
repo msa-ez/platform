@@ -187,6 +187,7 @@
                     id: elementId,
                     name: '',
                     oldName: '',
+                    displayName: '',
                     description: '',
                     author: null,
                     innerAggregate: {
