@@ -1134,6 +1134,7 @@
           DDL: '',
           boundedContextLists: '',
           DDLDraftTable: {},
+          reGenerate: false
         },
         DDLDraftTable: {},
         showDDLDraftDialog: false,

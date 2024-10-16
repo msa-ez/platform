@@ -95,6 +95,8 @@ The format must be as follows:
             This is the DDL used when creating this recommendation. Just use these again to create:
             ${this.client.input.ProcessingDDLs}
 
+            numberRemainingDDLs: ${this.client.input.ProcessingDDLs.length}
+
             Please create new recommendations, excluding the results you've already given.
             Use only the bounded context names exactly as they appear above and generate them.
             Since newly generated Recommendations will overwrite the results, start the option numbers from 1.
