@@ -1577,6 +1577,7 @@
         me.defaultGeneratorUiInputData['reGenerate'] = true;
         me.defaultGeneratorUiInputData['reGenerateTable'] = {[boundedContext]: table}
 
+        me.defaultGeneratorUiInputData['ProcessingDDLs'] = table.ddl
         me.defaultGeneratorUiInputData['boundedContextLists'] = boundedContext
         me.defaultGeneratorUiInputData['processedDDLs'] = []
         me.defaultGeneratorUiInputData.numberRemainingDDLs = 0
