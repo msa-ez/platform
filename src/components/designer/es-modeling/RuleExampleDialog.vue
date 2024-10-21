@@ -13,7 +13,7 @@
                         <td colspan="999">
                             <v-text-field 
                                 v-model="rule.description"
-                                label="Describe your business logic"
+                                label="Describe your business logic here"
                             ></v-text-field>
                         </td>
                     </tr>
