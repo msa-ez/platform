@@ -2130,12 +2130,6 @@
                     }
 
                     return []
-                }else{
-                    var changeCode = me.codeLists.find(x => x.fileName == me.openCode[0].fileName)
-                        if(changeCode && changeCode.code){
-                            me.openCode[0].code = me.codeAlign(changeCode.code)
-                        }
-                        return me.openCode
                 }
             },
 
