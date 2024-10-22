@@ -184,13 +184,13 @@ The approximate structure is as follows.
         let summarizedESValue = {}
         for(let boundedContext of getAllBoundedContexts(esValue)) {
             restoreBoundedContextAggregatesProperties(esValue, boundedContext)
-            summarizedESValue[boundedContext.id] = ESValueSummarizeUtil._getSummarizedBoundedContextValue(esValue, boundedContext)
+            summarizedESValue[boundedContext.id] = ESValueSummarizeUtil.getSummarizedBoundedContextValue(esValue, boundedContext)
         }
         return summarizedESValue
     }
 
 
-    static _getSummarizedBoundedContextValue(esValue, boundedContext) {
+    static getSummarizedBoundedContextValue(esValue, boundedContext) {
         const getAllAggregates = (esValue, boundedContext) => {
             return boundedContext.aggregates.map(aggregate => esValue.elements[aggregate.id])
         }
@@ -206,7 +206,13 @@ The approximate structure is as follows.
                     })
                 }
             }
-            return actors
+
+            let uniqueActors = []
+            for(let actor of actors){
+                if(!uniqueActors.some(a => a.name === actor.name))
+                    uniqueActors.push(actor)
+            }
+            return uniqueActors;
         }
 
         let summarizedBoundedContextValue = {}
@@ -216,11 +222,11 @@ The approximate structure is as follows.
         
         summarizedBoundedContextValue.aggregates = {}
         for(let aggregate of getAllAggregates(esValue, boundedContext))
-            summarizedBoundedContextValue.aggregates[aggregate.id] = ESValueSummarizeUtil._getSummarizedAggregateValue(esValue, boundedContext, aggregate)
+            summarizedBoundedContextValue.aggregates[aggregate.id] = ESValueSummarizeUtil.getSummarizedAggregateValue(esValue, boundedContext, aggregate)
         return summarizedBoundedContextValue
     }
 
-    static _getSummarizedAggregateValue(esValue, boundedContext, aggregate) {
+    static getSummarizedAggregateValue(esValue, boundedContext, aggregate) {
         const getAggregateProperties = (aggregate) => {
             return aggregate.aggregateRoot.fieldDescriptors.map(fieldDescriptor => {
                 let property = {
@@ -240,14 +246,14 @@ The approximate structure is as follows.
         summarizedAggregateValue.id = ESValueSummarizeUtil.__getElementIdSafely(aggregate)
         summarizedAggregateValue.name = aggregate.name
         summarizedAggregateValue.properties = getAggregateProperties(aggregate)
-        summarizedAggregateValue.enumerations = ESValueSummarizeUtil._getSummarizedEnumerationValue(aggregate)
-        summarizedAggregateValue.valueObjects = ESValueSummarizeUtil._getSummarizedValueObjectValue(aggregate)
-        summarizedAggregateValue.commands = ESValueSummarizeUtil._getSummarizedCommandValue(esValue, boundedContext, aggregate)
-        summarizedAggregateValue.events = ESValueSummarizeUtil._getSummarizedEventValue(esValue, boundedContext, aggregate)
+        summarizedAggregateValue.enumerations = ESValueSummarizeUtil.getSummarizedEnumerationValue(aggregate)
+        summarizedAggregateValue.valueObjects = ESValueSummarizeUtil.getSummarizedValueObjectValue(aggregate)
+        summarizedAggregateValue.commands = ESValueSummarizeUtil.getSummarizedCommandValue(esValue, boundedContext, aggregate)
+        summarizedAggregateValue.events = ESValueSummarizeUtil.getSummarizedEventValue(esValue, boundedContext, aggregate)
         return summarizedAggregateValue
     }
 
-    static _getSummarizedEnumerationValue(aggregate) {
+    static getSummarizedEnumerationValue(aggregate) {
         const getEnumInfo = (element) => {
             let enumInfo = {}
             enumInfo.id = ESValueSummarizeUtil.__getElementIdSafely(element)
@@ -267,7 +273,7 @@ The approximate structure is as follows.
         return summarizedEnumerationValue
     }
 
-    static _getSummarizedValueObjectValue(aggregate) {
+    static getSummarizedValueObjectValue(aggregate) {
         const getValueObjectInfo = (element) => {
             let valueObjectInfo = {}
             valueObjectInfo.id = ESValueSummarizeUtil.__getElementIdSafely(element)
@@ -299,7 +305,7 @@ The approximate structure is as follows.
         return summarizedValueObjectValue
     }
 
-    static _getSummarizedCommandValue(esValue, boundedContext, aggregate) {
+    static getSummarizedCommandValue(esValue, boundedContext, aggregate) {
         const getCommandInfo = (esValue, element) => {
             let commandInfo = {}
             commandInfo.id = ESValueSummarizeUtil.__getElementIdSafely(element)
@@ -325,13 +331,13 @@ The approximate structure is as follows.
             if(element && (element._type === 'org.uengine.modeling.model.Command') &&
             (element.boundedContext.id === boundedContext.id) &&
             (element.aggregate.id === aggregate.id)){
-                summarizedCommandValue.push(getCommandInfo(esValue, boundedContext, element))
+                summarizedCommandValue.push(getCommandInfo(esValue, element))
             }
         }
         return summarizedCommandValue
     }
 
-    static _getSummarizedEventValue(esValue, boundedContext, aggregate) {
+    static getSummarizedEventValue(esValue, boundedContext, aggregate) {
         const getRelationsForType = (esValue, sourceElement, targetType) => {
             return Object.values(esValue.relations)
                 .filter(r => r && r.sourceElement.id === sourceElement.id && r.targetElement._type === targetType)
