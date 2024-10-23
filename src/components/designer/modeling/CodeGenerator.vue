@@ -2116,13 +2116,15 @@
                         }
                         if (openCodePath && openCodePath.includes('.java')) {
                             setTimeout(()=>{   //TODO: temporal 
-                                me.openCode[0].code = me.codeAlign(me.openCode[0].code)
+                                var changeCode = me.codeLists.find(x => x.fileName == me.openCode[0].name)
+                                if(changeCode && changeCode.code){
+                                    me.openCode[0].code = me.codeAlign(changeCode.code)
+                                }
                             }, 0)
                             
                         }
                         return me.openCode
                     }
-
                     if (me.treeLists && me.treeLists.length > 0 && !me.editTemplateMode) {
                         return me.treeLists[0].children
                     }

@@ -1134,6 +1134,7 @@
           DDL: '',
           boundedContextLists: '',
           DDLDraftTable: {},
+          reGenerate: false
         },
         DDLDraftTable: {},
         showDDLDraftDialog: false,
@@ -1416,7 +1417,7 @@
           me.__generate('DDLDraftGenerator', me.defaultGeneratorUiInputData)
       },
 
-      _processDDLCreateESActionsGenerator(model) {
+      async _processDDLCreateESActionsGenerator(model) {
         var me = this
 
         if(model.isError) {
@@ -1430,7 +1431,7 @@
         }
 
         if(!model.modelValue || !model.modelValue.createdESValue) return
-        me.__makeNewEventStormingProject(model.modelValue.createdESValue)
+        await me.__makeNewEventStormingProject(model.modelValue.createdESValue)
         me.__processNextCreateEventStormingInput()
       },
 
@@ -1527,10 +1528,10 @@
         me.generator.generate()
       },
 
-      __makeNewEventStormingProject(esValue) {
+      async __makeNewEventStormingProject(esValue) {
         var me = this
 
-        EventStormingUtil.getAllBoundedContexts(esValue).forEach(boundedContext => {
+        for(let boundedContext of EventStormingUtil.getAllBoundedContexts(esValue)) {
 
           const createdBoundedContextCM = me.__addNewBoundedContextCM(boundedContext.name)
           const relatedAggregates = EventStormingUtil.getOnlyRelatedAggregates(boundedContext, esValue)
@@ -1555,10 +1556,10 @@
             element: createdBoundedContextCM
           }
           const relatedESValue = EventStormingUtil.getOnlyRelatedESValue(boundedContext, esValue)
-          me.saveModel(boundedContext, relatedESValue)
+          await me.saveModel(boundedContext, relatedESValue)
           me.changedByMe = true
 
-        })
+        }
       },
 
       __addNewBoundedContextCM(name){
@@ -1577,6 +1578,7 @@
         me.defaultGeneratorUiInputData['reGenerate'] = true;
         me.defaultGeneratorUiInputData['reGenerateTable'] = {[boundedContext]: table}
 
+        me.defaultGeneratorUiInputData['ProcessingDDLs'] = table.ddl
         me.defaultGeneratorUiInputData['boundedContextLists'] = boundedContext
         me.defaultGeneratorUiInputData['processedDDLs'] = []
         me.defaultGeneratorUiInputData.numberRemainingDDLs = 0

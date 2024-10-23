@@ -8,8 +8,13 @@ class AggregateActionsProcessor {
             case "create":
                 AggregateActionsProcessor._createAggregate(action, userInfo, esValue, callbacks)
                 break
+            
+            case "update":
+                AggregateActionsProcessor._updateAggregate(action, userInfo, esValue, callbacks)
+                break
         }
     }
+
 
     static _createAggregate(action, userInfo, esValue, callbacks) {
         let aggregateObject = AggregateActionsProcessor.__getAggregateBase(
@@ -107,21 +112,6 @@ class AggregateActionsProcessor {
         return [{name: "id", type: "Long", isKey: true}].concat(properties)
     }
 
-    static __getFileDescriptors(actionProperties) {
-        return actionProperties.map((property) => {
-            return {
-                "className": property.type ? property.type : "String",
-                "isCopy": false,
-                "isKey": property.isKey ? true : false,
-                "name": property.name,
-                "nameCamelCase": changeCase.camelCase(property.name),
-                "namePascalCase": changeCase.pascalCase(property.name),
-                "displayName": "",
-                "_type": "org.uengine.model.FieldDescriptor"
-            }
-        })
-    }
-
     static __relocateUIPositions(esValue, action, aggregateObject) {
         const getTargetBoundedContextIds = (esValue, currentBoundedContext) => {
             let targetBoundedContextIds = []
@@ -211,6 +201,37 @@ class AggregateActionsProcessor {
             "isAggregateRoot": true,
             "parentId": aggregateId
         }
+    }
+
+
+    static _updateAggregate(action, userInfo, esValue, callbacks) {
+        if(action.args.properties) {
+            const aggregateObject = esValue.elements[action.ids.aggregateId]
+            aggregateObject.aggregateRoot.fieldDescriptors = aggregateObject.aggregateRoot.fieldDescriptors.concat(AggregateActionsProcessor.__getFileDescriptors(action.args.properties))
+
+            const aggregateRootObject = ActionsProcessorUtils.getAggregateRootObject(aggregateObject)
+            if(aggregateRootObject) {
+                aggregateRootObject.fieldDescriptors = aggregateRootObject.fieldDescriptors.concat(AggregateActionsProcessor.__getFileDescriptors(action.args.properties))
+            }
+            
+            esValue.elements[action.ids.aggregateId] = {...aggregateObject}
+        }
+    }
+
+
+    static __getFileDescriptors(actionProperties) {
+        return actionProperties.map((property) => {
+            return {
+                "className": property.type ? property.type : "String",
+                "isCopy": false,
+                "isKey": property.isKey ? true : false,
+                "name": property.name,
+                "nameCamelCase": changeCase.camelCase(property.name),
+                "namePascalCase": changeCase.pascalCase(property.name),
+                "displayName": "",
+                "_type": "org.uengine.model.FieldDescriptor"
+            }
+        })
     }
 }
 

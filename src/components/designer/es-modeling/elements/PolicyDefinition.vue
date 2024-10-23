@@ -195,6 +195,7 @@
                     name: '',
                     fieldDescriptors: [],
                     oldName: '',
+                    displayName: '',
                     namePascalCase: '',
                     nameCamelCase: '',
                     namePlural: '',

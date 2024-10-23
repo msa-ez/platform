@@ -13,7 +13,7 @@
                         <td colspan="999">
                             <v-text-field 
                                 v-model="rule.description"
-                                label="Describe your business logic"
+                                label="Describe your business logic here"
                             ></v-text-field>
                         </td>
                     </tr>
@@ -565,7 +565,21 @@
                                     if(rel.sourceElement._type == 'org.uengine.modeling.model.Command' && rel.targetElement._type == 'org.uengine.modeling.model.Event'){
                                         if(rel.sourceElement.elementView.id == me.value.elementView.id){
                                             if(!whenItems.find(x => x.elementView.id == rel.sourceElement.elementView.id)){
-                                                whenItems.push(me.canvas.value.elements[rel.sourceElement.elementView.id]);
+                                                if(me.value.restRepositoryInfo.method == 'POST'){
+                                                    me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = JSON.parse(JSON.stringify(me.canvas.value.elements[me.value.aggregate.id].aggregateRoot.fieldDescriptors))
+                                                } else if(me.value.restRepositoryInfo.method == 'DELETE'){
+                                                    me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = [
+                                                        {
+                                                            "_type": "org.uengine.model.FieldDescriptor",
+                                                            "name": "id",
+                                                            "className": "Long",
+                                                            "nameCamelCase": "id",
+                                                            "namePascalCase": "Id",
+                                                            "isKey": true
+                                                        }
+                                                    ]
+                                                } 
+                                                whenItems.push(me.canvas.value.elements[rel.sourceElement.elementView.id])
                                             }
                                             if(!thenItems.find(x => x.elementView.id == rel.targetElement.elementView.id)){
                                                 thenItems.push(me.canvas.value.elements[rel.targetElement.elementView.id]);

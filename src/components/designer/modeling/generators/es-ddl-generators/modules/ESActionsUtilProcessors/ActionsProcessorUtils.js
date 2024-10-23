@@ -79,11 +79,11 @@ class ActionsProcessorUtils {
         ActionsProcessorUtils._addPropertyIfNotExist(aggregate.aggregateRoot.fieldDescriptors, propertyName, true)
         if(aggregateRootObject) ActionsProcessorUtils._addPropertyIfNotExist(aggregateRootObject.fieldDescriptors, propertyName, true)
         aggregateCommands.map(command => {
-            if(command.controllerInfo.method != "DELETE")
+            if(command.isRestRepository && command.controllerInfo.method === "POST")
                 ActionsProcessorUtils._addPropertyIfNotExist(command.fieldDescriptors, propertyName, false)
         })
         aggregateEvents.map(event => {
-            if(!ActionsProcessorUtils.isRelatedByDeleteCommand(esValue, event))
+            if(ActionsProcessorUtils.isRelatedByPostCommand(esValue, event))
                 ActionsProcessorUtils._addPropertyIfNotExist(event.fieldDescriptors, propertyName, false)
         })
     }
@@ -115,7 +115,21 @@ class ActionsProcessorUtils {
                 relation._type === "org.uengine.modeling.model.Relation" &&
                 relation.sourceElement &&
                 relation.sourceElement._type === "org.uengine.modeling.model.Command" &&
+                relation.sourceElement.isRestRepository &&
                 relation.sourceElement.controllerInfo.method === "DELETE" &&
+                relation.targetElement &&
+                relation.targetElement.id === event.id
+        })
+    }
+
+    static isRelatedByPostCommand(esValue, event) {
+        return Object.values(esValue.relations).some(relation => {
+            return relation &&
+                relation._type === "org.uengine.modeling.model.Relation" &&
+                relation.sourceElement &&
+                relation.sourceElement._type === "org.uengine.modeling.model.Command" &&
+                relation.sourceElement.isRestRepository &&
+                relation.sourceElement.controllerInfo.method === "POST" &&
                 relation.targetElement &&
                 relation.targetElement.id === event.id
         })

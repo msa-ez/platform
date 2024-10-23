@@ -92,6 +92,11 @@ The format must be as follows:
             You previously provided recommendations for a Bounded Context based on the DDL:
             ${JSON.stringify(this.client.input.reGenerateTable)}
 
+            This is the DDL used when creating this recommendation. Just use these again to create:
+            ${this.client.input.ProcessingDDLs}
+
+            numberRemainingDDLs: ${this.client.input.ProcessingDDLs.length}
+
             Please create new recommendations, excluding the results you've already given.
             Use only the bounded context names exactly as they appear above and generate them.
             Since newly generated Recommendations will overwrite the results, start the option numbers from 1.
@@ -104,9 +109,10 @@ The format must be as follows:
             1. Create boundedContexts one by one in order.
             2. Process DDL tables related to the recommendations of the boundedContexts currently being generated.
             3. Never handle DDL that has already been processed, as it is contained in ProcessedDDLs.
-            4. For DDL tables that are difficult to include in certain boundedContexts, create and include 'etc' boundedContext.
-            5. When creating an 'etc' boundedContext, DDL tables that have not yet been processed are included.
-            6. All DDL must be included without omission in the requested bounded contexts list and etc bounded context.
+            4. All DDL must be included without omission in the requested bounded contexts list and etc bounded context.
+            5. All requested boundedContexts must be used.
+            6. For DDL tables that are difficult to include in certain boundedContexts, create and include 'etc' boundedContext.
+            7. When creating an 'etc' boundedContext, DDL tables that have not yet been processed are included.
 
             The current processing status is as follows:
             Status of Current Bounded Context and Aggregates: ${this.client.input.DDLDraftTable}

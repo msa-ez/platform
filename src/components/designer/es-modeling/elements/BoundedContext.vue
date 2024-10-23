@@ -206,6 +206,7 @@
                     id: elementId,
                     name: 'BoundedContext' + x,
                     oldName: '',
+                    displayName: '',
                     description: null,
                     author: null,
                     aggregates: [],

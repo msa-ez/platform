@@ -59,6 +59,7 @@
                     name: '',
                     author: null,
                     oldName: '',
+                    displayName: '',
                     from: elementId,
                     to: elementId,
                     description: '',
