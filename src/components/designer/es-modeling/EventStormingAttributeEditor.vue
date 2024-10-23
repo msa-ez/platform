@@ -162,7 +162,7 @@
                     ></v-text-field>
                 </v-row>
                 <v-row justify="end">
-                    <v-btn v-if="type == 'org.uengine.modeling.model.Event' || type == 'org.uengine.modeling.model.Command'"
+                    <v-btn v-if="type == 'org.uengine.modeling.model.Event' || type == 'org.uengine.modeling.model.Command' || (type == 'org.uengine.modeling.model.View' && dataProjection == 'query-for-aggregate')"
                             depressed text
                             :disabled="isReadOnly"
                             @click="syncAttribute"
@@ -255,6 +255,7 @@
             type: String,
             elementId: String,
             entities: Object,
+            dataProjection: String,
             label: {
                 type: String,
                 default: "Attributes"

@@ -78,7 +78,7 @@
                     this.value.name = ''
 
                 if (this.value.sourceElement._type.endsWith('Event') && this.value.targetElement._type.endsWith('Policy')){
-//                    this.value.name = 'Pub/Sub'
+                   this.value.name = 'Pub/Sub'
                     style = {
                         "arrow-end": "block",
                         'stroke-width': '1.3',
