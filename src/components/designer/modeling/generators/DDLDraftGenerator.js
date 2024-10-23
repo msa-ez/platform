@@ -162,6 +162,8 @@ The format must be as follows:
                 if (Array.isArray(bc.recommendations)) {
                     bc.recommendations.forEach(rec => {
                         let aggregatesStr = '';
+                        let parsedAggregates = [];
+                        
                         if (Array.isArray(rec.aggregates) && rec.aggregates.length > 0) {
                             aggregatesStr = rec.aggregates.map(agg => {
                                 const entities = Array.isArray(agg.entities) ? agg.entities.join(', ') : '';
@@ -171,11 +173,20 @@ The format must be as follows:
                                 if(valueObjects) result += ` / ValueObjects: ${valueObjects}`;
                                 return result;
                             }).join('|||');
+
+                            parsedAggregates = rec.aggregates.map(agg => {
+                                return {
+                                    aggregateRoot: agg.name,
+                                    entities: Array.isArray(agg.entities) ? agg.entities : [],
+                                    valueObjects: Array.isArray(agg.valueObjects) ? agg.valueObjects : []
+                                }
+                            })
                         }
         
                         table.recommendations.push({
                             option: rec.option || '',
                             aggregates: aggregatesStr,
+                            parsedAggregates: parsedAggregates,
                             pros: rec.pros || '',
                             cons: rec.cons || ''
                         });
