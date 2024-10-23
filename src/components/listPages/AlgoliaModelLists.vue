@@ -50,7 +50,7 @@
                                 <v-list-item-title style="margin:5px 0px 0px 10px; font-weight: 700;">
                                     <div style="display: flex;">
                                         <Icon icon="material-symbols:home-storage" width="26" height="26" style="margin-right:3px;" />
-                                        <div class="cp-storage" style="margin-top:3px; font-size:14px;">{{$t('mainNav.Storage')}}</div>
+                                        <div class="cp-storage" :class="isForeign ? 'isForeign-storage-main-list-text' : 'isNotForeign-storage-main-list-text'" style="margin-top:3px; font-size:14px;">{{$t('mainNav.Storage')}}</div>
                                     </div>
                                 </v-list-item-title>
                             </template>
@@ -1828,6 +1828,14 @@
 </script>
 
 <style>
+    .isNotForeign-storage-main-list-text {
+        margin-top:3px; 
+        font-size:14px;
+    }
+    .isForeign-storage-main-list-text {
+        margin-top:5px; 
+        font-size:14px;
+    }
     .main-nav-tab-home {
         display:none;
     }
