@@ -26,7 +26,7 @@
                                 class="main-nav-tab"
                             >{{$t('mainNav.partnership')}}
                             </v-tab>
-                            <v-tab @click="learnNavDialog = true"
+                            <v-tab @click="nationLearnNavDialog"
                                 class="main-nav-tab"
                             >{{$t('mainNav.learn')}}
                             </v-tab>
@@ -43,14 +43,14 @@
                     <v-hover v-slot="{ hover }">
                         <v-list-group class="nav-storage-list"
                             :value="hover"
-                            :style="isLogin ? 'right:170px;' : 'right:160px;'"
+                            style="right:170px;"
                             :append-icon="null"
                         >
                             <template v-slot:activator>
                                 <v-list-item-title style="margin:5px 0px 0px 10px; font-weight: 700;">
                                     <div style="display: flex;">
-                                        <Icon icon="material-symbols:home-storage" width="28" height="28" style="margin-right:3px;" />
-                                        <div class="cp-storage" style="margin-top:5px; font-size:14px;">{{$t('mainNav.Storage')}}</div>
+                                        <Icon icon="material-symbols:home-storage" width="26" height="26" style="margin-right:3px;" />
+                                        <div class="cp-storage" style="margin-top:3px; font-size:14px;">{{$t('mainNav.Storage')}}</div>
                                     </div>
                                 </v-list-item-title>
                             </template>
@@ -340,13 +340,13 @@
                                                         <div class="gs-main-page-sub-title">
                                                             <div v-for="content in item.content" :key="content">{{$t(content)}}<br></div>
                                                         </div>
-                                                        <a :href="item.goToUrl" target="_blank" style="text-decoration: none; color: inherit;">
+                                                        <a :href="isForeign ? item.goToUrlEn : item.goToUrl" target="_blank" style="text-decoration: none; color: inherit;">
                                                             <v-btn color="primary"
-                                                                text
-                                                                style="margin-top:5px;
-                                                                font-size:18px;
-                                                                font-weight:700;
-                                                                padding: 0px;"
+                                                            text
+                                                            style="margin-top:5px;
+                                                            font-size:18px;
+                                                            font-weight:700;
+                                                            padding: 0px;"
                                                             >{{$t('main.goToUrlText')}}</v-btn>
                                                         </a>
                                                     </div>
@@ -817,21 +817,24 @@
                         title: 'main.title',
                         content: ['main.content1', 'main.content2', 'main.content3'],
                         imageUrl: '/static/image/main/main1.png',
-                        goToUrl:'https://intro-kor.msaez.io/tool/google-drive-examples/'
+                        goToUrl: 'https://intro-kor.msaez.io/tool/google-drive-examples/',
+                        goToUrlEn: 'https://intro.msaez.io/tool/google-drive-examples/'
                     },
                     {
                         id: 2,
                         title: 'main.title2',
                         content: ['main.content4', 'main.content5'],
                         imageUrl: '/static/image/main/main2.png',
-                        goToUrl:'https://intro-kor.msaez.io/tool/chat-gpt/'
+                        goToUrl: 'https://intro-kor.msaez.io/tool/chat-gpt/',
+                        goToUrlEn: 'https://intro.msaez.io/tool/chat-gpt/'
                     },
                     {
                         id: 3,
                         title: 'main.title3',
                         content: ['main.content6', 'main.content7', 'main.content8'],
                         imageUrl: '/static/image/main/main3.png',
-                        goToUrl:'https://intro-kor.msaez.io/tool/si-gpt/'
+                        goToUrl: 'https://intro-kor.msaez.io/tool/si-gpt/',
+                        goToUrlEn: 'https://intro.msaez.io/tool/si-gpt/'
                     }
                 ],
                 currentTextId: 1,
@@ -1152,6 +1155,13 @@
             },
         },
         methods: {
+            nationLearnNavDialog() {
+                if (!this.isForeign) {
+                    this.learnNavDialog = true;
+                } else {
+                    this.wikiOpen('business');
+                }
+            },
             openMakingDialog() {
                 var me = this
                 me.$EventBus.$emit('open-new-making-dialog');
