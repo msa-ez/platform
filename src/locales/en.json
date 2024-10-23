@@ -32,13 +32,13 @@
   "mainNav": {
     "introduction": "Introduction",
     "partnership": "Partnership",
-    "learn": "learn",
+    "learn": "Learn",
     "Storage": "Storage",
     "company": "Company In Use",
     "pricing": "Pricing Policy"
   },
   "making" : {
-    "title" : "Making",
+    "title" : "Create",
     "planning" : "Planning",
     "design" : "Design",
     "operation" : "Operation",
@@ -194,7 +194,7 @@
     "user": "Generating Persona... Choose a persona to generate customer journey map:",
     "chip1": "Google Drive",
     "chip2": "Food Delivery App",
-    "chip3": "Fish Distribution ERP",
+    "chip3": "Fish ERP",
     "chip4": "Internet Banking"
   },
   "UIWizardDialoger": {
@@ -207,7 +207,7 @@
     "serviceScenarios": "Change service description"
   },
   "inquiry": {
-    "title": "Contact us"
+    "title": "Q&A"
   },
   "ruleExamplesGuide":{
     "command":"The following steps are required to use the 'EXAMPLES'.",

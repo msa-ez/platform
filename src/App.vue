@@ -107,14 +107,15 @@
                 v-model="makingDialog"
                 max-width="90%"
             >
+                <!-- 만들기 버튼 -->
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn class="making-main-nav-modeling-is-mobile"
                         v-on="on"
                         v-bind="attrs"
                         text
-                        :style="isLogin ? 'margin-right:210px' : 'margin-right:200px;'"
-                    ><v-icon style="margin:-3px 1px 0px 0px;" :size="26">mdi-file-plus</v-icon>
-                    {{$t('making.title')}}
+                        :style="isForeign ? (isLogin ? 'margin-right:210px' : 'margin-right:200px;') : (isLogin ? 'margin-right:215px' : 'margin-right:225px;')"
+                    ><v-icon style="margin:0px 1px 0px 0px;" :size="26">mdi-file-plus</v-icon>
+                    <div :style="isForeign ? { marginTop: '-2px' } : { marginTop: '2px' }">{{$t('making.title')}}</div>
                     </v-btn>
                 </template>
                 <v-card style="padding:20px; height:85vh; overflow:auto;">
@@ -379,7 +380,7 @@
                 <v-img src="/static/image/main/question.svg" contain
                     style="width:22px; height:22px; margin-right:5px;">
                 </v-img>
-                {{ $t('inquiry.title') }}
+                <div font-size="14">{{ $t('inquiry.title') }}</div>
             </v-btn>
             
             <v-btn
@@ -2239,9 +2240,10 @@
 
     .making-main-nav-modeling-is-mobile {
         font-size:16px;
-        margin-top:5px;
+        margin-top:1px;
         font-weight: 700;
         padding:0px 5px 0px 5px !important;
+        text-transform: none;
     }
     
     /* 추가 */

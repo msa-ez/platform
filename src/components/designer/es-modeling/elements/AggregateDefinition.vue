@@ -180,6 +180,7 @@
                 :generateDone.sync="generateDone"
                 :generator="generator"
                 :isPBCModel="isPBCModel"
+                :isProject="isProject"
         ></aggregate-definition-panel>
 
     </div>
@@ -336,6 +337,9 @@
                 }
 
             },
+            isProject() {
+                return this.canvas.information && this.canvas.information.associatedProject
+            }
 
         },
         data: function () {
