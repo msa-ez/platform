@@ -553,6 +553,9 @@
             me.copySelectedCodeList = JSON.parse(JSON.stringify(me.selectedCodeList))
             me.generate();
 
+            me.$EventBus.$on('handlePushFileError', function () {
+                me.handleGitError();
+            })
             me.$EventBus.$on('setActionId', function (path) {
                 me.actionPathList.push(path)
             })
@@ -567,7 +570,7 @@
                     me.startGitAction = false
                     me.isSolutionCreating = false
                     me.allTestSucceeded = true
-                    me.gitActionSnackBar.timeout = 5000
+                    me.gitActionSnackBar.timeout = 15000
                     me.gitActionSnackBar.Text = "All tests succeeded"
                     me.gitActionSnackBar.Color = "success"
                     me.gitActionSnackBar.icon="check_circle"
@@ -604,6 +607,15 @@
             });
         },
         methods: {
+            handleGitError(){
+                this.gitActionSnackBar.timeout = 15000;
+                this.gitActionSnackBar.Text = "오류 검증 및 파일 업데이트 도중 문제가 발생하였습니다. 다시 시도합니다.";
+                this.gitActionSnackBar.Color = "error";
+                this.gitActionSnackBar.icon = "error";
+                this.gitActionSnackBar.title = "Error";
+                this.gitActionSnackBar.show = true;
+                this.regenerate();
+            },
             async rollBack(sha, idx){
                 var me = this
                 me.$app.try({
@@ -993,17 +1005,12 @@
     
                     } catch(e) {
                         console.log(e)
-                        me.gitActionSnackBar.timeout = 5000
-                        me.gitActionSnackBar.Text = "오류 검증 및 파일 업데이트 도중 문제가 발생하였습니다. 잠시 후 다시 시도해주세요."
-                        me.gitActionSnackBar.Color = "error"
-                        me.gitActionSnackBar.icon="error"
-                        me.gitActionSnackBar.title="Error"
-                        me.gitActionSnackBar.show = true
-                        me.startGitAction = false
+                        me.handleGitError();
+                        // me.startGitAction = false
                     }
                 } else {
                     if(me.siTestResults.length == 0){
-                        me.gitActionSnackBar.timeout = 5000
+                        me.gitActionSnackBar.timeout = 15000
                         me.gitActionSnackBar.Text = "비즈니스 로직 생성도중 오류가 발생하였습니다. 다시 시도합니다."
                         me.gitActionSnackBar.Color = "error"
                         me.gitActionSnackBar.icon="error"
@@ -1011,13 +1018,7 @@
                         me.gitActionSnackBar.show = true
                         me.generate();
                     } else {
-                        me.gitActionSnackBar.timeout = 5000
-                        me.gitActionSnackBar.Text = "오류 검증 및 파일 업데이트 도중 문제가 발생하였습니다. 잠시 후 다시 시도해주세요."
-                        me.gitActionSnackBar.Color = "error"
-                        me.gitActionSnackBar.icon="error"
-                        me.gitActionSnackBar.title="Error"
-                        me.gitActionSnackBar.show = true
-                        me.startGitAction = false
+                        me.handleGitError();
                     }
                 }
             },

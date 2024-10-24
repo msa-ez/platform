@@ -49,7 +49,8 @@ Preserve existing class interfaces (methods, parameters, fields) as much as poss
 9. If the code you are trying to modify includes "//readonly", you should never modify that code. Example: If "\nexample code //readonly\n", "example code" should never be modified and must remain as is.
 10. "codeChanges" are only created if it is a file.
 11. You should focus on examining the contents of the given files and the error content and solving the errors that occurred, and you should not solve the errors by removing all the parts where the errors occurred or avoiding the errors. You should create high-quality code that can solve the errors and can actually be used.
-12. You should check and acknowledge all the solutions that were previously proposed and provide a solution. Do not waste time by suggesting the same solution that was previously proposed, reverting changes, or suggesting incorrect solutions. Also, you should identify exactly which files need to be modified and modify them. Most of the files that need to be modified are .java, .xml files.`
+12. You should check and acknowledge all the solutions that were previously proposed and provide a solution. Do not waste time by suggesting the same solution that was previously proposed, reverting changes, or suggesting incorrect solutions. Also, you should identify exactly which files need to be modified and modify them. Most of the files that need to be modified are .java, .xml files.
+13. When generating the code to be fixed, you should not generate code arbitrarily, but generate meaningful code based on the code content of all the files provided.`
     // }
 
         if(this.client.modifiedHistory.length > 0){

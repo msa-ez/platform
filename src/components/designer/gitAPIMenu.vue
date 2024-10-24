@@ -2266,6 +2266,8 @@ import CodeGeneratorCore from './modeling/CodeGeneratorCore';
                                                     me.commonError(error)
                                                 })
                                             }
+                                        }).catch((error) =>{
+                                            me.$EventBus.$emit('handlePushFileError');
                                         })
                                     })
                                     .catch(error => {
