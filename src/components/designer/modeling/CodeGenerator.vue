@@ -2116,10 +2116,7 @@
                         }
                         if (openCodePath && openCodePath.includes('.java')) {
                             setTimeout(()=>{   //TODO: temporal 
-                                var changeCode = me.codeLists.find(x => x.fileName == me.openCode[0].name)
-                                if(changeCode && changeCode.code){
-                                    me.openCode[0].code = me.codeAlign(changeCode.code)
-                                }
+                                me.openCode[0].code = me.codeAlign(me.openCode[0].code)
                             }, 0)
                             
                         }

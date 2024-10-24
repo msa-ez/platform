@@ -1986,6 +1986,7 @@
     import DebeziumTransactionManager from "../modeling/generators/generatorTabs/DebeziumTransactionManager"
     import DDLDraftGenerator from "../modeling/generators/DDLDraftGenerator"
     import ModelDraftDialog from "../modeling/ModelDraftDialog"
+    import TestByUsingCommand from "./mixins/TestByUsingCommand"
     const prettier = require("prettier");
     const plugins = require("prettier-plugin-java");
     const axios = require("axios");
@@ -2025,7 +2026,7 @@
     // import ModelCodeGenerator from "../modeling/ModelCodeGenerator";
     export default {
         name: "event-storming-model-canvas",
-        mixins: [ModelCanvas],
+        mixins: [ModelCanvas, TestByUsingCommand],
         components: {
             UIWizardDialoger,
             AutoModelingDialog,
@@ -3664,9 +3665,15 @@
             },
 
             _createAggregateByAggreateInsideGenerator(model) {
+                var me = this
                 if(model.from !== "onGenerationFinished" || model.modelValue === null) return
 
-                console.log("[*] AggregateInsideGenerator 후처리 로직 Mock", model)
+                
+                console.log("[*] AggregateInsideGenerator 후처리 로직이 실행됨", model)
+
+                me.changedByMe = true
+                me.$set(me.value, "elements", model.modelValue.createdESValue.elements)
+                me.$set(me.value, "relations", model.modelValue.createdESValue.relations)   
             },
 
             _createAggregateByAggreateGenerator(val, agg, originModel) {

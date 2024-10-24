@@ -1417,7 +1417,7 @@
           me.__generate('DDLDraftGenerator', me.defaultGeneratorUiInputData)
       },
 
-      _processDDLCreateESActionsGenerator(model) {
+      async _processDDLCreateESActionsGenerator(model) {
         var me = this
 
         if(model.isError) {
@@ -1431,7 +1431,7 @@
         }
 
         if(!model.modelValue || !model.modelValue.createdESValue) return
-        me.__makeNewEventStormingProject(model.modelValue.createdESValue)
+        await me.__makeNewEventStormingProject(model.modelValue.createdESValue)
         me.__processNextCreateEventStormingInput()
       },
 
@@ -1481,10 +1481,14 @@
             usedDDL = this.__getDDLsFromTableNames(boundedContextInfo.ddl.split(", "), ddl)
           }
 
-          const functionRequests = (boundedContextInfo.scenario) ? boundedContextInfo.scenario : "Add the appropriate Create and Delete operations for the given DDL."
+          const functionRequests = (boundedContextInfo.scenario && boundedContextInfo.scenario.length > 0) ? boundedContextInfo.scenario : "Add the appropriate Create and Delete operations for each generated aggregate."
           eventStormingInputs.push({
             ddl: usedDDL,
-            selectedOption: boundedContextInfo.aggregates,
+            suggestedStructures: boundedContextInfo.parsedAggregates.map((aggregate) => ({
+              aggregateRoot: aggregate.aggregateRoot,
+              generalClasses: aggregate.entities.filter((entity) => entity.toLowerCase() !== aggregate.aggregateRoot.toLowerCase().replace("aggregate", "")),
+              valueObjects: aggregate.valueObjects
+            })),
             boundedContexts: [boundedContextKey],
             functionRequests: functionRequests,
             userInfo: me.userInfo,
@@ -1528,10 +1532,10 @@
         me.generator.generate()
       },
 
-      __makeNewEventStormingProject(esValue) {
+      async __makeNewEventStormingProject(esValue) {
         var me = this
 
-        EventStormingUtil.getAllBoundedContexts(esValue).forEach(boundedContext => {
+        for(let boundedContext of EventStormingUtil.getAllBoundedContexts(esValue)) {
 
           const createdBoundedContextCM = me.__addNewBoundedContextCM(boundedContext.name)
           const relatedAggregates = EventStormingUtil.getOnlyRelatedAggregates(boundedContext, esValue)
@@ -1556,10 +1560,10 @@
             element: createdBoundedContextCM
           }
           const relatedESValue = EventStormingUtil.getOnlyRelatedESValue(boundedContext, esValue)
-          me.saveModel(boundedContext, relatedESValue)
+          await me.saveModel(boundedContext, relatedESValue)
           me.changedByMe = true
 
-        })
+        }
       },
 
       __addNewBoundedContextCM(name){

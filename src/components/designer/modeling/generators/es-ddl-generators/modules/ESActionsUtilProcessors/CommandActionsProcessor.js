@@ -1,4 +1,5 @@
 const changeCase = require('change-case');
+const pluralize = require('pluralize');
 const ActionsProcessorUtils = require('./ActionsProcessorUtils')
 const GlobalPromptUtil = require('../GlobalPromptUtil')
 const ActorProcessor = require('./ActorProcessor')
@@ -82,7 +83,7 @@ class CommandActionsProcessor {
             displayName: displayName,
             nameCamelCase: changeCase.camelCase(name),
             namePascalCase: changeCase.pascalCase(name),
-            namePlural: "",
+            namePlural: pluralize(changeCase.camelCase(name)),
             relationCommandInfo: [],
             relationEventInfo: [],
             restRepositoryInfo: {
@@ -136,6 +137,22 @@ class CommandActionsProcessor {
     }
 
     static __getFileDescriptors(esValue, action) {
+        if(action.args.properties) {
+            return action.args.properties.map((property) => {
+                return {
+                    "className": property.type ? property.type : "String",
+                    "isCopy": false,
+                    "isKey": property.isKey ? true : false,
+                    "name": property.name,
+                    "nameCamelCase": changeCase.camelCase(property.name),
+                    "namePascalCase": changeCase.pascalCase(property.name),
+                    "displayName": "",
+                    "_type": "org.uengine.model.FieldDescriptor"
+                }
+            })
+        }
+
+        
         let targetFieldDescriptors = esValue.elements[action.ids.aggregateId].aggregateRoot.fieldDescriptors
         if(action.args.api_verb == "DELETE")
             targetFieldDescriptors = targetFieldDescriptors.filter(fieldDescriptor => fieldDescriptor.isKey)

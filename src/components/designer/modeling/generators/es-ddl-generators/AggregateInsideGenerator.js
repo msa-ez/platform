@@ -1,6 +1,8 @@
 const JsonAIGenerator = require("../JsonAIGenerator");
 const GlobalPromptUtil = require("./modules/GlobalPromptUtil");
 const ESActionUtil = require("./modules/ESActionsUtil")
+const ESValueSummarizeUtil = require("./modules/ESValueSummarizeUtil")
+const ESValueSummarizeUtil_OnlyName = require("./modules/ESValueSummarizeUtil_OnlyName")
 
 class AggregateInsideGenerator extends JsonAIGenerator{
     constructor(client){
@@ -31,41 +33,17 @@ class AggregateInsideGenerator extends JsonAIGenerator{
             
             console.log(`[*] ${this.generatorName}에 대한 프롬프트 생성중...`, {inputedParams: this.inputedParams})
 
-            const prompt = `
-Echo user's input.
-
-Example:
-[INPUT]
-# description
-Hello, world!
-
-[OUTPUT]
-\`\`\`json
-{
-    "description": "Hello, world!"
-}
-\`\`\`
-
-Let's start.
-
-[INPUT]
-# description
-${this.inputedParams.description}
-
-[OUTPUT]
-\`\`\`json
-`
-            // const prompt = this._getSystemPrompt() + this._getUserPrompt(
-            //     this.inputedParams.ddl, this.inputedParams.selectedOption,
-            //     this.inputedParams.boundedContexts, this.inputedParams.functionRequests
-            // )
+            const prompt = this._getSystemPrompt() + this._getUserPrompt(
+                this.inputedParams.esValue, this.inputedParams.targetAggregate, this.inputedParams.description
+            )
 
             console.log(`[*] LLM에게 ${this.generatorName}에서 생성된 프롬프트 전달중...`, {prompt})
             return prompt
 
         } catch(e) {
 
-            console.error(`[!] GetRelatedESValueByDDLGenerator에 대한 프롬프트 생성 도중에 오류 발생!`, {esValue, ddl, error:e})
+            console.error(`[!] ${this.generatorName}에 대한 프롬프트 생성 도중에 오류 발생!`, {esValue, ddl, error:e})
+            console.error(e)
             throw e
 
         }
@@ -73,24 +51,23 @@ ${this.inputedParams.description}
 
     _getSystemPrompt(){
         return this.__getFrontGuidePrompt() +
+            ESValueSummarizeUtil_OnlyName.getGuidePrompt() +
             this.__getOutputSyntaxGuidePrompt() +
             this.__getExamplePrompt() +
             GlobalPromptUtil.getJsonCompressGuidePrompt()
     }
 
     __getFrontGuidePrompt(){
-        return `You will need to write actions that utilize the given DDL to create the event stemming structure presented.
+        return `You need to return actions to add Commands and Events to a specific Aggregate based on the given EventStorming information.
 
 Please follow these rules.
-1. Create new BoundedContexts from the ones provided, and create event stemming actions to generate the user-directed structure in the appropriate Bounded Context.
-2. All properties in a given DDL must be included in the Aggregate or ValueObject you created.
-3. You can utilize basic Java data types such as String and Long for Aggregate properties, or predefined properties such as Address, Portrait, Rating, Money, and Email. Other properties must be defined in the corresponding Aggregate as Enumeration or ValueObject.
-4. If the Bounded Context name is not in English, you will need to change it to an appropriate English name. ex) 고객 -> Customer Service
-5. If the names of Aggregate, ValueObject, and Enumeration used in the user-supplied structure are not English, you must change them to appropriate English names.
-6. Create events, commands, and actions as appropriate to satisfy the functional requirements communicated.
-7. You must create and utilize only the Bounded Contexts provided in “Bounded Contexts to Create and Utilize”; do not create any additional Bounded Contexts.
-8. When the value of a ValueObject or Enumeration is utilised by the Aggregate Root, the corresponding material type must be used, not String. Ex) String > OrderStatus
-9. Do not write comments in the output JSON object.
+1. Commands must raise at least one event. Ex) CreateUser > UserCreated
+2. Even if the name of the feature passed by the user is not in English, you need to convert it to an appropriate English name and add it. Ex) 유저 업데이트 기능 -> UpdateUser, UserUpdated
+3. When adding properties to events and commands, make sure they exist in the Aggregate. If it doesn't, you can add the new property to the Aggregate via an action.
+4. When adding new properties to an aggregate, you can use native Java data types such as String, Long, Integer, etc. for aggregate properties, or you can use predefined properties: Address, Portrait, Rating, Money, Email. Other properties must be defined as enumerations or value objects in the corresponding aggregation.
+5. If the event to be generated additionally calls other commands. Please reference the existing event storming  information passing the name of that command and add it.
+6. When the value of a ValueObject or Enumeration is utilised by the Aggregate Root, the corresponding material type must be used, not String. Ex) String > OrderStatus
+7. Do not write comments in the output JSON object.
 
 `
     }
@@ -103,13 +80,8 @@ The returned format should be as follows.
     "actions": [
         {
             // This attribute indicates what type of object information is being modified.
-            // Choose one from BoundedContext, Aggregate, Enumeration, ValueObject, Command, Event.
+            // Choose one from Event, Command, Aggregate, Enumeration, ValueObject.
             "objectType": "<objectType>",
-
-            // This attribute contains the ID information of the object on which the action is performed.
-            "ids": {
-                "<idName>": "<idValue>"
-            },
 
             // This attribute contains the parameters required for the action.
             "args": {
@@ -123,98 +95,6 @@ The returned format should be as follows.
 I will explain the ids and args used in each objectType.
 You cannot use any arbitrary parameters not described in this explanation in ids or args.
 
-# objectType: BoundedContext
-- Description
-Used to create a Bounded Context specified by the user, and that BoundedContextId should be utilized by other actions.
-
-- Return format
-{
-    "objectType": "BoundedContext",
-    "ids": {
-        "boundedContextId": "<boundedContextId>"
-    },
-    "args": {
-        "boundedContextName": "<boundedContextName>"
-    }
-}
-
-# objectType: Aggregate
-- Description
-You can define an Aggregate by utilizing the properties found in the DDL.
-aggregateId can be used when defining ValueObjects, Enumerations that belong to an Aggregate.
-
-- Return format
-{
-    "objectType": "Aggregate",
-    "ids": {
-        "boundedContextId": "<boundedContextId>",
-        "aggregateId": "<aggregateId>"
-    },
-    "args": {
-        "aggregateName": "<aggregateName>",
-
-        // Please list as many attributes used in the transaction as possible.
-        "properties": [
-            {
-                "name": "<propertyName>",
-                ["type": "<propertyType>"], // If the type is String, do not specify the type.
-                ["isKey": true] // Write only if there is a primary key.
-            }
-        ]
-    }
-}
-
-# objectType: Enumeration
-- Description
-An object containing enumeration information that can be used in an Aggregate.
-If there is no appropriate Aggregate that this Enumeration can belong to, it must be newly created through a query.
-You can utilize the properties in the DDL to define an Enumeration.
-
-- Return format
-{
-    "objectType": "Enumeration",
-    "ids": {
-        "boundedContextId": "<boundedContextId>",
-        "aggregateId": "<aggregateId>",
-        "enumerationId": "<enumerationId>"
-    },
-    "args": {
-        "enumerationName": "<enumerationName>",
-        "properties": [
-            {
-                "name": "<propertyName>"
-            }
-        ]
-    }
-}
-
-# objectType: ValueObject
-- Description
-An object containing ValueObject information that can be used in an Aggregate.
-If there is no appropriate Aggregate that this ValueObject can belong to, it must be newly created through a query.
-You can utilize the properties in the DDL to define an ValueObject.
-
-- Return format
-{
-    "objectType": "ValueObject",
-    "ids": {
-        "boundedContextId": "<boundedContextId>",
-        "aggregateId": "<aggregateId>",
-        "valueObjectId": "<valueObjectId>"
-    },
-    "args": {
-        "valueObjectName": "<valueObjectName>",
-        "properties": [
-            {
-                "name": "<propertyName>",
-                ["type": "<propertyType>"], // If the type is String, do not specify the type.
-                ["isKey": true], // Write only if there is a primary key.
-                ["isForeignProperty": true] // Whether it is a foreign key. Write only if this attribute references another table's attribute.
-            }
-        ],
-    }
-}
-
 # objectType: Command
 - Description
 Generate commands in the aggregate to satisfy the given functional requirements.
@@ -222,15 +102,19 @@ Generate commands in the aggregate to satisfy the given functional requirements.
 - Return format
 {
     "objectType": "Command",
-    "ids": {
-        "boundedContextId": "<boundedContextId>",
-        "aggregateId": "<aggregateId>",
-        "commandId": "<commandId>"
-    },
     "args": {
         "commandName": "<commandName>",
         "api_verb": <"POST" | "DELETE" | "PUT">,
-        "outputEventIds": ["<outputEventId>"], // List of event IDs generated by this command. Must write existing event IDs.
+
+        "properties": [
+            {
+                "name": "<propertyName>",
+                ["type": "<propertyType>"], // If the type is String, do not specify the type.
+                ["isKey": true] // Write only if there is a primary key.
+            }
+        ],
+
+        "outputEventNames": ["<outputEventName>"], // Must write existing event names.
         "actor": "<actorName>" // The name of the actor performing the action. Should include names like user, admin, etc. If there is no specific actor, leave it empty.
     }
 }
@@ -242,109 +126,158 @@ Generate events in the aggregate to satisfy the given functional requirements.
 - Return format
 {
     "objectType": "Event",
-    "ids": {
-        "boundedContextId": "<boundedContextId>",
-        "aggregateId": "<aggregateId>",
-        "eventId": "<eventId>"
-    },
     "args": {
         "eventName": "<eventName>",
+
+        "properties": [
+            {
+                "name": "<propertyName>",
+                ["type": "<propertyType>"], // If the type is String, do not specify the type.
+                ["isKey": true] // Write only if there is a primary key.
+            }
+        ],
 
         // Specific events can call commands within other BoundedContexts to change states.
         // Examples of such call information are as follows.
         // 1. If the patient's preference information has changed and there is an updated latest date of the patient's preference information in the patient information, it should be written to reflect this.
         // 2. If the quantity of ordered products has changed and there is information related to the total quantity of ordered products in the order product information, it should be written to reflect this.
         // 3. If a customer has purchased a new product with points and there are remaining points in the customer information, the points should be reduced to reflect this.
-        // Notes are as follows.
-        // 1. Do not call a command to change the primary key. The primary key is an unchanging attribute.
-        // 2. Specify which attribute is being changed by calling the command.
-        "outputCommandIds": [{
-            "commandId": "<outputCommandId>", // The ID of the command being called. Must write existing command IDs.
-            "relatedAttribute": "<relatedAttribute>", // Specify which attribute is being updated by calling the command. Write the attribute name of the Aggregate to which the called command belongs.
-            "reason": "<reason>" // Specify the reason for calling this command.
-        }]
+        "outputCommandNames": ["<outputCommandName>"], // Must write existing command names.
     }
 }
+
+# objectType: Aggregate
+- Description
+When adding a command or event, if an existing Aggregate does not have the required property, you can add a new property.
+
+- Return format
+{
+    "objectType": "Aggregate",
+    "args": {
+        "properties": [
+            {
+                "name": "<propertyName>",
+                ["type": "<propertyType>"] // If the type is String, do not specify the type.
+            }
+        ]
+    }
+}
+
+# objectType: Enumeration
+- Description
+If the type of property you want to add to the aggregate does not have an appropriate default Java type, you can create a new type as an enumeration.
+
+- Return format
+{
+    "objectType": "Enumeration",
+    "args": {
+        // If you use a name that already exists, we'll add a new property to that Enumeration. 
+        // If you use a name that doesn't exist, we'll create a new Enumeration.
+        "enumerationName": "<enumerationName>",
+        "properties": [
+            {
+                "name": "<propertyName>"
+            }
+        ]
+    }
+}
+
+# objectType: ValueObject
+- Description
+If the type of property you want to add to the aggregate does not have an appropriate default Java type, you can create a new type as an ValueObject.
+
+- Return format
+{
+    "objectType": "ValueObject",
+    "args": {
+        // If you use a name that already exists, we'll add a new property to that ValueObject. 
+        // If you use a name that doesn't exist, we'll create a new ValueObject.
+        "valueObjectName": "<valueObjectName>",
+        "properties": [
+            {
+                "name": "<propertyName>",
+                ["type": "<propertyType>"], // If the type is String, do not specify the type.
+                ["isKey": true], // Write only if there is a primary key.
+                ["isForeignProperty": true] // Whether it is a foreign key. Write only if this attribute references another table's attribute.
+            }
+        ]
+    }
+}
+
 `
     }
 
     __getExamplePrompt(){
         return `Let me give you an example.
 [INPUT]
-- DDL
-CREATE TABLE orders (
-    order_id INT PRIMARY KEY,
-    customer_id INT,
-    order_date DATE,
-    total_amount DECIMAL(10, 2),
-    status VARCHAR(20)
-);
+- Existing Event Storming Model
+{"orderService":{"name":"orderService","actors":[{"name":"Customer"}],"aggregates":{"Order":{"name":"Order","enumerations":[{"name":"OrderStatus"}],"valueObjects":[],"commands":[{"name":"PlaceOrder","api_verb":"POST","outputEvents":["OrderPlaced"]}],"events":[{"name":"OrderPlaced","outputCommands":[]}]},"Inventory":{"name":"Inventory","enumerations":[],"valueObjects":[],"commands":[{"name":"UpdateInventory","api_verb":"POST","outputEvents":["InvenetoryUpdated"]}],"events":[{"name":"InvenetoryUpdated","outputCommands":[]}]}}}}
 
-CREATE TABLE order_items (
-    item_id INT PRIMARY KEY,
-    order_id INT,
-    product_id INT,
-    quantity INT,
-    unit_price DECIMAL(10, 2),
-    FOREIGN KEY (order_id) REFERENCES orders(order_id)
-);
+- Aggregate info to add event and command
+{"name":"Order","properties":[{"name":"orderId","type":"Long"},{"name":"customerId","type":"Long"},{"name":"orderStatus","type":"OrderStatus"},{"name":"totalAmount","type":"Money"}],"enumerations":[{"name":"OrderStatus","properties":["PLACED","PAID","CANCELLED"]}],"valueObjects":[],"commands":[{"name":"PlaceOrder","api_verb":"POST","outputEvents":["OrderPlaced"]}],"events":[{"name":"OrderPlaced","outputCommands":[]}]}
 
-CREATE TABLE customers (
-    customer_id INT PRIMARY KEY,
-    name VARCHAR(100),
-    email VARCHAR(100),
-    loyalty_points INT
-);
-
-CREATE TABLE products (
-    product_id INT PRIMARY KEY,
-    name VARCHAR(100),
-    description TEXT,
-    price DECIMAL(10, 2),
-    stock_quantity INT
-);
-
-- The EventStorming structure you need to create 
-주문 관리 (Entities: 주문, 주문항목, ValueObjects: 주문상세)
-고객 관리 (Entities: 고객)
-상품 관리 (Entities: 상품)
-
-- Bounded Contexts to Create and Utilize
-주문 관리, 고객 관리, 상품 관리
-
-- Functional Requirements
-고객이 주문을 생성할 수 있어야 합니다.
-주문 생성 시 재고를 확인하고 감소시켜야 합니다.
-주문 완료 시 고객의 로열티 포인트가 증가해야 합니다.
-고객이 주문을 취소할 수 있어야 합니다.
-주문 취소 시 재고를 원복하고 로열티 포인트를 차감해야 합니다.
+- Function Requirements
+Add functionality to cancel an order. When an order is cancelled, it should update the order status, and update the inventory.
 
 [OUTPUT]
 \`\`\`json
-{"actions":[{"objectType":"BoundedContext","ids":{"boundedContextId":"bc-order"},"args":{"boundedContextName":"Order Management"}},{"objectType":"Aggregate","ids":{"boundedContextId":"bc-order","aggregateId":"agg-order"},"args":{"aggregateName":"Order","properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"customerId","type":"Long"},{"name":"orderDate","type":"Date"},{"name":"totalAmount","type":"Money"},{"name":"orderDetail","type":"OrderDetail"},{"name":"orderStatus","type":"OrderStatus"}]}},{"objectType":"ValueObject","ids":{"boundedContextId":"bc-order","aggregateId":"agg-order","valueObjectId":"vo-order-detail"},"args":{"valueObjectName":"OrderDetail","properties":[{"name":"itemId","type":"Long","isKey":true},{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"},{"name":"unitPrice","type":"Money"}]}},{"objectType":"Enumeration","ids":{"boundedContextId":"bc-order","aggregateId":"agg-order","enumerationId":"enum-order-status"},"args":{"enumerationName":"OrderStatus","properties":[{"name":"CREATED"},{"name":"PAID"},{"name":"SHIPPED"},{"name":"DELIVERED"},{"name":"CANCELLED"}]}},{"objectType":"Command","ids":{"boundedContextId":"bc-order","aggregateId":"agg-order","commandId":"cmd-create-order"},"args":{"commandName":"CreateOrder","api_verb":"POST","outputEventIds":["evt-order-created"],"actor":"Customer"}},{"objectType":"Event","ids":{"boundedContextId":"bc-order","aggregateId":"agg-order","eventId":"evt-order-created"},"args":{"eventName":"OrderCreated","outputCommandIds":[{"commandId":"cmd-decrease-stock-quantity","relatedAttribute":"stockQuantity","reason":"Decrease product stock quantity after order creation"}]}},{"objectType":"Command","ids":{"boundedContextId":"bc-order","aggregateId":"agg-order","commandId":"cmd-cancel-order"},"args":{"commandName":"CancelOrder","api_verb":"PUT","outputEventIds":["evt-order-cancelled"],"actor":"Customer"}},{"objectType":"Event","ids":{"boundedContextId":"bc-order","aggregateId":"agg-order","eventId":"evt-order-cancelled"},"args":{"eventName":"OrderCancelled","outputCommandIds":[{"commandId":"cmd-increase-stock-quantity","relatedAttribute":"stockQuantity","reason":"Restore product stock quantity after order cancellation"},{"commandId":"cmd-decrease-loyalty-points","relatedAttribute":"loyaltyPoints","reason":"Decrease customer loyalty points after order cancellation"}]}},{"objectType":"BoundedContext","ids":{"boundedContextId":"bc-customer"},"args":{"boundedContextName":"Customer Management"}},{"objectType":"Aggregate","ids":{"boundedContextId":"bc-customer","aggregateId":"agg-customer"},"args":{"aggregateName":"Customer","properties":[{"name":"customerId","type":"Long","isKey":true},{"name":"name","type":"String"},{"name":"email","type":"Email"},{"name":"loyaltyPoints","type":"Integer"}]}},{"objectType":"Command","ids":{"boundedContextId":"bc-customer","aggregateId":"agg-customer","commandId":"cmd-decrease-loyalty-points"},"args":{"commandName":"DecreaseLoyaltyPoints","api_verb":"PUT","outputEventIds":["evt-loyalty-points-decreased"],"actor":"System"}},{"objectType":"Event","ids":{"boundedContextId":"bc-customer","aggregateId":"agg-customer","eventId":"evt-loyalty-points-decreased"},"args":{"eventName":"LoyaltyPointsDecreased"}},{"objectType":"Command","ids":{"boundedContextId":"bc-customer","aggregateId":"agg-customer","commandId":"cmd-increase-loyalty-points"},"args":{"commandName":"IncreaseLoyaltyPoints","api_verb":"PUT","outputEventIds":["evt-loyalty-points-increased"],"actor":"System"}},{"objectType":"Event","ids":{"boundedContextId":"bc-customer","aggregateId":"agg-customer","eventId":"evt-loyalty-points-increased"},"args":{"eventName":"LoyaltyPointsIncreased"}},{"objectType":"BoundedContext","ids":{"boundedContextId":"bc-product"},"args":{"boundedContextName":"Product Management"}},{"objectType":"Aggregate","ids":{"boundedContextId":"bc-product","aggregateId":"agg-product"},"args":{"aggregateName":"Product","properties":[{"name":"productId","type":"Long","isKey":true},{"name":"name","type":"String"},{"name":"description","type":"String"},{"name":"price","type":"Money"},{"name":"stockQuantity","type":"Integer"}]}},{"objectType":"Command","ids":{"boundedContextId":"bc-product","aggregateId":"agg-product","commandId":"cmd-decrease-stock-quantity"},"args":{"commandName":"DecreaseStockQuantity","api_verb":"PUT","outputEventIds":["evt-stock-quantity-decreased"],"actor":"System"}},{"objectType":"Event","ids":{"boundedContextId":"bc-product","aggregateId":"agg-product","eventId":"evt-stock-quantity-decreased"},"args":{"eventName":"StockQuantityDecreased","outputCommandIds":[{"commandId":"cmd-increase-loyalty-points","relatedAttribute":"loyaltyPoints","reason":"Increase customer loyalty points after successful order"}]}},{"objectType":"Command","ids":{"boundedContextId":"bc-product","aggregateId":"agg-product","commandId":"cmd-increase-stock-quantity"},"args":{"commandName":"IncreaseStockQuantity","api_verb":"PUT","outputEventIds":["evt-stock-quantity-increased"],"actor":"System"}},{"objectType":"Event","ids":{"boundedContextId":"bc-product","aggregateId":"agg-product","eventId":"evt-stock-quantity-increased"},"args":{"eventName":"StockQuantityIncreased"}}]}
+{"actions":[{"objectType":"Command","args":{"commandName":"CancelOrder","api_verb":"PUT","properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"cancellationReason"}],"outputEventNames":["OrderCancelled"],"actor":"user"}},{"objectType":"Event","args":{"eventName":"OrderCancelled","properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"cancellationReason"},{"name":"cancellationDate","type":"Date"}],"outputCommandNames":["UpdateInventory"]}},{"objectType":"Aggregate","args":{"properties":[{"name":"cancellationReason"},{"name":"cancellationDate","type":"Date"}]}}]}
 \`\`\`
 
 `
     }
 
-    _getUserPrompt(ddl, selectedOption, boundedContexts, functionRequests){
+    _getUserPrompt(esValue, targetAggregate, description){
         return `Now let's process the user's input.
 [INPUT]
-- DDL
-${ddl}
+- Existing Event Storming Model
+${JSON.stringify(ESValueSummarizeUtil_OnlyName.getFilteredSummarizedESValue(esValue))}
 
-- The EventStorming structure you need to create 
-${selectedOption}
+- Aggregate info to add event and command
+${JSON.stringify(this.__getFilteredAggregateValueWithProperties(esValue, esValue.elements[targetAggregate.boundedContext.id], targetAggregate))}
 
-- Bounded Contexts to Create and Utilize
-${boundedContexts.join(", ")}
-
-- Functional Requirements
-${functionRequests}
+- Function Requirements
+${description}
 
 [OUTPUT]
 \`\`\`json
 `
+    }
+
+    __getFilteredAggregateValueWithProperties(esValue, boundedContext, aggregate){
+        const summarizedAggregateValue = ESValueSummarizeUtil.getSummarizedAggregateValue(esValue, boundedContext, aggregate)
+
+        let filteredAggregateValue = {
+            name: summarizedAggregateValue.name,
+            properties: summarizedAggregateValue.properties,
+            enumerations: summarizedAggregateValue.enumerations.map(enumeration => {
+                return {
+                    name: enumeration.name,
+                    properties: enumeration.items
+                }
+            }),
+            valueObjects: summarizedAggregateValue.valueObjects.map(valueObject => {
+                return {
+                    name: valueObject.name,
+                    properties: valueObject.properties
+                }
+            }),
+            commands: summarizedAggregateValue.commands.map(command => {
+                return {
+                    name: command.name,
+                    api_verb: command.api_verb,
+                    outputEvents: (command.outputEvents) ? command.outputEvents.map(event => event.name) : []
+                }
+            }),
+            events: summarizedAggregateValue.events.map(event => {
+                return {
+                    name: event.name,
+                    outputCommands: (event.outputCommands) ? event.outputCommands.map(command => command.name) : []
+                }
+            })
+        }
+
+        return filteredAggregateValue
     }
 
 
@@ -362,34 +295,35 @@ ${functionRequests}
         try {
 
             console.log(`[*] ${this.generatorName}에서 결과 파싱중...`, {text})
+
+
+            let actions = GlobalPromptUtil.parseToJson(text).actions
+            this._restoreActions(actions, this.inputedParams.esValue, this.inputedParams.targetAggregate)
+
+            const createdESValue = ESActionUtil.getActionAppliedESValue(actions, this.inputedParams.userInfo, this.inputedParams.information, this.inputedParams.esValue)
+            const elementModifyInfo = this._createElementModifyInfo(actions, createdESValue)
+
+
             const outputResult = {
                 generatorName: this.generatorName,
                 modelValue: {
-                    description: GlobalPromptUtil.parseToJson(text).description
+                    actions: actions,
+                    createdESValue: createdESValue,
+                    elementModifyInfo: elementModifyInfo
                 },
                 modelRawValue: text,
                 inputedParams: this.inputedParams
             }
-
-            // const actions = GlobalPromptUtil.parseToJson(text).actions
-            // const createdESValue = ESActionUtil.getActionAppliedESValue(actions, this.inputedParams.userInfo, this.inputedParams.information)
-            
-            // const outputResult = {
-            //     generatorName: this.generatorName,
-            //     modelValue: {
-            //         actions: actions,
-            //         createdESValue: createdESValue
-            //     },
-            //     modelRawValue: text,
-            //     inputedParams: this.inputedParams
-            // }
             console.log(`[*] ${this.generatorName}에서 결과 파싱 완료!`, {outputResult})
+            console.log(`### Aggregate Inside에서 생성한 액션 정보 ###`)
+            console.log(JSON.stringify(outputResult.modelValue.actions, null, 2))
 
             return outputResult
 
         } catch(e) {
 
             console.error(`[!] ${this.modelName}에서 결과 파싱중에 오류 발생!`, {text, error:e})
+            console.error(e)
 
             return {
                 generatorName: this.generatorName,
@@ -400,6 +334,135 @@ ${functionRequests}
             }
 
         }
+    }
+
+    _restoreActions(actions, esValue, targetAggregate) {
+        for(let action of actions){
+            switch(action.objectType){
+                case "Aggregate":
+                    action.ids = {
+                        boundedContextId: targetAggregate.boundedContext.id,
+                        aggregateId: targetAggregate.id
+                    }
+                    break
+
+                case "Command":
+                    action.ids = {
+                        boundedContextId: targetAggregate.boundedContext.id,
+                        aggregateId: targetAggregate.id,
+                        commandId: `cmd-${action.args.commandName}`
+                    }                            
+                    break
+
+                case "Event":
+                    action.ids = {
+                        boundedContextId: targetAggregate.boundedContext.id,
+                        aggregateId: targetAggregate.id,
+                        eventId: `evt-${action.args.eventName}`
+                    }
+                    break
+
+                case "Enumeration":
+                    action.ids = {
+                        boundedContextId: targetAggregate.boundedContext.id,
+                        aggregateId: targetAggregate.id,
+                        enumerationId: this.__getIdByNameInAggregateRoot(action.args.enumerationName, "Enumeration", targetAggregate) 
+                    }
+                    break
+
+                case "ValueObject":
+                    action.ids = {
+                        boundedContextId: targetAggregate.boundedContext.id,
+                        aggregateId: targetAggregate.id,
+                        valueObjectId: this.__getIdByNameInAggregateRoot(action.args.valueObjectName, "ValueObject", targetAggregate) 
+                    }
+                    break
+            }
+        }
+
+        for(let action of actions){
+            switch(action.objectType){
+                case "Command":
+                    if(action.args && action.args.outputEventNames)
+                        action.args.outputEventIds = action.args.outputEventNames
+                            .map(name => this.__getIdByNameInEsValue(name, actions, esValue))
+                        .filter(id => id)
+                    break
+                
+                case "Event":
+                    if(action.args && action.args.outputCommandNames)
+                        action.args.outputCommandIds = action.args.outputCommandNames.map(name => {
+                            return {
+                                commandId: this.__getIdByNameInEsValue(name, actions, esValue),
+                                relatedAttribute: "",
+                                reason: ""
+                            }
+                        }).filter(outputCommand => outputCommand.commandId)
+                    break
+            }
+        }
+    }
+
+    __getIdByNameInAggregateRoot(name, objectType, targetAggregate){
+        if(targetAggregate.aggregateRoot &&
+            targetAggregate.aggregateRoot.entities &&
+            targetAggregate.aggregateRoot.entities.elements
+        ) {
+            for(let element of Object.values(targetAggregate.aggregateRoot.entities.elements)){
+                if(element && element.name === name && element.id)
+                    return element.id
+            }
+        }
+
+        switch(objectType){
+            case "Enumeration":
+                return `enum-${name}`
+            case "ValueObject":
+                return `vo-${name}`
+        }
+    }
+
+    __getIdByNameInEsValue(name, actions, esValue){
+        for(let action of actions){
+            if(action.args && action.args.commandName && action.args.commandName === name)
+                return action.ids.commandId
+            if(action.args && action.args.eventName && action.args.eventName === name)
+                return action.ids.eventId
+        }
+
+        for(let element of Object.values(esValue.elements)){
+            if(element && element.name === name && element.id)
+                return element.id
+        }
+
+        return null
+    }
+
+    _createElementModifyInfo(actions, createdESValue){
+        let elementModifyInfo = {}
+
+        for(let action of actions){
+            switch(action.objectType){
+                case "Aggregate":
+                case "Enumeration":
+                case "ValueObject":
+                    if(action.ids && action.ids.aggregateId && !elementModifyInfo[action.ids.aggregateId])
+                        elementModifyInfo[action.ids.aggregateId] = createdESValue.elements[action.ids.aggregateId]
+                    break
+                    
+                case "Command":
+                    if(action.ids && action.ids.commandId)
+                        elementModifyInfo[action.ids.commandId] = createdESValue.elements[action.ids.commandId]
+                    break
+                
+                case "Event":
+                    if(action.ids && action.ids.eventId)
+                        elementModifyInfo[action.ids.eventId] = createdESValue.elements[action.ids.eventId]
+                    break
+            }
+        }
+
+        return elementModifyInfo
     }
 }
 

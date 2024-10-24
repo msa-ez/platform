@@ -15,7 +15,7 @@ export default {
     },
     methods: {
         handleKeyPress(event) {
-            if (event.altKey && event.key === 't') {
+            if (event.altKey && event.key.toLowerCase() === 't') {
                 this.promptCommand();
             }
         },
@@ -56,14 +56,37 @@ export default {
             var me = this
             me.__generate('DDLCreateESActionsGenerator', {
                 ddl: `CREATE TABLE customers (
-customer_id INT PRIMARY KEY AUTO_INCREMENT,
-name VARCHAR(100) NOT NULL,
-phone VARCHAR(20) NOT NULL,
-address VARCHAR(255) NOT NULL,
-total_points INT DEFAULT 0
+    customer_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    total_points INT DEFAULT 0,
+    category_id INT NOT NULL,
+    level_id INT NOT NULL,
+    FOREIGN KEY (category_id) REFERENCES customer_categories(category_id),
+    FOREIGN KEY (level_id) REFERENCES customer_levels(level_id)
+);
+
+CREATE TABLE customer_categories (
+    category_id INT PRIMARY KEY AUTO_INCREMENT,
+    category_name VARCHAR(50) NOT NULL,
+    description VARCHAR(200)
+);
+
+CREATE TABLE customer_levels (
+    level_id INT PRIMARY KEY AUTO_INCREMENT,
+    level_name VARCHAR(50) NOT NULL,
+    min_points INT NOT NULL,
+    max_points INT NOT NULL
 );`,
-                selectedOption: "고객 (Entities: 고객, ValueObjects: 연락처, 주소)",
-                boundedContexts: [`고객`],
+                suggestedStructures: [
+                    {
+                        aggregateRoot: "Customer",
+                        generalClasses: ["CustomerCategory", "CustomerLevel"],
+                        valueObjects: ["Contact", "Address"]
+                    }
+                ],
+                boundedContexts: [`Customer`],
                 functionRequests: "Add the appropriate Create and Delete operations for the given DDL.",
                 userInfo: me.userInfo,
                 information: me.information
@@ -225,27 +248,26 @@ total_points INT DEFAULT 0
 
         _test_makeNewEventStormingProject() {
             const createdESValue = ESActionUtil.getActionAppliedESValue([
-                {
-                    "objectType": "BoundedContext",
-                    "ids": {
-                        "boundedContextId": "c2b72ca1-722e-4924-366b-1d68c9097a2e"
+                    {
+                        "objectType": "BoundedContext",
+                        "ids": {
+                            "boundedContextId": "bc-customer"
+                        },
+                        "args": {
+                            "boundedContextName": "Customer"
+                        }
                     },
-                    "args": {
-                        "boundedContextName": "StoreService"
-                    },
-                    "type": "create"
-                },
-                {
-                    "objectType": "Aggregate",
-                    "ids": {
-                        "boundedContextId": "c2b72ca1-722e-4924-366b-1d68c9097a2e",
-                        "aggregateId": "915eabd8-012f-fb23-3a00-75d8ffe29183"
-                    },
-                    "args": {
-                        "aggregateName": "Store",
-                        "properties": [
+                    {
+                        "objectType": "Aggregate",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer"
+                        },
+                        "args": {
+                            "aggregateName": "Customer",
+                            "properties": [
                             {
-                                "name": "storeId",
+                                "name": "customerId",
                                 "type": "Long",
                                 "isKey": true
                             },
@@ -253,79 +275,169 @@ total_points INT DEFAULT 0
                                 "name": "name"
                             },
                             {
+                                "name": "contact",
+                                "type": "Contact"
+                            },
+                            {
                                 "name": "address",
                                 "type": "Address"
                             },
                             {
-                                "name": "contact",
-                                "type": "Contact"
+                                "name": "totalPoints",
+                                "type": "Integer"
+                            },
+                            {
+                                "name": "customerCategory",
+                                "type": "CustomerCategory"
+                            },
+                            {
+                                "name": "customerLevel",
+                                "type": "CustomerLevel"
                             }
-                        ]
+                            ]
+                        }
                     },
-                    "type": "create"
-                },
-                {
-                    "objectType": "ValueObject",
-                    "ids": {
-                        "boundedContextId": "c2b72ca1-722e-4924-366b-1d68c9097a2e",
-                        "aggregateId": "915eabd8-012f-fb23-3a00-75d8ffe29183",
-                        "valueObjectId": "e6e0d4e7-5d96-20d8-9460-1449f083a80f"
-                    },
-                    "args": {
-                        "valueObjectName": "Contact",
-                        "properties": [
+                    {
+                        "objectType": "ValueObject",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer",
+                            "valueObjectId": "vo-contact"
+                        },
+                        "args": {
+                            "valueObjectName": "Contact",
+                            "properties": [
                             {
                                 "name": "phone"
                             }
-                        ]
+                            ]
+                        }
                     },
-                    "type": "create"
-                },
-                {
-                    "objectType": "Aggregate",
-                    "ids": {
-                        "boundedContextId": "c2b72ca1-722e-4924-366b-1d68c9097a2e",
-                        "aggregateId": "851fee67-1709-e1b5-1715-32370fcf193e"
-                    },
-                    "args": {
-                        "aggregateName": "StoreAddress",
-                        "properties": [
+                    {
+                        "objectType": "ValueObject",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer",
+                            "valueObjectId": "vo-address"
+                        },
+                        "args": {
+                            "valueObjectName": "Address",
+                            "properties": [
                             {
-                                "name": "id",
+                                "name": "address"
+                            }
+                            ]
+                        }
+                    },
+                    {
+                        "objectType": "GeneralClass",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer",
+                            "generalClassId": "gc-customer-category"
+                        },
+                        "args": {
+                            "generalClassName": "CustomerCategory",
+                            "properties": [
+                            {
+                                "name": "categoryId",
                                 "type": "Long",
                                 "isKey": true
                             },
                             {
-                                "name": "storeId",
-                                "type": "Long",
-                                "isForeignProperty": true
+                                "name": "categoryName"
                             },
                             {
-                                "name": "address",
-                                "type": "Address"
+                                "name": "description"
                             }
-                        ]
+                            ]
+                        }
                     },
-                    "type": "create"
-                },
-                {
-                    "objectType": "ValueObject",
-                    "ids": {
-                        "boundedContextId": "c2b72ca1-722e-4924-366b-1d68c9097a2e",
-                        "aggregateId": "851fee67-1709-e1b5-1715-32370fcf193e",
-                        "valueObjectId": "8074f9d0-44b3-65d7-6b5d-19e83af1e992"
-                    },
-                    "args": {
-                        "valueObjectName": "Address",
-                        "properties": [
+                    {
+                        "objectType": "GeneralClass",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer",
+                            "generalClassId": "gc-customer-level"
+                        },
+                        "args": {
+                            "generalClassName": "CustomerLevel",
+                            "properties": [
                             {
-                                "name": "address"
+                                "name": "levelId",
+                                "type": "Long",
+                                "isKey": true
+                            },
+                            {
+                                "name": "levelName"
+                            },
+                            {
+                                "name": "minPoints",
+                                "type": "Integer"
+                            },
+                            {
+                                "name": "maxPoints",
+                                "type": "Integer"
                             }
-                        ]
+                            ]
+                        }
                     },
-                    "type": "create"
-                }
-            ], this.userInfo, this.information)
+                    {
+                        "objectType": "Command",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer",
+                            "commandId": "cmd-create-customer"
+                        },
+                        "args": {
+                            "commandName": "CreateCustomer",
+                            "api_verb": "POST",
+                            "outputEventIds": [
+                            "evt-customer-created"
+                            ],
+                            "actor": "User"
+                        }
+                    },
+                    {
+                        "objectType": "Event",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer",
+                            "eventId": "evt-customer-created"
+                        },
+                        "args": {
+                            "eventName": "CustomerCreated"
+                        }
+                    },
+                    {
+                        "objectType": "Command",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer",
+                            "commandId": "cmd-delete-customer"
+                        },
+                        "args": {
+                            "commandName": "DeleteCustomer",
+                            "api_verb": "DELETE",
+                            "outputEventIds": [
+                            "evt-customer-deleted"
+                            ],
+                            "actor": "User"
+                        }
+                    },
+                    {
+                        "objectType": "Event",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer",
+                            "eventId": "evt-customer-deleted"
+                        },
+                        "args": {
+                            "eventName": "CustomerDeleted"
+                        }
+                    }
+                ], this.userInfo, this.information)
+            console.log(JSON.stringify(createdESValue, null, 2))
             this.__makeNewEventStormingProject(createdESValue)
         },
 

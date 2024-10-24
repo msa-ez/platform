@@ -319,9 +319,22 @@
             },
             convertDate(timeStamp) {
                 if (!timeStamp) return null;
-                if (typeof timeStamp == 'string') timeStamp = Number(timeStamp)
+                if (typeof timeStamp == 'string') timeStamp = Number(timeStamp);
                 var date = new Date(timeStamp);
-                return date.getFullYear() + "년 " + (date.getMonth() + 1) + "월 " + date.getDate() + "일 " + date.getHours() + "시 " + date.getMinutes() + "분"
+
+                if (this.isForeign) {
+                    // 영어식 날짜 형식
+                    return date.toLocaleString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: 'numeric'
+                    });
+                } else {
+                    // 한국어식 날짜 형식
+                    return date.getFullYear() + "년 " + (date.getMonth() + 1) + "월 " + date.getDate() + "일 " + date.getHours() + "시 " + date.getMinutes() + "분";
+                }
             },
         },
         beforeDestroy() {

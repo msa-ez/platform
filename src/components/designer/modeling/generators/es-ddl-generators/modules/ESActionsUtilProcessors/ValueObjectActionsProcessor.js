@@ -3,14 +3,19 @@ const ActionsProcessorUtils = require('./ActionsProcessorUtils')
 const GlobalPromptUtil = require('../GlobalPromptUtil')
 
 class ValueObjectActionsProcessor {
-    static getActionAppliedESValue(action, callbacks) {
+    static getActionAppliedESValue(action, esValue, callbacks) {
         switch(action.type) {
             case "create":
                 ValueObjectActionsProcessor._createValueObject(action, callbacks)
                 break
+            
+            case "update":
+                ValueObjectActionsProcessor._updateValueObject(action, esValue, callbacks)
+                break
         }
     }
 
+    
     static _createValueObject(action, callbacks) {
         callbacks.afterAllObjectAppliedCallBacks.push((esValue) => {
             const valueObject = ValueObjectActionsProcessor.__getValueObjectBase(
@@ -66,6 +71,27 @@ class ValueObjectActionsProcessor {
         }
     }
 
+    static __getValidPosition(esValue, action) {
+        const relatedValueObjects = ActionsProcessorUtils.getRelatedValueObjects(esValue, action.ids.aggregateId)
+        return {x: 700 + (relatedValueObjects.length * 250), y: 152}
+    }
+
+
+    static _updateValueObject(action, esValue, callbacks) {
+        const targetAggregate = esValue.elements[action.ids.aggregateId]
+        if(!targetAggregate || !targetAggregate.aggregateRoot || 
+           !targetAggregate.aggregateRoot.entities || !targetAggregate.aggregateRoot.entities.elements) return
+
+        const targetValueObject = targetAggregate.aggregateRoot.entities.elements[action.ids.valueObjectId]
+        if(!targetValueObject) return
+        
+        if(action.args.properties) {
+            targetValueObject.fieldDescriptors = targetValueObject.fieldDescriptors.concat(ValueObjectActionsProcessor.__getFileDescriptors(action.args.properties))
+            targetAggregate.aggregateRoot.entities.elements[action.ids.valueObjectId] = {...targetValueObject}
+        }
+    }
+
+
     static __getFileDescriptors(actionProperties) {
         return actionProperties.filter(property => !property.isForeignProperty).map((property) => {
             return {
@@ -78,11 +104,6 @@ class ValueObjectActionsProcessor {
                 "_type": "org.uengine.model.FieldDescriptor"
             }
         })
-    }
-
-    static __getValidPosition(esValue, action) {
-        const relatedValueObjects = ActionsProcessorUtils.getRelatedValueObjects(esValue, action.ids.aggregateId)
-        return {x: 700 + (relatedValueObjects.length * 250), y: 152}
     }
 }
 
