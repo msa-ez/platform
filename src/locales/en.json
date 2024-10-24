@@ -34,7 +34,7 @@
     "partnership": "Partnership",
     "learn": "Learn",
     "Storage": "Storage",
-    "company": "Company In Use",
+    "company": "Customers",
     "pricing": "Pricing Policy"
   },
   "making" : {
@@ -43,20 +43,20 @@
     "design" : "Design",
     "operation" : "Operation",
     "project" : "Project",
-    "migration" : "migration"
+    "migration" : "Migration"
   },
   "main": {
-    "title": "Microservices Architecture made easy!",
-    "content1": "Frontend, Auth/Authz, GraphQL, etc. - All Patterns supported by modeling",
-    "content2": "Event driven microservices with Kafka, Spring, Axon, Eventuate",
-    "content3": "Container & Kubernetes Deploy Diagramming",
-    "title2": "Let AI design the system.",
-    "content4": "Now, leave your business analysis and system design to Chat GPT-based AI service.",
-    "content5": "Create Business Model Canvas, Customer Journey Map, Eventstorming Model and User Story automatically.",
-    "title3": "Delegate coding and debugging to AI.",
-    "content6": "Utilize ChatGPT-4 and internet searches to write code,",
-    "content7": "iterate on implementation until issues in compilation and functionality are resolved",
-    "content8": "by finding solutions online and passing tests.",
+    "title": "Simplified Microservices Architecture",
+    "content1": "Frontend, Auth/AuthZ, GraphQL, and more — all patterns supported through modeling.",
+    "content2": "Event-driven microservices using Kafka, Spring, Axon, and Eventuate.",
+    "content3": "Container and Kubernetes deployment architecture visualization.",
+    "title2": "Let AI design your system.",
+    "content4": "Transform your business analysis and system design with our ChatGPT-powered AI service.",
+    "content5": "Automatically generate Business Model Canvas, Customer Journey Maps, Event Storming Models, and User Stories.",
+    "title3": "Leverage AI for coding and debugging.",
+    "content6": "Harness ChatGPT-4 and web searches for code generation,",
+    "content7": "refine implementations until all compilation and functional requirements are met,",
+    "content8": "by leveraging online solutions and test validations.",
     "goToUrlText": "Learn more",
     "goToLearn" : "Learn"
   },
@@ -99,7 +99,9 @@
     "cjm": "Customer Journey Map",
     "cjm-inst": "A customer journey map is a tool that visually represents the entire process a customer goes through when experiencing a product or service. This map captures each stage of the experience from the customer's perspective, allowing businesses to understand and improve the customer experience.",
     "userStoryMap": "User Story Map",
-    "userStoryMap-inst": "User Story Map is a visual tool to understand and upgrade user experience of the product or the service."
+    "userStoryMap-inst": "User Story Map is a visual tool to understand and upgrade user experience of the product or the service.",
+    "legacy-modernizer": "Legacy Modernizer",
+    "legacy-modernizer-inst": ""
   },
   "tutorials": {
     "tutorial": "TUTORIALS",
@@ -194,7 +196,7 @@
     "user": "Generating Persona... Choose a persona to generate customer journey map:",
     "chip1": "Google Drive",
     "chip2": "Food Delivery App",
-    "chip3": "Fish ERP",
+    "chip3": "Fishery ERP",
     "chip4": "Internet Banking"
   },
   "UIWizardDialoger": {

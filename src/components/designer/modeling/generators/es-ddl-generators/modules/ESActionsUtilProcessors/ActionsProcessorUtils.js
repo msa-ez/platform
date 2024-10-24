@@ -69,6 +69,14 @@ class ActionsProcessorUtils {
         return relatedEnums
     }
 
+    static getRelatedGeneralClasses(esValue, action) {
+        let relatedGeneralClasses = []
+        for(const element of Object.values(ActionsProcessorUtils.getEntitiesForAggregate(esValue, action.ids.aggregateId).elements)) {
+            if(element && !element.isAggregateRoot && element._type === "org.uengine.uml.model.Class")
+                relatedGeneralClasses.push(element)
+        }
+        return relatedGeneralClasses
+    }
 
     static addEntityPropertyToAggregateIfNotExist (esValue, targetAggregateId, propertyName) {
         const aggregate = esValue.elements[targetAggregateId]

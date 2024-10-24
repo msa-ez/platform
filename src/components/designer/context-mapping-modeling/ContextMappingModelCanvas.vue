@@ -1481,10 +1481,14 @@
             usedDDL = this.__getDDLsFromTableNames(boundedContextInfo.ddl.split(", "), ddl)
           }
 
-          const functionRequests = (boundedContextInfo.scenario) ? boundedContextInfo.scenario : "Add the appropriate Create and Delete operations for the given DDL."
+          const functionRequests = (boundedContextInfo.scenario && boundedContextInfo.scenario.length > 0) ? boundedContextInfo.scenario : "Add the appropriate Create and Delete operations for each generated aggregate."
           eventStormingInputs.push({
             ddl: usedDDL,
-            selectedOption: boundedContextInfo.aggregates,
+            suggestedStructures: boundedContextInfo.parsedAggregates.map((aggregate) => ({
+              aggregateRoot: aggregate.aggregateRoot,
+              generalClasses: aggregate.entities.filter((entity) => entity.toLowerCase() !== aggregate.aggregateRoot.toLowerCase().replace("aggregate", "")),
+              valueObjects: aggregate.valueObjects
+            })),
             boundedContexts: [boundedContextKey],
             functionRequests: functionRequests,
             userInfo: me.userInfo,

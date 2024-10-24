@@ -5,6 +5,7 @@ const ValueObjectActionsProcessor = require('./ESActionsUtilProcessors/ValueObje
 const EnumerationActionsProcessor = require('./ESActionsUtilProcessors/EnumerationActionsProcessor')
 const EventActionsProcessor = require('./ESActionsUtilProcessors/EventActionsProcessor')
 const CommandActionsProcessor = require('./ESActionsUtilProcessors/CommandActionsProcessor')
+const GeneralClassActionsProcessor = require('./ESActionsUtilProcessors/GeneralClassActionsProcessor')
 
 class ESActionsUtil {
     static getActionAppliedESValue(actions, userInfo, information, prevESValue=null) {
@@ -102,10 +103,13 @@ class ESActionsUtil {
                 AggregateActionsProcessor.getActionAppliedESValue(action, userInfo, esValue, callbacks);
                 break
             case "ValueObject":
-                ValueObjectActionsProcessor.getActionAppliedESValue(action, callbacks, esValue);
+                ValueObjectActionsProcessor.getActionAppliedESValue(action, esValue, callbacks);
                 break
             case "Enumeration":
-                EnumerationActionsProcessor.getActionAppliedESValue(action, callbacks, esValue);
+                EnumerationActionsProcessor.getActionAppliedESValue(action, esValue, callbacks);
+                break
+            case "GeneralClass":
+                GeneralClassActionsProcessor.getActionAppliedESValue(action, esValue, callbacks);
                 break
             case "Event":
                 EventActionsProcessor.getActionAppliedESValue(action, userInfo, esValue, callbacks);

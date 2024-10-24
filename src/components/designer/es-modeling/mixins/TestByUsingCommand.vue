@@ -17,7 +17,7 @@ export default {
     },
     methods: {
         handleKeyPress(event) {
-            if (event.altKey && event.key === 't') {
+            if (event.altKey && event.key.toLowerCase() === 't') {
                 this.promptCommand();
             }
         },
