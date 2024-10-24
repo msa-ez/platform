@@ -21,7 +21,7 @@ class AggregateInsideGenerator extends JsonAIGenerator{
         try {
 
             for(let optionKey of ["description", "targetAggregate", "esValue", "userInfo", "information"])
-                if(this.client.input[optionKey] === null) 
+                if(this.client.input[optionKey] === undefined) 
                     throw new Error(`${optionKey} 파라미터가 전달되지 않았습니다.`)
             this.inputedParams = {
                 description: this.client.input.description,

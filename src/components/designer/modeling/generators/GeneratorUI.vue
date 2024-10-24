@@ -297,6 +297,7 @@
     import DebeziumLogsTab from "./generatorTabs/DebeziumLogsTab.vue"
     import DDLGenerator from './DDLGenerator.js'
     import DDLDraftGenerator from './DDLDraftGenerator.js'
+    import DDLBoundedContextDistributeGenerator from './es-ddl-generators/DDLBoundedContextDistributeGenerator.js'
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
 
@@ -527,6 +528,7 @@
                         case "KubernetesGenerator": this.generatorComponent = new KubernetesGenerator(this); break;
                         case "DDLGenerator": this.generatorComponent = new DDLGenerator(this); break;
                         case "DDLDraftGenerator": this.generatorComponent = new DDLDraftGenerator(this); break;
+                        case "DDLBoundedContextDistributeGenerator": this.generatorComponent = new DDLBoundedContextDistributeGenerator(this); break;
                     }
 
                     return this.generatorComponent;
@@ -629,6 +631,15 @@
                     this.input['boundedContextLists'] = this.boundedContextLists
                     this.input['scenario'] = this.scenario
                     this.generatorComponent.generate();
+                }else if(this.generatorName === "DDLBoundedContextDistributeGenerator") {
+                    if(!this.DDL){
+                        return;
+                    }
+                    this.input = {}
+                    this.input['ddls'] = this.DDL
+                    this.input['suggestedBoundedContexts'] = this.boundedContextLists
+                    this.input['functionRequirements'] = [this.scenario]
+                    this.generatorComponent.generate();
                 }else{
                     this.focusedTabComponent = (this.userPanel < this.tabs.length) ? this.$refs[this.tabs[this.userPanel].component][0] : null
                     if (this.focusedTabComponent) {
@@ -721,8 +732,8 @@
                         this.generatorName = "ModelModificationGenerator"
                 }else if(mode && mode=='DDL'){
                     if(this.canvasType === "context-mapping-model-canvas"){
-                        this.generatorComponent = new DDLDraftGenerator(this);
-                        this.generatorName = "DDLDraftGenerator"
+                        this.generatorComponent = new DDLBoundedContextDistributeGenerator(this);
+                        this.generatorName = "DDLBoundedContextDistributeGenerator"
                     }else{
                         this.generatorComponent = new DDLGenerator(this);
                         this.generatorName = "DDLGenerator"
@@ -820,7 +831,7 @@
                         type: 'response'
                     }
                     this.chatList.push(response);
-                }else if(this.generatorName === "DDLDraftGenerator" || this.generatorName === "DDLGenerator"){
+                }else if(this.generatorName === "DDLGenerator"){
                     console.log("[*] DDLGenerator에서 전달한 모델 값")
                     console.log(model)
                 }else{
