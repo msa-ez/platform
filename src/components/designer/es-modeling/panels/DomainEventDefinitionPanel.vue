@@ -13,7 +13,7 @@
     >
 
         <template slot="t-description-text">
-            도메인 전문가가 정의함. 이벤트 퍼블리싱
+            {{ $t('panelInfo.DomainEventDefinitionPanel') }}
         </template>
 
         <template slot="t-generation-text">
@@ -186,7 +186,11 @@
                 me.relatedAggregate = me.isPBCModel ? me.value.aggregate : me.canvas.getAttachedAggregate(me.value)
                 me.findCommandLists()
                 me.findPolicyLists()
-                me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#event-sticker'
+                if (me.isForeign) {
+                    me.relatedUrl = 'https://intro.msaez.io/tool/event-storming-tool/#event-sticker'
+                } else {
+                    me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#event-sticker'
+                }
 
                 // Common
                 me.$super(EventStormingModelPanel).panelInit()

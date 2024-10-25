@@ -14,7 +14,8 @@
     >
 
         <template slot="t-description-text">
-            이벤트의 내용을 정의하고 시스템의 경계를 구분.
+            {{ $t('panelInfo.BoundedContextCMPanel') }}
+            <!-- 이벤트의 내용을 정의하고 시스템의 경계를 구분. -->
         </template>
 
         <template slot="t-generation-text">

@@ -335,7 +335,7 @@
                                             <v-col cols="2"></v-col>
                                             <v-col cols="6" class="gs-main-page-text-box">
                                                 <div style="display: flex; justify-content: flex-start;">
-                                                    <div style="text-align: left;">
+                                                    <div style="text-align: left; padding-right:10px;">
                                                         <div class="gs-main-page-top-title" style="white-space: pre-wrap;">{{$t(item.title)}}</div>
                                                         <div class="gs-main-page-sub-title">
                                                             <div v-for="content in item.content" :key="content">{{$t(content)}}<br></div>

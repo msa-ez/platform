@@ -16,8 +16,8 @@
                 >
                     Explain code<v-icon x-small>mdi-send</v-icon>
                 </v-btn>
-                <v-row>
-                    <v-col v-if="!showGpt" :cols="explainedResult == '' ? '12' : '6'"
+                <v-row class="ma-0 pa-0 pt-4">
+                    <v-col class="pa-0" v-if="!showGpt" :cols="explainedResult == '' ? '12' : '6'"
                         style="padding:0px; height:100%;"
                     >
                         <vue-markdown
