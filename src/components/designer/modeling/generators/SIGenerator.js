@@ -47,7 +47,10 @@ Preserve existing class interfaces (methods, parameters, fields) as much as poss
 7. Member variable types specified in the code listing must not be changed. You will need to modify other code to match the type. // public string ID; I need to keep a String . Even if you get a type conversion error such as “Cannot convert java.lang.String to java.lang.Long,” you should resolve the error by modifying the code that uses that variable, not by changing the variable type. If you inevitably need to change the type, you must add code to convert the variable type to the type you want to change to all codes that use the variable in the code list.
 8. If you determine that you have encountered a dependency version-related error, such as "NoSuchMethodError", you must modify the corresponding dependency version in pom.xml.
 9. If the code you are trying to modify includes "//readonly", you should never modify that code. Example: If "\nexample code //readonly\n", "example code" should never be modified and must remain as is.
-10. "codeChanges" are only created if it is a file.`
+10. "codeChanges" are only created if it is a file.
+11. You should focus on examining the contents of the given files and the error content and solving the errors that occurred, and you should not solve the errors by removing all the parts where the errors occurred or avoiding the errors. You should create high-quality code that can solve the errors and can actually be used.
+12. You should check and acknowledge all the solutions that were previously proposed and provide a solution. Do not waste time by suggesting the same solution that was previously proposed, reverting changes, or suggesting incorrect solutions. Also, you should identify exactly which files need to be modified and modify them. Most of the files that need to be modified are .java, .xml files.
+13. When generating the code to be fixed, you should not generate code arbitrarily, but generate meaningful code based on the code content of all the files provided.`
     // }
 
         if(this.client.modifiedHistory.length > 0){

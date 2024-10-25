@@ -1,15 +1,16 @@
 const changeCase = require('change-case');
+const pluralize = require('pluralize');
 const ActionsProcessorUtils = require('./ActionsProcessorUtils')
 const GlobalPromptUtil = require('../GlobalPromptUtil')
 
 class EnumerationActionsProcessor {
-    static getActionAppliedESValue(action, callbacks, esValue) {
+    static getActionAppliedESValue(action, esValue, callbacks) {
         switch(action.type) {
             case "create":
                 EnumerationActionsProcessor._createEnumeration(action, callbacks)
                 break
             case "update":
-                EnumerationActionsProcessor._updateEnumeration(action, callbacks, esValue)
+                EnumerationActionsProcessor._updateEnumeration(action, esValue, callbacks)
                 break
         }
     }
@@ -42,6 +43,7 @@ class EnumerationActionsProcessor {
             "name": name,
             "nameCamelCase": changeCase.camelCase(name),
             "namePascalCase": changeCase.pascalCase(name),
+            "namePlural": pluralize(changeCase.camelCase(name)),
             "elementView": {
                 "_type": "org.uengine.uml.model.enum",
                 "id": elementUUIDtoUse,
@@ -66,7 +68,7 @@ class EnumerationActionsProcessor {
     }
 
 
-    static _updateEnumeration(action, callbacks, esValue) {
+    static _updateEnumeration(action, esValue, callbacks) {
         const targetAggregate = esValue.elements[action.ids.aggregateId]
         if(!targetAggregate || !targetAggregate.aggregateRoot || 
            !targetAggregate.aggregateRoot.entities || !targetAggregate.aggregateRoot.entities.elements) return

@@ -208,7 +208,7 @@
                                 >
                                     <v-card style="height:100%;"
                                         outlined
-                                        @click="navigateTo('https://www.msaschool.io/operation/education/curriculum/')"
+                                        @click="navigateTo('https://www.msaschool.io/operation/introduction/curriculum/')"
                                     >
                                         <v-card-title class="justify-center">{{ $t('mainNavSubCard.training') }}</v-card-title>
                                         <v-img 

@@ -4,6 +4,7 @@
   
 <script>
 import ESActionUtil from "../../modeling/generators/es-ddl-generators/modules/ESActionsUtil"
+import DDLManager from "../../modeling/generators/es-ddl-generators/managers/DDLManager"
 
 export default {
     name: "test-by-using-command",
@@ -15,7 +16,7 @@ export default {
     },
     methods: {
         handleKeyPress(event) {
-            if (event.altKey && event.key === 't') {
+            if (event.altKey && event.key.toLowerCase() === 't') {
                 this.promptCommand();
             }
         },
@@ -45,6 +46,22 @@ export default {
                 case "generateFromDraft":
                     this._test_generateFromDraft()
                     break
+                
+                case "TestDDLManager":
+                    this._test_DDLManager()
+                    break
+                
+                case "TestDDLBoundedContextDistributeGenerator":
+                    this._test_DDLBoundedContextDistributeGenerator()
+                    break
+                
+                case "TestDDLDraftGeneratorForDistribution":
+                    this._test_DDLDraftGeneratorForDistribution()
+                    break
+                
+                case "TestDDLDraftComponent":
+                    this._test_DDLDraftComponent()
+                    break
 
                 default:
                     alert("유효하지 않은 커맨드입니다.")
@@ -56,14 +73,37 @@ export default {
             var me = this
             me.__generate('DDLCreateESActionsGenerator', {
                 ddl: `CREATE TABLE customers (
-customer_id INT PRIMARY KEY AUTO_INCREMENT,
-name VARCHAR(100) NOT NULL,
-phone VARCHAR(20) NOT NULL,
-address VARCHAR(255) NOT NULL,
-total_points INT DEFAULT 0
+    customer_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    total_points INT DEFAULT 0,
+    category_id INT NOT NULL,
+    level_id INT NOT NULL,
+    FOREIGN KEY (category_id) REFERENCES customer_categories(category_id),
+    FOREIGN KEY (level_id) REFERENCES customer_levels(level_id)
+);
+
+CREATE TABLE customer_categories (
+    category_id INT PRIMARY KEY AUTO_INCREMENT,
+    category_name VARCHAR(50) NOT NULL,
+    description VARCHAR(200)
+);
+
+CREATE TABLE customer_levels (
+    level_id INT PRIMARY KEY AUTO_INCREMENT,
+    level_name VARCHAR(50) NOT NULL,
+    min_points INT NOT NULL,
+    max_points INT NOT NULL
 );`,
-                selectedOption: "고객 (Entities: 고객, ValueObjects: 연락처, 주소)",
-                boundedContexts: [`고객`],
+                suggestedStructures: [
+                    {
+                        aggregateRoot: "Customer",
+                        generalClasses: ["CustomerCategory", "CustomerLevel"],
+                        valueObjects: ["Contact", "Address"]
+                    }
+                ],
+                boundedContexts: [`Customer`],
                 functionRequests: "Add the appropriate Create and Delete operations for the given DDL.",
                 userInfo: me.userInfo,
                 information: me.information
@@ -225,27 +265,26 @@ total_points INT DEFAULT 0
 
         _test_makeNewEventStormingProject() {
             const createdESValue = ESActionUtil.getActionAppliedESValue([
-                {
-                    "objectType": "BoundedContext",
-                    "ids": {
-                        "boundedContextId": "c2b72ca1-722e-4924-366b-1d68c9097a2e"
+                    {
+                        "objectType": "BoundedContext",
+                        "ids": {
+                            "boundedContextId": "bc-customer"
+                        },
+                        "args": {
+                            "boundedContextName": "Customer"
+                        }
                     },
-                    "args": {
-                        "boundedContextName": "StoreService"
-                    },
-                    "type": "create"
-                },
-                {
-                    "objectType": "Aggregate",
-                    "ids": {
-                        "boundedContextId": "c2b72ca1-722e-4924-366b-1d68c9097a2e",
-                        "aggregateId": "915eabd8-012f-fb23-3a00-75d8ffe29183"
-                    },
-                    "args": {
-                        "aggregateName": "Store",
-                        "properties": [
+                    {
+                        "objectType": "Aggregate",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer"
+                        },
+                        "args": {
+                            "aggregateName": "Customer",
+                            "properties": [
                             {
-                                "name": "storeId",
+                                "name": "customerId",
                                 "type": "Long",
                                 "isKey": true
                             },
@@ -253,79 +292,169 @@ total_points INT DEFAULT 0
                                 "name": "name"
                             },
                             {
+                                "name": "contact",
+                                "type": "Contact"
+                            },
+                            {
                                 "name": "address",
                                 "type": "Address"
                             },
                             {
-                                "name": "contact",
-                                "type": "Contact"
+                                "name": "totalPoints",
+                                "type": "Integer"
+                            },
+                            {
+                                "name": "customerCategory",
+                                "type": "CustomerCategory"
+                            },
+                            {
+                                "name": "customerLevel",
+                                "type": "CustomerLevel"
                             }
-                        ]
+                            ]
+                        }
                     },
-                    "type": "create"
-                },
-                {
-                    "objectType": "ValueObject",
-                    "ids": {
-                        "boundedContextId": "c2b72ca1-722e-4924-366b-1d68c9097a2e",
-                        "aggregateId": "915eabd8-012f-fb23-3a00-75d8ffe29183",
-                        "valueObjectId": "e6e0d4e7-5d96-20d8-9460-1449f083a80f"
-                    },
-                    "args": {
-                        "valueObjectName": "Contact",
-                        "properties": [
+                    {
+                        "objectType": "ValueObject",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer",
+                            "valueObjectId": "vo-contact"
+                        },
+                        "args": {
+                            "valueObjectName": "Contact",
+                            "properties": [
                             {
                                 "name": "phone"
                             }
-                        ]
+                            ]
+                        }
                     },
-                    "type": "create"
-                },
-                {
-                    "objectType": "Aggregate",
-                    "ids": {
-                        "boundedContextId": "c2b72ca1-722e-4924-366b-1d68c9097a2e",
-                        "aggregateId": "851fee67-1709-e1b5-1715-32370fcf193e"
-                    },
-                    "args": {
-                        "aggregateName": "StoreAddress",
-                        "properties": [
+                    {
+                        "objectType": "ValueObject",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer",
+                            "valueObjectId": "vo-address"
+                        },
+                        "args": {
+                            "valueObjectName": "Address",
+                            "properties": [
                             {
-                                "name": "id",
+                                "name": "address"
+                            }
+                            ]
+                        }
+                    },
+                    {
+                        "objectType": "GeneralClass",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer",
+                            "generalClassId": "gc-customer-category"
+                        },
+                        "args": {
+                            "generalClassName": "CustomerCategory",
+                            "properties": [
+                            {
+                                "name": "categoryId",
                                 "type": "Long",
                                 "isKey": true
                             },
                             {
-                                "name": "storeId",
-                                "type": "Long",
-                                "isForeignProperty": true
+                                "name": "categoryName"
                             },
                             {
-                                "name": "address",
-                                "type": "Address"
+                                "name": "description"
                             }
-                        ]
+                            ]
+                        }
                     },
-                    "type": "create"
-                },
-                {
-                    "objectType": "ValueObject",
-                    "ids": {
-                        "boundedContextId": "c2b72ca1-722e-4924-366b-1d68c9097a2e",
-                        "aggregateId": "851fee67-1709-e1b5-1715-32370fcf193e",
-                        "valueObjectId": "8074f9d0-44b3-65d7-6b5d-19e83af1e992"
-                    },
-                    "args": {
-                        "valueObjectName": "Address",
-                        "properties": [
+                    {
+                        "objectType": "GeneralClass",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer",
+                            "generalClassId": "gc-customer-level"
+                        },
+                        "args": {
+                            "generalClassName": "CustomerLevel",
+                            "properties": [
                             {
-                                "name": "address"
+                                "name": "levelId",
+                                "type": "Long",
+                                "isKey": true
+                            },
+                            {
+                                "name": "levelName"
+                            },
+                            {
+                                "name": "minPoints",
+                                "type": "Integer"
+                            },
+                            {
+                                "name": "maxPoints",
+                                "type": "Integer"
                             }
-                        ]
+                            ]
+                        }
                     },
-                    "type": "create"
-                }
-            ], this.userInfo, this.information)
+                    {
+                        "objectType": "Command",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer",
+                            "commandId": "cmd-create-customer"
+                        },
+                        "args": {
+                            "commandName": "CreateCustomer",
+                            "api_verb": "POST",
+                            "outputEventIds": [
+                            "evt-customer-created"
+                            ],
+                            "actor": "User"
+                        }
+                    },
+                    {
+                        "objectType": "Event",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer",
+                            "eventId": "evt-customer-created"
+                        },
+                        "args": {
+                            "eventName": "CustomerCreated"
+                        }
+                    },
+                    {
+                        "objectType": "Command",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer",
+                            "commandId": "cmd-delete-customer"
+                        },
+                        "args": {
+                            "commandName": "DeleteCustomer",
+                            "api_verb": "DELETE",
+                            "outputEventIds": [
+                            "evt-customer-deleted"
+                            ],
+                            "actor": "User"
+                        }
+                    },
+                    {
+                        "objectType": "Event",
+                        "ids": {
+                            "boundedContextId": "bc-customer",
+                            "aggregateId": "agg-customer",
+                            "eventId": "evt-customer-deleted"
+                        },
+                        "args": {
+                            "eventName": "CustomerDeleted"
+                        }
+                    }
+                ], this.userInfo, this.information)
+            console.log(JSON.stringify(createdESValue, null, 2))
             this.__makeNewEventStormingProject(createdESValue)
         },
 
@@ -393,6 +522,221 @@ CREATE TABLE store_categories (
 );`
 
             this.generateFromDraft(mock_selectedOptionItem)
+        },
+
+        _test_DDLManager(){
+            const mockDDL = `CREATE TABLE customers (
+    customer_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    total_points INT DEFAULT 0,
+    category_id INT NOT NULL,
+    level_id INT NOT NULL,
+    FOREIGN KEY (category_id) REFERENCES customer_categories(category_id),
+    FOREIGN KEY (level_id) REFERENCES customer_levels(level_id)
+);
+
+CREATE TABLE customer_categories (
+    category_id INT PRIMARY KEY AUTO_INCREMENT,
+    category_name VARCHAR(50) NOT NULL,
+    description VARCHAR(200)
+);
+
+CREATE TABLE customer_levels (
+    level_id INT PRIMARY KEY AUTO_INCREMENT,
+    level_name VARCHAR(50) NOT NULL,
+    min_points INT NOT NULL,
+    max_points INT NOT NULL
+);`
+
+            const ddlManager = new DDLManager(mockDDL)
+            console.log(ddlManager.getParsedDDLs())
+        },
+
+        _test_DDLBoundedContextDistributeGenerator(){
+            this.__generate('DDLBoundedContextDistributeGenerator', {
+                ddlSummaries: [
+                    "patients(PK: patient_id)",
+                    "patient_medical_records(PK: record_id, FK: patient_id, FK: doctor_id)",
+                    "doctors(PK: doctor_id, FK: department_id)",
+                    "departments(PK: department_id)",
+                    "appointments(PK: appointment_id, FK: patient_id, FK: doctor_id, FK: room_id)",
+                    "medical_rooms(PK: room_id, FK: department_id)",
+                    "prescriptions(PK: prescription_id, FK: record_id, FK: medicine_id)",
+                    "medicines(PK: medicine_id)",
+                    "medicine_inventory(PK: inventory_id, FK: medicine_id)",
+                    "billing_records(PK: bill_id, FK: patient_id, FK: appointment_id)",
+                    "insurance_claims(PK: claim_id, FK: bill_id)",
+                    "staff_schedules(PK: schedule_id, FK: doctor_id)",
+                    "lab_tests(PK: test_id, FK: record_id)",
+                    "lab_results(PK: result_id, FK: test_id)"
+                ],
+                suggestedBoundedContexts: [
+                    "환자관리",
+                    "진료부서관리"
+                ],
+                functionRequirements: [
+                    "환자 진료 기록을 관리해야 합니다",
+                    "의사별 진료 일정 관리가 필요합니다",
+                    "약품 재고 관리 기능이 필요합니다",
+                    "보험 청구 프로세스를 자동화해야 합니다",
+                    "진료실 예약 관리가 필요합니다",
+                    "검사 결과를 환자 기록과 연동해야 합니다",
+                    "부서별 의사 배치 현황을 관리해야 합니다"
+                ]
+            })
+        },
+
+        _test_DDLDraftGeneratorForDistribution(){
+            this.__generate('DDLDraftGeneratorForDistribution', {
+                ddl: `CREATE TABLE employees (
+    employee_id VARCHAR(36) PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    phone_number VARCHAR(20),
+    hire_date DATE NOT NULL,
+    job_title VARCHAR(100) NOT NULL,
+    salary DECIMAL(12,2) NOT NULL,
+    department_id VARCHAR(36) NOT NULL,
+    manager_id VARCHAR(36),
+    status VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE departments (
+    department_id VARCHAR(36) PRIMARY KEY,
+    department_name VARCHAR(100) NOT NULL,
+    location_id VARCHAR(36) NOT NULL,
+    budget DECIMAL(15,2) NOT NULL,
+    manager_id VARCHAR(36)
+);
+
+CREATE TABLE employee_benefits (
+    benefit_id VARCHAR(36) PRIMARY KEY,
+    employee_id VARCHAR(36) NOT NULL,
+    benefit_type VARCHAR(50) NOT NULL,
+    coverage_amount DECIMAL(12,2) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE,
+    status VARCHAR(20) NOT NULL,
+    FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
+);
+
+CREATE TABLE attendance_records (
+    record_id VARCHAR(36) PRIMARY KEY,
+    employee_id VARCHAR(36) NOT NULL,
+    check_in TIMESTAMP NOT NULL,
+    check_out TIMESTAMP,
+    work_type VARCHAR(20) NOT NULL,
+    location VARCHAR(100),
+    FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
+);
+
+CREATE TABLE performance_reviews (
+    review_id VARCHAR(36) PRIMARY KEY,
+    employee_id VARCHAR(36) NOT NULL,
+    reviewer_id VARCHAR(36) NOT NULL,
+    review_date DATE NOT NULL,
+    rating INTEGER NOT NULL,
+    comments TEXT,
+    goals TEXT,
+    status VARCHAR(20) NOT NULL,
+    FOREIGN KEY (employee_id) REFERENCES employees(employee_id),
+    FOREIGN KEY (reviewer_id) REFERENCES employees(employee_id)
+);`,
+                boundedContext: `HR Management`
+            })
+        },
+
+        _test_DDLDraftComponent(){
+            const aiOutput = {
+    "generatorName": "DDLDraftGeneratorForDistribution",
+    "modelValue": {
+        "options": [
+            {
+                "structure": [
+                    {
+                        "aggregateName": "Store",
+                        "entities": [],
+                        "valueObjects": [
+                            "Address",
+                            "Phone"
+                        ]
+                    },
+                    {
+                        "aggregateName": "Category",
+                        "entities": [],
+                        "valueObjects": []
+                    }
+                ],
+                "pros": "간단한 구조: 각 스토어와 카테고리를 독립적으로 관리할 수 있음, 높은 성능: 작은 집합체로 빠른 연산 가능",
+                "cons": "복잡한 관계 관리: 스토어와 카테고리 간의 관계를 별도로 관리해야 함"
+            },
+            {
+                "structure": [
+                    {
+                        "aggregateName": "Store",
+                        "entities": [
+                            "Category"
+                        ],
+                        "valueObjects": [
+                            "Address",
+                            "Phone"
+                        ]
+                    }
+                ],
+                "pros": "강력한 일관성: 스토어와 카테고리 간의 관계가 명확히 정의됨, 단순한 관리: 모든 관련 데이터가 하나의 집합체 내에 존재",
+                "cons": "큰 집합체 크기: 모든 스토어 관련 데이터를 하나의 집합체로 관리하므로 성능 저하 가능성"
+            },
+            {
+                "structure": [
+                    {
+                        "aggregateName": "Store",
+                        "entities": [],
+                        "valueObjects": [
+                            "Address",
+                            "Phone"
+                        ]
+                    },
+                    {
+                        "aggregateName": "StoreCategory",
+                        "entities": [],
+                        "valueObjects": []
+                    }
+                ],
+                "pros": "높은 유연성: 스토어와 카테고리를 독립적으로 관리 가능, 단순한 확장성: 각 요소를 독립적으로 확장 가능",
+                "cons": "복잡한 일관성 관리: 스토어와 카테고리 간의 일관성을 유지하기 위한 추가 로직 필요"
+            }
+        ],
+        "defaultOptionIndex": 0,
+        "conclusions": "Write a conclusion for each option, explaining in which cases it would be best to choose that option."
+    },
+    "modelRawValue": "```json\n{\"options\":[{\"structure\":[{\"aggregateName\":\"Store\",\"entities\":[],\"valueObjects\":[\"Address\",\"Phone\"]},{\"aggregateName\":\"Category\",\"entities\":[],\"valueObjects\":[]}],\"pros\":\"간단한 구조: 각 스토어와 카테고리를 독립적으로 관리할 수 있음, 높은 성능: 작은 집합체로 빠른 연산 가능\",\"cons\":\"복잡한 관계 관리: 스토어와 카테고리 간의 관계를 별도로 관리해야 함\"},{\"structure\":[{\"aggregateName\":\"Store\",\"entities\":[\"Category\"],\"valueObjects\":[\"Address\",\"Phone\"]}],\"pros\":\"강력한 일관성: 스토어와 카테고리 간의 관계가 명확히 정의됨, 단순한 관리: 모든 관련 데이터가 하나의 집합체 내에 존재\",\"cons\":\"큰 집합체 크기: 모든 스토어 관련 데이터를 하나의 집합체로 관리하므로 성능 저하 가능성\"},{\"structure\":[{\"aggregateName\":\"Store\",\"entities\":[],\"valueObjects\":[\"Address\",\"Phone\"]},{\"aggregateName\":\"StoreCategory\",\"entities\":[],\"valueObjects\":[]}],\"pros\":\"높은 유연성: 스토어와 카테고리를 독립적으로 관리 가능, 단순한 확장성: 각 요소를 독립적으로 확장 가능\",\"cons\":\"복잡한 일관성 관리: 스토어와 카테고리 간의 일관성을 유지하기 위한 추가 로직 필요\"}],\"defaultOptionIndex\":0,\"conclusions\":\"옵션 1은 간단한 스토어와 카테고리 관리가 필요한 경우 적합합니다. 옵션 2는 스토어와 카테고리 간의 강력한 일관성이 필요한 경우 적합합니다. 옵션 3은 유연성과 확장성이 중요한 경우에 적합합니다.\"}\n```",
+    "inputedParams": {
+        "ddl": "CREATE TABLE stores (\n    store_id INT PRIMARY KEY AUTO_INCREMENT,\n    name VARCHAR(100) NOT NULL,\n    address VARCHAR(255) NOT NULL,\n    phone VARCHAR(20) NOT NULL\n)\nCREATE TABLE store_categories (\n    category_id INT PRIMARY KEY AUTO_INCREMENT,\n    name VARCHAR(50) NOT NULL\n)",
+        "boundedContext": "Store",
+        "functionRequirements": []
+    }
+}
+
+        const ddlDraftOptions = [
+            {
+                boundedContext: aiOutput.inputedParams.boundedContext,
+                options: aiOutput.modelValue.options.map(option => ({
+                    ...option,
+                    boundedContext: aiOutput.inputedParams.boundedContext,
+                    functionRequirements: aiOutput.inputedParams.functionRequirements,
+                    ddl: aiOutput.inputedParams.ddl
+                })),
+                conclusions: aiOutput.modelValue.conclusions,
+                defaultOptionIndex: aiOutput.modelValue.defaultOptionIndex
+            }
+        ]
+        this.DDLDraftOptions = ddlDraftOptions
+        this.showDDLDraftDialog = true
+
+            
         }
     }
 }

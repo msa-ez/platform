@@ -7354,7 +7354,8 @@
                 generator.generate()
             },
             onModelCreated(model){
-                this.showDDLDraftDialog = true
+                if(model && model.generatorName === 'DDLGenerator')
+                    this.showDDLDraftDialog = true
             },
             setDDLDraftDialog(model){
                 this.DDLDraftTable = model.tables

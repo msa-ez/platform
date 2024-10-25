@@ -3,14 +3,14 @@ const ActionsProcessorUtils = require('./ActionsProcessorUtils')
 const GlobalPromptUtil = require('../GlobalPromptUtil')
 
 class ValueObjectActionsProcessor {
-    static getActionAppliedESValue(action, callbacks, esValue) {
+    static getActionAppliedESValue(action, esValue, callbacks) {
         switch(action.type) {
             case "create":
                 ValueObjectActionsProcessor._createValueObject(action, callbacks)
                 break
             
             case "update":
-                ValueObjectActionsProcessor._updateValueObject(action, callbacks, esValue)
+                ValueObjectActionsProcessor._updateValueObject(action, esValue, callbacks)
                 break
         }
     }
@@ -77,7 +77,7 @@ class ValueObjectActionsProcessor {
     }
 
 
-    static _updateValueObject(action, callbacks, esValue) {
+    static _updateValueObject(action, esValue, callbacks) {
         const targetAggregate = esValue.elements[action.ids.aggregateId]
         if(!targetAggregate || !targetAggregate.aggregateRoot || 
            !targetAggregate.aggregateRoot.entities || !targetAggregate.aggregateRoot.entities.elements) return

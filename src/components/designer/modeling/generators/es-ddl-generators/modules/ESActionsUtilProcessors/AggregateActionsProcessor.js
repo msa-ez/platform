@@ -1,4 +1,5 @@
 const changeCase = require('change-case');
+const pluralize = require('pluralize');
 const ActionsProcessorUtils = require('./ActionsProcessorUtils')
 const GlobalPromptUtil = require('../GlobalPromptUtil')
 
@@ -84,7 +85,7 @@ class AggregateActionsProcessor {
             displayName: displayName,
             nameCamelCase: changeCase.camelCase(name),
             namePascalCase: changeCase.pascalCase(name),
-            namePlural: "",
+            namePlural: pluralize(changeCase.camelCase(name)),
             rotateStatus: false,
             selected: false,
             _type: "org.uengine.modeling.model.Aggregate"
