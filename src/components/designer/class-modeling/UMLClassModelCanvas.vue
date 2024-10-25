@@ -1,7 +1,7 @@
 <template xmlns:v-on="http://www.w3.org/1999/xhtml">
     <div class="canvas-panel" :class="{ 'embedded' : embedded }">
         <div :key="eleCnt">
-            <separate-panel-components
+            <separate-panel-components class="uml-separate-panel"
                 :min="mainSeparatePanel.min"
                 :max="mainSeparatePanel.max"
                 :triggerLength="5"

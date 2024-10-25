@@ -653,6 +653,9 @@ code[class*=language-]:nth-child(1) {
 .auto-modeling-dialog .v-expansion-panel-content__wrap {
     padding:0px;
 }
+.auto-modeling-dialog-textarea .v-input__control .v-input__slot {
+    padding-left:10px;
+}
 
 .auto-modling-textarea {
     max-height:100% !important;
@@ -811,6 +814,10 @@ code[class*=language-]:nth-child(1) {
 .panel-title {
     font-size: 25px;
     color: #757575;
+}
+
+.uml-separate-panel {
+    margin:0px !important;
 }
 
 @media only screen and (max-width:1409px) and (min-width:1298px){

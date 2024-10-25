@@ -98,6 +98,15 @@
                                         </v-rating>
                                     </v-card>
                                 </v-col>
+                                <v-col v-if="isTemplateLoding"
+                                    cols="10" lg="2" md="3" sm="6"
+                                >
+                                    <v-skeleton-loader
+                                            class="mx-auto border marketplace-loding-card"
+                                            max-width="300"
+                                            type="image, text@2"
+                                    ></v-skeleton-loader>
+                                </v-col>
                             </v-row>
                         </v-col>
                     </v-row>
@@ -154,6 +163,15 @@
                                             </v-rating>
                                         </div>
                                     </v-card>
+                                </v-col>
+                                <v-col v-if="isToppingLoding"  
+                                    cols="10" lg="2" md="3" sm="6"
+                                >
+                                    <v-skeleton-loader
+                                            class="mx-auto border marketplace-loding-card"
+                                            max-width="300"
+                                            type="image, text@2"
+                                    ></v-skeleton-loader>
                                 </v-col>
                             </v-row>
                         </v-col>
@@ -297,6 +315,8 @@
                 ],
                 selectedTemplateIndex: null,
                 selectedToppingIndex: null,
+                isTemplateLoding: false,
+                isToppingLoding: false
             }
         },
         props: {
@@ -366,6 +386,7 @@
             async loadTemplateInfo() {
                 var me = this;
                 me.templateLists = [];
+                me.isTemplateLoding = true
 
                 for (let idx = 0; idx < me.allRepoList.length; idx++) {
                     const templateInfo = me.allRepoList[idx];
@@ -392,11 +413,12 @@
                         }
                     }
                 }
+                me.isTemplateLoding = false
             },
             async loadToppingInfo() {
                 var me = this;
                 me.toppingLists = [];
-
+                me.isToppingLoding = true
                 for (let idx = 0; idx < me.allRepoList.length; idx++) {
                     const toppingInfo = me.allRepoList[idx];
                     if (toppingInfo.name.includes("topping-") && !toppingInfo.name.includes("_topping")) {
@@ -428,6 +450,7 @@
                         }
                     }
                 }
+                me.isToppingLoding = false
             },
             setGitHubHeader(){
                 var gitAccessToken = localStorage.getItem('gitAccessToken') ? localStorage.getItem('gitAccessToken') : localStorage.getItem('gitToken')

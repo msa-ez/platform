@@ -30,7 +30,7 @@
 
 
         <template slot="t-description-text">
-            Reaction against the events (subscription)
+            {{ $t('panelInfo.PolicyDefinitionPanel') }}
         </template>
 
         <template slot="t-generation-text">
@@ -122,7 +122,11 @@
             panelInit(){
                 var me = this
                 // Policy
-                this.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#policy-sticker'
+                if (me.isForeign) {
+                    me.relatedUrl = 'https://intro.msaez.io/tool/event-storming-tool/#policy-sticker'
+                } else {
+                    me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#policy-sticker'
+                }
 
                 // Common
                 me.$super(EventStormingModelPanel).panelInit()

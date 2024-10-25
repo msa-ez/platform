@@ -18,7 +18,7 @@
 
 
         <template slot="t-description-text">
-            행위와 결정을 하기 위하여 유저가 참고하는 데이터 (데이터 프로젝션이 필요 :  CQRS 등으로 수집)
+            {{ $t('panelInfo.ViewDefinitionPanel') }}
         </template>
 
         <template slot="t-generation-text">

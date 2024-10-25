@@ -16,7 +16,7 @@
         </template> -->
 
         <template slot="t-description-text">
-            비즈니스 로직 처리의 도메인 객체 덩어리 (서로 연결된 하나 이상의 엔터티 및 value objects의 집합체)
+            {{ $t('panelInfo.AggregateDefinitionPanel') }}
         </template>
 
         <template slot="t-generation-text">
@@ -190,7 +190,11 @@
             panelInit(){
                 var me = this
                 // Element
-                me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#aggregate-sticker'
+                if (me.isForeign) {
+                    me.relatedUrl = 'https://intro.msaez.io/tool/event-storming-tool/#aggregate-sticker'
+                } else {
+                    me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#aggregate-sticker'
+                }
                 me.setRootMethods();
 
                 // Common
