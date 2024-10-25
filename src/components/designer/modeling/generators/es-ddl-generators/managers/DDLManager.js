@@ -46,7 +46,7 @@ class DDLManager {
         ]
      */
     _makeParsedDDLs(ddls) {   
-        const TABLE_REGEX = /CREATE TABLE (\w+) \(([\s\S]*?)\);/g;
+        const TABLE_REGEX = /CREATE TABLE [\\`'"]*(\w+)[\\`'"]* \(([\s\S]*?)\);/g;
 
         let tables = [];
         let match;
@@ -97,12 +97,16 @@ class DDLManager {
             }
         });
 
+        let summaryStr = tableName
+        if(primaryKeys.length > 0) summaryStr += `(PK: ${primaryKeys.join(', ')})`
+        if(foreignKeys.length > 0) summaryStr += `(FK: ${foreignKeys.map(fk => fk.column).join(', ')})`
+
         return {
             name: tableName,
             ddl: `CREATE TABLE ${tableName} (${tableContent})`,
             primaryKeys,
             foreignKeys,
-            summaryStr: `${tableName}(PK: ${primaryKeys.join(', ')}${(foreignKeys.length > 0) ? `, FK: ${foreignKeys.map(fk => fk.column).join(', ')}` : ''})`,
+            summaryStr,
             columns
         };
     }

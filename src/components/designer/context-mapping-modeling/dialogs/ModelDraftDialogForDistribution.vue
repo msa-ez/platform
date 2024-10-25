@@ -6,6 +6,13 @@
                 <div v-if="draftUIInfos.leftBoundedContextCount > 0">
                     <p class="mb-0">{{ draftUIInfos.leftBoundedContextCount }} Bounded Contexts remaining...</p>
                 </div>
+                <v-progress-circular
+                    v-if="draftUIInfos.leftBoundedContextCount > 0"
+                    color="primary"
+                    indeterminate
+                    size="24"
+                    class="ml-2"
+                ></v-progress-circular>
             </div>
         </v-card-subtitle>
 
@@ -22,32 +29,31 @@
                         <h3>Bounded Context: {{ boundedContextInfo.boundedContext }}</h3>
                     </div>
 
-                    <v-card v-for="(option, index) in boundedContextInfo.options" :key="index" class="mb-4">
-                        <v-card-title class="d-flex justify-space-between">
-                            <span>Option {{ index + 1 }}</span>
-                            <v-checkbox
-                                :input-value="isSelected(boundedContextInfo.boundedContext, option)"
-                                @change="selectOptionItem(boundedContextInfo.boundedContext, option, $event)"
-                            ></v-checkbox>
-                        </v-card-title>
-                        <v-card-text>
-                            <div v-if="option.structure">
-                                <div v-for="(aggregate, index) in option.structure" :key="index">
-                                    <strong>{{ aggregate.aggregateName }}</strong>
-                                    <div class="ml-3">
-                                        <div v-if="aggregate.entities.length > 0"><span class="font-weight-medium">Entities:</span> {{ aggregate.entities.join(', ') }}</div>
-                                        <div v-if="aggregate.valueObjects.length > 0"><span class="font-weight-medium">ValueObjects:</span> {{ aggregate.valueObjects.join(', ') }}</div>
-                                    </div><br>
+                    <v-radio-group v-model="selectedOptionItem[boundedContextInfo.boundedContext]">
+                        <v-card v-for="(option, index) in boundedContextInfo.options" :key="index" class="mb-4">
+                            <v-card-title class="d-flex justify-space-between">
+                                <span>Option {{ index + 1 }}</span>
+                                <v-radio :value="option"></v-radio>
+                            </v-card-title>
+                            <v-card-text>
+                                <div v-if="option.structure">
+                                    <div v-for="(aggregate, index) in option.structure" :key="index">
+                                        <strong>{{ aggregate.aggregateName }}</strong>
+                                        <div class="ml-3">
+                                            <div v-if="aggregate.entities.length > 0"><span class="font-weight-medium">Entities:</span> {{ aggregate.entities.join(', ') }}</div>
+                                            <div v-if="aggregate.valueObjects.length > 0"><span class="font-weight-medium">ValueObjects:</span> {{ aggregate.valueObjects.join(', ') }}</div>
+                                        </div><br>
+                                    </div>
                                 </div>
-                            </div>
-                            <h4>Pros:</h4>
-                            <p>{{ option.pros }}</p>
+                                <h4>Pros:</h4>
+                                <p>{{ option.pros }}</p>
 
-                            <h4>Cons:</h4>
-                            <p>{{ option.cons }}</p>
-                        </v-card-text>
-                    </v-card>
-
+                                <h4>Cons:</h4>
+                                <p>{{ option.cons }}</p>
+                            </v-card-text>
+                        </v-card>
+                    </v-radio-group>
+                    
                     <h4 class="mt-4">Conclusions:</h4>
                     <p>{{ boundedContextInfo.conclusions }}</p>
                 </v-tab-item>
@@ -88,22 +94,21 @@
                 selectedOptionItem: {}
             }
         },
+        watch: {
+            DDLDraftOptions: {
+                handler(newVal) {
+                    if(newVal.length === 0) return
+
+                    const lastDraftOption = newVal[newVal.length - 1]
+                    this.activeTab = newVal.length - 1
+                    this.selectedOptionItem[lastDraftOption.boundedContext] = lastDraftOption.options[lastDraftOption.defaultOptionIndex]
+                },
+                deep: true
+            }
+        },
         methods: {
-            isSelected(boundedContext, option) {
-                return this.selectedOptionItem[boundedContext] && 
-                    this.selectedOptionItem[boundedContext] === option;
-            },
-
-            selectOptionItem(boundedContext, option, isSelected) {
-                if (isSelected) {
-                    this.$set(this.selectedOptionItem, boundedContext, option);
-                } else {
-                    this.$delete(this.selectedOptionItem, boundedContext);
-                }
-            },
-
             generateFromDraft(){
-                this.$emit('generateFromDraft', this.selectedOptionItem);
+                this.$emit('generateFromDraft', this.selectedOptionItem);                
             }
         }
     }

@@ -1128,6 +1128,7 @@
 
         createEventStormingInputs: [],
         DDLCreateESActionsGeneratorRetryCount: 3,
+        DDLDraftGeneratorForDistributionRetryCount: 3,
 
         showDDLDraftDialog: false,
         DDLDraftOptions: [],
@@ -1398,6 +1399,7 @@
           me.isDraftGeneratorButtonEnabled = false
           me.createEventStormingInputs = me._getCreateEventStormingInputs(selectedOptionItem)
 
+          me.draftUIInfos.leftBoundedContextCount = me.createEventStormingInputs.length
           me.DDLCreateESActionsGeneratorRetryCount = 3
           me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())
 
@@ -1467,6 +1469,7 @@
         me.draftUIInfos.leftBoundedContextCount = me.ddlDraftGeneratorForDistributionInputs.length
         me.showDDLDraftDialog = true
 
+        me.DDLDraftGeneratorForDistributionRetryCount = 3
         me.__generate('DDLDraftGeneratorForDistribution', me.ddlDraftGeneratorForDistributionInputs.shift())
       },
 
@@ -1482,12 +1485,27 @@
         if(!model.modelValue || !model.modelValue.options) return
 
         var me = this
+        if(model.isError) {
+          if(me.DDLDraftGeneratorForDistributionRetryCount > 0) {
+            me.DDLDraftGeneratorForDistributionRetryCount -= 1
+            me.__generate('DDLDraftGeneratorForDistribution', model.inputedParams)
+          } else
+            me.__processNextDDLDraftGeneratorForDistributionInput()
+          
+          return
+        }
 
         me.DDLDraftOptions.push(me.__getDDLDraftOption(model))
-        me.draftUIInfos.leftBoundedContextCount = me.ddlDraftGeneratorForDistributionInputs.length
+        me.__processNextDDLDraftGeneratorForDistributionInput()
+      },
 
-        if(me.ddlDraftGeneratorForDistributionInputs.length > 0)
+      __processNextDDLDraftGeneratorForDistributionInput() {
+        var me = this
+        me.draftUIInfos.leftBoundedContextCount = me.ddlDraftGeneratorForDistributionInputs.length
+        if(me.ddlDraftGeneratorForDistributionInputs.length > 0) {
+          me.DDLDraftGeneratorForDistributionRetryCount = 3
           me.__generate('DDLDraftGeneratorForDistribution', me.ddlDraftGeneratorForDistributionInputs.shift())
+        }
       },
 
       __getDDLDraftOption(model){
@@ -1524,6 +1542,8 @@
 
       __processNextCreateEventStormingInput() {
         var me = this
+
+        me.draftUIInfos.leftBoundedContextCount = me.createEventStormingInputs.length
         if(me.createEventStormingInputs.length > 0) {
             me.DDLCreateESActionsGeneratorRetryCount = 3
             me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())

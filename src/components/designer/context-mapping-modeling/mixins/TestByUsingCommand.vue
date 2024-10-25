@@ -558,19 +558,19 @@ CREATE TABLE customer_levels (
             this.__generate('DDLBoundedContextDistributeGenerator', {
                 ddlSummaries: [
                     "patients(PK: patient_id)",
-                    "patient_medical_records(PK: record_id, FK: patient_id, FK: doctor_id)",
-                    "doctors(PK: doctor_id, FK: department_id)",
+                    "patient_medical_records(PK: record_id)(FK: patient_id, doctor_id)",
+                    "doctors(PK: doctor_id)(FK: department_id)",
                     "departments(PK: department_id)",
-                    "appointments(PK: appointment_id, FK: patient_id, FK: doctor_id, FK: room_id)",
-                    "medical_rooms(PK: room_id, FK: department_id)",
-                    "prescriptions(PK: prescription_id, FK: record_id, FK: medicine_id)",
+                    "appointments(PK: appointment_id)(FK: patient_id, doctor_id, room_id)",
+                    "medical_rooms(PK: room_id)(FK: department_id)",
+                    "prescriptions(PK: prescription_id)(FK: record_id, medicine_id)",
                     "medicines(PK: medicine_id)",
-                    "medicine_inventory(PK: inventory_id, FK: medicine_id)",
-                    "billing_records(PK: bill_id, FK: patient_id, FK: appointment_id)",
-                    "insurance_claims(PK: claim_id, FK: bill_id)",
-                    "staff_schedules(PK: schedule_id, FK: doctor_id)",
-                    "lab_tests(PK: test_id, FK: record_id)",
-                    "lab_results(PK: result_id, FK: test_id)"
+                    "medicine_inventory(PK: inventory_id)(FK: medicine_id)",
+                    "billing_records(PK: bill_id)(FK: patient_id, appointment_id)",
+                    "insurance_claims(PK: claim_id)(FK: bill_id)",
+                    "staff_schedules(PK: schedule_id)(FK: doctor_id)",
+                    "lab_tests(PK: test_id)(FK: record_id)",
+                    "lab_results(PK: result_id)(FK: test_id)"
                 ],
                 suggestedBoundedContexts: [
                     "환자관리",

@@ -93,13 +93,13 @@ The returned format should be as follows.
 [INPUT]
 - DDL Summary
 users(PK: user_id)
-user_profiles(PK: profile_id, FK: user_id)
-products(PK: product_id, FK: category_id)
+user_profiles(PK: profile_id)(FK: user_id)
+products(PK: product_id)(FK: category_id)
 product_categories(PK: category_id)
-orders(PK: order_id, FK: user_id, FK: product_id)
-payments(PK: payment_id, FK: order_id)
-delivery_addresses(PK: address_id, FK: user_id)
-product_reviews(PK: review_id, FK: user_id, FK: product_id)
+orders(PK: order_id)(FK: user_id, product_id)
+payments(PK: payment_id)(FK: order_id)
+delivery_addresses(PK: address_id)(FK: user_id)
+product_reviews(PK: review_id)(FK: user_id, product_id)
 
 - Suggested Bounded Contexts
 유저 서비스
