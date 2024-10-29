@@ -189,7 +189,7 @@
                                             </div>
 
                                             <v-btn v-if="!generationStopped" class="prompt_field generator-ui-text-field" color="primary" @click="generate()" block>Generate</v-btn>
-                                            <v-circular-progress indeterminate v-if="generationStopped"></v-circular-progress>
+                                            <v-progress-circular indeterminate v-if="generationStopped"></v-progress-circular>
                                         </v-card>
                                     </v-tab-item>
 
@@ -570,6 +570,7 @@
             // }, 
 
             async generate(changedInput){
+                this.$emit("isPauseQueue", true)
                 let issuedTimeStamp = Date.now()
                 let usage = new Usage({
                     serviceType: `${this.generatorComponent.generateType}_AIGeneration`,
@@ -746,6 +747,7 @@
             },
 
             async reGenerate(userStory){
+                this.$emit("isPauseQueue", true)
                 this.result = '';
                 this.$emit("clearModelValue")
 
@@ -815,6 +817,7 @@
             },
 
             onGenerationFinished(model){
+                this.$emit("isPauseQueue", false)
                 const callbackModelValueToTabComponent = () => {
                     this.focusedTabComponent = (this.prevUsedGeneratorTabIndex < this.tabs.length) ? this.$refs[this.tabs[this.prevUsedGeneratorTabIndex].component][0] : null
                     if (this.focusedTabComponent) {

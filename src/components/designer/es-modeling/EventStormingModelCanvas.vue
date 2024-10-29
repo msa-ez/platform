@@ -256,7 +256,7 @@
                                         <template v-slot:activator="{ on }">
                                             <v-btn
                                                     class="gs-model-z-index-2 gs-undo-opacity-hover"
-                                                    :disabled="checkUndo"
+                                                    :disabled="isUndoDisabled"
                                                     text
                                                     small
                                                     right
@@ -272,7 +272,7 @@
                                         <template v-slot:activator="{ on }">
                                             <v-btn
                                                     class="gs-model-z-index-2 gs-redo-opacity-hover"
-                                                    :disabled="checkRedo"
+                                                    :disabled="isRedoDisabled"
                                                     text
                                                     small
                                                     right
@@ -1250,6 +1250,7 @@
                             @createModelFromDDL="createModelFromDDL"
                             @clearModelValue="clearModelValue"
                             @showContinueBtn="showContinue = true"
+                            @isPauseQueue="setIsPauseQueue"
                             :generatorStep="generatorStep"
                             :defaultInputData="defaultGeneratorUiInputData"
                             :modelValue="value"
@@ -1286,6 +1287,7 @@
                             @createModelFromDDL="createModelFromDDL"
                             @onGenerationFinished="onGenerationFinished"
                             @clearModelValue="clearModelValue"
+                            @isPauseQueue="setIsPauseQueue"
                             :generatorStep="generatorStep"
                             :modelValue="value"
                             :tabs="tabs"
@@ -2011,7 +2013,7 @@
             // ModelCodeGenerator
         },
         props: {
-            labId: String,
+            labsId: String,
             isOriginalModel: Boolean,
         },
         data() {
@@ -2041,7 +2043,6 @@
                 backupGenState: null,
                 generatorStep: "event",
                 showUiWizard: false,
-                canvasRenderKey: 0,
                 // automodeling
                 showField: false,
                 autoModelingDialogKey: 0,
@@ -2384,7 +2385,7 @@
                 generatorName: '',
                 showDDLDraftDialog: false,
                 DDLDraftTable: null,
-                selectedOptionItem: {},
+                selectedOptionItem: {},                
             };
         },
         computed: {
@@ -2568,9 +2569,8 @@
                     .split("@")[1]
                     .split(".")[0]
                     .toLowerCase();
-                var lab = me.labId;
                 if (me.labInfo) {
-                    me.hashPath = me.getClassPath("labs/" + lab + "/" + userName);
+                    me.hashPath = me.getClassPath("labs/" + me.labsId + "/" + userName);
                 } else {
                     me.hashName = `ide-${me.hashCode(userGroup + "-" + userName)}`;
                     me.projectID = me.$route.params.projectId;
@@ -2697,8 +2697,8 @@
                 };
             },
             setCanvasType(){
-                Vue.use(EventStormingModeling);
                 this.canvasType = 'es'
+                Vue.use(EventStormingModeling);
             },
             isUserInteractionActive(){
                 var me = this
@@ -2991,8 +2991,10 @@
                     if (me.embeddedCanvasDialog && me.embeddedCanvasType == "Domain Class Modeling") {
                         // return;
                     }
-                    me.changeValueAction(diff);
 
+                    me.pauseQueue(diff);
+                    me.changeValueAction(diff);
+                    
                     clearTimeout(me.valueChangedTimer);
                     me.valueChangedTimer = setTimeout(async function () {
                         await me.saveLocalScreenshot()
@@ -3061,6 +3063,7 @@
                 this.tabs[0].initValue.modelValue = this.value
             },
             createModel(val, originModel) {
+                
                 const generateGWT = (modelValue, requestValue, gwts) => {
                     const generateExamples = (gwts) => {
                         const getExample = (gwt) => {
@@ -3510,7 +3513,7 @@
                                 currentDebeziumTransactionManager.apply(modelValueToModify, me.userInfo, me.information, val.modelMode === "mockModelValue")
                                 me.forceRefreshCanvas()
 
-                                me.changedByMe = true
+                                // me.changedByMe = true
                                 makeBoundedContextPushQueueIfExists(me.value.elements, modelValueToModify.elements)
                                 me.$set(me.value, "elements", modelValueToModify.elements)
                                 me.$set(me.value, "relations", modelValueToModify.relations)
@@ -3531,7 +3534,7 @@
                                 generateGWT(modelValueToModify, val.modelValue.requestValue, val.modelValue.gwts)
                                 me.forceRefreshCanvas()
 
-                                me.changedByMe = true
+                                // me.changedByMe = true
                                 me.$set(me.value, "elements", modelValueToModify.elements)
                             } catch(e) {
                                 val.isApplyError = true
@@ -3592,14 +3595,7 @@
                         me.value.uiStyle = val.uiStyle;
                     }
 
-                    me.changedByMe = true;
-
-                    // me.addAppendedProperties(me.value.elements, val.elements);
-                    // me.addAppendedProperties(me.value.relations, val.relations);
-
-                    //                    console.log(me.value.elements);
-
-                    //                    me.value.__ob__.dep.notify();
+                    // me.changedByMe = true;
                 }
             },
 
@@ -3777,6 +3773,7 @@
                     me.value.elements[model.updateElement.id] = model.updateElement
                     me.changedByMe = true
                 }
+                alert("model.updateElement")
             },
             createModelFromDDL(model){
                 var me = this;
@@ -4992,6 +4989,8 @@
                         if(!value) value = me.value
                         if(!options) options = {}
 
+                        me.setIsPauseQueue(false)
+
                         let isHexagonal = options.isHexagonal ? true : false
                         let id = element.relationView ? element.relationView.id : element.elementView.id
                         let valueObj = element.relationView ? value.relations : value.elements
@@ -5028,6 +5027,8 @@
                             STATUS_COMPLETE: true,
                             movingElement: false
                         })      
+
+                      
                     }
                 })
             },
@@ -6754,8 +6755,8 @@
                                         clearInterval(me.ideInterval);
                                     } else {
                                         me.ideUrl = `${me.getProtocol()}//${hashName}.kuberez.io/?labId=${
-                                            me.labId
-                                        }#/home/project/${me.labId}`;
+                                            me.labsId
+                                        }#/home/project/${me.labsId}`;
                                         clearInterval(me.ideInterval);
                                     }
                                 }
@@ -6766,9 +6767,8 @@
             },
             ideExistCheck(userEmail) {
                 var me = this;
-                var lab = me.labId;
                 if (me.labInfo.independent) {
-                    var hashPath = me.getClassPath("labs/" + lab + "/" + userEmail);
+                    var hashPath = me.getClassPath("labs/" + me.labsId + "/" + userEmail);
                 } else {
                     var hashPath = me.getClassPath(userEmail);
                 }

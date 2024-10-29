@@ -372,8 +372,6 @@
 
             <v-btn @click="navigateToSlack"
                 class="question-btn"
-                v-on="on"
-                v-bind="attrs"
                 text
                 elevation="0"
             >

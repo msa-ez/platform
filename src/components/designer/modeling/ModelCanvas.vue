@@ -273,9 +273,11 @@
                 canvasType: 'es',
                 isAutoForkModel:  false,
                 canvasValidationResults: [],
+                canvasRenderKey: 0,
 
                 //overlay
                 overlayText: null,
+                isRendering: false,
 
                 //invite
                 invitationLists: null,
@@ -426,7 +428,10 @@
                 mouseEventCnt: 0,
                 valueChangedTimer: null,
                 modelCanvasChannel: null,
-
+                // pause queue
+                isPauseQueue: false,
+                changedPauseQueue: false, // 변화 값 처리
+                pauseValue: null, // 시작 시점의 value 저장.
             }
         },
         beforeDestroy: function () {
@@ -581,18 +586,18 @@
             showOverlay() {
                 return this.overlayText
             },
-            storage() {
-                var me = this
-                if (me.isServerModel) {
-                    return 'db'
-                } else {
-                    return 'localstorage'
-                }
-            },
+            // storage() {
+            //     var me = this
+            //     if (me.isServerModel) {
+            //         return 'db'
+            //     } else {
+            //         return 'localstorage'
+            //     }
+            // },
             fixedDefalutStroage() {
                 return 'db'
             },
-            checkUndo() {
+            isUndoDisabled(){
                 var me = this
                 if (!me.isServerModel) {
                     if (me.undoRedoIndex == 0) {
@@ -604,7 +609,7 @@
                     return me.undoDisable
                 }
             },
-            checkRedo() {
+            isRedoDisabled() {
                 var me = this
                 if (!me.isServerModel) {
                     if (me.undoRedoIndex == me.undoRedoArray.length) {
@@ -837,12 +842,15 @@
                     }
                 }
             },
-            "copyValue": {
+            copyValue: {
                 deep: true,
                 handler: function (newVal, oldVal) {
                     this.onChangedValue(oldVal, newVal)
                 }
             },
+            // "changedByMe":function (newVal, oldVal) {
+            //     console.log('changedByMe', newVal, oldVal)
+            // },
         },
         methods: {
             setCanvasType(){
@@ -2945,14 +2953,14 @@
             getUndoRedoQueue(endAt) {
                 var me = this
                 return new Promise(async function (resolve) {
-                    var option = {
+                    let size = 2;
+                    let keyValue = await me.list(`db://definitions/${me.projectId}/queue`, {
                         sort: 'desc',
                         orderBy: null,
-                        size: 2,
+                        size: size,
                         startAt: null,
                         endAt: endAt,
-                    }
-                    var keyValue = await me.list(`db://definitions/${me.projectId}/queue`, option)
+                    })
 
                     if (keyValue) {
                         var prevVal = keyValue[0]
@@ -2960,7 +2968,8 @@
                         var nextVal = keyValue[1]
                         var nextKey = nextVal ? nextVal.key : null
 
-                        if (prevKey && prevVal.action.includes('user')) {
+                        // 다음 큐 존재하고, 마지막 큐가 유저 큐인 경우 다음 큐를 가져온다.
+                        if (keyValue.length == size && prevKey && prevVal.action.includes('user')) {
                             resolve(me.getUndoRedoQueue(nextKey))
                         } else {
                             resolve(keyValue)
@@ -3028,6 +3037,7 @@
                                 me.$EventBus.$emit('progressValue', false)
                                 me.overlayText = null
                                 me.initLoad = true
+                                me.isRendering = false
                                 if(me.isAutoForkModel) me.autoForkModel()
                             }, 500)
 
@@ -3140,14 +3150,17 @@
 
                 }
 
-                var obj = {
-                    action: state,
-                    editUid: me.userInfo.uid,
-                    timeStamp: Date.now(),
-                    item: JSON.stringify(child)
+                if(action.includes('user')){
+                    me.overlayText = null
+                    me.isRendering = false
+                } else {
+                    me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                        action: state,
+                        editUid: me.userInfo.uid,
+                        timeStamp: Date.now(),
+                        item: JSON.stringify(child)
+                    })
                 }
-                me.pushObject(`db://definitions/${me.projectId}/queue`, obj)
-
             },
             receivedQueueDrawElement(child, ignore) {
                 var me = this
@@ -3540,7 +3553,7 @@
             undo() {
                 var me = this
                 if(me.isServerModel && me.isQueueModel){
-                    me.firebaseUndo()
+                    me.queueUndo()
                 } else {
                     me.localUndo()
                 }
@@ -3548,7 +3561,7 @@
             redo() {
                 var me = this
                 if (me.isServerModel && me.isQueueModel) {
-                    me.firebaseRedo()
+                    me.queueRedo()
                 } else {
                     me.localRedo()
                 }
@@ -3560,6 +3573,8 @@
                     async action(me){
                         let undoElement
                         if (me.undoRedoArray.length > 0) {
+                            me.isRendering = true
+                            me.overlayText = 'Undoing'
                             me.undoRedoIndex = me.undoRedoIndex - 1
                             undoElement = me.undoRedoArray[me.undoRedoIndex] ? JSON.parse(me.undoRedoArray[me.undoRedoIndex]) : null
 
@@ -3568,23 +3583,33 @@
                                 return
                             }
 
-                            var type = Object.keys(undoElement)[0]
-                            var diff = undoElement[type]
-                            var id = Object.keys(undoElement[type])[0]
-                            var value = Object.values(diff)
+                            // var type = Object.keys(undoElement)[0]
+                            // var eldiff = undoElement[type]
+                            // var id = Object.keys(undoElement[type])[0]
+                            // var value = Object.values(diff)
+                            // me.changedByUndoRedo = true
+
+                            // if (Array.isArray(value[0])) {
+                            //     if (value.length == 1 && value[0].length == 1) {
+                            //         me.value[type][id] = null
+                            //     } else if (value[0].length == 2) {
+                            //         me.$set(me.value[type], id, value[0][0])
+                            //     } else {
+                            //         jsondiffpatch.patch(me.value[type], jsondiffpatch.reverse(diff));
+                            //         me.diffToUndo = diff
+                            //     }
+                            // } else if (typeof value == 'object') {
+                            //     jsondiffpatch.patch(me.value[type], jsondiffpatch.reverse(diff));
+                            //     me.diffToUndo = diff
+                            // }
+
                             me.changedByUndoRedo = true
-
-
-                            if (Array.isArray(value[0])) {
-                                if (value[0].length == 1) {
-                                    me.value[type][id] = null
-                                } else if (value[0].length == 2) {
-                                    me.$set(me.value[type], id, value[0][0])
-                                }
-                            } else if (typeof value == 'object') {
-                                jsondiffpatch.patch(me.value[type], jsondiffpatch.reverse(diff));
-                                me.diffToUndo = diff
-                            }
+                            jsondiffpatch.patch(me.value, jsondiffpatch.reverse(undoElement));
+                            me.diffToUndo = undoElement
+                            me.overlayText = null
+                            me.isRendering = false
+                            
+                            me.canvasRenderKey++;
                         }
                     }
                 })
@@ -3597,7 +3622,8 @@
                     async action(me){
                         let redoElement
                         if (me.undoRedoArray.length > 0) {
-
+                            me.isRendering = true
+                            me.overlayText = 'Redoing'
                             redoElement = me.undoRedoArray[me.undoRedoIndex] ? JSON.parse(me.undoRedoArray[me.undoRedoIndex]) : null
                             me.undoRedoIndex = me.undoRedoIndex + 1
 
@@ -3606,21 +3632,30 @@
                                 return
                             }
 
-                            var type = Object.keys(redoElement)[0]
-                            var diff = redoElement[type]
-                            var id = Object.keys(redoElement[type])[0]
-                            var value = Object.values(diff)
-                            me.changedByUndoRedo = true
+                            // var type = Object.keys(redoElement)[0]
+                            // var diff = redoElement[type]
+                            // var id = Object.keys(redoElement[type])[0]
+                            // var value = Object.values(diff)
+                            // me.changedByUndoRedo = true
 
-                            if (Array.isArray(value[0])) {
-                                if (value[0].length == 1) {
-                                    me.$set(me.value[type], id, value[0][0])
-                                } else if (value[0].length == 2) {
-                                    me.value[type][id] = null
-                                }
-                            } else if (typeof value == 'object') {
-                                jsondiffpatch.patch(me.value[type], diff);
-                            }
+                            // if (Array.isArray(value[0])) {
+                            //     if (value.length == 1 && value[0].length == 1) {
+                            //         me.$set(me.value[type], id, value[0][0])
+                            //     } else if (value[0].length == 2) {
+                            //         me.value[type][id] = null
+                            //     } else {
+                            //         jsondiffpatch.patch(me.value[type], diff);
+                            //     }
+                            // } else if (typeof value == 'object') {
+                            //     jsondiffpatch.patch(me.value[type], diff);
+                            // }
+
+                            me.changedByUndoRedo = true
+                            jsondiffpatch.patch(me.value, redoElement);
+                            me.overlayText = null
+                            me.isRendering = false
+
+                            me.canvasRenderKey++;
                         }      
                     }
                 })
@@ -3644,15 +3679,18 @@
                             }
                             me.undoRedoArray.push(JSON.stringify(diff))
                             me.undoRedoIndex = me.undoRedoIndex + 1
+
+                            console.log("Local UndoRedo Storage", diff)
                         }      
                     }
                 })
             },
-            async firebaseUndo() {
+            async queueUndo() {
                 var me = this
                 me.$app.try({
                     context: me,
                     async action(me){
+                        me.isRendering = true
                         me.overlayText = 'Undoing'
                         me.undoDisable = true
                         var keySnap = await me.getLastQueue()
@@ -3661,9 +3699,14 @@
                             var prevValue = await me.getUndoTarget(currentKey)
                             if (prevValue) {
                                 me.undoRedoDraw(prevValue, 'undo')
+                            } else {
+                                me.overlayText = null
+                                me.isRendering = false
                             }
+                        } else {
+                            me.overlayText = null
+                            me.isRendering = false
                         }
-                        me.overlayText = null
                     }
                 })
             },
@@ -3711,11 +3754,12 @@
                 })
 
             },
-            async firebaseRedo() {
+            async queueRedo() {
                 var me = this
                 me.$app.try({
                     context: me,
                     async action(me){
+                        me.isRendering = true
                         me.overlayText = 'Redoing'
                         me.redoDisable = true
                         var keySnap = await me.getLastQueue()
@@ -3724,9 +3768,14 @@
                             var prevValue = await me.getRedoTarget(currentKey)
                             if (prevValue) {
                                 me.undoRedoDraw(prevValue, 'redo')
+                            } else {
+                                me.overlayText = null
+                                me.isRendering = false
                             }
+                        } else {
+                            me.overlayText = null
+                            me.isRendering = false
                         }
-                        me.overlayText = null
                     }
                 })
             },
@@ -4010,7 +4059,7 @@
                         // First Excution
                         me.appendElement(element, value, options)
                         if(me.isServerModel && me.isQueueModel){
-                            me.pushAppendedQueue(element, options)
+                            if(!me.isPauseQueue) me.pushAppendedQueue(element, options)
                             me.$EventBus.$emit(elementId, {
                                 action: element.relationView ? 'relationPush' : 'elementPush',
                                 STATUS_COMPLETE: false
@@ -4038,13 +4087,12 @@
                             else
                                 value = me.value
                         }
-    
                         let elementId = element.relationView ? element.relationView.id : element.elementView.id
 
                         // First Excution
                         me.removeElement(element, value, options)
                         if(me.isServerModel && me.isQueueModel){
-                            me.pushRemovedQueue(element, options)
+                            if(!me.isPauseQueue) me.pushRemovedQueue(element, options)
                             me.$EventBus.$emit(elementId, {
                                 action: element.relationView ? 'relationDelete' : 'elementDelete',
                                 STATUS_COMPLETE: false
@@ -4070,16 +4118,21 @@
                         if(!value) value = me.value
                         let elementId = element.relationView ? element.relationView.id : element.elementView.id
 
-                        // First Excution
-                        me.moveElement(element, newVal, value, options)
-                        if (me.isServerModel && me.isQueueModel) {
-                            me.pushMovedQueue(element, oldVal, newVal, options)
-                            me.$EventBus.$emit(elementId, {
-                                action: element.relationView ? 'relationMove' : 'elementMove',
-                                STATUS_COMPLETE: false,
-                                movingElement: true
-                            })
-                        }
+                        if(me.isMultipleElementsSelected()){
+                            me.setIsPauseQueue(true)
+                            me.moveElement(element, newVal, value, options)
+                        } else {
+                            // First Excution
+                            me.moveElement(element, newVal, value, options)
+                            if (me.isServerModel && me.isQueueModel) {
+                                if(!me.isPauseQueue) me.pushMovedQueue(element, oldVal, newVal, options)
+                                me.$EventBus.$emit(elementId, {
+                                    action: element.relationView ? 'relationMove' : 'elementMove',
+                                    STATUS_COMPLETE: false,
+                                    movingElement: true
+                                })
+                            }
+                        }                      
                     },
                     onFail(e){
                         console.log(`[Error] MoveElement Action: ${e}`)
@@ -4098,6 +4151,7 @@
                         if(!options) options = {}
                         if(!value) value = me.value
                         let forcePush = options.forcePush
+                        let isNotPauseQueue = !me.isPauseQueue && !me.changedPauseQueue
 
                         if (me.isServerModel) {
                             // server
@@ -4106,14 +4160,16 @@
                                 if(!forcePush){
                                     diff = me.removeMoveDiff(diff);
                                 }
-                                if (!me.isReadOnlyModel && diff) {
-                                    let queueKey = await me.pushChangedValueQueue(diff, options)
-                                    me.changedByMeKeys.push(queueKey)
+                                if(isNotPauseQueue) {
+                                    if (!me.isReadOnlyModel && diff) {
+                                        let queueKey = await me.pushChangedValueQueue(diff, options)
+                                        me.changedByMeKeys.push(queueKey)
 
-                                    // COMMON QUEUE
-                                    if(me.projectSendable) {
-                                        options.associatedProject = me.information.associatedProject
-                                        await me.pushChangedValueQueue(diff, options)
+                                        // COMMON QUEUE
+                                        if(me.projectSendable) {
+                                            options.associatedProject = me.information.associatedProject
+                                            await me.pushChangedValueQueue(diff, options)
+                                        }
                                     }
                                 }
                                 me.changedByMe = false
@@ -4121,10 +4177,14 @@
                             } else if ( !me.isQueueModel && !me.isReadOnlyModel ) {
                                 // 서버o, 랩 x, 큐 x
                                 await me.putString(`db://definitions/${me.projectId}/value`, JSON.stringify(value));
-                                me.localUndoRedoStorage(diff)
+                                if(isNotPauseQueue) {
+                                    me.localUndoRedoStorage(diff)
+                                }
                             } else if (me.$isElectron) {
                                 await me.putString(`db://definitions/${me.projectId}/value`, JSON.stringify(value));
-                                me.localUndoRedoStorage(diff)
+                                if(isNotPauseQueue) {
+                                    me.localUndoRedoStorage(diff)
+                                }
                             }
                         } else {
                             // 서버x, 랩x, 큐x
@@ -4139,8 +4199,13 @@
                             }
                             me.putObject(`localstorage://localLists`, lists)
                             me.putObject(`localstorage://${me.projectId}`, me.value)
-                            me.localUndoRedoStorage(diff)
+
+                            if(isNotPauseQueue) {
+                                me.localUndoRedoStorage(diff)
+                            }
                         }
+                        
+                        me.changedPauseQueue = false
                     }
                 })
             },
@@ -4226,6 +4291,8 @@
                         if(!value) value = me.value
                         if(!options) options = {}
 
+                        me.setIsPauseQueue(false)
+
                         let id = element.relationView ? element.relationView.id : element.elementView.id
                         let valueObj = element.relationView ? value.relations : value.elements
                         if(!valueObj[id]) return;
@@ -4243,11 +4310,13 @@
                             valueObj[id].elementView.height = newVal.height
                         }
 
+                      
                         me.$EventBus.$emit(id, {
                             action: element.relationView ? 'relationMove' : 'elementMove',
                             STATUS_COMPLETE: true,
                             movingElement: false
                         })  
+                       
                     },
                     onFail(e){
                         console.log(`[Error] Move Element: ${e}`)
@@ -4255,30 +4324,34 @@
                 })
             },
             applyPatchValue(diff, value, options){
-                const extractOnlyValueKeyData = (value, diff) => {
-                    const result = {};
-                    for (const key of Object.keys(value))
-                        if (diff.hasOwnProperty(key))
-                            result[key] = diff[key];
-                    return result;
-                }
-
                 var me = this
                 me.$app.try({
                     context: me,
                     async action(me){
+                        const extractOnlyValueKeyData = (value, diff) => {
+                            const result = {};
+                            for (const key of Object.keys(value))
+                                if (diff.hasOwnProperty(key))
+                                    result[key] = diff[key];
+                            return result;
+                        }
+                        
                         if(!value) value = me.value
 
                         let valueDiff = extractOnlyValueKeyData(value, diff)
-                        if(Object.keys(valueDiff).length === 0) return
+                        if(Object.keys(valueDiff).length === 0) return;
 
-                        try {
+                        // 새로운 속성을 Vue의 반응성 시스템에 추가
+                        ['elements', 'relations'].forEach(type => {
+                            if (valueDiff[type]) {
+                                const newIds = Object.keys(valueDiff[type]).filter(id => !value[type][id]);
+                                if (newIds.length > 0) {
+                                    newIds.forEach(id => me.$set(value[type], id, null));
+                                }
+                            }
+                        });
 
-                            jsondiffpatch.patch(value, valueDiff)
-                            
-                        } catch (error) {
-                            console.log(error)
-                        }
+                        jsondiffpatch.patch(value, valueDiff);
                     }
                 })
             },
@@ -4379,13 +4452,39 @@
                 if(!options) options={}
                 if(options.associatedProject) definitionId = options.associatedProject
 
-                // console.log('Sever Queue] Change')
                 return await me.pushObject(`db://definitions/${definitionId}/queue`, {
                     action: 'valueModify',
                     editUid: me.userInfo.uid,
                     timeStamp: Date.now(),
                     item: JSON.stringify(diff)
                 })
+            },
+            pauseQueue(diff, options){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(me.isPauseQueue) {
+                            if(!me.pauseValue) me.pauseValue = JSON.parse(JSON.stringify(me.value))
+                        } else {
+                            let diffs = null;
+                            
+                            if(me.pauseValue) {
+                                diffs = jsondiffpatch.diff(me.pauseValue, me.value)
+                                me.pauseValue = null;
+                            }
+                            if(!diffs) return; 
+
+                            me.changedPauseQueue = true
+                            me.changedByMe = false;
+                            if(me.isServerModel && me.isQueueModel){
+                                await me.pushChangedValueQueue(diffs, options)
+                            } else {
+                                me.localUndoRedoStorage(diffs)
+                            }
+                        }
+                    }
+                });
             },
             //////////////////////////////////////////////////////////////////////////////
             /////////////////////////////// USER /////////////////////////////////////////
@@ -4471,6 +4570,7 @@
                 me.$app.try({
                     context: me,
                     async action(me){
+                        return;
                         if(!me.isUserInteractionActive()) return;
                         if(!element) return;
                         if(element.relationView ) return; // exception relation
@@ -4494,6 +4594,7 @@
                 me.$app.try({
                     context: me,
                     async action(me){
+                        return;
                         if(!me.isUserInteractionActive()) return;
                         if(!element) return;
                         if(element.relationView ) return; // exception relation
@@ -4743,6 +4844,33 @@
                     this.sendMoveEvents(offsetX, offsetY);
                 }
             },
+            setIsPauseQueue(val){
+                this.isPauseQueue = val
+                
+                if(this.isPauseQueue && !this.pauseValue) this.pauseValue = JSON.parse(JSON.stringify(this.value))
+            },
+            isMultipleElementsSelected(value){
+                let me = this
+                if(!value) value = me.value
+                let selectCnt = 0
+
+                Object.values(value.elements).forEach((element) => {
+                    if(!me.validateElementFormat(element)) return;
+                    let component = me.$refs[element.elementView.id];
+                    if (component && component[0].selected) {
+                        selectCnt ++;
+
+                        if(element._type.endsWith('BoundedContext')){
+                            if(Object.values(value.elements).find(ele =>  ele.boundedContext && ele.boundedContext.id == element.id)) {
+                                selectCnt++
+                            }
+                        }
+                    }
+                    if(selectCnt > 2) return;
+                });
+
+                return selectCnt > 1 ? true : false;
+            }
         }
     }
 

@@ -476,6 +476,27 @@
             async onGenerationFinished(model){
                 this.generateDone = true;
                 this.$emit('update:generateDone', true);
+                this.$EventBus.$emit('createAggregate', model, this.value, this.originModel);
+                this.canvas.setIsPauseQueue(false);
+            },
+            generate(){
+                var me = this
+                let parent = me.$parent;
+                while(parent.$vnode.tag.indexOf('event-storming-model-canvas') == -1) parent = parent.$parent;
+
+                let model = Object.assign([], parent.value)
+                let boundedContext = null
+                if(me.value && me.value.boundedContext){
+                    boundedContext = model.elements[me.value.boundedContext.id]
+                }
+
+                me.input.aggregate = me.value
+                me.input.boundedContext = boundedContext
+                me.input.model = model
+                me.input.description = me.value.description
+
+                me.generator.generate();
+                me.generateDone = false;
                 this.$EventBus.$emit('createAggregate', {from: "onGenerationFinished", ...model}, this.value, this.originModel);
             },
             stop(){

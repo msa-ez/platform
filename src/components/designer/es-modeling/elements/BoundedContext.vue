@@ -302,6 +302,7 @@
                 this.generateDone = true;
                 this.$emit('update:generateDone', true);
                 this.$EventBus.$emit('createModelInBoundedContext', model, this.originModel);
+                this.canvas.setIsPauseQueue(false);
             },  
             generate(){
                 this.generator.generate();
@@ -370,16 +371,16 @@
                     let filteredAggregateId = attachedAggregate.map(element => element = {id: element.elementView.id});
                     if( JSON.stringify(filteredAggregateId) !== JSON.stringify( me.value.aggregates ) ) {
                         me.value.aggregates = filteredAggregateId
-                        if(me.canvas.initLoad) {
-                            me.canvas.changedByMe = true;
+                        if(me.canvas.initLoad && !me.canvas.isRendering) {
+                            // me.canvas.changedByMe = true;
                             me.canvas.changedTemplateCode = true
                         }
                     }
                 } else {
                     if(me.value.aggregates.length > 0){
                         me.value.aggregates = []
-                        if(me.canvas.initLoad) {
-                            me.canvas.changedByMe = true;
+                        if(me.canvas.initLoad && !me.canvas.isRendering) {
+                            // me.canvas.changedByMe = true;
                             me.canvas.changedTemplateCode = true
                         }
                     }
