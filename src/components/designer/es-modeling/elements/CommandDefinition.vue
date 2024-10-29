@@ -441,18 +441,20 @@
                     var newId = attachedAggregate.elementView.id
 
                     // 움직일때 AGG 변화 파악.
-                    if( me.value.aggregate.id != newId ){
+                    if(!me.value.aggregate || (me.value.aggregate.id != newId) ){
                         // 서로 들다른 agg
                         me.value.aggregate = { id: newId }
-                        if(me.canvas.initLoad) {
-                            me.canvas.changedByMe = true;
+                        if(me.canvas.initLoad && !me.canvas.isRendering) {
+                            // me.canvas.changedByMe = true;
                             me.canvas.changedTemplateCode = true
                         }
                     }
 
                 }else if(!me.value.aggregate || me.value.aggregate.id){
                     me.value.aggregate = {};
-                    if(me.canvas.initLoad) me.canvas.changedByMe = true;
+                    // if(me.canvas.initLoad && !me.canvas.isRendering) {
+                    //     me.canvas.changedByMe = true;
+                    // }
                 }
 
             },

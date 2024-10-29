@@ -473,10 +473,10 @@
                 this.generateDone = true;
                 this.$emit('update:generateDone', true);
                 this.$EventBus.$emit('createAggregate', model, this.value, this.originModel);
+                this.canvas.setIsPauseQueue(false);
             },
             generate(){
                 var me = this
-
                 let parent = me.$parent;
                 while(parent.$vnode.tag.indexOf('event-storming-model-canvas') == -1) parent = parent.$parent;
 

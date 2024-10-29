@@ -566,6 +566,7 @@
             // }, 
 
             async generate(changedInput){
+                this.$emit("isPauseQueue", true)
                 let issuedTimeStamp = Date.now()
                 let usage = new Usage({
                     serviceType: `${this.generatorComponent.generateType}_AIGeneration`,
@@ -733,6 +734,7 @@
             },
 
             async reGenerate(userStory){
+                this.$emit("isPauseQueue", true)
                 this.result = '';
                 this.$emit("clearModelValue")
 
@@ -802,6 +804,7 @@
             },
 
             onGenerationFinished(model){
+                this.$emit("isPauseQueue", false)
                 const callbackModelValueToTabComponent = () => {
                     this.focusedTabComponent = (this.prevUsedGeneratorTabIndex < this.tabs.length) ? this.$refs[this.tabs[this.prevUsedGeneratorTabIndex].component][0] : null
                     if (this.focusedTabComponent) {

@@ -78,7 +78,7 @@
                             <v-row class="gs-modeling-undo-redo">
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on }">
-                                        <v-btn class="gs-model-z-index-2 gs-undo-opacity-hover" :disabled="checkUndo" text small right @click.native="undo()"
+                                        <v-btn class="gs-model-z-index-2 gs-undo-opacity-hover" :disabled="isUndoDisabled" text small right @click.native="undo()"
                                             v-on="on">
                                             <v-icon medium>mdi-undo</v-icon>
                                         </v-btn>
@@ -87,7 +87,7 @@
                                 </v-tooltip>
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on }">
-                                        <v-btn class="gs-model-z-index-2 gs-undo-opacity-hover" :disabled="checkRedo" text small right @click.native="redo()"
+                                        <v-btn class="gs-model-z-index-2 gs-undo-opacity-hover" :disabled="isRedoDisabled" text small right @click.native="redo()"
                                             v-on="on">
                                             <v-icon medium>mdi-redo</v-icon>
                                         </v-btn>

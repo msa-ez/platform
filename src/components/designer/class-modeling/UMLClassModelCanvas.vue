@@ -63,7 +63,7 @@
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on }">
                                         <v-btn class="gs-model-z-index-2 gs-undo-opacity-hover"
-                                                :disabled="checkUndo" 
+                                                :disabled="isUndoDisabled" 
                                                 text
                                                 small
                                                 right 
@@ -78,7 +78,7 @@
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on }">
                                         <v-btn class="gs-model-z-index-2 gs-undo-opacity-hover"
-                                                :disabled="checkRedo"
+                                                :disabled="isRedoDisabled"
                                                 text
                                                 small
                                                 right 
