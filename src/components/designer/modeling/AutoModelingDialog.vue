@@ -83,6 +83,13 @@
                                     >
                                         <v-col style="text-align: center;">
                                             <v-card :style="genType == 'CJM' ? 'border: solid darkturquoise;':'background-color: white;'" class="auto-cjm" >
+                                                <v-chip x-small
+                                                    outlined color="orange"
+                                                    style="position: absolute;
+                                                    right: 5px;
+                                                    top: 5px;
+                                                    z-index: 1;"
+                                                >Beta</v-chip>
                                                 <div @click="checkLogin('CJM')" style="cursor: pointer; ">
                                                     <v-avatar
                                                         class="ma-3"
@@ -103,6 +110,13 @@
                                         </v-col>
                                         <v-col style="text-align: center;">
                                             <v-card :style="genType == 'BM2' ? 'border: solid darkturquoise;':'background-color: white;'" class="auto-bm">
+                                                <v-chip x-small
+                                                    outlined color="orange"
+                                                    style="position: absolute;
+                                                    right: 5px;
+                                                    top: 5px;
+                                                    z-index: 1;"
+                                                >Beta</v-chip>
                                                 <div @click="checkLogin('BM2')" style="cursor: pointer;">
                                                     <v-avatar
                                                         class="ma-3"
@@ -123,6 +137,13 @@
                                         </v-col>
                                         <v-col style="text-align: center;">
                                             <v-card :style="genType == 'USM' ? 'border: solid darkturquoise;':'background-color: white;'" class="auto-usm">
+                                                <v-chip x-small
+                                                    outlined color="orange"
+                                                    style="position: absolute;
+                                                    right: 5px;
+                                                    top: 5px;
+                                                    z-index: 1;"
+                                                >Beta</v-chip>
                                                 <div @click="checkLogin('USM')" style="cursor: pointer;">
                                                     <v-avatar
                                                         class="ma-3"
@@ -169,6 +190,13 @@
                                         </v-col>
                                         <v-col style="text-align: center;">
                                             <v-card :style="genType == 'UI' ? 'border: solid darkturquoise;':'background-color: white;'" class="auto-ui">
+                                                <v-chip x-small
+                                                    outlined color="orange"
+                                                    style="position: absolute;
+                                                    right: 5px;
+                                                    top: 5px;
+                                                    z-index: 1;"
+                                                >Beta</v-chip>
                                                 <div @click="checkLogin('UI')" style="cursor: pointer;">
                                                     <v-avatar
                                                         class="ma-3"

@@ -7,7 +7,7 @@
             <v-divider></v-divider>
             <v-card-text style="margin-top: 10px;">
                 <div>
-                    <v-row>
+                    <v-row class="ma-0 pa-0">
                         <div style="width: 175px;">
                             <v-select
                                 v-model="selectedMonth"

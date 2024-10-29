@@ -1,9 +1,11 @@
 <template>
     <div style="width: 100%; height: 100%;">
-        <v-row style="width: 100%; height: 100%;">
+        <v-row style="width: 100%; height: 100%;"
+             class="ma-0 pa-0"
+        >
 
             <div style="width: 10%; margin-left:5% ">
-                <v-row>
+                <v-row class="ma-0 pa-0">
                     <v-avatar
                             size="80"
                     >
@@ -17,7 +19,8 @@
                         </div>
                     </v-avatar>
                 </v-row>
-                <div style="margin-top: 8%;text-align: start; -webkit-text-stroke: thin;"> {{getPersonalInfo.name}}
+                <div style="margin-top: 8%;text-align: start; -webkit-text-stroke: thin;">
+                    {{getPersonalInfo.name}}
                 </div>
             </div>
 
@@ -51,7 +54,9 @@
 
                     <v-tab-item>
                         <v-card-text style="height: 100%; overflow-x: scroll;">
-                            <v-row v-if="filterModelingItems == undefined  && typeof filterModelingItems != 'object'">
+                            <v-row v-if="filterModelingItems == undefined  && typeof filterModelingItems != 'object'"
+                                 class="ma-0 pa-0"
+                            >
                                 <v-col
                                         v-for="idx in 9"
                                         cols="6"
@@ -73,11 +78,11 @@
                                 </v-col>
                             </v-row>
 
-                            <v-row v-else-if="filterModelingItems == null">
-                                전체 공개된 모델링이 없습니다.
+                            <v-row v-else-if="filterModelingItems == null" class="ma-0 pa-0">
+                                {{ $t('PersonalInfo.noModeling') }}
                             </v-row>
 
-                            <v-row v-else-if="filterModelingItems.length > 0 ">
+                            <v-row v-else-if="filterModelingItems.length > 0 " class="ma-0 pa-0">
                                 <v-col v-for="(modeling) in filterModelingItems"
                                     :key="modeling.projectId"
                                     xl="4"
