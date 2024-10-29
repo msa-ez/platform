@@ -1,4 +1,5 @@
 const changeCase = require('change-case');
+const pluralize = require('pluralize');
 const ActionsProcessorUtils = require('./ActionsProcessorUtils')
 const GlobalPromptUtil = require('../GlobalPromptUtil')
 
@@ -8,8 +9,13 @@ class AggregateActionsProcessor {
             case "create":
                 AggregateActionsProcessor._createAggregate(action, userInfo, esValue, callbacks)
                 break
+            
+            case "update":
+                AggregateActionsProcessor._updateAggregate(action, userInfo, esValue, callbacks)
+                break
         }
     }
+
 
     static _createAggregate(action, userInfo, esValue, callbacks) {
         let aggregateObject = AggregateActionsProcessor.__getAggregateBase(
@@ -79,7 +85,7 @@ class AggregateActionsProcessor {
             displayName: displayName,
             nameCamelCase: changeCase.camelCase(name),
             namePascalCase: changeCase.pascalCase(name),
-            namePlural: "",
+            namePlural: pluralize(changeCase.camelCase(name)),
             rotateStatus: false,
             selected: false,
             _type: "org.uengine.modeling.model.Aggregate"
@@ -105,21 +111,6 @@ class AggregateActionsProcessor {
     static __makePrimaryKeyPropertyIfNotExists(properties) {
         if(properties.find(property => property.isKey)) return properties
         return [{name: "id", type: "Long", isKey: true}].concat(properties)
-    }
-
-    static __getFileDescriptors(actionProperties) {
-        return actionProperties.map((property) => {
-            return {
-                "className": property.type ? property.type : "String",
-                "isCopy": false,
-                "isKey": property.isKey ? true : false,
-                "name": property.name,
-                "nameCamelCase": changeCase.camelCase(property.name),
-                "namePascalCase": changeCase.pascalCase(property.name),
-                "displayName": "",
-                "_type": "org.uengine.model.FieldDescriptor"
-            }
-        })
     }
 
     static __relocateUIPositions(esValue, action, aggregateObject) {
@@ -211,6 +202,37 @@ class AggregateActionsProcessor {
             "isAggregateRoot": true,
             "parentId": aggregateId
         }
+    }
+
+
+    static _updateAggregate(action, userInfo, esValue, callbacks) {
+        if(action.args.properties) {
+            const aggregateObject = esValue.elements[action.ids.aggregateId]
+            aggregateObject.aggregateRoot.fieldDescriptors = aggregateObject.aggregateRoot.fieldDescriptors.concat(AggregateActionsProcessor.__getFileDescriptors(action.args.properties))
+
+            const aggregateRootObject = ActionsProcessorUtils.getAggregateRootObject(aggregateObject)
+            if(aggregateRootObject) {
+                aggregateRootObject.fieldDescriptors = aggregateRootObject.fieldDescriptors.concat(AggregateActionsProcessor.__getFileDescriptors(action.args.properties))
+            }
+            
+            esValue.elements[action.ids.aggregateId] = {...aggregateObject}
+        }
+    }
+
+
+    static __getFileDescriptors(actionProperties) {
+        return actionProperties.map((property) => {
+            return {
+                "className": property.type ? property.type : "String",
+                "isCopy": false,
+                "isKey": property.isKey ? true : false,
+                "name": property.name,
+                "nameCamelCase": changeCase.camelCase(property.name),
+                "namePascalCase": changeCase.pascalCase(property.name),
+                "displayName": "",
+                "_type": "org.uengine.model.FieldDescriptor"
+            }
+        })
     }
 }
 

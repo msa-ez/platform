@@ -12,7 +12,7 @@
             @changeTranslate="changeTranslate"
     >
         <template slot="t-description-text">
-            행동, 결정 등의 값들에 대한 정의 (UI 혹은 API)
+            {{ $t('panelInfo.CommandDefinitionPanel') }}
         </template>
 
         <template slot="t-generation-text">
@@ -289,7 +289,11 @@
                 // Element
                 // me.relatedAggregate = me.canvas.getAttachedAggregate(me.value)
                 me.relatedAggregate = me.isPBCModel ? me.value.aggregate : me.canvas.getAttachedAggregate(me.value)
-                me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#command-sticker'
+                if (me.isForeign) {
+                    me.relatedUrl = 'https://intro.msaez.io/tool/event-storming-tool/#command-sticker'
+                } else {
+                    me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#command-sticker'
+                }
 
                 // Common
                 me.$super(EventStormingModelPanel).panelInit()

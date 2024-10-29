@@ -18,7 +18,7 @@
 
 
         <template slot="t-description-text">
-            행위와 결정을 하기 위하여 유저가 참고하는 데이터 (데이터 프로젝션이 필요 :  CQRS 등으로 수집)
+            {{ $t('panelInfo.ViewDefinitionPanel') }}
         </template>
 
         <template slot="t-generation-text">
@@ -143,7 +143,9 @@
                                         v-model="value.queryParameters"
                                         :isReadOnly="isReadOnly"
                                         :type="value._type"
+                                        :dataProjection="value.dataProjection"
                                         :elementId="value.elementView.id"
+                                        @sync-attribute="syncFromAggregate"
                                         :entities="relatedAggregate ? relatedAggregate.aggregateRoot.entities : null"
                                         :fields="relatedAggregate ? relatedAggregate.aggregateRoot.fieldDescriptors : null"
                                 ></event-storming-attribute>
@@ -322,6 +324,40 @@
             });
         },
         methods: {
+            syncFromAggregate() {
+                var me = this
+                var aggregateField = null
+                var entityTypeList =  ['Integer', 'String', 'Boolean', 'Float', 'Double', 'Long', 'Date']
+
+                if (me.isEmptyObject(me.relatedAggregate)) {
+                    alert("Attach 'Associated aggregate'. ")
+                } else {
+                    var aggLists = me.canvas.attachedLists().aggregateLists;
+
+                    if( Object.keys(aggLists).length > 0 ){
+                        var eventFields = JSON.parse(JSON.stringify(me.value.queryParameters));
+                        aggregateField = aggLists[me.relatedAggregate.elementView.id] ? aggLists[me.relatedAggregate.elementView.id].aggregateRoot.fieldDescriptors : null;
+
+                        if (aggregateField) {
+                            aggregateField.forEach(function (aggField) {
+                                let eventKey = -1
+                                if(aggField.isKey){
+                                    eventKey = eventFields.findIndex(eventField => eventField.isKey)
+                                }else{
+                                    eventKey = eventFields.findIndex(eventField => !eventField.isKey && eventField.name == aggField.name && eventField.className == aggField.className)
+                                }
+
+                                if (eventKey == -1) {
+                                    me.value.queryParameters.push(aggField)
+                                } else {
+                                    me.value.queryParameters[eventKey] = aggField
+                                }
+                                me.value.queryParameters.__ob__.dep.notify();
+                            })
+                        }
+                    }
+                }
+            },
             panelInit(){
                 var me = this
                 // Element

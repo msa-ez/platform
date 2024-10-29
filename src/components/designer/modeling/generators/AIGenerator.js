@@ -188,7 +188,7 @@ class AIGenerator {
                                 me.stop();
                                 if(me.client.onGenerationFinished) {
                                     me.client.onGenerationFinished(me.savedModel)
-                                    resolve(model); 
+                                    resolve(null); 
                                 }
                             }
                         } else {

@@ -14,7 +14,7 @@
     >
 
         <template slot="t-description-text">
-            외부 시스템
+            {{ $t('panelInfo.ExternalDefinitionPanel') }}
         </template>
 
         <template slot="t-generation-text"></template>

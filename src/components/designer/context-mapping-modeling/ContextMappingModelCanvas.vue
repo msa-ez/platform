@@ -1044,13 +1044,13 @@
           </v-dialog>
 
           <v-dialog v-model="showDDLDraftDialog" max-width="1200" max-height="800" overflow="scroll">
-            <ModelDraftDialog
-                :DDLDraftTable="DDLDraftTable"
-                :defaultGeneratorUiInputData="defaultGeneratorUiInputData"
+            <ModelDraftDialogForDistribution
+                :DDLDraftOptions="DDLDraftOptions"
+                :draftUIInfos="draftUIInfos"
                 :isGeneratorButtonEnabled="isDraftGeneratorButtonEnabled"
                 @reGenerate="reGenerate"
                 @generateFromDraft="generateFromDraft"
-            ></ModelDraftDialog>
+            ></ModelDraftDialogForDistribution>
           </v-dialog>
 
 
@@ -1086,13 +1086,16 @@
 </template>
 
 <script>
+  import DDLBoundedContextDistributeGenerator from "../modeling/generators/es-ddl-generators/DDLBoundedContextDistributeGenerator";
+  import DDLDraftGeneratorForDistribution from "../modeling/generators/es-ddl-generators/DDLDraftGeneratorForDistribution";
+  import DDLDraftGenerator from "../modeling/generators/DDLDraftGenerator";
+  import DDLCreateESActionsGenerator from "../modeling/generators/es-ddl-generators/DDLCreateESActionsGenerator";
+
   import EventStormingModelCanvas from "../es-modeling/EventStormingModelCanvas";
   import ContextMappingModeling from './index'
   import BoundedContext from '../es-modeling/elements/BoundedContext.vue';
   import GeneratorUI from "../modeling/generators/GeneratorUI";
-  import DDLCreateESActionsGenerator from "../modeling/generators/es-ddl-generators/DDLCreateESActionsGenerator";
-  import DDLDraftGenerator from "../modeling/generators/DDLDraftGenerator";
-  import ModelDraftDialog from "../modeling/ModelDraftDialog";
+  import ModelDraftDialogForDistribution from './dialogs/ModelDraftDialogForDistribution'
   import BoundedContextCMUtil from './modules/BoundedContextCMUtil'
   import EventStormingUtil from './modules/EventStormingUtil'
   import TestByUsingCommand from './mixins/TestByUsingCommand'
@@ -1102,7 +1105,7 @@
     mixins: [EventStormingModelCanvas, TestByUsingCommand],
     components: { 
       GeneratorUI,
-      ModelDraftDialog
+      ModelDraftDialogForDistribution
     },
     data() {
       return {
@@ -1116,17 +1119,24 @@
             height: "100",
             src: `${window.location.protocol + "//" + window.location.host}/static/image/event/bounded2.png`,
           },
-          // {
-            //   component: "packaged-business-capabilities-cm",
-            //   label: "PBC",
-            //   width: "100",
-            //   height: "100",
-            //   src: `${window.location.protocol + "//" + window.location.host}/static/image/event/pbc.png`,
-            // },
         ],
         generator: null,
         currentGeneratorName: "",
         input: null,
+
+        ddlDraftGeneratorForDistributionInputs: [],
+
+        createEventStormingInputs: [],
+        DDLCreateESActionsGeneratorRetryCount: 3,
+        DDLDraftGeneratorForDistributionRetryCount: 3,
+
+        showDDLDraftDialog: false,
+        DDLDraftOptions: [],
+        draftUIInfos: {
+          leftBoundedContextCount: 0
+        },
+        isDraftGeneratorButtonEnabled: true,
+
         defaultGeneratorUiInputData: {
           processingDDL: [],
           processedDDLs: [],
@@ -1134,12 +1144,8 @@
           DDL: '',
           boundedContextLists: '',
           DDLDraftTable: {},
+          reGenerate: false
         },
-        DDLDraftTable: {},
-        showDDLDraftDialog: false,
-        createEventStormingInputs: [],
-        DDLCreateESActionsGeneratorRetryCount: 3,
-        isDraftGeneratorButtonEnabled: true
       };
     },
     watch: {
@@ -1378,70 +1384,9 @@
       },
 
 
-      onGenerationFinished(model){
-        var me = this
-
-        if(!model) return
-        switch(model.generatorName) {
-          case 'DDLDraftGenerator':
-            me._processDDLDraftGenerator(model)
-            break;
-
-          case 'DDLCreateESActionsGenerator':
-            me._processDDLCreateESActionsGenerator(model)
-            break;
-        }
-      },
-
-      _processDDLDraftGenerator(model) {
-        var me = this
-        me.showDDLDraftDialog = true
-        me.isDraftGeneratorButtonEnabled = true
-
-        if(me.defaultGeneratorUiInputData['reGenerate'])
-        me.defaultGeneratorUiInputData['reGenerate'] = false
-
-        me.DDLDraftTable = Object.assign(me.DDLDraftTable, model.tables)
-        me.defaultGeneratorUiInputData = {
-          ...me.defaultGeneratorUiInputData,
-          DDLDraftTable: JSON.stringify(me.DDLDraftTable),
-          processingDDL: [],
-          processedDDLs: model.processedDDLs,
-          numberRemainingDDLs: model.numberRemainingDDLs,
-          DDL: model.DDL,
-          boundedContextLists: model.boundedContextLists
-        }
-
-        if(model.numberRemainingDDLs > 0)
-          me.__generate('DDLDraftGenerator', me.defaultGeneratorUiInputData)
-      },
-
-      _processDDLCreateESActionsGenerator(model) {
-        var me = this
-
-        if(model.isError) {
-          if(me.DDLCreateESActionsGeneratorRetryCount > 0) {
-            me.DDLCreateESActionsGeneratorRetryCount -= 1
-            me.__generate('DDLCreateESActionsGenerator', model.inputedParams)
-          } else
-            me.__processNextCreateEventStormingInput()
-          
-          return
-        }
-
-        if(!model.modelValue || !model.modelValue.createdESValue) return
-        me.__makeNewEventStormingProject(model.modelValue.createdESValue)
-        me.__processNextCreateEventStormingInput()
-      },
-
-      __processNextCreateEventStormingInput() {
-        var me = this
-        if(me.createEventStormingInputs.length > 0) {
-            me.DDLCreateESActionsGeneratorRetryCount = 3
-            me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())
-        }
-        else
-          me.showDDLDraftDialog = false
+      reGenerate(table, boundedContext){
+        console.log("[*] Re-generate", table, boundedContext)
+        let me = this
       },
 
 
@@ -1449,10 +1394,12 @@
         try {
 
           var me = this
-          console.log("[*] Draft를 기반으로 이벤트 캔버스 모델 생성중...", {selectedOptionItem, ddl:me.defaultGeneratorUiInputData.DDL})
+          console.log("[*] Draft를 기반으로 이벤트 캔버스 모델 생성중...", {selectedOptionItem})
 
           me.isDraftGeneratorButtonEnabled = false
-          me.createEventStormingInputs = me._getCreateEventStormingInputs(selectedOptionItem, me.defaultGeneratorUiInputData.DDL)
+          me.createEventStormingInputs = me._getCreateEventStormingInputs(selectedOptionItem)
+
+          me.draftUIInfos.leftBoundedContextCount = me.createEventStormingInputs.length
           me.DDLCreateESActionsGeneratorRetryCount = 3
           me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())
 
@@ -1466,26 +1413,23 @@
         }
       },
 
-      _getCreateEventStormingInputs(selectedOptionItem, ddl) {
+      _getCreateEventStormingInputs(selectedOptionItem) {
         let me = this
         let eventStormingInputs = []
 
         for(let boundedContextKey of Object.keys(selectedOptionItem)){
-          let boundedContextInfo = selectedOptionItem[boundedContextKey][0]
+          let boundedContextInfo = selectedOptionItem[boundedContextKey]
 
-          let usedDDL = ""
-          if(boundedContextInfo.ddl) {
-            if(typeof boundedContextInfo.ddl === "object") 
-              boundedContextInfo.ddl = Object.values(boundedContextInfo.ddl).join(", ")
-            usedDDL = this.__getDDLsFromTableNames(boundedContextInfo.ddl.split(", "), ddl)
-          }
-
-          const functionRequests = (boundedContextInfo.scenario) ? boundedContextInfo.scenario : "Add the appropriate Create and Delete operations for the given DDL."
           eventStormingInputs.push({
-            ddl: usedDDL,
-            selectedOption: boundedContextInfo.aggregates,
-            boundedContexts: [boundedContextKey],
-            functionRequests: functionRequests,
+            ddl: boundedContextInfo.ddl,
+            suggestedStructures: boundedContextInfo.structure
+              .map((structure) => ({
+                aggregateRoot: structure.aggregateName,
+                generalClasses: structure.entities,
+                valueObjects: structure.valueObjects
+            })),
+            boundedContexts: [boundedContextInfo.boundedContext],
+            functionRequests: (boundedContextInfo.functionRequirements && boundedContextInfo.functionRequirements.length > 0) ? boundedContextInfo.functionRequirements.join("\n") : "Add the appropriate Create and Delete operations for each generated aggregate.",
             userInfo: me.userInfo,
             information: me.information
           })
@@ -1494,21 +1438,134 @@
         return eventStormingInputs
       },
 
-      __getDDLsFromTableNames(tableNames, ddl){
-        let usedDDL = ""
-        for(let tableName of tableNames){
-          const matchedDDL = ddl.match(new RegExp(`CREATE\\s+TABLE\\s+${tableName.trim()}[\\s\\S]*?\\);`))
-          if(matchedDDL) usedDDL += matchedDDL[0] + "\n"
-        }
-        return usedDDL
-      },
       
+      onGenerationFinished(model){
+        var me = this
+
+        if(!model) return
+        switch(model.generatorName) {
+          case 'DDLBoundedContextDistributeGenerator':
+            me._processDDLBoundedContextDistributeGenerator(model)
+            break;
+          
+          case 'DDLDraftGeneratorForDistribution':
+            me._processDDLDraftGeneratorForDistribution(model)
+            break
+
+          case 'DDLCreateESActionsGenerator':
+            me._processDDLCreateESActionsGenerator(model)
+            break;
+        }
+      },
+
+      _processDDLBoundedContextDistributeGenerator(model) {
+        if(!model.modelValue || !model.modelValue.boundedContexts) return
+        
+        var me = this
+
+        me.ddlDraftGeneratorForDistributionInputs = me.__makeDDLDraftGeneratorForDistributionInputs(model.modelValue.boundedContexts, model.inputedParams.ddlManager)
+
+        me.DDLDraftOptions = []
+        me.draftUIInfos.leftBoundedContextCount = me.ddlDraftGeneratorForDistributionInputs.length
+        me.showDDLDraftDialog = true
+
+        me.DDLDraftGeneratorForDistributionRetryCount = 3
+        me.__generate('DDLDraftGeneratorForDistribution', me.ddlDraftGeneratorForDistributionInputs.shift())
+      },
+
+      __makeDDLDraftGeneratorForDistributionInputs(boundedContexts, ddlManager){
+        return boundedContexts.map(boundedContext => ({
+          ddl: ddlManager.getParsedDDLs(boundedContext.ddls).map(ddl => ddl.ddl).join("\n"),
+          boundedContext: boundedContext.name,
+          functionRequirements: boundedContext.functionRequirements ? boundedContext.functionRequirements : []
+        }))
+      },
+
+      _processDDLDraftGeneratorForDistribution(model) {
+        if(!model.modelValue || !model.modelValue.options) return
+
+        var me = this
+        if(model.isError) {
+          if(me.DDLDraftGeneratorForDistributionRetryCount > 0) {
+            me.DDLDraftGeneratorForDistributionRetryCount -= 1
+            me.__generate('DDLDraftGeneratorForDistribution', model.inputedParams)
+          } else
+            me.__processNextDDLDraftGeneratorForDistributionInput()
+          
+          return
+        }
+
+        me.DDLDraftOptions.push(me.__getDDLDraftOption(model))
+        me.__processNextDDLDraftGeneratorForDistributionInput()
+      },
+
+      __processNextDDLDraftGeneratorForDistributionInput() {
+        var me = this
+        me.draftUIInfos.leftBoundedContextCount = me.ddlDraftGeneratorForDistributionInputs.length
+        if(me.ddlDraftGeneratorForDistributionInputs.length > 0) {
+          me.DDLDraftGeneratorForDistributionRetryCount = 3
+          me.__generate('DDLDraftGeneratorForDistribution', me.ddlDraftGeneratorForDistributionInputs.shift())
+        }
+      },
+
+      __getDDLDraftOption(model){
+        return {
+          boundedContext: model.inputedParams.boundedContext,
+          options: model.modelValue.options.map(option => ({
+              ...option,
+              boundedContext: model.inputedParams.boundedContext,
+              functionRequirements: model.inputedParams.functionRequirements,
+              ddl: model.inputedParams.ddl
+          })),
+          conclusions: model.modelValue.conclusions,
+          defaultOptionIndex: model.modelValue.defaultOptionIndex
+        }
+      },
+
+      async _processDDLCreateESActionsGenerator(model) {
+        var me = this
+
+        if(model.isError) {
+          if(me.DDLCreateESActionsGeneratorRetryCount > 0) {
+            me.DDLCreateESActionsGeneratorRetryCount -= 1
+            me.__generate('DDLCreateESActionsGenerator', model.inputedParams)
+          } else
+            me.__processNextCreateEventStormingInput()
+          
+          return
+        }
+
+        if(!model.modelValue || !model.modelValue.createdESValue) return
+        await me.__makeNewEventStormingProject(model.modelValue.createdESValue)
+        me.__processNextCreateEventStormingInput()
+      },
+
+      __processNextCreateEventStormingInput() {
+        var me = this
+
+        me.draftUIInfos.leftBoundedContextCount = me.createEventStormingInputs.length
+        if(me.createEventStormingInputs.length > 0) {
+            me.DDLCreateESActionsGeneratorRetryCount = 3
+            me.__generate('DDLCreateESActionsGenerator', me.createEventStormingInputs.shift())
+        }
+        else
+          me.showDDLDraftDialog = false
+      },
+
       
       __generate(generatorName, inputObj){
         var me = this
         me.currentGeneratorName = generatorName
 
         switch(generatorName) {
+          case "DDLBoundedContextDistributeGenerator":
+            me.generator = new DDLBoundedContextDistributeGenerator(me);
+            break
+          
+          case "DDLDraftGeneratorForDistribution":
+            me.generator = new DDLDraftGeneratorForDistribution(me);
+            break
+
           case 'DDLDraftGenerator':
             me.generator = new DDLDraftGenerator(me);
             break;
@@ -1527,10 +1584,10 @@
         me.generator.generate()
       },
 
-      __makeNewEventStormingProject(esValue) {
+      async __makeNewEventStormingProject(esValue) {
         var me = this
 
-        EventStormingUtil.getAllBoundedContexts(esValue).forEach(boundedContext => {
+        for(let boundedContext of EventStormingUtil.getAllBoundedContexts(esValue)) {
 
           const createdBoundedContextCM = me.__addNewBoundedContextCM(boundedContext.name)
           const relatedAggregates = EventStormingUtil.getOnlyRelatedAggregates(boundedContext, esValue)
@@ -1555,10 +1612,10 @@
             element: createdBoundedContextCM
           }
           const relatedESValue = EventStormingUtil.getOnlyRelatedESValue(boundedContext, esValue)
-          me.saveModel(boundedContext, relatedESValue)
+          await me.saveModel(boundedContext, relatedESValue)
           me.changedByMe = true
 
-        })
+        }
       },
 
       __addNewBoundedContextCM(name){
@@ -1568,20 +1625,6 @@
         const createdBoundedContextCM = BoundedContextCMUtil.getNewBoundedContextCM(name, me.value)
         me.addElementAction(createdBoundedContextCM)
         return createdBoundedContextCM
-      },
-      
-      reGenerate(table, boundedContext){
-        console.log("[*] Re-generate", table, boundedContext)
-        let me = this
-
-        me.defaultGeneratorUiInputData['reGenerate'] = true;
-        me.defaultGeneratorUiInputData['reGenerateTable'] = {[boundedContext]: table}
-
-        me.defaultGeneratorUiInputData['boundedContextLists'] = boundedContext
-        me.defaultGeneratorUiInputData['processedDDLs'] = []
-        me.defaultGeneratorUiInputData.numberRemainingDDLs = 0
-
-        me.__generate('DDLDraftGenerator', me.defaultGeneratorUiInputData)
       }
     },
   };

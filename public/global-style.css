@@ -649,9 +649,13 @@ code[class*=language-]:nth-child(1) {
 }
 .auto-modeling-dialog-textarea .v-input__control .v-input__slot .v-text-field__slot textarea{
     height:75vh;
+    max-height:80vh;
 }
 .auto-modeling-dialog .v-expansion-panel-content__wrap {
     padding:0px;
+}
+.auto-modeling-dialog-textarea .v-input__control .v-input__slot {
+    padding-left:10px;
 }
 
 .auto-modling-textarea {
@@ -813,9 +817,17 @@ code[class*=language-]:nth-child(1) {
     color: #757575;
 }
 
+.uml-separate-panel {
+    margin: 0px !important;
+}
+
+.ddl-text-field .v-input__slot {
+    margin-bottom: 0px !important;
+}
+
 @media only screen and (max-width:1409px) and (min-width:1298px){
     .gs-main-page-top-title {
-        font-size:36px;
+        font-size: 36px;
         font-weight: 500;
     }
 

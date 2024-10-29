@@ -16,7 +16,7 @@
         </template> -->
 
         <template slot="t-description-text">
-            비즈니스 로직 처리의 도메인 객체 덩어리 (서로 연결된 하나 이상의 엔터티 및 value objects의 집합체)
+            {{ $t('panelInfo.AggregateDefinitionPanel') }}
         </template>
 
         <template slot="t-generation-text">
@@ -60,13 +60,18 @@
         </template> -->
 
         <template slot="generateWithAi">
-            <div><span>
-                <div>
-                    <v-btn v-if="generateDone" :disabled="!value.boundedContext.id || !value.description" class="auto-modeling-btn" color="primary" @click="generate()"><v-icon>mdi-auto-fix</v-icon>(RE)Generate Inside</v-btn>
-                    <v-btn v-if="!generateDone" class="auto-modeling-btn" color="primary" @click="stop()"><v-icon>mdi-auto-fix</v-icon>Stop Generation</v-btn>
-                    <!-- <v-btn v-if="!value.description" :disabled="true" class="auto-modeling-btn" text><v-icon>mdi-auto-fix</v-icon>(RE)Generate Inside</v-btn> -->
-                </div>
-            </span></div>
+            <div>
+                <span>
+                    <div>
+                        <v-btn v-if="generateDone" :disabled="!value.boundedContext.id || !value.description" class="auto-modeling-btn" color="primary" @click="generate('AggregateInsideGenerator')"><v-icon>mdi-auto-fix</v-icon>Generate Inside</v-btn>
+
+                        <v-btn v-if="generateDone && !isProject" :disabled="!value.boundedContext.id || !value.description" class="auto-modeling-btn" color="primary" @click="generate('AggregateGenerator')"><v-icon>mdi-auto-fix</v-icon>(RE)Generate Inside</v-btn>
+
+                        <v-btn v-if="!generateDone" class="auto-modeling-btn" color="primary" @click="stop()"><v-icon>mdi-auto-fix</v-icon>Stop Generation</v-btn>
+                        <!-- <v-btn v-if="!value.description" :disabled="true" class="auto-modeling-btn" text><v-icon>mdi-auto-fix</v-icon>(RE)Generate Inside</v-btn> -->
+                    </div>
+                </span>
+            </div>
         </template>
 
         <template slot="element">
@@ -117,6 +122,7 @@
         props: {
             generator: Object,
             duplicatedFieldList: Array,
+            isProject: Boolean
         },
         components: {
             AggregateRulesPanel,
@@ -184,7 +190,11 @@
             panelInit(){
                 var me = this
                 // Element
-                me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#aggregate-sticker'
+                if (me.isForeign) {
+                    me.relatedUrl = 'https://intro.msaez.io/tool/event-storming-tool/#aggregate-sticker'
+                } else {
+                    me.relatedUrl = 'https://intro-kor.msaez.io/tool/event-storming-tool/#aggregate-sticker'
+                }
                 me.setRootMethods();
 
                 // Common
@@ -357,12 +367,12 @@
                 this.$EventBus.$emit('generationFinished');
             },
 
-            generate(){
+            generate(generatorName){
                 this.executeBeforeDestroy();
                 this.closePanel();
 
                 this.state.startTemplateGenerate = true;
-                this.$emit('generateAggregate');
+                this.$emit('generateAggregate', generatorName);
                 this.$emit('update:generateDone', false);
                 this.generateDone = false;
             },

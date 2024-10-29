@@ -588,22 +588,14 @@
                                                             offset-y
                                                             left
                                                     >
-                                                        <template
-                                                                v-slot:activator="{
-                                                                on,
-                                                            }"
-                                                        >
-                                                            <div
-                                                                    v-if="isReadOnlyModel"
-                                                            >
+                                                        <template v-slot:activator="{ on }">
+                                                            <div v-if="isReadOnlyModel">
                                                                 <v-btn
                                                                         class="gs-model-z-index-1 es-hide-fork-btn"
                                                                         text
                                                                         :disabled="disableBtn"
                                                                         @click="saveComposition('fork')"
-                                                                        style="
-                                                                        margin-right: 5px;
-                                                                    "
+                                                                        style="margin-right: 5px;"
                                                                 >
                                                                     <v-icon>{{ icon.fork }}</v-icon>
                                                                     <div class="es-hide-fork">
@@ -613,15 +605,10 @@
                                                                 <v-btn
                                                                         class="gs-model-z-index-1 es-hide-join-btn"
                                                                         v-if="!projectVersion"
-                                                                        :color="joinRequestedText.show
-                                                                            ? 'primary'
-                                                                            : 'success'
-                                                                    "
+                                                                        :color="joinRequestedText.show ? 'primary' : 'success'"
                                                                         :disabled="disableBtn"
                                                                         @click="requestInviteUser()"
-                                                                        style="
-                                                                        margin-right: 5px;
-                                                                    "
+                                                                        style="margin-right: 5px;"
                                                                         text
                                                                 >
                                                                     <div v-if="joinRequestedText.show">
@@ -634,79 +621,51 @@
                                                             </div>
                                                             <div v-else>
                                                                 <v-btn
-                                                                        class="gs-model-z-index-1 es-hide-save-btn"
-                                                                        text
-                                                                        v-if="
-                                                                        showSaveBtn
-                                                                    "
-                                                                        style="
-                                                                        margin-right: 5px;
-                                                                    "
-                                                                        :disabled="
-                                                                        disableBtn
-                                                                    "
-                                                                        @click="saveComposition('save')"
-                                                                        v-on="on"
+                                                                    class="gs-model-z-index-1 es-hide-save-btn"
+                                                                    text
+                                                                    v-if="showSaveBtn"
+                                                                    style="margin-right: 5px;"
+                                                                    :disabled="disableBtn"
+                                                                    @click="saveComposition('save')"
+                                                                    v-on="on"
                                                                 >
-                                                                    <v-icon>{{
-                                                                        icon.save
-                                                                        }}</v-icon>
-                                                                    <div
-                                                                            class="es-hide-save"
-                                                                    >
+                                                                    <v-icon>{{ icon.save }}</v-icon>
+                                                                    <div class="es-hide-save">
                                                                         SAVE
                                                                     </div>
                                                                 </v-btn>
                                                                 <v-btn
-                                                                        class="gs-model-z-index-1"
-                                                                        text
-                                                                        v-else
-                                                                        :disabled="
-                                                                        disableBtn
-                                                                    "
-                                                                        @click="saveComposition('fork')"
-                                                                        style="
-                                                                        margin-right: 5px;
-                                                                    "
-                                                                        v-on="on"
+                                                                    class="gs-model-z-index-1"
+                                                                    text
+                                                                    v-else
+                                                                    :disabled="disableBtn"
+                                                                    @click="saveComposition('fork')"
+                                                                    style="margin-right: 5px;"
+                                                                    v-on="on"
                                                                 >
-                                                                    <v-icon>{{
-                                                                        icon.fork
-                                                                        }}</v-icon>
-                                                                    <div
-                                                                            class="es-hide-fork"
-                                                                    >
+                                                                    <v-icon>{{ icon.fork }}</v-icon>
+                                                                    <div class="es-hide-fork">
                                                                         FORK
                                                                     </div>
                                                                 </v-btn>
                                                             </div>
                                                         </template>
-                                                        <v-list
-                                                                v-if="
-                                                                !isClazzModeling
-                                                            "
-                                                        >
+                                                        <v-list v-if="!isClazzModeling">
                                                             <v-list-item
-                                                                    v-for="(
-                                                                    item, index
-                                                                ) in filteredSaveItems"
-                                                                    :key="index"
-                                                                    @click="functionSelect(item.title,index)"
+                                                                v-for="(item, index) in filteredSaveItems"
+                                                                :key="index"
+                                                                @click="functionSelect(item.title,index)"
                                                             >
-                                                                <v-list-item-title
-                                                                >{{
-                                                                    item.title
-                                                                    }}
-                                                                </v-list-item-title>
+                                                                <v-list-item-title>{{item.title}}</v-list-item-title>
                                                             </v-list-item>
                                                         </v-list>
                                                     </v-menu>
 
                                                     <v-menu
-                                                            v-if="isOwnModel && isServerModel && !isReadOnlyModel"
-                                                            offset-y
-                                                            open-on-hover
-                                                            left
+                                                        v-if="isOwnModel && isServerModel && !isReadOnlyModel"
+                                                        offset-y
+                                                        open-on-hover
+                                                        left
                                                     >
                                                         <template v-slot:activator="{ on }">
                                                             <div>
@@ -721,11 +680,11 @@
                                                                     <v-icon>{{icon.share}}</v-icon>
                                                                     <div class="es-hide-share"> SHARE </div>
                                                                     <v-avatar
-                                                                            v-if="requestCount"
-                                                                            size="25"
-                                                                            color="red"
-                                                                            style="
-                                                                            margin-left: 2px;"
+                                                                        v-if="requestCount"
+                                                                        size="25"
+                                                                        color="red"
+                                                                        style="
+                                                                        margin-left: 2px;"
                                                                     >
                                                                         {{ requestCount }}
                                                                     </v-avatar>
@@ -734,17 +693,11 @@
                                                         </template>
                                                         <v-list>
                                                             <v-list-item
-                                                                    v-for="(
-                                                                    item, index
-                                                                ) in shareItems"
-                                                                    :key="index"
-                                                                    @click="functionSelect(item.title,index)"
+                                                                v-for="( item, index) in shareItems"
+                                                                :key="index"
+                                                                @click="functionSelect(item.title,index)"
                                                             >
-                                                                <v-list-item-title
-                                                                >{{
-                                                                    item.title
-                                                                    }}
-                                                                </v-list-item-title>
+                                                                <v-list-item-title>{{item.title}}</v-list-item-title>
                                                             </v-list-item>
                                                         </v-list>
                                                     </v-menu>
@@ -1988,6 +1941,7 @@
     import DebeziumTransactionManager from "../modeling/generators/generatorTabs/DebeziumTransactionManager"
     import DDLDraftGenerator from "../modeling/generators/DDLDraftGenerator"
     import ModelDraftDialog from "../modeling/ModelDraftDialog"
+    import TestByUsingCommand from "./mixins/TestByUsingCommand"
     const prettier = require("prettier");
     const plugins = require("prettier-plugin-java");
     const axios = require("axios");
@@ -2027,7 +1981,7 @@
     // import ModelCodeGenerator from "../modeling/ModelCodeGenerator";
     export default {
         name: "event-storming-model-canvas",
-        mixins: [ModelCanvas],
+        mixins: [ModelCanvas, TestByUsingCommand],
         components: {
             UIWizardDialoger,
             AutoModelingDialog,
@@ -3645,7 +3599,34 @@
                     // me.changedByMe = true;
                 }
             },
+
+
             createAggregate(val, agg, originModel) {
+                var me = this;
+                
+                switch(val.generatorName) {
+                    case 'AggregateInsideGenerator':
+                        me._createAggregateByAggreateInsideGenerator(val)
+                        break;
+                    default:
+                        me._createAggregateByAggreateGenerator(val, agg, originModel)
+                        break;
+                }
+            },
+
+            _createAggregateByAggreateInsideGenerator(model) {
+                var me = this
+                if(model.from !== "onGenerationFinished" || model.modelValue === null) return
+
+                
+                console.log("[*] AggregateInsideGenerator 후처리 로직이 실행됨", model)
+
+                me.changedByMe = true
+                me.$set(me.value, "elements", model.modelValue.createdESValue.elements)
+                me.$set(me.value, "relations", model.modelValue.createdESValue.relations)   
+            },
+
+            _createAggregateByAggreateGenerator(val, agg, originModel) {
                 var me = this;
 
                 // let codeGenerator = new CodeGeneratorCore({canvas: me})
@@ -3701,6 +3682,8 @@
                     me.changedByMe = true
                 }
             },
+
+
             getAttachedElements(val, agg){
                 var me = this;
 
@@ -7373,7 +7356,8 @@
                 generator.generate()
             },
             onModelCreated(model){
-                this.showDDLDraftDialog = true
+                if(model && model.generatorName === 'DDLGenerator')
+                    this.showDDLDraftDialog = true
             },
             setDDLDraftDialog(model){
                 this.DDLDraftTable = model.tables

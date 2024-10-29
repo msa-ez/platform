@@ -13,7 +13,7 @@
                         <td colspan="999">
                             <v-text-field 
                                 v-model="rule.description"
-                                label="Describe your business logic"
+                                label="Describe your business logic here"
                             ></v-text-field>
                         </td>
                     </tr>
@@ -48,6 +48,7 @@
                                             :is="getComponentType(selectedAttType)"
                                             v-model="value['given'][0].value[key]" 
                                             :label="selectedAttType"
+                                            :items="selectedEnumItems"
                                             @save="closeExampleEditor()"
                                             @selectChip="closeExampleEditor"
                                         ></component>
@@ -59,10 +60,10 @@
                                 </template>
                                 <table v-else class="rules-table" style="width: 100%;">
                                     <tr>
-                                        <td v-for="(givenArrValue, givenArrKey) in given[0]" class="given-td-uml">{{ givenArrKey }}</td>
+                                        <td v-for="(givenArrValue, givenArrKey) in given[0]" :key="givenArrKey" class="given-td-uml">{{ givenArrKey }}</td>
                                     </tr>
-                                    <tr v-for="(givenValue, givenIdx) in given">
-                                        <td v-for="(givenArrValue, givenArrKey) in givenValue" @click="selectTableData(ruleIdx, 'given', givenArrKey, null, null, key, givenIdx)">
+                                    <tr v-for="(givenValue, givenIdx) in given" :key="givenIdx">
+                                        <td v-for="(givenArrValue, givenArrKey) in givenValue" :key="givenArrKey" @click="selectTableData(ruleIdx, 'given', givenArrKey, null, null, key, givenIdx)">
                                             <component v-if="'given-' + rule['givenItems'][0].name + '-' + key + '-' + givenArrKey == selectedItemPath && selectedItemIndex == ruleIdx && selectedGivenIndex == givenIdx"
                                                 class="td-component-size"
                                                 :is="getComponentType(selectedAttType)"
@@ -145,6 +146,7 @@
     import String from '../../primitives/String.vue'
     import Number from '../../primitives/Number.vue'
     import Boolean from '../../primitives/Boolean.vue'
+    import Enum from '../../primitives/Enum.vue'
 
     export default {
         name: 'rule-example-dialog',
@@ -159,7 +161,8 @@
         components:{
             String,
             Number,
-            Boolean
+            Boolean,
+            Enum
         },
         data() {
             return {
@@ -201,6 +204,7 @@
                 selectedItemPath: null,
                 selectedItemIndex: 0,
                 selectedGivenIndex: 0,
+                selectedEnumItems: [],
             }
         },
         watch: {
@@ -290,6 +294,8 @@
                         return 'Number';
                     case 'Boolean':
                         return 'Boolean';
+                    case 'Enum':
+                        return 'Enum';
                     default:
                         return 'String'; // 기본값 or 오류 처리
                 }
@@ -329,7 +335,12 @@
                     me.selectedGivenIndex = givenIdx;
                 }
                 me.selectedItemIndex = ruleIdx;
-                me.selectedAttType = selectedItem ? selectedItem.className : "";
+                if(me.rule[type + 'Items'][0].aggregateRoot.entities.elements[selectedItem.classId] && me.rule[type + 'Items'][0].aggregateRoot.entities.elements[selectedItem.classId]._type == "org.uengine.uml.model.enum"){
+                    me.selectedAttType = "Enum"
+                    me.selectedEnumItems = me.rule[type + 'Items'][0].aggregateRoot.entities.elements[selectedItem.classId].items.map(item => item.value);
+                } else {
+                    me.selectedAttType = selectedItem ? selectedItem.className : "";
+                }
             },
             resetExampleDialog(){
                 var me = this
@@ -565,7 +576,21 @@
                                     if(rel.sourceElement._type == 'org.uengine.modeling.model.Command' && rel.targetElement._type == 'org.uengine.modeling.model.Event'){
                                         if(rel.sourceElement.elementView.id == me.value.elementView.id){
                                             if(!whenItems.find(x => x.elementView.id == rel.sourceElement.elementView.id)){
-                                                whenItems.push(me.canvas.value.elements[rel.sourceElement.elementView.id]);
+                                                if(me.value.restRepositoryInfo.method == 'POST'){
+                                                    me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = JSON.parse(JSON.stringify(me.canvas.value.elements[me.value.aggregate.id].aggregateRoot.fieldDescriptors))
+                                                } else if(me.value.restRepositoryInfo.method == 'DELETE'){
+                                                    me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = [
+                                                        {
+                                                            "_type": "org.uengine.model.FieldDescriptor",
+                                                            "name": "id",
+                                                            "className": "Long",
+                                                            "nameCamelCase": "id",
+                                                            "namePascalCase": "Id",
+                                                            "isKey": true
+                                                        }
+                                                    ]
+                                                } 
+                                                whenItems.push(me.canvas.value.elements[rel.sourceElement.elementView.id])
                                             }
                                             if(!thenItems.find(x => x.elementView.id == rel.targetElement.elementView.id)){
                                                 thenItems.push(me.canvas.value.elements[rel.targetElement.elementView.id]);
@@ -651,14 +676,22 @@
                     var givenArr = [];
                     let givenObject = {};
                     if(me.rule.givenItems[0].aggregateRoot.entities.elements && me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId]) {
-                        me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId].fieldDescriptors.forEach(function (givenField){
-                            givenObject[givenField.name] = "N/A";
-                        });
-                        givenArr.push(givenObject);
-                        givenObject = givenArr;
+                        if(me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId]._type == "org.uengine.uml.model.enum"){
+                            givenObject = "N/A";
+                            // me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId].items.forEach(function (item){
+                            //     givenObject.push(item.value)
+                            // });
+                        } else {
+                            me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId].fieldDescriptors.forEach(function (givenField){
+                                givenObject[givenField.name] = "N/A";
+                            });
+                            givenArr.push(givenObject);
+                            givenObject = givenArr;
+                        }
                     } else {
                         givenObject = "N/A";
                     }
+
                     values['given'][0].value[field.name] = givenObject;
                 });
 

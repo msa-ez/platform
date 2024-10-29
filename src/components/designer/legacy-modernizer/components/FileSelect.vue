@@ -16,7 +16,7 @@
       @change="handleFileUpload"
     />
     <div v-if="isDragging" class="drop-zone">
-      드래그하여 파일을 업로드 합니다.
+      {{ $t('FileSelect.upload') }}
     </div>
   </v-card>
 </template>
@@ -30,7 +30,7 @@ export default {
     return {
       isDragging: false,
       dragCounter: 0,
-      fileName: '클릭하여 파일을 업로드 하거나\n파일을 드래그 & 드롭 해주세요',
+      fileName: this.$t('FileSelect.fileName'),
     };
   },
   methods: {

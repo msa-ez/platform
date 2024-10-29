@@ -144,49 +144,51 @@
 
                                     <v-tab-item v-show="canvasType === 'event-storming-model-canvas' || canvasType === 'context-mapping-model-canvas'">
                                         <v-card style="padding: 10px;">
-                                            <v-textarea
-                                                v-model="DDL"
-                                                label="DDL"
-                                                rows="12"
-                                                no-resize
-                                            ></v-textarea>
-                                            
-                                            <v-row align="center" no-gutters>
-                                                <v-col cols="10">
-                                                    <v-text-field
+                                            <div style="max-height:60vh; margin-bottom:10px; overflow: auto;">
+                                                <v-textarea
+                                                    v-model="DDL"
+                                                    label="DDL"
+                                                    auto-grow
+                                                    no-resize
+                                                ></v-textarea>
+                                                
+                                                <v-row align="center" no-gutters class="ma-0 pa-0">
+                                                    <v-text-field class="delet-input-detail ddl-text-field"
                                                         v-model="boundedContextInput"
                                                         label="Add a Bounded Context"
                                                         dense
                                                         outlined
                                                         @keyup.enter="addBoundedContext"
                                                     ></v-text-field>
-                                                </v-col>
-                                                <v-col cols="2">
-                                                    <v-btn icon @click="addBoundedContext" color="primary" class="ml-2" style="margin-bottom:40%; margin-right:70%;">
+                                                    <v-btn @click="addBoundedContext"
+                                                        class="ml-2"
+                                                        color="primary"
+                                                        icon text
+                                                    >
                                                         <v-icon>mdi-plus</v-icon>
                                                     </v-btn>
-                                                </v-col>
-                                            </v-row>
-                                            <v-sheet class="d-flex flex-wrap mt-2">
-                                                <v-chip
-                                                    v-for="(context, index) in boundedContextLists"
-                                                    :key="index"
-                                                    class="ma-1"
-                                                    close
-                                                    @click:close="removeBoundedContext(index)"
-                                                >
-                                                    {{ context }}
-                                                </v-chip>
-                                            </v-sheet>
-                                            <v-textarea
-                                                v-model="scenario"
-                                                label="Business Scenario"
-                                                rows="4"
-                                                no-resize
-                                                class="mt-4"
-                                            ></v-textarea>
+                                                </v-row>
+                                                <v-sheet>
+                                                    <v-chip
+                                                        v-for="(context, index) in boundedContextLists"
+                                                        :key="index"
+                                                        class="ma-1"
+                                                        close
+                                                        @click:close="removeBoundedContext(index)"
+                                                    >
+                                                        {{ context }}
+                                                    </v-chip>
+                                                </v-sheet>
+                                                <v-textarea
+                                                    v-model="scenario"
+                                                    label="Business Scenario"
+                                                    rows="4"
+                                                    no-resize
+                                                    class="mt-4"
+                                                ></v-textarea>
+                                            </div>
 
-                                            <v-btn v-if="!generationStopped" class="prompt_field generator-ui-text-field" @click="generate()" block>Generate</v-btn>
+                                            <v-btn v-if="!generationStopped" class="prompt_field generator-ui-text-field" color="primary" @click="generate()" block>Generate</v-btn>
                                             <v-circular-progress indeterminate v-if="generationStopped"></v-circular-progress>
                                         </v-card>
                                     </v-tab-item>
@@ -217,7 +219,7 @@
                                     <v-tab-item>
                                         <v-card flat>
                                             <div id="scroll_messageList"
-                                                style="height: 100%; max-height: 75vh;
+                                                style="height: 100%; height: 75vh;
                                                 overflow: auto; padding:10px;
                                                 border-bottom: solid 2px rgba(0, 0, 0, 0.2);"
                                             >
@@ -297,6 +299,7 @@
     import DebeziumLogsTab from "./generatorTabs/DebeziumLogsTab.vue"
     import DDLGenerator from './DDLGenerator.js'
     import DDLDraftGenerator from './DDLDraftGenerator.js'
+    import DDLBoundedContextDistributeGenerator from './es-ddl-generators/DDLBoundedContextDistributeGenerator.js'
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
 
@@ -527,6 +530,7 @@
                         case "KubernetesGenerator": this.generatorComponent = new KubernetesGenerator(this); break;
                         case "DDLGenerator": this.generatorComponent = new DDLGenerator(this); break;
                         case "DDLDraftGenerator": this.generatorComponent = new DDLDraftGenerator(this); break;
+                        case "DDLBoundedContextDistributeGenerator": this.generatorComponent = new DDLBoundedContextDistributeGenerator(this); break;
                     }
 
                     return this.generatorComponent;
@@ -630,6 +634,15 @@
                     this.input['boundedContextLists'] = this.boundedContextLists
                     this.input['scenario'] = this.scenario
                     this.generatorComponent.generate();
+                }else if(this.generatorName === "DDLBoundedContextDistributeGenerator") {
+                    if(!this.DDL){
+                        return;
+                    }
+                    this.input = {}
+                    this.input['ddls'] = this.DDL
+                    this.input['suggestedBoundedContexts'] = this.boundedContextLists
+                    this.input['functionRequirements'] = [this.scenario]
+                    this.generatorComponent.generate();
                 }else{
                     this.focusedTabComponent = (this.userPanel < this.tabs.length) ? this.$refs[this.tabs[this.userPanel].component][0] : null
                     if (this.focusedTabComponent) {
@@ -722,8 +735,8 @@
                         this.generatorName = "ModelModificationGenerator"
                 }else if(mode && mode=='DDL'){
                     if(this.canvasType === "context-mapping-model-canvas"){
-                        this.generatorComponent = new DDLDraftGenerator(this);
-                        this.generatorName = "DDLDraftGenerator"
+                        this.generatorComponent = new DDLBoundedContextDistributeGenerator(this);
+                        this.generatorName = "DDLBoundedContextDistributeGenerator"
                     }else{
                         this.generatorComponent = new DDLGenerator(this);
                         this.generatorName = "DDLGenerator"
@@ -823,7 +836,7 @@
                         type: 'response'
                     }
                     this.chatList.push(response);
-                }else if(this.generatorName === "DDLDraftGenerator" || this.generatorName === "DDLGenerator"){
+                }else if(this.generatorName === "DDLGenerator"){
                     console.log("[*] DDLGenerator에서 전달한 모델 값")
                     console.log(model)
                 }else{

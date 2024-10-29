@@ -129,7 +129,7 @@
                                         alt="MSAEZ"
                                     >
                                 </v-avatar>
-                                <b style="margin-left: 9px;" :key="dialogRenderKey">{{ result.solution }} <span v-if="result.codeChanges">{{ systemMsg }}</span></b>
+                                <b style="margin-left: 9px;" :key="dialogRenderKey">{{ result.solution }}</b>
                             </v-card-text>
                         </div>
                         <div v-for="(changes, changesIdx) in result.codeChanges" :key="changesIdx" style="margin-left: 40px; margin-right: 40px; margin-bottom: 12px;">
@@ -470,7 +470,6 @@
                 ],
 
                 userImg: null,
-                systemMsg: null,
                 dialogRenderKey: 0,
                 lastIndex: 0,
                 solutionCnt: 0,
@@ -514,7 +513,21 @@
             
         },
         computed: {
-            
+            systemMsg(){
+                if (window.countryCode == 'ko') {
+                    if(this.isAutoMode){
+                        return '다음과 같이 코드를 수정하겠습니다.'
+                    } else {
+                        return '다음과 같이 코드를 수정해도 되겠습니까 ?'
+                    }
+                } else {
+                    if(this.isAutoMode){
+                        return 'I will modify the code as follows.'
+                    } else {
+                        return 'Can I modify the code as follows ?'
+                    }
+                }
+            },
         },
         created:function () {
             if(this.testFile){
@@ -540,6 +553,9 @@
             me.copySelectedCodeList = JSON.parse(JSON.stringify(me.selectedCodeList))
             me.generate();
 
+            me.$EventBus.$on('handlePushFileError', function () {
+                me.handleGitError();
+            })
             me.$EventBus.$on('setActionId', function (path) {
                 me.actionPathList.push(path)
             })
@@ -554,7 +570,7 @@
                     me.startGitAction = false
                     me.isSolutionCreating = false
                     me.allTestSucceeded = true
-                    me.gitActionSnackBar.timeout = 5000
+                    me.gitActionSnackBar.timeout = 15000
                     me.gitActionSnackBar.Text = "All tests succeeded"
                     me.gitActionSnackBar.Color = "success"
                     me.gitActionSnackBar.icon="check_circle"
@@ -579,11 +595,6 @@
                 }
             })
 
-            if (window.countryCode == 'ko') {
-                me.systemMsg = '다음과 같이 코드를 수정해도 되겠습니까 ?'
-            } else {
-                me.systemMsg = 'Can I modify the code as follows ?'
-            }
             if(localStorage.getItem("picture")){
                 me.userImg = localStorage.getItem("picture")
             }
@@ -596,6 +607,15 @@
             });
         },
         methods: {
+            handleGitError(){
+                this.gitActionSnackBar.timeout = 15000;
+                this.gitActionSnackBar.Text = "오류 검증 및 파일 업데이트 도중 문제가 발생하였습니다. 다시 시도합니다.";
+                this.gitActionSnackBar.Color = "error";
+                this.gitActionSnackBar.icon = "error";
+                this.gitActionSnackBar.title = "Error";
+                this.gitActionSnackBar.show = true;
+                this.regenerate();
+            },
             async rollBack(sha, idx){
                 var me = this
                 me.$app.try({
@@ -844,9 +864,9 @@
                 })
             },
             setDialog(model, option){
+                var me = this
                 if(model){
                     try {
-                        var me = this
                         if(me.fullErrorLog){
                             me.siTestResults[me.lastIndex].errorLog = [...new Set(model.map(JSON.stringify))].map(JSON.parse)
                             if(me.siTestResults[me.lastIndex].errorLog.length > 30){
@@ -865,7 +885,7 @@
                                 if(!me.siTestResults[me.resultLength + solutionIdx]){
                                     me.siTestResults[me.resultLength + solutionIdx] = {}
                                 }
-                                    me.siTestResults[me.resultLength + solutionIdx].solution = solution.solution
+                                    me.siTestResults[me.resultLength + solutionIdx].solution = solution.solution + " " + me.systemMsg
                                     me.siTestResults[me.resultLength + solutionIdx].solutionType = solution.solutionType
                                     me.commitMsg = solution.solutionType + ': ' + solution.solution
                                 if(solution && solution.codeChanges){
@@ -985,13 +1005,20 @@
     
                     } catch(e) {
                         console.log(e)
-                        me.gitActionSnackBar.timeout = 5000
-                        me.gitActionSnackBar.Text = "오류 검증 및 파일 업데이트 도중 문제가 발생하였습니다. 잠시 후 다시 시도해주세요."
+                        me.handleGitError();
+                        // me.startGitAction = false
+                    }
+                } else {
+                    if(me.siTestResults.length == 0){
+                        me.gitActionSnackBar.timeout = 15000
+                        me.gitActionSnackBar.Text = "비즈니스 로직 생성도중 오류가 발생하였습니다. 다시 시도합니다."
                         me.gitActionSnackBar.Color = "error"
                         me.gitActionSnackBar.icon="error"
                         me.gitActionSnackBar.title="Error"
                         me.gitActionSnackBar.show = true
-                        me.startGitAction = false
+                        me.generate();
+                    } else {
+                        me.handleGitError();
                     }
                 }
             },

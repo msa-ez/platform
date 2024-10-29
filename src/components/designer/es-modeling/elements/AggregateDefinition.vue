@@ -180,6 +180,7 @@
                 :generateDone.sync="generateDone"
                 :generator="generator"
                 :isPBCModel="isPBCModel"
+                :isProject="isProject"
         ></aggregate-definition-panel>
 
     </div>
@@ -189,9 +190,10 @@
     import Element from './EventStormingModelElement'
     import AggregateDefinitionPanel from "../panels/AggregateDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
-    import Generator from "../../modeling/generators/AggregateGenerator";
     import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
     import isAttached from "../../../../utils/isAttached";
+    import AggregateInsideGenerator from "../../modeling/generators/es-ddl-generators/AggregateInsideGenerator";
+    import AggregateGenerator from "../../modeling/generators/AggregateGenerator";
 
     var changeCase = require('change-case');
     var _ = require('lodash')
@@ -335,6 +337,9 @@
                 }
 
             },
+            isProject() {
+                return this.canvas.information && this.canvas.information.associatedProject
+            }
 
         },
         data: function () {
@@ -458,7 +463,6 @@
         },
         methods: {
             init(){
-                this.generator = new Generator(this);
                 if(this.generateDone) {
                     this.originModel = JSON.parse(JSON.stringify(this.canvas.value));
                 }
@@ -467,7 +471,7 @@
                 if(model=="No setting boundedContext."){
                     this.generator.stop();
                 }
-                this.$EventBus.$emit('createAggregate', model, this.value);
+                this.$EventBus.$emit('createAggregate', {from: "onModelCreated", ...model}, this.value);
             },
             async onGenerationFinished(model){
                 this.generateDone = true;
@@ -493,6 +497,7 @@
 
                 me.generator.generate();
                 me.generateDone = false;
+                this.$EventBus.$emit('createAggregate', {from: "onGenerationFinished", ...model}, this.value, this.originModel);
             },
             stop(){
                 this.generator.stop()
@@ -846,6 +851,82 @@
                 }
                 return component
             },
+
+
+            generate(generatorName){
+                var me = this
+
+                switch(generatorName) {
+                    case "AggregateGenerator":
+                        me._generateByAggregateGenerator()
+                        break;
+
+                    case "AggregateInsideGenerator":
+                        me._generateByAggregateInsideGenerator()
+                        break;
+                }
+            },
+
+            _generateByAggregateGenerator() {
+                var me = this
+
+                let model = Object.assign({}, me.__getEsCanvas().value)
+                let boundedContext = null
+                if(me.value && me.value.boundedContext)
+                    boundedContext = model.elements[me.value.boundedContext.id]
+
+                me.__generate('AggregateGenerator', {
+                    aggregate: me.value,
+                    boundedContext: boundedContext,
+                    model: model,
+                    description: me.value.description
+                })
+                me.generateDone = false;
+            },
+
+            _generateByAggregateInsideGenerator() {
+                var me = this
+
+                const esCanvas = me.__getEsCanvas()
+                me.__generate('AggregateInsideGenerator', {
+                    description: me.value.description,
+                    targetAggregate: me.value,
+                    esValue: esCanvas.value,
+                    userInfo: esCanvas.userInfo,
+                    information: esCanvas.information,
+                })
+                me.generateDone = false;
+            },
+
+            __getEsCanvas() {
+                var me = this
+                let parent = me.$parent;
+                while(parent.$vnode.tag.indexOf('event-storming-model-canvas') == -1) parent = parent.$parent;
+                return parent
+            },
+
+            __generate(generatorName, inputObj){
+                var me = this
+                me.currentGeneratorName = generatorName
+
+                switch(generatorName) {
+                case 'AggregateInsideGenerator':
+                    me.generator = new AggregateInsideGenerator(me);
+                    break;
+
+                case 'AggregateGenerator':
+                    me.generator = new AggregateGenerator(me);
+                    break;
+
+                default:
+                    me.generator = null
+                    me.currentGeneratorName = ''
+                    throw new Error(`Invalid generator name: ${generatorName}`)
+                }
+
+                me.input = inputObj
+                me.generator.generate()
+            }
         }
     }
 </script>

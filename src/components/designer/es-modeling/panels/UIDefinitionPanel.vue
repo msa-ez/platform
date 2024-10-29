@@ -12,7 +12,7 @@
             @close="closePanel"
             @changeTranslate="changeTranslate"
     >
-        <template slot="t-description-text">UI 정보를 정의하는 스티커</template>
+        <template slot="t-description-text">{{ $t('panelInfo.UIDefinitionPanel') }}</template>
         <!-- <template slot="t-generation-text"></template> -->
 
         <template slot="t-edit-user">
