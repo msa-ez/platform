@@ -1,6 +1,6 @@
 <template>
     <v-card flat>
-        <div style="padding-top:10px; padding-left:10px; padding-right:10px;">
+        <div style="padding:10px;">
             <!-- #region 상단 안내 문구 -->
             <v-alert
                 dense
@@ -18,8 +18,8 @@
         </div>
         
         <div id="scroll_messageList"
-            style="height: 100%; max-height: 60vh;
-            overflow: auto; padding-left:10px; padding-right:10px; padding-bottom:10px;
+            style="height: 100%; height: 55vh;
+            overflow: auto; padding:10px;
             border-bottom: solid 2px rgba(0, 0, 0, 0.2);"
         >
             <!-- #region AI가 출력시킬 채팅 내용들 -->

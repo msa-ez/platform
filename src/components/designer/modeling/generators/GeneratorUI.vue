@@ -144,7 +144,7 @@
 
                                     <v-tab-item v-show="canvasType === 'event-storming-model-canvas' || canvasType === 'context-mapping-model-canvas'">
                                         <v-card style="padding: 10px;">
-                                            <div style="max-height:60vh; margin-bottom:10px; overflow: auto;">
+                                            <div style="max-height:55vh; margin-bottom:10px; overflow: auto;">
                                                 <v-textarea
                                                     v-model="DDL"
                                                     label="DDL"
@@ -153,7 +153,7 @@
                                                 ></v-textarea>
                                                 
                                                 <v-row align="center" no-gutters class="ma-0 pa-0">
-                                                    <v-text-field class="delet-input-detail ddl-text-field"
+                                                    <v-text-field class="delete-input-detail ddl-text-field"
                                                         v-model="boundedContextInput"
                                                         label="Add a Bounded Context"
                                                         dense
@@ -198,7 +198,7 @@
                                             <v-textarea v-if="input"
                                                 v-model="input.userStory"
                                                 class="auto-modeling-dialog-textarea"
-                                                style="font-size: small; padding-top:40px; height: 100%;"
+                                                style="font-size: small; padding-top: 40px; height: 100%;"
                                             >
                                             </v-textarea>
                                         </v-card>
@@ -219,7 +219,7 @@
                                     <v-tab-item>
                                         <v-card flat>
                                             <div id="scroll_messageList"
-                                                style="height: 100%; height: 75vh;
+                                                style="height: 100%; height: 70vh;
                                                 overflow: auto; padding:10px;
                                                 border-bottom: solid 2px rgba(0, 0, 0, 0.2);"
                                             >

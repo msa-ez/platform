@@ -2252,11 +2252,12 @@
             display:none;
         }
         .making-main-nav-modeling-is-mobile {
-            margin-top:160px !important;
-            margin-right: 22px !important
+            margin-top: 163px !important;
+            margin-right: 19px !important
         }
         .question-btn {
             top:7px;
+            right: 100px
         }
     }
 
