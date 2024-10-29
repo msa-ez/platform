@@ -40,7 +40,7 @@
                                  :projectTitle="projectName"
                                  @change="onResultChange"
                                  @codeChange="onCodeChange"
-                                 :labId="labInfo.labId"
+                                 :labsId="labInfo.labId"
                                  :projectId="modelingId"
                                  :isOriginalModel="isOriginalModel"
                                  @newProjectId="setLoadProjectId"

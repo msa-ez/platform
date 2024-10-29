@@ -330,7 +330,7 @@
                 var me = this
                 try {
                     if (e.data.message === 'code') {
-                        console.log("code!!!!!")
+                        // console.log("code!!!!!")
                         if (me.liveSync) {
                             if (e.data.start) {
                                 me.codeStatus = false
@@ -343,8 +343,6 @@
                                     if (iframe.getAttribute("iframe-src").includes(ideHost)) {
                                         var body = $('iframe').get(idx);
                                         // var message = JSON.parse(JSON.stringify(e.data));
-
-                                        console.log("labId: " + me.labId);
                                         var split = e.data.path.split("/");
 
                                         var result = "";

@@ -173,13 +173,13 @@
                     me.refreshImg()
                 }
             },
-            storage() {
-                if (this.canvas) {
-                    return this.canvas.storage
-                } else {
-                    return 'localstorage'
-                }
-            },
+            // storage() {
+            //     if (this.canvas) {
+            //         return this.canvas.storage
+            //     } else {
+            //         return 'localstorage'
+            //     }
+            // },
             isEmbedded() {
                 if (this.canvas) {
                     return this.canvas.embedded

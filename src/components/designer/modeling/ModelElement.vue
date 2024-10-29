@@ -210,13 +210,13 @@
                     me.refreshImg()
                 }
             },
-            storage() {
-                if (this.canvas) {
-                    return this.canvas.storage
-                } else {
-                    return 'localstorage'
-                }
-            },
+            // storage() {
+            //     if (this.canvas) {
+            //         return this.canvas.storage
+            //     } else {
+            //         return 'localstorage'
+            //     }
+            // },
             isClazzModeling() {
                 if (this.canvas)
                     return this.canvas.isClazzModeling

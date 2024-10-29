@@ -189,7 +189,7 @@
                                             </div>
 
                                             <v-btn v-if="!generationStopped" class="prompt_field generator-ui-text-field" color="primary" @click="generate()" block>Generate</v-btn>
-                                            <v-circular-progress indeterminate v-if="generationStopped"></v-circular-progress>
+                                            <v-progress-circular indeterminate v-if="generationStopped"></v-progress-circular>
                                         </v-card>
                                     </v-tab-item>
 

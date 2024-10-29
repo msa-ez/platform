@@ -2013,7 +2013,7 @@
             // ModelCodeGenerator
         },
         props: {
-            labId: String,
+            labsId: String,
             isOriginalModel: Boolean,
         },
         data() {
@@ -2569,9 +2569,8 @@
                     .split("@")[1]
                     .split(".")[0]
                     .toLowerCase();
-                var lab = me.labId;
                 if (me.labInfo) {
-                    me.hashPath = me.getClassPath("labs/" + lab + "/" + userName);
+                    me.hashPath = me.getClassPath("labs/" + me.labsId + "/" + userName);
                 } else {
                     me.hashName = `ide-${me.hashCode(userGroup + "-" + userName)}`;
                     me.projectID = me.$route.params.projectId;
@@ -6756,8 +6755,8 @@
                                         clearInterval(me.ideInterval);
                                     } else {
                                         me.ideUrl = `${me.getProtocol()}//${hashName}.kuberez.io/?labId=${
-                                            me.labId
-                                        }#/home/project/${me.labId}`;
+                                            me.labsId
+                                        }#/home/project/${me.labsId}`;
                                         clearInterval(me.ideInterval);
                                     }
                                 }
@@ -6768,9 +6767,8 @@
             },
             ideExistCheck(userEmail) {
                 var me = this;
-                var lab = me.labId;
                 if (me.labInfo.independent) {
-                    var hashPath = me.getClassPath("labs/" + lab + "/" + userEmail);
+                    var hashPath = me.getClassPath("labs/" + me.labsId + "/" + userEmail);
                 } else {
                     var hashPath = me.getClassPath(userEmail);
                 }

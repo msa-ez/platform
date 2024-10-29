@@ -586,14 +586,14 @@
             showOverlay() {
                 return this.overlayText
             },
-            storage() {
-                var me = this
-                if (me.isServerModel) {
-                    return 'db'
-                } else {
-                    return 'localstorage'
-                }
-            },
+            // storage() {
+            //     var me = this
+            //     if (me.isServerModel) {
+            //         return 'db'
+            //     } else {
+            //         return 'localstorage'
+            //     }
+            // },
             fixedDefalutStroage() {
                 return 'db'
             },
