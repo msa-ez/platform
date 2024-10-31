@@ -90,7 +90,7 @@
                                                     v-model="value.name"
                                                     :error="value.name == ''"
                                                     id="elementName"
-                                                    class="delet-input-detail"
+                                                    class="delete-input-detail"
                                                     :disabled="isReadOnly"
                                                     label="Name"
                                                     autofocus
@@ -103,7 +103,7 @@
                                                     v-model="value.displayName"
                                                     :disabled="isReadOnly"
                                                     label="Display Name"
-                                                    class="delet-input-detail"
+                                                    class="delete-input-detail"
                                                 >
                                                 </v-text-field>
                                                 

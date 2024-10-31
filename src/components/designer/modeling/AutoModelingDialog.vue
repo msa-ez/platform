@@ -81,135 +81,26 @@
                                         lg="3" md="3" sm="6" cols="12"
                                         style="padding:10px;"
                                     >
-                                        <v-col style="text-align: center;">
-                                            <v-card :style="genType == 'CJM' ? 'border: solid darkturquoise;':'background-color: white;'" class="auto-cjm" >
-                                                <v-chip x-small
-                                                    outlined color="orange"
-                                                    style="position: absolute;
-                                                    right: 5px;
-                                                    top: 5px;
-                                                    z-index: 1;"
-                                                >Beta</v-chip>
-                                                <div @click="checkLogin('CJM')" style="cursor: pointer; ">
-                                                    <v-avatar
-                                                        class="ma-3"
-                                                        size="125"
-                                                        rounded="0"
-                                                    >
-                                                        <v-img src="https://miro.medium.com/v2/resize:fit:0/1*GeerSkalcxLlE3bp83i1XA.png"></v-img>
+                                        <v-col
+                                            v-for="(item, index) in cardItems"
+                                            :key="index"
+                                            style="text-align: center;"
+                                        >
+                                            <v-card :style="genType == item.type ? 'border: solid darkturquoise;' : 'background-color: white;'" :class="item.class">
+                                                <v-chip :style="item.chipText == 'Stable' ? 'color: white;' : ''"
+                                                    x-small
+                                                    :outlined="item.chipOutlined"
+                                                    :color="item.chipColor"
+                                                    style="position: absolute; right: 5px; top: 5px; z-index: 1;"
+                                                >{{ item.chipText }}</v-chip>
+                                                <div @click="checkLogin(item.type)" style="cursor: pointer;">
+                                                    <v-avatar class="ma-3" size="125" rounded="0">
+                                                        <v-img :src="item.imgSrc"></v-img>
                                                     </v-avatar>
-                                                    
                                                     <v-card-text style="justify-content: center; margin-top: -10px;">
-                                                        <div :style="genType == 'CJM' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
-                                                            <v-icon v-if="genType == 'CJM'" small color="success">mdi-check</v-icon>
-                                                            {{$t('mainAutoModelingText.cjm')}}
-                                                        </div>
-                                                    </v-card-text>
-                                                </div>
-                                            </v-card>
-                                        </v-col>
-                                        <v-col style="text-align: center;">
-                                            <v-card :style="genType == 'BM2' ? 'border: solid darkturquoise;':'background-color: white;'" class="auto-bm">
-                                                <v-chip x-small
-                                                    outlined color="orange"
-                                                    style="position: absolute;
-                                                    right: 5px;
-                                                    top: 5px;
-                                                    z-index: 1;"
-                                                >Beta</v-chip>
-                                                <div @click="checkLogin('BM2')" style="cursor: pointer;">
-                                                    <v-avatar
-                                                        class="ma-3"
-                                                        size="125"
-                                                        rounded="0"
-                                                    >
-                                                        <v-img src="https://user-images.githubusercontent.com/92732781/233012222-d0662c4b-5546-4e7b-af28-c07617a57ef0.png"></v-img>
-                                                    </v-avatar>
-                                                    
-                                                    <v-card-text style="justify-content: center; margin-top: -10px;">
-                                                        <div :style="genType == 'BM2' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
-                                                            <v-icon v-if="genType == 'BM2'" small color="success">mdi-check</v-icon>
-                                                            {{$t('mainAutoModelingText.bm')}}
-                                                        </div>
-                                                    </v-card-text>
-                                                </div>
-                                            </v-card>
-                                        </v-col>
-                                        <v-col style="text-align: center;">
-                                            <v-card :style="genType == 'USM' ? 'border: solid darkturquoise;':'background-color: white;'" class="auto-usm">
-                                                <v-chip x-small
-                                                    outlined color="orange"
-                                                    style="position: absolute;
-                                                    right: 5px;
-                                                    top: 5px;
-                                                    z-index: 1;"
-                                                >Beta</v-chip>
-                                                <div @click="checkLogin('USM')" style="cursor: pointer;">
-                                                    <v-avatar
-                                                        class="ma-3"
-                                                        size="125"
-                                                        rounded="0"
-                                                    >
-                                                        <v-img src="/static/image/userStoryMap.png"></v-img>
-                                                    </v-avatar>
-                                                    
-                                                    <v-card-text style="justify-content: center; margin-top: -10px;">
-                                                        <div :style="genType == 'USM' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
-                                                            <v-icon v-if="genType == 'USM'" small color="success">mdi-check</v-icon>
-                                                            {{$t('mainAutoModelingText.userStory')}}
-                                                        </div>
-                                                    </v-card-text>
-                                                </div>
-                                            </v-card>
-                                        </v-col>
-                                        <v-col style="text-align: center;">
-                                            <v-card :style="genType == 'ES2' ? 'border: solid darkturquoise;':'background-color: white;'" class="auto-es">
-                                                <v-chip class="gs-stable-chip" x-small
-                                                    style="position: absolute;
-                                                    right: 5px;
-                                                    top: 5px;
-                                                    z-index: 1;"
-                                                >Stable</v-chip>
-                                                <div @click="checkLogin('ES2')" style="cursor: pointer;">
-                                                    <v-avatar
-                                                        class="ma-3"
-                                                        size="125"
-                                                        rounded="0"
-                                                    >
-                                                        <v-img src="/static/image/main/mainModeling.png"></v-img>
-                                                    </v-avatar>
-                                    
-                                                    <v-card-text style="justify-content: center; margin-top: -10px;">
-                                                        <div :style="genType == 'ES2' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
-                                                            <v-icon v-if="genType == 'ES2'" small color="success">mdi-check</v-icon>
-                                                            {{$t('mainAutoModelingText.eventstorming')}}
-                                                        </div>
-                                                    </v-card-text>
-                                                </div>
-                                            </v-card>
-                                        </v-col>
-                                        <v-col style="text-align: center;">
-                                            <v-card :style="genType == 'UI' ? 'border: solid darkturquoise;':'background-color: white;'" class="auto-ui">
-                                                <v-chip x-small
-                                                    outlined color="orange"
-                                                    style="position: absolute;
-                                                    right: 5px;
-                                                    top: 5px;
-                                                    z-index: 1;"
-                                                >Beta</v-chip>
-                                                <div @click="checkLogin('UI')" style="cursor: pointer;">
-                                                    <v-avatar
-                                                        class="ma-3"
-                                                        size="125"
-                                                        rounded="0"
-                                                    >
-                                                        <v-img style="opacity: 0.8;" src="/static/image/brandUi.png"></v-img>
-                                                    </v-avatar>
-                                    
-                                                    <v-card-text style="justify-content: center; margin-top: -10px;">
-                                                        <div :style="genType == 'UI' ? 'background-color: #DAF5FF;':''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
-                                                            <v-icon v-if="genType == 'UI'" small color="success">mdi-check</v-icon>
-                                                            {{$t('mainAutoModelingText.Brand')}}
+                                                        <div :style="genType == item.type ? 'background-color: #DAF5FF;' : ''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
+                                                            <v-icon v-if="genType == item.type" small color="success">mdi-check</v-icon>
+                                                            {{ $t(item.textKey) }}
                                                         </div>
                                                     </v-card-text>
                                                 </div>
@@ -349,6 +240,53 @@
                     'autoModeling.chip2',
                     'autoModeling.chip3',
                     'autoModeling.chip4'
+                ],
+                cardItems: [
+                    {
+                        type: 'CJM',
+                        class: 'auto-cjm',
+                        chipOutlined: true,
+                        chipColor: 'orange',
+                        chipText: 'Beta',
+                        imgSrc: 'https://miro.medium.com/v2/resize:fit:0/1*GeerSkalcxLlE3bp83i1XA.png',
+                        textKey: 'mainAutoModelingText.cjm'
+                    },
+                    {
+                        type: 'BM2',
+                        class: 'auto-bm',
+                        chipOutlined: true,
+                        chipColor: 'orange',
+                        chipText: 'Beta',
+                        imgSrc: 'https://user-images.githubusercontent.com/92732781/233012222-d0662c4b-5546-4e7b-af28-c07617a57ef0.png',
+                        textKey: 'mainAutoModelingText.bm'
+                    },
+                    {
+                        type: 'USM',
+                        class: 'auto-usm',
+                        chipOutlined: true,
+                        chipColor: 'orange',
+                        chipText: 'Beta',
+                        imgSrc: '/static/image/userStoryMap.png',
+                        textKey: 'mainAutoModelingText.userStory'
+                    },
+                    {
+                        type: 'ES2',
+                        class: 'auto-es',
+                        chipOutlined: false,
+                        chipColor: 'green',
+                        chipText: 'Stable',
+                        imgSrc: '/static/image/main/mainModeling.png',
+                        textKey: 'mainAutoModelingText.eventstorming'
+                    },
+                    {
+                        type: 'UI',
+                        class: 'auto-ui',
+                        chipOutlined: true,
+                        chipColor: 'orange',
+                        chipText: 'Beta',
+                        imgSrc: '/static/image/brandUi.png',
+                        textKey: 'mainAutoModelingText.Brand'
+                    }
                 ],
                 disableSaveBtn: false,
                 // projectInfo: {

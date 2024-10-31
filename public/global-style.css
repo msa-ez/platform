@@ -648,8 +648,8 @@ code[class*=language-]:nth-child(1) {
     display:none;
 }
 .auto-modeling-dialog-textarea .v-input__control .v-input__slot .v-text-field__slot textarea{
-    height:75vh;
-    max-height:80vh;
+    height:60vh;
+    max-height:70vh;
 }
 .auto-modeling-dialog .v-expansion-panel-content__wrap {
     padding:0px;
@@ -803,7 +803,7 @@ code[class*=language-]:nth-child(1) {
     z-index: 9999;
 }
 
-.delet-input-detail .v-text-field__details {
+.delete-input-detail .v-text-field__details {
     display: none !important;
 }
 

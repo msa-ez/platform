@@ -13,177 +13,184 @@
             >
                 <v-btn class="cp-explain-code" v-if="!editMode" @click="explain()"
                     small style="position:absolute; top:70px; right:15px; z-index: 999;" text
+                    :loading="isExplainLoading"
                 >
-                    Explain code<v-icon x-small>mdi-send</v-icon>
+                    <span>Explain code<v-icon x-small>mdi-send</v-icon></span>
                 </v-btn>
-                <v-row class="ma-0 pa-0 pt-4">
-                    <v-col class="pa-0" v-if="!showGpt" :cols="explainedResult == '' ? '12' : '6'"
-                        style="padding:0px; height:100%;"
-                    >
-                        <vue-markdown
-                                v-if="!isExpectedTemplate && codeLanguage=='markdown' && (!editMode || (editMode && readOnly))"
-                                class="markdown-body gs-inside-markdown-body"
-                                :source="codeValue"
-                                @editorDidMount="editorDidMount"
-                                style="overflow:auto; padding:0px 10px 10px 0px;"
-                        ></vue-markdown>
-                        <MonacoEditor
-                                v-else
-                                :key="monacoIds"
-                                ref="monaco-editor"
-                                class="monaco-editor gs-inside-monaco-editor"
-                                :options="options"
-                                v-model="codeValue"
-                                :style="isExpectedTemplate ? '':''"
-                                :theme="isGitActionDialog ? 'vs-dark':'light'"
-                                :diffEditor="isDiffEditor"
-                                :language="codeLanguage"
-                                :original="getOriginal"
-                                @editorDidMount="editorDidMount"
-                                @change="onCmCodeChange"
-                        ></MonacoEditor>
-                    </v-col>
-                    <v-col v-if="!showGpt && explainedResult !=''" cols="6">
-                        <v-row>
-                            <v-card @scroll="handleScroll" id="scroll-text" style="width: 100%; max-height: 86vh; z-index: 1000; overflow-y: scroll; background-color: #FFFFFF; margin-top: -4px;">
-                                <vue-markdown
-                                    class="markdown-body"
-                                    style="padding: 15px; font-size: 13px; color: #434853;"
-                                    :source="explainedResult"
-                                >
-                                </vue-markdown>
-                                <div style="z-index:1001; position: absolute; right: 0px; top: -8px;">
-                                    <v-btn class="cp-explain-code-close" v-if="explainedResult !=''" @click="closeExplainCode()" style="z-index:999; color: black;" icon><v-icon>mdi-close</v-icon></v-btn>
-                                </div>
-                                <div style="position: absolute; z-index:1001; top:-23px; right: 25px; display: flex; justify-content: center; align-items: center;">
-                                    <v-btn v-if="generationStopped"
-                                        @click="explain(true)"
-                                        style="z-index:999; margin-top: 15px; color: black;" icon>
-                                            <v-icon>mdi-refresh</v-icon>
-                                    </v-btn>
-                                    <v-btn v-else @click="stopExplainCode()" style="z-index:999; margin-top: 15px; color: black;" icon>
-                                        <v-icon>mdi-stop-circle-outline</v-icon>
-                                    </v-btn>
-                                </div>
+                <div v-if="!showGpt">
+                    <vue-markdown
+                            v-if="!isExpectedTemplate && codeLanguage=='markdown' && (!editMode || (editMode && readOnly))"
+                            class="markdown-body gs-inside-markdown-body"
+                            :source="codeValue"
+                            @editorDidMount="editorDidMount"
+                            style="overflow:auto; padding:0px 10px 10px 0px;"
+                    ></vue-markdown>
+                    <MonacoEditor
+                            v-else
+                            :key="monacoIds"
+                            ref="monaco-editor"
+                            class="monaco-editor gs-inside-monaco-editor"
+                            :options="options"
+                            v-model="codeValue"
+                            :style="isExpectedTemplate ? '':''"
+                            :theme="isGitActionDialog ? 'vs-dark':'light'"
+                            :diffEditor="isDiffEditor"
+                            :language="codeLanguage"
+                            :original="getOriginal"
+                            @editorDidMount="editorDidMount"
+                            @change="onCmCodeChange"
+                    ></MonacoEditor>
+                </div>
+                <div v-if="!showGpt && explainedResult !=''">
+                    <v-card @scroll="handleScroll" id="scroll-text" 
+                        style="width: 350px; 
+                        z-index: 1002; 
+                        background-color: #FFFFFF; 
+                        margin-top: -4px;
+                        position:absolute; 
+                        top:100px; 
+                        right:25px;
+                    ">
+                        <v-row class="ma-0 pa-2" style="z-index:999;">
+                            <v-btn @click="explaineToggleEvent" icon width="24" height="24">
+                                <v-icon :size="16">{{ explaineToggle ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+                            </v-btn>
+                            <v-spacer></v-spacer>
+                            <v-btn v-if="generationStopped" @click="explain(true)" style="z-index:999;" icon width="24" height="24">
+                                <v-icon :size="16">mdi-refresh</v-icon>
+                            </v-btn>
+                            <v-btn v-else @click="stopExplainCode()" icon width="24" height="24">
+                                <v-icon :size="16">mdi-stop-circle-outline</v-icon>
+                            </v-btn>
+                            <v-btn class="cp-explain-code-close" v-if="explainedResult !=''" @click="closeExplainCode()" style="z-index:999; color: black;" icon width="24" height="24">
+                                <v-icon :size="16">mdi-close</v-icon>
+                            </v-btn>
+                        </v-row>
+                        <div v-if="explaineToggle">
+                            <vue-markdown
+                                class="markdown-body pl-2 pb-2 pr-2"
+                                style="font-size: 13px; color: #434853; max-height:68vh; overflow: auto;"
+                                :source="explainedResult"
+                            >
+                            </vue-markdown>
+                            <v-text-field
+                                v-model="chatPrompt"
+                                style="width:100%; background-color: #FFFFFF; color: white;"
+                                solo
+                                outlined
+                                class="delete-input-detail cp-explain-code-text pl-2 pr-2"
+                                append-icon="mdi-send"
+                                @click:append="removeDuplicateChatPrompt"
+                                @keydown.enter="removeDuplicateChatPrompt"
+                            ></v-text-field>
+                        </div>
+                    </v-card>
+                </div>
+                <v-col v-if="showGpt" cols="12">
+                    <v-row>
+                        <v-card class="pa-2" @scroll="handleScroll" id="scroll-text" style="width: 100%; max-height: 86vh; z-index: 1000; overflow-y: scroll; background-color: #FFFFFF; margin-top: -4px;">
+                            <v-row class="ma-0 pa-0 pr-8">
+                                <v-col class="ma-0 pa-0 ">
+                                    <v-alert closable   
+                                        title="Ask ChatGPT"
+                                        icon="mdi-auto-fix"
+                                        type="info"
+                                        outlined
+                                        v-if="!explainError && showGpt"
+                                    >
+                                        Ask anything about the code below this selection. i.e. How can I run this app? Where is the port number? how can I change the database product to MySQL.
+                                    </v-alert>
+                                    <v-alert closable   
+                                        title="OOps"
+                                        type="error"
+                                        v-if="explainError && showGpt"
+                                    >
+                                        {{explainError}}
+                                        <v-btn @click="explainError = null">DISMISS</v-btn>
+                                    </v-alert>
+                                </v-col>
+                                <v-icon v-if="showGpt" @click="closeExplainCode()"
+                                    style="position:absolute; right:10px; top:10px; z-index:999;"
+                                >mdi-close</v-icon>
+                            </v-row>
+                            <vue-markdown
+                                class="markdown-body"
+                                style="padding: 15px; font-size: 13px; color: #434853;"
+                                :source="explainedResult"
+                            >
+                            </vue-markdown>
+                            
+                            <div v-if="explainedResult !=''" style="position: absolute; z-index:1001; top:65px; right: 35px; z-index:1001; display: flex; justify-content: center; align-items: center; ">
+                                <v-btn v-if="generationStopped"
+                                    @click="explain(true)"
+                                    style="z-index:999; margin-top: 15px; color: black;" icon>
+                                        <v-icon>mdi-refresh</v-icon>
+                                </v-btn>
+                                <v-btn v-else @click="stopExplainCode()" style="z-index:999; margin-top: 15px; color: black;" icon>
+                                    <v-icon>mdi-stop-circle-outline</v-icon>
+                                </v-btn>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <!-- explainProject -->
                                 <v-text-field
                                     v-model="chatPrompt"
+                                    ref="input"
                                     style="width:100%; background-color: #FFFFFF; color: white;"
                                     solo
                                     outlined
-                                    class="question-box cp-explain-code-text"
+                                    autofocus
+                                    class="question-box cp-explain-project-text"
                                     append-icon="mdi-send"
                                     @click:append="removeDuplicateChatPrompt"
                                     @keydown.enter="removeDuplicateChatPrompt"
-                                ></v-text-field>
-                            </v-card>
-                        </v-row>
-                    </v-col>
-                    <v-col v-if="showGpt" cols="12">
-                        <v-row>
-                            <v-card class="pa-2" @scroll="handleScroll" id="scroll-text" style="width: 100%; max-height: 86vh; z-index: 1000; overflow-y: scroll; background-color: #FFFFFF; margin-top: -4px;">
-                                <v-row class="ma-0 pa-0 pr-8">
-                                    <v-col class="ma-0 pa-0 ">
-                                        <v-alert closable   
-                                            title="Ask ChatGPT"
-                                            icon="mdi-auto-fix"
-                                            type="info"
-                                            outlined
-                                            v-if="!explainError && showGpt"
-                                        >
-                                            Ask anything about the code below this selection. i.e. How can I run this app? Where is the port number? how can I change the database product to MySQL.
-                                        </v-alert>
-                                        <v-alert closable   
-                                            title="OOps"
-                                            type="error"
-                                            v-if="explainError && showGpt"
-                                        >
-                                            {{explainError}}
-                                            <v-btn @click="explainError = null">DISMISS</v-btn>
-                                        </v-alert>
+                                ></v-text-field>                                     
+                            </div>
+                            <div v-if="isRootFolder" style="text-align: center;">
+                                <v-row no-gutters style="margin-top: 15px; margin-bottom: 15px;">
+                                    <v-col cols="12">
+                                        <b style="font-size: large;">or</b>
                                     </v-col>
-                                    <v-icon v-if="showGpt" @click="closeExplainCode()"
-                                        style="position:absolute; right:10px; top:10px; z-index:999;"
-                                    >mdi-close</v-icon>
                                 </v-row>
-                                <vue-markdown
-                                    class="markdown-body"
-                                    style="padding: 15px; font-size: 13px; color: #434853;"
-                                    :source="explainedResult"
-                                >
-                                </vue-markdown>
-                                
-                                <div v-if="explainedResult !=''" style="position: absolute; z-index:1001; top:65px; right: 35px; z-index:1001; display: flex; justify-content: center; align-items: center; ">
-                                    <v-btn v-if="generationStopped"
-                                        @click="explain(true)"
-                                        style="z-index:999; margin-top: 15px; color: black;" icon>
-                                            <v-icon>mdi-refresh</v-icon>
-                                    </v-btn>
-                                    <v-btn v-else @click="stopExplainCode()" style="z-index:999; margin-top: 15px; color: black;" icon>
-                                        <v-icon>mdi-stop-circle-outline</v-icon>
-                                    </v-btn>
-                                </div>
-                                <div style="display: flex; align-items: center;">
-                                    <!-- explainProject -->
-                                    <v-text-field
-                                        v-model="chatPrompt"
-                                        ref="input"
-                                        style="width:100%; background-color: #FFFFFF; color: white;"
-                                        solo
-                                        outlined
-                                        autofocus
-                                        class="question-box cp-explain-project-text"
-                                        append-icon="mdi-send"
-                                        @click:append="removeDuplicateChatPrompt"
-                                        @keydown.enter="removeDuplicateChatPrompt"
-                                    ></v-text-field>                                     
-                                </div>
-                                <div v-if="isRootFolder" style="text-align: center;">
-                                    <v-row no-gutters style="margin-top: 15px; margin-bottom: 15px;">
-                                        <v-col cols="12">
-                                            <b style="font-size: large;">or</b>
-                                        </v-col>
-                                    </v-row>
-                                    <v-btn style="margin-bottom: 10px;" color="primary" @click="openImplDialog()">Auto implement</v-btn>
-                                    <v-dialog v-model="isOpenImplDialog" width="800" persistent>
-                                        <v-card class="mx-auto">
-                                            <v-icon @click="isOpenImplDialog = false"
-                                                style="position:absolute; right:10px; top:10px;"
-                                            >mdi-close</v-icon>
-                                            <v-card-title>Choose the test to implement by AI</v-card-title>
-                                            <v-card-text>
-                                                <v-autocomplete
-                                                    label="Choose the test"
-                                                    @change="changedTestFile()"
-                                                    v-model="selectedTestFile"
-                                                    item-text="name"
-                                                    :items="testFileList"
-                                                    :error="!isExistRules"
-                                                    :error-messages="errorMsg"
-                                                    clearable
-                                                    return-object
-                                                    dense
-                                                ></v-autocomplete>
-                                                <v-checkbox
-                                                    v-model="isUseMain"
-                                                    label="Continuing from the last commit"
-                                                    class="shrink mr-2 mt-0"
-                                                ></v-checkbox>
-                                            </v-card-text>
-                                            <v-card-actions>
-                                                <div style="font-size: small;">
-                                                    <v-icon small style="margin-right: 5px;">mdi-help-circle-outline</v-icon>
-                                                    <a href="https://beta.openai.com/account/api-keys" target="_blank">how to create test or example</a>
-                                                </div>
-                                                <v-spacer />
-                                                <v-btn :loading="startImpl" :disabled="!selectedTestFile || !isExistRules" color="primary" @click="startImplWithAI()">Start</v-btn>
-                                            </v-card-actions>
-                                        </v-card>
-                                    </v-dialog>
-                                </div>
-                            </v-card>
-                        </v-row>
-                    </v-col>
-                </v-row>
+                                <v-btn style="margin-bottom: 10px;" color="primary" @click="openImplDialog()">Auto implement</v-btn>
+                                <v-dialog v-model="isOpenImplDialog" width="800" persistent>
+                                    <v-card class="mx-auto">
+                                        <v-icon @click="isOpenImplDialog = false"
+                                            style="position:absolute; right:10px; top:10px;"
+                                        >mdi-close</v-icon>
+                                        <v-card-title>Choose the test to implement by AI</v-card-title>
+                                        <v-card-text>
+                                            <v-autocomplete
+                                                label="Choose the test"
+                                                @change="changedTestFile()"
+                                                v-model="selectedTestFile"
+                                                item-text="name"
+                                                :items="testFileList"
+                                                :error="!isExistRules"
+                                                :error-messages="errorMsg"
+                                                clearable
+                                                return-object
+                                                dense
+                                            ></v-autocomplete>
+                                            <v-checkbox
+                                                v-model="isUseMain"
+                                                label="Continuing from the last commit"
+                                                class="shrink mr-2 mt-0"
+                                            ></v-checkbox>
+                                        </v-card-text>
+                                        <v-card-actions>
+                                            <div style="font-size: small;">
+                                                <v-icon small style="margin-right: 5px;">mdi-help-circle-outline</v-icon>
+                                                <a href="https://beta.openai.com/account/api-keys" target="_blank">how to create test or example</a>
+                                            </div>
+                                            <v-spacer />
+                                            <v-btn :loading="startImpl" :disabled="!selectedTestFile || !isExistRules" color="primary" @click="startImplWithAI()">Start</v-btn>
+                                        </v-card-actions>
+                                    </v-card>
+                                </v-dialog>
+                            </div>
+                        </v-card>
+                    </v-row>
+                </v-col>
             </v-card-text>
         </div>
     </div>
@@ -231,6 +238,7 @@
         },
         data() {
             return {
+                isExplainLoading: false,
                 isUseMain: true,
                 isOpenImplDialog: false,
                 startImpl: false,
@@ -261,6 +269,7 @@
                 monacoIds: 0,
                 options: {},
                 generateCode: null,
+                explaineToggle: true,
             }
         },
         components: {
@@ -486,6 +495,9 @@
             });
         },
         methods: {
+            explaineToggleEvent() {
+                this.explaineToggle = !this.explaineToggle;
+            },
             openImplDialog(){
                 this.checkTopping()
                 if(this.testFileList && this.testFileList.length > 0){
@@ -563,6 +575,7 @@
                 let prompt
                 this.explainError = ''
                 this.generationStopped = false;
+                this.isExplainLoading = true;
 
                 let codeGenerator = getParent(me.$parent, "code-generator")
                 let collectedCodes = codeGenerator.getSelectedFilesDeeply()
@@ -596,7 +609,11 @@
                 me.generator = new AIGenerator(this, {prompt: prompt});
                 
                 //me.generator.model = "gpt-4o-32k" //payment issue
-                me.generator.generate();
+                me.generator.generate().then(() => {
+                    this.isExplainLoading = false; // 로딩 종료
+                }).catch(() => {
+                    this.isExplainLoading = false; // 에러 발생 시 로딩 종료
+                });
             },
             onReceived(result){
                 this.explainedResult = result;
