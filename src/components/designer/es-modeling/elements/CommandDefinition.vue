@@ -243,50 +243,65 @@
                 return 8
             },
             detailHeight() {
-                var count = null
+                let detailCnt = 0
                 if(this.value.elementView.height <= 270){
-                    count = this.commandfieldDescriptorsCount
+                    detailCnt = this.availableFieldCount
                 } else if(this.value.elementView.height > 270){
-                    count = this.value.fieldDescriptors.length
+                    detailCnt = this.value.fieldDescriptors.length
                 }
-                return this.subjectHeight + (count * 5)
+                return detailCnt;
+
+                // return this.subjectHeight + (detailCnt * 5)
             },
             detailLeft() {
                 var width = this.value.elementView.width * 0.1
                 return width
             },
             detailTop() {
-                return this.subjectTop + this.detailHeight
+                let baseTop = 7;
+                let centerPoint = (this.value.elementView.height / 2);
+                let innerHeight = (this.value.elementView.height - (this.subjectTop + this.subjectHeight)) / 2 
+                let fieldHalfHeight = this.fieldHeight * this.detailHeight / 2 
+                let centerAndInnerMargin = centerPoint - innerHeight
+                let centerAndFieldMargin = centerPoint - fieldHalfHeight
+
+                if( centerAndInnerMargin * 2 < centerAndFieldMargin && centerAndFieldMargin > 0 ){
+                    return baseTop + centerPoint - centerAndFieldMargin
+                } 
+                return baseTop + centerPoint
+
+                // return this.subjectTop + this.detailHeight
             },
             getFieldDescriptors() {
-
                 if (this.value.fieldDescriptors) {
                     if (this.value.fieldDescriptors.length == 1
                         && this.value.fieldDescriptors[0].name == 'id') {
                         return false
                     }
 
-                    var text = ''
-                    var value = 0
+                    const prefix = 'ㆍ '
+                    let text = ''
+
                     if(this.value.elementView.height <= 100){
-                        value = 42
+                        this.fieldHeight = 42
                     } else if(this.value.elementView.height <= 150){
-                        value = 30
+                        this.fieldHeight = 30
                     } else if(this.value.elementView.height <= 270){
-                        value = 23
+                        this.fieldHeight = 23
                     } else if(this.value.elementView.height > 270){
-                        value = 17
+                        this.fieldHeight = 17
                     }
-                    var y = Math.ceil(this.value.elementView.height/value)
-                    this.commandfieldDescriptorsCount = y
-                    if(this.value.fieldDescriptors.length > y){
-                        for(var i = 0; i <= y; i++){
-                            if(i == y) text = text + 'ㆍ ' + this.value.fieldDescriptors[i].name + '  ...'
-                            else text = text + 'ㆍ ' + this.value.fieldDescriptors[i].name + '\n'
+                    
+                    this.availableFieldCount = Math.ceil(this.value.elementView.height/this.fieldHeight) - 2 ;
+                    if(this.value.fieldDescriptors.length > this.availableFieldCount){
+                        for(var i = 0; i <= this.availableFieldCount; i++){
+                            let fd = this.value.fieldDescriptors[i];
+                            if(i == this.availableFieldCount) text = `${text}${prefix} ${fd.name} ...`
+                            else text = `${text}${prefix} ${fd.name}` + '\n'
                         }
                     } else {
-                        this.value.fieldDescriptors.forEach(function (field) {
-                            text = text + 'ㆍ ' + field.name + '\n'
+                        this.value.fieldDescriptors.forEach(function (fd) {
+                            text = `${text}${prefix} ${fd.name}` + '\n'
                         })
                     }
                     return text
@@ -349,7 +364,8 @@
         },
         data: function () {
             return {
-                commandfieldDescriptorsCount: 0,
+                fieldHeight: 17,
+                availableFieldCount: 0,
                 itemH: 20,
                 titleH: (this.value.classReference ? 60 : 30),
                 reference: this.value.classReference != null,
@@ -441,18 +457,20 @@
                     var newId = attachedAggregate.elementView.id
 
                     // 움직일때 AGG 변화 파악.
-                    if( me.value.aggregate.id != newId ){
+                    if(!me.value.aggregate || (me.value.aggregate.id != newId) ){
                         // 서로 들다른 agg
                         me.value.aggregate = { id: newId }
-                        if(me.canvas.initLoad) {
-                            me.canvas.changedByMe = true;
+                        if(me.canvas.initLoad && !me.canvas.isRendering) {
+                            // me.canvas.changedByMe = true;
                             me.canvas.changedTemplateCode = true
                         }
                     }
 
                 }else if(!me.value.aggregate || me.value.aggregate.id){
                     me.value.aggregate = {};
-                    if(me.canvas.initLoad) me.canvas.changedByMe = true;
+                    // if(me.canvas.initLoad && !me.canvas.isRendering) {
+                    //     me.canvas.changedByMe = true;
+                    // }
                 }
 
             },

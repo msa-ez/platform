@@ -1881,8 +1881,8 @@
 
     @media only screen and (max-width: 1250px) { 
         .nav-storage-list {
-            top:45px !important;
-            right:78px !important;
+            top:48px !important;
+            right:83px !important;
         }
     }
 </style>

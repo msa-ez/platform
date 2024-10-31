@@ -663,16 +663,18 @@ import { group } from "d3";
                     let newId = attachedBoundedContext.elementView.id
 
                     // 움직일때 BC 변화 파악.
-                    if( newId != me.value.boundedContext.id ){
+                    if( !me.value.boundedContext || newId != me.value.boundedContext.id ){
                         me.value.boundedContext = {id: newId};
-                        if(me.canvas.initLoad) {
-                            me.canvas.changedByMe = true;
+                        if(me.canvas.initLoad && !me.canvas.isRendering) {
+                            // me.canvas.changedByMe = true;
                             me.canvas.changedTemplateCode = true
                         }
                     }
                 } else if(me.value.boundedContext && me.value.boundedContext.id){
                     me.value.boundedContext = {}
-                    if(me.canvas.initLoad) me.canvas.changedByMe = true;
+                    // if(me.canvas.initLoad && !me.canvas.isRendering) {
+                        // me.canvas.changedByMe = true;
+                    // }
                 }
 
             },

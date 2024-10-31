@@ -210,13 +210,13 @@
                     me.refreshImg()
                 }
             },
-            storage() {
-                if (this.canvas) {
-                    return this.canvas.storage
-                } else {
-                    return 'localstorage'
-                }
-            },
+            // storage() {
+            //     if (this.canvas) {
+            //         return this.canvas.storage
+            //     } else {
+            //         return 'localstorage'
+            //     }
+            // },
             isClazzModeling() {
                 if (this.canvas)
                     return this.canvas.isClazzModeling
@@ -339,6 +339,7 @@
                 me.$app.try({
                     context: me,
                     async action(me){
+                        let options = {}
                         let offsetX, offsetY, offsetW, offsetH
 
                         let originX = me.value.elementView.x
@@ -395,7 +396,7 @@
                         let afterViewObj = {x: offsetX, y: offsetY, width: offsetW, height: offsetH}
                         let beforeViewObj = {x: originX, y: originY, width: originW, height: originH}
 
-                        me.canvas.moveElementAction(me.value, beforeViewObj, afterViewObj)
+                        me.canvas.moveElementAction(me.value, beforeViewObj, afterViewObj, null, options)                       
                     },
                     onFail(e){
                         console.log(`[Error] Delayed ElementMove: ${e}`)

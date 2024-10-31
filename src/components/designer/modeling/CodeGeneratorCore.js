@@ -252,7 +252,7 @@ class CodeGeneratorCore {
                 })
             }
 
-            if (item.boundedContext.id && !item.mirrorElement) {
+            if (item.boundedContext && item.boundedContext.id && !item.mirrorElement) {
                 item.boundedContext = boundedContextByIds[item.boundedContext.id]
             }
             eventByIds[item.elementView.id] = item
