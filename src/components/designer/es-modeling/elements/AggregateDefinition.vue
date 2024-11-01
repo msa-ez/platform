@@ -223,21 +223,34 @@
             subjectHeight() {
                 return 8
             },
-            detailHeight() {
-                var count = null
-                if(this.value.elementView.height <= 270){
-                    count = this.aggfieldDescriptorsCount
-                } else if(this.value.elementView.height > 270){
-                    count = this.value.aggregateRoot.fieldDescriptors.length
-                }
-                return this.subjectHeight + (count * 5)
-            },
             detailLeft() {
-                var width = this.value.elementView.width * 0.1
-                return width
+                return this.value.elementView.width * 0.1
+            },
+            detailHeight() {
+                let detailCnt = 0
+                if(this.value.elementView.height <= 270){
+                    detailCnt = this.availableFieldCount
+                } else if(this.value.elementView.height > 270){
+                    detailCnt = this.value.aggregateRoot.fieldDescriptors.length
+                }
+                return detailCnt;
+
+                // return this.subjectHeight + (detailCnt * 5)
             },
             detailTop() {
-                return this.subjectTop + this.detailHeight
+                let baseTop = 7;
+                let centerPoint = (this.value.elementView.height / 2);
+                let innerHeight = (this.value.elementView.height - (this.subjectTop + this.subjectHeight)) / 2 
+                let fieldHalfHeight = this.fieldHeight * this.detailHeight / 2 
+                let centerAndInnerMargin = centerPoint - innerHeight
+                let centerAndFieldMargin = centerPoint - fieldHalfHeight
+
+                if( centerAndInnerMargin * 2 < centerAndFieldMargin && centerAndFieldMargin > 0 ){
+                    return baseTop + centerPoint - centerAndFieldMargin
+                } 
+                return baseTop + centerPoint
+
+                // return this.subjectTop + this.detailHeight
             },
             getFieldDescriptors() {
                 if(this.canvas.isHexagonal){
@@ -245,41 +258,40 @@
                 }
 
                 if (this.value.aggregateRoot.fieldDescriptors) {
-
                     if (this.value.aggregateRoot.fieldDescriptors.length == 1
                         && this.value.aggregateRoot.fieldDescriptors[0].name == 'id') {
-                        return false
+                        return null
+                    }
+                    const prefix = 'ㆍ '
+                    let text = ''
+
+                    // 높이별 필드의 고정 높이.
+                    if(this.value.elementView.height <= 100) {
+                        this.fieldHeight = 42
+                    } else if(this.value.elementView.height <= 150){
+                        this.fieldHeight = 30
+                    } else if(this.value.elementView.height <= 270) {
+                        this.fieldHeight = 23
+                    } else if(this.value.elementView.height > 270) {
+                        this.fieldHeight = 17
                     }
 
-                    var text = ''
-                    var value = 0
-                    if(this.value.elementView.height <= 100){
-                        value = 42
-                    } else if(this.value.elementView.height <= 150){
-                        value = 30
-                    } else if(this.value.elementView.height <= 270){
-                        value = 23
-                    } else if(this.value.elementView.height > 270){
-                        value = 17
-                    }
-                    var y = Math.ceil(this.value.elementView.height/value)
-                    this.aggfieldDescriptorsCount = y
-                    if(this.value.aggregateRoot.fieldDescriptors.length > y){
-                        for(var i = 0; i <= y; i++){
-                            let fd = this.value.aggregateRoot.fieldDescriptors[i];
-                            if(i == y) text = text + 'ㆍ ' + (fd.displayName ? fd.displayName : fd.name) + '  ...'
-                            else text = text + 'ㆍ ' + (fd.displayName ? fd.displayName : fd.name) + '\n'
+                    this.availableFieldCount = Math.ceil(this.value.elementView.height/this.fieldHeight) - 2 ;
+                    let fieldDescriptors = this.value.aggregateRoot.fieldDescriptors;
+                    if(fieldDescriptors.length > this.availableFieldCount){
+                        for(var i = 0; i <= this.availableFieldCount; i++){
+                            let fd = fieldDescriptors[i];
+                            if(i == this.availableFieldCount) text = `${text}${prefix} ${fd.displayName ? fd.displayName : fd.name}  ...`
+                            else text = `${text}${prefix} ${fd.displayName ? fd.displayName : fd.name}` + '\n'
                         }
                     } else {
-                        this.value.aggregateRoot.fieldDescriptors.forEach(function (field) {
-                            text = text + 'ㆍ ' + (field.displayName ? field.displayName : field.name) + '\n'
+                        fieldDescriptors.forEach(function (field) {
+                            text = `${text}${prefix} ${field.displayName ? field.displayName : field.name}` + '\n'
                         })
                     }
                     return text
                 }
                 return null
-
-
             },
             className() {
                 return 'org.uengine.modeling.model.Aggregate'
@@ -344,7 +356,8 @@
         },
         data: function () {
             return {
-                aggfieldDescriptorsCount: 0,
+                fieldHeight: 17,
+                availableFieldCount: 0,
                 titleH: (this.value.classReference ? 60 : 30),
                 reference: this.value.classReference != null,
                 referenceClassName: this.value.classReference,
@@ -934,6 +947,7 @@
 <style scoped lang="scss" rel="stylesheet/scss">
     .discStyle {
         list-style-type: disc;
+        outline: 'dashed';
     }
 </style>
 

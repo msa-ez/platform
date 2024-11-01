@@ -1601,7 +1601,7 @@
             action: 'save',
             title: 'Edit BoundedContext',
             comment: '',
-            projectName: projectId,
+            projectName: me.information.associatedProject,
             projectId: projectId,
             version: 'v0.0.1',
             error: null,
