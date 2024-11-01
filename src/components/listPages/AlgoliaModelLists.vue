@@ -36,6 +36,7 @@
                             </v-tab> -->
                             <v-icon @click="searchOpen = !searchOpen"
                                 class="main-nav-tab"
+                                style="margin-left:10px;"
                             >mdi-magnify
                             </v-icon>
                         </v-tabs>
