@@ -231,20 +231,25 @@
                     <v-alert
                             v-if="searchOpen"
                             elevation="2"
-                            style="position:fixed; top:50px; z-index:2; height:70px; width:40%; left: 50%; transform: translate(-50%, 0%);"
+                            style="position:fixed; top:50px; z-index:2; width:40%; left: 50%; transform: translate(-50%, 0%);"
+                            class="ma-0 pa-2"
                     >
                         <div>
-                            <v-row style="align-items: baseline;">
+                            <v-row class="ma-0 pa-0">
+                                <v-spacer></v-spacer>
+                                <v-icon @click="searchClose(true)" :size="16">mdi-close</v-icon>
+                            </v-row>
+                            <v-row class="ma-0 pa-0" style="align-items: baseline;">
                                 <v-menu offset-y>
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-chip
-                                                :color="selectedMode.color"
-                                                dark
-                                                style="margin-right: 10px;"
-                                                v-bind="attrs"
-                                                v-on="on"
+                                            :color="selectedMode.color"
+                                            outlined
+                                            style="margin-right: 10px;"
+                                            v-bind="attrs"
+                                            v-on="on"
                                         >
-                                            {{selectedMode.type}}
+                                            {{selectedMode.display}}
                                         </v-chip>
                                     </template>
                                     <v-list>
@@ -266,10 +271,6 @@
                                         hide-details
                                         dense
                                 ></v-text-field>
-                                <v-icon @click="searchClose(true)" style="width:26px; height:26px; margin-top: 13px;">mdi-close</v-icon>
-                            </v-row>
-                            <v-row>
-                                <v-btn @click="searchClose()" block text style="height: 25px"> <v-icon>mdi-chevron-up</v-icon> </v-btn>
                             </v-row>
                         </div>
                     </v-alert>
