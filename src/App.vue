@@ -110,11 +110,12 @@
                 <!-- 만들기 버튼 -->
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn class="making-main-nav-modeling-is-mobile"
+                        :class="isForeign ? 'isForeign-create-main-nav-is-mobile' : 'isForeign-not-create-main-nav-is-mobile'"
                         v-on="on"
                         v-bind="attrs"
                         text
-                        :style="isForeign ? (isLogin ? 'margin-right:210px' : 'margin-right:200px;') : (isLogin ? 'margin-right:215px' : 'margin-right:225px;')"
-                    ><v-icon style="margin:0px 1px 0px 0px;" :size="26">mdi-file-plus</v-icon>
+                        :style="isForeign ? {'margin-right': '300px', 'margin-top': '4px'} : 'margin-right: 245px'"
+                    ><v-icon style="margin:0px 3px 0px 0px;" :size="26">mdi-file-plus</v-icon>
                     <div :style="isForeign ? { marginTop: '-2px' } : { marginTop: '2px' }">{{$t('making.title')}}</div>
                     </v-btn>
                 </template>
@@ -374,9 +375,10 @@
                 class="question-btn"
                 text
                 elevation="0"
+                style="text-transform: none;"
             >
                 <v-img src="/static/image/main/question.svg" contain
-                    style="width:22px; height:22px; margin-right:5px;">
+                    style="width:24px; height:24px; margin-right:5px;">
                 </v-img>
                 <div font-size="14">{{ $t('inquiry.title') }}</div>
             </v-btn>
@@ -385,6 +387,7 @@
                 v-if="!(isLogin || isGuestLogin)"
                 @click="loginPage()"
                 fab icon
+                style="margin-right:10px"
             >
                 <v-avatar
                     size="40"
@@ -965,10 +968,14 @@
         // },
         computed: {
             isForeign() {
-                if (window.countryCode == 'ko') {
-                    return false
+                try {
+                    let lang = this.$i18n.locale;
+                    return lang !== 'ko';
+                } catch (error) {
+                    console.error('Error determining locale:', error);
+                    // 기본값으로 false 반환
+                    return false;
                 }
-                return true
             },
 
             // showAppBar(){
@@ -2155,7 +2162,7 @@
 <style>
     .question-btn {
         position: absolute;
-        top:15px; right:70px;
+        top:15px; right:95px;
         font-weight: 700;
         padding:0px 5px 0px 5px !important;
     }
@@ -2249,12 +2256,18 @@
         .main-nav-modeling-is-mobile {
             display:none;
         }
-        .making-main-nav-modeling-is-mobile {
-            margin-top: 163px !important;
-            margin-right: 19px !important
+
+        .isForeign-not-create-main-nav-is-mobile {
+            top: 98px !important;
+            margin-right: 48px !important;
+        }
+
+        .isForeign-create-main-nav-is-mobile {
+            top: 93px !important;
+            margin-right: 68px !important;
         }
         .question-btn {
-            top:7px;
+            top:15px;
             right: 100px
         }
     }
