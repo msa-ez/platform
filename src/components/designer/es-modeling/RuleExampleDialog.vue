@@ -573,22 +573,31 @@
                                     }
                                 } else if(me.value._type.includes("Command")){
                                     // when
+                                    let defaultFieldDescriptor = {
+                                        "_type": "org.uengine.model.FieldDescriptor",
+                                        "name": "id",
+                                        "className": "Long",
+                                        "nameCamelCase": "id",
+                                        "namePascalCase": "Id",
+                                        "isKey": true
+                                    }
                                     if(rel.sourceElement._type == 'org.uengine.modeling.model.Command' && rel.targetElement._type == 'org.uengine.modeling.model.Event'){
                                         if(rel.sourceElement.elementView.id == me.value.elementView.id){
                                             if(!whenItems.find(x => x.elementView.id == rel.sourceElement.elementView.id)){
                                                 if(me.value.restRepositoryInfo.method == 'POST'){
-                                                    me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = JSON.parse(JSON.stringify(me.canvas.value.elements[me.value.aggregate.id].aggregateRoot.fieldDescriptors))
+                                                    if(me.value.aggregate && me.value.aggregate.id && me.canvas.value.elements[me.value.aggregate.id]){
+                                                        me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = JSON.parse(JSON.stringify(me.canvas.value.elements[me.value.aggregate.id].aggregateRoot.fieldDescriptors))
+                                                    } else if(rel.sourceElement.aggregate && rel.sourceElement.aggregate.id && me.canvas.value.elements[rel.sourceElement.aggregate.id]) {
+                                                        me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = JSON.parse(JSON.stringify(me.canvas.value.elements[rel.sourceElement.aggregate.id].aggregateRoot.fieldDescriptors))
+                                                    } else if(rel.targetElement.aggregate && rel.targetElement.aggregate.id && me.canvas.value.elements[rel.targetElement.aggregate.id]) {
+                                                        me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = JSON.parse(JSON.stringify(me.canvas.value.elements[rel.targetElement.aggregate.id].aggregateRoot.fieldDescriptors))
+                                                    } else {
+                                                        me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = []
+                                                        me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors.push(defaultFieldDescriptor)
+                                                    }
                                                 } else if(me.value.restRepositoryInfo.method == 'DELETE'){
-                                                    me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = [
-                                                        {
-                                                            "_type": "org.uengine.model.FieldDescriptor",
-                                                            "name": "id",
-                                                            "className": "Long",
-                                                            "nameCamelCase": "id",
-                                                            "namePascalCase": "Id",
-                                                            "isKey": true
-                                                        }
-                                                    ]
+                                                    me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = []
+                                                    me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors.push(defaultFieldDescriptor)
                                                 } 
                                                 whenItems.push(me.canvas.value.elements[rel.sourceElement.elementView.id])
                                             }
