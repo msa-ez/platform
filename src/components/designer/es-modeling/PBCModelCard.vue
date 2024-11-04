@@ -218,15 +218,15 @@
                 var me = this
                 if (me.copyInformation)
                     if (me.copyInformation.type == 'k8s') {
-                        return {display: 'KUBERNETES', color: 'blue'}
+                        return {display: 'Kubernetes', color: 'blue'}
                     } else if (me.copyInformation.type == 'bm') {
-                        return {display: 'BusinessModel', color: 'orange'}
+                        return {display: 'Business Model', color: 'orange'}
                     } else if (me.copyInformation.type == 'es') {
-                        return {display: 'EVENTSTORMING', color: 'green'}
+                        return {display: 'Event Storming', color: 'green'}
                     } else if (me.copyInformation.type == 'sticky') {
-                        return {display: 'STICKY NOTE', color: 'purple'}
+                        return {display: 'Sticky Note', color: 'purple'}
                     } else if (me.copyInformation.type == 'bpmn') {
-                        return {display: 'BusinessProcess', color: 'pink'}
+                        return {display: 'Business Process', color: 'pink'}
                     } else if (me.copyInformation.type == 'uml') {
                         return {display: 'UML', color: 'grey'}
                     } else if (me.copyInformation.type == 'project') {
