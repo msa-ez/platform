@@ -4,17 +4,34 @@
             <v-card style="padding: 15px; display: inline-table;">
                 <table class="rules-table" cellspacing="0">
                     <tr>
-                        <td style="font-size: 20px; font-weight: 500; padding-bottom: 12px;" colspan="999">{{ rule.ruleName }}</td>
+                        <td style="font-size: 20px; font-weight: 500; padding-bottom: 12px;" colspan="999">{{
+                            rule.ruleName }}</td>
                         <v-icon @click="isOpenRules = false"
-                            style="position:absolute; right:10px; top:10px;"
-                        >mdi-close</v-icon>
+                            style="position:absolute; right:10px; top:10px;">mdi-close</v-icon>
                     </tr>
                     <tr>
                         <td colspan="999">
-                            <v-text-field 
-                                v-model="rule.description"
-                                label="Describe your business logic here"
-                            ></v-text-field>
+                            <v-row class="ma-0 pa-0" align="center" justify="space-between">
+                                <v-text-field v-model="rule.description" label="Describe your business logic here"
+                                    class="delete-input-detail ma-0 pa-0"></v-text-field>
+                                <v-btn v-if="!isGenerating" @click="startExampleGenerate()" color="primary" text
+                                    class="ml-2 pl-1 pr-1" style="text-transform: none;">
+                                    Generate Examples
+                                </v-btn>
+                                <v-btn v-if="isGenerating" @click="stopExampleGenerate()" color="primary" text
+                                    class="ml-2 pl-1 pr-1" style="text-transform: none;">
+                                    <v-progress-circular size="15" :width="3" style="margin-right: 10px;" indeterminate
+                                        color="primary"></v-progress-circular>
+                                    Stop generating
+                                </v-btn>
+                                <v-tooltip bottom>
+                                    <template v-slot:activator="{ on, attrs }">
+                                        <v-icon v-bind="attrs" v-on="on" class="ml-2"
+                                            @click="resetExampleDialog()">mdi-refresh</v-icon>
+                                    </template>
+                                    <span>Reset examples</span>
+                                </v-tooltip>
+                            </v-row>
                         </td>
                     </tr>
                     <tr class="tr-divider" style="text-align: center; font-size: 18px; font-weight: 500;">
@@ -22,7 +39,7 @@
                         <td :colspan="whenAttLength">When</td>
                         <td colspan="999">Then</td>
                     </tr>
-                    
+
                     <tr class="tr-divider" style="text-align: center; font-weight: 500;">
                         <td :colspan="givenAttLength">{{ ruleExampleTableHeaders.given }}</td>
                         <td :colspan="whenAttLength">{{ ruleExampleTableHeaders.when }}</td>
@@ -31,49 +48,46 @@
                     <tr class="tr-divider">
                         <td v-for="key in Object.keys(rule.values[0]['given'][0].value)">{{ key }}</td>
                         <td v-for="key in Object.keys(rule.values[0]['when'][0].value)">{{ key }}</td>
-                        
+
                         <template v-for="attribute in rule.values[0]['then']">
                             <td v-for="key in Object.keys(attribute.value)">{{ key }}</td>
                         </template>
                     </tr>
                     <template v-for="(value, ruleIdx) in rule.values">
-                        <tr class="tr-divider tr-input"
-                            style="border-bottom: 1px solid #E0E0E0;"
-                        >
+                        <tr class="tr-divider tr-input" style="border-bottom: 1px solid #E0E0E0;">
                             <template v-for="(given, key) in value['given'][0].value">
                                 <template v-if="checkGivenType(given)">
                                     <td @click="selectTableData(ruleIdx, 'given', key)">
-                                        <component v-if="'given-' + rule['givenItems'][0].name + '-' + key == selectedItemPath && selectedItemIndex == ruleIdx"
-                                            class="td-component-size"
-                                            :is="getComponentType(selectedAttType)"
-                                            v-model="value['given'][0].value[key]" 
-                                            :label="selectedAttType"
-                                            :items="selectedEnumItems"
-                                            @save="closeExampleEditor()"
-                                            @selectChip="closeExampleEditor"
-                                        ></component>
+                                        <component
+                                            v-if="'given-' + rule['givenItems'][0].name + '-' + key == selectedItemPath && selectedItemIndex == ruleIdx"
+                                            class="td-component-size" :is="getComponentType(selectedAttType)"
+                                            v-model="value['given'][0].value[key]" :label="selectedAttType"
+                                            :items="selectedEnumItems" @save="closeExampleEditor()"
+                                            @selectChip="closeExampleEditor"></component>
                                         <div v-else>
-                                            <v-chip class="rule-chip" v-if="chipLabels[given]">{{ chipLabels[given] }}</v-chip>
+                                            <v-chip class="rule-chip" v-if="chipLabels[given]">{{ chipLabels[given]
+                                                }}</v-chip>
                                             <template v-else>{{ given }}</template>
                                         </div>
                                     </td>
                                 </template>
                                 <table v-else class="rules-table" style="width: 100%;">
                                     <tr>
-                                        <td v-for="(givenArrValue, givenArrKey) in given[0]" :key="givenArrKey" class="given-td-uml">{{ givenArrKey }}</td>
+                                        <td v-for="(givenArrValue, givenArrKey) in given[0]" :key="givenArrKey"
+                                            class="given-td-uml">{{ givenArrKey }}</td>
                                     </tr>
                                     <tr v-for="(givenValue, givenIdx) in given" :key="givenIdx">
-                                        <td v-for="(givenArrValue, givenArrKey) in givenValue" :key="givenArrKey" @click="selectTableData(ruleIdx, 'given', givenArrKey, null, null, key, givenIdx)">
-                                            <component v-if="'given-' + rule['givenItems'][0].name + '-' + key + '-' + givenArrKey == selectedItemPath && selectedItemIndex == ruleIdx && selectedGivenIndex == givenIdx"
-                                                class="td-component-size"
-                                                :is="getComponentType(selectedAttType)"
-                                                v-model="givenValue[givenArrKey]" 
-                                                :label="selectedAttType"
-                                                @save="closeExampleEditor()"
-                                                @selectChip="closeExampleEditor"
-                                            ></component>
+                                        <td v-for="(givenArrValue, givenArrKey) in givenValue" :key="givenArrKey"
+                                            @click="selectTableData(ruleIdx, 'given', givenArrKey, null, null, key, givenIdx)">
+                                            <component
+                                                v-if="'given-' + rule['givenItems'][0].name + '-' + key + '-' + givenArrKey == selectedItemPath && selectedItemIndex == ruleIdx && selectedGivenIndex == givenIdx"
+                                                class="td-component-size" :is="getComponentType(selectedAttType)"
+                                                v-model="givenValue[givenArrKey]" :label="selectedAttType"
+                                                @save="closeExampleEditor()" @selectChip="closeExampleEditor">
+                                            </component>
                                             <div v-else>
-                                                <v-chip class="rule-chip" v-if="chipLabels[givenValue[givenArrKey]]">{{ chipLabels[givenValue[givenArrKey]] }}</v-chip>
+                                                <v-chip class="rule-chip" v-if="chipLabels[givenValue[givenArrKey]]">{{
+                                                    chipLabels[givenValue[givenArrKey]] }}</v-chip>
                                                 <template v-else>{{ givenValue[givenArrKey] }}</template>
                                             </div>
                                         </td>
@@ -82,57 +96,52 @@
                                     <v-icon @click="addGivenExample(key, ruleIdx)">mdi-plus</v-icon>
                                 </table>
                             </template>
-                            <td v-for="key in Object.keys(value['when'][0].value)" @click="selectTableData(ruleIdx, 'when', key)">
-                                <component v-if="'when-' + rule['whenItems'][0].name + '-' + key == selectedItemPath && selectedItemIndex == ruleIdx"
-                                    class="td-component-size"
-                                    :is="getComponentType(selectedAttType)"
-                                    v-model="value['when'][0].value[key]" 
-                                    :label="selectedAttType"
-                                    @save="closeExampleEditor()"
-                                    @selectChip="closeExampleEditor"
-                                ></component>
+                            <td v-for="key in Object.keys(value['when'][0].value)"
+                                @click="selectTableData(ruleIdx, 'when', key)">
+                                <component
+                                    v-if="'when-' + rule['whenItems'][0].name + '-' + key == selectedItemPath && selectedItemIndex == ruleIdx"
+                                    class="td-component-size" :is="getComponentType(selectedAttType)"
+                                    v-model="value['when'][0].value[key]" :label="selectedAttType"
+                                    @save="closeExampleEditor()" @selectChip="closeExampleEditor"></component>
                                 <div v-else>
-                                    <v-chip class="rule-chip" v-if="chipLabels[value['when'][0].value[key]]">{{ chipLabels[value['when'][0].value[key]] }}</v-chip>
+                                    <v-chip class="rule-chip" v-if="chipLabels[value['when'][0].value[key]]">{{
+                                        chipLabels[value['when'][0].value[key]] }}</v-chip>
                                     <template v-else>{{ value['when'][0].value[key] }}</template>
                                 </div>
                             </td>
-                            
+
                             <template v-for="(then, thenIdx) in value['then']">
-                                <td v-for="key in Object.keys(then.value)" @click="selectTableData(ruleIdx, 'then', key, thenIdx, then.name)">
-                                    <component v-if="'then-' + rule['thenItems'][thenIdx].name  + '-' + key == selectedItemPath && selectedItemIndex == ruleIdx"
-                                        class="td-component-size"
-                                        :is="getComponentType(selectedAttType)"
-                                        v-model="then.value[key]" 
-                                        :label="selectedAttType"
-                                        @save="closeExampleEditor()"
-                                        @selectChip="closeExampleEditor"
-                                    ></component>
+                                <td v-for="key in Object.keys(then.value)"
+                                    @click="selectTableData(ruleIdx, 'then', key, thenIdx, then.name)">
+                                    <component
+                                        v-if="'then-' + rule['thenItems'][thenIdx].name  + '-' + key == selectedItemPath && selectedItemIndex == ruleIdx"
+                                        class="td-component-size" :is="getComponentType(selectedAttType)"
+                                        v-model="then.value[key]" :label="selectedAttType" @save="closeExampleEditor()"
+                                        @selectChip="closeExampleEditor"></component>
                                     <div v-else>
-                                        <v-chip class="rule-chip" v-if="chipLabels[then.value[key]]">{{ chipLabels[then.value[key]] }}</v-chip>
+                                        <v-chip class="rule-chip" v-if="chipLabels[then.value[key]]">{{
+                                            chipLabels[then.value[key]] }}</v-chip>
                                         <template v-else>{{ then.value[key] }}</template>
                                     </div>
                                 </td>
                             </template>
-                            <v-icon style="position: absolute; right: 10px; margin-top: 5px;" @click="removeExample(ruleIdx)">mdi-delete</v-icon>
+                            <v-tooltip bottom>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-icon style="position: absolute; right: 15px; margin-top: 8px;" v-bind="attrs"
+                                        v-on="on" @click="removeExample(ruleIdx)">mdi-delete</v-icon>
+                                </template>
+                                <span>Delete row</span>
+                            </v-tooltip>
                         </tr>
                     </template>
                 </table>
-                <v-layout style="float: left; margin-top: 10px;">
-                    <v-spacer/>
-                    <v-icon @click="addExample()">mdi-plus</v-icon>
-                    <v-icon @click="resetExampleDialog()">mdi-refresh</v-icon>
-                    <v-btn v-if="!isGenerating" @click="startExampleGenerate()" color="primary" text>Generate Examples</v-btn>
-                    <v-btn v-if="isGenerating" @click="stopExampleGenerate()" color="primary" text>
-                        <v-progress-circular 
-                            size="15"
-                            :width="3"
-                            style="margin-right: 10px;"
-                            indeterminate
-                            color="primary"
-                        ></v-progress-circular>
-                        Stop generating
-                    </v-btn>
-                </v-layout>
+                <v-row class="ma-0 pa-0">
+                    <v-card outlined class="ma-0 pa-0 mt-2 pt-1 pb-1"
+                        style="cursor: pointer; width: 98%; text-align: center;" @click="addExample()">
+                        <v-icon style="vertical-align: middle;">mdi-plus</v-icon>
+                        <span class="ml-2" style="vertical-align: middle;">Add Row</span>
+                    </v-card>
+                </v-row>
             </v-card>
         </v-dialog>
     </div>

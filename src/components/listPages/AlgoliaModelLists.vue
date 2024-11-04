@@ -1885,7 +1885,6 @@
         position:fixed;
         top:13px;
         z-index:1;
-        width:100px;
         right:200px;
     }
     .nav-storage-list .v-list-item {
