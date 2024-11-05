@@ -31,7 +31,6 @@ class EnumerationActionsProcessor {
 
             let entities = ActionsProcessorUtils.getEntitiesForAggregate(esValue, action.ids.aggregateId)
             entities.elements[enumObject.id] = enumObject
-            ActionsProcessorUtils.addEntityPropertyToAggregateIfNotExist(esValue, action.ids.aggregateId, enumObject.name)
         })
     }
 
