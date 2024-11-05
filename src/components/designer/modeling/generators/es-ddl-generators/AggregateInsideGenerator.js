@@ -64,10 +64,11 @@ Please follow these rules.
 1. Commands must raise at least one event. Ex) CreateUser > UserCreated
 2. Even if the name of the feature passed by the user is not in English, you need to convert it to an appropriate English name and add it. Ex) 유저 업데이트 기능 -> UpdateUser, UserUpdated
 3. When adding properties to events and commands, make sure they exist in the Aggregate. If it doesn't, you can add the new property to the Aggregate via an action.
-4. When adding new properties to an aggregate, you can use native Java data types such as String, Long, Integer, etc. for aggregate properties, or you can use predefined properties: Address, Portrait, Rating, Money, Email. Other properties must be defined as enumerations or value objects in the corresponding aggregation.
+4. When adding new properties to an aggregate, you can use native Java data types such as String, Long, Integer, etc. for aggregate properties, or you can use predefined properties: Address, Portrait, Rating, Money, Email. Other properties must be defined as ValueObject or Enumeration or Entity in the corresponding aggregation.
 5. If the event to be generated additionally calls other commands. Please reference the existing event storming  information passing the name of that command and add it.
-6. When the value of a ValueObject or Enumeration is utilised by the Aggregate Root, the corresponding material type must be used, not String. Ex) String > OrderStatus
-7. Do not write comments in the output JSON object.
+6. When the value of a ValueObject or Enumeration or Entity is utilised by the Aggregate Root, the corresponding material type must be used, not String. Ex) String > OrderStatus
+7. Consider using ValueObject and Entity wherever possible.
+8. Do not write comments in the output JSON object.
 
 `
     }
@@ -80,7 +81,7 @@ The returned format should be as follows.
     "actions": [
         {
             // This attribute indicates what type of object information is being modified.
-            // Choose one from Event, Command, Aggregate, Enumeration, ValueObject.
+            // Choose one from Event, Command, Aggregate, Enumeration, ValueObject, Entity.
             "objectType": "<objectType>",
 
             // This attribute contains the parameters required for the action.
@@ -185,6 +186,8 @@ If the type of property you want to add to the aggregate does not have an approp
 # objectType: ValueObject
 - Description
 If the type of property you want to add to the aggregate does not have an appropriate default Java type, you can create a new type as an ValueObject.
+ValueObjects are immutable objects defined by their attributes rather than their identity.
+They are used to group related attributes that should be treated as a single unit.
 
 - Return format
 {
@@ -204,6 +207,28 @@ If the type of property you want to add to the aggregate does not have an approp
     }
 }
 
+# objectType: Entity
+- Description
+If the type of property you want to add to the aggregate does not have an appropriate default Java type, you can create a new type as an Entity.
+Unlike ValueObjects, Entities are mutable objects with their own identity and lifecycle.
+They represent complex domain concepts that don't qualify as Aggregates but need more flexibility than ValueObjects.
+
+- Return format
+{
+    "objectType": "Entity",
+    "args": {
+        "entityName": "<entityName>",
+        "properties": [
+            {
+                "name": "<propertyName>",
+                ["type": "<propertyType>"], // If the type is String, do not specify the type.
+                ["isKey": true], // Write only if there is a primary key.
+                ["isForeignProperty": true] // Whether it is a foreign key. Write only if this attribute references another table's attribute.
+            }
+        ],
+    }
+}
+
 `
     }
 
@@ -217,11 +242,11 @@ If the type of property you want to add to the aggregate does not have an approp
 {"name":"Order","properties":[{"name":"orderId","type":"Long"},{"name":"customerId","type":"Long"},{"name":"orderStatus","type":"OrderStatus"},{"name":"totalAmount","type":"Money"}],"enumerations":[{"name":"OrderStatus","properties":["PLACED","PAID","CANCELLED"]}],"valueObjects":[],"commands":[{"name":"PlaceOrder","api_verb":"POST","outputEvents":["OrderPlaced"]}],"events":[{"name":"OrderPlaced","outputCommands":[]}]}
 
 - Function Requirements
-Add functionality to cancel an order. When an order is cancelled, it should update the order status, and update the inventory.
+Add functionality to create an order with multiple order items and shipping information. Each order item should contain product details and quantity. Shipping information should include address and delivery preferences.
 
 [OUTPUT]
 \`\`\`json
-{"actions":[{"objectType":"Command","args":{"commandName":"CancelOrder","api_verb":"PUT","properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"cancellationReason"}],"outputEventNames":["OrderCancelled"],"actor":"user"}},{"objectType":"Event","args":{"eventName":"OrderCancelled","properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"cancellationReason"},{"name":"cancellationDate","type":"Date"}],"outputCommandNames":["UpdateInventory"]}},{"objectType":"Aggregate","args":{"properties":[{"name":"cancellationReason"},{"name":"cancellationDate","type":"Date"}]}}]}
+{"actions":[{"objectType":"Command","args":{"commandName":"CreateOrderWithItems","api_verb":"POST","properties":[{"name":"customerId","type":"Long"},{"name":"orderItems","type":"List<OrderItem>"},{"name":"shippingInfo","type":"ShippingInfo"}],"outputEventNames":["OrderCreatedWithItems"],"actor":"Customer"}},{"objectType":"Event","args":{"eventName":"OrderCreatedWithItems","properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"customerId","type":"Long"},{"name":"orderItems","type":"List<OrderItem>"},{"name":"shippingInfo","type":"ShippingInfo"},{"name":"totalAmount","type":"Money"},{"name":"orderDate","type":"Date"}],"outputCommandNames":["UpdateInventory"]}},{"objectType":"Aggregate","args":{"properties":[{"name":"shippingInfo","type":"ShippingInfo"},{"name":"orderDate","type":"Date"}]}},{"objectType":"Enumeration","args":{"enumerationName":"DeliveryPreference","properties":[{"name":"STANDARD"},{"name":"EXPRESS"},{"name":"CONTACTLESS"}]}},{"objectType":"ValueObject","args":{"valueObjectName":"ShippingInfo","properties":[{"name":"recipientName"},{"name":"address","type":"Address"},{"name":"contactNumber"},{"name":"deliveryPreference","type":"DeliveryPreference"}]}},{"objectType":"Entity","args":{"entityName":"OrderItem","properties":[{"name":"orderItemId","type":"Long","isKey":true},{"name":"productId","type":"Long","isForeignProperty":true},{"name":"quantity","type":"Integer"},{"name":"unitPrice","type":"Money"},{"name":"orderId","type":"Long","isForeignProperty":true}]}}]}
 \`\`\`
 
 `
@@ -250,6 +275,12 @@ ${description}
         let filteredAggregateValue = {
             name: summarizedAggregateValue.name,
             properties: summarizedAggregateValue.properties,
+            entities: summarizedAggregateValue.entities.map(entity => {
+                return {
+                    name: entity.name,
+                    properties: entity.properties
+                }
+            }),
             enumerations: summarizedAggregateValue.enumerations.map(enumeration => {
                 return {
                     name: enumeration.name,
@@ -377,6 +408,16 @@ ${description}
                         valueObjectId: this.__getIdByNameInAggregateRoot(action.args.valueObjectName, "ValueObject", targetAggregate) 
                     }
                     break
+                
+                case "Entity":
+                    action.ids = {
+                        boundedContextId: targetAggregate.boundedContext.id,
+                        aggregateId: targetAggregate.id,
+                        generalClassId: this.__getIdByNameInAggregateRoot(action.args.entityName, "Entity", targetAggregate) 
+                    }
+                    action.objectType = "GeneralClass"
+                    action.args.generalClassName = action.args.entityName
+                    break
             }
         }
 
@@ -419,6 +460,8 @@ ${description}
                 return `enum-${name}`
             case "ValueObject":
                 return `vo-${name}`
+            case "Entity":
+                return `gc-${name}`
         }
     }
 
@@ -446,6 +489,7 @@ ${description}
                 case "Aggregate":
                 case "Enumeration":
                 case "ValueObject":
+                case "Entity":
                     if(action.ids && action.ids.aggregateId && !elementModifyInfo[action.ids.aggregateId])
                         elementModifyInfo[action.ids.aggregateId] = createdESValue.elements[action.ids.aggregateId]
                     break

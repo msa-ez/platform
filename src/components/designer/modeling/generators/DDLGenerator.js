@@ -88,7 +88,7 @@ The format must be as follows:
                         }
                     ],
                     "commands": [
-                    // Creation must be created.
+                    // Creation, Update, Delete must be created but don't need to properties.
                         {
                             "name": "Command Name",
                             "${this.originalLanguage}Name: "Command name in ${this.originalLanguage}", 
@@ -101,7 +101,7 @@ The format must be as follows:
                                 }
                             ],
                             `:``}
-                            "api_verb": "POST" | "DELETE" | "PUT",
+                            "api_verb": "POST" | "DELETE" | "PATCH",
                             "isCreation": true | false, //true if this command creates new instance of the aggregate
                             "actor": "Actor Name",
                             "outputEvents": ["Event Name"]

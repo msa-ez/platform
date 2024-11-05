@@ -103,6 +103,7 @@ class AggregateGenerator extends JsonAIGenerator {
                                 }
                             ],
                             "commands": [
+                            // Creation, Update, Delete must be created but don't need to properties.
                                 {
                                     "name": "Command Name",
                                     "${this.originalLanguage.toLowerCase()}Name: "Name in ${this.originalLanguage.toLowerCase()}", 
@@ -112,7 +113,7 @@ class AggregateGenerator extends JsonAIGenerator {
                                             "type": "Property Type"
                                         }
                                     ],
-                                    "api_verb": "POST" | "DELETE" | "PUT",
+                                    "api_verb": "POST" | "DELETE" | "PATCH",
                                     "api_uri": "uri",
                                     "isCreation": true | false, //true if this command creates new instance of the aggregate
                                     "actor": "Actor Name",

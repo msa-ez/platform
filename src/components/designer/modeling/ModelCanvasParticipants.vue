@@ -227,6 +227,7 @@
         mounted() {
             var me = this
 
+            this.all = this.checkPublic
             me.$EventBus.$on('inviteCallBack', function (msgObj) {
                 me.callbackMsg = msgObj.msg
             })
