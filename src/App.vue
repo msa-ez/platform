@@ -119,255 +119,314 @@
                     <div :style="isForeign ? { marginTop: '-2px' } : { marginTop: '2px' }">{{$t('making.title')}}</div>
                     </v-btn>
                 </template>
-                <v-card style="padding:20px; height:85vh; overflow:auto;">
-                    <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('making.title')}}</div>
+                <v-card style="height:85vh; overflow:auto;">
+                    <!-- <div style="font-size:24px; font-weight: 700; text-align: center; margin:5px 0px;">{{$t('making.title')}}</div> -->
 
-                    <!-- 만들기 설계(design) -->
-                    <div class="making-sub-title">{{$t('making.design')}}</div>
-                    <v-row
-                        style="margin:0px;"
-                    >
-                        <v-col class="making-col"
-                            v-for="(item,index) in design"
-                            :key="index"
-                            lg="4"
-                            md="4"
-                            sm="6"
-                            xs="12"
-                        >
-                            <v-card
-                                class="mx-auto"
-                                outlined
-                                style="padding:15px; height:100%; position: relative;"
+                    <v-tabs v-model="activeTab" grow centered>
+                        <v-tab>Stable</v-tab>
+                        <v-tab>Beta</v-tab>
+                    </v-tabs>
+
+                    <v-tabs-items v-model="activeTab">
+                        <!-- Stable Tab -->
+                        <v-tab-item>
+                            <div class="making-sub-title">{{$t('making.design')}}</div>
+                            <v-row style="margin:0px;">
+                                <v-col class="making-col"
+                                    v-for="(item, index) in design.filter(item => item.tagStatus === 'Stable')"
+                                    :key="index"
+                                    lg="4"
+                                    md="4"
+                                    sm="6"
+                                    xs="12"
+                                >
+                                    <!-- 만들기 설계(design) -->
+                                    <v-card
+                                        class="mx-auto"
+                                        outlined
+                                        style="padding:15px; height:100%; position: relative;"
+                                    >
+                                        <v-row class="ma-0">
+                                            <div style="font-weight: 500; font-size:18px; color:black;">
+                                                {{$t(item.title)}}
+                                            </div>
+                                            <v-spacer></v-spacer>
+                                            <v-chip v-if="item.tagStatus === 'Stable'" class="gs-stable-chip">
+                                                {{ item.tagStatus }}
+                                            </v-chip>
+                                            <v-chip v-else outlined color="orange">{{ item.tagStatus }}</v-chip>
+                                        </v-row>
+                                        <v-row>
+                                            <v-col cols="12">
+                                                <v-img @click.native="moveToModel(item.type)"
+                                                    class="cp-create-model-img"
+                                                    :src="item.image"
+                                                    style="height:150px; margin:10px 0px; cursor:pointer;"
+                                                ></v-img>
+                                            </v-col>
+                                        </v-row>
+                                        <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
+                                        <v-card-actions style="position: absolute; right:0px; bottom:0px;">
+                                            <v-spacer></v-spacer>
+                                            <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                            <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                            <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                                @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
+                                            </v-btn>
+                                        </v-card-actions>
+                                    </v-card>
+                                </v-col>
+                            </v-row>
+                        </v-tab-item>
+
+                        <!-- Beta Tab -->
+                        <v-tab-item>
+                            <div class="making-sub-title">{{$t('making.design')}}</div>
+                            <v-row style="margin:0px;">
+                                <v-col class="making-col"
+                                    v-for="(item, index) in design.filter(item => item.tagStatus === 'Beta')"
+                                    :key="index"
+                                    lg="4"
+                                    md="4"
+                                    sm="6"
+                                    xs="12"
+                                >
+                                    <!-- 만들기 설계(design) -->
+                                    <v-card
+                                        class="mx-auto"
+                                        outlined
+                                        style="padding:15px; height:100%; position: relative;"
+                                    >
+                                        <v-row class="ma-0">
+                                            <div style="font-weight: 500; font-size:18px; color:black;">
+                                                {{$t(item.title)}}
+                                            </div>
+                                            <v-spacer></v-spacer>
+                                            <v-chip v-if="item.tagStatus === 'Stable'" class="gs-stable-chip">
+                                                {{ item.tagStatus }}
+                                            </v-chip>
+                                            <v-chip v-else outlined color="orange">{{ item.tagStatus }}</v-chip>
+                                        </v-row>
+                                        <v-row>
+                                            <v-col cols="12">
+                                                <v-img @click.native="moveToModel(item.type)"
+                                                    class="cp-create-model-img"
+                                                    :src="item.image"
+                                                    style="height:150px; margin:10px 0px; cursor:pointer;"
+                                                ></v-img>
+                                            </v-col>
+                                        </v-row>
+                                        <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
+                                        <v-card-actions style="position: absolute; right:0px; bottom:0px;">
+                                            <v-spacer></v-spacer>
+                                            <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                            <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                            <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                                @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
+                                            </v-btn>
+                                        </v-card-actions>
+                                    </v-card>
+                                </v-col>
+                            </v-row>
+
+                            <!-- 만들기 기획(planning) -->
+                            <div class="making-sub-title">{{$t('making.planning')}}</div>
+                            <v-row
+                                style="margin:0px;"
                             >
-                                <v-row class="ma-0">
-                                    <div style="font-weight: 500; font-size:18px; color:black;">
-                                        {{$t(item.title)}}
-                                    </div>
-                                    <v-spacer></v-spacer>
-                                    <v-chip v-if="item.tagStatus === 'Stable'" class="gs-stable-chip">
-                                        {{ item.tagStatus }}
-                                    </v-chip>
-                                    <v-chip v-else outlined color="orange">{{ item.tagStatus }}</v-chip>
-                                </v-row>
-                                <v-row>
-                                    <v-col cols="12">
-                                        <v-img @click.native="moveToModel(item.type)"
-                                            class="cp-create-model-img"
-                                            :src="item.image"
-                                            style="height:150px; margin:10px 0px; cursor:pointer;"
-                                        ></v-img>
-                                    </v-col>
-                                </v-row>
-                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
-                                <v-card-actions style="position: absolute; right:0px; bottom:0px;">
-                                    <v-spacer></v-spacer>
-                                    <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
-                                    <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
-                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                        @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
-                                    </v-btn>
-                                </v-card-actions>
-                            </v-card>
-                        </v-col>
-                    </v-row>
+                                <v-col class="making-col"
+                                    v-for="(item,index) in planning"
+                                    :key="index"
+                                    lg="3"
+                                    md="3"
+                                    sm="6"
+                                    xs="12"
+                                >
+                                    <v-card
+                                        class="mx-auto"
+                                        outlined
+                                        style="padding:15px; height:100%; position: relative;"
+                                    >
+                                        <v-row class="ma-0">
+                                            <div style="font-weight: 500; font-size:18px; color:black;">
+                                                {{$t(item.title)}}
+                                            </div>
+                                            <v-spacer></v-spacer>
+                                            <v-chip v-if="item.tagStatus === 'Stable'" class="gs-stable-chip">
+                                                {{ item.tagStatus }}
+                                            </v-chip>
+                                            <v-chip v-else outlined color="orange">{{ item.tagStatus }}</v-chip>
+                                        </v-row>
+                                        <v-row>
+                                            <v-col cols="12">
+                                                <v-img @click.native="moveToModel(item.type)"
+                                                    :src="item.image"
+                                                    style="height:150px; margin:10px 0px; cursor:pointer;"
+                                                ></v-img>
+                                            </v-col>
+                                        </v-row>
+                                        <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
+                                        <v-card-actions style="position: absolute; right:0px; bottom:0px;">
+                                            <v-spacer></v-spacer>
+                                            <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                            <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                            <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                                @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
+                                            </v-btn>
+                                        </v-card-actions>
+                                    </v-card>
+                                </v-col>
+                            </v-row>
 
-                    <!-- 만들기 기획(planning) -->
-                    <div class="making-sub-title">{{$t('making.planning')}}</div>
-                    <v-row
-                        style="margin:0px;"
-                    >
-                        <v-col class="making-col"
-                            v-for="(item,index) in planning"
-                            :key="index"
-                            lg="3"
-                            md="3"
-                            sm="6"
-                            xs="12"
-                        >
-                            <v-card
-                                class="mx-auto"
-                                outlined
-                                style="padding:15px; height:100%; position: relative;"
+                            <!-- 마이그레이션  -->
+                            <div class="making-sub-title">{{$t('making.migration')}}</div>
+                            <v-row
+                                style="margin:0px;"
                             >
-                                <v-row class="ma-0">
-                                    <div style="font-weight: 500; font-size:18px; color:black;">
-                                        {{$t(item.title)}}
-                                    </div>
-                                    <v-spacer></v-spacer>
-                                    <v-chip v-if="item.tagStatus === 'Stable'" class="gs-stable-chip">
-                                        {{ item.tagStatus }}
-                                    </v-chip>
-                                    <v-chip v-else outlined color="orange">{{ item.tagStatus }}</v-chip>
-                                </v-row>
-                                <v-row>
-                                    <v-col cols="12">
-                                        <v-img @click.native="moveToModel(item.type)"
-                                            :src="item.image"
-                                            style="height:150px; margin:10px 0px; cursor:pointer;"
-                                        ></v-img>
-                                    </v-col>
-                                </v-row>
-                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
-                                <v-card-actions style="position: absolute; right:0px; bottom:0px;">
-                                    <v-spacer></v-spacer>
-                                    <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
-                                    <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
-                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                        @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
-                                    </v-btn>
-                                </v-card-actions>
-                            </v-card>
-                        </v-col>
-                    </v-row>
+                                <v-col class="making-col"
+                                    v-for="(item,index) in migration"
+                                    :key="index"
+                                    lg="4"
+                                    md="4"
+                                    sm="6"
+                                    xs="12"
+                                >
+                                    <v-card
+                                        class="mx-auto"
+                                        outlined
+                                        style="padding:15px; height:100%; position: relative;"
+                                    >
+                                        <v-row class="ma-0">
+                                            <div style="font-weight: 500; font-size:18px; color:black;">
+                                                {{$t(item.title)}}
+                                            </div>
+                                            <v-spacer></v-spacer>
+                                            <v-chip v-if="item.tagStatus === 'Stable'" class="gs-stable-chip">
+                                                {{ item.tagStatus }}
+                                            </v-chip>
+                                            <v-chip v-else outlined color="orange">{{ item.tagStatus }}</v-chip>
+                                        </v-row>
+                                        <v-row>
+                                            <v-col cols="12">
+                                                <v-img @click.native="moveToModel(item.type)"
+                                                    :src="item.image"
+                                                    style="height:150px; margin:10px 0px; cursor:pointer;"
+                                                ></v-img>
+                                            </v-col>
+                                        </v-row>
+                                        <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
+                                        <v-card-actions style="position: absolute; right:0px; bottom:0px;">
+                                            <v-spacer></v-spacer>
+                                            <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                            <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                            <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                                @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
+                                            </v-btn>
+                                        </v-card-actions>
+                                    </v-card>
+                                </v-col>
+                            </v-row>
 
-                    <!-- 마이그레이션  -->
-                    <div class="making-sub-title">{{$t('making.migration')}}</div>
-                    <v-row
-                        style="margin:0px;"
-                    >
-                        <v-col class="making-col"
-                            v-for="(item,index) in migration"
-                            :key="index"
-                            lg="4"
-                            md="4"
-                            sm="6"
-                            xs="12"
-                        >
-                            <v-card
-                                class="mx-auto"
-                                outlined
-                                style="padding:15px; height:100%; position: relative;"
+
+                            <!-- 만들기 개발(development) -->
+                            <div class="making-sub-title">{{$t('making.operation')}}</div>
+                            <v-row
+                                style="margin:0px;"
                             >
-                                <v-row class="ma-0">
-                                    <div style="font-weight: 500; font-size:18px; color:black;">
-                                        {{$t(item.title)}}
-                                    </div>
-                                    <v-spacer></v-spacer>
-                                    <v-chip v-if="item.tagStatus === 'Stable'" class="gs-stable-chip">
-                                        {{ item.tagStatus }}
-                                    </v-chip>
-                                    <v-chip v-else outlined color="orange">{{ item.tagStatus }}</v-chip>
-                                </v-row>
-                                <v-row>
-                                    <v-col cols="12">
-                                        <v-img @click.native="moveToModel(item.type)"
-                                            :src="item.image"
-                                            style="height:150px; margin:10px 0px; cursor:pointer;"
-                                        ></v-img>
-                                    </v-col>
-                                </v-row>
-                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
-                                <v-card-actions style="position: absolute; right:0px; bottom:0px;">
-                                    <v-spacer></v-spacer>
-                                    <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
-                                    <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
-                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                        @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
-                                    </v-btn>
-                                </v-card-actions>
-                            </v-card>
-                        </v-col>
-                    </v-row>
+                                <v-col class="making-col"
+                                    v-for="(item,index) in development"
+                                    :key="index"
+                                    lg="4"
+                                    md="4"
+                                    sm="6"
+                                    xs="12"
+                                >
+                                    <v-card
+                                        class="mx-auto"
+                                        outlined
+                                        style="padding:15px; height:100%; position: relative;"
+                                    >
+                                        <v-row class="ma-0">
+                                            <div style="font-weight: 500; font-size:18px; color:black;">
+                                                {{$t(item.title)}}
+                                            </div>
+                                            <v-spacer></v-spacer>
+                                            <v-chip v-if="item.tagStatus === 'Stable'" class="gs-stable-chip">
+                                                {{ item.tagStatus }}
+                                            </v-chip>
+                                            <v-chip v-else outlined color="orange">{{ item.tagStatus }}</v-chip>
+                                        </v-row>
+                                        <v-row>
+                                            <v-col cols="12">
+                                                <v-img @click.native="moveToModel(item.type)"
+                                                    :src="item.image"
+                                                    style="height:150px; margin:10px 0px; cursor:pointer;"
+                                                ></v-img>
+                                            </v-col>
+                                        </v-row>
+                                        <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
+                                        <v-card-actions style="position: absolute; right:0px; bottom:0px;">
+                                            <v-spacer></v-spacer>
+                                            <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                            <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                            <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                                @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
+                                            </v-btn>
+                                        </v-card-actions>
+                                    </v-card>
+                                </v-col>
+                            </v-row>
 
-
-                    <!-- 만들기 개발(development) -->
-                    <div class="making-sub-title">{{$t('making.operation')}}</div>
-                    <v-row
-                        style="margin:0px;"
-                    >
-                        <v-col class="making-col"
-                            v-for="(item,index) in development"
-                            :key="index"
-                            lg="4"
-                            md="4"
-                            sm="6"
-                            xs="12"
-                        >
-                            <v-card
-                                class="mx-auto"
-                                outlined
-                                style="padding:15px; height:100%; position: relative;"
+                            <!-- 만들기 프로젝트(project) -->
+                            <div class="making-sub-title">{{$t('making.project')}}</div>
+                            <v-row
+                                style="margin:0px;"
                             >
-                                <v-row class="ma-0">
-                                    <div style="font-weight: 500; font-size:18px; color:black;">
-                                        {{$t(item.title)}}
-                                    </div>
-                                    <v-spacer></v-spacer>
-                                    <v-chip v-if="item.tagStatus === 'Stable'" class="gs-stable-chip">
-                                        {{ item.tagStatus }}
-                                    </v-chip>
-                                    <v-chip v-else outlined color="orange">{{ item.tagStatus }}</v-chip>
-                                </v-row>
-                                <v-row>
-                                    <v-col cols="12">
-                                        <v-img @click.native="moveToModel(item.type)"
-                                            :src="item.image"
-                                            style="height:150px; margin:10px 0px; cursor:pointer;"
-                                        ></v-img>
-                                    </v-col>
-                                </v-row>
-                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
-                                <v-card-actions style="position: absolute; right:0px; bottom:0px;">
-                                    <v-spacer></v-spacer>
-                                    <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
-                                    <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
-                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                        @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
-                                    </v-btn>
-                                </v-card-actions>
-                            </v-card>
-                        </v-col>
-                    </v-row>
-
-                    <!-- 만들기 프로젝트(project) -->
-                    <div class="making-sub-title">{{$t('making.project')}}</div>
-                    <v-row
-                        style="margin:0px;"
-                    >
-                        <v-col class="making-col"
-                            v-for="(item,index) in makingProject"
-                            :key="index"
-                            lg="4"
-                            md="4"
-                            sm="6"
-                            xs="12"
-                        >
-                            <v-card
-                                class="mx-auto"
-                                outlined
-                                style="padding:15px; height:100%; position: relative;"
-                            >
-                                <v-row class="ma-0">
-                                    <div style="font-weight: 500; font-size:18px; color:black;">
-                                        {{$t(item.title)}}
-                                    </div>
-                                    <v-spacer></v-spacer>
-                                    <v-chip v-if="item.tagStatus === 'Stable'" class="gs-stable-chip">
-                                        {{ item.tagStatus }}
-                                    </v-chip>
-                                    <v-chip v-else outlined color="orange">{{ item.tagStatus }}</v-chip>
-                                </v-row>
-                                <v-row>
-                                    <v-col cols="12">
-                                        <v-img @click.native="moveToModel(item.type)"
-                                            :src="item.image"
-                                            style="height:150px; margin:10px 0px; cursor:pointer;"
-                                        ></v-img>
-                                    </v-col>
-                                </v-row>
-                                <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
-                                <v-card-actions style="position: absolute; right:0px; bottom:0px;">
-                                    <v-spacer></v-spacer>
-                                    <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
-                                    <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
-                                    <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
-                                        @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
-                                    </v-btn>
-                                </v-card-actions>
-                            </v-card>
-                        </v-col>
-                    </v-row>
+                                <v-col class="making-col"
+                                    v-for="(item,index) in makingProject"
+                                    :key="index"
+                                    lg="4"
+                                    md="4"
+                                    sm="6"
+                                    xs="12"
+                                >
+                                    <v-card
+                                        class="mx-auto"
+                                        outlined
+                                        style="padding:15px; height:100%; position: relative;"
+                                    >
+                                        <v-row class="ma-0">
+                                            <div style="font-weight: 500; font-size:18px; color:black;">
+                                                {{$t(item.title)}}
+                                            </div>
+                                            <v-spacer></v-spacer>
+                                            <v-chip v-if="item.tagStatus === 'Stable'" class="gs-stable-chip">
+                                                {{ item.tagStatus }}
+                                            </v-chip>
+                                            <v-chip v-else outlined color="orange">{{ item.tagStatus }}</v-chip>
+                                        </v-row>
+                                        <v-row>
+                                            <v-col cols="12">
+                                                <v-img @click.native="moveToModel(item.type)"
+                                                    :src="item.image"
+                                                    style="height:150px; margin:10px 0px; cursor:pointer;"
+                                                ></v-img>
+                                            </v-col>
+                                        </v-row>
+                                        <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
+                                        <v-card-actions style="position: absolute; right:0px; bottom:0px;">
+                                            <v-spacer></v-spacer>
+                                            <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                            <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                            <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                                @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
+                                            </v-btn>
+                                        </v-card-actions>
+                                    </v-card>
+                                </v-col>
+                            </v-row>
+                        </v-tab-item>
+                    </v-tabs-items>
                 </v-card>
             </v-dialog>
 
@@ -941,6 +1000,7 @@
                     ],
                 
             },
+            activeTab: 0,
             isDragging: false,
             startX: 0,
             startY: 0,
