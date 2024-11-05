@@ -18,13 +18,13 @@ class GeneralClassActionsProcessor {
 
     
     static _createGeneralClass(action, callbacks) {
-        callbacks.afterAllObjectAppliedCallBacks.push((esValue) => {
-            const generalClass = GeneralClassActionsProcessor.__getGeneralClassBase(
-                action.args.generalClassName, 
-                GeneralClassActionsProcessor.__getFileDescriptors(action.args.properties),
-                0, 0, action.ids.generalClassId
-            )
+        const generalClass = GeneralClassActionsProcessor.__getGeneralClassBase(
+            action.args.generalClassName, 
+            GeneralClassActionsProcessor.__getFileDescriptors(action.args.properties),
+            0, 0, action.ids.generalClassId
+        )
 
+        callbacks.afterAllObjectAppliedCallBacks.push((esValue) => {
             const VALID_POSITION = GeneralClassActionsProcessor.__getValidPosition(esValue, action)
             generalClass.elementView.x = VALID_POSITION.x
             generalClass.elementView.y = VALID_POSITION.y
@@ -32,6 +32,8 @@ class GeneralClassActionsProcessor {
             let entities = ActionsProcessorUtils.getEntitiesForAggregate(esValue, action.ids.aggregateId)
             entities.elements[generalClass.id] = generalClass
         })
+
+        GeneralClassActionsProcessor.__makeRelations(action, generalClass, callbacks)
     }
 
     static __getGeneralClassBase (name, fieldDescriptors, x, y, elementUUID) {
@@ -86,6 +88,8 @@ class GeneralClassActionsProcessor {
         if(action.args.properties) {
             targetGeneralClass.fieldDescriptors = targetGeneralClass.fieldDescriptors.concat(GeneralClassActionsProcessor.__getFileDescriptors(action.args.properties))
             targetAggregate.aggregateRoot.entities.elements[action.ids.generalClassId] = {...targetGeneralClass}
+
+            GeneralClassActionsProcessor.__makeRelations(action, targetGeneralClass, callbacks)
         }
     }
 
@@ -105,6 +109,48 @@ class GeneralClassActionsProcessor {
                 "isLob": false,
                 "isCorrelationKey": false,
                 "label": "- " + property.name + ": " + (property.type ? property.type : "String")
+            }
+        })
+    }
+
+    static __makeRelations(action, generalClass, callbacks) {
+        callbacks.afterAllRelationAppliedCallBacks.push((esValue) => {
+            let entities = ActionsProcessorUtils.getEntitiesForAggregate(esValue, action.ids.aggregateId)
+            const sourceElement = entities.elements[generalClass.id]
+            if(!sourceElement) return
+
+            for(const fieldDescriptor of sourceElement.fieldDescriptors) {
+                let matchedElement = null
+                for(const element of Object.values(entities.elements).filter(element => element)) {
+                    if(fieldDescriptor.className === element.name) {
+                        matchedElement = element
+                        break
+                    }
+                }
+
+                let isRelationAlreadyExists = false
+                for(const relation of Object.values(entities.relations).filter(relation => relation)) {
+                    if(relation.from === sourceElement.id && relation.to === matchedElement.id) {
+                        isRelationAlreadyExists = true
+                        break
+                    }
+                }
+                if(isRelationAlreadyExists) continue
+
+                if(matchedElement) {
+                    const ddlRelationObject = ActionsProcessorUtils.getDDLRelationObjectBase(sourceElement, matchedElement)
+
+                    if(!sourceElement.relations) sourceElement.relations = []
+                    sourceElement.relations.push(ddlRelationObject.id)
+
+                    if(!matchedElement.relations) matchedElement.relations = []
+                    matchedElement.relations.push(ddlRelationObject.id)
+
+                    entities.relations[ddlRelationObject.id] = ddlRelationObject
+
+                    
+                    sourceElement.fieldDescriptors = sourceElement.fieldDescriptors.filter(fieldDescriptor => fieldDescriptor.className !== matchedElement.name)
+                }
             }
         })
     }

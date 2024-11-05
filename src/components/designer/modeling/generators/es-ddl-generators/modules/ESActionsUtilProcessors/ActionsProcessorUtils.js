@@ -225,6 +225,34 @@ class ActionsProcessorUtils {
             "targetMultiplicity": "1",
         }
     }
+
+    static getDDLRelationObjectBase(fromObject, toObject) {
+        const elementUUIDtoUse = GlobalPromptUtil.getUUID()
+        const FROM_OBJECT_ID = fromObject.id ? fromObject.id : fromObject.elementView.id
+        const TO_OBJECT_ID = toObject.id ? toObject.id : toObject.elementView.id
+        return {
+            "name": toObject.name,
+            "id": elementUUIDtoUse,
+            "_type": "org.uengine.uml.model.Relation",
+            "sourceElement": fromObject,
+            "targetElement": toObject,
+            "from": FROM_OBJECT_ID,
+            "to": TO_OBJECT_ID,
+            "selected": false,
+            "relationView": {
+                "id": elementUUIDtoUse,
+                "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
+                "from": FROM_OBJECT_ID,
+                "to": TO_OBJECT_ID,
+                "needReconnect": true
+            },
+            "sourceMultiplicity": "1",
+            "targetMultiplicity": "1",
+            "relationType": "Association",
+            "fromLabel": "",
+            "toLabel": ""
+        }
+    }
 }
 
 module.exports = ActionsProcessorUtils
