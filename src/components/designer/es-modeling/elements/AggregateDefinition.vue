@@ -489,7 +489,7 @@
             async onGenerationFinished(model){
                 this.generateDone = true;
                 this.$emit('update:generateDone', true);
-                this.$EventBus.$emit('createAggregate', model, this.value, this.originModel);
+                this.$EventBus.$emit('createAggregate', {from: "onGenerationFinished", ...model}, this.value, this.originModel);
                 this.canvas.setIsPauseQueue(false);
             },
             generate(){

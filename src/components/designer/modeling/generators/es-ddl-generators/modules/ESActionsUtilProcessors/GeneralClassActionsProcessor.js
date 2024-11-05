@@ -9,6 +9,10 @@ class GeneralClassActionsProcessor {
             case "create":
                 GeneralClassActionsProcessor._createGeneralClass(action, callbacks)
                 break
+
+            case "update":
+                GeneralClassActionsProcessor._updateGeneralClass(action, esValue, callbacks)
+                break
         }
     }
 
@@ -27,8 +31,6 @@ class GeneralClassActionsProcessor {
             
             let entities = ActionsProcessorUtils.getEntitiesForAggregate(esValue, action.ids.aggregateId)
             entities.elements[generalClass.id] = generalClass
-            
-            ActionsProcessorUtils.addEntityPropertyToAggregateIfNotExist(esValue, action.ids.aggregateId, generalClass.name)
         })
     }
 
@@ -71,6 +73,22 @@ class GeneralClassActionsProcessor {
         const relatedGeneralClasses = ActionsProcessorUtils.getRelatedGeneralClasses(esValue, action)
         return {x: 700 + (relatedGeneralClasses.length * 250), y: 760}
     }
+
+
+    static _updateGeneralClass(action, esValue, callbacks) {
+        const targetAggregate = esValue.elements[action.ids.aggregateId]
+        if(!targetAggregate || !targetAggregate.aggregateRoot || 
+           !targetAggregate.aggregateRoot.entities || !targetAggregate.aggregateRoot.entities.elements) return
+
+        const targetGeneralClass = targetAggregate.aggregateRoot.entities.elements[action.ids.generalClassId]
+        if(!targetGeneralClass) return
+        
+        if(action.args.properties) {
+            targetGeneralClass.fieldDescriptors = targetGeneralClass.fieldDescriptors.concat(GeneralClassActionsProcessor.__getFileDescriptors(action.args.properties))
+            targetAggregate.aggregateRoot.entities.elements[action.ids.generalClassId] = {...targetGeneralClass}
+        }
+    }
+
 
     static __getFileDescriptors(actionProperties) {
         return actionProperties.filter(property => !property.isForeignProperty).map((property) => {

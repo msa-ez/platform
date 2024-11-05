@@ -39,6 +39,22 @@ The approximate structure is as follows.
                         ["isKey": true] // Indicates whether it's a primary key. Only one of the properties should have isKey set to true.
                     }
                 ],
+
+                // Definitions of Entity objects used for the Aggregate Root properties.
+                "entities": [
+                    {
+                        "id": "<entityId>",
+                        "name": "<entityName>",
+                        "properties": [
+                            {
+                                "name": "<propertyName>",
+                                ["type": "<propertyType>"], // If the type is String, do not specify the type.
+                                ["isKey": true],
+                                ["isForeignProperty": true] // Indicates whether it's a foreign key. If this property references a property in another table, this value should be set to true.
+                            }
+                        ]
+                    }
+                ],
                 
                 // Definitions of Enum objects used for the Aggregate Root properties.
                 "enumerations": [
@@ -246,11 +262,43 @@ The approximate structure is as follows.
         summarizedAggregateValue.id = ESValueSummarizeUtil.__getElementIdSafely(aggregate)
         summarizedAggregateValue.name = aggregate.name
         summarizedAggregateValue.properties = getAggregateProperties(aggregate)
+        summarizedAggregateValue.entities = ESValueSummarizeUtil.getSummarizedEntityValue(aggregate)
         summarizedAggregateValue.enumerations = ESValueSummarizeUtil.getSummarizedEnumerationValue(aggregate)
         summarizedAggregateValue.valueObjects = ESValueSummarizeUtil.getSummarizedValueObjectValue(aggregate)
         summarizedAggregateValue.commands = ESValueSummarizeUtil.getSummarizedCommandValue(esValue, boundedContext, aggregate)
         summarizedAggregateValue.events = ESValueSummarizeUtil.getSummarizedEventValue(esValue, boundedContext, aggregate)
         return summarizedAggregateValue
+    }
+
+    static getSummarizedEntityValue(aggregate) {
+        const getEntityInfo = (entity) => {
+            let entityInfo = {}
+            entityInfo.id = ESValueSummarizeUtil.__getElementIdSafely(entity)
+            entityInfo.name = entity.name
+            entityInfo.properties = entity.fieldDescriptors.map(fieldDescriptor => {
+                let property = {
+                    name: fieldDescriptor.name
+                }
+
+                if(!(fieldDescriptor.className.toLowerCase().includes("string"))) 
+                    property.type = fieldDescriptor.className
+                if(fieldDescriptor.isKey) 
+                    property.isKey = true
+                if(fieldDescriptor.className.toLowerCase() === aggregate.name.toLowerCase()) 
+                    property.isForeignProperty = true
+                
+                return property
+            })
+            return entityInfo
+        }
+
+        if(!aggregate.aggregateRoot || !aggregate.aggregateRoot.entities || !aggregate.aggregateRoot.entities.elements) return []
+
+        let summarizedEntityValue = []
+        for(let element of Object.values(aggregate.aggregateRoot.entities.elements))
+            if(element && !element.isAggregateRoot && (element._type === 'org.uengine.uml.model.Class'))
+                summarizedEntityValue.push(getEntityInfo(element))
+        return summarizedEntityValue
     }
 
     static getSummarizedEnumerationValue(aggregate) {

@@ -3,7 +3,7 @@
         <v-container style="max-width: 1500px;">
             <slot name="body">
                 <div>
-                    <div class="main-nav-tabs-box">
+                    <div :class="isForeign ? 'isForeign-main-nav-tabs-box' : 'main-nav-tabs-box' ">
                         <v-tabs class="main-nav-tabs" background-color="transparent" show-arrows color="none">
                             <v-tab to="/"
                                 class="main-nav-tab main-nav-tab-home"
@@ -36,6 +36,7 @@
                             </v-tab> -->
                             <v-icon @click="searchOpen = !searchOpen"
                                 class="main-nav-tab"
+                                style="margin-left:10px;"
                             >mdi-magnify
                             </v-icon>
                         </v-tabs>
@@ -43,31 +44,35 @@
                     <v-hover v-slot="{ hover }">
                         <v-list-group class="nav-storage-list"
                             :value="hover"
-                            style="right:170px;"
                             :append-icon="null"
+                            :class="isForeign ? 'isForeign-nav-storage-list' : 'isForeign-not-nav-storage-list'"
                         >
                             <template v-slot:activator>
                                 <v-list-item-title style="margin:5px 0px 0px 10px; font-weight: 700;">
                                     <div style="display: flex;">
-                                        <Icon icon="material-symbols:home-storage" width="26" height="26" style="margin-right:3px;" />
-                                        <div class="cp-storage" :class="isForeign ? 'isForeign-storage-main-list-text' : 'isNotForeign-storage-main-list-text'" style="margin-top:3px; font-size:14px;">{{$t('mainNav.Storage')}}</div>
+                                        <Icon icon="material-symbols:home-storage" width="26" height="26" style="margin-right:5px;" />
+                                        <div class="cp-storage" :class="isForeign ? 'isForeign-storage-main-list-text' : 'isNotForeign-storage-main-list-text'">{{$t('mainNav.Storage')}}</div>
                                     </div>
                                 </v-list-item-title>
                             </template>
-                        
-                            <v-list-item
-                                v-for="(tabObj, tabIndex) in filterTabLists"
-                                v-if="tabObj.id !== 'home' && tabObj.show"
-                                :key="tabObj.id"
-                                link
-                                @click="tabId = tabObj.id"
+                            <v-card
+                                class="mx-auto pt-2 pb-2"
+                                max-width="300"
                             >
-                                <v-list-item-title style="margin-top:-4px;">{{ tabObj.display }}</v-list-item-title>
-                                <v-avatar v-if="tabIndex > 0 && tabObj.totalCount != null" color="green lighten-5" size="30"
-                                        style="font-size:10px;">
-                                    {{ tabObj.totalCount == null ? '...' : (tabObj.totalCount == 0 ? '0' : tabObj.totalCount) }}
-                                </v-avatar>
-                            </v-list-item>
+                                <v-list-item
+                                    v-for="(tabObj, tabIndex) in filterTabLists"
+                                    v-if="tabObj.id !== 'home' && tabObj.show"
+                                    :key="tabObj.id"
+                                    link
+                                    @click="tabId = tabObj.id"
+                                >
+                                    <v-list-item-title style="margin-top:2px;">{{ tabObj.display }}</v-list-item-title>
+                                    <v-avatar v-if="tabIndex > 0 && tabObj.totalCount != null" color="green lighten-5" size="30"
+                                            style="font-size:10px;">
+                                        {{ tabObj.totalCount == null ? '...' : (tabObj.totalCount == 0 ? '0' : tabObj.totalCount) }}
+                                    </v-avatar>
+                                </v-list-item>
+                            </v-card>
                         </v-list-group>
                     </v-hover>
 
@@ -226,20 +231,25 @@
                     <v-alert
                             v-if="searchOpen"
                             elevation="2"
-                            style="position:fixed; top:50px; z-index:2; height:70px; width:40%; left: 50%; transform: translate(-50%, 0%);"
+                            style="position:fixed; top:50px; z-index:2; width:40%; left: 50%; transform: translate(-50%, 0%);"
+                            class="ma-0 pa-2"
                     >
                         <div>
-                            <v-row style="align-items: baseline;">
+                            <v-row class="ma-0 pa-0">
+                                <v-spacer></v-spacer>
+                                <v-icon @click="searchClose(true)" :size="16">mdi-close</v-icon>
+                            </v-row>
+                            <v-row class="ma-0 pa-0" style="align-items: baseline;">
                                 <v-menu offset-y>
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-chip
-                                                :color="selectedMode.color"
-                                                dark
-                                                style="margin-right: 10px;"
-                                                v-bind="attrs"
-                                                v-on="on"
+                                            :color="selectedMode.color"
+                                            outlined
+                                            style="margin-right: 10px;"
+                                            v-bind="attrs"
+                                            v-on="on"
                                         >
-                                            {{selectedMode.type}}
+                                            {{selectedMode.display}}
                                         </v-chip>
                                     </template>
                                     <v-list>
@@ -261,10 +271,6 @@
                                         hide-details
                                         dense
                                 ></v-text-field>
-                                <v-icon @click="searchClose(true)" style="width:26px; height:26px; margin-top: 13px;">mdi-close</v-icon>
-                            </v-row>
-                            <v-row>
-                                <v-btn @click="searchClose()" block text style="height: 25px"> <v-icon>mdi-chevron-up</v-icon> </v-btn>
                             </v-row>
                         </div>
                     </v-alert>
@@ -1846,7 +1852,17 @@
         max-width:60%;
         min-width:10%;
         z-index:1;
-        left: 50%;
+        left: 46%;
+        transform: translate(-50%, 0%);
+    }
+    .isForeign-main-nav-tabs-box {
+        margin-top:-78px;
+        margin-bottom:10px;
+        position:absolute;
+        max-width:60%;
+        min-width:10%;
+        z-index:1;
+        left: 43%;
         transform: translate(-50%, 0%);
     }
     .main-nav-tab {
@@ -1869,20 +1885,30 @@
         position:fixed;
         top:13px;
         z-index:1;
-        width:100px;
+        right:200px;
+    }
+    .isForeign-not-nav-storage-list {
+        padding-right:10px;
     }
     .nav-storage-list .v-list-item {
-        padding:0px 5px;
+        padding:0px 5px 5px 5px;
         min-height:36px;
     }
     .main-nav-tab:hover {
         color: #2C81D5 !important; /* Vuetify의 primary 색상 */
     }
+    .isForeign-nav-storage-list {
+        right:247px !important;
+    }
 
     @media only screen and (max-width: 1250px) { 
-        .nav-storage-list {
-            top:48px !important;
-            right:83px !important;
+        .isForeign-nav-storage-list {
+            top:58px !important;
+            right:134px !important;
+        }
+        .isForeign-not-nav-storage-list {
+            top:60px !important;
+            right:105px !important;
         }
     }
 </style>

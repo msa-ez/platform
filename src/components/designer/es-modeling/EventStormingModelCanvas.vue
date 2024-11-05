@@ -1064,7 +1064,7 @@
                                             />
                                         </span>
                                     </template>
-                                    <span>{{ item.label }}</span>
+                                    <span>{{ $t('EventStormingModelCanvas.info', {label: item.label}) }}</span>
                                 </v-tooltip>
                             </v-card>
                             <v-card class="mobile-first-sticker-tools">

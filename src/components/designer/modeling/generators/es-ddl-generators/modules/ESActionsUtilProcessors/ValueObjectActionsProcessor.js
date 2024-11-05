@@ -30,8 +30,6 @@ class ValueObjectActionsProcessor {
             
             let entities = ActionsProcessorUtils.getEntitiesForAggregate(esValue, action.ids.aggregateId)
             entities.elements[valueObject.id] = valueObject
-            
-            ActionsProcessorUtils.addEntityPropertyToAggregateIfNotExist(esValue, action.ids.aggregateId, valueObject.name)
         })
     }
 

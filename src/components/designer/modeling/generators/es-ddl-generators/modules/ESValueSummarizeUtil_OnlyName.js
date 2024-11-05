@@ -22,6 +22,13 @@ The approximate structure is as follows.
             "<aggregateName>": {
                 "name": "<aggregateName>",
                 
+                // Definitions of Entity objects used for the Aggregate Root properties.
+                "entities": [
+                    {
+                        "name": "<entityName>",
+                    }
+                ],
+
                 // Definitions of Enum objects used for the Aggregate Root properties.
                 "enumerations": [
                     {
@@ -86,6 +93,12 @@ The approximate structure is as follows.
     static _getFilteredAggregate(aggregate){
         return {
             name: aggregate.name,
+
+            entities: aggregate.entities.map(entity => {
+                return {
+                    name: entity.name
+                }
+            }),
             
             enumerations: aggregate.enumerations.map(enumeration => { 
                 return {

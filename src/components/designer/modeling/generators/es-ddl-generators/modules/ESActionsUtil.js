@@ -49,6 +49,7 @@ class ESActionsUtil {
                         case "Enumeration": idToSearch = action.ids.enumerationId; break
                         case "Event": idToSearch = action.ids.eventId; break
                         case "Command": idToSearch = action.ids.commandId; break
+                        case "GeneralClass": idToSearch = action.ids.generalClassId; break
                     }
 
                     if(!idToSearch) action.type = "create"

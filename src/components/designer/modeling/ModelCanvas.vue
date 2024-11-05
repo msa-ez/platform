@@ -509,10 +509,14 @@
                 }
             },
             isForeign() {
-                if (window.countryCode == 'ko') {
-                    return true
+                try {
+                    let lang = this.$i18n.locale;
+                    return lang !== 'ko';
+                } catch (error) {
+                    console.error('Error determining locale:', error);
+                    // 기본값으로 false 반환
+                    return false;
                 }
-                return true
             },
             isCustomMoveExist() {
                 return this.isServerModel && this.isQueueModel
