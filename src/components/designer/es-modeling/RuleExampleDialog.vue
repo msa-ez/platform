@@ -16,20 +16,20 @@
                                     class="delete-input-detail ma-0 pa-0"></v-text-field>
                                 <v-btn v-if="!isGenerating" @click="startExampleGenerate()" color="primary" text
                                     class="ml-2 pl-1 pr-1" style="text-transform: none;">
-                                    Generate Examples
+                                    {{ $t('RuleExampleDialog.generateExamples') }}
                                 </v-btn>
                                 <v-btn v-if="isGenerating" @click="stopExampleGenerate()" color="primary" text
                                     class="ml-2 pl-1 pr-1" style="text-transform: none;">
                                     <v-progress-circular size="15" :width="3" style="margin-right: 10px;" indeterminate
                                         color="primary"></v-progress-circular>
-                                    Stop generating
+                                    {{ $t('RuleExampleDialog.stopGenerating') }}
                                 </v-btn>
                                 <v-tooltip bottom>
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-icon v-bind="attrs" v-on="on" class="ml-2"
                                             @click="resetExampleDialog()">mdi-refresh</v-icon>
                                     </template>
-                                    <span>Reset examples</span>
+                                    <span>{{ $t('RuleExampleDialog.resetExamples') }}</span>
                                 </v-tooltip>
                             </v-row>
                         </td>

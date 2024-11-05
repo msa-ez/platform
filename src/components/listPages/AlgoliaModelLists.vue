@@ -1887,6 +1887,9 @@
         z-index:1;
         right:200px;
     }
+    .isForeign-not-nav-storage-list {
+        padding-right:10px;
+    }
     .nav-storage-list .v-list-item {
         padding:0px 5px 5px 5px;
         min-height:36px;
