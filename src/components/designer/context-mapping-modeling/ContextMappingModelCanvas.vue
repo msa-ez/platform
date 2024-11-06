@@ -1176,6 +1176,8 @@
           Vue.use(ContextMappingModeling);
           this.canvasType = 'cm'
       },
+
+
       async saveModel(boundedContext, model){
         // override
         var me = this
@@ -1622,7 +1624,9 @@
 
           const createdBoundedContextCM = me.__addNewBoundedContextCM(boundedContext.name)
           const relatedAggregates = EventStormingUtil.getOnlyRelatedAggregates(boundedContext, esValue)
-          me.value.elements[createdBoundedContextCM.id]['aggregates'] = relatedAggregates.map(aggregate => aggregate.id)
+          me.value.elements[createdBoundedContextCM.id]['aggregates'] = relatedAggregates.map(aggregate => {
+            return { id: aggregate.id }
+          })
 
           const relatedElements = EventStormingUtil.getOnlyRelatedElements(boundedContext, esValue)
           relatedElements.forEach(element => { me.mirrorValue.elements[element.id] = element })
@@ -1656,6 +1660,49 @@
         const createdBoundedContextCM = BoundedContextCMUtil.getNewBoundedContextCM(name, me.value)
         me.addElementAction(createdBoundedContextCM)
         return createdBoundedContextCM
+      },
+
+
+      async openCodeViewer() {
+        var me = this
+
+        try {
+            me._restoreBoundedContextCMAggregates()
+            me.openSeparatePanel();
+        } catch (e) {
+            console.error(e)
+            alert('openCodeViewer:: ', e)
+            return false
+        }
+      },
+      
+      _restoreBoundedContextCMAggregates() {
+        var me = this
+
+        for(let boundedContext of Object.values(me.value.elements)) {
+          if(!boundedContext || boundedContext._type !== "org.uengine.modeling.model.BoundedContext") continue
+
+          const relatedAggregates = me.__getOnlyRelatedAggregatesFromBCCM(boundedContext)
+          boundedContext.aggregates = relatedAggregates.map(aggregate => {
+            return { id: aggregate.id }
+          })
+        }
+      },
+
+      __getOnlyRelatedAggregatesFromBCCM(boundedContextCM) {
+        var me = this
+        if(!me.mirrorValue || !me.mirrorValue.elements) return []
+
+        const relatedAggregates = []
+        for(let element of Object.values(me.mirrorValue.elements)) {
+          if(!element || element._type !== "org.uengine.modeling.model.Aggregate" || !element.boundedContext) continue
+
+          if((typeof element.boundedContext === 'string' && element.boundedContext === boundedContextCM.mirrorElement) ||
+             (element.boundedContext.id && element.boundedContext.id === boundedContextCM.mirrorElement)) {
+              relatedAggregates.push(element)
+          }
+        }
+        return relatedAggregates
       }
     },
   };
