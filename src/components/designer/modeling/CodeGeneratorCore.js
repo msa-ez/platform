@@ -1135,7 +1135,7 @@ class CodeGeneratorCore {
             var pbcId = platforms.pbcId
             rootModel.boundedContexts.forEach(function (bound, idx) {
                 // 8080 gateway 8081 frontend
-                bound.portGenerated = 8082 + idx
+                bound.portGenerated = (bound.portNumForCodeGen) ? bound.portNumForCodeGen : (8082 + idx)
                 // if(rootModel.boundedContexts[idx].preferredPlatform.includes("http")){
                 //     me.value.elements[rootModel.boundedContexts[idx].elementView.id].preferredPlatform = rootModel.boundedContexts[idx].preferredPlatform
                 // }

@@ -1621,6 +1621,7 @@
         var me = this
 
         for(let boundedContext of EventStormingUtil.getAllBoundedContexts(esValue)) {
+          boundedContext.portNumForCodeGen = me.__getValidPortNumForCodeGen()
 
           const createdBoundedContextCM = me.__addNewBoundedContextCM(boundedContext.name)
           const relatedAggregates = EventStormingUtil.getOnlyRelatedAggregates(boundedContext, esValue)
@@ -1660,6 +1661,11 @@
         const createdBoundedContextCM = BoundedContextCMUtil.getNewBoundedContextCM(name, me.value)
         me.addElementAction(createdBoundedContextCM)
         return createdBoundedContextCM
+      },
+
+      __getValidPortNumForCodeGen() {
+        var me = this
+        return Object.values(me.mirrorValue.elements).filter(element => element && element._type === "org.uengine.modeling.model.BoundedContext").length + 8082
       },
 
 
