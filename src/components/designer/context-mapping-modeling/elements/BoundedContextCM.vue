@@ -149,13 +149,16 @@
         return this.canvas.isEditable && !this.movingElement
       },
       innerAggregate(){
+        if(!this.canvas || !this.canvas.mirrorValue || !this.canvas.mirrorValue.elements) return []
+
         let innerAggregate = []
-        if(this.canvas && this.canvas.mirrorValue && this.canvas.mirrorValue.elements) {
-          for(let element of Object.values(this.canvas.mirrorValue.elements))
-            if(element && element._type === "org.uengine.modeling.model.Aggregate" &&
-               element.boundedContext && element.boundedContext.id === this.value.mirrorElement
-            )
+        for(let element of Object.values(this.canvas.mirrorValue.elements)) {
+          if(!element || element._type !== "org.uengine.modeling.model.Aggregate" || !element.boundedContext) continue
+
+          if((typeof element.boundedContext === 'string' && element.boundedContext === this.value.mirrorElement) ||
+             (element.boundedContext.id && element.boundedContext.id === this.value.mirrorElement)) {
               innerAggregate.push(element)
+          }
         }
         return innerAggregate;
       },

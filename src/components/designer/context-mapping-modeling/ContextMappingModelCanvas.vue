@@ -1281,12 +1281,43 @@
             me.synchronizeAssociatedProject(me.information.associatedProject, settingProjectId);
           }
 
+          if(me.information.associatedProject)
+            await me._pushEventStormingValuesToQueue(me.information.associatedProject, model)
+
           window.open(`/#/storming/${settingProjectId}`, "_blank");
           me.storageDialogCancel();
         } else {
           this.storageCondition.loading = false
         }
       },
+
+      async _pushEventStormingValuesToQueue(projectId, esValue){
+        let me = this
+
+        for(let element of Object.values(esValue.elements)){
+          if(!element) continue
+
+          await me.pushObject(`db://definitions/${projectId}/queue`, {
+              action: "elementPush",
+              editUid: me.userInfo.uid,
+              timeStamp: Date.now(),
+              item: JSON.stringify(element),
+          })
+        }
+
+        for(let relation of Object.values(esValue.relations)){
+          if(!relation) continue
+
+          await me.pushObject(`db://definitions/${projectId}/queue`, {
+            action: "relationPush",
+            editUid: me.userInfo.uid,
+            timeStamp: Date.now(),
+            item: JSON.stringify(relation),
+          })
+        }
+      },
+
+
       async synchronizeAssociatedProject(associatedProject, newId, oldId) {
           var me = this;
           if(!associatedProject) return;
