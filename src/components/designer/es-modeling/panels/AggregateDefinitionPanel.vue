@@ -63,7 +63,7 @@
             <div>
                 <span>
                     <div>
-                        <v-btn v-if="generateDone" :disabled="!value.boundedContext.id || !value.description" class="auto-modeling-btn" color="primary" @click="generate('AggregateInsideGenerator')"><v-icon>mdi-auto-fix</v-icon>Generate Inside</v-btn>
+                        <v-btn v-if="generateDone" :disabled="!value.boundedContext.id || !value.description" class="auto-modeling-btn" color="primary" @click="generate('AggregateInsideQuestionShapeGenerator')"><v-icon>mdi-auto-fix</v-icon>Generate Inside</v-btn>
 
                         <v-btn v-if="generateDone && !isProject" :disabled="!value.boundedContext.id || !value.description" class="auto-modeling-btn" color="primary" @click="generate('AggregateGenerator')"><v-icon>mdi-auto-fix</v-icon>(RE)Generate Inside</v-btn>
 

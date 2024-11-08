@@ -192,6 +192,8 @@
     import StormingSubController from "../../modeling/StormingSubController";
     import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
     import isAttached from "../../../../utils/isAttached";
+
+    import AggregateInsideQuestionShapeGenerator from "../../modeling/generators/es-ddl-generators/AggregateInsideQuestionShapeGenerator";
     import AggregateInsideGenerator from "../../modeling/generators/es-ddl-generators/AggregateInsideGenerator";
     import AggregateGenerator from "../../modeling/generators/AggregateGenerator";
 
@@ -486,12 +488,58 @@
                 }
                 this.$EventBus.$emit('createAggregate', {from: "onModelCreated", ...model}, this.value);
             },
+
+
             async onGenerationFinished(model){
+                if(model.generatorName === "AggregateInsideQuestionShapeGenerator") {
+                    if(model.isError) {
+                        if(model.inputedParams.leftRetryCount <= 0) {
+                            alert("Aggregate Description을 통해서 이벤트 스토밍을 생성하는 과정에서 오류가 발생했습니다. 다시 시도해주세요.")
+                            return
+                        }
+
+                        this.__generate('AggregateInsideQuestionShapeGenerator', model.inputedParams)
+                        return
+                    }
+
+                    this._generateByAggregateInsideGenerator(model.modelValue.restructuredQuestions)
+                    return
+                }
+
+                if(model.generatorName === "AggregateInsideGenerator") {
+                    if(model.isError) {
+                        if(model.inputedParams.leftRetryCount <= 0) {
+                            alert("Aggregate Description을 통해서 이벤트 스토밍을 생성하는 과정에서 오류가 발생했습니다. 다시 시도해주세요.")
+                            return
+                        }
+
+                        this.__generate('AggregateInsideGenerator', model.inputedParams)
+                        return
+                    }
+                }
+
                 this.generateDone = true;
                 this.$emit('update:generateDone', true);
                 this.$EventBus.$emit('createAggregate', {from: "onGenerationFinished", ...model}, this.value, this.originModel);
                 this.canvas.setIsPauseQueue(false);
             },
+
+            _generateByAggregateInsideGenerator(restructuredQuestions) {
+                var me = this
+
+                const esCanvas = me.__getEsCanvas()
+                me.__generate('AggregateInsideGenerator', {
+                    description: JSON.stringify(restructuredQuestions),
+                    targetAggregate: me.value,
+                    esValue: esCanvas.value,
+                    userInfo: esCanvas.userInfo,
+                    information: esCanvas.information,
+                    leftRetryCount: 3
+                })
+                me.generateDone = false;
+            },
+
+
             generate(){
                 var me = this
                 let parent = me.$parent;
@@ -870,14 +918,29 @@
                 var me = this
 
                 switch(generatorName) {
+                    case "AggregateInsideQuestionShapeGenerator":
+                        me._generateByAggregateInsideQuestionShapeGenerator()
+                        break;
+
                     case "AggregateGenerator":
                         me._generateByAggregateGenerator()
                         break;
-
-                    case "AggregateInsideGenerator":
-                        me._generateByAggregateInsideGenerator()
-                        break;
                 }
+            },
+
+            _generateByAggregateInsideQuestionShapeGenerator() {
+                var me = this
+
+                const esCanvas = me.__getEsCanvas()
+                me.__generate('AggregateInsideQuestionShapeGenerator', {
+                    description: me.value.description,
+                    targetAggregate: me.value,
+                    esValue: esCanvas.value,
+                    userInfo: esCanvas.userInfo,
+                    information: esCanvas.information,
+                    leftRetryCount: 3
+                })
+                me.generateDone = false;
             },
 
             _generateByAggregateGenerator() {
@@ -897,20 +960,6 @@
                 me.generateDone = false;
             },
 
-            _generateByAggregateInsideGenerator() {
-                var me = this
-
-                const esCanvas = me.__getEsCanvas()
-                me.__generate('AggregateInsideGenerator', {
-                    description: me.value.description,
-                    targetAggregate: me.value,
-                    esValue: esCanvas.value,
-                    userInfo: esCanvas.userInfo,
-                    information: esCanvas.information,
-                })
-                me.generateDone = false;
-            },
-
             __getEsCanvas() {
                 var me = this
                 let parent = me.$parent;
@@ -923,18 +972,22 @@
                 me.currentGeneratorName = generatorName
 
                 switch(generatorName) {
-                case 'AggregateInsideGenerator':
-                    me.generator = new AggregateInsideGenerator(me);
-                    break;
+                    case 'AggregateInsideQuestionShapeGenerator':
+                        me.generator = new AggregateInsideQuestionShapeGenerator(me);
+                        break;
 
-                case 'AggregateGenerator':
-                    me.generator = new AggregateGenerator(me);
-                    break;
+                    case 'AggregateInsideGenerator':
+                        me.generator = new AggregateInsideGenerator(me);
+                        break;
 
-                default:
-                    me.generator = null
-                    me.currentGeneratorName = ''
-                    throw new Error(`Invalid generator name: ${generatorName}`)
+                    case 'AggregateGenerator':
+                        me.generator = new AggregateGenerator(me);
+                        break;
+
+                    default:
+                        me.generator = null
+                        me.currentGeneratorName = ''
+                        throw new Error(`Invalid generator name: ${generatorName}`)
                 }
 
                 me.input = inputObj

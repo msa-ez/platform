@@ -20,7 +20,7 @@ class AggregateInsideGenerator extends JsonAIGenerator{
     createPrompt(){
         try {
 
-            for(let optionKey of ["description", "targetAggregate", "esValue", "userInfo", "information"])
+            for(let optionKey of ["description", "targetAggregate", "esValue", "userInfo", "information", "leftRetryCount"])
                 if(this.client.input[optionKey] === undefined) 
                     throw new Error(`${optionKey} 파라미터가 전달되지 않았습니다.`)
             this.inputedParams = {
@@ -42,7 +42,7 @@ class AggregateInsideGenerator extends JsonAIGenerator{
 
         } catch(e) {
 
-            console.error(`[!] ${this.generatorName}에 대한 프롬프트 생성 도중에 오류 발생!`, {esValue, ddl, error:e})
+            console.error(`[!] ${this.generatorName}에 대한 프롬프트 생성 도중에 오류 발생!`, {error:e})
             console.error(e)
             throw e
 
@@ -63,12 +63,15 @@ class AggregateInsideGenerator extends JsonAIGenerator{
 Please follow these rules.
 1. Commands must raise at least one event. Ex) CreateUser > UserCreated
 2. Even if the name of the feature passed by the user is not in English, you need to convert it to an appropriate English name and add it. Ex) 유저 업데이트 기능 -> UpdateUser, UserUpdated
-3. When adding properties to events and commands, make sure they exist in the Aggregate. If it doesn't, you can add the new property to the Aggregate via an action.
+3. Properties that are used as events or commands must exist in the Aggregate. If they don't, create them through an action.
 4. When adding new properties to an aggregate, you can use native Java data types such as String, Long, Integer, etc. for aggregate properties, or you can use predefined properties: Address, Portrait, Rating, Money, Email. Other properties must be defined as ValueObject or Enumeration or Entity in the corresponding aggregation.
-5. If the event to be generated additionally calls other commands. Please reference the existing event storming  information passing the name of that command and add it.
-6. When the value of a ValueObject or Enumeration or Entity is utilised by the Aggregate Root, the corresponding material type must be used, not String. Ex) String > OrderStatus
-7. Consider using ValueObject and Entity wherever possible.
-8. Do not write comments in the output JSON object.
+5. When you add a property to an entity or value object, as with aggregate, if the property you want to use does not exist, you must add a new ValueObject or Enumeration directly.
+6. If the event to be generated additionally calls other commands. Please reference the existing event storming  information passing the name of that command and add it.
+7. When the value of a ValueObject or Enumeration or Entity is utilised by the Aggregate Root, the corresponding material type must be used, not String. Ex) String > OrderStatus
+8. Consider using ValueObject and Entity wherever possible.
+9. If you want to specify it as an array, use 'List<ClassName>'. Ex) List<Address>
+10. Note that updates and deletes require the Aggregate's primary key to be included in the event or command to distinguish them.
+11. Do not write comments in the output JSON object.
 
 `
     }
@@ -236,17 +239,17 @@ They represent complex domain concepts that don't qualify as Aggregates but need
         return `Let me give you an example.
 [INPUT]
 - Existing Event Storming Model
-{"orderService":{"name":"orderService","actors":[{"name":"Customer"}],"aggregates":{"Order":{"name":"Order","enumerations":[{"name":"OrderStatus"}],"valueObjects":[],"commands":[{"name":"PlaceOrder","api_verb":"POST","outputEvents":["OrderPlaced"]}],"events":[{"name":"OrderPlaced","outputCommands":[]}]},"Inventory":{"name":"Inventory","enumerations":[],"valueObjects":[],"commands":[{"name":"UpdateInventory","api_verb":"POST","outputEvents":["InvenetoryUpdated"]}],"events":[{"name":"InvenetoryUpdated","outputCommands":[]}]}}}}
+{"userService":{"name":"userService","actors":[{"name":"Admin"},{"name":"User"}],"aggregates":{"User":{"name":"User","enumerations":[{"name":"UserStatus"}],"valueObjects":[{"name":"UserProfile"}],"commands":[{"name":"RegisterUser","api_verb":"POST","outputEvents":["UserRegistered"]},{"name":"UpdateUserStatus","api_verb":"PUT","outputEvents":["UserStatusUpdated"]}],"events":[{"name":"UserRegistered","outputCommands":["SendWelcomeNotification"]},{"name":"UserStatusUpdated","outputCommands":[]}]}}},"notificationService":{"name":"notificationService","actors":[{"name":"System"}],"aggregates":{"Notification":{"name":"Notification","enumerations":[{"name":"NotificationType"}],"valueObjects":[{"name":"NotificationContent"}],"commands":[{"name":"SendWelcomeNotification","api_verb":"POST","outputEvents":["WelcomeNotificationSent"]},{"name":"SendStatusNotification","api_verb":"POST","outputEvents":["StatusNotificationSent"]}],"events":[{"name":"WelcomeNotificationSent","outputCommands":[]},{"name":"StatusNotificationSent","outputCommands":[]}]}}}}
 
 - Aggregate info to add event and command
-{"name":"Order","properties":[{"name":"orderId","type":"Long"},{"name":"customerId","type":"Long"},{"name":"orderStatus","type":"OrderStatus"},{"name":"totalAmount","type":"Money"}],"enumerations":[{"name":"OrderStatus","properties":["PLACED","PAID","CANCELLED"]}],"valueObjects":[],"commands":[{"name":"PlaceOrder","api_verb":"POST","outputEvents":["OrderPlaced"]}],"events":[{"name":"OrderPlaced","outputCommands":[]}]}
+{"name":"User","properties":[{"name":"userId","type":"Long"},{"name":"email","type":"Email"},{"name":"userStatus","type":"UserStatus"},{"name":"profile","type":"UserProfile"}],"enumerations":[{"name":"UserStatus","properties":["ACTIVE","INACTIVE","SUSPENDED"]}],"valueObjects":[{"name":"UserProfile","properties":[{"name":"nickname"},{"name":"bio"},{"name":"joinDate","type":"Date"}]}],"commands":[{"name":"RegisterUser","api_verb":"POST","outputEvents":["UserRegistered"]},{"name":"UpdateUserStatus","api_verb":"PUT","outputEvents":["UserStatusUpdated"]}],"events":[{"name":"UserRegistered","outputCommands":["SendWelcomeNotification"]},{"name":"UserStatusUpdated","outputCommands":[]}]}
 
 - Function Requirements
-Add functionality to create an order with multiple order items and shipping information. Each order item should contain product details and quantity. Shipping information should include address and delivery preferences.
+{"restructuredQuestions":[{"mainRequest":"Add email verification functionality to the user registration process","subRequests":{"aggregateChanges":["Add PENDING and VERIFIED states to UserStatus enumeration: UserStatus { PENDING, VERIFIED, ACTIVE, INACTIVE, SUSPENDED }","Add verificationToken property of type String to User aggregate","Add verificationDate property of type Date to User aggregate","Add verificationExpiryDate property of type Date to User aggregate"],"commandChanges":["Add VerifyEmail command with parameters: userId and verificationToken","Add ResendVerificationEmail command with parameter: userId","Modify RegisterUser command to set initial status as PENDING and generate verificationToken"],"eventChanges":["Add EmailVerificationRequested event containing userId, email, and verificationToken","Add EmailVerified event containing userId and verificationDate","Add VerificationEmailResent event containing userId and newVerificationToken"],"policyChanges":["Users must verify their email before accessing certain features","Verification token should expire after 24 hours","Maximum 3 verification email resend attempts per day"]},"cautions":{"technicalCautions":["Ensure verification tokens are securely generated using cryptographic functions","Implement token expiration mechanism using verificationExpiryDate","Handle concurrent verification attempts for the same user"],"businessCautions":["Consider resend verification email functionality with cool-down period","Define clear user limitations before verification","Implement clear error messages for expired or invalid tokens"],"securityCautions":["Protect verification endpoints from brute force attacks using rate limiting","Implement rate limiting for verification attempts (max 5 attempts per hour)","Ensure verification tokens are single-use only"]},"dependencies":["NotificationService for sending verification emails","Update UserProfile ValueObject to include verificationStatus"]}]}
 
 [OUTPUT]
 \`\`\`json
-{"actions":[{"objectType":"Command","args":{"commandName":"CreateOrderWithItems","api_verb":"POST","properties":[{"name":"customerId","type":"Long"},{"name":"orderItems","type":"List<OrderItem>"},{"name":"shippingInfo","type":"ShippingInfo"}],"outputEventNames":["OrderCreatedWithItems"],"actor":"Customer"}},{"objectType":"Event","args":{"eventName":"OrderCreatedWithItems","properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"customerId","type":"Long"},{"name":"orderItems","type":"List<OrderItem>"},{"name":"shippingInfo","type":"ShippingInfo"},{"name":"totalAmount","type":"Money"},{"name":"orderDate","type":"Date"}],"outputCommandNames":["UpdateInventory"]}},{"objectType":"Aggregate","args":{"properties":[{"name":"shippingInfo","type":"ShippingInfo"},{"name":"orderDate","type":"Date"}]}},{"objectType":"Enumeration","args":{"enumerationName":"DeliveryPreference","properties":[{"name":"STANDARD"},{"name":"EXPRESS"},{"name":"CONTACTLESS"}]}},{"objectType":"ValueObject","args":{"valueObjectName":"ShippingInfo","properties":[{"name":"recipientName"},{"name":"address","type":"Address"},{"name":"contactNumber"},{"name":"deliveryPreference","type":"DeliveryPreference"}]}},{"objectType":"Entity","args":{"entityName":"OrderItem","properties":[{"name":"orderItemId","type":"Long","isKey":true},{"name":"productId","type":"Long","isForeignProperty":true},{"name":"quantity","type":"Integer"},{"name":"unitPrice","type":"Money"},{"name":"orderId","type":"Long","isForeignProperty":true}]}}]}
+{"actions":[{"objectType":"Command","args":{"commandName":"VerifyEmail","api_verb":"PUT","properties":[{"name":"userId","type":"Long","isKey":true},{"name":"verificationToken"}],"outputEventNames":["EmailVerified"],"actor":"User"}},{"objectType":"Command","args":{"commandName":"ResendVerificationEmail","api_verb":"POST","properties":[{"name":"userId","type":"Long","isKey":true}],"outputEventNames":["VerificationEmailResent"],"actor":"User"}},{"objectType":"Event","args":{"eventName":"EmailVerified","properties":[{"name":"userId","type":"Long","isKey":true},{"name":"verificationDate","type":"Date"}]}},{"objectType":"Event","args":{"eventName":"EmailVerificationRequested","properties":[{"name":"userId","type":"Long","isKey":true},{"name":"email","type":"Email"},{"name":"verificationToken"}],"outputCommandNames":["SendWelcomeNotification"]}},{"objectType":"Event","args":{"eventName":"VerificationEmailResent","properties":[{"name":"userId","type":"Long","isKey":true},{"name":"newVerificationToken"}]}},{"objectType":"Aggregate","args":{"properties":[{"name":"verificationToken"},{"name":"verificationDate","type":"Date"},{"name":"verificationExpiryDate","type":"Date"}]}},{"objectType":"Enumeration","args":{"enumerationName":"UserStatus","properties":[{"name":"PENDING"},{"name":"VERIFIED"}]}}]}
 \`\`\`
 
 `
@@ -356,6 +359,7 @@ ${description}
             console.error(`[!] ${this.modelName}에서 결과 파싱중에 오류 발생!`, {text, error:e})
             console.error(e)
 
+            this.inputedParams.leftRetryCount -= 1
             return {
                 generatorName: this.generatorName,
                 modelValue: null,
