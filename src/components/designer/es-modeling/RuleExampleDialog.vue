@@ -675,14 +675,34 @@
                     if(checkValue){
                         me.rule.values = me.value.examples
                     } else {
-                        me.rule.values = [] 
-                        me.rule.values.push(me.exampleFrameWork)
+                        me.rule.values = [];
+                        
+                        function mapValues(frameworkArray, sourceArray) {
+                            frameworkArray.forEach((frameworkItem, index) => {
+                                const sourceItem = sourceArray[index];
+                                if (sourceItem) {
+                                    Object.keys(frameworkItem.value).forEach(key => {
+                                        if (sourceItem.value[key] !== undefined) {
+                                            frameworkItem.value[key] = sourceItem.value[key];
+                                        } else {
+                                            frameworkItem.value[key] = "N/A";
+                                        }
+                                    });
+                                }
+                            });
+                        }
+
+                        mapValues(me.exampleFrameWork.given, me.value.examples[0].given);
+                        mapValues(me.exampleFrameWork.when, me.value.examples[0].when);
+                        mapValues(me.exampleFrameWork.then, me.value.examples[0].then);
+
+                        me.rule.values.push(me.exampleFrameWork);
                     }
                     me.rule.thenItems.forEach(function (item){
                         me.thenAttLength[item.name] = item.fieldDescriptors.length
                     })
                 } else {
-                    me.rule.values = [] 
+                    me.rule.values = [];
                     me.rule.values.push(me.exampleFrameWork)
                 }
             },
