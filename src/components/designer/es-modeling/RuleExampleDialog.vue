@@ -593,7 +593,9 @@
                                     if(rel.sourceElement._type == 'org.uengine.modeling.model.Command' && rel.targetElement._type == 'org.uengine.modeling.model.Event'){
                                         if(rel.sourceElement.elementView.id == me.value.elementView.id){
                                             if(!whenItems.find(x => x.elementView.id == rel.sourceElement.elementView.id)){
-                                                if(me.value.restRepositoryInfo.method == 'POST'){
+                                                if(me.value && !me.value.isRestRepository && me.value.fieldDescriptors && me.value.fieldDescriptors.length > 0){
+                                                    me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = JSON.parse(JSON.stringify(me.value.fieldDescriptors))
+                                                } else if(me.value.restRepositoryInfo.method == 'POST'){
                                                     if(me.value.aggregate && me.value.aggregate.id && me.canvas.value.elements[me.value.aggregate.id]){
                                                         me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = JSON.parse(JSON.stringify(me.canvas.value.elements[me.value.aggregate.id].aggregateRoot.fieldDescriptors))
                                                     } else if(rel.sourceElement.aggregate && rel.sourceElement.aggregate.id && me.canvas.value.elements[rel.sourceElement.aggregate.id]) {
@@ -640,17 +642,46 @@
             },
             setAttributes(){
                 var me = this
+                function areObjectsEqual(obj1, obj2) {
+                    // Helper function to compare two arrays of objects
+                    function compareArray(arr1, arr2) {
+                        if (arr1.length !== arr2.length) return false;
+                        for (let i = 0; i < arr1.length; i++) {
+                            if (arr1[i].name !== arr2[i].name) {
+                                return false;
+                            }
+                            // Compare keys in the 'value' object
+                            const keys1 = Object.keys(arr1[i].value);
+                            const keys2 = Object.keys(arr2[i].value);
+                            if (keys1.length !== keys2.length || !keys1.every(key => keys2.includes(key))) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+
+                    // Compare 'given', 'when', and 'then' arrays
+                    return compareArray(obj1[0].given, obj2.given) &&
+                        compareArray(obj1[0].when, obj2.when) &&
+                        compareArray(obj1[0].then, obj2.then);
+                }
+                me.setExampleFrameWork();
                 if(me.value && me.value.examples 
                 && me.value.examples[0].given && me.value.examples[0].given[0].value
                 && me.value.examples[0].when && me.value.examples[0].when[0].value
                 && me.value.examples[0].then && me.value.examples[0].then[me.value.examples[0].then.lastIndex].value)
                 {
-                    me.rule.values = me.value.examples
+                    var checkValue = areObjectsEqual(me.value.examples, me.exampleFrameWork)
+                    if(checkValue){
+                        me.rule.values = me.value.examples
+                    } else {
+                        me.rule.values = [] 
+                        me.rule.values.push(me.exampleFrameWork)
+                    }
                     me.rule.thenItems.forEach(function (item){
                         me.thenAttLength[item.name] = item.fieldDescriptors.length
                     })
                 } else {
-                    me.setExampleFrameWork()
                     me.rule.values = [] 
                     me.rule.values.push(me.exampleFrameWork)
                 }
