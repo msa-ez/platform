@@ -4865,7 +4865,7 @@
                         selectCnt ++;
 
                         if(element._type.endsWith('BoundedContext')){
-                            if(Object.values(value.elements).find(ele =>  ele.boundedContext && ele.boundedContext.id == element.id)) {
+                            if(Object.values(value.elements).find(ele => ele && ele.boundedContext && ele.boundedContext.id == element.id)) {
                                 selectCnt++
                             }
                         }

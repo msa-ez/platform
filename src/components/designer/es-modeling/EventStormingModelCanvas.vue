@@ -1901,6 +1901,7 @@
         <v-dialog v-model="showDDLDraftDialog" max-width="1200" max-height="800" overflow="scroll">
             <ModelDraftDialog
                 :DDLDraftTable="DDLDraftTable"
+                @generateFromDraft="generateFromDraft"
             ></ModelDraftDialog>
         </v-dialog>
         <!-- <gitAPIMenu></gitAPIMenu> -->
@@ -7354,11 +7355,16 @@
                 generator.generate()
             },
             onModelCreated(model){
-                if(model && model.generatorName === 'DDLGenerator')
+                if(model && (model.generatorName === 'DDLGenerator' || model.generatorName === 'DDLDraftGenerator'))
                     this.showDDLDraftDialog = true
             },
             setDDLDraftDialog(model){
                 this.DDLDraftTable = model.tables
+            },
+
+            generateFromDraft(selectedOptionItem){
+                this.showDDLDraftDialog = false
+                console.log(selectedOptionItem)
             }
         },
     };
