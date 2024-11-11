@@ -1,6 +1,12 @@
 <template>
     <v-card>
-        <v-card-title>BoundedContext Reconstruction Draft</v-card-title>
+        <v-card-title class="d-flex justify-space-between align-center">
+            <span>BoundedContext Reconstruction Draft</span>
+            <v-btn @click="close()" small text>
+                <v-icon small>mdi-close</v-icon>
+            </v-btn>
+        </v-card-title>
+
         <v-card-subtitle>
             <div class="d-flex align-center">
                 <div v-if="draftUIInfos.leftBoundedContextCount > 0">
@@ -98,7 +104,13 @@
             DDLDraftOptions: {
                 handler(newVal) {
                     if(newVal.length === 0) return
+                    Object.keys(this.selectedOptionItem).forEach(key => {
+                        if(!newVal.some(option => option.boundedContext === key)) {
+                            delete this.selectedOptionItem[key];
+                        }
+                    });
 
+                    
                     const lastDraftOption = newVal[newVal.length - 1]
                     this.activeTab = newVal.length - 1
                     this.selectedOptionItem[lastDraftOption.boundedContext] = lastDraftOption.options[lastDraftOption.defaultOptionIndex]
@@ -109,6 +121,12 @@
         methods: {
             generateFromDraft(){
                 this.$emit('generateFromDraft', this.selectedOptionItem);                
+            },
+
+            close(){
+                if(confirm('Are you sure you want to close this dialog? All progress will be lost.')) {
+                    this.$emit('close');
+                }
             }
         }
     }
