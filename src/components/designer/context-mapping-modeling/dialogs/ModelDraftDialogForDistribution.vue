@@ -2,7 +2,7 @@
     <v-card>
         <v-card-title class="d-flex justify-space-between align-center">
             <span>BoundedContext Reconstruction Draft</span>
-            <v-btn @click="close()" small text>
+            <v-btn @click="close()" small text icon class="pa-0">
                 <v-icon small>mdi-close</v-icon>
             </v-btn>
         </v-card-title>
@@ -22,14 +22,18 @@
             </div>
         </v-card-subtitle>
 
-        <v-card-text v-if="DDLDraftOptions && DDLDraftOptions.length > 0">
-            <v-tabs v-model="activeTab">
+        <v-card-text v-if="DDLDraftOptions && DDLDraftOptions.length > 0"
+            class="pa-0"
+        >
+            <v-tabs v-model="activeTab" class="model-draft-dialog-tab">
                 <v-tab v-for="(boundedContextInfo, index) in DDLDraftOptions" :key="index">
                 {{ boundedContextInfo.boundedContext }}<br>
                 </v-tab>
             </v-tabs>
 
-            <v-tabs-items v-model="activeTab">
+            <v-tabs-items v-model="activeTab"
+                class="model-draft-dialog-tab-items pa-4"
+            >
                 <v-tab-item v-for="(boundedContextInfo, index) in DDLDraftOptions" :key="index">
                     <div class="d-flex align-center mb-2">
                         <h3>Bounded Context: {{ boundedContextInfo.boundedContext }}</h3>
@@ -65,9 +69,14 @@
                 </v-tab-item>
             </v-tabs-items>
 
-            <v-btn @click="generateFromDraft"
-                :disabled="!isGeneratorButtonEnabled || draftUIInfos.leftBoundedContextCount > 0 || (!selectedOptionItem || Object.keys(selectedOptionItem).length !== DDLDraftOptions.length)"
-                block>Generate From Draft</v-btn>
+            <v-row class="ma-0 pa-4">
+                <v-btn @click="generateFromDraft"
+                    :disabled="!isGeneratorButtonEnabled || draftUIInfos.leftBoundedContextCount > 0 || (!selectedOptionItem || Object.keys(selectedOptionItem).length !== DDLDraftOptions.length)"
+                    block
+                    color="primary"
+                >Generate From Draft
+                </v-btn>
+            </v-row>
         </v-card-text>
     </v-card>
 </template>
@@ -122,7 +131,6 @@
             generateFromDraft(){
                 this.$emit('generateFromDraft', this.selectedOptionItem);                
             },
-
             close(){
                 if(confirm('Are you sure you want to close this dialog? All progress will be lost.')) {
                     this.$emit('close');

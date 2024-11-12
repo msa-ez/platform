@@ -825,6 +825,19 @@ code[class*=language-]:nth-child(1) {
     margin-bottom: 0px !important;
 }
 
+.model-draft-dialog-tab-items {
+    height:63vh;
+    overflow: auto;
+}
+
+.model-draft-dialog-tab {
+    padding:0px 10px 0px 10px;
+}
+
+.model-draft-dialog-selected-card {
+    border: 2px solid #42A5F5 !important; /* 선택된 카드 스타일 */
+}
+
 @media only screen and (max-width:1409px) and (min-width:1298px){
     .gs-main-page-top-title {
         font-size: 36px;
