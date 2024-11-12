@@ -39,32 +39,46 @@
                         <h3>Bounded Context: {{ boundedContextInfo.boundedContext }}</h3>
                     </div>
 
-                    <v-radio-group v-model="selectedOptionItem[boundedContextInfo.boundedContext]">
-                        <v-card v-for="(option, index) in boundedContextInfo.options" :key="index" class="mb-4">
-                            <v-card-title class="d-flex justify-space-between">
-                                <span>Option {{ index + 1 }}</span>
-                                <v-radio :value="option"></v-radio>
-                            </v-card-title>
-                            <v-card-text>
-                                <div v-if="option.structure">
-                                    <div v-for="(aggregate, index) in option.structure" :key="index">
-                                        <strong>{{ aggregate.aggregateName }}</strong>
-                                        <div class="ml-3">
-                                            <div v-if="aggregate.entities.length > 0"><span class="font-weight-medium">Entities:</span> {{ aggregate.entities.join(', ') }}</div>
-                                            <div v-if="aggregate.valueObjects.length > 0"><span class="font-weight-medium">ValueObjects:</span> {{ aggregate.valueObjects.join(', ') }}</div>
-                                        </div><br>
+                    <v-card v-for="(option, index) in boundedContextInfo.options" 
+                        :key="selectedCardKey" 
+                        class="mb-4"
+                        @click="selectedCard(index, option, boundedContextInfo.boundedContext)"
+                        :class="isSelectedCard(boundedContextInfo, index) ? 'model-draft-dialog-selected-card': ''"
+                        :disabled="!isGeneratorButtonEnabled || draftUIInfos.leftBoundedContextCount > 0 || (!selectedOptionItem || Object.keys(selectedOptionItem).length !== DDLDraftOptions.length)"
+                    >
+                        <!-- <v-card-title class="d-flex justify-space-between">
+                            <span>Option {{ index + 1 }}</span>
+                        </v-card-title> -->
+                        <v-card-text>
+                            <div v-if="option.structure" class="mb-4">
+                                <div v-for="(aggregate, index) in option.structure" :key="index"
+                                    class="pa-2 mr-4 rounded-lg draft-aggregate-box d-inline-block"
+                                >
+                                    <strong>{{ aggregate.aggregateName }}</strong>
+                                    <div>
+                                        <div v-if="aggregate.entities.length > 0">
+                                            <span>&lt;&lt; Entities &gt;&gt;</span>
+                                            <div v-for="(entity, index) in aggregate.entities" :key="index"
+                                                class="draft-aggregate-box-text"
+                                            >{{ entity }}</div>
+                                        </div>
+                                        <div v-if="aggregate.valueObjects.length > 0">
+                                            <span>&lt;&lt; ValueObjects &gt;&gt;</span> 
+                                            <div v-for="(valueObject, index) in aggregate.valueObjects" :key="index"
+                                                class="draft-aggregate-box-text"
+                                            >{{ valueObject }}</div>
+                                        </div>
                                     </div>
                                 </div>
-                                <h4>Pros:</h4>
-                                <p>{{ option.pros }}</p>
+                            </div>
+                            <h4>{{ $t('ModelDraftDialogForDistribution.pros') }}</h4>
+                            <p>{{ option.pros }}</p>
 
-                                <h4>Cons:</h4>
-                                <p>{{ option.cons }}</p>
-                            </v-card-text>
-                        </v-card>
-                    </v-radio-group>
-                    
-                    <h4 class="mt-4">Conclusions:</h4>
+                            <h4>{{ $t('ModelDraftDialogForDistribution.cons') }}</h4>
+                            <p>{{ option.cons }}</p>
+                        </v-card-text>
+                    </v-card>
+                    <h4 class="mt-4">{{ $t('ModelDraftDialogForDistribution.conclusions') }}</h4>
                     <p>{{ boundedContextInfo.conclusions }}</p>
                 </v-tab-item>
             </v-tabs-items>
@@ -106,7 +120,9 @@
         data() {
             return {
                 activeTab: null,
-                selectedOptionItem: {}
+                selectedOptionItem: {},
+                selectedCardIndex: {},
+                selectedCardKey: 0
             }
         },
         watch: {
@@ -127,6 +143,14 @@
                 deep: true
             }
         },
+        computed: {
+            isSelectedCard() {
+                return (boundedContextInfo, index) => {
+                    return this.selectedCardIndex.hasOwnProperty(boundedContextInfo.boundedContext) && 
+                           this.selectedCardIndex[boundedContextInfo.boundedContext] === index
+                }
+            }
+        },
         methods: {
             generateFromDraft(){
                 this.$emit('generateFromDraft', this.selectedOptionItem);                
@@ -135,6 +159,11 @@
                 if(confirm('Are you sure you want to close this dialog? All progress will be lost.')) {
                     this.$emit('close');
                 }
+            },
+            selectedCard(index, option, key) {
+                this.selectedCardIndex[key] = index
+                this.selectedOptionItem[key] = option
+                this.selectedCardKey ++
             }
         }
     }
