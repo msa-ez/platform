@@ -1,5 +1,12 @@
 {
   "message": "ko",
+  "ModelDraftDialogForDistribution": {
+    "pros": "장점:",
+    "cons": "단점:",
+    "conclusions": "결론:",
+    "create": "생성",
+    "reconstructionDraft": "바운디드 컨텍스트 재구성 초안"
+  },
   "RuleExampleDialog": {
     "generateExamples": "예제 생성",
     "stopGenerating": "생성 중단",

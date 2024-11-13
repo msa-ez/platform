@@ -825,6 +825,37 @@ code[class*=language-]:nth-child(1) {
     margin-bottom: 0px !important;
 }
 
+.model-draft-dialog-tab-items {
+    height:60vh;
+    overflow: auto;
+}
+
+.model-draft-dialog-tab {
+    padding:0px 16px 0px 16px;
+}
+
+.model-draft-dialog-selected-card {
+    border: 2px solid #42A5F5 !important; /* 선택된 카드 스타일 */
+}
+
+.draft-aggregate-box {
+    background-color: #F8D454;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+    text-align: center;
+    min-width:120px;
+}
+
+.draft-aggregate-box span {
+    font-size:12px;
+    font-weight: 500;
+}
+
+.draft-aggregate-box-text{
+    background-color: white;
+    margin-bottom: 5px;
+    padding: 0px 5px 0px 5px;
+}
+
 @media only screen and (max-width:1409px) and (min-width:1298px){
     .gs-main-page-top-title {
         font-size: 36px;

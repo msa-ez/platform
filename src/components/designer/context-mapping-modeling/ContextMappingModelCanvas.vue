@@ -1043,13 +1043,20 @@
             </v-card>
           </v-dialog>
 
-          <v-dialog v-model="showDDLDraftDialog" max-width="1200" max-height="800" overflow="scroll">
+          <v-dialog
+                  v-model="showDDLDraftDialog"
+                  persistent
+                  max-width="1200"
+                  max-height="800"
+                  overflow="scroll"
+          >
             <ModelDraftDialogForDistribution
                 :DDLDraftOptions="DDLDraftOptions"
                 :draftUIInfos="draftUIInfos"
                 :isGeneratorButtonEnabled="isDraftGeneratorButtonEnabled"
                 @reGenerate="reGenerate"
                 @generateFromDraft="generateFromDraft"
+                @close="showDDLDraftDialog = false"
             ></ModelDraftDialogForDistribution>
           </v-dialog>
 

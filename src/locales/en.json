@@ -1,5 +1,12 @@
 {
   "message": "en",
+  "ModelDraftDialogForDistribution": {
+    "pros": "Pros:",
+    "cons": "Cons:",
+    "conclusions": "Conclusions:",
+    "create": "Create",
+    "reconstructionDraft": "BoundedContext Reconstruction Draft"
+  },
   "RuleExampleDialog": {
     "generateExamples": "Generate Examples",
     "stopGenerating": "Stop Generating",
