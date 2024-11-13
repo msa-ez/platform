@@ -3,7 +3,9 @@
   "ModelDraftDialogForDistribution": {
     "pros": "Pros:",
     "cons": "Cons:",
-    "conclusions": "Conclusions:"
+    "conclusions": "Conclusions:",
+    "create": "Create",
+    "reconstructionDraft": "BoundedContext Reconstruction Draft"
   },
   "RuleExampleDialog": {
     "generateExamples": "Generate Examples",
