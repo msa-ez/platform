@@ -1,5 +1,11 @@
 {
   "message": "ko",
+  "modelingPanelTool": {
+    "draggableOn": "화면 드래그 : on",
+    "draggableOff": "화면 드래그 : off",
+    "arrangeGuidanceOn": "화면 라인 가이드 : on",
+    "arrangeGuidanceOff": "화면 라인 가이드 : off"
+  },
   "ModelDraftDialogForDistribution": {
     "pros": "장점:",
     "cons": "단점:",

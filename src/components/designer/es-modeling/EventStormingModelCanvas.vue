@@ -1009,8 +1009,8 @@
                                         >
                                         </span>
                                     </template>
-                                    <span v-if="dragPageMovable == true">Draggable Screen : on</span>
-                                    <span v-if="dragPageMovable == false">Draggable Screen : off</span>
+                                    <span v-if="dragPageMovable == true">{{ $t('modelingPanelTool.draggableOn') }}</span>
+                                    <span v-if="dragPageMovable == false">{{ $t('modelingPanelTool.draggableOff') }}</span>
                                 </v-tooltip>
 
                                 <v-tooltip right v-if="!isReadOnlyModel">
@@ -1036,7 +1036,7 @@
                                             </v-icon>
                                         </span>
                                     </template>
-                                    <span v-if="automaticGuidance == true">Arrange Guidance : on</span>
+                                    <span v-if="automaticGuidance == true">{{ $t('modelingPanelTool.arrangeGuidanceOn') }}</span>
                                     <span v-if="automaticGuidance == false">Arrange Guidance : off</span>
                                 </v-tooltip>
                                 <v-tooltip
@@ -1112,10 +1112,10 @@
                                         </span>
                                     </template>
                                     <span v-if="dragPageMovable == true"
-                                    >Draggable Screen : on</span
+                                    >{{ $t('modelingPanelTool.draggableOn') }}</span
                                     >
                                     <span v-if="dragPageMovable == false"
-                                    >Draggable Screen : off</span
+                                    >{{ $t('modelingPanelTool.draggableOff') }}</span
                                     >
                                 </v-tooltip>
 
@@ -1149,7 +1149,7 @@
                                         </span>
                                     </template>
                                     <span v-if="automaticGuidance == true"
-                                    >Arrange Guidance : on</span
+                                    >{{ $t('modelingPanelTool.arrangeGuidanceOn') }}</span
                                     >
                                     <span v-if="automaticGuidance == false"
                                     >Arrange Guidance : off</span
