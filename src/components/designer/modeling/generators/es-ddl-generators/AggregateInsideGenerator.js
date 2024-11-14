@@ -67,7 +67,7 @@ Please follow these rules.
 4. When adding new properties to an aggregate, you can use native Java data types such as String, Long, Integer, etc. for aggregate properties, or you can use predefined properties: Address, Portrait, Rating, Money, Email. Other properties must be defined as ValueObject or Enumeration or Entity in the corresponding aggregation.
 5. When you add a property to an entity or value object, as with aggregate, if the property you want to use does not exist, you must add a new ValueObject or Enumeration directly.
 6. If the event to be generated additionally calls other commands. Please reference the existing event storming  information passing the name of that command and add it.
-7. When the value of a ValueObject or Enumeration or Entity is utilised by the Aggregate Root, the corresponding material type must be used, not String. Ex) String > OrderStatus
+7. When using the value of an Enumeration or ValueObject or Entity in an Aggregate Root, you must use its class name, not the type of the object's Id. Ex) Integer -> OrderStatus
 8. Consider using ValueObject and Entity wherever possible.
 9. If you want to specify it as an array, use 'List<ClassName>'. Ex) List<Address>
 10. Note that updates and deletes require the Aggregate's primary key to be included in the event or command to distinguish them.
@@ -81,6 +81,35 @@ Please follow these rules.
 The returned format should be as follows.
 \`\`\`json
 {
+    "thoughtProcess": {
+        "requirements": {
+            "summary": "<Brief summary of the requirements>",
+            "keyPoints": [
+                "<Key point 1>",
+                "<Key point 2>",
+                "..."
+            ]
+        },
+        "analysis": {
+            "existingComponents": {
+                "commands": ["<existing command names>"],
+                "events": ["<existing event names>"],
+                "properties": ["<existing property names>"]
+            },
+            "missingComponents": {
+                "commands": ["<needed command names>"],
+                "events": ["<needed event names>"],
+                "properties": ["<needed property names>"]
+            }
+        },
+        "decisions": [
+            {
+                "decision": "<What was decided>",
+                "reasoning": "<Why this decision was made>",
+                "impact": ["<Impact 1>", "<Impact 2>", "..."]
+            }
+        ]
+    },
     "actions": [
         {
             // This attribute indicates what type of object information is being modified.
@@ -249,7 +278,7 @@ They represent complex domain concepts that don't qualify as Aggregates but need
 
 [OUTPUT]
 \`\`\`json
-{"actions":[{"objectType":"Command","args":{"commandName":"VerifyEmail","api_verb":"PUT","properties":[{"name":"userId","type":"Long","isKey":true},{"name":"verificationToken"}],"outputEventNames":["EmailVerified"],"actor":"User"}},{"objectType":"Command","args":{"commandName":"ResendVerificationEmail","api_verb":"POST","properties":[{"name":"userId","type":"Long","isKey":true}],"outputEventNames":["VerificationEmailResent"],"actor":"User"}},{"objectType":"Event","args":{"eventName":"EmailVerified","properties":[{"name":"userId","type":"Long","isKey":true},{"name":"verificationDate","type":"Date"}]}},{"objectType":"Event","args":{"eventName":"EmailVerificationRequested","properties":[{"name":"userId","type":"Long","isKey":true},{"name":"email","type":"Email"},{"name":"verificationToken"}],"outputCommandNames":["SendWelcomeNotification"]}},{"objectType":"Event","args":{"eventName":"VerificationEmailResent","properties":[{"name":"userId","type":"Long","isKey":true},{"name":"newVerificationToken"}]}},{"objectType":"Aggregate","args":{"properties":[{"name":"verificationToken"},{"name":"verificationDate","type":"Date"},{"name":"verificationExpiryDate","type":"Date"}]}},{"objectType":"Enumeration","args":{"enumerationName":"UserStatus","properties":[{"name":"PENDING"},{"name":"VERIFIED"}]}}]}
+{"thoughtProcess":{"requirements":{"summary":"Implement email verification functionality for new user registrations with security measures and token management","keyPoints":["Email verification flow for new registrations","Token-based verification system","Resend verification capability","Status tracking for verification process","Security considerations for verification process"]},"analysis":{"existingComponents":{"commands":["RegisterUser","UpdateUserStatus"],"events":["UserRegistered","UserStatusUpdated"],"properties":["userId","email","userStatus","profile"]},"missingComponents":{"commands":["VerifyEmail","ResendVerificationEmail"],"events":["EmailVerificationRequested","EmailVerified","VerificationEmailResent"],"properties":["verificationToken","verificationDate","verificationExpiryDate"]}},"decisions":[{"decision":"Add PENDING and VERIFIED states to UserStatus","reasoning":"Track user verification state separately from active/inactive status","impact":["Allows differentiation between unverified and verified users","Enables verification-based access control"]},{"decision":"Create separate commands for verification and resend","reasoning":"Follow single responsibility principle and enable separate rate limiting","impact":["Better security control per operation","Clearer audit trail","Simplified error handling"]},{"decision":"Add verification tracking properties to User aggregate","reasoning":"Need to manage verification process state and security","impact":["Enables token validation","Supports expiration mechanism","Allows verification attempt tracking"]}]},"actions":[{"objectType":"Command","args":{"commandName":"VerifyEmail","api_verb":"PUT","properties":[{"name":"userId","type":"Long","isKey":true},{"name":"verificationToken"}],"outputEventNames":["EmailVerified"],"actor":"User"}},{"objectType":"Command","args":{"commandName":"ResendVerificationEmail","api_verb":"POST","properties":[{"name":"userId","type":"Long","isKey":true}],"outputEventNames":["VerificationEmailResent"],"actor":"User"}},{"objectType":"Event","args":{"eventName":"EmailVerified","properties":[{"name":"userId","type":"Long","isKey":true},{"name":"verificationDate","type":"Date"}]}},{"objectType":"Event","args":{"eventName":"EmailVerificationRequested","properties":[{"name":"userId","type":"Long","isKey":true},{"name":"email","type":"Email"},{"name":"verificationToken"}],"outputCommandNames":["SendWelcomeNotification"]}},{"objectType":"Event","args":{"eventName":"VerificationEmailResent","properties":[{"name":"userId","type":"Long","isKey":true},{"name":"newVerificationToken"}]}},{"objectType":"Aggregate","args":{"properties":[{"name":"verificationToken"},{"name":"verificationDate","type":"Date"},{"name":"verificationExpiryDate","type":"Date"}]}},{"objectType":"Enumeration","args":{"enumerationName":"UserStatus","properties":[{"name":"PENDING"},{"name":"VERIFIED"}]}}]}
 \`\`\`
 
 `
@@ -266,6 +295,17 @@ ${JSON.stringify(this.__getFilteredAggregateValueWithProperties(esValue, esValue
 
 - Function Requirements
 ${description}
+
+- Final Check
+* Every property used in Commands and Events must exist in the Aggregate (add if missing)
+* Use proper data types (avoid String when domain-specific types exist)
+* Include primary key (isKey: true) for update/delete operations
+* Consider using ValueObjects for related property groups
+* Check if new Events should trigger any existing Commands
+* Ensure consistent naming conventions (PascalCase for types, camelCase for properties)
+* Verify all required properties are included in Commands/Events based on the business requirements
+* The command you create must call the event for that command. Ex) CreateCustomer -> CustomerCreated
+* When using the value of an Enumeration or ValueObject or Entity in an Aggregate Root, you must use its class name, not the type of the object's Id. Ex) Integer -> OrderStatus
 
 [OUTPUT]
 \`\`\`json
