@@ -754,10 +754,10 @@
                     </span>
                   </template>
                   <span v-if="dragPageMovable == true"
-                  >Draggable Screen : on</span
+                  >{{ $t('modelingPanelTool.draggableOn') }}</span
                   >
                   <span v-if="dragPageMovable == false"
-                  >Draggable Screen : off</span
+                  >{{ $t('modelingPanelTool.draggableOff') }}</span
                   >
                 </v-tooltip>
 
@@ -785,7 +785,7 @@
                     </span>
                   </template>
                   <span v-if="automaticGuidance == true"
-                  >Arrange Guidance : on</span
+                  >{{ $t('modelingPanelTool.arrangeGuidanceOn') }}</span
                   >
                   <span v-if="automaticGuidance == false"
                   >Arrange Guidance : off</span
@@ -871,10 +871,10 @@
                     </span>
                   </template>
                   <span v-if="dragPageMovable == true"
-                  >Draggable Screen : on</span
+                  >{{ $t('modelingPanelTool.draggableOn') }}</span
                   >
                   <span v-if="dragPageMovable == false"
-                  >Draggable Screen : off</span
+                  >{{ $t('modelingPanelTool.draggableOff') }}</span
                   >
                 </v-tooltip>
 
@@ -903,7 +903,7 @@
                     </span>
                   </template>
                   <span v-if="automaticGuidance == true"
-                  >Arrange Guidance : on</span
+                  >{{ $t('modelingPanelTool.arrangeGuidanceOn') }}</span
                   >
                   <span v-if="automaticGuidance == false"
                   >Arrange Guidance : off</span
@@ -1043,13 +1043,20 @@
             </v-card>
           </v-dialog>
 
-          <v-dialog v-model="showDDLDraftDialog" max-width="1200" max-height="800" overflow="scroll">
+          <v-dialog
+                  v-model="showDDLDraftDialog"
+                  persistent
+                  max-width="1200"
+                  max-height="800"
+                  overflow="scroll"
+          >
             <ModelDraftDialogForDistribution
                 :DDLDraftOptions="DDLDraftOptions"
                 :draftUIInfos="draftUIInfos"
                 :isGeneratorButtonEnabled="isDraftGeneratorButtonEnabled"
                 @reGenerate="reGenerate"
                 @generateFromDraft="generateFromDraft"
+                @close="showDDLDraftDialog = false"
             ></ModelDraftDialogForDistribution>
           </v-dialog>
 

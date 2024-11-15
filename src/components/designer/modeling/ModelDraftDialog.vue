@@ -76,8 +76,7 @@
             </v-tab-item>
         </v-tabs-items>
 
-        <v-btn v-if="defaultGeneratorUiInputData.numberRemainingDDLs === 0" @click="generateFromDraft"
-                :disabled="!isGeneratorButtonEnabled || (!selectedOptionItem || Object.keys(selectedOptionItem).length !== Object.keys(DDLDraftTable).length)"
+        <v-btn @click="generateFromDraft" :disabled="!isGeneratorButtonEnabled || (!selectedOptionItem || Object.keys(selectedOptionItem).length !== Object.keys(DDLDraftTable).length)"
                 block>Generate From Draft</v-btn>
         </v-card-text>
     </v-card>

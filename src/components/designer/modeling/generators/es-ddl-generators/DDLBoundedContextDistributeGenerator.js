@@ -75,6 +75,13 @@ Please follow these rules.
 The returned format should be as follows.
 \`\`\`json
 {
+    "thoughtProcess": {
+        "step1": "Analyze the relationships between tables based on foreign keys",
+        "step2": "Group closely related tables that share foreign key relationships",
+        "step3": "Consider the suggested bounded contexts from user input",
+        "step4": "Map function requirements to appropriate bounded contexts",
+        "step5": "Verify all tables are assigned and constraints are met"
+    },
     "boundedContexts": [
         {
             "name": "BoundedContextName",
@@ -113,7 +120,7 @@ product_reviews(PK: review_id)(FK: user_id, product_id)
 
 [OUTPUT]
 \`\`\`json
-{"boundedContexts":[{"name":"UserService","ddls":["users","user_profiles","delivery_addresses"],"functionRequirements":["사용자 프로필 관리 기능이 필요합니다","배송지 관리 기능이 필요합니다"]},{"name":"ProductService","ddls":["products","product_categories","product_reviews"],"functionRequirements":["상품 카테고리별 조회 기능이 필요합니다"]},{"name":"OrderPaymentService","ddls":["orders","payments"],"functionRequirements":["주문시 결제 처리 기능이 필요합니다"]}]}
+{"thoughtProcess":{"step1":"Analyzed foreign key relationships: user_profiles and delivery_addresses are connected to users; products linked to product_categories; orders connected to users and products; payments linked to orders; product_reviews connected to users and products","step2":"Grouped tables by primary relationships: users with profiles and addresses; products with categories and reviews; orders with payments","step3":"Mapped to suggested contexts: '유저 서비스' becomes UserService, '상품 서비스' becomes ProductService, created additional OrderPaymentService for order-related tables","step4":"Assigned function requirements: user profile and delivery management to UserService, product category browsing to ProductService, payment processing to OrderPaymentService","step5":"Verified all tables are assigned and each bounded context has less than maximum allowed DDLs"},"boundedContexts":[{"name":"UserService","ddls":["users","user_profiles","delivery_addresses"],"functionRequirements":["사용자 프로필 관리 기능이 필요합니다","배송지 관리 기능이 필요합니다"]},{"name":"ProductService","ddls":["products","product_categories","product_reviews"],"functionRequirements":["상품 카테고리별 조회 기능이 필요합니다"]},{"name":"OrderPaymentService","ddls":["orders","payments"],"functionRequirements":["주문시 결제 처리 기능이 필요합니다"]}]}
 \`\`\`
 
 `
@@ -130,6 +137,15 @@ ${suggestedBoundedContexts.join('\n')}
 
 - Function Requirements
 ${functionRequirements.join('\n')}
+
+- Final Check
+* Each DDL must be assigned to exactly one Bounded Context
+* Each Bounded Context must not exceed ${this.maxDDLForEachBoundedContext} DDLs
+* All suggested Bounded Contexts must be included in the result
+* All function requirements must be assigned to appropriate Bounded Contexts
+* Bounded Context names must be in English and follow PascalCase convention
+* Tables with foreign key relationships should preferably be in the same Bounded Context
+* Response must be a valid JSON without any comments or additional text
 
 [OUTPUT]
 \`\`\`json

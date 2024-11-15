@@ -151,7 +151,6 @@
                                                     auto-grow
                                                     no-resize
                                                 ></v-textarea>
-                                                
                                                 <v-row align="center" no-gutters class="ma-0 pa-0">
                                                     <v-text-field class="delete-input-detail ddl-text-field"
                                                         v-model="boundedContextInput"
