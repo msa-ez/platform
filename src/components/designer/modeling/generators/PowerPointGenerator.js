@@ -318,8 +318,15 @@ class PowerPointGenerator {
         if (modelData.value.hasOwnProperty("relations") && Object.values(modelData.value.relations).length > 0) {
             const relations = Object.values(modelData.value.relations);
             relations.forEach((item) => {
-                if (item && item.relationView) {
-                    const vertices = JSON.parse(item.relationView.value);
+                if (item) {
+                    let vertices;
+                    if (modelData.canvasType === "hexagonal" && item.hexagonalView) {
+                        vertices = JSON.parse(item.hexagonalView.value);
+                    } else if (item.relationView) {
+                        vertices = JSON.parse(item.relationView.value);
+                    } else {
+                        return;
+                    }
                     const midIdx = Math.floor((vertices.length + 1)/2);
                     const lastIdx = vertices.length - 1;
                     if (vertices.length > 0) {
@@ -419,19 +426,21 @@ class PowerPointGenerator {
 
     setShapeByType(object, list, canvasType) {
         const me = this;
-        if (canvasType === "uml") {
+        if (canvasType === "es") {
+            let shape = me.generateEventStorming(object);
+            list.push(shape);
+        } else if (canvasType === "bm") {
+            let shape = me.generateBusinessModel(object);
+            list.push(shape);
+        } else if (canvasType === "cjm") {
+            let shape = me.generateCustomerJourneyMap(object);
+            list.push(shape);
+        } else if (canvasType === "uml") {
             let shapes = me.generateUMLClassDiagram(object);
             list = list.concat(shapes);
-        } else {
-            let shape;
-            if (canvasType === "es") {
-                shape = me.generateEventStorming(object);
-            } else if (canvasType === "bm") {
-                shape = me.generateBusinessModel(object);
-            } else if (canvasType === "cjm") {
-                shape = me.generateCustomerJourneyMap(object);
-            }
-            list.push(shape)
+        } else if (canvasType === "hexagonal") {
+            let shapes = me.generateHexagonal(object);
+            list = list.concat(shapes);
         }
         return list;
     }
@@ -550,6 +559,9 @@ class PowerPointGenerator {
                     canvasType: "uml",
                     value: object.aggregateRoot.entities
                 };
+                const slideTitle = object.displayName ? object.displayName : object.name;
+                const titleOptions = { x: "2%", y: "5%", fontSize: 40, bold: true };
+                slide.addText(slideTitle, titleOptions);
                 slide = me.convertToShape(slide, model);
                 slide = me.convertToArrow(slide, model);
             }
@@ -1035,7 +1047,175 @@ class PowerPointGenerator {
                 })
             }
 
-            shapes = [titleShape, fieldShape];
+            shapes = [titleShape, messageShape];
+        }
+
+        return shapes;
+    }
+
+    // Hexagonal
+    generateHexagonal(object) {
+        const me = this;
+        let shapes = [];
+
+        if (object._type.includes("Event") || object._type.includes("Command") || object._type.includes("Policy")) {
+            const type = object._type.split(".").pop();
+
+            let rx = object.hexagonalView.x;
+            let ry = object.hexagonalView.y - 5;
+            let fontAlign = "left";
+
+            if (object._type.includes("Event")) {
+                rx -= object.hexagonalView.subWidth;
+                fontAlign = "right";
+            }
+
+            let rectangleShape = {
+                type: "shape",
+                textList: [
+                    {
+                        text: object.displayName ? object.displayName : object.name,
+                        options: {
+                            fontSize: 12,
+                            bold: true,
+                            color: types[type].fill,
+                            align: fontAlign
+                        }
+                    }
+                ],
+                shape: pptx.shapes.RECTANGLE,
+                x: convert(rx, "px", "in"),
+                y: convert(ry, "px", "in"),
+                w: convert(object.hexagonalView.subWidth, "px", "in"),
+                h: convert(10, "px", "in"),
+                fill: {
+                    color: types[type].fill,
+                    transparency: 0,
+                },
+                line: {
+                    color: types[type].fill
+                },
+                valign: "top",
+                autoFit: true
+            }
+
+            let cx = object.hexagonalView.x;
+            let cy = object.hexagonalView.y - 10;
+
+            if (object._type.includes("Command") || object._type.includes("Policy")) {
+                cx -= 10;
+            }
+
+            let circleShape = {
+                type: "shape",
+                textList: [],
+                shape: pptx.shapes.OVAL,
+                x: convert(cx, "px", "in"),
+                y: convert(cy, "px", "in"),
+                w: convert(20, "px", "in"),
+                h: convert(20, "px", "in"),
+                fill: {
+                    color: types[type].fill,
+                    transparency: 0,
+                },
+                line: {
+                    color: types[type].fill
+                },
+                valign: "top",
+                autoFit: true
+            }
+
+            shapes = [rectangleShape, circleShape];
+
+        } else if (object._type.includes("BoundedContext")) {
+            let hx = object.hexagonalView.x - object.hexagonalView.width/2;
+            let hy = object.hexagonalView.y - object.hexagonalView.height/2;
+
+            let hexagonShape1 = {
+                type: "shape",
+                textList: [],
+                shape: pptx.shapes.HEXAGON,
+                x: convert(hx, "px", "in"),
+                y: convert(hy, "px", "in"),
+                w: convert(object.hexagonalView.width, "px", "in"),
+                h: convert(object.hexagonalView.height, "px", "in"),
+                fill: {
+                    color: "92D050",
+                    transparency: 0,
+                },
+                line: {
+                    color: "000000"
+                },
+                valign: "top",
+                autoFit: true
+            }
+
+            let hexagonShape2 = {
+                type: "shape",
+                textList: [
+                    {
+                        text: object.displayName ? object.displayName : object.name,
+                        options: {
+                            fontSize: 10,
+                            align: "center",
+                            bold: true,
+                            valign: "top"
+                        }
+                    }
+                ],
+                shape: pptx.shapes.HEXAGON,
+                x: convert(hx+50, "px", "in"),
+                y: convert(hy+50, "px", "in"),
+                w: convert(object.hexagonalView.width-100, "px", "in"),
+                h: convert(object.hexagonalView.height-100, "px", "in"),
+                fill: {
+                    color: "FFFF00",
+                    transparency: 0,
+                },
+                line: {
+                    color: "000000",
+                    dashType: "dash"
+                },
+                valign: "top",
+                autoFit: true
+            }
+
+            shapes = [hexagonShape1, hexagonShape2];
+
+        } else if (object._type.includes("Aggregate")) {
+            let x = object.hexagonalView.x-object.hexagonalView.width/2;
+            let y = object.hexagonalView.y-object.hexagonalView.height/2;
+
+            let shape = {
+                type: "shape",
+                textList: [
+                    {
+                        text: object.displayName ? object.displayName : object.name,
+                        options: {
+                            fontSize: 12,
+                            align: "center",
+                            bold: true,
+                            margin: 10
+                        }
+                    }
+                ],
+                shape: pptx.shapes.RECTANGLE,
+                x: convert(x, "px", "in"),
+                y: convert(y, "px", "in"),
+                w: convert(object.hexagonalView.width, "px", "in"),
+                h: convert(object.hexagonalView.height, "px", "in"),
+                fill: {
+                    color: "FFFF00",
+                    transparency: 0,
+                },
+                line: {
+                    color: "000000"
+                },
+                valign: "top",
+                autoFit: true
+            }
+            shapes = [shape];
+
         }
 
         return shapes;
@@ -1051,7 +1231,19 @@ class PowerPointGenerator {
             let slide = pptx.addSlide();
             slide = me.convertToShape(slide, model);
             slide = me.convertToArrow(slide, model);
-        })
+
+            // add hexagonal view
+            if (model.canvasType === "es") {
+                const hexagonalModel = {
+                    canvasType: "hexagonal",    
+                    value: model.value
+                };
+                let slide2 = pptx.addSlide();
+                slide2.addText("Hexagonal", { x: "2%", y: "5%", fontSize: 40, bold: true });
+                slide2 = me.convertToShape(slide2, hexagonalModel);
+                // slide2 = me.convertToArrow(slide2, hexagonalModel);
+            }
+        });
         pptx.writeFile({ fileName: me.pptName });
     }
 }

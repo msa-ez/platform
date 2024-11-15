@@ -4861,7 +4861,7 @@
                 Object.values(value.elements).forEach((element) => {
                     if(!me.validateElementFormat(element)) return;
                     let component = me.$refs[element.elementView.id];
-                    if (component && component[0].selected) {
+                    if (component && component[0] && (component[0].selected || (me.canvasType == "es" && me.isHexagonal))) {
                         selectCnt ++;
 
                         if(element._type.endsWith('BoundedContext')){

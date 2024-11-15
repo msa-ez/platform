@@ -2986,9 +2986,9 @@
 
                 var diff = jsondiffpatch.diff(oldVal, newVal);
                 if (me.initLoad && diff) {
-                    if (me.isHexagonal) {
-                        me.settingHexagonal();
-                    }
+                    // if (me.isHexagonal) {
+                    //     me.settingHexagonal(newVal);
+                    // }
                     if (me.embeddedCanvasDialog && me.embeddedCanvasType == "Domain Class Modeling") {
                         // return;
                     }
@@ -4193,12 +4193,11 @@
                     if (values.elements) {
                         Object.keys(values.elements).forEach(function (id) {
                             var element = values.elements[id];
-
-                            if (element && element.isPBCModel) {
+                            if (element && element != null) {
                                 var typeSplit = element._type.split(".");
                                 var type = typeSplit[typeSplit.length - 1];
 
-                                if ( !values.elements[id].hexagonalView || (values.elements[id].hexagonalView && Object.values(values.elements[id].hexagonalView).filter((x) => x == 0).length >= 4)) {
+                                if (!values.elements[id].hexagonalView) {
                                     // 초기값 세팅.
                                     element.hexagonalView = JSON.parse(JSON.stringify(element.elementView));
                                     element.hexagonalView._type = `${element._type}Hexagonal`;
@@ -4208,17 +4207,28 @@
                                         // 크기를 일정하게 처리.
                                         element.hexagonalView.height = 20;
                                         element.hexagonalView.width = 20;
-                                        element.hexagonalView.subWidth = 100;
+                                        element.hexagonalView.subWidth = 80;
+                                    } else {
+                                        element.hexagonalView.x = element.elementView.x;
+                                        element.hexagonalView.y = element.elementView.y;
+                                        element.hexagonalView.width = 350;
+                                        element.hexagonalView.height = 350;
                                     }
                                 } else {
-                                    if (!element._type.endsWith("BoundedContext") && !element._type.endsWith("PBC") && !element._type.endsWith("Aggregate")) {
+                                    // 기존값 세팅.
+                                    element.hexagonalView = values.elements[id].hexagonalView;
+                                    if (!element._type.endsWith("BoundedContext") && 
+                                        !element._type.endsWith("PBC") && 
+                                        !element._type.endsWith("Aggregate")
+                                    ) {
                                         // 크기를 일정하게 처리.
                                         element.hexagonalView.height = 20;
                                         element.hexagonalView.width = 20;
-                                        element.hexagonalView.subWidth = 100;
+                                        element.hexagonalView.subWidth = 80;
+                                    } else {
+                                        element.hexagonalView.x = element.elementView.x;
+                                        element.hexagonalView.y = element.elementView.y;
                                     }
-                                    // 기존값 세팅.
-                                    element.hexagonalView = values.elements[id].hexagonalView;
                                 }
 
                                 if (modelForElements[type]) {
@@ -4235,7 +4245,7 @@
                     if (values.relations) {
                         Object.keys(values.relations).forEach(function (id) {
                             var relation = values.relations[id];
-                            if (relation && relation.isPBCModel) {
+                            if (relation && relation != null) {
                                 var typeSplit = relation._type.split(".");
                                 var type = typeSplit[typeSplit.length - 1];
 
@@ -4248,7 +4258,6 @@
                                     // 기존값 세팅.
                                     relation.hexagonalView = values.relations[id].hexagonalView;
                                 }
-
                                 if (modelForElements[type]) modelForElements[type].push(relation);
                             }
                         });
@@ -4348,7 +4357,7 @@
                                                     element.hexagonalView.subWidth = 100;
                                                     bcElement.innerElements.outputAdapters.push(element);
                                                 } else {
-                                                    if (type == "Aggregate") {
+                                                    if (element._type.includes("Aggregate")) {
                                                         element.hexagonalView.x = bc.hexagonalView.x;
                                                         element.hexagonalView.y = bc.hexagonalView.y;
                                                         element.hexagonalView.width = bc.hexagonalView.width / 3;
@@ -4372,12 +4381,17 @@
                         bc["outputElWidth"] = bcElement.outputElWidth;
                     });
 
-                    //setting BoundedContext
+                    // setting BoundedContext
                     modelForElements.BoundedContext.forEach((bc) => {
                         var distance = {};
                         var standard = 30;
-
                         if (bc) {
+                            if (bc.hexagonalView.width < 350) {
+                                bc.hexagonalView.width = 350;
+                            }
+                            if (bc.hexagonalView.height < 350) {
+                                bc.hexagonalView.height = 350;
+                            }
                             if (bc.hexagonalView.width < bc.hexagonalView.height) {
                                 bc.hexagonalView.height = JSON.parse(JSON.stringify(bc.hexagonalView.width));
                             } else {
@@ -4386,116 +4400,77 @@
                         }
 
                         if (bc && bc.innerElements) {
-                            //BoundedContext
+                            // BoundedContext
                             var bcX = JSON.parse(JSON.stringify(bc.hexagonalView.x));
                             var bcY = JSON.parse(JSON.stringify(bc.hexagonalView.y));
                             var bcW = JSON.parse(JSON.stringify(bc.hexagonalView.width));
                             var bcH = JSON.parse(JSON.stringify(bc.hexagonalView.height));
 
-                            //InputAdapters
+                            // InputAdapters
                             if (bc.innerElements && bc.innerElements.inputAdapters) {
                                 bc.innerElements.inputAdapters = descYPositionSort(bc.innerElements.inputAdapters);
                                 var inputLen = bc.innerElements.inputAdapters.length;
                                 var xDistance = bcW / 2 / inputLen;
                                 var yDistance = bcH / 2 / inputLen;
 
-                                bc.innerElements.inputAdapters.forEach(
-                                    (inputAdapter, index) => {
-                                        var itemH = inputAdapter.hexagonalView.height;
-                                        var itemW = inputAdapter.hexagonalView.width;
+                                bc.innerElements.inputAdapters.forEach((inputAdapter, index) => {
+                                    var itemH = inputAdapter.hexagonalView.height;
+                                    var itemW = inputAdapter.hexagonalView.width;
 
-                                        if (standard < bcH / 2 / inputLen || standard * index < bcH / 2.2) {
-                                            // top
-                                            if (yDistance < standard) {
-                                                yDistance = standard;
-                                            } else if (yDistance > 65) {
-                                                xDistance = 60;
-                                                yDistance = 60;
-                                            }
-
-                                            inputAdapter.hexagonalView.y = bcY - itemH / 2 - yDistance * index;
-                                        } else {
-                                            // bottom
-                                            inputAdapter.hexagonalView.y = bcY - itemH / 2 + yDistance * (inputLen - index) + 10;
-                                            inputAdapter.hexagonalView.subWidth = bc.inputElWidth + xDistance * (inputLen - index) + xDistance * 0.4 * (inputLen - index);
+                                    if (standard < bcH / 2 / inputLen || standard * index < bcH / 2.2) {
+                                        // top
+                                        if (yDistance < standard) {
+                                            yDistance = standard;
+                                        } else if (yDistance > 65) {
+                                            xDistance = 60;
+                                            yDistance = 60;
                                         }
-                                        inputAdapter.hexagonalView.x = bcX - bcW / 2 - bc.inputElWidth;
-                                        inputAdapter.hexagonalView.subWidth = bc.inputElWidth + xDistance * 0.5 * index;
-
-                                        distance.minX = inputAdapter.hexagonalView.x;
-                                        me.value.elements[inputAdapter.elementView.id].hexagonalView = inputAdapter.hexagonalView;
+                                        inputAdapter.hexagonalView.y = bcY - itemH / 2 - yDistance * index;
+                                    } else {
+                                        // bottom
+                                        inputAdapter.hexagonalView.y = bcY - itemH / 2 + yDistance * (inputLen - index) + 10;
+                                        inputAdapter.hexagonalView.subWidth = bc.inputElWidth + xDistance * (inputLen - index) + xDistance * 0.4 * (inputLen - index);
                                     }
-                                );
+                                    inputAdapter.hexagonalView.x = bcX - bcW / 2 - bc.inputElWidth;
+                                    inputAdapter.hexagonalView.subWidth = bc.inputElWidth + xDistance * 0.5 * index;
+
+                                    distance.minX = inputAdapter.hexagonalView.x;
+                                    me.value.elements[inputAdapter.elementView.id].hexagonalView = inputAdapter.hexagonalView;
+                                });
                             }
 
-                            //OutputAdapters
-                            if (
-                                bc.innerElements &&
-                                bc.innerElements.outputAdapters
-                            ) {
-                                var outputLen =
-                                    bc.innerElements.outputAdapters.length;
-                                var xDistance =
-                                    bcW /
-                                    2 /
-                                    bc.innerElements.outputAdapters.length;
-                                var yDistance =
-                                    bcH /
-                                    2 /
-                                    bc.innerElements.outputAdapters.length;
+                            // OutputAdapters
+                            if (bc.innerElements && bc.innerElements.outputAdapters) {
+                                var outputLen = bc.innerElements.outputAdapters.length;
+                                var xDistance = bcW / 2 / outputLen;
+                                var yDistance = bcH / 2 / outputLen;
 
-                                bc.innerElements.outputAdapters = ascYPositionSort(
-                                    bc.innerElements.outputAdapters
-                                );
-                                bc.innerElements.outputAdapters.forEach(
-                                    (outputAdapter, index) => {
-                                        var itemH =
-                                            outputAdapter.hexagonalView.height;
-                                        var itemW =
-                                            outputAdapter.hexagonalView.width;
+                                bc.innerElements.outputAdapters = ascYPositionSort(bc.innerElements.outputAdapters);
+                                bc.innerElements.outputAdapters.forEach((outputAdapter, index) => {
+                                    var itemH = outputAdapter.hexagonalView.height;
+                                    var itemW = outputAdapter.hexagonalView.width;
 
-                                        if (
-                                            standard < bcH / 2 / outputLen ||
-                                            standard * index < bcH / 2.2
-                                        ) {
-                                            // bottom
-                                            if (yDistance < standard) {
-                                                yDistance = standard;
-                                            } else if (yDistance > 65) {
-                                                xDistance = 60;
-                                                yDistance = 60;
-                                            }
-
-                                            outputAdapter.hexagonalView.y =
-                                                bcY + itemH / 2 + yDistance * index;
-                                        } else {
-                                            // top
-                                            outputAdapter.hexagonalView.y =
-                                                bcY +
-                                                itemH / 2 -
-                                                yDistance * (outputLen - index) -
-                                                5;
-                                            outputAdapter.hexagonalView.subWidth =
-                                                bc.outputElWidth +
-                                                xDistance * (outputLen - index) +
-                                                xDistance *
-                                                0.4 *
-                                                (outputLen - index);
+                                    if (standard < bcH / 2 / outputLen || standard * index < bcH / 2.2) {
+                                        // bottom
+                                        if (yDistance < standard) {
+                                            yDistance = standard;
+                                        } else if (yDistance > 65) {
+                                            xDistance = 60;
+                                            yDistance = 60;
                                         }
-                                        outputAdapter.hexagonalView.x =
-                                            bcX + bcW / 2 + bc.outputElWidth;
-                                        outputAdapter.hexagonalView.subWidth =
-                                            bc.outputElWidth +
-                                            xDistance * 0.5 * index;
 
-                                        distance.maxX =
-                                            outputAdapter.hexagonalView.x;
-                                        me.value.elements[
-                                            outputAdapter.elementView.id
-                                            ].hexagonalView =
-                                            outputAdapter.hexagonalView;
+                                        outputAdapter.hexagonalView.y = bcY + itemH / 2 + yDistance * index;
+                                    } else {
+                                        // top
+                                        outputAdapter.hexagonalView.y = bcY + itemH / 2 - yDistance * (outputLen - index) - 5;
+                                        outputAdapter.hexagonalView.subWidth = bc.outputElWidth + xDistance * (outputLen - index) + xDistance * 0.4 * (outputLen - index);
                                     }
-                                );
+                                    outputAdapter.hexagonalView.x = bcX + bcW / 2 + bc.outputElWidth;
+                                    outputAdapter.hexagonalView.subWidth = bc.outputElWidth + xDistance * 0.5 * index;
+
+                                    distance.maxX = outputAdapter.hexagonalView.x;
+                                    me.value.elements[outputAdapter.elementView.id].hexagonalView = outputAdapter.hexagonalView;
+                                });
                             }
 
                             // Aggregates
@@ -4504,21 +4479,15 @@
                                 if (aggLen > 1) {
                                     var bcSubH = Math.floor(bcH * 0.6);
                                     var yDistance = bcSubH / 2 / aggLen;
-                                    bc.innerElements.Aggregate.forEach(
-                                        (agg, index) => {
-                                            agg.hexagonalView.height =
-                                                (bcSubH - yDistance * 2) / aggLen;
-                                            var itemH = agg.hexagonalView.height;
-                                            agg.hexagonalView.y =
-                                                bcY -
-                                                bcSubH / 2 +
-                                                (itemH / 2) * (index + 1) +
-                                                yDistance * (index + 1);
-
-                                            me.value.elements[agg.elementView.id] =
-                                                agg;
-                                        }
-                                    );
+                                    bc.innerElements.Aggregate.forEach((agg, index) => {
+                                        agg.hexagonalView.height = (bcSubH - yDistance * 2) / aggLen;
+                                        var itemH = agg.hexagonalView.height;
+                                        agg.hexagonalView.y = bcY - bcSubH / 2 + (itemH / 2) * (index + 1) + yDistance * (index + 1);
+                                        me.value.elements[agg.elementView.id] = agg;
+                                    });
+                                } else if (aggLen == 1) {
+                                    var agg = bc.innerElements.Aggregate[0];
+                                    me.value.elements[agg.elementView.id] = agg;
                                 }
                             }
 
@@ -4531,13 +4500,11 @@
                         }
 
                         if (distance.maxX - distance.minX > bc.elementView.width) {
-                            var width =
-                                bc.hexagonalView.width -
-                                (distance.maxX -
-                                    distance.minX -
-                                    bc.elementView.width);
-                            bc.hexagonalView.width = width;
-                            bc.hexagonalView.height = width;
+                            var width = bc.hexagonalView.width - (distance.maxX - distance.minX - bc.elementView.width);
+                            if (width > 350) {
+                                bc.hexagonalView.width = width;
+                                bc.hexagonalView.height = width;
+                            }
                         }
                     });
                     //end BoundedContext
@@ -5416,7 +5383,7 @@
                     value.nameCamelCase = changeCase.camelCase(value.name);
                 }
             },
-            generateHexagonal(value) {
+            async generateHexagonal() {
                 var me = this;
                 me.elementTypes.forEach(function (item, index) {
                     if (item.component.includes("bounded-context")) {
@@ -5430,8 +5397,8 @@
                         }/static/image/event/pbc_hexagonal.png`;
                     }
                 });
-                me.hexagonalValue = me.settingHexagonal(value);
-                if (me.hexagonalValue) me.isHexagonal = true;
+                await me.settingHexagonal();
+                me.isHexagonal = true;
             },
             generateModel() {
                 var me = this;
