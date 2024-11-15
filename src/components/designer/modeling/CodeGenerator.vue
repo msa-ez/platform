@@ -1471,6 +1471,7 @@
     import GitAPI from "../../../utils/GitAPI"
     import Github from "../../../utils/Github"
     import Gitlab from "../../../utils/Gitlab"
+    import Gitea from "../../../utils/Gitea";
     import Usage from "../../../utils/Usage";
     
     import GitActionDialog from './GitActionDialog'
@@ -2578,6 +2579,11 @@
             } else {
                 git = new Github();
             }
+
+            // const baseURL = 'http://localhost:3000';
+            // const token = '';
+            git = new Gitea(baseURL, token);
+
             this.gitAccessToken = localStorage.getItem('gitAccessToken') ? localStorage.getItem('gitAccessToken') : localStorage.getItem('gitToken')
             this.gitAPI = new GitAPI(git);
             this.core = new CodeGeneratorCore({
