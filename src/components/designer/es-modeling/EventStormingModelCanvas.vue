@@ -1901,9 +1901,26 @@
         <v-dialog v-model="showDDLDraftDialog" max-width="1200" max-height="800" overflow="scroll">
             <ModelDraftDialog
                 :DDLDraftTable="DDLDraftTable"
+                :isGeneratorButtonEnabled="isGeneratorButtonEnabled"
                 @generateFromDraft="generateFromDraft"
             ></ModelDraftDialog>
         </v-dialog>
+
+        <v-dialog
+                  v-model="showDDLDraftDialogForRelocate"
+                  persistent
+                  max-width="1200"
+                  max-height="800"
+                  overflow="scroll"
+          >
+            <ModelDraftDialogForDistribution
+                :DDLDraftOptions="DDLDraftOptionsForRelocate"
+                :draftUIInfos="draftUIInfosForRelocate"
+                :isGeneratorButtonEnabled="isDraftGeneratorButtonEnabledForRelocate"
+                @generateFromDraft="generateFromDraft"
+                @close="showDDLDraftDialogForRelocate = false"
+            ></ModelDraftDialogForDistribution>
+          </v-dialog>
         <!-- <gitAPIMenu></gitAPIMenu> -->
     </div>
 </template>
@@ -1940,7 +1957,9 @@
     import isAttached from "../../../utils/isAttached";
     import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
     import DebeziumTransactionManager from "../modeling/generators/generatorTabs/DebeziumTransactionManager"
-    import DDLDraftGenerator from "../modeling/generators/DDLDraftGenerator"
+    import DDLDraftGeneratorForRelocate from "../modeling/generators/es-ddl-generators/DDLDraftGeneratorForRelocate"
+    import ModelDraftDialogForDistribution from "../context-mapping-modeling/dialogs/ModelDraftDialogForDistribution.vue"
+    import BoundedContextRelocateActionsGenerator from "../modeling/generators/es-ddl-generators/BoundedContextRelocateActionsGenerator"
     import ModelDraftDialog from "../modeling/ModelDraftDialog"
     import TestByUsingCommand from "./mixins/TestByUsingCommand"
     const prettier = require("prettier");
@@ -2010,7 +2029,8 @@
             CodeGenerator,
             PBCModelList,
             MouseCursorComponent,
-            ModelDraftDialog
+            ModelDraftDialog,
+            ModelDraftDialogForDistribution
             // ModelCodeGenerator
         },
         props: {
@@ -2387,6 +2407,14 @@
                 showDDLDraftDialog: false,
                 DDLDraftTable: null,
                 selectedOptionItem: {},                
+                isGeneratorButtonEnabled: true,
+
+                showDDLDraftDialogForRelocate: false,
+                DDLDraftOptionsForRelocate: [],
+                draftUIInfosForRelocate: {
+                    leftBoundedContextCount: 0
+                },
+                isDraftGeneratorButtonEnabledForRelocate: true
             };
         },
         computed: {
@@ -3033,12 +3061,47 @@
                 this.value.description = val;
             },
             onGenerationFinished(model) {
-                this.forceRefreshCanvas();
                 if(model.DDL){
                     this.setDDLDraftDialog(model)
                 }
+
+                if(model.generatorName === "DDLDraftGeneratorForRelocate" && model.modelValue){
+                    this.DDLDraftOptionsForRelocate = [this._getRelocateDraftOption(model)]
+                    this.draftUIInfosForRelocate.leftBoundedContextCount = 0
+                }
+
+                if(model.generatorName === "BoundedContextRelocateActionsGenerator" && model.modelValue){
+                    this.draftUIInfosForRelocate.leftBoundedContextCount = 0
+                    this.isDraftGeneratorButtonEnabledForRelocate = true
+                    this.showDDLDraftDialogForRelocate = false
+
+                    if(model.modelValue.removedElements && model.modelValue.removedElements.length > 0) {
+                        model.modelValue.removedElements.forEach(element => {
+                            if(this.value.elements[element.id])
+                                this.removeElementAction(this.value.elements[element.id])
+                        })
+                    }
+
+                    this.changedByMe = true
+                    this.$set(this.value, "elements", model.modelValue.createdESValue.elements)
+                    this.$set(this.value, "relations", model.modelValue.createdESValue.relations) 
+                }
+                this.forceRefreshCanvas();
                 // this.openCodeViewer()
             },
+
+            _getRelocateDraftOption(model){
+                return {
+                    boundedContext: model.inputedParams.targetBoundedContext.name,
+                    options: model.modelValue.options.map(option => ({
+                        ...option,
+                        boundedContext: model.inputedParams.targetBoundedContext
+                    })),
+                    conclusions: model.modelValue.conclusions,
+                    defaultOptionIndex: model.modelValue.defaultOptionIndex
+                }
+            },
+
             generateAggregate() {
                 this.generatorParameter.userStory = this.$refs.generatorUI.input.userStory;
                 this.generatorParameter.model = Object.assign([], this.value);
@@ -7340,31 +7403,75 @@
             repairBoundedContext(boundedContext) {
                 var me = this
                 
-                me.generatorName = 'DDLDraftGenerator'
-                let generator = new DDLDraftGenerator(me)
-
-                let aggregates = boundedContext.aggregates.map(agg => me.value.elements[agg.id])
-                                    .filter(el => el != null);
-
+                me.generatorName = 'DDLDraftGeneratorForRelocate'
                 me.input = {
-                    DDL: JSON.stringify(aggregates),
-                    boundedContextLists: 'Please reconstruct the following aggregates within a single bounded context.',
-                    boundedContextName: boundedContext.name
+                    targetBoundedContext: boundedContext,
+                    esValue: me.value
                 }
 
+                let generator = new DDLDraftGeneratorForRelocate(me)
                 generator.generate()
             },
+            
             onModelCreated(model){
-                if(model && (model.generatorName === 'DDLGenerator' || model.generatorName === 'DDLDraftGenerator'))
+                if(model && (model.generatorName === 'DDLGenerator' || model.generatorName === 'DDLDraftGenerator')) {                    
+                    this.isGeneratorButtonEnabled = true
                     this.showDDLDraftDialog = true
+                }
+
+                if(model && model.generatorName === 'DDLDraftGeneratorForRelocate') {
+                    this.showDDLDraftDialogForRelocate = true
+                    this.DDLDraftOptionsForRelocate = []
+                    this.draftUIInfosForRelocate.leftBoundedContextCount = 1
+                    this.isDraftGeneratorButtonEnabledForRelocate = true
+                }
             },
+
             setDDLDraftDialog(model){
                 this.DDLDraftTable = model.tables
             },
 
+
             generateFromDraft(selectedOptionItem){
-                this.showDDLDraftDialog = false
-                console.log(selectedOptionItem)
+                if(!selectedOptionItem || Object.keys(selectedOptionItem).length === 0) {
+                    alert('Please select an option.')
+                    return
+                }
+                try {
+
+                    this.isDraftGeneratorButtonEnabledForRelocate = false
+                    this.draftUIInfosForRelocate.leftBoundedContextCount = 1
+
+                    const SELECTED_BC_NAME = Object.keys(selectedOptionItem)[0]
+                    const SELECTED_OPTION = selectedOptionItem[SELECTED_BC_NAME]
+                    this._relocateBoundedContext(SELECTED_BC_NAME, SELECTED_OPTION.structure, this.value)
+                
+                }
+                catch(e) {
+
+                    console.error(e)
+                    alert(e.message)
+
+                    this.isDraftGeneratorButtonEnabledForRelocate = true
+                    this.draftUIInfosForRelocate.leftBoundedContextCount = 0
+                    
+                }
+            },
+
+            _relocateBoundedContext(targetBoundedContextName, suggestedStructures, esValue){
+                var me = this
+	
+                me.generatorName = 'BoundedContextRelocateActionsGenerator'
+                me.input = {
+                    targetBoundedContextName: targetBoundedContextName,
+                    suggestedStructures: suggestedStructures,
+                    esValue: esValue,
+                    userInfo: me.userInfo,
+                    information: me.information
+                }
+
+                let generator = new BoundedContextRelocateActionsGenerator(me)
+                generator.generate()
             }
         },
     };
