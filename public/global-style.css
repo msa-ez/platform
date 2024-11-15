@@ -665,6 +665,7 @@ code[class*=language-]:nth-child(1) {
 
 .auto-modeling-btn {
     margin-right: 10px !important;
+    text-transform: none;
 }
 
 .auto-modeling-btn-box {
