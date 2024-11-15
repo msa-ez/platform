@@ -1,5 +1,8 @@
 {
   "message": "ko",
+  "DetailComponent": {
+    "allDetails": "가이드 보기"
+  },
   "modelingPanelTool": {
     "draggableOn": "화면 드래그 : on",
     "draggableOff": "화면 드래그 : off",

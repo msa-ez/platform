@@ -1,5 +1,8 @@
 {
   "message": "en",
+  "DetailComponent": {
+    "allDetails": "View Guide"
+  },
   "modelingPanelTool": {
     "draggableOn": "Draggable Screen : on",
     "draggableOff": "Draggable Screen : off",
