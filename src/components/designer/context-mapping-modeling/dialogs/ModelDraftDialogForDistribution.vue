@@ -143,6 +143,11 @@
             DDLDraftOptions: {
                 handler(newVal) {
                     if(newVal.length === 0) return
+                    Object.keys(this.selectedCardIndex).forEach(key => {
+                        if(!newVal.some(option => option.boundedContext === key)) {
+                            delete this.selectedCardIndex[key];
+                        }
+                    });
                     Object.keys(this.selectedOptionItem).forEach(key => {
                         if(!newVal.some(option => option.boundedContext === key)) {
                             delete this.selectedOptionItem[key];
@@ -152,6 +157,8 @@
                     
                     const lastDraftOption = newVal[newVal.length - 1]
                     this.activeTab = newVal.length - 1
+
+                    this.selectedCardIndex[lastDraftOption.boundedContext] = lastDraftOption.defaultOptionIndex
                     this.selectedOptionItem[lastDraftOption.boundedContext] = lastDraftOption.options[lastDraftOption.defaultOptionIndex]
                 },
                 deep: true

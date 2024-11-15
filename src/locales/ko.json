@@ -1,5 +1,23 @@
 {
   "message": "ko",
+  "AggregateDefinitionPanel": {
+    "aggregateGenerateTitle": "Bounded Context 내부에 Aggregate가 포함돼있는 상태에서 Description의 내용을 작성하면 버튼이 활성화됩니다.",
+    "aggregateGenerateTooltipText1": "어그리거트 기반 생성",
+    "aggregateGenerateTooltipText2": "어그리거트와 관련된 모든 것을 제거 후 재생성",
+    "aggregateGenerateSubTitle1": "생성 : 어그리거트 내부의 속성들을 기반으로 관련된 이벤트, 커맨드 등등을 생성합니다.",
+    "aggregateGenerateSubTitle2": "재생성 : 어그리거트 내부의 속성들을 기반으로 관련된 모든 것을 제거 후 재생성합니다.",
+    "generate": "생성",
+    "reGenerate": "재생성"
+  },
+  "DetailComponent": {
+    "allDetails": "가이드 보기"
+  },
+  "modelingPanelTool": {
+    "draggableOn": "화면 드래그 : on",
+    "draggableOff": "화면 드래그 : off",
+    "arrangeGuidanceOn": "화면 라인 가이드 : on",
+    "arrangeGuidanceOff": "화면 라인 가이드 : off"
+  },
   "ModelDraftDialogForDistribution": {
     "pros": "장점:",
     "cons": "단점:",

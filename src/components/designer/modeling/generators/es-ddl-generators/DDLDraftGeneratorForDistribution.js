@@ -74,6 +74,13 @@ Recommendation Instructions to write proposal.
 The returned format should be as follows.
 \`\`\`json
 {
+    "thoughtProcess": {
+        "ddlAnalysis": "Analyze the given DDL structure, relationships, and key properties",
+        "contextConsideration": "Consider the bounded context and its business requirements",
+        "aggregateIdentification": "Explain how you identified potential aggregates",
+        "decompositionReasoning": "Explain your reasoning for different decomposition options",
+        "tradeoffAnalysis": "Analyze the tradeoffs between different options considering ACID properties"
+    },
     "options": [
         {
             "structure": [
@@ -133,7 +140,7 @@ Order Management
 
 [OUTPUT]
 \`\`\`json
-{"options":[{"structure":[{"aggregateName":"Order","entities":["OrderItem","Payment"],"valueObjects":["Address","Money"]}],"pros":"Strong consistency: All order-related operations are atomic, Complete transaction boundary: Ensures payment and items are always consistent with the order","cons":"Large aggregate size: May impact performance for high-volume operations, Complex locking: Entire order must be locked for any changes"},{"structure":[{"aggregateName":"Order","entities":["OrderItem"],"valueObjects":["Address","Money"]},{"aggregateName":"Payment","entities":[],"valueObjects":["Money","PaymentMethod"]}],"pros":"Better performance: Smaller aggregates mean faster operations, Independent scaling: Payment processing can scale independently","cons":"Eventually consistent: Payment status updates need to be synchronized, Complex business logic: Need to handle payment-order consistency"},{"structure":[{"aggregateName":"Order","entities":[],"valueObjects":["Address"]},{"aggregateName":"OrderItem","entities":[],"valueObjects":["Money"]},{"aggregateName":"Payment","entities":[],"valueObjects":["Money","PaymentMethod"]}],"pros":"Maximum flexibility: Each component can be modified independently, Highest performance: Very small and focused aggregates","cons":"Complex consistency management: Need careful orchestration, Many moving parts: Increased complexity in system design"}],"defaultOptionIndex":1,"conclusions":"Option 1 is suitable for systems where consistency is critical and order volume is moderate. Option 2 (default) provides a good balance between consistency and performance, suitable for most e-commerce systems. Option 3 is best for high-scale systems where performance is paramount and eventual consistency is acceptable."}
+{"thoughtProcess":{"ddlAnalysis":"The DDL defines three main tables: orders, order_items, and order_payments. The orders table serves as the core entity with order_items and order_payments having foreign key relationships to it. Each table has its own primary key and specific business-related fields.","contextConsideration":"In the Order Management bounded context, we need to handle order processing, item management, and payment processing while maintaining appropriate transaction boundaries and consistency levels.","aggregateIdentification":"Based on the table structure, we can identify potential aggregates around Order, OrderItem, and Payment concepts. The relationships between these components suggest different possible aggregate boundaries.","decompositionReasoning":"We can decompose this in multiple ways: 1) Single large aggregate for full consistency, 2) Separate Order and Payment aggregates for better performance, 3) Fully decomposed for maximum flexibility.","tradeoffAnalysis":"The key tradeoff is between consistency and performance. A single aggregate ensures strong consistency but may cause performance issues. Splitting into multiple aggregates improves performance but requires managing eventual consistency."},"options":[{"structure":[{"aggregateName":"Order","entities":["OrderItem","Payment"],"valueObjects":["Address","Money"]}],"pros":"Strong consistency: All order-related operations are atomic, Complete transaction boundary: Ensures payment and items are always consistent with the order","cons":"Large aggregate size: May impact performance for high-volume operations, Complex locking: Entire order must be locked for any changes"},{"structure":[{"aggregateName":"Order","entities":["OrderItem"],"valueObjects":["Address","Money"]},{"aggregateName":"Payment","entities":[],"valueObjects":["Money","PaymentMethod"]}],"pros":"Better performance: Smaller aggregates mean faster operations, Independent scaling: Payment processing can scale independently","cons":"Eventually consistent: Payment status updates need to be synchronized, Complex business logic: Need to handle payment-order consistency"},{"structure":[{"aggregateName":"Order","entities":[],"valueObjects":["Address"]},{"aggregateName":"OrderItem","entities":[],"valueObjects":["Money"]},{"aggregateName":"Payment","entities":[],"valueObjects":["Money","PaymentMethod"]}],"pros":"Maximum flexibility: Each component can be modified independently, Highest performance: Very small and focused aggregates","cons":"Complex consistency management: Need careful orchestration, Many moving parts: Increased complexity in system design"}],"defaultOptionIndex":1,"conclusions":"Option 1 is suitable for systems where consistency is critical and order volume is moderate. Option 2 (default) provides a good balance between consistency and performance, suitable for most e-commerce systems. Option 3 is best for high-scale systems where performance is paramount and eventual consistency is acceptable."}
 \`\`\`
 
 `
@@ -147,6 +154,18 @@ ${ddl}
 
 - Target Bounded Context
 ${boundedContext}
+
+- Final Check
+* Ensure all DDL properties are used in at least one aggregate
+* Consider creating ValueObjects for complex properties (e.g., address, money-related fields)
+* Check if any properties could be grouped into meaningful ValueObjects or Entities
+* Verify that each option follows ACID principles differently
+* Ensure at least two different structural options are provided
+* Make sure the defaultOptionIndex is properly justified in the conclusions
+* Consider the impact of aggregate size on performance and consistency
+* Verify that relationships between aggregates are clearly defined
+* Check if any technical constraints in DDL suggest specific aggregate boundaries
+* The options provided should not be nearly identical or duplicate.
 
 [OUTPUT]
 \`\`\`json

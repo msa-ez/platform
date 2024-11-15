@@ -1,5 +1,23 @@
 {
   "message": "en",
+  "AggregateDefinitionPanel": {
+    "aggregateGenerateTitle": "The button will be activated when you write the Description content while having an Aggregate included within the Bounded Context.",
+    "aggregateGenerateTooltipText1": "Generate Based on Aggregate",
+    "aggregateGenerateTooltipText2": "Remove and Regenerate All Aggregate-Related Items",
+    "aggregateGenerateSubTitle1": "Generate: Creates events, commands, and other related items based on the aggregate's internal properties.",
+    "aggregateGenerateSubTitle2": "Regenerate: Removes and recreates everything related to the aggregate based on its internal properties.",
+    "generate": "Generate",
+    "reGenerate": "Regenerate"
+  },
+  "DetailComponent": {
+    "allDetails": "View Guide"
+  },
+  "modelingPanelTool": {
+    "draggableOn": "Draggable Screen : on",
+    "draggableOff": "Draggable Screen : off",
+    "arrangeGuidanceOn": "Arrange Guidance : on",
+    "arrangeGuidanceOff": "Arrange Guidance : off"
+  },
   "ModelDraftDialogForDistribution": {
     "pros": "Pros:",
     "cons": "Cons:",
