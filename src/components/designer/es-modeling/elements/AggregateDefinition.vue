@@ -247,8 +247,10 @@
                 let centerAndInnerMargin = centerPoint - innerHeight
                 let centerAndFieldMargin = centerPoint - fieldHalfHeight
 
-                if( centerAndInnerMargin * 2 < centerAndFieldMargin && centerAndFieldMargin > 0 ){
-                    return baseTop + centerPoint - centerAndFieldMargin
+                if( (centerAndInnerMargin * 2 < centerAndFieldMargin) && centerAndFieldMargin > 0 ){
+                    let calH = baseTop + centerPoint - centerAndFieldMargin;
+                    let baseH = fieldHalfHeight + this.subjectTop+ this.subjectHeight
+                    return baseH > calH ? baseH : calH
                 } 
                 return baseTop + centerPoint
 

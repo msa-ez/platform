@@ -4,36 +4,34 @@ Cypress.on('uncaught:exception', (err, runnable) => {
 
 describe('Modeling Test', () => {
   
-  beforeEach(() => {
-    cy.session('mySession', () => {
-      cy.login()
-      cy.wait(20000);
-    })
-  })
+  // beforeEach(() => {
+  //   cy.session('mySession', () => {
+  //     cy.login()
+  //     cy.wait(20000);
+  //   })
+  // })
 
   
   
   it('Modeling Test.', () => {
     cy.visit('https://www.msaez.io:8081/#/')
     
-    cy.get('.v-avatar').click()
+    // cy.get('.v-avatar').click()
     
-    cy.get('.cp-github-login').click()
+    // cy.get('.cp-github-login').click()
     
-    cy.wait(9000);
-
     cy.wait(4000);
 
-    cy.get('.main-nav-modeling-is-mobile').click({force: true});
+    cy.get('.cp-main-nav-modeling-is-mobile').click({force: true});
 
     cy.wait(1000);
 
     cy.get('.cp-create-model-img').eq(0).click();
 
-    cy.wait(5000);
+    cy.wait(3000);
 
-    cy.get('.cp-panel-folding').click();
-    cy.wait(500);
+    // cy.get('.cp-panel-folding').click();
+    // cy.wait(500);
     
 
     // Event
@@ -45,7 +43,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').type('OrderPlaced')
-    cy.get('.v-btn__content').eq(6).click({force: true})
+    cy.get('.cp-panel-close').click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -63,7 +61,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').type('OrderCanceled')
-    cy.get('.v-btn__content').eq(6).click({force: true})
+    cy.get('.cp-panel-close').click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -81,7 +79,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').type('DeliveryStarted')
-    cy.get('.v-btn__content').eq(6).click({force: true})
+    cy.get('.cp-panel-close').click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -99,7 +97,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').type('DeliveryCanceled')
-    cy.get('.v-btn__content').eq(6).click({force: true})
+    cy.get('.cp-panel-close').click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -117,7 +115,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').type('order')
-    cy.get('.v-btn__content').eq(6).click({force: true})
+    cy.get('.cp-panel-close').click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -135,7 +133,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').type('cancel')
-    cy.get('.v-btn__content').eq(6).click({force: true})
+    cy.get('.cp-panel-close').click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -154,7 +152,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').type('start delivery')
-    cy.get('.v-btn__content').eq(6).click({force: true})
+    cy.get('.cp-panel-close').click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -171,7 +169,7 @@ describe('Modeling Test', () => {
     cy.wait(500);
 
     cy.get('#elementName').type('cancel delivery')
-    cy.get('.v-btn__content').eq(6).click({force: true})
+    cy.get('.cp-panel-close').click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -190,7 +188,7 @@ describe('Modeling Test', () => {
     // cy.wait(500);
 
     // cy.get('#elementName').type('customer')
-    // cy.get('.v-btn__content').eq(6).click({force: true})
+    // cy.get('.cp-panel-close').click({force: true})
 
     // cy.get('body').trigger('mousedown', { which: 1 }) 
     // cy.wait(500);
@@ -208,7 +206,7 @@ describe('Modeling Test', () => {
     // cy.wait(500);
 
     // cy.get('#elementName').type('customer')
-    // cy.get('.v-btn__content').eq(6).click({force: true})
+    // cy.get('.cp-panel-close').click({force: true})
 
     // cy.get('body').trigger('mousedown', { which: 1 }) 
     // cy.wait(500);
@@ -233,7 +231,7 @@ describe('Modeling Test', () => {
     // cy.get('.mr-2').eq(4).click();
     // cy.wait(500);
     // cy.get('.cp-save-button').click();    
-    cy.get('.v-btn__content').eq(6).click({force: true})
+    cy.get('.cp-panel-close').click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -258,7 +256,7 @@ describe('Modeling Test', () => {
     // cy.get('.mr-2').eq(4).click();
     // cy.wait(500);
     // cy.get('.cp-save-button').click();    
-    cy.get('.v-btn__content').eq(6).click({force: true})
+    cy.get('.cp-panel-close').click({force: true})
 
     cy.get('body').trigger('mousedown', { which: 1 }) 
     cy.wait(500);
@@ -271,37 +269,40 @@ describe('Modeling Test', () => {
     // BoundedContext
     cy.get('.cp-sticker').eq(8).trigger('mousedown', { which: 1 }) 
     cy.wait(500);
-    cy.get('body').trigger('mousemove');
-    cy.wait(500);
-    cy.get('body').trigger('mouseup').dblclick();
-    cy.wait(500);
-
-    cy.get('#elementName').clear().type('order')
-    cy.get('.v-btn__content').eq(6).click({force: true})
-
-    cy.get('body').trigger('mousedown', { which: 1 }) 
-    cy.wait(500);
     cy.get('body').trigger('mousemove', { pageX: 283, pageY: 340 });
     cy.wait(500);
     cy.get('body').trigger('mouseup', { pageX: 283, pageY: 340 });
+    cy.wait(500);
+
+    cy.dbclickAt(283, 390);
+    cy.get('#elementName').clear().type('order')
+    cy.get('.cp-panel-close').click({force: true})
+
+    // cy.get('body').trigger('mousedown', { which: 1 }) 
+    // cy.wait(500);
+    // cy.get('body').trigger('mousemove', { pageX: 283, pageY: 340 });
+    // cy.wait(500);
+    // cy.get('body').trigger('mouseup', { pageX: 283, pageY: 340 });
     cy.wait(1000);
 
     cy.get('.cp-sticker').eq(8).trigger('mousedown', { which: 1 }) 
     cy.wait(500);
-    cy.get('body').trigger('mousemove');
-    cy.wait(500);
-    cy.get('body').trigger('mouseup').dblclick();
-    cy.wait(500);
-
-    cy.get('#elementName').clear().type('delivery')
-    cy.get('.v-btn__content').eq(6).click({force: true})
-
-    cy.get('body').trigger('mousedown', { which: 1 }) 
-    cy.wait(500);
     cy.get('body').trigger('mousemove', { pageX: 808, pageY: 340 });
     cy.wait(500);
-    cy.get('body').trigger('mouseup', { pageX: 808, pageY: 340 });
-    cy.wait(1000);
+    cy.get('body').trigger('mouseup', { pageX: 808, pageY: 340 })
+    cy.wait(500);
+
+    cy.dbclickAt(808, 390);
+
+    cy.get('#elementName').clear().type('delivery')
+    cy.get('.cp-panel-close').click({force: true})
+
+    // cy.get('body').trigger('mousedown', { which: 1 }) 
+    // cy.wait(500);
+    // cy.get('body').trigger('mousemove', { pageX: 808, pageY: 340 });
+    // cy.wait(500);
+    // cy.get('body').trigger('mouseup', { pageX: 808, pageY: 340 });
+    // cy.wait(1000);
 
     // Relations
     cy.clickAt(220, 300);
@@ -332,21 +333,21 @@ describe('Modeling Test', () => {
     cy.clickAt(715, 415);
     cy.wait(2000);
 
-    cy.get('.cp-es-save-btn').click();
-    // 테스트때마다 변경필요.
-    cy.contains('label', '* Definition ID(Unique ID)').next('input').clear({force:true}).type('modeling-test22');
-    cy.wait(1000);
-    cy.get('.cp-es-dialog-save').click();
-    cy.wait(8000);
+    // cy.get('.cp-es-save-btn').click();
+    // // 테스트때마다 변경필요.
+    // cy.contains('label', '* Definition ID(Unique ID)').next('input').clear({force:true}).type('modeling-test22');
+    // cy.wait(1000);
+    // cy.get('.cp-es-dialog-save').click();
+    // cy.wait(8000);
 
-    cy.get('.cp-panel-folding').click();
-    cy.wait(1000);
+    // cy.get('.cp-panel-folding').click();
+    // cy.wait(1000);
 
-    cy.get('.cp-es-share-btn').click();
-    cy.contains('label', 'User to invite').next('input').type('rbtn110@gmail.com{enter}');
-    cy.wait(1000);
-    cy.get('.cp-es-apply-btn').click();
-    cy.wait(5000);
+    // cy.get('.cp-es-share-btn').click();
+    // cy.contains('label', 'User to invite').next('input').type('rbtn110@gmail.com{enter}');
+    // cy.wait(1000);
+    // cy.get('.cp-es-apply-btn').click();
+    // cy.wait(5000);
   })
 })
 

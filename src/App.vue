@@ -109,7 +109,7 @@
             >
                 <!-- 만들기 버튼 -->
                 <template v-slot:activator="{ on, attrs }">
-                    <v-btn class="making-main-nav-modeling-is-mobile"
+                    <v-btn class="making-main-nav-modeling-is-mobile cp-main-nav-modeling-is-mobile"
                         :class="isForeign ? 'isForeign-create-main-nav-is-mobile' : 'isForeign-not-create-main-nav-is-mobile'"
                         v-on="on"
                         v-bind="attrs"
