@@ -2582,7 +2582,7 @@
 
             // const baseURL = 'http://localhost:3000';
             // const token = '';
-            git = new Gitea(baseURL, token);
+            // git = new Gitea(baseURL, token);
 
             this.gitAccessToken = localStorage.getItem('gitAccessToken') ? localStorage.getItem('gitAccessToken') : localStorage.getItem('gitToken')
             this.gitAPI = new GitAPI(git);

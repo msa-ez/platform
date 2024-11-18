@@ -84,11 +84,11 @@ class Gitea extends Git {
     }
 
     async getTemplateURL(repo) {
-        return `https://github.com/msa-ez/${repo}`;
+        return `${this.client.defaults.baseURL}/msa-ez/${repo}`;
     }
 
     async getToppingURL(repo) {
-        return `https://github.com/msa-ez/topping-${repo}`;
+        return `${this.client.defaults.baseURL}/msa-ez/topping-${repo}`;
     }
 
     loadHandleBarHelper(handler) {
