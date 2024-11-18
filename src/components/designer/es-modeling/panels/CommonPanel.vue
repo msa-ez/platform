@@ -31,7 +31,7 @@
                                                 <slot name="t-information">
                                                     <v-tooltip top>
                                                         <template v-slot:activator="{ on }">
-                                                            <v-btn icon @click.native="close()" style="align-self: flex-start;">
+                                                            <v-btn icon @click.native="close()" style="align-self: flex-start;" class="cp-panel-close">
                                                                 <v-icon color="grey lighten-1">mdi-close</v-icon>
                                                             </v-btn>
                                                             <v-btn icon v-on="on" style="align-self: flex-start;">

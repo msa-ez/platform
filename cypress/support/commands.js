@@ -40,11 +40,8 @@ import '@4tw/cypress-drag-drop'
       cy.visit('https://github.com/login')
 
       cy.window().then((win) => {
-          const email = Cypress.env('EMAIL');
-          const password = Cypress.env('PASSWORD');
-
-          cy.get('input[name="login"]').type(email);
-          cy.get('input[name="password"]').type(password)
+          cy.get('input[name="login"]').type('rbtn110@uengine.org');
+          cy.get('input[name="password"]').type('Rlarbtn135!')
           cy.get('input[type="submit"]').click();
       });
   });
@@ -62,6 +59,17 @@ import '@4tw/cypress-drag-drop'
       const element = win.document.elementFromPoint(x, y);
       if (element) {
         cy.wrap(element).click({force: true});
+      } else {
+        throw new Error(`No element found at (${x}, ${y})`);
+      }
+    });
+  });
+
+  Cypress.Commands.add('dbclickAt', (x, y) => {
+    cy.window().then((win) => {
+      const element = win.document.elementFromPoint(x, y);
+      if (element) {
+        cy.wrap(element).dblclick({force: true});
       } else {
         throw new Error(`No element found at (${x}, ${y})`);
       }
