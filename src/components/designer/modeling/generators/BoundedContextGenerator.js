@@ -53,12 +53,11 @@ class BoundedContextGenerator extends JsonAIGenerator {
         }
 
 
-        return `
-        ${existingEventStormingModel ? `There is an existing event storming model : ${existingEventStormingModel}`: ``}
+        // ${existingEventStormingModel ? `There is an existing event storming model : ${existingEventStormingModel}`: ``}
         
-        Refer to the Bounded Context information of the current state and make the most of it:
-        ${this.client.input.boundedContext}
-
+        // Refer to the Bounded Context information of the current state and make the most of it:
+        // ${this.client.input.boundedContext}
+        return `
         Please create a Bounded Context for event storming model in json for following description: 
         ${this.client.input.description}
         
@@ -79,11 +78,11 @@ class BoundedContextGenerator extends JsonAIGenerator {
                                 "icon": "material design icon font name for representing this aggregate data",
                                 "isRepresentingUser": true | false
                             },
-                            "properties": [
+                            "properties": [ // Properties that are not java class type must create entities too.
                                 {
                                     "name": "propertyName", // Property Name must be Camel-Case
                                     "${this.originalLanguage.toLowerCase()}Name: "Property Name in ${this.originalLanguage.toLowerCase()}", 
-                                    "type": "PropertyType", // Property Type can be known java class or the Value object classes listed here: must be one of Address, Portrait, Rating, Money, Email. use simple name reduce the package name if java class name.
+                                    "type": "PropertyType", // Property Type can be primitive java class or the Value object classes listed here: must be one of Address, Portrait, Rating, Money, Email, or types that cannot be expressed with primitive java class type.
                                     "isKey": true or false,
                                     "uiStyle":{
                                         "inputUI": "TEXT" | "SELECT" | "TEXTAREA" // proper user interface type for input this property value
@@ -91,8 +90,19 @@ class BoundedContextGenerator extends JsonAIGenerator {
                                     "options" : ["value1", "value2"] // optional. if there are selectable options for this value.
                                 }
                             ],
-                            "commands": [
-                            // Creation, Update, Delete must be created but don't need to properties.
+                            "entities": [ // Must be created except for java class type of property.
+                                {
+                                    "name": "Entity Name",
+                                    "type": "AggregateRoot" | "Entity" | "ValueObject" | "Enumeration" | "Property",
+                                    "properties": [
+                                        {
+                                            "name": "Property Name",
+                                            "type": "Property Type"
+                                        }
+                                    ]
+                                }
+                            ],  
+                            "commands": [ // Must not create commands for read actions. They must be created as readModels.
                                 {
                                     "name": "Command Name",
                                     "${this.originalLanguage.toLowerCase()}Name: "Name in ${this.originalLanguage.toLowerCase()}", 
@@ -126,6 +136,20 @@ class BoundedContextGenerator extends JsonAIGenerator {
                                 }
                             ]
                         }
+                    ],
+                    "readModels": [ // Must create readModels for read actions.
+                        {
+                            "name": "ReadModel Name",
+                            "${this.originalLanguage.toLowerCase()}Name: "Name in ${this.originalLanguage.toLowerCase()}", 
+                            "parameters": [
+                                {
+                                    "name": "Property Name",
+                                    "type": "Property Type"
+                                }
+                            ],
+                            "api_uri": "uri",
+                            "sourceAggregates": ["source1", "source2", ...]
+                        }
                     ]
                 }
             },
@@ -152,12 +176,14 @@ class BoundedContextGenerator extends JsonAIGenerator {
             
         }
         
-        for generated aggregate objects, i want to set Value Object for each properties if possible.
-        Class name of Value Objects must be one of Address, Money, Email, Password, File, Photo, Rating, Likes, Tags, Payment, Location, Weather, Comment.
+        Important details:
+        - for generated aggregate objects, i want to set Value Object for each properties if possible.
+        - Class name of Value Objects must be one of Address, Money, Email, Password, File, Photo, Rating, Likes, Tags, Payment, Location, Weather, Comment.
+        - Related to queries must be created as readModels. Must not create commands for read actions.
 
-        The result must split into two or more different bounded contexts.
-        Commands and events within aggregates of each bounded context must exist at least once.
-        Each bounded context interacts with each other, and domain events must flow into a service in a way that invokes the policies of other bounded context.
+        - The result must split into two or more different bounded contexts.
+        - Commands and events within aggregates of each bounded context must exist at least once.
+        - Each bounded context interacts with each other, and domain events must flow into a service in a way that invokes the policies of other bounded context.
 
         ${descriptionOfCommunicationStyle}
 
@@ -269,7 +295,7 @@ class BoundedContextGenerator extends JsonAIGenerator {
                                         aggregateRoot: {
                                             _type: 'org.uengine.modeling.model.AggregateRoot', 
                                             fieldDescriptors: [],
-                                            entities: {elements: {}, relation: {}}, 
+                                            entities: {elements: {}, relations: {}}, 
                                             operations: [],
                                         },
                                         author: me.userUid,
@@ -309,7 +335,8 @@ class BoundedContextGenerator extends JsonAIGenerator {
                                         namePlural: "",
                                         rotateStatus: false,
                                         selected: false,
-                                        _type: "org.uengine.modeling.model.Aggregate"
+                                        _type: "org.uengine.modeling.model.Aggregate",
+                                        uiStyle: {}
                                     }
                                     if(agg["properties"] && agg["properties"].length > 0){
                                         agg["properties"].forEach(function (ele, idx){
@@ -327,25 +354,130 @@ class BoundedContextGenerator extends JsonAIGenerator {
                                             me.modelElements[aggUuid].aggregateRoot.fieldDescriptors.push(field)
                                         })
                                     } else if(agg["entities"] && agg["entities"][0] && agg["entities"][0]["properties"]){
-                                        agg["entities"][0]["properties"].forEach(function (ele, idx){
-                                            var field = {
-                                                className: ele.type,
-                                                isCopy: false,
-                                                isKey: idx == 0 ? true:false,
-                                                name: ele.name,
-                                                nameCamelCase: changeCase.camelCase(ele.name),
-                                                namePascalCase: changeCase.pascalCase(ele.name),
-                                                _type: "org.uengine.model.FieldDescriptor"
+                                        // agg["entities"][0]["properties"].forEach(function (ele, idx){
+                                        //     var field = {
+                                        //         className: ele.type,
+                                        //         isCopy: false,
+                                        //         isKey: idx == 0 ? true:false,
+                                        //         name: ele.name,
+                                        //         nameCamelCase: changeCase.camelCase(ele.name),
+                                        //         namePascalCase: changeCase.pascalCase(ele.name),
+                                        //         _type: "org.uengine.model.FieldDescriptor"
+                                        //     }
+                                        //     me.modelElements[aggUuid].aggregateRoot.fieldDescriptors.push(field)
+                                        // })
+                                    }
+
+                                    let aggRootEntityId
+                                    if(me.modelElements[aggUuid].aggregateRoot.entities){
+                                        aggRootEntityId = me.uuid()
+                                        var entity = {
+                                            _type:"org.uengine.uml.model.vo.user.Class",
+                                            name:agg.name,
+                                            isAggregateRoot:true,
+                                            elementView:{
+                                                _type:"org.uengine.uml.model.Class",
+                                                id:aggRootEntityId,
+                                                x:350,
+                                                y:150,
+                                                width:200,
+                                                height:150,
+                                            },
+                                            namePascalCase:changeCase.pascalCase(agg.name),
+                                            nameCamelCase:changeCase.camelCase(agg.name),
+                                            fieldDescriptors:me.modelElements[aggUuid].aggregateRoot.fieldDescriptors,
+                                            operations:[],
+                                        }
+                                        me.modelElements[aggUuid].aggregateRoot.entities.elements[aggUuid] = entity
+                                    }
+
+                                    if(agg["entities"] && agg["entities"].length > 0){
+                                        agg["entities"].forEach(function (ele, idx){
+                                            let uuid = me.uuid()
+                                            if(ele.type != "Property"){
+                                                var entity
+                                                if(ele.type != "Enumeration"){
+                                                    entity = {
+                                                        _type:"org.uengine.uml.model.vo.user.Class",
+                                                        name:ele.name,
+                                                        namePascalCase:changeCase.pascalCase(ele.name),
+                                                        nameCamelCase:changeCase.camelCase(ele.name),
+                                                        fieldDescriptors:[],
+                                                        operations:[],
+                                                        elementView:{
+                                                            _type:"org.uengine.uml.model.Class",
+                                                            id:uuid,
+                                                            x:350 + (idx * 220),
+                                                            y:150 + (idx * 120),
+                                                            width:200,
+                                                            height:150,
+                                                            style:"{}",
+                                                            titleH:50,
+                                                            subEdgeH:120,
+                                                            fieldH:90,
+                                                            methodH:30
+                                                        },
+                                                        selected:false,
+                                                        parentOperations:[],
+                                                        relationType:null,
+                                                        isVO:true,
+                                                        relations:[],
+                                                        groupElement:null,
+                                                        isAggregateRoot:false
+                                                    }
+                                                }else{
+                                                    entity = {
+                                                        _type:"org.uengine.uml.model.enum",
+                                                        id:me.uuid(),
+                                                        name:ele.name,
+                                                        nameCamelCase:changeCase.camelCase(ele.name),
+                                                        namePascalCase:changeCase.pascalCase(ele.name),
+                                                        elementView:{},
+                                                        selected:false,
+                                                        items:[],
+                                                        useKeyValue:false
+                                                    }
+                                                }
+                                                me.modelElements[aggUuid].aggregateRoot.entities.elements[uuid] = entity
                                             }
-                                            me.modelElements[aggUuid].aggregateRoot.fieldDescriptors.push(field)
+
+                                            if(ele.properties && ele.properties.length > 0){
+                                                ele.properties.forEach(function (property){
+                                                    var field = {
+                                                        className: property.type,
+                                                        isCopy: false,
+                                                        isKey: idx == 0 ? true:false,
+                                                        name: property.name,
+                                                    }
+                                                    me.modelElements[aggUuid].aggregateRoot.entities.elements[uuid].fieldDescriptors.push(field)
+                                                })
+                                            }
                                         })
+                                        
+                                        var relation = {
+                                            _type:"org.uengine.uml.model.Relation",
+                                            from:aggRootEntityId,
+                                            fromLabel:"",
+                                            id:me.uuid(),
+                                            name:agg.name,
+                                            relationType:"Association",
+                                            relationView:{},
+                                            selected:false,
+                                            sourceElement:me.modelElements[aggUuid].aggregateRoot.entities.elements[uuid],
+                                            sourceMultiplicity:"1",
+                                            targetElement:me.modelElements[aggUuid].aggregateRoot.entities.elements[aggRootEntityId],
+                                            targetMultiplicity:"1",
+                                            to:uuid,
+                                            toLabel:""
+                                        }
+                                        me.modelElements[aggUuid].aggregateRoot.entities.relations[uuid] = relation
                                     }
                                 } 
                                 modelValue["boundedContext"][key]["aggregates"][aggIdx].eleInfo = me.modelElements[aggUuid]
                             }
 
                             if(agg["uiStyle"]){
-                                me.modelElements[aggUuid].uiStyle = agg["uiStyle"];
+                                me.modelElements[aggUuid]['uiStyle'] = agg["uiStyle"];
                             }
 
                             me.modelElements[aggUuid].description = agg[me.originalLanguage.toLowerCase()+"Description"];
@@ -437,7 +569,7 @@ class BoundedContextGenerator extends JsonAIGenerator {
 
                             if(agg["commands"]){
                                 agg["commands"].forEach(function (ele, idx){
-                                    if(!ele.name.includes('undefined')){
+                                    if(ele.name && !ele.name.includes('undefined')){
                                         elementUuid = bcUuid + '-command-' + ele.name
                                         if(firstCommand && eventHeight == 0){
                                             commandHeight = me.modelElements[aggUuid]["elementView"].y + (idx * 120) - 200
@@ -578,6 +710,87 @@ class BoundedContextGenerator extends JsonAIGenerator {
                                 }
                             }
                         })
+                        
+                        if(modelValue["boundedContext"][key]["readModels"]){
+                            modelValue["boundedContext"][key]["readModels"].forEach(function (readModel, readModelIdx){
+                                var readModelUuid = bcUuid + '-readModel-' + readModel.name
+                                if(me.generateCnt == bcIdx){
+                                    me.modelElements[readModelUuid] ={
+                                        _type:"org.uengine.modeling.model.View",
+                                        id:readModelUuid,
+                                        visibility:"public",
+                                        name:readModel.name,
+                                        oldName:"",
+                                        displayName:"",
+                                        namePascalCase:changeCase.pascalCase(readModel.name),
+                                        namePlural:"",
+                                        aggregate:{},
+                                        description:null,
+                                        author:me.userUid,
+                                        boundedContext:{
+                                            id:bcUuid
+                                        },
+                                        fieldDescriptors:[],
+                                        queryParameters:[],
+                                        queryOption:{
+                                            apiPath:readModel.api_uri,
+                                            useDefaultUri:false,
+                                            multipleResult:false
+                                        },
+                                        controllerInfo:{
+                                            url:readModel.api_uri
+                                        },
+                                        dataProjection:"query-for-aggregate",
+                                        elementView:{
+                                            _type:"org.uengine.modeling.model.View",
+                                            height:115,
+                                            id:readModelUuid,
+                                            style:"{}",
+                                            width:100,
+                                            x:me.modelElements[bcUuid]["elementView"].x + 90,
+                                            y:me.modelElements[bcUuid]["elementView"].y + (modelValue["boundedContext"][key]["aggregates"].length * 120) - 200
+                                        },
+                                        rotateStatus:false
+                                    }
+                                }
+                                
+                                if(readModel.properties && readModel.properties.length > 0){
+                                    readModel.properties.forEach(function (property){
+                                        var field = {
+                                            className: property.type,
+                                            isCopy: false,
+                                            isKey: false,
+                                            name: property.name,
+                                            nameCamelCase: changeCase.camelCase(property.name),
+                                            namePascalCase: changeCase.pascalCase(property.name),
+                                            _type: "org.uengine.model.FieldDescriptor"
+                                        }
+                                        if(me.modelElements[readModelUuid]){
+                                            me.modelElements[readModelUuid].fieldDescriptors.push(field)
+                                        }
+
+                                        var queryParameter = [
+                                            {
+                                                _type:"org.uengine.model.FieldDescriptor",
+                                                name:property.name,
+                                                namePascalCase:changeCase.pascalCase(property.name),
+                                                nameCamelCase:changeCase.camelCase(property.name),
+                                                className:property.type,
+                                                isKey:true,
+                                                isName:false,
+                                                isList:false,
+                                                isVO:false,
+                                                isLob:false,
+                                                isCorrelationKey:false
+                                            }
+                                        ]
+                                        if(me.modelElements[readModelUuid]){
+                                            me.modelElements[readModelUuid].queryParameters.push(queryParameter)
+                                        }
+                                    })
+                                }
+                            })
+                        }
                     }
                     if(modelValue["boundedContext"][key]["aggregates"].length > 1){
                         me.modelElements[bcUuid]["elementView"].width = modelValue["boundedContext"][key]["aggregates"].length * 480
@@ -744,7 +957,7 @@ class BoundedContextGenerator extends JsonAIGenerator {
                                             _type: "org.uengine.modeling.model.Policy"
                                         }
                                     }
-                                    if(modelValue["boundedContext"][policy.triggerEvents[0].boundedContext]["aggregates"][aggIdx]["events"][policy.triggerEvents[0].event].eleInfo){
+                                    if(modelValue["boundedContext"][policy.triggerEvents[0].boundedContext]["aggregates"][aggIdx]["events"][policy.triggerEvents[0].event] && modelValue["boundedContext"][policy.triggerEvents[0].boundedContext]["aggregates"][aggIdx]["events"][policy.triggerEvents[0].event].eleInfo){
                                         evnInfo = modelValue["boundedContext"][policy.triggerEvents[0].boundedContext]["aggregates"][aggIdx]["events"][policy.triggerEvents[0].event].eleInfo
                                     }
     
@@ -900,10 +1113,6 @@ class BoundedContextGenerator extends JsonAIGenerator {
                 // } else {
                 //     var elementsList = me.modelElements
                 // }
-
-                // remove duplicate relations
-                relations = me.removeDuplicateRelations(relations)
-
                 var obj = {
                     projectName: modelValue["serviceName"],
                     elements: me.modelElements,
