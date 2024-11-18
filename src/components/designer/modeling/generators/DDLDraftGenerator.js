@@ -177,8 +177,8 @@ The format must be as follows:
                             parsedAggregates = rec.aggregates.map(agg => {
                                 return {
                                     aggregateRoot: agg.name,
-                                    entities: Array.isArray(agg.entities) ? agg.entities : [],
-                                    valueObjects: Array.isArray(agg.valueObjects) ? agg.valueObjects : []
+                                    entities: Array.isArray(agg.entities) ? agg.entities.filter(entity => !entity.includes(agg.name) && !entity.includes(agg.name.replace("Aggregate", ""))) : [],
+                                    valueObjects: Array.isArray(agg.valueObjects) ? agg.valueObjects.filter(valueObject => !valueObject.includes(agg.name) && !valueObject.includes(agg.name.replace("Aggregate", ""))) : []
                                 }
                             })
                         }

@@ -1,4 +1,5 @@
 const changeCase = require("change-case")
+const GlobalPromptUtil = require("./GlobalPromptUtil")
 
 /**
  * 주어진 엘리먼트 이름 정보를 토대로 기존의 UUID 이름을 의미가 있는 별칭으로 변환/역복원시켜서 LLM에게 더 의미있는 엘리먼트 이름을 제공하도록 도와줌
@@ -40,6 +41,14 @@ class ESAliasTransManager {
         return this._transSummarizedESValue(summarizedESValue, (alias) => this.__getUUIDSafely(alias))
     }
 
+    transToAliasInActions(actions){
+        return this._transActions(actions, (uuid) => this.__getAliasSafely(uuid))
+    }
+
+    transToUUIDInActions(actions){
+        return this._transActions(actions, (alias) => this.__getUUIDSafelyWithNewUUID(alias))
+    }
+
 
     /**
      * 현재 존재하는 이벤트 스토밍 정보를 토대로 엘리먼트에 대한 UUID를 의미있는 별칭으로 변환하기 위한 딕셔너리 초기화
@@ -52,6 +61,20 @@ class ESAliasTransManager {
             const aliasToUse = this.__makeAliasToUse(element)
             this.UUIDToAliasDic[key] = aliasToUse
             this.aliasToUUIDDic[aliasToUse] = key
+
+
+            if(element._type !== "org.uengine.modeling.model.Aggregate") return
+            if(!element.aggregateRoot || !element.aggregateRoot.entities || !element.aggregateRoot.entities.elements) return
+            const aggregateElements = element.aggregateRoot.entities.elements
+
+            Object.keys(aggregateElements).forEach(entityKey => {
+                const entity = aggregateElements[entityKey]
+                if(!entity) return
+
+                const entityAliasToUse = this.__makeAliasToUse(entity)
+                this.UUIDToAliasDic[entityKey] = entityAliasToUse
+                this.aliasToUUIDDic[entityAliasToUse] = entityKey
+            })
         })
     }
 
@@ -75,6 +98,7 @@ class ESAliasTransManager {
         })
     }
 
+
     /**
      * 주어진 요약된 이벤트 스토밍 정보를 토대로 엘리먼트 이름을 변환하는 함수를 적용해서 반환
      * @param {*} summarizedESValue 요약된 이벤트 스토밍 정보
@@ -84,6 +108,11 @@ class ESAliasTransManager {
     _transSummarizedESValue(summarizedESValue, transFunc){
         const getTranslatedAggregate = (aggregate) => {
             aggregate.id = transFunc(aggregate.id)
+
+            if(aggregate.entities)
+                aggregate.entities.forEach(entity => {
+                    entity.id = transFunc(entity.id)
+                })
 
             if(aggregate.enumerations)
                 aggregate.enumerations.forEach(enumeration => {
@@ -141,6 +170,24 @@ class ESAliasTransManager {
         return translatedSummarizedESValue
     }
 
+    _transActions(actions, transFunc){
+        for(const action of actions){
+            for(const idKey of Object.keys(action.ids)){
+                action.ids[idKey] = transFunc(action.ids[idKey])
+            }
+
+            if(action.objectType === "Command" && action.args && action.args.outputEventIds)
+                action.args.outputEventIds = action.args.outputEventIds.map(id => transFunc(id))
+
+            if(action.objectType === "Event" && action.args && action.args.outputCommandIds)
+                action.args.outputCommandIds = action.args.outputCommandIds.map(outputCommand => {
+                    outputCommand.commandId = transFunc(outputCommand.commandId)
+                    return outputCommand
+                })
+        }
+        return actions
+    }
+
 
     /**
      * 주어진 엘리먼트 정보를 토대로 의미있는 별칭을 생성해서 딕셔너리에 저장시키고, 반환함
@@ -153,7 +200,7 @@ class ESAliasTransManager {
                 case "org.uengine.modeling.model.Command": return "cmd"
                 case "org.uengine.modeling.model.Event": return "evt"
                 case "org.uengine.modeling.model.Actor": return "act"
-                case "org.uengine.uml.model.Class": return element.isAggregateRoot ? "agg-root" : "entity"
+                case "org.uengine.uml.model.Class": return element.isAggregateRoot ? "agg-root" : "ent"
                 case "org.uengine.uml.model.Enum": return "enum"
                 case "org.uengine.uml.model.vo.Class": return "vo"
                 default: return "obj"
@@ -181,6 +228,15 @@ class ESAliasTransManager {
     __getUUIDSafely(alias){
         if(this.aliasToUUIDDic[alias]) return this.aliasToUUIDDic[alias]
         return alias
+    }
+
+    __getUUIDSafelyWithNewUUID(alias){
+        if(this.aliasToUUIDDic[alias]) return this.aliasToUUIDDic[alias]
+
+        const newUUID = GlobalPromptUtil.getUUID()
+        this.aliasToUUIDDic[alias] = newUUID
+        this.UUIDToAliasDic[newUUID] = alias
+        return newUUID
     }
 }
 

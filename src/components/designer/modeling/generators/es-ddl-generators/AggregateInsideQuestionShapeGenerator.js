@@ -67,7 +67,7 @@ Please follow these rules.
 4. When adding new properties to an aggregate, you can use native Java data types such as String, Long, Integer, etc. for aggregate properties, or you can use predefined properties: Address, Portrait, Rating, Money, Email. Other properties must be defined as ValueObject or Enumeration or Entity in the corresponding aggregation.
 5. When you add a property to an entity or value object, as with aggregate, if the property you want to use does not exist, you must add a new ValueObject or Enumeration directly.
 6. If the event to be generated additionally calls other commands. Please reference the existing event storming  information passing the name of that command and add it.
-7. When the value of a ValueObject or Enumeration or Entity is utilised by the Aggregate Root, the corresponding material type must be used, not String. Ex) String > OrderStatus
+7. When using the value of an Enumeration or ValueObject or Entity in an Aggregate Root, you must use its class name, not the type of the object's Id. Ex) Integer -> OrderStatus
 8. Consider using ValueObject and Entity wherever possible.
 9. If you want to specify it as an array, use 'List<ClassName>'. Ex) List<Address>
 10. Note that updates and deletes require the Aggregate's primary key to be included in the event or command to distinguish them.
@@ -151,6 +151,18 @@ ${JSON.stringify(this.__getFilteredAggregateValueWithProperties(esValue, esValue
 
 - Function Requirements
 ${description}
+
+- Final Check
+* All property types must be either Java native types, predefined types (Address, Portrait, Rating, Money, Email), or defined ValueObjects/Enumerations/Entities
+* All update/delete operations must include the aggregate's primary key
+* All names must be in English, following proper naming conventions
+* All arrays must be specified using List<ClassName> format
+* Check if new events need to trigger any existing commands from the event storming model
+* Ensure all ValueObjects and Entities have their properties properly defined
+* Verify that all required security and validation rules are included in cautions
+* Consider potential impacts on other aggregates or services listed in dependencies
+* The command you create must call the event for that command. Ex) CreateCustomer -> CustomerCreated
+* When using the value of an Enumeration or ValueObject or Entity in an Aggregate Root, you must use its class name, not the type of the object's Id. Ex) Integer -> OrderStatus
 
 [OUTPUT]
 \`\`\`json

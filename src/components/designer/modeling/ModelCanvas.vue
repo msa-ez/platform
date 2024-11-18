@@ -1585,7 +1585,7 @@
                 if(action == 'fork') convertProjectId = item.projectId ? item.projectId : me.dbuid();                
                 convertProjectId = convertProjectId.replaceAll(' ','-');
                 if(action == 'save' || action == 'fork'){
-                    if(me.userInfo.providerUid && ((action == 'fork' && me.params.providerUid) || (action == 'save')) ){
+                    if(me.userInfo.providerUid && (action == 'fork' || action == 'save')){
                         convertProjectId = `${me.userInfo.providerUid}_${me.canvasType}_${convertProjectId}`
                     }
                 }
@@ -1914,7 +1914,7 @@
                             var settingProjectId = me.storageCondition.projectId.replaceAll(' ','-').trim();
                             if( !me.storageCondition.projectId ) me.storageCondition.projectId = me.dbuid();
                         
-                            if(me.userInfo.providerUid && me.params.providerUid){
+                            if(me.userInfo.providerUid){
                                 settingProjectId = `${me.userInfo.providerUid}_${me.canvasType}_${settingProjectId}`
                             }
 
@@ -2004,7 +2004,7 @@
                                             location = me.canvasType
                                         }
 
-                                        let path = me.userInfo.providerUid && me.params.providerUid ? `/${me.userInfo.providerUid}/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}` : `/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}`
+                                        let path = me.userInfo.providerUid ? `/${me.userInfo.providerUid}/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}` : `/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}`
                                         me.$router.push({path: path});
                                         setTimeout(() => {
                                             me.$emit('forceUpdateKey');
@@ -2015,7 +2015,7 @@
                             }
 
                         } else {
-                            this.storageCondition.loading = false
+                            me.storageCondition.loading = false
                         }
                     }
                 })
@@ -4861,7 +4861,7 @@
                 Object.values(value.elements).forEach((element) => {
                     if(!me.validateElementFormat(element)) return;
                     let component = me.$refs[element.elementView.id];
-                    if (component && component[0].selected) {
+                    if (component && component[0] && (component[0].selected || (me.canvasType == "es" && me.isHexagonal))) {
                         selectCnt ++;
 
                         if(element._type.endsWith('BoundedContext')){

@@ -541,13 +541,14 @@
     // import SIGenerator from './modeling/generators/SIGenerator'
     // import getParent from '../../utils/getParent'
     import GitAPI from "../../utils/GitAPI";
-import Github from "../../utils/Github";
-import Gitlab from "../../utils/Gitlab";
-import Usage from "../../utils/Usage";
-import labBase from "../labs/LabStorageBase";
-import Login from "../oauth/Login";
-import LoginByGitlab from "../oauth/LoginByGitlab";
-import CodeGeneratorCore from './modeling/CodeGeneratorCore';
+    import Github from "../../utils/Github";
+    import Gitea from "../../utils/Gitea";
+    import Gitlab from "../../utils/Gitlab";
+    import Usage from "../../utils/Usage";
+    import labBase from "../labs/LabStorageBase";
+    import Login from "../oauth/Login";
+    import LoginByGitlab from "../oauth/LoginByGitlab";
+    import CodeGeneratorCore from './modeling/CodeGeneratorCore';
     const axios = require('axios');
     const _ = require('lodash');
 
@@ -842,6 +843,11 @@ import CodeGeneratorCore from './modeling/CodeGeneratorCore';
             } else {
                 git = new Github();
             }
+
+            // const baseURL = 'http://localhost:3000';
+            // const token = '';
+
+            git = new Gitea(baseURL, token);
             this.git = new GitAPI(git);
         },
         mounted: function () {
@@ -1211,7 +1217,7 @@ import CodeGeneratorCore from './modeling/CodeGeneratorCore';
                         me.commitStepText = 'Check Git Repo'
                         let gitRepoInfo = await me.git.getMainRepo(me.gitOrgName, me.gitRepoName)
                         .then((result) => {
-                            me.treesha = result.data.sha
+                            me.treesha = result.data.sha || result.data.commit.id
                             me.setPushTemplateList()
                         })
                         .catch((error) => {
@@ -2195,85 +2201,93 @@ import CodeGeneratorCore from './modeling/CodeGeneratorCore';
                         .then(async (result) => {
                             if(!me.isFirstCommit && result) {
                                 me.commitStepText = 'Get Git Repo'
-                                me.treesha = result.data.sha
+                                me.treesha = result.data.sha || result.data.commit.id
+                                let treeOptions = {
+                                    sha: me.treesha,
+                                    repo: me.gitRepoName,
+                                    org: me.gitOrgName,
+                                    branch: branch
+                                }
                                 if(result.data.tree) {
-                                    let treeOptions = {
+                                    treeOptions = {
                                         tree: result.data.tree,
                                         name: result.data.name,
                                         repo: me.gitRepoName,
                                         org: me.gitOrgName
                                     }
-                                    gitTreeList = await me.git.getFiles(treeOptions)
-                                    .then(async function(files) {
-                                        me.commitStepText = 'Set Git Commit Tree'
-                                        let options = {
-                                            gitTree: files,
-                                            generateCodeLists: me.generateCodeLists,
-                                            copyChangedPathLists: me.copyChangedPathLists,
-                                            pushType: me.pushType,
-                                            isOne: me.isOneBCModel,
-                                            onlyOneBcId: me.onlyOneBcId,
-                                            org: me.gitOrgName,
-                                            repo: me.gitRepoName,
-                                            testFile: me.isSIgpt ? me.selectedTestFile:null
-                                        }
-                                        let setTreeList = await me.git.setPushList(options)
-                                        .then(async function (list) {
-                                            me.commitStepText = 'Commit to Git'
-                                            if(!list) {
-                                                me.isPushing = false
-                                                me.commitStepText = null
-                                                me.gitSnackBar.show = true
-                                                me.gitSnackBar.timeout = -1
-                                                me.gitSnackBar.Text = "Nothing changed"
-                                                me.gitSnackBar.Color = "warning"
-                                                me.gitSnackBar.icon="warning"
-                                                me.gitSnackBar.title="Warning"
-                                            } else {
-                                                let commitResult = await me.git.commit(me.gitOrgName, me.gitRepoName, branch, list, me.isFirstCommit, me.gitCommitMessage)
-                                                .then(async (commit) => {
-                                                    me.commitStepText = 'Push to Git'
-                                                    let options = {
-                                                        org: me.gitOrgName, 
-                                                        repo: me.gitRepoName, 
-                                                        commitData: commit, 
-                                                        list: list,
-                                                        branch: branch
-                                                    }
-                                                    me.$EventBus.$emit("getCommitId", commit.data.sha)
-                                                    let pushResult = await me.git.push(options)
-                                                    .then(function () {
-                                                        me.commitStepText = null
-                                                        me.isPushing = false
-                                                        me.isFirstCommit = false
-                                                        me.gitTab = 'IDE'
-                                                        me.gitCommitMessage = null
-                                                        me.copyChangedPathLists = []
-                                                        me.gitSnackBar.show = true
-                                                        me.gitSnackBar.timeout = 3000
-                                                        me.gitSnackBar.Text = "Commit/Push Success."
-                                                        me.gitSnackBar.Color = "success"
-                                                        me.gitSnackBar.icon="check_circle"
-                                                        me.gitSnackBar.title="Success"
-                                                        if(me.isSIgpt){
-                                                            setTimeout(() => {
-                                                                me.getActionLogs()
-                                                            }, 5000)
-                                                        }
-                                                    })
-                                                })
-                                                .catch((error) =>{
-                                                    me.commonError(error)
-                                                })
-                                            }
-                                        }).catch((error) =>{
-                                            me.$EventBus.$emit('handlePushFileError');
-                                        })
-                                    })
-                                    .catch(error => {
-                                        me.commonError(error)
-                                    })
                                 }
+                                gitTreeList = await me.git.getFiles(treeOptions)
+                                .then(async function(files) {
+                                    me.commitStepText = 'Set Git Commit Tree'
+                                    let options = {
+                                        gitTree: files,
+                                        generateCodeLists: me.generateCodeLists,
+                                        copyChangedPathLists: me.copyChangedPathLists,
+                                        pushType: me.pushType,
+                                        isOne: me.isOneBCModel,
+                                        onlyOneBcId: me.onlyOneBcId,
+                                        org: me.gitOrgName,
+                                        repo: me.gitRepoName,
+                                        testFile: me.isSIgpt ? me.selectedTestFile:null
+                                    }
+                                    let setTreeList = await me.git.setPushList(options)
+                                    .then(async function (list) {
+                                        me.commitStepText = 'Commit to Git'
+                                        if(!list) {
+                                            me.isPushing = false
+                                            me.commitStepText = null
+                                            me.gitSnackBar.show = true
+                                            me.gitSnackBar.timeout = -1
+                                            me.gitSnackBar.Text = "Nothing changed"
+                                            me.gitSnackBar.Color = "warning"
+                                            me.gitSnackBar.icon="warning"
+                                            me.gitSnackBar.title="Warning"
+                                        } else {
+                                            let commitResult = await me.git.commit(me.gitOrgName, me.gitRepoName, branch, list, me.isFirstCommit, me.gitCommitMessage)
+                                            .then(async (commit) => {
+                                                me.commitStepText = 'Push to Git'
+                                                let options = {
+                                                    org: me.gitOrgName, 
+                                                    repo: me.gitRepoName, 
+                                                    commitData: commit, 
+                                                    list: list,
+                                                    branch: branch
+                                                }
+                                                let commitSha = commit.data.sha || commit.data.commit.id
+                                                me.$EventBus.$emit("getCommitId", commitSha)
+                                                let pushResult = await me.git.push(options)
+                                                .then(function () {
+                                                    me.commitStepText = null
+                                                    me.isPushing = false
+                                                    me.isFirstCommit = false
+                                                    me.gitTab = 'IDE'
+                                                    me.gitCommitMessage = null
+                                                    me.copyChangedPathLists = []
+                                                    me.gitSnackBar.show = true
+                                                    me.gitSnackBar.timeout = 3000
+                                                    me.gitSnackBar.Text = "Commit/Push Success."
+                                                    me.gitSnackBar.Color = "success"
+                                                    me.gitSnackBar.icon="check_circle"
+                                                    me.gitSnackBar.title="Success"
+                                                    if(me.isSIgpt){
+                                                        setTimeout(() => {
+                                                            me.getActionLogs()
+                                                        }, 5000)
+                                                    }
+                                                })
+                                            })
+                                            .catch((error) =>{
+                                                me.commonError(error)
+                                            })
+                                        }
+                                    }).catch((error) =>{
+                                        me.$EventBus.$emit('handlePushFileError');
+                                    })
+                                })
+                                .catch(error => {
+                                    me.commonError(error)
+                                })
+                                
                             }
                         })
                         .catch((error) => {

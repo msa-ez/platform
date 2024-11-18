@@ -664,7 +664,8 @@ code[class*=language-]:nth-child(1) {
 }
 
 .auto-modeling-btn {
-    margin-right: 10px !important;
+    margin-left: 10px !important;
+    text-transform: none;
 }
 
 .auto-modeling-btn-box {
@@ -826,12 +827,12 @@ code[class*=language-]:nth-child(1) {
 }
 
 .model-draft-dialog-tab-items {
-    height:63vh;
+    height:60vh;
     overflow: auto;
 }
 
 .model-draft-dialog-tab {
-    padding:0px 10px 0px 10px;
+    padding:0px 16px 0px 16px;
 }
 
 .model-draft-dialog-selected-card {

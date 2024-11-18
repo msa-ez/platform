@@ -219,8 +219,8 @@
                                         <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
                                         <v-card-actions style="position: absolute; right:0px; bottom:0px;">
                                             <v-spacer></v-spacer>
-                                            <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
-                                            <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                            <v-btn small depressed text @click="goTutorials(item.type)" :disabled="disabledTypes(item.type)">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                            <v-btn small depressed text @click="goVideo(item.type)" :disabled="disabledTypes(item.type)">{{ $t('tools.video-btn') }}</v-btn>
                                             <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
                                                 @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
                                             </v-btn>
@@ -948,7 +948,6 @@
                     title: 'tools.bpmn',
                     image: '/static/image/main/mainBPMN.png',
                     subtitle: 'tools.bpmn-inst',
-                    disabled: false,
                     tagStatus: 'Beta'
                 },
             ],
@@ -1539,6 +1538,15 @@
 
         },
         methods: {
+            disabledTypes(type) {
+                // bpmn 타입에 대해 한국에서만 버튼이 활성화되도록 설정
+                if (type === 'bpmn') {
+                    return this.isForeign; // 한국이 아닌 경우에만 disabled
+                }
+                // 다른 타입에 대한 기본 disabled 상태
+                const item = this.design.find(item => item.type === type);
+                return item ? item.disabled : true;
+            },
             login() {
                 this.$EventBus.$emit('jumpToLab');
             },
@@ -1566,7 +1574,7 @@
             goVideo: function (type) {
                 if (type == 'es') {
                     if (this.isForeign) {
-                        window.open(" https://www.youtube.com/watch?v=G46GbI8aa3o&list=PLEr96Fo5umW9w_5SmjXhOar1xRRWcZsbB&index=1", "_blank");
+                        window.open("https://www.youtube.com/watch?v=G46GbI8aa3o&list=PLEr96Fo5umW9w_5SmjXhOar1xRRWcZsbB&index=1", "_blank");
                     } else {
                         window.open("https://www.youtube.com/watch?v=BqKfq3ASU1g&list=PLEr96Fo5umW99TW0kmXQHzL3XEztDXPjI", "_blank");
                     }
@@ -1575,7 +1583,6 @@
                 } else if (type == 'bpmn') {
                     window.open("https://www.youtube.com/watch?v=9RtGeyvZrJo&t=4s", "_blank");
                 }
-
             },
             onSignInWithRedirectResult(result){
                 var me = this
