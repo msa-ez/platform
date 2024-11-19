@@ -1089,6 +1089,7 @@
                         lists = this.filteredLocal
                     }
                 }
+                lists = lists ? lists.map(item => ({ ...item, isDeletedProject: false })) : lists;
 
                 me.renderTabId++;
 
@@ -1760,7 +1761,7 @@
                         if (isServer) {
                             await me.delete(`db://userLists/${authorId}/mine/${projectId}`)
                         }
-                        me.$EventBus.$emit(`completeDelete_${projectId}`)
+                        me.deleteItem.isDeletedProject = true
 
                         me.delete(`localstorage://${projectId}`)
                         me.delete(`localstorage://image_${projectId}`)
