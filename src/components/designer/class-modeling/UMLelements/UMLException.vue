@@ -151,6 +151,9 @@
             },
             name() {
                 try {
+                    if (this.value.displayName) {
+                        return this.value.displayName;
+                    }
                     return this.value.name
                 } catch (e) {
                     return "";
