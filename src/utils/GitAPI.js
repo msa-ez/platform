@@ -4,16 +4,16 @@ const Github =  require("./Github")
 const Gitea =  require("./Gitea")
 class GitAPI {
     constructor() {
-        // const baseURL = 'http://localhost:3000';
-        // const token = '';
-        // this._git = new Gitea(baseURL, token);
-
+        
         if(window.PROVIDER == "gitlab") {
             this._git = new Gitlab();
         } else {
             this._git = new Github();
         }
-
+        
+        // const baseURL = 'http://localhost:3000';
+        // const token = '';
+        // this._git = new Gitea(baseURL, token);
     }
 
     getType() {

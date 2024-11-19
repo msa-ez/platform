@@ -68,10 +68,11 @@ Please follow these rules.
 5. When you add a property to an entity or value object, as with aggregate, if the property you want to use does not exist, you must add a new ValueObject or Enumeration directly.
 6. If the event to be generated additionally calls other commands. Please reference the existing event storming  information passing the name of that command and add it.
 7. When using the value of an Enumeration or ValueObject or Entity in an Aggregate Root, you must use its class name, not the type of the object's Id. Ex) Integer -> OrderStatus
-8. Consider using ValueObject and Entity wherever possible.
-9. If you want to specify it as an array, use 'List<ClassName>'. Ex) List<Address>
-10. Note that updates and deletes require the Aggregate's primary key to be included in the event or command to distinguish them.
-11. Do not write comments in the output JSON object.
+8. Any generated generalClasses or valueObjects must be added as appropriate properties to the aggregateRoot or other Entity.
+9. Consider using ValueObject and Entity wherever possible.
+10. If you want to specify it as an array, use 'List<ClassName>'. Ex) List<Address>
+11. Note that updates and deletes require the Aggregate's primary key to be included in the event or command to distinguish them.
+12. Do not write comments in the output JSON object.
 
 `
     }
@@ -306,6 +307,7 @@ ${description}
 * Verify all required properties are included in Commands/Events based on the business requirements
 * The command you create must call the event for that command. Ex) CreateCustomer -> CustomerCreated
 * When using the value of an Enumeration or ValueObject or Entity in an Aggregate Root, you must use its class name, not the type of the object's Id. Ex) Integer -> OrderStatus
+* The generated generalClasses or valueObjects should be added as properties to the appropriate AggregateRoot or Entities.
 
 [OUTPUT]
 \`\`\`json

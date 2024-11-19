@@ -26,6 +26,11 @@
                                 autofocus
                                 :disabled="isReadOnly"
                         ></v-text-field>
+                        <v-text-field 
+                                v-model="value.displayName" 
+                                label="Display Name"
+                                :disabled="isReadOnly"
+                        ></v-text-field>
                         <v-select 
                                 v-if="!value.relationType.includes('Realization')"
                                 v-model="value.relationType"
@@ -116,10 +121,23 @@
                     if (me.value.name !== '') {
                         if(newVal.includes('Aggregation') || newVal.includes('Composition')) {
                             me.value.name = pluralize(me.value.name);
+                        } else {
+                            me.value.name = pluralize.singular(me.value.name);
                         }
                     }
                 }
             },
+            "value.targetMultiplicity": {
+                deep: true,
+                handler(newVal) {
+                    var me = this;
+                    if (newVal === '1..n' || newVal === '0..n') {
+                        me.value.name = pluralize(me.value.name);
+                    } else {
+                        me.value.name = pluralize.singular(me.value.name);
+                    }
+                }
+            }
         },
         created: function () {
         },

@@ -68,7 +68,8 @@ Please follow these rules.
 6. Create events, commands, and actions as appropriate to satisfy the functional requirements communicated.
 7. You must create and utilize only the Bounded Contexts provided in “Bounded Contexts to Create and Utilize”; do not create any additional Bounded Contexts.
 8. When using the value of an Enumeration or ValueObject or Entity in an Aggregate Root, you must use its class name, not the type of the object's Id. Ex) Integer -> OrderStatus
-9. Do not write comments in the output JSON object.
+9. Any generated generalClasses or valueObjects must be added as appropriate properties to the aggregateRoot or other Entity.
+10. Do not write comments in the output JSON object.
 
 `
     }
@@ -385,6 +386,7 @@ ${functionRequests}
 * Check that all IDs referenced in Commands/Events exist in the actions list
 * The command you create must call the event for that command. Ex) CreateCustomer -> CustomerCreated
 * When using the value of an Enumeration or ValueObject or Entity in an Aggregate Root, you must use its class name, not the type of the object's Id. Ex) Integer -> OrderStatus
+* The generated generalClasses or valueObjects should be added as properties to the appropriate AggregateRoot or Entities.
 
 [OUTPUT]
 \`\`\`json

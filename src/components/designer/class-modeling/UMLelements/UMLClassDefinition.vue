@@ -269,6 +269,9 @@
             },
             name() {
                 try {
+                    if (this.value.displayName) {
+                        return this.value.displayName;
+                    }
                     return this.value.name
                 } catch (e) {
                     return "";
@@ -481,15 +484,17 @@
                 })
                 
                 if(!isIncluded) {
+                    var label = `- ${el.displayName ? el.displayName : changeCase.camelCase(name)}: ${toName}`
                     var attr = {
                         "_type": "org.uengine.uml.model.FieldDescriptor",
                         "name": changeCase.camelCase(name),
+                        "displayName": el.displayName ? el.displayName : "",
                         "className": toName,
                         "isKey": false,
                         "isVO": el.targetElement.isVO,
                         "namePascalCase": changeCase.pascalCase(name),
                         "nameCamelCase": changeCase.camelCase(name),
-                        "label": "- "+ changeCase.camelCase(name) + ": " + toName,
+                        "label": label,
                         "classId": el.to,
                         "isList": false,
                     }
@@ -499,11 +504,12 @@
                             el.sourceMultiplicity == '1' && 
                             (el.targetMultiplicity == '1..n' || el.targetMultiplicity == '0..n')
                     ) {
+                        label = `- ${el.displayName ? el.displayName : pluralize(attr.nameCamelCase)}: List<${attr.className}>`
                         attr.isList = true;
                         attr.name = changeCase.camelCase(pluralize(name));
+                        attr.displayName = el.displayName ? el.displayName : pluralize(name);
                         attr.className = "List<" + attr.className + ">";
-                        attr.label = "- "+ pluralize(attr.nameCamelCase) + 
-                                ": List<" + attr.className + ">";
+                        attr.label = label;
                     }
                     
                     me.value.fieldDescriptors.push(attr)
@@ -525,20 +531,24 @@
                             el.sourceMultiplicity == '1' && 
                             (el.targetMultiplicity == '1..n' || el.targetMultiplicity == '0..n')
                     ) {
+                        var label = `- ${el.displayName ? el.displayName : pluralize(attr.nameCamelCase)}: List<${attr.className}>`
                         me.$set(me.value.fieldDescriptors[idx], "isList", true)
                         me.$set(me.value.fieldDescriptors[idx], "name", changeCase.camelCase(pluralize(name)))
+                        me.$set(me.value.fieldDescriptors[idx], "displayName", el.displayName ? el.displayName : pluralize(name))
                         me.$set(me.value.fieldDescriptors[idx], "nameCamelCase", changeCase.camelCase(pluralize(name)))
                         me.$set(me.value.fieldDescriptors[idx], "namePascalCase", changeCase.pascalCase(pluralize(name)))
                         me.$set(me.value.fieldDescriptors[idx], "className", "List<"+changeCase.pascalCase(toName)+">")
-                        me.$set(me.value.fieldDescriptors[idx], "label", "- "+changeCase.camelCase(pluralize(name))+": List<" + changeCase.pascalCase(toName)+">")
+                        me.$set(me.value.fieldDescriptors[idx], "label", label)
 
                     } else {
+                        var label = `- ${el.displayName ? el.displayName : changeCase.camelCase(name)}: ${changeCase.pascalCase(toName)}`
                         me.$set(me.value.fieldDescriptors[idx], "isList", false)
                         me.$set(me.value.fieldDescriptors[idx], "name", changeCase.camelCase(name))
+                        me.$set(me.value.fieldDescriptors[idx], "displayName", el.displayName ? el.displayName : name)
                         me.$set(me.value.fieldDescriptors[idx], "nameCamelCase", changeCase.camelCase(name))
                         me.$set(me.value.fieldDescriptors[idx], "namePascalCase", changeCase.pascalCase(name))
                         me.$set(me.value.fieldDescriptors[idx], "className", changeCase.pascalCase(toName))
-                        me.$set(me.value.fieldDescriptors[idx], "label", "- "+changeCase.camelCase(name)+": "+changeCase.pascalCase(toName))
+                        me.$set(me.value.fieldDescriptors[idx], "label", label)
                     }
                 }
             },

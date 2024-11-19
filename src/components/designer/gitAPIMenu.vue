@@ -846,8 +846,8 @@
 
             // const baseURL = 'http://localhost:3000';
             // const token = '';
+            // git = new Gitea(baseURL, token);
 
-            git = new Gitea(baseURL, token);
             this.git = new GitAPI(git);
         },
         mounted: function () {

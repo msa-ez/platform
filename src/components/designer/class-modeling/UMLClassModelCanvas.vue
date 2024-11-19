@@ -2012,6 +2012,7 @@
                         element.isVO = false
                         element.parentId = item.id
                         element.name = item.name
+                        element.displayName = item.displayName
 
                     } else if (!componentInfo.isNew && element) {
                         element.parentId = item.id
@@ -2021,6 +2022,7 @@
                         element.isVO = false
                         element.parentId = item.id
                         element.name = item.name
+                        element.displayName = item.displayName
                     }
 
                     if (element && element.isAggregateRoot) {
@@ -2164,8 +2166,8 @@
                 Object.values(me.value.relations).forEach(function(item, idx) {
                     if(item) {
                         if(item.sourceElement.elementView.id == source.elementView.id && 
-                                item.targetElement.elementView.id == target.elementView.id &&
-                                item.name == relationName
+                            item.targetElement.elementView.id == target.elementView.id &&
+                            item.name == relationName
                         ) {
                             isNew = false;
                             item.name = relationName;
@@ -2175,8 +2177,8 @@
                 if(isNew) {
                     var relation = me.addElement(relationInfo)
                     relation.name = relationName
+                    relation.displayName = target.displayName
                 }
-                
             },
 
             openClassNameDialog(componentInfo, cloneInfo) {
