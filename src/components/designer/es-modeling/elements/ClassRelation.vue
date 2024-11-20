@@ -74,11 +74,11 @@
             },
             style_() {
                 var style = {}
-                if (!this.value.name)
-                    this.value.name = ''
+                // if (!this.value.name)
+                //     this.value.name = ''
 
                 if (this.value.sourceElement._type.endsWith('Event') && this.value.targetElement._type.endsWith('Policy')){
-                   this.value.name = 'Pub/Sub'
+                //    this.value.name = 'Pub/Sub'
                     style = {
                         "arrow-end": "block",
                         'stroke-width': '1.3',
@@ -94,23 +94,23 @@
                         'font-size': 14,
                     }
                 } else if (this.value.sourceElement._type.endsWith('Event') && this.value.targetElement._type.endsWith('Command')) {
-                   this.value.name = this.value.name ? this.value.name : 'Req/Res'
+                //    this.value.name = this.value.name ? this.value.name : 'Req/Res'
                     style = {
                         "arrow-end": "block",
                         'font-size': 14,
                         'z-index': '998'
                     }
                 } else if ( (this.value.sourceElement._type.endsWith('Policy') || this.value.sourceElement._type.endsWith('Command')) &&  this.value.targetElement._type.endsWith('View')) {
-                    this.value.name = this.value.name ? this.value.name : 'Req/Res'
+                    // this.value.name = this.value.name ? this.value.name : 'Req/Res'
                     style = {
                         "arrow-end": "block",
                         'font-size': 14,
                     }
-                    if (!this.value.fallback)
-                        this.value.fallback = false;
+                    // if (!this.value.fallback)
+                    //     this.value.fallback = false;
 
-                    if (!this.value.circuitBreaker)
-                        this.value.circuitBreaker = false
+                    // if (!this.value.circuitBreaker)
+                    //     this.value.circuitBreaker = false
                 } else if (this.value.sourceElement._type.endsWith('Command') && this.value.targetElement._type.endsWith('Event')) {
                     style = {
                         "arrow-end": "block",
@@ -120,7 +120,7 @@
                         'font-size': 14,
                     }
                 } else if (this.value.sourceElement._type.endsWith('View') && this.value.targetElement._type.endsWith('Aggregate') ) {
-                    this.value.name = 'UI-Mashup'
+                    // this.value.name = 'UI-Mashup'
                     style = {
                         "arrow-end": "block",
                         'font-size': 14,

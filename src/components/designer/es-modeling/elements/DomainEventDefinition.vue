@@ -407,9 +407,10 @@
                     }
                 } else if(me.value.aggregate && me.value.aggregate.id){
                     me.value.aggregate = {};
-                    // if(me.canvas.initLoad && !me.canvas.isRendering) {
-                    //     me.canvas.changedByMe = true;
-                    // }
+                    if(me.canvas.initLoad && !me.canvas.isRendering) {
+                        // me.canvas.changedByMe = true;
+                        me.canvas.changedTemplateCode = true
+                    }
                 }
             },
             validate(executeRecursionValidate, panelValue){
