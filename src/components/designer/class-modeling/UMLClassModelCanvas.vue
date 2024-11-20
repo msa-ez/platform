@@ -856,20 +856,24 @@
                     context: me,
                     async action(me){
                         if(!element) return;
-                        if(element._type.includes('Relation')) {
-                            let fromEle = me.value.elements[element.from]
-                            if(fromEle.fieldDescriptors && fromEle.fieldDescriptors.length > 0) {
-                                let fields = fromEle.fieldDescriptors
-                                me.value.elements[element.from].fieldDescriptors = fields.filter((field) => {
-                                    if (field.name.toLowerCase() !== element.name.toLowerCase() ||
-                                        field.name !== element.name ||
-                                        pluralize(field.name) !== pluralize(element.name)
-                                    ) {
-                                        return true;
-                                    }
-                                    return false;
-                                })
-                            }
+                        if(element._type.includes('Relation') && element.from) {
+                            me.$EventBus.$emit(`${element.from}`, {
+                                action: 'deleteRelation',
+                                relation: element
+                            });
+                            // let fromEle = me.value.elements[element.from]
+                            // if(fromEle.fieldDescriptors && fromEle.fieldDescriptors.length > 0) {
+                            //     let fields = fromEle.fieldDescriptors
+                            //     me.value.elements[element.from].fieldDescriptors = fields.filter((field) => {
+                            //         if (field.name.toLowerCase() !== element.name.toLowerCase() ||
+                            //             field.name !== element.name ||
+                            //             pluralize(field.name) !== pluralize(element.name)
+                            //         ) {
+                            //             return true;
+                            //         }
+                            //         return false;
+                            //     })
+                            // }
                         }
                     },
                     onFail(e){

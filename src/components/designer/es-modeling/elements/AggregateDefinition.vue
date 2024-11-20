@@ -578,6 +578,7 @@
             addAggRelation(element) {
                 var me = this;
                 var toName = element.targetElement.name;
+                var toDisplayName = element.targetElement.displayName;
 
                 var hasClassId = me.value.aggregateRoot.fieldDescriptors.some((field) =>
                     field.className.includes(changeCase.pascalCase(toName))
@@ -589,15 +590,16 @@
 
                 var attr = {
                     "_type": "org.uengine.model.FieldDescriptor",
-                    "name": changeCase.camelCase(toName) + "Id",
-                    "className": changeCase.pascalCase(toName) + "Id",
+                    "name": `${changeCase.camelCase(toName)}Id`,
+                    "className": `${changeCase.pascalCase(toName)}Id`,
                     "isKey": false,
-                    "namePascalCase": changeCase.pascalCase(toName) + "Id",
-                    "nameCamelCase": changeCase.camelCase(toName) + "Id",
+                    "namePascalCase": `${changeCase.pascalCase(toName)}Id`,
+                    "nameCamelCase": `${changeCase.camelCase(toName)}Id`,
                     "isVO": true,
-                    "label": "- "+ changeCase.camelCase(toName) + "Id: " + changeCase.pascalCase(toName) + "Id",
+                    "label": `- ${changeCase.camelCase(toName)}Id: ${changeCase.pascalCase(toName)}Id`,
                     "referenceClass": changeCase.pascalCase(toName),
                     "isOverrideField": false,
+                    "displayName": `${toDisplayName ? toDisplayName : changeCase.pascalCase(toName)} ID`
                 }
                 var keyField = me.value.aggregateRoot.fieldDescriptors.find((attr) => attr.isKey)
                 var compareKeyField = element.targetElement.aggregateRoot.fieldDescriptors.find((attr) => attr.isKey)

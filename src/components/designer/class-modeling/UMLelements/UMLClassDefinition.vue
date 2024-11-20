@@ -309,23 +309,24 @@
             },
             attributeLabels() {
                 try {
-                    // var me = this
-                    // var arr = []
-                    // if (me.value.fieldDescriptors.length > 0) {
-                    //     me.value.fieldDescriptors.forEach(function (item) {
-                    //         var labelName = item.displayName ? item.displayName : item.name;
-                    //         var label = item.label ? item.label : '- ' + labelName + ': ' + item.className;
-                    //         arr.push(label);
-                    //     });
-                    // }
-                    // return arr
                     var me = this
                     var text = '';
                     me.value.fieldDescriptors.forEach((item) => {
                         var labelName = item.displayName ? item.displayName : item.name;
-                        var label = item.label ? item.label : '- ' + labelName + ': ' + item.className;
+                        var label = item.label ? item.label : `- ${labelName}: ${item.className}`;
+                        if (label.length > 25 && me.value.elementView.width <= 250) {
+                            me.value.elementView.width = 250
+                        }
                         text += label + '\n';
                     })
+                    if (me.value.fieldDescriptors.length > 3) {
+                        me.value.elementView.height = 120 + me.value.fieldDescriptors.length * 20
+                        if (me.value.operations.length > 0) {
+                            me.value.elementView.height += me.value.operations.length * 20
+                        }
+                    } else if (me.value.elementView.height < 150 && me.value.fieldDescriptors.length <= 3) {
+                        me.value.elementView.height = 150
+                    }
                     return text;
                 } catch (e) {
                     return "";
@@ -336,8 +337,11 @@
                     var me = this
                     var text = ''
                     if (me.value.operations.length > 0) {
-                        me.value.operations.forEach(function (item) {
-                            var label = item.label ? item.label : '+' + item.name + '()'
+                        me.value.operations.forEach((item) => {
+                            var label = item.label ? item.label : `+ ${item.name}(): ${item.returnType}`
+                            if (label.length > 25 && me.value.elementView.width <= 250) {
+                                me.value.elementView.width = 250
+                            }
                             text += label + '\n';
                         })
                     }
@@ -554,21 +558,16 @@
             },
             deleteRelAttribute(relation) {
                 var me = this
-                const toName = relation.targetElement.name
-                const idx = me.value.fieldDescriptors.findIndex((attr) => (
-                        (attr.className == toName || 
-                        changeCase.camelCase(attr.className) == changeCase.camelCase(toName) ||
-                        changeCase.pascalCase(attr.className) == changeCase.pascalCase(toName) ||
-                        (attr.className.includes("List<") &&
-                            attr.className == "List<" + changeCase.pascalCase(toName) + ">"
-                        )) && attr.name === relation.name
-                    )
-                )
-
-                if (idx > -1) {
-                    me.value.fieldDescriptors.splice(idx, 1)
-                }
-                
+                const toName = relation.name
+                const fields = me.value.fieldDescriptors.filter((attr) => {
+                    return (attr.name !== toName &&
+                        attr.nameCamelCase !== changeCase.camelCase(toName) &&
+                        attr.namePascalCase !== changeCase.pascalCase(toName) &&
+                        pluralize(attr.nameCamelCase) !== pluralize(changeCase.camelCase(toName)) &&
+                        pluralize.singular(attr.nameCamelCase) !== pluralize.singular(changeCase.camelCase(toName))
+                    );
+                })
+                me.$set(me.value, 'fieldDescriptors', fields)
                 me.refreshImg();
             }
         }
