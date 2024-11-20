@@ -109,14 +109,23 @@
                     },
                 ],
                 multiplicityList: [ '1', '1..n', '0..n', '0..1' ],
+                isEdited: false,
             }
         },
         computed: {
         },
         watch: {
+            "value.name": {
+                deep: true,
+                handler(newVal, oldVal) {
+                    if (newVal !== oldVal) {
+                        this.isEdited = true;
+                    }
+                }
+            },
             "value.relationType": {
                 deep: true,
-                handler: function (newVal) {
+                handler(newVal) {
                     var me = this;
                     if (me.value.name !== '') {
                         if(newVal.includes('Aggregation') || newVal.includes('Composition')) {
@@ -124,6 +133,7 @@
                         } else {
                             me.value.name = pluralize.singular(me.value.name);
                         }
+                        me.isEdited = true;
                     }
                 }
             },
@@ -136,6 +146,7 @@
                     } else {
                         me.value.name = pluralize.singular(me.value.name);
                     }
+                    me.isEdited = true;
                 }
             }
         },
@@ -143,11 +154,13 @@
         },
         beforeDestroy() {
             var me = this
-            const obj = {
-                action: "updateRelation",
-                relation: me.value
+            if (me.canvas.value.relations[me.value.id] && me.isEdited) {
+                const obj = {
+                    action: "updateRelation",
+                    relation: me.value
+                }
+                me.$EventBus.$emit(`${me.value.from}`, obj)
             }
-            me.$EventBus.$emit(`${me.value.from}`, obj)
         },
         methods:{
         },
