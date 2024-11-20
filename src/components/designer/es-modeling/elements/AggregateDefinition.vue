@@ -678,10 +678,10 @@
                 if( me.value.mirrorElement ) return;
 
                 me.$super(Element).onMoveAction()
-
+                let attachedLists = me.canvas.attachedLists()
                 //Attached Event
-                if (me.canvas.attachedLists && me.canvas.attachedLists.eventLists) {
-                    Object.values(me.canvas.attachedLists.eventLists).forEach(event => {
+                if (attachedLists && attachedLists.eventLists) {
+                    Object.values(attachedLists.eventLists).forEach(event => {
                         var eventComponent = me.canvas.$refs[`${event.elementView.id}`] ? me.canvas.$refs[`${event.elementView.id}`][0] : null
                         if (eventComponent) {
                             eventComponent.onMoveAction(true)
@@ -689,8 +689,8 @@
                     })
                 }
                 //Attached Command
-                if (me.canvas.attachedLists && me.canvas.attachedLists.commandLists) {
-                    Object.values(me.canvas.attachedLists.commandLists).forEach(command => {
+                if (attachedLists && attachedLists.commandLists) {
+                    Object.values(attachedLists.commandLists).forEach(command => {
                         var commandComponent = me.canvas.$refs[`${command.elementView.id}`] ? me.canvas.$refs[`${command.elementView.id}`][0] : null
                         if (commandComponent) {
                             commandComponent.onMoveAction(true)
@@ -698,8 +698,8 @@
                     });
                 }
 
-                if (me.canvas.attachedLists && me.canvas.attachedLists.boundedContextLists) {
-                    Object.values(me.canvas.attachedLists.boundedContextLists).forEach(bc => {
+                if (attachedLists &&  attachedLists.boundedContextLists) {
+                    Object.values(attachedLists.boundedContextLists).forEach(bc => {
                         var commandComponent = me.canvas.$refs[`${bc.elementView.id}`] ? me.canvas.$refs[`${bc.elementView.id}`][0] : null
                         if (commandComponent && !executeRecursion) {
                             commandComponent.onMoveAction(true)
@@ -719,9 +719,11 @@
 
                 // execute Relate Validate ex) 자신의 element에서 다른 element의 validate 실행여부.
                 if(recursionValidate) {
+                    let attachedLists = me.canvas.attachedLists()
+
                     //Attached Event
-                    if (me.canvas.attachedLists && me.canvas.attachedLists.eventLists) {
-                        Object.values(me.canvas.attachedLists.eventLists).forEach(event => {
+                    if (attachedLists && attachedLists.eventLists) {
+                        Object.values(attachedLists.eventLists).forEach(event => {
                             var eventComponent = me.canvas.$refs[`${event.elementView.id}`] ? me.canvas.$refs[`${event.elementView.id}`][0] : null
                             if (eventComponent) {
                                 eventComponent.validate(false)
@@ -729,8 +731,8 @@
                         })
                     }
                     //Attached Command
-                    if (me.canvas.attachedLists && me.canvas.attachedLists.commandLists) {
-                        Object.values(me.canvas.attachedLists.commandLists).forEach(command => {
+                    if (attachedLists && attachedLists.commandLists) {
+                        Object.values(attachedLists.commandLists).forEach(command => {
                             var commandComponent = me.canvas.$refs[`${command.elementView.id}`] ? me.canvas.$refs[`${command.elementView.id}`][0] : null
                             if (commandComponent) {
                                 commandComponent.validate(false)
