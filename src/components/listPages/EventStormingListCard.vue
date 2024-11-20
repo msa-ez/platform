@@ -197,23 +197,18 @@
                 return 'Join'
             },
         },
-        mounted() {
-            var me = this
-            // me.$EventBus.$on(`completeDelete_${me.copyInformation.projectId}`, function () {
-            //     me.isDelete = true
-            // })
-        },
         methods: {
             async setting() {
                 var me = this
+                const providerUid = localStorage.getItem('providerUid')
+
                 me.copyInformation = JSON.parse(JSON.stringify(me.information))
-                let providerUid = localStorage.getItem('providerUid')
                 if (me.copyInformation && !me.set) {
                     if (!me.copyInformation.img) {
                         me.copyInformation.img = me.defaultImage
                     }
                     me.copyInformation.authorId = me.information.authorId ? me.information.authorId : me.information.author
-                    me.copyInformation.projectId = me.information.objectID ? me.information.objectID : me.information.projectId
+                    me.copyInformation.projectFullId = me.information.objectID ? me.information.objectID : me.information.projectId
                     me.copyInformation.createdTimeStamp = me.information.createdTimeStamp ? me.convertDate(me.information.createdTimeStamp) : me.convertDate(me.information.date)
                     me.copyInformation.lastModifiedTimeStamp = me.information.lastModifiedTimeStamp ? me.convertDate(me.information.lastModifiedTimeStamp) : me.convertDate(me.information.lastModifiedDate)
                     me.copyInformation.hiddenEmail = me.hiddenEmail(me.copyInformation.authorEmail)
@@ -221,29 +216,30 @@
                     me.copyInformation.isNewProject = me.isNew(me.copyInformation.lastModifiedTimeStamp)
                     me.copyInformation.chip = me.chipSetting()
 
-                    let prefix = `${providerUid}_${me.information.type}_`
-                    if(me.copyInformation.projectId.startsWith(`${prefix}`)){
-                        me.projectPath = `/${providerUid}`
-                        me.copyInformation.projectId = me.copyInformation.projectId.split(prefix)[1]
-                    } 
+                    let authorId = ''
+                    let projectId = me.copyInformation.projectFullId
+                    let typePattern = `_${me.information.type}_`
+                    if (me.copyInformation.projectFullId.includes(typePattern)) {
+                        [authorId, projectId] = me.copyInformation.projectFullId.split(typePattern);
+                    }
 
                     if (me.information.type == 'es') {
-                        me.projectPath = `${me.projectPath}/storming/${me.copyInformation.projectId}`
+                        me.projectPath = `${authorId}/storming/${projectId}`
                     } else if (me.information.type == 'k8s') {
-                        me.projectPath = `${me.projectPath}/kubernetes/${me.copyInformation.projectId}`
+                        me.projectPath = `${authorId}/kubernetes/${projectId}`
                     } else if (me.information.type == 'bm') {
-                        me.projectPath = `${me.projectPath}/business-model-canvas/${me.copyInformation.projectId}`
+                        me.projectPath = `${authorId}/business-model-canvas/${projectId}`
                     } else {
-                        me.projectPath = `${me.projectPath}/${me.information.type}/${me.copyInformation.projectId}`
+                        me.projectPath = `${authorId}/${me.information.type}/${projectId}`
                     }
                     
                     
                     // lazy image
-                    let result =  await me.getString(`storage://definitions/${me.copyInformation.projectId}/information/image`);
+                    let result =  await me.getString(`storage://definitions/${me.copyInformation.projectFullId}/information/image`);
                     if( result && !result.Error ){
                         me.copyInformation.img = result
                     } else {
-                        let image = await me.getString(`localstorage://image_${me.copyInformation.projectId}`);
+                        let image = await me.getString(`localstorage://image_${me.copyInformation.projectFullId}`);
                         if(image) {
                             me.copyInformation.img = image
                         } else {
@@ -253,15 +249,10 @@
                                 me.copyInformation.img = me.defaultImage
                             }
                         }
-                        // let serverImageLists = await me.getObject(`localstorage://serverImageLists`)
-                        // if(serverImageLists && serverImageLists[me.copyInformation.projectId]){
-                        //     me.copyInformation.img = serverImageLists[me.copyInformation.projectId];
-                        // }
-                    }
-                    
-                    
+                    }    
                     me.set = true
                 }
+
                 me.renderKey++;
             },
             isNew(date) {
@@ -300,7 +291,7 @@
             },
             openProject(){ 
                 var me = this
-                if(information && information.isDeletedProject){
+                if(me.information && me.information.isDeletedProject){
                     return;
                 }
                 // if (me.copyInformation.type == 'project') {
