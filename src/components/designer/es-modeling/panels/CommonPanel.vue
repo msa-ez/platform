@@ -8,7 +8,7 @@
                             <v-list class="pa-1" style="height: 100px;">
                                 <v-list-item>
                                     <slot name="t-title">
-                                        <v-col>
+                                        <v-col class="pa-0 pt-2">
                                             <v-col style="margin:0;">
                                                 <div v-if="elementAuthorDisplay"
                                                      class="gs-model-panel-Author">
@@ -27,6 +27,7 @@
                                                     </template>
                                                     <span><slot name="t-generation-text"></slot></span>
                                                 </v-tooltip>
+                                                <v-spacer></v-spacer>
 
                                                 <slot name="t-information">
                                                     <v-tooltip top>
@@ -45,7 +46,7 @@
                                                     </v-tooltip>
                                                 </slot>
                                             </v-row>
-                                            <v-col>
+                                            <v-col class="pa-0 pt-4">
                                                 <slot name="t-edit-user"></slot>
                                             </v-col>
                                         </v-col>
