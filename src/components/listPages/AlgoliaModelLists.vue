@@ -1079,7 +1079,7 @@
                 } else {
                     // var findIndex = me.filterTabLists.findIndex(tab)
                     if (me.filterTabLists[me.selectedTabIndex].id == 'public') {
-                        console.log( this.filteredPublic)
+                        // console.log( this.filteredPublic)
                         lists = this.filteredPublic
                     } else if (me.filterTabLists[me.selectedTabIndex].id == 'mine') {
                         lists = this.filteredMine
