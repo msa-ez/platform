@@ -65,13 +65,18 @@
                                     color="primary"
                                     class="mr-2"
                             ></v-progress-circular>
-                            <v-btn
-                                    :disabled="recommending"
+                            <div class="d-flex align-end flex-column">
+                                <v-btn
+                                    :disabled="recommending || (!recommending && !useRecommend)"
                                     color="primary"
                                     @click="recommend"
-                            >
-                                guide me
-                            </v-btn>
+                                >
+                                    guide me
+                                </v-btn>
+                                <div v-if="!useRecommend" class="text-caption mt-1">
+                                    ReadModel 이 부착되어야 이용할 수 있습니다.
+                                </div>
+                            </div>
                         </div>
                     </v-card-text>
 
@@ -99,7 +104,7 @@
                         </v-card>
                     </div>
                     
-                    <v-card-text>
+                    <v-card-text :class="!useRecommend ? 'pt-0' : ''">
                         <v-select
                                 v-model="value.chart.type"
                                 :items="chartList"
@@ -144,17 +149,22 @@
                                     color="primary"
                                     class="mr-2"
                             ></v-progress-circular>
-                            <v-btn
-                                    :disabled="recommending"
+                            <div class="d-flex align-end flex-column">
+                                <v-btn
+                                    :disabled="recommending || (!recommending && !useRecommend)"
                                     color="primary"
                                     @click="recommend"
-                            >
-                                guide me
-                            </v-btn>
+                                >
+                                    guide me
+                                </v-btn>
+                                <div v-if="!useRecommend" class="text-caption mt-1">
+                                    ReadModel 이 부착되어야 이용할 수 있습니다.
+                                </div>
+                            </div>
                         </div>
                     </v-card-text>
                     
-                    <v-card-text>
+                    <v-card-text :class="!useRecommend ? 'pt-0' : ''">
                         <v-select
                                 v-model="value.grid.columns"
                                 label="Columns"
@@ -244,6 +254,7 @@
                 recommending: false,
                 recommendData: [],
                 useSubtitle: false,
+                useRecommend: false,
             }
         },
         created () { },
@@ -288,6 +299,7 @@
 
                            if (me.canvas._isAttached(outer, inner)) {
                                 me.readModel = element;
+                                me.useRecommend = true;
                            }
                         }
                     }
@@ -374,3 +386,6 @@
         }
     }
 </script>
+
+<style scoped>
+</style>
