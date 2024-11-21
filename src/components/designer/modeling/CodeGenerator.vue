@@ -690,7 +690,7 @@
                                                                             <v-icon style="margin-right: 5px;" small>mdi-cart</v-icon>
                                                                             Marketplace
                                                                         </v-btn>
-                                                                        <v-tab v-if="isExistConfTemplate('TEMPLATE', item.preferredPlatform)"> Configuration </v-tab>
+                                                                        <v-tab v-if="isExistConfTemplate('MAIN', item.preferredPlatform)"> Configuration </v-tab>
 
                                                                         <v-tab-item>
                                                                             <v-list v-if="editableTemplate">
@@ -709,7 +709,7 @@
 
                                                                         <v-tab-item>
                                                                             <CodeConfiguration
-                                                                                :instruction="configurationTemplate('TEMPLATE', item)"
+                                                                                :instruction="configurationTemplate('MAIN', item)"
                                                                                 @apply="applyCodeConfiguration"
                                                                                 @close="closeCodeConfiguration"
                                                                             ></CodeConfiguration>
@@ -1643,7 +1643,7 @@
                     BASE: false,
                 },
                 gitAPI: null,
-                basePlatform: "",
+                // basePlatform: "",
                 baseToppingPlatforms:{
                     'Kubernetes':[
                         {label:'Vanilla Kubernetes', value: 'isVanillaK8s'}
@@ -1983,12 +1983,12 @@
                 }
                 return false;
             },
-            // basePlatform(){
-            //     if(this.value && this.value.basePlatform){
-            //         return this.value.basePlatform
-            //     }
-            //     return this.defaultTemplate;
-            // },
+            basePlatform(){
+                if(this.value && this.value.basePlatform){
+                    return this.value.basePlatform
+                }
+                return this.defaultTemplate;
+            },
             basePlatformConf(){
                 if(this.value && this.value.basePlatformConf){
                     return this.value.basePlatformConf
@@ -2603,11 +2603,11 @@
             // }
             // }
 
-            if(this.value && this.value.basePlatform){
-                this.basePlatform = this.value.basePlatform
-            }else{
-                this.basePlatform = this.defaultTemplate;
-            }
+            // if(this.value && this.value.basePlatform){
+            //     this.basePlatform = this.value.basePlatform
+            // }else{
+            //     this.basePlatform = this.defaultTemplate;
+            // }
             
             this.openCodeGenerator()
             // this.settingGithub()
@@ -2617,8 +2617,7 @@
 
         },
         beforeDestroy: function () {
-            let me = this
-            window.removeEventListener("message", me.messageProcessing);
+            window.removeEventListener("message", this.messageProcessing);
             this.closeCodeViewer()
         },
         mounted: async function () { 
@@ -3734,7 +3733,7 @@ jobs:
 
                 if( division == 'BASE' && me.$manifestsPerBaseTemplate[template] ){
                     return me.$manifestsPerBaseTemplate[me.basePlatform].find(x=>x.includes('for-model/_template/')) ? true : false
-                }else if( division == 'TEMPLATE' && me.$manifestsPerTemplate[template] ){
+                }else if( division == 'MAIN' && me.$manifestsPerTemplate[template] ){
                     return me.$manifestsPerTemplate[template].find(x=> x.includes('_template') && !x.includes('for-model/_template')) ? true : false
                 }else if( division == 'TOPPING' && me.$manifestsPerToppings[template] ){
                     return me.$manifestsPerToppings[template].find(x=> x.includes('_template') && x.includes('for-model/_template')) ? true : false
@@ -3757,7 +3756,7 @@ jobs:
                     if(division == 'BASE'){
                         templateKey = Object.keys(me._templateLists).find(x=>x.includes(codeObj.split('/')[codeObj.split('/').length-1]));
                         conf = me.basePlatformConf[codeObj] ? JSON.parse(JSON.stringify(me.basePlatformConf[codeObj])) : null;
-                    } else if(division == 'TEMPLATE'){
+                    } else if(division == 'MAIN'){
                         elementId = codeObj.bcId;
                         if(me.value.elements[elementId]){
                             templateKey = Object.keys(me._templateLists).find(x=>x.includes(me.value.elements[elementId].name));
@@ -3837,12 +3836,13 @@ jobs:
             applyCodeConfiguration(division, elementId , configuration){
                 var me = this
                 let conf = null;
+                me.closeCodeConfiguration(division, elementId);
 
                 if(division == 'BASE'){
                     conf = me.basePlatformConf[me.basePlatform];
                 }else if(division == 'TOPPING'){
-                    conf = me.value.toppingPlatformsConf[elementId]
-                } else if(division == 'TEMPLATE'){
+                    conf = me.toppingPlatformsConf[elementId]
+                } else if(division == 'MAIN'){
                     conf = me.value.elements[elementId].preferredPlatformConf[me.value.elements[elementId].preferredPlatform]
                 }
 
@@ -3855,18 +3855,20 @@ jobs:
                     }
                     me.$emit('changedByMe', true);
                     if(division == 'BASE'){
-                        me.basePlatformConf[me.basePlatform] = JSON.parse(JSON.stringify(configuration));
-                        me.basePlatformConf.__ob__.dep.notify();
+                        // setting basePlatformConf
+                        me.value.basePlatformConf[me.basePlatform] = JSON.parse(JSON.stringify(configuration));
+                        me.value.basePlatformConf.__ob__.dep.notify();
                     } else if(division == 'TOPPING'){
+                        // setting toppingPlatformsConf
                         me.value.toppingPlatformsConf[elementId] = JSON.parse(JSON.stringify(configuration));
                         me.value.toppingPlatformsConf.__ob__.dep.notify();
-                    } else if(division == 'TEMPLATE'){
+                    } else if(division == 'MAIN'){
+                        // setting preferredPlatformConf
                         me.value.elements[elementId].preferredPlatformConf[me.value.elements[elementId].preferredPlatform] = JSON.parse(JSON.stringify(configuration));
                         me.value.elements[elementId].preferredPlatformConf.__ob__.dep.notify();
                     }
                     me.refreshCallGenerate();
                 }
-                me.closeCodeConfiguration(division, elementId);
             },
             closeCodeConfiguration(division, elementId) {
                 this.menuOpen[elementId] = false
@@ -3902,7 +3904,6 @@ jobs:
                 me.$emit('changedByMe', true)
                 if(division == 'BASE'){
                     me.value.basePlatform = platform
-                    me.basePlatform = platform
                 } else if( division == 'TOPPING'){
                     me.value.toppingPlatforms = platform
                 } else if( division == 'TEMPLATE'){
@@ -5360,7 +5361,6 @@ jobs:
                     me.value.toppingPlatforms = [];
                     me.usedToppings = [];
                     me.filteredCustomToppingLists = null;
-                    me.toppingPlatforms = [];
                     localStorage.removeItem('customToppingLists');
                 }
                 if(isChangeBaseTemplate){
@@ -7277,7 +7277,6 @@ jobs:
                     
                     context: me,
                     async action(me){
-
                         console.log('>>> Generate Code] Start Main<<<', Date.now() )
                         me.isGeneratorDone = false;
 
@@ -7396,7 +7395,7 @@ jobs:
                 var me = this
 
                 return new Promise( async(resolve, reject) => {
-                    var value = values  ? values : me.value
+                    let value = values  ? values : me.value
                     let originValue = JSON.parse(JSON.stringify(value));
 
                     // add pbc Element.
@@ -7405,7 +7404,7 @@ jobs:
                         value.relations = Object.assign(me.canvas.pbcValue.relations, value.relations);
                     }
 
-                    var rootModelAndElement
+                    let rootModelAndElement
                     if(me.reGenerateOnlyModifiedTemplate){
                         rootModelAndElement = me.rootModelAndElementMap
                     } else {
@@ -7414,8 +7413,8 @@ jobs:
                         me.rootModelAndElementMap = rootModelAndElement
                     }
 
-                    var rootModel = rootModelAndElement.rootModel
-                    var modelForElements = rootModelAndElement.modelForElements
+                    let rootModel = rootModelAndElement.rootModel
+                    let modelForElements = rootModelAndElement.modelForElements
 
                     // Generate BC Of PBC
                     let bcOfPBC = await me.extractBoundedContextsOfPBC(JSON.parse(JSON.stringify(value)));
@@ -7434,14 +7433,13 @@ jobs:
                     }
 
 
-                    var basePlatforms =  value.basePlatform ? value.basePlatform : ( options && options.baseTemplate ? options.baseTemplate : me.defaultTemplate )
-                    var basePlatformConf =  value.basePlatformConf ? value.basePlatformConf : {}
-                    var preferredPlatforms = rootModelAndElement.preferredPlatforms
-                    var toppingPlatforms = value.toppingPlatforms;
-                    var toppingPlatformsConf = value.toppingPlatformsConf ? value.toppingPlatformsConf : {}
-
-                    var rootPath = options && options.rootPath ? options.rootPath : ''
-                    var platforms ={
+                    let basePlatforms =  value.basePlatform ? value.basePlatform : ( options && options.baseTemplate ? options.baseTemplate : me.defaultTemplate )
+                    let basePlatformConf =  value.basePlatformConf ? value.basePlatformConf : {}
+                    let preferredPlatforms = rootModelAndElement.preferredPlatforms
+                    let toppingPlatforms = value.toppingPlatforms;
+                    let toppingPlatformsConf = value.toppingPlatformsConf ? value.toppingPlatformsConf : {}
+                    let rootPath = options && options.rootPath ? options.rootPath : ''
+                    let platforms = {
                         preferredPlatforms: preferredPlatforms,
                         basePlatform: basePlatforms,
                         basePlatformConf: basePlatformConf,
@@ -7449,15 +7447,16 @@ jobs:
                         toppingPlatformsConf: toppingPlatformsConf,
                         rootPath: rootPath,
                     }
-                    let scmInfo = {
-                        projectName: rootModel.projectName,
-                        scm: value.scm
-                    }
 
                     if(me.reGenerateOnlyModifiedTemplate){
                         rootModel.boundedContexts = me.rootModelBoundedContexts
                     } else {
-                        rootModel.boundedContexts = me.settingSCM(rootModel.boundedContexts, scmInfo );
+                        rootModel.boundedContexts = me.settingSCM(rootModel.boundedContexts, 
+                            {
+                                projectName: rootModel.projectName,
+                                scm: value.scm
+                            }
+                        );
                         me.rootModelBoundedContexts = rootModel.boundedContexts
                     }
 
@@ -7542,7 +7541,7 @@ jobs:
                     //////////////////////////////////////////////// TEMPLATE END ////////////////////////////////////////////////
 
                     //Data Preprocessing
-                    me.core.afterProcessing(rootModel,modelForElements,platforms);
+                    me.core.afterProcessing(rootModel,modelForElements, platforms);
 
                     //Generate Code
                     if(!me.githubTokenError){
@@ -8151,34 +8150,28 @@ jobs:
                 var me = this;
                 return new Promise( function (resolve, reject) {
                     try {
-                        // if( me.canvasName == 'context-mapping-model-canvas' ) {
-                        //     resolve()
-                        //     return;
+                        let modelForElements = templateContext.modelForElements
+                        let rootModel = templateContext.rootModel
+                        let rootPath = templateContext.rootPath
 
-                        // }
-                        // console.log("3333333")
-                        var modelForElements = templateContext.modelForElements
-                        var toppingPlatforms = templateContext.toppingPlatforms
-                        var basePlatform = templateContext.basePlatform
+                        let toppingPlatforms = templateContext.toppingPlatforms
+                        let toppingPlatformsConf = templateContext.toppingPlatformsConf
+                        let basePlatform = templateContext.basePlatform
                         let basePlatformConf = templateContext.basePlatformConf;
-                        var filteredProjectName = templateContext.filteredProjectName
-                        var rootModel = templateContext.rootModel
-                        var rootPath = templateContext.rootPath
+                        let filteredProjectName = templateContext.filteredProjectName
 
-
-                        var xHttpSendCnt = -1
-                        var xHttpDoneCnt = -1
+                        let xHttpSendCnt = -1
+                        let xHttpDoneCnt = -1
 
                         if (toppingPlatforms && toppingPlatforms.length > 0) {
                             toppingPlatforms.forEach(async function (preferredPlatform, index) {
-                                var template = JSON.parse(JSON.stringify(preferredPlatform));
+                                let template = JSON.parse(JSON.stringify(preferredPlatform));
                                 if(template && !template.includes("http")){
                                     let getTemplateURL = await me.gitAPI.getToppingURL(template)
                                     template = getTemplateURL
                                 }
 
-                                var manifestTemplate
-
+                                let manifestTemplate
                                 if(me.reGenerateOnlyModifiedTemplate && me.editTemplateFrameWorkList && me.editTemplateFrameWorkList[template]){
                                     manifestTemplate = Object.keys(me.editTemplateFrameWorkList[template])
                                 } else {
@@ -8186,8 +8179,7 @@ jobs:
                                     manifestTemplate = me.$manifestsPerToppings[template] ? me.$manifestsPerToppings[template] : [];
                                 }
                                 
-                                var manifestTemplateLastIndex = manifestTemplate.length - 1
-
+                                let manifestTemplateLastIndex = manifestTemplate.length - 1
                                 if( manifestTemplateLastIndex == -1 ){
                                     if(toppingPlatforms.length - 1 == index){
                                         resolve()
@@ -8203,6 +8195,8 @@ jobs:
                                             template: template,
                                             rootModel: rootModel,
                                             rootPath: rootPath,
+                                            toppingPlatforms: toppingPlatforms,
+                                            toppingPlatformsConf: toppingPlatformsConf,
                                             basePlatform: basePlatform,
                                             basePlatformConf: basePlatformConf,
                                             generatedType: "TOPPING",
@@ -8309,8 +8303,10 @@ jobs:
                     var element = processContext.element;
                     var modelForElements = processContext.modelForElements;
                     var template = processContext.template;
-                    var basePlatform = processContext.basePlatform;
+                    var basePlatform = processContext.basePlatform ? processContext.basePlatform : me.basePlatform;
                     let basePlatformConf = processContext.basePlatformConf;
+                    let toppingPlatforms = processContext.toppingPlatforms
+                    let toppingPlatformsConf = processContext.toppingPlatformsConf;
                     var filteredProjectName = processContext.filteredProjectName;
                     var rootModel = processContext.rootModel;
                     var rootPath = processContext.rootPath
@@ -8440,10 +8436,19 @@ jobs:
                     //     content = content.replace(`path: ${originPath}`, `path: ${replacePath}`)
                     // }
 
+                    // if(!basePlatform) basePlatform = me.defaultTemplate;
                     let baseOptions = {};
-                    if(!basePlatform) basePlatform = me.defaultTemplate;
+                    if (generatedType == 'TOPPING' && me.isExistConfTemplate('TOPPING', template)) {
 
-                    if( me.isExistConfTemplate('BASE', basePlatform) ){
+                        if( !(toppingPlatformsConf && toppingPlatformsConf[template]) ){
+                            if( !toppingPlatformsConf[template] ) toppingPlatformsConf[template] = {};
+                            if( !toppingPlatformsConf[template].package ){
+                                toppingPlatformsConf[template].package = `${filteredProjectName.trim().replace(/ /gi, "").replace("-", "")}`;
+                                toppingPlatformsConf[template].packagePath = `src/main/java/${filteredProjectName.trim().replace(/ /gi, "").replace("-", "")}`;
+                            }
+                        }
+                        baseOptions = toppingPlatformsConf[template];
+                    } else if(generatedType != 'TOPPING' && me.isExistConfTemplate('BASE', basePlatform)){
                         if( !(basePlatformConf && basePlatformConf[basePlatform]) ){
                             if( !basePlatformConf[basePlatform] ) basePlatformConf[basePlatform] = {};
                             if( !basePlatformConf[basePlatform].package ){
@@ -8458,12 +8463,9 @@ jobs:
                             "packagePath": `src/main/java/${filteredProjectName.trim().replace(/ /gi, "").replace("-", "")}`
                         }
                     }
-
-                    //
                     baseOptions["rootPackage"] = `${me.core.filterProjectName(me.projectName).trim().replace(/ /gi, "").replace("-", "")}`;
 
-
-                    var templateProcessContext = {
+                    let templateProcessContext = {
                         templateFile: element,
                         template: template,
                         content: content,
@@ -8481,7 +8483,7 @@ jobs:
                         model.forEach(function (modelElement) {
                             if ( (template == modelElement.preferredPlam || template.includes(modelElement.preferredPlatform)) || !processContext.generatedType.includes('MAIN') || modelElement.isPassedElement ) {
                                 if(forEach == 'BoundedContext' ){
-                                    if( me.isExistConfTemplate('TEMPLATE', modelElement.preferredPlatform)
+                                    if( me.isExistConfTemplate('MAIN', modelElement.preferredPlatform)
                                         && modelElement.preferredPlatformConf
                                         && modelElement.preferredPlatformConf[modelElement.preferredPlatform] ){
                                         // setting of Configuration
@@ -8494,7 +8496,7 @@ jobs:
                                         && modelElement.boundedContext.preferredPlatform
                                         && modelElement.boundedContext.preferredPlatformConf
                                         && modelElement.boundedContext.preferredPlatformConf[modelElement.boundedContext.preferredPlatform]
-                                        && me.isExistConfTemplate('TEMPLATE', modelElement.boundedContext.preferredPlatform) ){
+                                        && me.isExistConfTemplate('MAIN', modelElement.boundedContext.preferredPlatform) ){
                                     // setting of Configuration
                                     templateProcessContext.options = JSON.parse(JSON.stringify(modelElement.boundedContext.preferredPlatformConf[modelElement.boundedContext.preferredPlatform]));
                                 } else { // setting of base
