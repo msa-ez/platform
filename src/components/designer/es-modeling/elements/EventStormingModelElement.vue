@@ -215,7 +215,7 @@ import { group } from "d3";
                                     return true
                                 }
 
-                                return !me.newEditUserImg.some(user => user.uid == me.canvas.userInfo.uid || user.action == 'userPanelOpen');
+                                return me.newEditUserImg.some(user => user.uid == me.canvas.userInfo.uid || user.action == 'userPanelOpen');
                             }
                         }
                     }
