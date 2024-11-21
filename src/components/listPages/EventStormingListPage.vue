@@ -2071,7 +2071,8 @@
                         if (isServer) {
                             await me.delete(`db://userLists/${me.deleteItem.author}/mine/${me.deleteItem.projectId}`)
                         }
-                        me.$EventBus.$emit(`completeDelete_${me.deleteItem.projectId}`)
+                        // me.$EventBus.$emit(`completeDelete_${me.deleteItem.projectId}`)
+                        me.deleteItem.isDeletedProject = true
 
                         me.delete(`localstorage://${me.deleteItem.projectId}`)
                         var localLists = await me.getObject(`localstorage://localLists`)

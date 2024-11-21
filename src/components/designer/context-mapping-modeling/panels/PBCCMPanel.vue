@@ -22,10 +22,8 @@
         <template slot="t-edit-user">
             <div
                     v-if="newEditUserImg.length > 0 && isReadOnly"
-                    style="text-align:center"
             >
                 <v-chip
-                        small
                         color="orange"
                         text-color="white"
                         style="font-weight:bold;"
@@ -34,9 +32,9 @@
                     <v-avatar left>
                         <v-icon>mdi-lead-pencil</v-icon>
                     </v-avatar>
-                    <v-row>
-                        <div style="margin-left: 10px;"> {{newEditUserImg[0].name}} is now editing...</div>
-                        <div style="font-size: 12px; margin-right: 10px;"> ( Click to force editing ) </div>
+                    <v-row class="ma-0 pa-0">
+                        <div>{{newEditUserImg[0].name}} is editing...</div>
+                        <div style="font-size: 12px;">( Click to edit )</div>
                     </v-row>
                 </v-chip>
             </div>

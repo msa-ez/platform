@@ -26,6 +26,11 @@
                                 autofocus
                                 :disabled="isReadOnly"
                         ></v-text-field>
+                        <v-text-field 
+                                v-model="value.displayName" 
+                                label="Display Name"
+                                :disabled="isReadOnly"
+                        ></v-text-field>
                         <v-select 
                                 v-if="!value.relationType.includes('Realization')"
                                 v-model="value.relationType"
@@ -104,32 +109,58 @@
                     },
                 ],
                 multiplicityList: [ '1', '1..n', '0..n', '0..1' ],
+                isEdited: false,
             }
         },
         computed: {
         },
         watch: {
+            "value.name": {
+                deep: true,
+                handler(newVal, oldVal) {
+                    if (newVal !== oldVal) {
+                        this.isEdited = true;
+                    }
+                }
+            },
             "value.relationType": {
                 deep: true,
-                handler: function (newVal) {
+                handler(newVal) {
                     var me = this;
                     if (me.value.name !== '') {
                         if(newVal.includes('Aggregation') || newVal.includes('Composition')) {
                             me.value.name = pluralize(me.value.name);
+                        } else {
+                            me.value.name = pluralize.singular(me.value.name);
                         }
+                        me.isEdited = true;
                     }
                 }
             },
+            "value.targetMultiplicity": {
+                deep: true,
+                handler(newVal) {
+                    var me = this;
+                    if (newVal === '1..n' || newVal === '0..n') {
+                        me.value.name = pluralize(me.value.name);
+                    } else {
+                        me.value.name = pluralize.singular(me.value.name);
+                    }
+                    me.isEdited = true;
+                }
+            }
         },
         created: function () {
         },
         beforeDestroy() {
             var me = this
-            const obj = {
-                action: "updateRelation",
-                relation: me.value
+            if (me.canvas.value.relations[me.value.id] && me.isEdited) {
+                const obj = {
+                    action: "updateRelation",
+                    relation: me.value
+                }
+                me.$EventBus.$emit(`${me.value.from}`, obj)
             }
-            me.$EventBus.$emit(`${me.value.from}`, obj)
         },
         methods:{
         },

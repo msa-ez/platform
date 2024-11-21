@@ -18,7 +18,6 @@
         <template slot="t-edit-user">
             <div
                     v-if="newEditUserImg.length > 0 && isReadOnly"
-                    style="text-align:center"
             >
                 <v-chip
                         small
@@ -30,9 +29,9 @@
                     <v-avatar left>
                         <v-icon>mdi-lead-pencil</v-icon>
                     </v-avatar>
-                    <v-row>
-                        <div style="margin-left: 10px;"> {{newEditUserImg[0].name}} is now editing...</div>
-                        <div style="font-size: 12px; margin-right: 10px;"> ( Click to force editing ) </div>
+                    <v-row class="ma-0 pa-0">
+                        <div>{{newEditUserImg[0].name}} is editing...</div>
+                        <div style="font-size: 12px;">( Click to edit )</div>
                     </v-row>
                 </v-chip>
             </div>
@@ -66,13 +65,18 @@
                                     color="primary"
                                     class="mr-2"
                             ></v-progress-circular>
-                            <v-btn
-                                    :disabled="recommending"
+                            <div class="d-flex align-end flex-column">
+                                <v-btn
+                                    :disabled="recommending || (!recommending && !useRecommend)"
                                     color="primary"
                                     @click="recommend"
-                            >
-                                guide me
-                            </v-btn>
+                                >
+                                    guide me
+                                </v-btn>
+                                <div v-if="!useRecommend" class="text-caption mt-1">
+                                    ReadModel 이 부착되어야 이용할 수 있습니다.
+                                </div>
+                            </div>
                         </div>
                     </v-card-text>
 
@@ -100,7 +104,7 @@
                         </v-card>
                     </div>
                     
-                    <v-card-text>
+                    <v-card-text :class="!useRecommend ? 'pt-0' : ''">
                         <v-select
                                 v-model="value.chart.type"
                                 :items="chartList"
@@ -145,17 +149,22 @@
                                     color="primary"
                                     class="mr-2"
                             ></v-progress-circular>
-                            <v-btn
-                                    :disabled="recommending"
+                            <div class="d-flex align-end flex-column">
+                                <v-btn
+                                    :disabled="recommending || (!recommending && !useRecommend)"
                                     color="primary"
                                     @click="recommend"
-                            >
-                                guide me
-                            </v-btn>
+                                >
+                                    guide me
+                                </v-btn>
+                                <div v-if="!useRecommend" class="text-caption mt-1">
+                                    ReadModel 이 부착되어야 이용할 수 있습니다.
+                                </div>
+                            </div>
                         </div>
                     </v-card-text>
                     
-                    <v-card-text>
+                    <v-card-text :class="!useRecommend ? 'pt-0' : ''">
                         <v-select
                                 v-model="value.grid.columns"
                                 label="Columns"
@@ -245,6 +254,7 @@
                 recommending: false,
                 recommendData: [],
                 useSubtitle: false,
+                useRecommend: false,
             }
         },
         created () { },
@@ -289,6 +299,7 @@
 
                            if (me.canvas._isAttached(outer, inner)) {
                                 me.readModel = element;
+                                me.useRecommend = true;
                            }
                         }
                     }
@@ -375,3 +386,6 @@
         }
     }
 </script>
+
+<style scoped>
+</style>

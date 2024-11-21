@@ -105,7 +105,7 @@ import { group } from "d3";
                 me.setInitElement()
 
                 me.validate(false)
-                me.onMoveAction()
+                // me.onMoveAction()
             } catch (e) {
                 // alert('Error: modelCanvas 선언 필수.', e)
                 console.log('Error: modelCanvas 선언 필수.', e)
@@ -215,7 +215,7 @@ import { group } from "d3";
                                     return true
                                 }
 
-                                return !me.newEditUserImg.some(user => user.uid == me.canvas.userInfo.uid || user.action == 'userPanelOpen');
+                                return me.newEditUserImg.some(user => user.uid == me.canvas.userInfo.uid || user.action == 'userPanelOpen');
                             }
                         }
                     }
@@ -672,9 +672,10 @@ import { group } from "d3";
                     }
                 } else if(me.value.boundedContext && me.value.boundedContext.id){
                     me.value.boundedContext = {}
-                    // if(me.canvas.initLoad && !me.canvas.isRendering) {
+                    if(me.canvas.initLoad && !me.canvas.isRendering) {
                         // me.canvas.changedByMe = true;
-                    // }
+                        me.canvas.changedTemplateCode = true
+                    }
                 }
 
             },
