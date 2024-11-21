@@ -177,8 +177,10 @@
                     me.value.name = pluralize(changeCase.camelCase(me.value.targetElement.name))
                 } else {
                     me.value.name = pluralize.singular(me.value.targetElement.name)
+
                 }
             }
+            me.value.displayName = me.value.targetElement.displayName;
 
             if (this.value && this.value.relationView) {
                 this.value.from = this.value.relationView.from;

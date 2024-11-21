@@ -123,13 +123,22 @@ class CodeGeneratorCore {
                 if (element) {
                     if( element._type.endsWith("BoundedContext") ) return;
 
-                    let attachedBcId = element.boundedContext ? (element.boundedContext.elementView ? element.boundedContext.elementView.id : element.boundedContext.id):null
-                    if( element.mirrorElement && (attachedBcId && attachedBcId == bc.elementView.id) ){
+                    // let attachedBcId = element.boundedContext ? (element.boundedContext.elementView ? element.boundedContext.elementView.id : element.boundedContext.id):null
+                    // if( element.mirrorElement && (attachedBcId && attachedBcId == bc.elementView.id) ){
+                    //     element.preferredPlatform = bc.preferredPlatform && bc.preferredPlatform.includes("http") ? bc.preferredPlatform : me.defaultTemplate
+                    // } else if ( (attachedBcId && attachedBcId == bc.elementView.id) && isAttached(bc, element) ){
+                    //     element.boundedContext = bc;
+                    //     element.preferredPlatform = bc.preferredPlatform && bc.preferredPlatform.includes("http") ? bc.preferredPlatform : me.defaultTemplate
+                    // }
+
+                    let getBcId = element.boundedContext ? element.boundedContext.id :null
+                    if (getBcId && element.mirrorElement && attachedBcId === bc.elementView.id) {
                         element.preferredPlatform = bc.preferredPlatform && bc.preferredPlatform.includes("http") ? bc.preferredPlatform : me.defaultTemplate
-                    } else if ( (attachedBcId && attachedBcId == bc.elementView.id) && isAttached(bc, element) ){
+                    } else if (isAttached(bc, element)) {
                         element.boundedContext = bc;
                         element.preferredPlatform = bc.preferredPlatform && bc.preferredPlatform.includes("http") ? bc.preferredPlatform : me.defaultTemplate
                     }
+
 
                 }
             })
@@ -252,14 +261,12 @@ class CodeGeneratorCore {
                 })
             }
 
-            if (item.boundedContext && item.boundedContext.id && !item.mirrorElement) {
-                item.boundedContext = boundedContextByIds[item.boundedContext.id]
-            }
+            // if (item.boundedContext && item.boundedContext.id && !item.mirrorElement) {
+            //     item.boundedContext = boundedContextByIds[item.boundedContext.id]
+            // }
             eventByIds[item.elementView.id] = item
         };
-
         modelForElements.Event.forEach(attach)
-
 
         var policyByIds = {};
         modelForElements.Policy.forEach(item => {
@@ -272,11 +279,10 @@ class CodeGeneratorCore {
                     }
                 }
             });
+
             if (item.boundedContext && item.boundedContext.policies) item.boundedContext.policies.push(item)
 
             policyByIds[item.elementView.id] = item
-
-
         })
 
         var commandByIds = {};
@@ -372,6 +378,7 @@ class CodeGeneratorCore {
                 }
             }
         });
+
         rootModel.actors.push(modelForElements.Actor)
 
         //빈 값 전처리후에 진행.
@@ -419,7 +426,6 @@ class CodeGeneratorCore {
                     })
                 }
             })
-
 
             item.deleteRules.forEach(function (deleteRule, deleteIndex) {
                 if (deleteRule.when == null ? true : (Object.keys(deleteRule.when).length == 0 ? true : false)) {
@@ -480,7 +486,6 @@ class CodeGeneratorCore {
                                     continue
                                 me.setNames(item.updateRules[i].fieldMapping[j].eventField);
                                 me.setNames(item.updateRules[i].fieldMapping[j].viewField);
-
                             }
                         }
                     }
@@ -1049,8 +1054,6 @@ class CodeGeneratorCore {
                 modelElements.boundedContextes.push(bc)
             })
         }
-
-
 
         modelForElements.ModelElements = modelElements
         selectedTemplate = [...new Set(selectedTemplate)];

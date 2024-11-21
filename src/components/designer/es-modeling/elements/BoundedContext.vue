@@ -367,7 +367,7 @@
                 if(me.value.mirrorElement) return;
 
                 let attachedAggregate = me.canvas.getAllAttachedAggregate(me.value);
-                if(attachedAggregate.length > 0) {
+                if(attachedAggregate && attachedAggregate.length > 0) {
                     let filteredAggregateId = attachedAggregate.map(element => element = {id: element.elementView.id});
                     if( JSON.stringify(filteredAggregateId) !== JSON.stringify( me.value.aggregates ) ) {
                         me.value.aggregates = filteredAggregateId
@@ -391,6 +391,7 @@
                 attachedElements = attachedElements.map(element => {
                     if (element._type !== "org.uengine.modeling.model.BoundedContext") {
                         element.boundedContext = { id: me.value.id };
+                        // me.canvas.changedByUndoRedo = true
                         attachedElement.push(element);
                     }
                 });

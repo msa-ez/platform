@@ -856,14 +856,24 @@
                     context: me,
                     async action(me){
                         if(!element) return;
-                        if(element._type.includes('Relation')){
-                            let fromEle = me.value.elements[element.from]
-                            if(fromEle.fieldDescriptors){
-                                let fields = fromEle.fieldDescriptors
-                                me.value.elements[element.from].fieldDescriptors = fields.filter((field) => {
-                                    return field.name.toLowerCase() !== element.name.toLowerCase()
-                                })
-                            }
+                        if(element._type.includes('Relation') && element.from) {
+                            me.$EventBus.$emit(`${element.from}`, {
+                                action: 'deleteRelation',
+                                relation: element
+                            });
+                            // let fromEle = me.value.elements[element.from]
+                            // if(fromEle.fieldDescriptors && fromEle.fieldDescriptors.length > 0) {
+                            //     let fields = fromEle.fieldDescriptors
+                            //     me.value.elements[element.from].fieldDescriptors = fields.filter((field) => {
+                            //         if (field.name.toLowerCase() !== element.name.toLowerCase() ||
+                            //             field.name !== element.name ||
+                            //             pluralize(field.name) !== pluralize(element.name)
+                            //         ) {
+                            //             return true;
+                            //         }
+                            //         return false;
+                            //     })
+                            // }
                         }
                     },
                     onFail(e){
@@ -2109,7 +2119,7 @@
                             me.setRelations(element, target, attr.name)
 
                         } else if (!attr.isVO && 
-                                (attr.hasOwnProperty("items") || attr.hasOwnProperty("enumerationValues"))
+                            (attr.hasOwnProperty("items") || attr.hasOwnProperty("enumerationValues"))
                         ) {
                             if(Object.values(me.value.elements).find(x => x.name === attr.namePascalCase)) {
                                 return
@@ -2144,6 +2154,8 @@
 
                         me.setRelations(element, target, attr.name)
                     }
+
+                    typeList.push(attr.className)
                     
                 })
             },
