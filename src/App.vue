@@ -86,10 +86,10 @@
                 elevation="0"
                 style="
                 font-weight: 700;
-                margin:27px 110px 0px 0px;
-                padding:0px 5px 0px 5px !important;"
+                margin: 27px 140px 0px 0px;
+                padding: 0px 5px 0px 5px !important;"
             >
-                <v-icon style="margin:-3px 1px 0px 0px;" :size="26">mdi-file-plus</v-icon>
+                <v-icon style="margin: -3px 1px 0px 0px;" :size="26">mdi-file-plus</v-icon>
                 신규 강의 생성
             </v-btn>
             <!-- 이벤트 스토밍만 열던 기존 버튼 -->

@@ -202,7 +202,7 @@
                     style="padding-bottom:100px;"
                 >
 
-                <div v-if="editModeController == 'selectedLabInfo'" :key="updateCard" style="margin-top: 30px; margin-left: 15px; margin-right: 10px;">
+                <div v-if="editModeController == 'selectedLabInfo'" :key="updateCard" class="pt-0 pl-2 pr-2 pt-3">
                     <v-progress-circular
                         v-if="isLoadingLabInfo"
                         indeterminate
@@ -211,10 +211,10 @@
                     ></v-progress-circular>
                     <div v-else>
                             <div v-if="selectedLabInfo" style="text-align:left;">
-                                <v-chip color="#9E9E9E" small style="margin-top:-30px; color:white; font-weight:300;"><b>{{selectedLabInfo.labId}}</b>
+                                <!-- <v-chip color="#9E9E9E" small style="margin-top:-30px; color:white; font-weight:300;"><b>{{selectedLabInfo.labId}}</b>
                                 </v-chip>
                                 <v-chip color="#9E9E9E" small style="margin-top:-30px; margin-left: 5px; color:white; font-weight:300;"><b>{{selectedLabInfo.tool}}</b>
-                                </v-chip>
+                                </v-chip> -->
                                 <v-chip v-if="selectedLabInfo.labStatus && selectedLabInfo.labStatus.status=='completed'"
                                         color="green"
                                         outlined
@@ -227,7 +227,7 @@
                                         style="margin-top: -30px; margin-left: 5px;"
                                         small>진행중
                                 </v-chip>
-                                <v-chip
+                                <!-- <v-chip
                                         v-if="selectedLabInfo.passMessage"
                                         :color="selectedLabInfo.passMessage == '접속'? 'blue darken-1' :'green' "
                                         outlined
@@ -235,32 +235,33 @@
                                         style="margin-top: -30px; margin-left: 5px;"
                                 >
                                     {{selectedLabInfo.passMessage}}
-                                </v-chip>
-                                <v-icon v-if="AlllabsList[selectedLabInfo.groupName] && AlllabsList[selectedLabInfo.groupName][selectedLabInfo.labId] && AlllabsList[selectedLabInfo.groupName][selectedLabInfo.labId].active" style="margin-left: 5px;margin-top:-30px;"> mdi-eye-off-outline
-                                </v-icon>
-                                <span style="float: right; margin-top:-15px;">
-                                    <v-icon v-if="selectedLabInfo.groupName == 'Ops'" @click="openGitpodIde()" size="20" style="margin-right:10px;">mdi-git</v-icon>
-                                    <v-icon v-if="isAdmin" style="margin-right:10px;" size="20" @click="openDeleteLabDialog()">mdi-archive</v-icon>
-                                    <v-icon v-if="isAdmin" @click="openEditLabInfo(selectedLabInfo)" size="20" style="margin-right:5px;">mdi-pencil</v-icon>
-                                    <v-btn color="primary"
-                                        @click="loginToUseLab()"
-                                        style="font-weight:700; padding:10px;">
-                                        <v-icon left style="margin-right: 3px;">
-                                            mdi-login
-                                        </v-icon>
-                                        INTO THE LAB
-                                    </v-btn>
-                                </span>
-                                <v-col>
-                                    <div style="margin-left:-12px; margin-bottom:-10px; margin-top:-20px; display: flex;">
-                                        <h2>{{selectedLabInfo.labName}}</h2>
-                                        <v-tooltip right>
-                                            <template v-slot:activator="{ on }">
-                                                <v-icon v-if="selectedLabInfo.video" v-on="on" color="grey" @click="openLabVideoDialog()" style="margin-left: 5px;">mdi-youtube</v-icon>
-                                            </template>
-                                            <span>참고영상 시청</span>
-                                        </v-tooltip>
-                                    </div>
+                                </v-chip> -->
+                                <!-- <v-icon v-if="AlllabsList[selectedLabInfo.groupName] && AlllabsList[selectedLabInfo.groupName][selectedLabInfo.labId] && AlllabsList[selectedLabInfo.groupName][selectedLabInfo.labId].active" style="margin-left: 5px;margin-top:-30px;"> mdi-eye-off-outline
+                                </v-icon> -->
+                                <v-col class="pa-0">
+                                    <v-row class="pa-0 ma-0">
+                                            <h2>{{selectedLabInfo.labName}}</h2>
+                                            <!-- <v-tooltip right>
+                                                <template v-slot:activator="{ on }">
+                                                    <v-icon v-if="selectedLabInfo.video" v-on="on" color="grey" @click="openLabVideoDialog()" style="margin-left: 5px;">mdi-youtube</v-icon>
+                                                </template>
+                                                <span>참고영상 시청</span>
+                                            </v-tooltip> -->
+                                        <v-spacer></v-spacer>
+                                        <span>
+                                            <v-icon v-if="selectedLabInfo.groupName == 'Ops'" @click="openGitpodIde()" size="20" style="margin-right:10px;">mdi-git</v-icon>
+                                            <v-icon v-if="isAdmin" style="margin-right:10px;" size="20" @click="openDeleteLabDialog()">mdi-archive</v-icon>
+                                            <v-icon v-if="isAdmin" @click="openEditLabInfo(selectedLabInfo)" size="20" style="margin-right:5px;">mdi-pencil</v-icon>
+                                            <v-btn color="primary"
+                                                @click="loginToUseLab()"
+                                                style="font-weight:700; padding:10px;">
+                                                <v-icon left style="margin-right: 3px;">
+                                                    mdi-login
+                                                </v-icon>
+                                                INTO THE LAB
+                                            </v-btn>
+                                        </span>
+                                    </v-row>
                                 </v-col>
                             </div>
                                 <div style="margin: 5px 0 10px 0;">
