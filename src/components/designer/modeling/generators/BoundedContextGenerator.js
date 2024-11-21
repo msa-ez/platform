@@ -58,12 +58,12 @@ class BoundedContextGenerator extends JsonAIGenerator {
         // Refer to the Bounded Context information of the current state and make the most of it:
         // ${this.client.input.boundedContext}
         return `
-        Please create a Bounded Context for event storming model in json for following description: 
+        Please create one Bounded Context for event storming model in json for following description: 
         ${this.client.input.description}
         
         The format must be as follows:
         {
-            "boundedContext": {
+            "boundedContext": { // Only one bounded context is allowed.
                 "bounded-context-name": {  // Bounded Context names must be a lower-cases and spaces are not allowed, use hypen instead. Also, a single Bounded Context can contain two or more aggregates.
                     "${this.originalLanguage.toLowerCase()}Name: "Name in ${this.originalLanguage}", 
                     "aggregates": [ 
@@ -180,8 +180,7 @@ class BoundedContextGenerator extends JsonAIGenerator {
         - for generated aggregate objects, i want to set Value Object for each properties if possible.
         - Class name of Value Objects must be one of Address, Money, Email, Password, File, Photo, Rating, Likes, Tags, Payment, Location, Weather, Comment.
         - Related to queries must be created as readModels. Must not create commands for read actions.
-
-        - The result must split into two or more different bounded contexts.
+        
         - Commands and events within aggregates of each bounded context must exist at least once.
         - Each bounded context interacts with each other, and domain events must flow into a service in a way that invokes the policies of other bounded context.
 
@@ -452,28 +451,28 @@ class BoundedContextGenerator extends JsonAIGenerator {
                                                     me.modelElements[aggUuid].aggregateRoot.entities.elements[uuid].fieldDescriptors.push(field)
                                                 })
                                             }
+
+                                            var relation = {
+                                                _type:"org.uengine.uml.model.Relation",
+                                                from:aggRootEntityId,
+                                                fromLabel:"",
+                                                id:me.uuid(),
+                                                name:agg.name,
+                                                relationType:"Association",
+                                                relationView:{},
+                                                selected:false,
+                                                sourceElement:me.modelElements[aggUuid].aggregateRoot.entities.elements[uuid],
+                                                sourceMultiplicity:"1",
+                                                targetElement:me.modelElements[aggUuid].aggregateRoot.entities.elements[aggRootEntityId],
+                                                targetMultiplicity:"1",
+                                                to:uuid,
+                                                toLabel:""
+                                            }
+                                            me.modelElements[aggUuid].aggregateRoot.entities.relations[uuid] = relation
                                         })
-                                        
-                                        var relation = {
-                                            _type:"org.uengine.uml.model.Relation",
-                                            from:aggRootEntityId,
-                                            fromLabel:"",
-                                            id:me.uuid(),
-                                            name:agg.name,
-                                            relationType:"Association",
-                                            relationView:{},
-                                            selected:false,
-                                            sourceElement:me.modelElements[aggUuid].aggregateRoot.entities.elements[uuid],
-                                            sourceMultiplicity:"1",
-                                            targetElement:me.modelElements[aggUuid].aggregateRoot.entities.elements[aggRootEntityId],
-                                            targetMultiplicity:"1",
-                                            to:uuid,
-                                            toLabel:""
-                                        }
-                                        me.modelElements[aggUuid].aggregateRoot.entities.relations[uuid] = relation
                                     }
                                 } 
-                                modelValue["boundedContext"][key]["aggregates"][aggIdx].eleInfo = me.modelElements[aggUuid]
+                                modelValue["boundedContext"][key]["aggregates"][aggIdx]["eleInfo"] = me.modelElements[aggUuid]
                             }
 
                             if(agg["uiStyle"]){
