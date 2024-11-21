@@ -578,7 +578,7 @@
                                                     thenItems.push(me.canvas.value.elements[rel.targetElement.elementView.id]);
                                                 }
                                             }
-                                        }
+                                        } 
                                     }
                                 } else if(me.value._type.includes("Command")){
                                     // when
@@ -636,6 +636,9 @@
                         })
                     }
                     me.rule.whenItems = whenItems
+                    if(me.value._type.includes("Policy") && thenItems.length == 0){
+                        thenItems = JSON.parse(JSON.stringify(me.rule.givenItems))
+                    }
                     me.rule.thenItems = thenItems
                     me.rule.ruleName = `Whenever ${me.rule.whenItems[0].name}, ${me.rule.thenItems[0].name}`
                 } 
@@ -699,7 +702,8 @@
                         me.rule.values.push(me.exampleFrameWork);
                     }
                     me.rule.thenItems.forEach(function (item){
-                        me.thenAttLength[item.name] = item.fieldDescriptors.length
+                        let fieldDescriptors = item.fieldDescriptors || item.aggregateRoot.fieldDescriptors
+                        me.thenAttLength[item.name] = fieldDescriptors.length;
                     })
                 } else {
                     me.rule.values = [];
@@ -778,11 +782,12 @@
                         type: "Event",
                         value: {}
                     }
-                    item.fieldDescriptors.forEach(function (field){
+                    let fieldDescriptors = item.fieldDescriptors || item.aggregateRoot.fieldDescriptors
+                    fieldDescriptors.forEach(function (field){
                         obj.value[field.name] = "N/A";
                     });
                     values['then'].push(obj);
-                    me.thenAttLength[item.name] = item.fieldDescriptors.length;
+                    me.thenAttLength[item.name] = fieldDescriptors.length;
                 });
                 me.exampleFrameWork = values;
             },
