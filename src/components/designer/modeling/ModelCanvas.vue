@@ -4355,7 +4355,11 @@
                             }
                         });
 
-                        jsondiffpatch.patch(value, valueDiff);
+                        try{
+                            jsondiffpatch.patch(value, valueDiff);
+                        } catch(e){
+                            console.log(`[Warning] Apply Patch Value: ${e}`)
+                        }
                     }
                 })
             },

@@ -4900,6 +4900,23 @@
                         componentInfo.vertices
                     );
 
+                    // relation Setting
+                    const sourceType = element.sourceElement._type
+                    const targetType = element.targetElement._type
+                    if (!element.name) element.name = ''
+                    if (sourceType.endsWith('Event') && targetType.endsWith('Policy')){
+                        element.name = 'Pub/Sub'
+                    }else if (sourceType.endsWith('Event') && targetType.endsWith('Command')) {
+                        element.name = element.name ? element.name : 'Req/Res'
+                    } else if ( (sourceType.endsWith('Policy') || sourceType.endsWith('Command')) &&  targetType.endsWith('View')) {
+                        element.name = element.name ? element.name : 'Req/Res'
+                        if (!element.fallback) element.fallback = false;
+                        if (!element.circuitBreaker) element.circuitBreaker = false
+                    }  else if (sourceType.endsWith('View') && targetType.endsWith('Aggregate') ) {
+                        element.name = 'UI-Mashup'
+                    }
+                    // end of RelationSetting
+
                     me.addElementAction(element);
                 } else if (componentInfo.component.includes("line")) {
                     var vertices = [

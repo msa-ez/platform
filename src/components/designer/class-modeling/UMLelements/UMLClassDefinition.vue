@@ -269,6 +269,9 @@
             },
             name() {
                 try {
+                    if (this.value.displayName) {
+                        return this.value.displayName;
+                    }
                     return this.value.name
                 } catch (e) {
                     return "";
@@ -306,23 +309,24 @@
             },
             attributeLabels() {
                 try {
-                    // var me = this
-                    // var arr = []
-                    // if (me.value.fieldDescriptors.length > 0) {
-                    //     me.value.fieldDescriptors.forEach(function (item) {
-                    //         var labelName = item.displayName ? item.displayName : item.name;
-                    //         var label = item.label ? item.label : '- ' + labelName + ': ' + item.className;
-                    //         arr.push(label);
-                    //     });
-                    // }
-                    // return arr
                     var me = this
                     var text = '';
                     me.value.fieldDescriptors.forEach((item) => {
                         var labelName = item.displayName ? item.displayName : item.name;
-                        var label = item.label ? item.label : '- ' + labelName + ': ' + item.className;
+                        var label = item.label ? item.label : `- ${labelName}: ${item.className}`;
+                        if (label.length > 25 && me.value.elementView.width <= 250) {
+                            me.value.elementView.width = 250
+                        }
                         text += label + '\n';
                     })
+                    if (me.value.fieldDescriptors.length > 3) {
+                        me.value.elementView.height = 120 + me.value.fieldDescriptors.length * 20
+                        if (me.value.operations.length > 0) {
+                            me.value.elementView.height += me.value.operations.length * 20
+                        }
+                    } else if (me.value.elementView.height < 150 && me.value.fieldDescriptors.length <= 3) {
+                        me.value.elementView.height = 150
+                    }
                     return text;
                 } catch (e) {
                     return "";
@@ -333,8 +337,11 @@
                     var me = this
                     var text = ''
                     if (me.value.operations.length > 0) {
-                        me.value.operations.forEach(function (item) {
-                            var label = item.label ? item.label : '+' + item.name + '()'
+                        me.value.operations.forEach((item) => {
+                            var label = item.label ? item.label : `+ ${item.name}(): ${item.returnType}`
+                            if (label.length > 25 && me.value.elementView.width <= 250) {
+                                me.value.elementView.width = 250
+                            }
                             text += label + '\n';
                         })
                     }
@@ -481,15 +488,17 @@
                 })
                 
                 if(!isIncluded) {
+                    var label = `- ${el.displayName ? el.displayName : changeCase.camelCase(name)}: ${toName}`
                     var attr = {
                         "_type": "org.uengine.uml.model.FieldDescriptor",
                         "name": changeCase.camelCase(name),
+                        "displayName": el.displayName ? el.displayName : "",
                         "className": toName,
                         "isKey": false,
                         "isVO": el.targetElement.isVO,
                         "namePascalCase": changeCase.pascalCase(name),
                         "nameCamelCase": changeCase.camelCase(name),
-                        "label": "- "+ changeCase.camelCase(name) + ": " + toName,
+                        "label": label,
                         "classId": el.to,
                         "isList": false,
                     }
@@ -499,11 +508,12 @@
                             el.sourceMultiplicity == '1' && 
                             (el.targetMultiplicity == '1..n' || el.targetMultiplicity == '0..n')
                     ) {
+                        label = `- ${el.displayName ? el.displayName : pluralize(attr.nameCamelCase)}: List<${attr.className}>`
                         attr.isList = true;
                         attr.name = changeCase.camelCase(pluralize(name));
+                        attr.displayName = el.displayName ? el.displayName : pluralize(name);
                         attr.className = "List<" + attr.className + ">";
-                        attr.label = "- "+ pluralize(attr.nameCamelCase) + 
-                                ": List<" + attr.className + ">";
+                        attr.label = label;
                     }
                     
                     me.value.fieldDescriptors.push(attr)
@@ -525,40 +535,39 @@
                             el.sourceMultiplicity == '1' && 
                             (el.targetMultiplicity == '1..n' || el.targetMultiplicity == '0..n')
                     ) {
+                        var label = `- ${el.displayName ? el.displayName : pluralize(attr.nameCamelCase)}: List<${attr.className}>`
                         me.$set(me.value.fieldDescriptors[idx], "isList", true)
                         me.$set(me.value.fieldDescriptors[idx], "name", changeCase.camelCase(pluralize(name)))
+                        me.$set(me.value.fieldDescriptors[idx], "displayName", el.displayName ? el.displayName : pluralize(name))
                         me.$set(me.value.fieldDescriptors[idx], "nameCamelCase", changeCase.camelCase(pluralize(name)))
                         me.$set(me.value.fieldDescriptors[idx], "namePascalCase", changeCase.pascalCase(pluralize(name)))
                         me.$set(me.value.fieldDescriptors[idx], "className", "List<"+changeCase.pascalCase(toName)+">")
-                        me.$set(me.value.fieldDescriptors[idx], "label", "- "+changeCase.camelCase(pluralize(name))+": List<" + changeCase.pascalCase(toName)+">")
+                        me.$set(me.value.fieldDescriptors[idx], "label", label)
 
                     } else {
+                        var label = `- ${el.displayName ? el.displayName : changeCase.camelCase(name)}: ${changeCase.pascalCase(toName)}`
                         me.$set(me.value.fieldDescriptors[idx], "isList", false)
                         me.$set(me.value.fieldDescriptors[idx], "name", changeCase.camelCase(name))
+                        me.$set(me.value.fieldDescriptors[idx], "displayName", el.displayName ? el.displayName : name)
                         me.$set(me.value.fieldDescriptors[idx], "nameCamelCase", changeCase.camelCase(name))
                         me.$set(me.value.fieldDescriptors[idx], "namePascalCase", changeCase.pascalCase(name))
                         me.$set(me.value.fieldDescriptors[idx], "className", changeCase.pascalCase(toName))
-                        me.$set(me.value.fieldDescriptors[idx], "label", "- "+changeCase.camelCase(name)+": "+changeCase.pascalCase(toName))
+                        me.$set(me.value.fieldDescriptors[idx], "label", label)
                     }
                 }
             },
             deleteRelAttribute(relation) {
                 var me = this
-                const toName = relation.targetElement.name
-                const idx = me.value.fieldDescriptors.findIndex((attr) => (
-                        (attr.className == toName || 
-                        changeCase.camelCase(attr.className) == changeCase.camelCase(toName) ||
-                        changeCase.pascalCase(attr.className) == changeCase.pascalCase(toName) ||
-                        (attr.className.includes("List<") &&
-                            attr.className == "List<" + changeCase.pascalCase(toName) + ">"
-                        )) && attr.name === relation.name
-                    )
-                )
-
-                if (idx > -1) {
-                    me.value.fieldDescriptors.splice(idx, 1)
-                }
-                
+                const toName = relation.name
+                const fields = me.value.fieldDescriptors.filter((attr) => {
+                    return (attr.name !== toName &&
+                        attr.nameCamelCase !== changeCase.camelCase(toName) &&
+                        attr.namePascalCase !== changeCase.pascalCase(toName) &&
+                        pluralize(attr.nameCamelCase) !== pluralize(changeCase.camelCase(toName)) &&
+                        pluralize.singular(attr.nameCamelCase) !== pluralize.singular(changeCase.camelCase(toName))
+                    );
+                })
+                me.$set(me.value, 'fieldDescriptors', fields)
                 me.refreshImg();
             }
         }

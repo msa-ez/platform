@@ -145,7 +145,11 @@
                     if(this.value.relationType.includes('Generalization')) {
                         return "";
                     } else {
-                        return this.value.name;
+                        if (this.value.displayName) {
+                            return this.value.displayName;
+                        } else {
+                            return this.value.name;
+                        }
                     }
                 } catch (e) {
                     return "";
@@ -172,9 +176,11 @@
                 if(me.value.relationType.includes('Aggregation') || me.value.relationType.includes('Composition') ) {
                     me.value.name = pluralize(changeCase.camelCase(me.value.targetElement.name))
                 } else {
-                    me.value.name = changeCase.camelCase(me.value.targetElement.name)
+                    me.value.name = pluralize.singular(me.value.targetElement.name)
+
                 }
             }
+            me.value.displayName = me.value.targetElement.displayName;
 
             if (this.value && this.value.relationView) {
                 this.value.from = this.value.relationView.from;

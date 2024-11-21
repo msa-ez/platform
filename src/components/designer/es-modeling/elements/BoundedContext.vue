@@ -367,7 +367,7 @@
                 if(me.value.mirrorElement) return;
 
                 let attachedAggregate = me.canvas.getAllAttachedAggregate(me.value);
-                if(attachedAggregate) {
+                if(attachedAggregate && attachedAggregate.length > 0) {
                     let filteredAggregateId = attachedAggregate.map(element => element = {id: element.elementView.id});
                     if( JSON.stringify(filteredAggregateId) !== JSON.stringify( me.value.aggregates ) ) {
                         me.value.aggregates = filteredAggregateId
@@ -377,14 +377,13 @@
                         }
                     }
                 } else {
-                    if(me.value.aggregates.length > 0){
-                        me.value.aggregates = []
-                        if(me.canvas.initLoad && !me.canvas.isRendering) {
-                            // me.canvas.changedByMe = true;
-                            me.canvas.changedTemplateCode = true
-                        }
+                    me.value.aggregates = []
+                    if(me.canvas.initLoad && !me.canvas.isRendering) {
+                        // me.canvas.changedByMe = true;
+                        me.canvas.changedTemplateCode = true
                     }
                 }
+                
                 let elements = me.canvas.value.elements;
                 let attachedElements = Array.isArray(elements)  ? elements.filter(x => x !== null && isAttached(x, me.value)) : Object.values(elements).filter(x => x !== null).filter(x => isAttached(x, me.value));
                 let attachedElement = []
@@ -392,6 +391,7 @@
                 attachedElements = attachedElements.map(element => {
                     if (element._type !== "org.uengine.modeling.model.BoundedContext") {
                         element.boundedContext = { id: me.value.id };
+                        // me.canvas.changedByUndoRedo = true
                         attachedElement.push(element);
                     }
                 });

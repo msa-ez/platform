@@ -26,6 +26,11 @@
                                 autofocus
                                 :disabled="isReadOnly"
                         ></v-text-field>
+                        <v-text-field
+                                v-model="value.displayName"
+                                label="Display Name"
+                                :disabled="isReadOnly"
+                        ></v-text-field>
 
                         <v-text-field 
                                 v-model="value.message" 

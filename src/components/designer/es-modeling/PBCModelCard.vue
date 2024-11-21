@@ -60,7 +60,7 @@
                 </div>
             </v-list-item-content>
             <div v-bind:style="isDelete ? 'text-decoration-line: line-through;': ''">
-                <v-card-title style="margin:-10px 0 -10px; 0;">
+                <v-card-title style="margin:-10px 0 -10px 0;">
                     {{ copyInformation.projectName }}
                 </v-card-title>
                 <v-card-text style="color:rgba(0, 0, 0, 0.6)">
@@ -170,7 +170,6 @@
                     me.copyInformation.hiddenEmail = me.hiddenEmail(me.copyInformation.authorEmail)
                     me.copyInformation.isShared = me.copyInformation.permissions && me.copyInformation.permissions.length > 0 ? true : false
                     me.copyInformation.isNewProject = me.isNew(me.copyInformation.lastModifiedTimeStamp)
-                    me.copyInformation.isDeleteProject = false
                     me.copyInformation.chip = me.chipSetting()
                     if (me.information.type == 'es') {
                         me.projectPath = `/storming/${me.copyInformation.projectId}`
