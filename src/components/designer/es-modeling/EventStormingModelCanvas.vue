@@ -492,15 +492,9 @@
                                                                 <v-btn
                                                                         class="gs-model-z-index-1 es-hide-replay-btn"
                                                                         text
-                                                                        style="
-                                                                        margin-right: 5px;
-                                                                    "
-                                                                        @click="
-                                                                        loadVersions()
-                                                                    "
-                                                                        :disabled="
-                                                                        disableBtn
-                                                                    "
+                                                                        style="margin-right: 5px;"
+                                                                        @click="loadVersions()"
+                                                                        :disabled="disableBtn"
                                                                         v-on="on"
                                                                 >
                                                                     <v-icon>mdi-restart</v-icon>
@@ -509,30 +503,11 @@
                                                             </div>
                                                         </template>
 
-                                                        <v-list
-                                                                style="
-                                                                overflow: hidden;
-                                                            "
-                                                        >
-                                                            <div
-                                                                    v-if="
-                                                                    versionLists
-                                                                "
-                                                            >
-                                                                <div
-                                                                        style="
-                                                                        text-align-last: center;
-                                                                    "
-                                                                >
-                                                                    VERSIONS
-                                                                </div>
+                                                        <v-list style="overflow: hidden;">
+                                                            <div v-if="versionLists">
+                                                                <div style="text-align-last: center;"> VERSIONS </div>
                                                                 <v-divider></v-divider>
-                                                                <div
-                                                                        style="
-                                                                        overflow-y: scroll;
-                                                                        height: 200px;
-                                                                    "
-                                                                >
+                                                                <div style="overflow-y: scroll; height: 200px;">
                                                                     <v-list-item
                                                                             v-for="(item,index) in filteredVersionLists"
                                                                             :key="index"
@@ -4137,6 +4112,7 @@
             },
             alertError() {
                 var me = this;
+                if( me.isReplay ) return;
                 me.errorCount = 0;
                 me.errorList = [];
                 Object.values(me.value.elements).forEach((element) => {

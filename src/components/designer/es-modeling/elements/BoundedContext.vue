@@ -363,8 +363,8 @@
             onMoveAction(executeRecursion){
                 var me = this
                 let id = me.value.id;
-                
-                if(me.value.mirrorElement) return;
+                if( me.canvas.isReplay ) return;
+                if( me.value.mirrorElement ) return;
 
                 let attachedAggregate = me.canvas.getAllAttachedAggregate(me.value);
                 if(attachedAggregate && attachedAggregate.length > 0) {
@@ -411,6 +411,7 @@
             },
             validate(executeRelateToValidate, panelValue){
                 var me = this
+                if( me.canvas.isReplay ) return;
                 var executeValidate = executeRelateToValidate == false ? false :true
                 var validateValue = me.propertyPanel && panelValue ? panelValue : me.value
 

@@ -242,7 +242,7 @@
                 return label
 
             },
-            elementComment(queue) {
+            queueComment(queue) {
                 var me = this
                 var comment = {
                     display: '',

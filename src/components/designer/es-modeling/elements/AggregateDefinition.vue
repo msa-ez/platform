@@ -424,6 +424,7 @@
 
             if(me.value.aggregateRoot.entities.elements) {
                 Object.values(me.canvas.value.elements).forEach(function(el) {
+                    if(me.canvas.isReplay) return;
                     if(me.canvas.validateElementFormat(el)) {
                         if(el._type.endsWith("Aggregate")
                             && el.boundedContext
@@ -677,6 +678,7 @@
             },
             onMoveAction(executeRecursion){
                 var me = this
+                if( me.canvas.isReplay ) return;
                 if( me.value.mirrorElement ) return;
 
                 me.$super(Element).onMoveAction()
@@ -711,6 +713,7 @@
             },
             validate(executeRecursionValidate, panelValue){
                 var me = this
+                if( me.canvas.isReplay ) return;
                 var notPK = false
                 var duplicateField = false
                 let recursionValidate = executeRecursionValidate == false ? false :true

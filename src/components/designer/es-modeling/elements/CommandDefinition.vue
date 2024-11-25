@@ -449,6 +449,7 @@
             },
             onMoveAction(executeRecursion){
                 var me = this
+                if( me.canvas.isReplay ) return;
                 if(me.value.mirrorElement ) return;
                 if(me.isPBCModel) return;
 
@@ -479,6 +480,7 @@
             },
             validate(executeRecursionValidate, panelValue){
                 var me = this
+                if( me.canvas.isReplay ) return;
                 let recursionValidate = executeRecursionValidate == false ? false :true
                 var validateValue = me.propertyPanel && panelValue ? panelValue : me.value
 
