@@ -744,7 +744,7 @@
                     values['when'][0].type = "Command";
                 }
 
-                // 여기서 'given' 값을 설정하는 부분을 수정
+                // 여기서 'given' 값을 설정하는 부분을 수정합니다.
                 me.rule.givenItems[0].aggregateRoot.fieldDescriptors.forEach(function (field){
                     var givenArr = [];
                     let givenObject = {};
