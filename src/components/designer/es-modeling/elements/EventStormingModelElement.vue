@@ -359,6 +359,7 @@ import { group } from "d3";
             },
             setMirrorElementId(){
                 var me = this
+                if( me.canvas.isReplay ) return;
                 if( !me.value.name) return;
 
                 // already connection (mirror)
@@ -655,6 +656,7 @@ import { group } from "d3";
             },
             onMoveAction(){
                 var me = this
+                if( me.canvas.isReplay ) return;
                 if( me.value.mirrorElement ) return;
                 if( me.value._type.endsWith('BoundedContext') || me.value._type.endsWith('PBC')) return;
 
@@ -681,6 +683,7 @@ import { group } from "d3";
             },
             validate() {
                 var me = this
+                if( me.canvas.isReplay ) return;
 
                 if( me.value._type.endsWith('BoundedContext') || me.value._type.endsWith('PBC')) return;
 
