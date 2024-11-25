@@ -6,6 +6,7 @@ const EnumerationActionsProcessor = require('./ESActionsUtilProcessors/Enumerati
 const EventActionsProcessor = require('./ESActionsUtilProcessors/EventActionsProcessor')
 const CommandActionsProcessor = require('./ESActionsUtilProcessors/CommandActionsProcessor')
 const GeneralClassActionsProcessor = require('./ESActionsUtilProcessors/GeneralClassActionsProcessor')
+const ReadModelActionsProcessor = require('./ESActionsUtilProcessors/ReadModelActionsProcessor')
 
 class ESActionsUtil {
     static getActionAppliedESValue(actions, userInfo, information, prevESValue=null) {
@@ -50,6 +51,7 @@ class ESActionsUtil {
                         case "Event": idToSearch = action.ids.eventId; break
                         case "Command": idToSearch = action.ids.commandId; break
                         case "GeneralClass": idToSearch = action.ids.generalClassId; break
+                        case "ReadModel": idToSearch = action.ids.readModelId; break
                     }
 
                     if(!idToSearch) action.type = "create"
@@ -117,6 +119,9 @@ class ESActionsUtil {
                 break
             case "Command":
                 CommandActionsProcessor.getActionAppliedESValue(action, userInfo, esValue, callbacks);
+                break
+            case "ReadModel":
+                ReadModelActionsProcessor.getActionAppliedESValue(action, userInfo, esValue, callbacks);
                 break
         }
     }

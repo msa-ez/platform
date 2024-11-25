@@ -117,7 +117,10 @@ class CommandActionsProcessor {
 
     static __getValidPosition(esValue, action, commandObject) {
         const commands = ActionsProcessorUtils.getAggregateCommands(esValue, action.ids.aggregateId)
-        if(commands.length <= 0) {
+        const readModels = ActionsProcessorUtils.getAggregateReadModels(esValue, action.ids.aggregateId)
+        const allModels = [...commands, ...readModels]
+
+        if(allModels.length <= 0) {
             const currentAggregate = esValue.elements[action.ids.aggregateId]
             return {
                 x: currentAggregate.elementView.x - Math.round(currentAggregate.elementView.width/2) - 29,
@@ -125,13 +128,13 @@ class CommandActionsProcessor {
             }
         }
         else {
-            const minX = Math.min(...commands.map(command => command.elementView.x))
-            const maxY = Math.max(...commands.map(command => command.elementView.y))
+            const minX = Math.min(...allModels.map(model => model.elementView.x))
+            const maxY = Math.max(...allModels.map(model => model.elementView.y))
 
-            const maxYCommand = commands.filter(command => command.elementView.y === maxY)[0]
+            const maxYModel = allModels.filter(model => model.elementView.y === maxY)[0]
             return {
                 x: minX,
-                y: maxY + Math.round(maxYCommand.elementView.height/2) + Math.round(commandObject.elementView.height/2) + 14
+                y: maxY + Math.round(maxYModel.elementView.height/2) + Math.round(commandObject.elementView.height/2) + 14
             }
         }
     }
