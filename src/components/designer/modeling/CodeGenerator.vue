@@ -2584,6 +2584,7 @@
             // const token = '';
             // git = new Gitea(baseURL, token);
 
+            // this.gitAccessToken = '';
             this.gitAccessToken = localStorage.getItem('gitAccessToken') ? localStorage.getItem('gitAccessToken') : localStorage.getItem('gitToken')
             this.gitAPI = new GitAPI(git);
             this.core = new CodeGeneratorCore({
@@ -2882,7 +2883,7 @@
                         me.filteredPrettierCodeLists[idx].code = commitData.codeList[key]
                     }
                 })
-
+                let gitType = me.gitAPI.getType().toLowerCase();
                 var actionCode = `name: test
 run-name: testing 
 on: [push]
@@ -2918,7 +2919,7 @@ jobs:
         cd ${me.openCode[0].name}
         cat target/surefire-reports/*.txt || true`
 
-                var actionFileIdx = me.codeLists.findIndex(x => x.fullPath == ".github/workflows/github-actions-test.yml")
+                var actionFileIdx = me.codeLists.findIndex(x => x.fullPath == `.${gitType}/workflows/${gitType}-actions-test.yml`)
                 if(!actionFileIdx || actionFileIdx == -1){
                     me.codeLists.push({
                         bcId: null,
@@ -2926,11 +2927,11 @@ jobs:
                         code: actionCode,
                         element: null,
                         file: "yml",
-                        fileName: "github-actions-test.yml",
-                        fullPath: ".github/workflows/github-actions-test.yml",
+                        fileName: `${gitType}-actions-test.yml`,
+                        fullPath: `.${gitType}/workflows/${gitType}-actions-test.yml`,
                         generatedType: "BASE",
                         template: me.openCode[0].template,
-                        templatePath: "for-model/.github/workflows/github-actions-test.yml"
+                        templatePath: `for-model/.${gitType}/workflows/${gitType}-actions-test.yml`
                     })
                 } else {
                     me.codeLists[actionFileIdx].code = actionCode
@@ -5780,28 +5781,33 @@ jobs:
                             // if( me.templateFrameWorkList[gitRepoUrl] && Object.keys(me.templateFrameWorkList[gitRepoUrl]).length > 0 ){
                             // }
                             let templateUrl = gitRepoUrl ? gitRepoUrl : me.basePlatform
+                            if(!me.$manifestsPerTemplate[templateUrl]){
                             me.$manifestsPerTemplate[templateUrl] = [];
+                            }
                             let org = templateUrl.split('/')[templateUrl.split('/').length - 2].trim()
                             let repo = templateUrl.split('/')[templateUrl.split('/').length - 1].trim()
                             
                             // Template은 Main Branch에서 받아오도록 처리
-                            let commitRes = await me.gitAPI.getCommit(org, repo, "main")
+                            await me.gitAPI.getCommit(org, repo, "main")
                             .then(async function (res) {
                                 // Commit List 받아오는 것.
-                                let tree = await me.gitAPI.getTree(org, repo, res)
+                                await me.gitAPI.getTree(org, repo, res)
                                 .then(async function (list) {
-                                    // console.log("try me.gitAPI.setGitList()")
-                                    let gitList = await me.gitAPI.setGitList(list, repo, templateUrl)
-                                    .then(function (resultLists) {
-                                        // console.log(resultLists)
-                                        Object.assign(me.$manifestsPerBaseTemplate, resultLists.manifestsPerBaseTemplate)
-                                        me.$manifestsPerTemplate[templateUrl] = resultLists.manifestsPerTemplate[templateUrl]
-                                        me.templateFrameWorkList = { ...me.templateFrameWorkList, ...resultLists.templateFrameWorkList }
-                                        resolve()
-                                    })
-                                    .catch(e => {
-                                        console.log(e)
-                                    })
+                                    if(me.$manifestsPerBaseTemplate[templateUrl]){
+                                        resolve();
+                                    } else {
+                                        await me.gitAPI.setGitList(list, repo, templateUrl)
+                                        .then(function (resultLists) {
+                                            // console.log(resultLists)
+                                            Object.assign(me.$manifestsPerBaseTemplate, resultLists.manifestsPerBaseTemplate)
+                                            me.$manifestsPerTemplate[templateUrl] = resultLists.manifestsPerTemplate[templateUrl]
+                                            me.templateFrameWorkList = { ...me.templateFrameWorkList, ...resultLists.templateFrameWorkList }
+                                            resolve();
+                                        })
+                                        .catch(e => {
+                                            console.log(e)
+                                        })
+                                    }
                                 })
                                 .catch(e => {
                                     console.log(e)
@@ -5867,28 +5873,34 @@ jobs:
                         // console.log(template, fullUrl)
                         let org = fullUrl.split('/')[fullUrl.split('/').length -2];
                         let repo = fullUrl.split('/')[fullUrl.split('/').length -1];
+                        if(repo === "topping-egov-default") {
+                            repo = "topping-egov-ui";
+                        }
                         let toppingName = repo.replace('topping-','');
                         // Template은 Main Branch에서 받아오도록 처리
                         if( me.gitToppingList[fullUrl] && Object.keys(me.gitToppingList[fullUrl]).length > 0 ){
                             resolve();
                         }
                         // console.log(repo,)
-                        let commitRes = await me.gitAPI.getCommit(org, repo, "main")
+                        await me.gitAPI.getCommit(org, repo, "main")
                         .then(async function (res) {
                             // Commit List 받아오는 것.
-                            let tree = await me.gitAPI.getTree(org, repo, res)
+                            await me.gitAPI.getTree(org, repo, res)
                             .then(async function (list) {
-                                // console.log("try me.gitAPI.setGitList() - " + fullUrl)
-                                let gitList = await me.gitAPI.setGitList(list, toppingName, fullUrl)
-                                .then(function (resultLists) {
-                                    me.$manifestsPerToppings[fullUrl] = resultLists.manifestsPerToppings[fullUrl]
-                                    Object.assign(me.gitToppingList, resultLists.gitToppingList)
-                                    // me.gitToppingList = resultLists.gitToppingList
-                                    resolve()
-                                })
-                                .catch(e => {
-                                    console.log(e)
-                                })
+                                if(me.$manifestsPerToppings[fullUrl]){
+                                    resolve();
+                                } else {
+                                    await me.gitAPI.setGitList(list, toppingName, fullUrl)
+                                    .then(function (resultLists) {
+                                        me.$manifestsPerToppings[fullUrl] = resultLists.manifestsPerToppings[fullUrl]
+                                        Object.assign(me.gitToppingList, resultLists.gitToppingList)
+                                        // me.gitToppingList = resultLists.gitToppingList
+                                        resolve();
+                                    })
+                                    .catch(e => {
+                                        console.log(e)
+                                    })
+                                }
                             })
                             .catch(e => {
                                 console.log(e)

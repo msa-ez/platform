@@ -204,11 +204,13 @@
                             if(relations[ele]){
                                 if(relations[ele].sourceElement.id && relations[ele].sourceElement.id == me.value.id){
                                     sourceElements = relations[ele].sourceElement
+                                } else {
+                                    sourceElements = true
                                 }
         
                                 if(relations[ele].targetElement.id && relations[ele].targetElement.id == me.value.id){
                                     targetElements = relations[ele].targetElement
-                                }
+                                } 
                             }
                         })
                     }
