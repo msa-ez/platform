@@ -107,7 +107,10 @@
                                                     class="delete-input-detail"
                                                 >
                                                 </v-text-field>
-                                                
+                                                <detail-component
+                                                    :title="$t('CommonPanel.nameInfoTitle')"
+                                                    :details="nameInfoDetails"
+                                                />
                                             </slot>
 
                                             <slot name="md-name-panel-translate">
@@ -240,12 +243,16 @@
                 descriptionPanel: '',
                 relatedUrlDialog: false,
                 openValidationLists: false,
-                validationLevelIcon:
+                validationLevelIcon: {
+                    'error' : {icon: 'mdi-close-circle-outline', color:'#E53935'},
+                    'warning' : {icon: 'mdi-alert-outline', color:'#FFA726'},
+                    'info' : {icon: 'mdi-information-outline', color:'#29B6F6'},
+                },
+                nameInfoDetails: [
                     {
-                        'error' : {icon: 'mdi-close-circle-outline', color:'#E53935'},
-                        'warning' : {icon: 'mdi-alert-outline', color:'#FFA726'},
-                        'info' : {icon: 'mdi-information-outline', color:'#29B6F6'},
+                        title: "CommonPanel.nameInfoDetail1"
                     },
+                ],
             }
         },
         beforeDestroy(){

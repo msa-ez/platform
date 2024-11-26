@@ -9,6 +9,10 @@
     "generate": "Generate",
     "reGenerate": "Regenerate"
   },
+  "CommonPanel": {
+    "nameInfoTitle": "Name should be written in English.",
+    "nameInfoDetail1": "Name is reflected in the code.\nDisplay Name appears on screen stickers and frontend UI of the code."
+  },
   "DetailComponent": {
     "allDetails": "View Guide"
   },
@@ -238,7 +242,8 @@
     "chip1": "Google Drive",
     "chip2": "Food Delivery App",
     "chip3": "Fishery ERP",
-    "chip4": "Internet Banking"
+    "chip4": "Internet Banking",
+    "editPersona": "Edit persona name and details"
   },
   "UIWizardDialoger": {
     "imageMessage": "Here are a logo for this service:",
