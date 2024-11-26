@@ -9,6 +9,10 @@
     "generate": "생성",
     "reGenerate": "재생성"
   },
+  "CommonPanel": {
+    "nameInfoTitle": "Name은 영문으로 작성합니다.",
+    "nameInfoDetail1": "Name은 코드에 반영되는 이름입니다.\nDisplay Name은 화면의 스티커와 코드의 프론트엔드 UI에 표시되는 이름입니다."
+  },
   "DetailComponent": {
     "allDetails": "가이드 보기"
   },
@@ -237,7 +241,8 @@
     "chip1": "구글 드라이브",
     "chip2": "음식 배달 앱",
     "chip3": "생선 유통 ERP",
-    "chip4": "인터넷 뱅킹"
+    "chip4": "인터넷 뱅킹",
+    "editPersona": "페르소나의 이름과 내용을 수정합니다."
   },
   "UIWizardDialoger": {
     "imageMessage": "다음은 이 서비스에 대한 이미지 추천입니다.",

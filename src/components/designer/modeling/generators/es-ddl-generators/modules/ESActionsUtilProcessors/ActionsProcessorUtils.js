@@ -42,6 +42,15 @@ class ActionsProcessorUtils {
         })
     }
 
+    static getAggregateReadModels(esValue, targetAggregateId) {
+        return Object.values(esValue.elements).filter((element) => {
+            return element &&
+                element._type === "org.uengine.modeling.model.View" &&
+                element.aggregate &&
+                element.aggregate.id === targetAggregateId
+        })
+    }
+
     static getAggregateEvents (esValue, targetAggregateId) {
         return Object.values(esValue.elements).filter((element) => {
             return element &&

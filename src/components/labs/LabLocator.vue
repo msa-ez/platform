@@ -1,12 +1,18 @@
 <template id="lablocator">
     <v-container fluid style="height: 100%; padding: 0px;">
-        <v-tooltip v-if="naviIndex == 0" top>
+        <v-tooltip v-if="naviIndex == 0" right>
             <template v-slot:activator="{ on, attrs }">
-                <v-btn style="position: fixed; left:15px; bottom: 15px; z-index: 1;" v-bind="attrs" v-on="on"
-                       @click="resizeGuide()"
-                       color="primary" v-if="isAdmin || myId==userId" icon large>
-                    <span style="color:#1976d2; font-weight:900; font-size:26px; margin-top:-4px;">↹</span>
-                </v-btn>
+                <v-card
+                    style="position: fixed; left:20px; top:70px; z-index: 1; width:48px; height:26px; display: flex; align-items: center; justify-content: center;"
+                    v-bind="attrs"
+                    v-on="on"
+                    @click="resizeGuide()"
+                    color="primary"
+                    v-if="isAdmin || myId==userId"
+                    large
+                >
+                    <Icon color="white" icon="mingcute:right-fill" width="24" height="24" />
+                </v-card>
             </template>
             <span>인스트럭션 크기 조절</span>
         </v-tooltip>
@@ -1482,6 +1488,7 @@
         },
         async mounted() {
             var me = this
+
             window.addEventListener("paste", this.myFunction);
             me.courseInfo = await this.getCourseInfo();
             if (me.courseInfo) {
@@ -1750,10 +1757,18 @@
             });
 
             var hashPath = me.getClassPath(localStorage.getItem('email'));
-            return me.hashCode(hashPath);
 
+            // 로그인 상태 확인
+            me.loginToUseLab();
+            return me.hashCode(hashPath);
         },
         methods: {
+            loginToUseLab(){
+                var me = this
+                if(!me.isLogin) {
+                    me.$EventBus.$emit('showLoginDialog');
+                }
+            },
             addKeydownEventListener(type) {
                 var me = this
                 me.sumbitType = type
