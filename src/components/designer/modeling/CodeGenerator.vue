@@ -4399,7 +4399,9 @@ jobs:
                 var me = this
                 // me.isListSettingDone = false
                 me.codeLists = [];
-                me.templateFrameWorkList = {};
+                if(!me.templateFrameWorkList){
+                    me.templateFrameWorkList = {};
+                }
                 me.modelForElement = {};
                 // me.settingGithub();
                 me.callGenerate();
