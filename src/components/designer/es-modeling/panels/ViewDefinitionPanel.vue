@@ -88,6 +88,7 @@
                                    v-model="value.dataProjection" row>
                         <v-radio :disabled="isOnlyCQRS" label="CQRS" value="cqrs"></v-radio>
                         <v-radio label="Query For Aggregate" value="query-for-aggregate"></v-radio>
+                        <v-radio label="Query For Multiple Aggregate" value="query-for-multiple-aggregate"></v-radio>
                         <v-radio disabled label="GraphQL" value="graphql"></v-radio>
                     </v-radio-group>
                     <!-- <v-alert
@@ -154,6 +155,37 @@
 
 
 
+                    </div>
+
+                    <div v-if="value.dataProjection == 'query-for-multiple-aggregate'">
+                        <v-card flat>
+                            <v-card-text style="padding-top: 10px;">
+                                <event-storming-attribute
+                                        label="Query Parameters"
+                                        v-model="value.queryParameters"
+                                        :isReadOnly="isReadOnly"
+                                        :type="value._type"
+                                        :dataProjection="value.dataProjection"
+                                        :elementId="value.elementView.id"
+                                        @sync-attribute="syncFromAggregate"
+                                        :entities="relatedAggregate ? relatedAggregate.aggregateRoot.entities : null"
+                                        :fields="relatedAggregate ? relatedAggregate.aggregateRoot.fieldDescriptors : null"
+                                ></event-storming-attribute>
+                            </v-card-text>
+
+                            <v-card-text class="pa-0">
+                                <event-storming-attribute
+                                        label="Read Model Attributes"
+                                        v-model="value.fieldDescriptors"
+                                        :isReadOnly="isReadOnly"
+                                        :type="value._type"
+                                        :elementId="value.elementView.id"
+                                        @sync-attribute="syncFromAggregate"
+                                        :entities="relatedAggregate ? relatedAggregate.aggregateRoot.entities : null"
+                                        :fields="relatedAggregate ? relatedAggregate.aggregateRoot.fieldDescriptors : null"
+                                ></event-storming-attribute>
+                            </v-card-text>
+                        </v-card>
                     </div>
 
                     <div v-if="value.dataProjection == 'cqrs'">
