@@ -104,6 +104,7 @@
             onMoveAction(){ },
             validate(executeRelateToValidate, panelValue){
                 var me = this
+                if( me.canvas.isReplay ) return;
                 var executeValidate = executeRelateToValidate == false ? false :true
                 var validateValue = me.propertyPanel && panelValue ? panelValue : me.value
 

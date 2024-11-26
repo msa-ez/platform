@@ -2228,7 +2228,8 @@
                                         onlyOneBcId: me.onlyOneBcId,
                                         org: me.gitOrgName,
                                         repo: me.gitRepoName,
-                                        testFile: me.isSIgpt ? me.selectedTestFile:null
+                                        testFile: me.isSIgpt ? me.selectedTestFile:null,
+                                        branch: branch
                                     }
                                     let setTreeList = await me.git.setPushList(options)
                                     .then(async function (list) {
@@ -2391,7 +2392,8 @@
                             isOne: me.isOneBCModel,
                             onlyOneBcId: me.onlyOneBcId,
                             org: me.gitOrgName,
-                            repo: me.gitRepoName
+                            repo: me.gitRepoName,
+                            branch: null
                         }
                         let setTreeList = await me.git.setPushList(options)
                         .then(async function (list) {

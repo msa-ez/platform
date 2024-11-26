@@ -6,6 +6,7 @@ import ModelerRouter from './components/designer/ModelerRouter'
 import ModelerImageGenerator from './components/designer/ModelerImageGenerator'
 import ProcessDesigner from './components/designer/process/ProcessDesigner'
 import OpenIdRedirect from './components/oauth/OpenIdRedirect'
+import OpenIdRedirectDPG from './components/oauth/OpenIdRedirectDPG'
 import ModelingResult from './components/designer/ModelingResult'
 // import ViewModelingDesigner from "./components/designer/modeling/ViewModelingDesigner";
 Vue.component("modeler-router", ModelerRouter);
@@ -343,6 +344,11 @@ var options = {
         path: '/dpg/redirect',
         name: "OpenId",
         component: OpenIdRedirect
+    },
+    {
+        path: '/dpg/redirect-new',
+        name: "OpenId",
+        component: OpenIdRedirectDPG
     },
     {
         path: '/result',

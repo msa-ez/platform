@@ -178,7 +178,7 @@
     import StormingSubController from "../../modeling/StormingSubController";
     import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
     import isAttached from '../../../../utils/isAttached';
-    import Generator from "../../modeling/generators/BoundedContextGenerator";
+    import Generator from "../../modeling/generators/es-ddl-generators/DraftGeneratorByFunctions";
 
     var _ = require('lodash')
     export default {
@@ -296,12 +296,13 @@
                 }
             },
             onModelCreated(model){
-                this.$EventBus.$emit('createModelInBoundedContext', model, this.originModel);
+                this.closePanel()
+                this.$EventBus.$emit('createModelInBoundedContext', {eventBy: "onModelCreated", ...model}, this.originModel);
             },
             async onGenerationFinished(model){
                 this.generateDone = true;
                 this.$emit('update:generateDone', true);
-                this.$EventBus.$emit('createModelInBoundedContext', model, this.originModel);
+                this.$EventBus.$emit('createModelInBoundedContext', {eventBy: "onGenerationFinished", ...model}, this.originModel);
                 this.canvas.setIsPauseQueue(false);
             },  
             generate(){
@@ -363,8 +364,8 @@
             onMoveAction(executeRecursion){
                 var me = this
                 let id = me.value.id;
-                
-                if(me.value.mirrorElement) return;
+                if( me.canvas.isReplay ) return;
+                if( me.value.mirrorElement ) return;
 
                 let attachedAggregate = me.canvas.getAllAttachedAggregate(me.value);
                 if(attachedAggregate && attachedAggregate.length > 0) {
@@ -411,6 +412,7 @@
             },
             validate(executeRelateToValidate, panelValue){
                 var me = this
+                if( me.canvas.isReplay ) return;
                 var executeValidate = executeRelateToValidate == false ? false :true
                 var validateValue = me.propertyPanel && panelValue ? panelValue : me.value
 

@@ -590,7 +590,7 @@
                                                                             <v-icon style="margin-right: 5px;" small>mdi-cart</v-icon>
                                                                             Marketplace
                                                                         </v-btn>
-                                                                        <v-tab v-if="isExistConfTemplate('TEMPLATE', item.preferredPlatform)"> Configuration </v-tab>
+                                                                        <v-tab v-if="isExistConfTemplate('MAIN', item.preferredPlatform)"> Configuration </v-tab>
 
                                                                         <v-tab-item>
                                                                             <v-list v-if="editableTemplate">
@@ -609,7 +609,7 @@
 
                                                                         <v-tab-item>
                                                                             <CodeConfiguration
-                                                                                :instruction="configurationTemplate('TEMPLATE', item)"
+                                                                                :instruction="configurationTemplate('MAIN', item)"
                                                                                 @apply="applyCodeConfiguration"
                                                                                 @close="closeCodeConfiguration"
                                                                             ></CodeConfiguration>
@@ -2951,7 +2951,7 @@
 
                 if( division == 'BASE' && me.$manifestsPerBaseTemplate[template] ){
                     return me.$manifestsPerBaseTemplate[me.basePlatform].find(x=>x.includes('for-model/_template/')) ? true : false
-                }else if( division == 'TEMPLATE' && me.$manifestsPerTemplate[template] ){
+                }else if( division == 'MAIN' && me.$manifestsPerTemplate[template] ){
                     return me.$manifestsPerTemplate[template].find(x=> x.includes('_template') && !x.includes('for-model/_template')) ? true : false
                 }else if( division == 'TOPPING' && me.$manifestsPerToppings[template] ){
                     return me.$manifestsPerToppings[template].find(x=> x.includes('_template') && x.includes('for-model/_template')) ? true : false
@@ -2974,7 +2974,7 @@
                     if(division == 'BASE'){
                         templateKey = Object.keys(me._templateLists).find(x=>x.includes(codeObj.split('/')[codeObj.split('/').length-1]));
                         conf = me.basePlatformConf[codeObj] ? JSON.parse(JSON.stringify(me.basePlatformConf[codeObj])) : null;
-                    } else if(division == 'TEMPLATE'){
+                    } else if(division == 'MAIN'){
                         elementId = codeObj.bcId;
                         if(me.value.elements[elementId]){
                             templateKey = Object.keys(me._templateLists).find(x=>x.includes(me.value.elements[elementId].name));

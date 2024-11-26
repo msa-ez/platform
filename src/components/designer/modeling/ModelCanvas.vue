@@ -302,6 +302,7 @@
 
                 //firebase
                 lastSnapshotKey: null,
+                // snapshot 
                 lastSnapQueueKey: null,
                 latestQueueKey: null,
                 receivedQueueExistValue: false,
@@ -1692,17 +1693,17 @@
                         let valueUrl = await me.putString(`storage://definitions/${originProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(me.value));
                         let imagURL = await me.putString(`storage://definitions/${originProjectId}/versionLists/${projectVersion}/image`, img);
                         // console.log(settingProjectId, originProjectId)
-                        var versionInfoObj = {
-                            lastQueueKey: me.lastSnapQueueKey,
-                            saveUser: me.userInfo.uid,
-                            saveUserEmail: me.userInfo.email,
-                            saveUserName: me.userInfo.name,
-                            projectName: me.storageCondition.editProjectName,
-                            img: imagURL,
-                            timeStamp: Date.now(),
-                            comment: me.storageCondition.comment,
-                            valueUrl: valueUrl
-                        }
+                        // var versionInfoObj = {
+                        //     lastQueueKey: me.latestQueueKey,
+                        //     saveUser: me.userInfo.uid,
+                        //     saveUserEmail: me.userInfo.email,
+                        //     saveUserName: me.userInfo.name,
+                        //     projectName: me.storageCondition.editProjectName,
+                        //     img: imagURL,
+                        //     timeStamp: Date.now(),
+                        //     comment: me.storageCondition.comment,
+                        //     valueUrl: valueUrl
+                        // }
 
                         if(associatedProject){
                             // Sync connected associatedProject.
@@ -1711,7 +1712,17 @@
 
                         me.projectName = putInformation.projectName
                         me.onCreateGitTagName(me.storageCondition);
-                        await me.putObject(`db://definitions/${originProjectId}/versionLists/${projectVersion}`, versionInfoObj)
+                        await me.putObject(`db://definitions/${originProjectId}/versionLists/${projectVersion}`, {
+                            lastQueueKey: me.latestQueueKey,
+                            saveUser: me.userInfo.uid,
+                            saveUserEmail: me.userInfo.email,
+                            saveUserName: me.userInfo.name,
+                            projectName: me.storageCondition.editProjectName,
+                            img: imagURL,
+                            timeStamp: Date.now(),
+                            comment: me.storageCondition.comment,
+                            valueUrl: valueUrl
+                        })
                         // await me.putObject(`db://definitions/${originProjectId}/versionLists/${projectVersion}/versionValue`, versionValueObj)
 
                         await me.putObject(`db://definitions/${originProjectId}/information`, putInformation)
@@ -2079,21 +2090,28 @@
             },
             async loadVersions(){
                 var me = this
-                let result =[]
+                let result = []
 
-                if( !me.versionLists || me.versionLists.length == 0 ){
-                    var versions  = await me.list(`db://definitions/${me.projectId}/versionLists`);
-                    if(versions){
-                        await me.migrateVersions(me.projectId, versions);
-                        result = Object.keys(versions).map(function(version){
-                            var rObj =  versions[version] ? versions[version] : {}
-                            rObj['version'] = version.replaceAll('-','.');
-                            return rObj;
-                        });
-
-                        me.versionLists = result.sort((a, b) => a.timeStamp - b.timeStamp );
+                let lastVersion = null;
+                if( me.versionLists ) {
+                    lastVersion = me.versionLists[me.versionLists.length - 1];
+                    if(lastVersion.versionId == me.information.lastVersionName) {
+                        return;
                     }
                 }
+
+                var versions  = await me.list(`db://definitions/${me.projectId}/versionLists`);
+                if(versions){
+                    await me.migrateVersions(me.projectId, versions);
+                    result = Object.keys(versions).map(function(version){
+                        var rObj =  versions[version] ? versions[version] : {}
+                        rObj['versionId'] = version;
+                        rObj['version'] = version.replaceAll('-','.');
+                        return rObj;
+                    });
+                    me.versionLists = result.sort((a, b) => a.timeStamp - b.timeStamp );
+                }
+                
             },
             async migrateVersions(projectId, versions){
                 var me = this
@@ -4578,7 +4596,7 @@
                 me.$app.try({
                     context: me,
                     async action(me){
-                        return;
+                        // return;
                         if(!me.isUserInteractionActive()) return;
                         if(!element) return;
                         if(element.relationView ) return; // exception relation
@@ -4602,7 +4620,7 @@
                 me.$app.try({
                     context: me,
                     async action(me){
-                        return;
+                        // return;
                         if(!me.isUserInteractionActive()) return;
                         if(!element) return;
                         if(element.relationView ) return; // exception relation

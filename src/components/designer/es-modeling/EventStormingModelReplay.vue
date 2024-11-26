@@ -83,12 +83,12 @@
                                  @mouseover="onOverSliderQueue"
                                  @mouseleave="onOverSliderQueue"
                             >
-                                {{ sliderCurrentDate }}
+                              {{ sliderCurrentDate }}
                             </div>
                         </template>
 
                         <template v-slot:append>
-                            <div style="background-color:red;" class="replay-version-icon">
+                            <!-- <div style="background-color:red;" class="replay-version-icon">
                                 <Icon
                                     icon="mdi:flag"
                                     width="20px" height="20px"
@@ -99,7 +99,7 @@
                                     margin-top:-5px;
                                     z-index:3;"
                                 />
-                            </div>
+                            </div> -->
                             <div class="replay-version-icon-tool-tip"
                                 style="background-color: black;
                                 opacity: 0.5;
@@ -123,14 +123,34 @@
                                     </div>
                                 </v-slide-item>
                             </div>
+                        
+                            <!-- Version -->
                             <div v-for="versionItem in filteredVersionLists">
-                                <div :class="versionItem.isVersion ? `v-slider__thumb orange lighten-1` : `v-slider__thumb yellow accent-4`"
+                                <!-- <div :class="versionItem.isVersion ? `v-slider__thumb orange lighten-1` : `v-slider__thumb yellow accent-4`" -->
+                                <div 
                                      :style="markStyle(versionItem)"
-                                     @click="onClickMark(versionItem)"
-                                     @mouseover="onOverSliderMarkLists($event,versionItem)"
-                                     @mouseleave="onOverSliderMarkLists($event,versionItem)"
+                                     @click="onClickMark(versionItem, 'version')"
+                                     @mouseover="onOverSliderMarkLists($event, versionItem, 'version')"
+                                     @mouseleave="onOverSliderMarkLists($event, versionItem, 'version')"
+                                >
+                                <Icon
+                                    icon="mdi:flag"
+                                    width="20px" height="20px"
+                                    style="background-color:transparent; color:orange; position: absolute; bottom: 8px;"/>
+                                </div>
+                            </div>
+
+                            <!-- Snapshot -->
+                            <div v-for="snaphot in filteredSnapshotLists">
+                                <div class="v-slider__thumb green lighten-1"
+                                     :style="markStyle(snaphot)"
+                                     @click="onClickMark(snaphot, 'snapshot')"
+                                     @mouseover="onOverSliderMarkLists($event,snaphot, 'snapshot')"
+                                     @mouseleave="onOverSliderMarkLists($event,snaphot, 'snapshot')"
                                 ></div>
                             </div>
+
+
                         </template>
                     </v-slider>
                 </div>
@@ -149,6 +169,13 @@
             <div style="position: absolute; right: 0;bottom: 8%; width: 20%; height: 30%;" v-if="detail.show">
                 <v-card v-if="detail.isMark" style="width: 100%; height: 100%;">
                     <v-card-title style="line-height: 1rem; padding: 10px;">
+                        <v-card-text v-if="detail.isSnapshot" style="padding: 0px; font-weight: bold;">
+                            SNAPSHOT
+                        </v-card-text>
+                        <v-card-text v-else-if="detail.isVersion" style="padding: 0px; font-weight: bold;">
+                            VERSION
+                        </v-card-text>
+                    
                         <div class="mark-title">Name:&nbsp;</div>
 
                         <v-slide-group
@@ -256,6 +283,12 @@
         },
         data() {
             return {
+                tickLabels: {
+                    0: 'Figs',
+                    1: 'Lemon',
+                    2: 'Pear',
+                    3: 'Apple',
+                },
                 svalue: 25,
                 copyItem: null,
                 replayFlagIcontoolTip: false,
@@ -344,8 +377,12 @@
             copyURL(){
                 var me = this
                 if( !me.copyItem ) me.copyItem = me.detail.item.key;
-                var url = `${window.location.origin}/#/storming/${me.modelProjectId}:${me.copyItem}`
 
+                let url = `${window.location.origin}/#/storming/${me.modelProjectId}:${me.copyItem}`
+                if(me.detail.isSnapshot) {
+                    url = window.location.href
+                }
+                
                 const t = document.createElement("textarea");
                 document.body.appendChild(t);
                 t.value = url;

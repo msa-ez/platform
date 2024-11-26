@@ -386,6 +386,7 @@
             },
             onMoveAction(executeRecursion){
                 var me = this
+                if( me.canvas.isReplay ) return;
                 if( me.value.mirrorElement ) return;
 
                 // Common
@@ -415,6 +416,7 @@
             },
             validate(executeRecursionValidate, panelValue){
                 var me = this
+                if( me.canvas.isReplay ) return;
                 var notPK = false
                 var duplicateField = false
                 let recursionValidate = executeRecursionValidate == false ? false :true

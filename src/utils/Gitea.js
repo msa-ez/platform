@@ -84,11 +84,11 @@ class Gitea extends Git {
     }
 
     async getTemplateURL(repo) {
-        return `${this.client.defaults.baseURL}/msa-ez/${repo}`;
+        return `https://github.com/msa-ez/${repo}`;
     }
 
     async getToppingURL(repo) {
-        return `${this.client.defaults.baseURL}/msa-ez/topping-${repo}`;
+        return `https://github.com/msa-ez/topping-${repo}`;
     }
 
     loadHandleBarHelper(handler) {
@@ -179,16 +179,21 @@ class Gitea extends Git {
             try {
                 let filesToCommit = [];
                 let targetBranch = "main";
-                try {
-                    await me.client.get(`/api/v1/repos/${options.org}/${options.repo}/branches/template`);
-                    targetBranch = "template";
-                } catch (error) {
-                    targetBranch = "main";
+
+                if(options.branch) {
+                    targetBranch = options.branch;  
+                } else {
+                    try {
+                        await me.client.get(`/api/v1/repos/${options.org}/${options.repo}/branches/template`);
+                        targetBranch = "template";
+                    } catch (error) {
+                        targetBranch = "main";
+                    }
                 }
     
                 if (options.gitTree.length > 0) {
                     options.gitTree.forEach(function(elData) {
-                        if (!options.generateCodeLists.find(element => element.fullPath == elData.path)) {
+                        if (!options.generateCodeLists.find(element => element.path == elData.path)) {
                             filesToCommit.push({
                                 path: elData.path.startsWith('/') ? elData.path.substring(1) : elData.path,
                                 operation: "delete"
@@ -202,12 +207,18 @@ class Gitea extends Git {
                     let path = file.fullPath.startsWith('/') ? file.fullPath.substring(1) : file.fullPath;
                     let operation = "create";
 
-                    try {
-                        await me.client.get(`/api/v1/repos/${options.org}/${options.repo}/contents/${path}?ref=${targetBranch}`);
-                        operation = "update"; 
-                    } catch (error) {
-                        operation = "create";
+                    if(options.gitTree.length == 0 || targetBranch === "main") {
+                        try {
+                            await me.client.get(`/api/v1/repos/${options.org}/${options.repo}/contents/${path}?ref=${targetBranch}`);
+                            operation = "update"; 
+                        } catch (error) {
+                            operation = "create";
+                        }
+                    } else {
+                        const existingFile = options.gitTree.find(elData => elData.path === path);
+                        operation = existingFile ? "update" : "create";
                     }
+
 
                     filesToCommit.push({
                         path: path,

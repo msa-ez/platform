@@ -74,6 +74,8 @@
         },
         data() {
             return {
+                // important
+                isReplay: true,
                 componentKey: 0,
                 loading: false,
                 mainSeparatePanel:{
@@ -112,9 +114,7 @@
             }
         },
         created: function () {
-            var me = this
-            me.init()
-
+            this.init()
         },
         computed: {
             isOnPrem() {
@@ -159,7 +159,26 @@
                 return false
             },
             filteredSnapshotLists(){
-                return this.snapshotLists.sort((a, b) => {
+                var me = this
+                let copySnapshotLists = me.snapshotLists.slice();
+                let sliderMaxIndex = me.sliderLists.length - 1;
+
+                copySnapshotLists.forEach(function (mark,index) {
+                    let markIndex = -1;
+                    if(mark.lastSnapshotKey){
+                        markIndex = me.sliderLists.findIndex( x=> mark.lastSnapshotKey == x.key);
+                    } else{
+                        if(me.sliderLists[sliderMaxIndex].timeStamp < mark.timeStamp){
+                            markIndex = sliderMaxIndex;
+                        }else{
+                            var matchQueue = me.sliderLists.find( x=> mark.timeStamp <= x.timeStamp);
+                            markIndex = me.sliderLists.findIndex( x=> x.timeStamp == matchQueue.timeStamp);
+                        }
+                    }
+                    copySnapshotLists[index].markIndex = markIndex == -1 ? 0: markIndex;
+                })
+
+                return copySnapshotLists.sort((a, b) => {
                     if (a.timeStamp < b.timeStamp) {
                         return -1;
                     }
@@ -171,27 +190,25 @@
             },
             filteredVersionLists(){
                 var me = this
-                let versionListsCopy = me.versionLists.slice();
+                let copyVersionLists = me.versionLists.slice();
+                let sliderMaxIndex = me.sliderLists.length - 1;
 
-                //
-                let queueListLength = me.sliderLists.length - 1;
-                versionListsCopy.forEach(function (mark,index) {
+                copyVersionLists.forEach(function (mark,index) {
                     let markIndex = -1;
                     if(mark.lastQueueKey){
                         markIndex = me.sliderLists.findIndex( x=> mark.lastQueueKey == x.key);
                     } else{
-                        if(me.sliderLists[queueListLength].timeStamp < mark.timeStamp){
-                            markIndex = queueListLength;
+                        if(me.sliderLists[sliderMaxIndex].timeStamp < mark.timeStamp){
+                            markIndex = sliderMaxIndex;
                         }else{
                             var matchQueue = me.sliderLists.find( x=> mark.timeStamp <= x.timeStamp);
                             markIndex = me.sliderLists.findIndex( x=> x.timeStamp == matchQueue.timeStamp);
                         }
                     }
-                    versionListsCopy[index].markIndex = markIndex == -1 ? 0: markIndex;
+                    copyVersionLists[index].markIndex = markIndex == -1 ? 0: markIndex;
                 })
-                //
 
-               return versionListsCopy.sort((a, b) => {
+               return copyVersionLists.sort((a, b) => {
                     if (a.timeStamp < b.timeStamp) {
                         return -1;
                     }
@@ -249,6 +266,96 @@
 
         },
         methods: {
+            init() {
+                var me = this
+
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.loading = true
+                        var projectModelId = me.projectId ? me.projectId : me.$route.params.projectId
+
+                        var information = await me.list(`db://definitions/${projectModelId}/information`);
+                        me.model = information
+                        me.model.projectId = projectModelId
+                        me.model.uid = information.author;
+                        me.model.permissions = information.permissions;
+
+                        /*
+                        초기 큐의 모든 정보를 불러와서 최소값,최대값, 리스트 정보 세팅.
+                            1 2 3 4 5 6 7 ... (최신)
+                        */
+                        let queueLists = await me.list(`db://definitions/${me.modelProjectId}/queue`, {
+                                sort: 'asc',
+                                orderBy: null,
+                                size: null,
+                                startAt: null,
+                                endAt: null
+                            });
+                        const queueListLength = queueLists.length - 1
+
+                        /*
+                            해당 큐의 최소값, 최대값, 큐 정보 세팅.
+                        */
+                        me.slider.min = 0;
+                        me.slider.max = queueListLength;
+                        me.sliderLists = queueLists;
+
+                        /*
+                            url 파라미터의 정보로 현재 위치 파악.
+                                            없으면 최신값
+                        */
+                        if(me.$route.params.queueKey){
+                            me.slider.current = 'null'.includes(me.$route.params.queueKey) ? queueListLength :
+                                queueLists.findIndex(queue => queue.key == me.$route.params.queueKey)
+                        }else{
+                            me.slider.current = queueListLength;
+                        }
+
+                        /*
+                            버전및 스냅샷 리스트 슬라이드 위치 표시.
+                        */
+                        var snapshotLists = await me.list(`db://definitions/${me.modelProjectId}/snapshotLists`);
+                        var snapLists = Object.keys(snapshotLists).map(function(snapshotKey){
+                            var rObj = {};
+                            rObj = snapshotLists[snapshotKey];
+
+                            rObj.key = snapshotKey
+                            rObj.isSnapshot = true
+                            return rObj;
+                        });
+
+                        me.snapshotLists = snapLists;
+
+                        // !!! Danger
+                        var versionLists = await me.list(`db://definitions/${me.modelProjectId}/versionLists`);
+                        if(versionLists){
+                            var verLists = Object.keys(versionLists).map(function(versionKey){
+                                var item = versionLists[versionKey];
+                                var rObj = item.versionInfo ? item.versionInfo : {}
+
+                                rObj.isVersion = true
+                                rObj.key = versionKey
+                                rObj.snapshot = item.valueUrl ? item.valueUrl : item.versionValue.value;
+                                rObj.lastQueueKey = item.lastQueueKey
+                                rObj.snapshotImg = item.img ? item.img : rObj.img
+                                rObj.timeStamp = item.timeStamp ? item.timeStamp : rObj.date
+                                rObj.projectName = item.projectName ?  item.projectName : rObj.projectName;
+                                rObj.comment = item.comment
+                                return rObj;
+                            });
+                            me.versionLists = verLists;
+                        } else {
+                            // No versions
+                            me.versionLists = []
+                        }
+                        //해당 정보 세팅.
+                        me.onLoad();
+
+                    }
+                });
+              
+            },
             loadScmUrl(){
                 var me = this
                 if(me.scmOrg && me.scmRepo){
@@ -323,9 +430,9 @@
                         var value = me.value
                         var originProjectId = me.modelProjectId
                         var projectVersion = me.condition.version.replaceAll('.','-').trim();
-                        var obj = me.parserUrl(me.condition.scmUrl);
 
                         if(me.condition.usedSCM){
+                            let obj = me.parserUrl(me.condition.scmUrl);
                             value.scm.org = obj.org;
                             value.scm.repo = obj.repo;
                             value.scm.tag = me.condition.scmVersion;
@@ -416,6 +523,8 @@
                     subTitle: '',
                     contents: '',
                     image: '',
+                    isSnapshot: false,
+                    isVersion: false,
                 };
             },
             onOverSliderQueue(event){
@@ -426,7 +535,7 @@
                 if(event.type == 'mouseleave'){
 
                 } else if( event.type =='mouseover' || 'mouseup' == event.type ){
-                    var info = me.elementComment(me.currentQueue)
+                    var info = me.queueComment(me.currentQueue)
 
                     me.detail.title = info.state
                     me.detail.subTitle = info.display
@@ -437,17 +546,23 @@
                     me.detail.show = true
                 }
             },
-            onOverSliderMarkLists(event, item){
+            onOverSliderMarkLists(event, item, type){
                 var me = this
-                
-
                 if(event.type == 'mouseleave'){
                     // me.resetDetail();
-                } else if( event.type =='mouseover' ){
-                    me.detail.title = me.filteredVersionLists.filter(x=>x.markIndex == item.markIndex).map(x =>x.key);
-                    // me.detail.title = item.key.replaceAll('-','.');
+                } else if(event.type =='mouseover'){
+                    if(type == 'snapshot'){
+                        me.detail.isVersion = false;
+                        me.detail.isSnapshot = true;
+                        me.detail.title = me.filteredSnapshotLists.filter(x=>x.markIndex == item.markIndex).map(x =>x.key);            
+                    } else {
+                        me.detail.isSnapshot = false;
+                        me.detail.isVersion = true;
+                        me.detail.title = me.filteredVersionLists.filter(x=>x.markIndex == item.markIndex).map(x =>x.key);
+                        me.detail.subTitle = ''
+                    }
+                    
                     me.detail.isMark = true
-                    me.detail.subTitle = ``
                     me.detail.contents = ''
                     me.detail.image = item.snapshotImg;
                     me.detail.date = me.convertTimeStamp(item.timeStamp);
@@ -455,15 +570,19 @@
                     me.detail.show = true
                 }
             },
-            onClickMark(item){
+            onClickMark(item, type){
                 var me = this
-                var list = JSON.parse(JSON.stringify(me.sliderLists));
-                var vLists = JSON.parse(JSON.stringify(me.filteredVersionLists))
                 var markItem = null;
+                let list = JSON.parse(JSON.stringify(me.sliderLists));
 
-                var version = vLists.find(queue => item.timeStamp <= queue.timeStamp);
-                me.projectName = version.projectName
-
+                let vLists = JSON.parse(JSON.stringify(me.filteredVersionLists))  
+                if(type == 'snapshot'){
+                    vLists = JSON.parse(JSON.stringify(me.filteredSnapshotLists))
+                } else {
+                    // VERSION
+                    var version = vLists.find(queue => item.timeStamp <= queue.timeStamp);
+                    me.projectName = version.projectName
+                }
 
                 if(item.timeStamp){
                     markItem = list.find(queue => item.timeStamp <= queue.timeStamp);
@@ -474,96 +593,8 @@
                 var moveIndex = list.findIndex(item => item.key == markItem.key);
 
                 me.slider.current = moveIndex  == -1 ? me.slider.current  : moveIndex
-
             },
-            async init() {
-                var me = this
-                try {
-                    me.loading = true
-                    var projectModelId = me.projectId ? me.projectId : me.$route.params.projectId
-
-                    var information = await me.list(`db://definitions/${projectModelId}/information`);
-                    me.model = information
-                    me.model.projectId = projectModelId
-                    me.model.uid = information.author;
-                    me.model.permissions = information.permissions;
-
-                    /*
-                      초기 큐의 모든 정보를 불러와서 최소값,최대값, 리스트 정보 세팅.
-                        1 2 3 4 5 6 7 ... (최신)
-                    */
-                    var options = {
-                        sort: 'asc',
-                        orderBy: null,
-                        size: null,
-                        startAt: null,
-                        endAt: null
-                    }
-                    var queueLists = await me.list(`db://definitions/${me.modelProjectId}/queue`,options);
-                    const queueListLength = queueLists.length - 1
-
-                    /*
-                        해당 큐의 최소값, 최대값, 큐 정보 세팅.
-                     */
-                    me.slider.min = 0;
-                    me.slider.max = queueListLength;
-                    me.sliderLists = queueLists;
-
-                    /*
-                        url 파라미터의 정보로 현재 위치 파악.
-                                         없으면 최신값
-                     */
-                    if(me.$route.params.queueKey){
-                        me.slider.current = 'null'.includes(me.$route.params.queueKey) ? queueListLength :
-                            queueLists.findIndex(queue => queue.key == me.$route.params.queueKey)
-                    }else{
-                        me.slider.current = queueListLength;
-                    }
-
-                    /*
-                        버전및 스냅샷 리스트 슬라이드 위치 표시.
-                     */
-                    var snapshotLists = await me.list(`db://definitions/${me.modelProjectId}/snapshotLists`);
-                    var snapLists = Object.keys(snapshotLists).map(function(snapshotKey){
-                        var rObj = {};
-                        rObj = snapshotLists[snapshotKey];
-
-                        rObj.key = snapshotKey
-                        return rObj;
-                    });
-
-                    me.snapshotLists = snapLists;
-
-                    // !!! Danger
-                    var versionLists = await me.list(`db://definitions/${me.modelProjectId}/versionLists`);
-                    if(versionLists){
-                        var verLists = Object.keys(versionLists).map(function(versionKey){
-                            var item = versionLists[versionKey];
-                            var rObj = item.versionInfo ? item.versionInfo : {}
-
-                            rObj.key = versionKey
-                            rObj.isVersion = true
-                            rObj.snapshot = item.versionValue.value;
-                            rObj.lastSnapshotKey = ''
-                            rObj.snapshotImg = rObj.img ? rObj.img : '';
-                            rObj.timeStamp = rObj.date ? rObj.date: '';
-                            rObj.projectName = rObj.projectName ?  rObj.projectName : me.projectName;
-                            return rObj;
-                        });
-                        me.versionLists = verLists;
-                    } else {
-                        // No versions
-                        me.versionLists = []
-                    }
-
-
-                    //해당 정보 세팅.
-                    me.onLoad();
-                } catch (e) {
-                    console.log(`Error] ModelReplay : ${e}`);
-                }
-
-            },
+            
             async onLoad(){
                 var me = this
 
@@ -573,7 +604,6 @@
                     // 해당 큐의 최신 위치의 스냅샷 세팅.
                     var snapshot = me.currentSnapshot.snapshot;
                     me.value = JSON.parse(snapshot);
-
 
                     // 해당 스냅부터 현재 큐까지 정보 세팅.
                     var queueLists = me.sliderLists.filter(x=> me.currentSnapshot.lastSnapshotKey < x.key && x.key <= me.currentQueueKey);
@@ -973,26 +1003,24 @@
 
                 me.mainSeparatePanel.current = 100
             },
-            elementComment(queue) {
+            queueComment(queue) {
                 var me = this
-                var comment = {
+                let comment = {
                     state: '',
                     display: '',
                     detail: ''
                 }
-                var action = queue.action
-                var item = queue.item ? JSON.parse(queue.item) : queue
-
-
+                let action = queue.action
+                let item = queue.item ? JSON.parse(queue.item) : queue
 
                 if (action.includes('undo') || action.includes('redo')) {
-                    var undoDiff = JSON.parse(queue.value.item)
+                    let undoDiff = JSON.parse(queue.value.item)
                     item = undoDiff.childValue.item ? JSON.parse(undoDiff.childValue.item) : undoDiff.childValue
                     action = JSON.parse(queue.value.item).childValue.action
                 }
 
-                if (action.includes('relation')) {
-
+                if (action.startsWith('relation')) {
+                    // relation 관련 코멘트
                     if (action.includes('Push')) {
 
                         var source = item.sourceElement
@@ -1025,64 +1053,86 @@
                             comment.display = '[선] 이동합니다.'
                             comment.detail = ''
                         }
-
-                    } else if (action.includes('Modify')) {
-                        comment.display = '준비중 입니다.'
-                        comment.detail = ''
                     }
-
-                } else {
+                } else if (action.startsWith('element')) { 
+                    // element 관련 코멘트
                     if (action.includes('Push')) {
-
                         comment.state = 'Create'
                         comment.display = '\"' + item.name + ' \" 인[ ' + item._type.split('.')[4] + ' ]를 추가 합니다.'
                         comment.detail = 'X좌표: ' + item.elementView.x + '/ Y좌표: ' + item.elementView.y
-
                     } else if (action.includes('Delete')) {
                         comment.state = 'Delete'
                         comment.display = '\"' + item.name + ' \" 인[ ' + item._type.split('.')[4] + ' ]를 삭제 합니다.'
                         comment.detail = 'X좌표: ' + item.elementView.x + '/ Y좌표: ' + item.elementView.y
-
                     } else if (action.includes('Move')) {
-
                         comment.state = 'Move'
                         comment.display = '\" ' + item.elementName + '\"인 [ ' + item.elementType + ' ]가 이동 합니다.'
                         comment.detail = '[ X: ' + JSON.parse(item.before).x + '/ Y: ' + JSON.parse(item.before).y + '] \n'
                             + ' => [ X: ' + JSON.parse(item.after).x + '/ Y: ' + JSON.parse(item.after).y + '] \n'
-
-                    } else if (action.includes('Modify')) {
-                        var diff = item
-                        var id = Object.keys(diff.elements)[0]
-                        // var copyValue = JSON.parse(JSON.stringify(me.value))
-                        var copyValue = me.value
-                        var elementName = copyValue.elements[id] ? copyValue.elements[id].name : ''
-                        var elementType = copyValue.elements[id] ? copyValue.elements[id]._type.split('.')[4] : ''
-
-                        var diffParse = me.getDiffValues(diff)
-                        comment.state = 'Modify'
-                        comment.display = '\"' + elementName + ' \"인 [ ' + elementType + ' ]를 수정 합니다. '
-
-                        Object.entries(diffParse.changed).forEach(function (key) {
-                            if (typeof key[1] == 'object' && !Array.isArray(key[1])) {
-                                comment.detail = comment.detail + key[0] + ', '
-                            } else if (Array.isArray(key[1])) {
-                                comment.detail = comment.detail + '[' + key[0] + ': ' + key[1][0] + ' -> ' + key[1][1] + '], '
-                            } else {
-                                comment.detail = comment.detail + ''
-                            }
-                        })
-                        comment.detail = comment.detail + ' 변경되었습니다.'
-                    } else if( action.includes('user')){
-                        comment.state = 'User Status'
-                        if(action.includes('Exit')){
-                            comment.display = `USER(${item.userName}) has left.`
-                        } else {
-                            comment.display = `USER(${item.userName}) entered.`
-                        }
-                        comment.detail = ''
                     }
-                }
+                } else if (action.startsWith('value')) {
+                    // element 수정 관련 코멘트
+                    var diff = item
+                    var id = Object.keys(diff.elements)[0]
+                    var copyValue = me.value
+                    var elementName = copyValue.elements[id] ? copyValue.elements[id].name : ''
+                    var elementType = copyValue.elements[id] ? copyValue.elements[id]._type.split('.')[4] : ''
 
+                    var diffParse = me.getDiffValues(diff)
+                    comment.state = 'Modify'
+                    comment.display = '\"' + elementName + ' \"인 [ ' + elementType + ' ]를 수정 합니다. '
+
+                    Object.entries(diffParse.changed).forEach(function (key) {
+                        if (typeof key[1] == 'object' && !Array.isArray(key[1])) {
+                            comment.detail = comment.detail + key[0] + ', '
+                        } else if (Array.isArray(key[1])) {
+                            comment.detail = comment.detail + '[' + key[0] + ': ' + key[1][0] + ' -> ' + key[1][1] + '], '
+                        } else {
+                            comment.detail = comment.detail + ''
+                        }
+                    })
+                    comment.detail = comment.detail + ' 변경되었습니다.'
+                } else if(action.startsWith('user')){
+                    // user Action 관련 코멘트
+                    comment.state = 'User Status'
+
+                    if(action.includes('PanelOpen')){
+                        comment.display = `"${item.name ? item.name : 'USER'}"(이)가 편집창을 열었습니다.`
+                    } else if(action.includes('PanelClose')){
+                        comment.display = `"${item.name ? item.name : 'USER'}"(이)가 편집창을 닫았습니다.`
+                    } else if(action.includes('Entrance')){
+                        comment.display = `"${item.userName ? item.userName : 'USER'}"(이)가 참가 했습니다.`
+                    } else if(action.includes('Exit')){
+                         comment.display = `"${item.userName ? item.userName : 'USER'}"(이)가 퇴장 했습니다.`
+                    } else if(action.includes('MovedOn')){
+                        let editElement = me.value && me.value.elements[item.editElement] ? me.value.elements[item.editElement] : null
+                        let editElementName = editElement ? editElement.name : '스티커'
+                        let editElementType = editElement ? editElement._type.split('.')[4] : null
+
+                        comment.display = `"${item.userName ? item.userName : 'USER'}"(이)가 "${editElementName} [${editElementType}]"를 이동 했습니다.`
+                    } else if(action.includes('MovedOff')){
+                        let editElement = me.value && me.value.elements[item.editElement] ? me.value.elements[item.editElement] : null
+                        let editElementName = editElement ? editElement.name : '스티커'
+                        let editElementType = editElement ? editElement._type.split('.')[4] : null
+
+                        comment.display = `"${item.userName ? item.userName : 'USER'}"(이)가 "${editElementName} [${editElementType}]"를 이동 해제 했습니다.`
+                    } else if(action.includes('SelectedOn')){
+                        let editElement = me.value && me.value.elements[item.editElement] ? me.value.elements[item.editElement] : null
+                        let editElementName = editElement ? editElement.name : '스티커'
+                        let editElementType = editElement ? editElement._type.split('.')[4] : null
+
+                        comment.display = `"${item.userName ? item.userName : 'USER'}"(이)가 "${editElementName} [${editElementType}]"를 선택 했습니다.`
+                    } else if(action.includes('SelectedOff')){
+                        let editElement = me.value && me.value.elements[item.editElement] ? me.value.elements[item.editElement] : null
+                        let editElementName = editElement ? editElement.name : '스티커'
+                        let editElementType = editElement ? editElement._type.split('.')[4] : null
+
+                        comment.display = `"${item.userName ? item.userName : 'USER'}"(이)가 "${editElementName} [${editElementType}]"를 선택 해제 했습니다.`
+                    }
+                    comment.detail = ''
+                } else {
+                    comment.detail = ''
+                }
 
                 return comment
             },
@@ -1116,14 +1166,17 @@
                 cal = Number(cal);
                 cal = (cal).toFixed(1);
 
-                if( cal < 0){
-                    cal = 0
-                }
-                else if( 99 < cal){
+                if( cal <= 0){
+                    cal = 1
+                } else if( 99 < cal){
                     cal = 97.7
+                } else {
+                    cal = cal - 0.2
                 }
-                return {position: 'absolute', left: `${ cal }%`,'z-index': 2, top: '25px', left: '5px',};
+        
+                return {position: 'absolute', left: `${ cal }%`,'z-index': 2, top: mark.isVersion ? '30px': '25px'};
             },
+
             changeUrl(url) {
                 if (typeof (history.pushState) != "undefined") { //브라우저가 지원하는 경우
                     history.pushState(null, null, url);
@@ -1132,18 +1185,7 @@
                 }
             },
             copyURL(){
-                var me = this
-
-                var url = `${window.location.origin}/#/storming/${me.modelProjectId}:${me.detail.item.key}`
-
-                const t = document.createElement("textarea");
-                document.body.appendChild(t);
-                t.value = url;
-                t.select();
-                document.execCommand('copy');
-                // remove
-                document.body.removeChild(t);
-                // this.$EventBus.$emit('snackbar', {show :true, text : 'Copied to clipboard!', timeout: 1000 ,bottom: true })
+                throw new Error('copyURL() must be implement');
             },
             convertTimeStamp(timeStamp){
                 if(timeStamp){
