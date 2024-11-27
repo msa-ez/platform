@@ -15,7 +15,8 @@ class CommandActionsProcessor {
 
     static _createCommand(action, userInfo, esValue, callbacks) {
         const commandObject = CommandActionsProcessor.__getCommandBase(
-            userInfo, action.args.commandName, "", 
+            userInfo, action.args.commandName, 
+            action.args.commandAlias ? action.args.commandAlias : "", 
             action.args.api_verb, [], action.ids.boundedContextId,
             action.ids.aggregateId, 0, 0, action.ids.commandId
         )

@@ -1,13 +1,14 @@
 <template>
 <!--    <div v-if="visible">-->
     <div>
-        <v-row v-if="!generateDone" style="position:absolute; top:75px; right:35px; z-index:999;">
+        <!-- 이미 초안관련 다이얼로그로 진행상태를 보여주기 때문에 불필요해서 임시 주석 처리함 -->
+        <!-- <v-row v-if="!generateDone" style="position:absolute; top:75px; right:35px; z-index:999;">
             <v-progress-circular
                 indeterminate
                 color="primary"
             ></v-progress-circular>
             <div style="margin:5px 0px 0px 5px;">Creating {{ value.name }}... <v-btn @click="stop" text>stop</v-btn></div>
-        </v-row>
+        </v-row> -->
         <group-element
                 :selectable="selectable"
                 :movable="movable"
@@ -284,6 +285,9 @@
                 $tr.parent().children().first().before($tr)
             }
 
+            me.$EventBus.$on("BoundedContextGeneratorStop", (targetId) => {
+                if(this.value.id === targetId) me.stop()
+            });
         },
         beforeUnmount: function(){
             this.stop()
