@@ -590,33 +590,34 @@
                                         "namePascalCase": "Id",
                                         "isKey": true
                                     }
+                                    let whenItem = JSON.parse(JSON.stringify(me.value))
+                                    if(!whenItems.find(x => x.id == whenItem.id)){
+                                        if(!whenItem.isRestRepository){
+                                            if(me.value.fieldDescriptors.length == 0){
+                                                whenItem.fieldDescriptors = []
+                                                whenItem.fieldDescriptors.push(defaultFieldDescriptor)
+                                            }
+                                        } else if(whenItem.restRepositoryInfo.method == 'POST'){
+                                            if(whenItem.aggregate && whenItem.aggregate.id && me.canvas.value.elements[whenItem.aggregate.id]){
+                                                whenItem.fieldDescriptors = JSON.parse(JSON.stringify(me.canvas.value.elements[whenItem.aggregate.id].aggregateRoot.fieldDescriptors))
+                                            } else {
+                                                whenItem.fieldDescriptors = []
+                                                whenItem.fieldDescriptors.push(defaultFieldDescriptor)
+                                            }
+                                        } else if(whenItem.restRepositoryInfo.method == 'DELETE'){
+                                            whenItem.fieldDescriptors = []
+                                            whenItem.fieldDescriptors.push(defaultFieldDescriptor)
+                                        } 
+                                        whenItems.push(whenItem)
+                                    }
+
                                     if(rel.sourceElement._type == 'org.uengine.modeling.model.Command' && rel.targetElement._type == 'org.uengine.modeling.model.Event'){
                                         if(rel.sourceElement.elementView.id == me.value.elementView.id){
-                                            if(!whenItems.find(x => x.elementView.id == rel.sourceElement.elementView.id)){
-                                                if(me.value && !me.value.isRestRepository && me.value.fieldDescriptors && me.value.fieldDescriptors.length > 0){
-                                                    me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = JSON.parse(JSON.stringify(me.value.fieldDescriptors))
-                                                } else if(me.value.restRepositoryInfo.method == 'POST'){
-                                                    if(me.value.aggregate && me.value.aggregate.id && me.canvas.value.elements[me.value.aggregate.id]){
-                                                        me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = JSON.parse(JSON.stringify(me.canvas.value.elements[me.value.aggregate.id].aggregateRoot.fieldDescriptors))
-                                                    } else if(rel.sourceElement.aggregate && rel.sourceElement.aggregate.id && me.canvas.value.elements[rel.sourceElement.aggregate.id]) {
-                                                        me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = JSON.parse(JSON.stringify(me.canvas.value.elements[rel.sourceElement.aggregate.id].aggregateRoot.fieldDescriptors))
-                                                    } else if(rel.targetElement.aggregate && rel.targetElement.aggregate.id && me.canvas.value.elements[rel.targetElement.aggregate.id]) {
-                                                        me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = JSON.parse(JSON.stringify(me.canvas.value.elements[rel.targetElement.aggregate.id].aggregateRoot.fieldDescriptors))
-                                                    } else {
-                                                        me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = []
-                                                        me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors.push(defaultFieldDescriptor)
-                                                    }
-                                                } else if(me.value.restRepositoryInfo.method == 'DELETE'){
-                                                    me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors = []
-                                                    me.canvas.value.elements[rel.sourceElement.elementView.id].fieldDescriptors.push(defaultFieldDescriptor)
-                                                } 
-                                                whenItems.push(me.canvas.value.elements[rel.sourceElement.elementView.id])
-                                            }
                                             if(!thenItems.find(x => x.elementView.id == rel.targetElement.elementView.id)){
                                                 thenItems.push(me.canvas.value.elements[rel.targetElement.elementView.id]);
                                             }
                                         }
-                                    }
+                                    } 
                                 } else if(me.value._type.includes("View")){
                                     // when
                                     if(rel.sourceElement._type == 'org.uengine.modeling.model.Command' && rel.targetElement._type == 'org.uengine.modeling.model.View'){
@@ -636,7 +637,7 @@
                         })
                     }
                     me.rule.whenItems = whenItems
-                    if(me.value._type.includes("Policy") && thenItems.length == 0){
+                    if((me.value._type.includes("Policy") || me.value._type.includes("Command")) && thenItems.length == 0){
                         thenItems = JSON.parse(JSON.stringify(me.rule.givenItems))
                     }
                     me.rule.thenItems = thenItems
@@ -777,9 +778,10 @@
                 }
 
                 me.rule.thenItems.forEach(function (item){
+                    let type = item.fieldDescriptors ? "Event" : "Aggregate";
                     var obj = {
                         name: item.name,
-                        type: "Event",
+                        type: type,
                         value: {}
                     }
                     let fieldDescriptors = item.fieldDescriptors || item.aggregateRoot.fieldDescriptors

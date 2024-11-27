@@ -2,11 +2,10 @@ const Git = require("./Git");
 const axios = require("axios");
 
 class Gitea extends Git {
-    constructor(baseURL, token) {
+    constructor() {
         super();
         this.client = axios.create({
-            baseURL,
-            headers: { 'Authorization': `token ${token}` }
+            baseURL: this.getBaseUrl()
         });
     }
 
@@ -26,57 +25,63 @@ class Gitea extends Git {
         return `https://gitpod.io/#${this.client.defaults.baseURL}/${org}/${repo}${releaseTagPath}`;
     }
 
+    getBaseUrl() {
+        return "http://localhost:3000";
+    }
+
     getHeader() {
-        // return {
-            // Authorization: 'token ' + localStorage.getItem('gitToken'),
-            // Accept: 'application/vnd.github+json'
-        // };
+        // if(!localStorage.getItem('giteaToken')) {
+        //     localStorage.setItem('giteaToken', '');
+        // }
+        return {
+            Authorization: 'token ' + localStorage.getItem('giteaToken')
+        };
     }
 
     async getUserInfo() {
-        return this.client.get(`/api/v1/user`);
+        return this.client.get(`/api/v1/user`, { headers: this.getHeader() });
     }
 
     async getBranch(org, repo, forkedTag) {
-        return this.client.get(`/api/v1/repos/${org}/${repo}/branches/branch-${forkedTag}`);
+        return this.client.get(`/api/v1/repos/${org}/${repo}/branches/branch-${forkedTag}`, { headers: this.getHeader() });
     }
 
     async getRef(org, repo, branch) {
-        return this.client.get(`/api/v1/repos/${org}/${repo}/git/refs/heads/${branch}`);
+        return this.client.get(`/api/v1/repos/${org}/${repo}/git/refs/heads/${branch}`, { headers: this.getHeader() });
     }
 
     async getTags(org, repo, forkedTag) {
-        return this.client.get(`/api/v1/repos/${org}/${repo}/tags`);
+        return this.client.get(`/api/v1/repos/${org}/${repo}/tags`, { headers: this.getHeader() });
     }
 
     async createBranch(org, repo, templateBranchData) {
-        return this.client.post(`/api/v1/repos/${org}/${repo}/git/refs`, templateBranchData);
+        return this.client.post(`/api/v1/repos/${org}/${repo}/git/refs`, templateBranchData, { headers: this.getHeader() });
     }
 
     async getReleasedTag(org, repo, tag) {
-        return this.client.get(`/api/v1/repos/${org}/${repo}/releases/tags/${tag}`);
+        return this.client.get(`/api/v1/repos/${org}/${repo}/releases/tags/${tag}`, { headers: this.getHeader() });
     }
 
     async getMainRepo(org, repo) {
-        return this.client.get(`/api/v1/repos/${org}/${repo}/branches/main`);
+        return this.client.get(`/api/v1/repos/${org}/${repo}/branches/main`, { headers: this.getHeader() });
     }
 
     async createRepo(org, repo, userName) {
         const createRepoUrl = org === userName ? `/api/v1/user/repos` : `/api/v1/orgs/${org}/repos`;
         const options = { name: repo, auto_init: true };
-        return this.client.post(createRepoUrl, options);
+        return this.client.post(createRepoUrl, options, { headers: this.getHeader() });
     }
 
     async getTemplateBranch(org, repo, branch) {
-        return this.client.get(`/api/v1/repos/${org}/${repo}/branches/${branch}`);
+        return this.client.get(`/api/v1/repos/${org}/${repo}/branches/${branch}`, { headers: this.getHeader() });
     }
 
     async getRepo(org, repo) {
-        return this.client.get(`/api/v1/repos/${org}/${repo}`);
+        return this.client.get(`/api/v1/repos/${org}/${repo}`, { headers: this.getHeader() });
     }
 
     async getOrgList() {
-        return this.client.get(`/api/v1/user/orgs`);
+        return this.client.get(`/api/v1/user/orgs`, { headers: this.getHeader() });
     }
 
     async recursiveTree(element) {
@@ -103,11 +108,11 @@ class Gitea extends Git {
     }
 
     async getFolder(org, repo, path) {
-        return this.client.get(`/api/v1/repos/${org}/${repo}/contents/${path}`);
+        return this.client.get(`/api/v1/repos/${org}/${repo}/contents/${path}`, { headers: this.getHeader() });
     }
 
     async getFile(org, repo, filePath) {
-        const res = await this.client.get(`/api/v1/repos/${org}/${repo}/contents/${filePath}`);
+        const res = await this.client.get(`/api/v1/repos/${org}/${repo}/contents/${filePath}`, { headers: this.getHeader() });
         return {
             data: decodeURIComponent(escape(atob(res.data.content))),
             url: res.config.url
@@ -121,12 +126,12 @@ class Gitea extends Git {
         try {
             const latestCommitSha = options.sha;
     
-            const treeInfo = await me.client.get(`/api/v1/repos/${options.org}/${options.repo}/git/trees/${latestCommitSha}?recursive=1`);
+            const treeInfo = await me.client.get(`/api/v1/repos/${options.org}/${options.repo}/git/trees/${latestCommitSha}?recursive=1`, { headers: me.getHeader() });
             const treeItems = treeInfo.data.tree;
     
             for (const item of treeItems) {
                 if (item.type === 'blob') {
-                    const fileContent = await me.client.get(`/api/v1/repos/${options.org}/${options.repo}/contents/${item.path}?ref=${options.branch}`);
+                    const fileContent = await me.client.get(`/api/v1/repos/${options.org}/${options.repo}/contents/${item.path}?ref=${options.branch}`, { headers: me.getHeader() });
                     files.push({
                         path: item.path,
                         content: Buffer.from(fileContent.data.content, 'base64').toString('utf-8')
@@ -142,7 +147,7 @@ class Gitea extends Git {
     }
 
     async getFileSha(org, repo, path) {
-        const response = await this.client.get(`/api/v1/repos/${org}/${repo}/contents/${path}`);
+        const response = await this.client.get(`/api/v1/repos/${org}/${repo}/contents/${path}`, { headers: this.getHeader() });
         return response.data.sha;
     }
 
@@ -157,7 +162,7 @@ class Gitea extends Git {
                 sha: sha,
                 encoding: 'base64'
             };
-            return this.client.put(`/api/v1/repos/${org}/${repo}/contents/${path}`, payload);
+            return this.client.put(`/api/v1/repos/${org}/${repo}/contents/${path}`, payload, { headers: this.getHeader() });
         } catch (error) {
             if (error.response && error.response.status === 404) {
                 // If the file does not exist, create it using POST
@@ -166,7 +171,7 @@ class Gitea extends Git {
                     message: "Create new file",
                     encoding: 'base64'
                 };
-                return this.client.post(`/api/v1/repos/${org}/${repo}/contents/${path}`, payload);
+                return this.client.post(`/api/v1/repos/${org}/${repo}/contents/${path}`, payload, { headers: this.getHeader() });
             } else {
                 throw error;
             }
@@ -184,7 +189,7 @@ class Gitea extends Git {
                     targetBranch = options.branch;  
                 } else {
                     try {
-                        await me.client.get(`/api/v1/repos/${options.org}/${options.repo}/branches/template`);
+                        await me.client.get(`/api/v1/repos/${options.org}/${options.repo}/branches/template`, { headers: me.getHeader() });
                         targetBranch = "template";
                     } catch (error) {
                         targetBranch = "main";
@@ -209,7 +214,7 @@ class Gitea extends Git {
 
                     if(options.gitTree.length == 0 || targetBranch === "main") {
                         try {
-                            await me.client.get(`/api/v1/repos/${options.org}/${options.repo}/contents/${path}?ref=${targetBranch}`);
+                            await me.client.get(`/api/v1/repos/${options.org}/${options.repo}/contents/${path}?ref=${targetBranch}`, { headers: me.getHeader() });
                             operation = "update"; 
                         } catch (error) {
                             operation = "create";
@@ -234,13 +239,13 @@ class Gitea extends Git {
                         message: options.commitMessage || "Batch commit"
                     };
 
-                    await me.client.post(`/api/v1/repos/${options.org}/${options.repo}/contents`, commitData);
+                    await me.client.post(`/api/v1/repos/${options.org}/${options.repo}/contents`, commitData, { headers: me.getHeader() });
 
                     if(targetBranch === "main") {
                         await me.client.post(`/api/v1/repos/${options.org}/${options.repo}/branches`, {
                             new_branch_name: "template",
                             old_branch_name: "main"
-                        });
+                        }, { headers: me.getHeader() });
                     }
 
                     resolve(filesToCommit);
@@ -254,7 +259,7 @@ class Gitea extends Git {
     }
 
     async getTree(org, repo, sha) {
-        return this.client.get(`/api/v1/repos/${org}/${repo}/git/trees/${sha}`);
+        return this.client.get(`/api/v1/repos/${org}/${repo}/git/trees/${sha}`, { headers: this.getHeader() });
     }
 
     async postTree(org, repo, treeList, treesha) {
@@ -264,7 +269,7 @@ class Gitea extends Git {
             tree: treeList,
             base_tree: treesha
         };
-        return this.client.post(`/api/v1/repos/${org}/${repo}/git/trees`, postTreeData);
+        return this.client.post(`/api/v1/repos/${org}/${repo}/git/trees`, postTreeData, { headers: this.getHeader() });
     }
 
     async setGitList(element, repository, gitRepoUrl) {
@@ -287,7 +292,7 @@ class Gitea extends Git {
             let gitToppingList = {};
     
             try {
-                let result = await me.client.get(`${element.data.url}?recursive=1`);
+                let result = await me.client.get(`${element.data.url}?recursive=1`, { headers: me.getHeader() });
                 if (result && result.data && result.data.tree.length > 0) {
                     let callCnt = 0;
                     for (const ele of result.data.tree) {
@@ -305,7 +310,7 @@ class Gitea extends Git {
                                     }
                                     gitToppingList[gitRepoUrl][elePath].requestUrl = ele.url;
     
-                                    let gitSha = await me.client.get(ele.url);
+                                    let gitSha = await me.client.get(ele.url, { headers: me.getHeader() });
                                     if (!gitTemplateContents[elePath]) gitTemplateContents[elePath] = null;
                                     gitTemplateContents[elePath] = atob(gitSha.data.content);
                                 }
@@ -344,7 +349,7 @@ class Gitea extends Git {
                                     }
                                     templateFrameWorkList[gitRepoUrl][ele.path].requestUrl = ele.url;
     
-                                    let gitSha = await me.client.get(ele.url);
+                                    let gitSha = await me.client.get(ele.url, { headers: me.getHeader() });
                                     if (!gitTemplateContents[ele.path]) gitTemplateContents[ele.path] = null;
                                     gitTemplateContents[ele.path] = atob(gitSha.data.content);
                                 }
@@ -382,16 +387,16 @@ class Gitea extends Git {
     }
 
     async getCommit(org, repo, branch) {
-        const res = await this.client.get(`/api/v1/repos/${org}/${repo}/branches/${branch}`);
+        const res = await this.client.get(`/api/v1/repos/${org}/${repo}/branches/${branch}`, { headers: this.getHeader() });
         return res.data.commit.id;
     }
 
     async postCommit(org, repo, options) {
-        return this.client.post(`/api/v1/repos/${org}/${repo}/git/commits`, options);
+        return this.client.post(`/api/v1/repos/${org}/${repo}/git/commits`, options, { headers: this.getHeader() });
     }
 
     async commit(org, repo, branch, treeList, init, commitMessage) {
-        const res = await this.client.get(`/api/v1/repos/${org}/${repo}/branches/${branch}`);
+        const res = await this.client.get(`/api/v1/repos/${org}/${repo}/branches/${branch}`, { headers: this.getHeader() });
         return res;
     }
 
@@ -404,11 +409,11 @@ class Gitea extends Git {
     }
 
     async createRelease(obj) {
-        return this.client.post(`/api/v1/repos/${obj.owner}/${obj.repo}/releases`, obj);
+        return this.client.post(`/api/v1/repos/${obj.owner}/${obj.repo}/releases`, obj, { headers: this.getHeader() });
     }
 
     async patch(org, repo, branch, options) {
-        return this.client.patch(`/api/v1/repos/${org}/${repo}/git/refs/heads/${branch}`, options);
+        return this.client.patch(`/api/v1/repos/${org}/${repo}/git/refs/heads/${branch}`, options, { headers: this.getHeader() });
     }
 
     async getActionId(org, repo) {

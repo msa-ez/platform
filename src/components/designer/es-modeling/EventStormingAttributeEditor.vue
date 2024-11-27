@@ -162,7 +162,7 @@
                     ></v-text-field>
                 </v-row>
                 <v-row justify="end">
-                    <v-btn v-if="type == 'org.uengine.modeling.model.Event' || type == 'org.uengine.modeling.model.Command' || (type == 'org.uengine.modeling.model.View' && dataProjection == 'query-for-aggregate')"
+                    <v-btn v-if="type == 'org.uengine.modeling.model.Event' || type == 'org.uengine.modeling.model.Command' || (type == 'org.uengine.modeling.model.View' && (dataProjection == 'query-for-aggregate' || dataProjection == 'query-for-multiple-aggregate'))"
                             depressed text
                             :disabled="isReadOnly"
                             @click="syncAttribute"
@@ -255,7 +255,10 @@
             type: String,
             elementId: String,
             entities: Object,
-            dataProjection: String,
+            dataProjection: {
+                type: String,
+                default: 'cqrs'
+            },
             label: {
                 type: String,
                 default: "Attributes"
@@ -511,7 +514,7 @@
 
                     var check = false
                     // if (((tmpObject.name).toLowerCase() == 'id' && (tmpObject.className).toLowerCase() == 'long') && !hasKey && (!me.type.includes('uml') && !me.type.includes('Command'))) {
-                    if (!hasKey && (!me.type.includes('uml') && !me.type.includes('Command'))) {
+                    if (!hasKey && (!me.type.includes('uml') && !me.type.includes('Command') && !me.type.includes('View'))) {
                         check = true
                     } else {
                         me.value.forEach(function (agg) {

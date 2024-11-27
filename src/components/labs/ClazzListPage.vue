@@ -11,7 +11,7 @@
                 <v-tabs-slider color="green lighten-2"></v-tabs-slider>
 
                 <v-tab
-                        v-for="(tab,index,keys) in fillteredlabsTabLists"
+                        v-for="(tab,index,keys) in fillteredlabsTabLists()"
                         :key="keys"
                         :value="keys"
                 >
@@ -62,21 +62,55 @@
                         </div>
                     </v-card>
                 </v-dialog>
-
                 <v-tab-item
-                        v-for="(tab,index,keys) in labsTabLists"
-                        :key="keys"
-                        :value="keys"
+                    v-for="(tab, index, keys) in fillteredlabsTabLists()"
+                    :key="keys"
+                    :value="keys"
                 >
-                    <!--
-                        selectedTab
-                        0: 추천강의 - 수강 가능 한 클래스
-                        1: 기업강의 - connectionKey가 있는 Class
-                        2: 수강중인 강의 - 본인 계정 정보 하위에 등록되어있는 클래스 ( 구현 필요함 )
-                        3: 종료된 강의 - 현행 유지..
-                        4: 강의중인강의 - 현행 유지
-                    -->
-                    <div style="margin:12px 0 12px 0;" v-if="selectedTab == 0">
+                    <!-- 로그인하지 않았을 때 공개 강의만 표시 -->
+                    <div v-if="!isLogin && tab.key === 'free'" style="margin:12px 0 12px 0;">
+                        <v-row>
+                            <v-row v-if="filteredFreeClassList == undefined && typeof filteredFreeClassList != 'object'">
+                                <v-col
+                                    v-for="idx in 8"
+                                    cols="12"
+                                    sm="3">
+                                    <v-card
+                                        outlined
+                                        class="mx-auto"
+                                        style="width: 95%; height: 400px; justify-content: center;"
+                                        align="center"
+                                        indeterminate
+                                    >
+                                        <v-skeleton-loader
+                                            ref="skeleton"
+                                            type="card"
+                                            class="mx-auto"
+                                        >
+                                        </v-skeleton-loader>
+                                    </v-card>
+                                </v-col>
+                            </v-row>
+                            <v-col v-else-if="filteredFreeClassList == null" style="margin-left:15px;">
+                                <div style="text-align: center;height: 600px;">
+                                    강의가 없습니다.
+                                </div>
+                            </v-col>
+                            <v-col v-else-if="filteredFreeClassList.length > 0"
+                                v-for="(clazz, index) in filteredFreeClassList" :key="index" md="3">
+                                <class-card
+                                    :clazz="clazz" :clazzIdList="clazzIdList"
+                                    :teacherClassList="teacherClassList"
+                                    :selectedTab="selectedTab"
+                                    @changeSelectedTab="setSelectedTab"
+                                    @changeTeacherClassList="setTeacherClassList"
+                                ></class-card>
+                            </v-col>
+                        </v-row>
+                    </div>
+                    <!-- 로그인한 경우 기존 로직 유지 -->
+                    <div v-else style="margin:12px 0 12px 0;">
+                        <div style="margin:12px 0 12px 0;" v-if="selectedTab == 0">
                         <v-row>
                             <v-row v-if="filteredRecommendClassList == undefined  && typeof filteredRecommendClassList != 'object'">
                                 <v-col
@@ -562,8 +596,8 @@
                             </v-col>
                         </v-row>
                     </div>
+                    </div>
                 </v-tab-item>
-
             </v-tabs>
         </div>
         <v-dialog
@@ -716,7 +750,7 @@
                 {tabName: '종료된 강의', key: 'ended'},
                 {tabName: '강의중인 클래스', key: 'lecture'},
                 {tabName: '강의 생성', key: 'add'},
-                {tabName: 'Archive', key: 'archive'},
+                {tabName: '보관소', key: 'archive'},
 
             ],
             tempSearch: '',
@@ -788,18 +822,6 @@
                     return true
                 }
                 return false
-            },
-            fillteredlabsTabLists() {
-                return this.labsTabLists
-                // if (this.email) {
-                // return this.labsTabLists
-                // } else {
-                // var array = Object.values(this.labsTabLists)
-                // array.pop()
-                // return Object.assign({}, array);
-
-                // }
-
             },
             testSearch() {
                 return this.search
@@ -1084,6 +1106,14 @@
             this.$EventBus.$emit("inSideCourse", false)
         },
         methods: {
+            fillteredlabsTabLists() {
+                // 로그인 상태가 아닐 경우, 공개 강의만 반환
+                if (!this.isLogin) {
+                    return this.labsTabLists.filter(tab => tab.key === 'free');
+                }
+                // 로그인 상태일 경우, 모든 강의 반환
+                return this.labsTabLists;
+            },
             movetoArchiveSelectedCards() {
                 var me = this
                 var deleteCnt = 0

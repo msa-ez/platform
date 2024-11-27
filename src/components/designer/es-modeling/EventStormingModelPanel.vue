@@ -221,6 +221,9 @@
                                 if(relations[ele].sourceElement.id && relations[ele].sourceElement.id == me.value.id){
                                     sourceElements = relations[ele].sourceElement
                                     targetElements = relations[ele].sourceElement
+                                } else {
+                                    sourceElements = true
+                                    targetElements = true
                                 }
                             }
                         })

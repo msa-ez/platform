@@ -13,9 +13,7 @@ class GitAPI {
             this._git = new Github();
         }
         
-        // const baseURL = 'http://localhost:3000';
-        // const token = '';
-        // this._git = new Gitea(baseURL, token);
+        // this._git = new Gitea();
     }
 
     getType() {
