@@ -2579,13 +2579,11 @@
             } else {
                 git = new Github();
             }
-
-            // const baseURL = 'http://localhost:3000';
-            // const token = '';
-            // git = new Gitea(baseURL, token);
-
-            // this.gitAccessToken = '';
             this.gitAccessToken = localStorage.getItem('gitAccessToken') ? localStorage.getItem('gitAccessToken') : localStorage.getItem('gitToken')
+
+            // git = new Gitea();
+            // this.gitAccessToken = localStorage.getItem('giteaToken');
+            
             this.gitAPI = new GitAPI(git);
             this.core = new CodeGeneratorCore({
                 canvas: me.canvas,
