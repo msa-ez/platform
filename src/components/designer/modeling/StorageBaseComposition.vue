@@ -5,7 +5,6 @@
     import StorageBaseFireBase from "./StorageBaseFireBase";
     import StorageBaseAceBase from "./StorageBaseAceBase";
     import StorageBaseLocalStorage from "./StorageBaseLocalStorage";
-
     import StorageBaseCloudStorage from "./StorageBaseCloudStorage";
 
     // 2
