@@ -5793,7 +5793,7 @@ jobs:
                                 // Commit List 받아오는 것.
                                 await me.gitAPI.getTree(org, repo, res)
                                 .then(async function (list) {
-                                    if(me.$manifestsPerBaseTemplate[templateUrl]){
+                                    if(me.$manifestsPerBaseTemplate[templateUrl] && me.templateFrameWorkList[templateUrl]){
                                         resolve();
                                     } else {
                                         await me.gitAPI.setGitList(list, repo, templateUrl)
@@ -5887,7 +5887,7 @@ jobs:
                             // Commit List 받아오는 것.
                             await me.gitAPI.getTree(org, repo, res)
                             .then(async function (list) {
-                                if(me.$manifestsPerToppings[fullUrl]){
+                                if(me.$manifestsPerToppings[fullUrl] && me.gitToppingList[fullUrl]){
                                     resolve();
                                 } else {
                                     await me.gitAPI.setGitList(list, toppingName, fullUrl)

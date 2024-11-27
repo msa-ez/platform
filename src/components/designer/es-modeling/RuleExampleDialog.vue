@@ -778,7 +778,7 @@
                 }
 
                 me.rule.thenItems.forEach(function (item){
-                    let type = item.fieldDescriptors ? "Event" : "Aggregate";
+                    let type = item._type ? item._type.split('.').pop() : ''
                     var obj = {
                         name: item.name,
                         type: type,
