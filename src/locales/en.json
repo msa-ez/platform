@@ -1,5 +1,27 @@
 {
   "message": "en",
+  "DomainEventDefinitionPanel" : {
+    "triggerByLifeCycleDetailTitle" : "Define tasks to be executed at specific points (before/after) during data lifecycle events such as saving, updating, and deleting.",
+    "triggerByLifeCycleDetailSubTitle1": "Pre Persist: Executes right before data is saved.",
+    "triggerByLifeCycleDetailSubTitle2": "Post Persist: Executes immediately after data is saved.", 
+    "triggerByLifeCycleDetailSubTitle3": "Pre Update: Executes right before data is updated.",
+    "triggerByLifeCycleDetailSubTitle4": "Post Update: Executes immediately after data is updated.",
+    "triggerByLifeCycleDetailSubTitle5": "Pre Remove: Executes right before data is deleted.",
+    "triggerByLifeCycleDetailSubTitle6": "Post Remove: Executes immediately after data is deleted."
+  },
+  "EventStormingAttributeEditor" : {
+    "editAggregateMembersByClassDiagramBtn" : "This menu interacts with the Domain Class Modeling Tool to define their ubiquitous language with object-oriented manner.",
+    "AttributesHover1" : "Allowing both primitive types and non-primitive types including user defined Entities or Value Objects.",
+    "AttributesHover2" : "Only primitive types are allowed.",
+    "attributesDetailTitle" : "Only simple data types can be used for Attributes.",
+    "attributesDetail1" : "Key icon: Indicates data being used as a key value. Can be changed to another Attribute using the edit button",
+    "attributesDetail2_1" : "Display Name: The name that appears on screen stickers and in the frontend UI code.",
+    "attributesDetail2_2" : "Correlation Key: An identifier used to track and link related events or processes, defining correlations between events.",
+    "attributesDetail2_3" : "List: An option to specify whether the attribute should be treated as an array.",
+    "attributesDetail2_4" : "Name: The primary identifier used when referencing Attributes in other systems, processes, or code. Use names with uniqueness and clarity to help manage data and properties consistently.",
+    "attributesDetail2_5" : "Large Object (LOB): A checkbox to determine whether to use LOB types (CLOB, BLOB) for efficiently storing large data like images or files in the database. Commonly used for file fields or large data fields.",
+    "attributesDetail3" : "SYNC ATTRIBUTE button: A button that synchronizes properties within an Aggregate when attached to it."
+  },
   "AggregateDefinitionPanel": {
     "aggregateGenerateTitle": "The button will be activated when you write the Description content while having an Aggregate included within the Bounded Context.",
     "aggregateGenerateTooltipText1": "Generate Based on Aggregate",

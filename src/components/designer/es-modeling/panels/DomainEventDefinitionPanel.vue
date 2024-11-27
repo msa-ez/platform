@@ -61,12 +61,8 @@
                 <v-card flat>
                     <div class="pa-4 pb-0">
                         <v-card-text class="pa-0 pb-2 panel-title">Trigger By LifeCycle</v-card-text>
-                        <!-- <detail-component
-                            :title="'Event를 발생시키는 조건을 설정하세요'"
-                            :details="triggerText"
-                        /> -->
                     </div>
-                    <v-card-text class="pt-0">
+                    <v-card-text class="pt-0 pb-0">
                         <v-radio-group v-model="value.trigger" style="width: 290px;" :disabled="isReadOnly" class="mt-1">
                             <v-row dense class="pa-0 ma-0">
                                 <v-col dense class="pa-0">
@@ -83,6 +79,10 @@
                                 </v-col>
                             </v-row>
                         </v-radio-group>
+                        <detail-component
+                            :title="$t('DomainEventDefinitionPanel.triggerByLifeCycleDetailTitle')"
+                            :details="triggerByLifeCycleDetailSubTitle"
+                        />
                     </v-card-text>
                 </v-card>
 
@@ -153,13 +153,24 @@
                 policyLists: [],
                 lifeCycleCommand: "",
                 relatedAggregate: null,
-                triggerText: `Pre Persist: 데이터가 저장되기 직전에 실행됩니다. \n
-                            Post Persist: 데이터가 저장된 직후에 실행됩니다. \n
-                            Pre Update: 데이터가 업데이트되기 직전에 실행됩니다. \n
-                            Post Update: 데이터가 업데이트된 직후에 실행됩니다. \n
-                            Pre Remove: 데이터가 삭제되기 직전에 실행됩니다. \n
-                            Post Remove: 데이터가 삭제된 직후에 실행됩니다. \n`           
-            } 
+                triggerByLifeCycleDetailSubTitle: [
+                    {
+                        title: "DomainEventDefinitionPanel.triggerByLifeCycleDetailSubTitle1"
+                    },
+                    {
+                        title: "DomainEventDefinitionPanel.triggerByLifeCycleDetailSubTitle2"
+                    },
+                    {
+                        title: "DomainEventDefinitionPanel.triggerByLifeCycleDetailSubTitle3"
+                    },
+                    {
+                        title: "DomainEventDefinitionPanel.triggerByLifeCycleDetailSubTitle5"
+                    },
+                    {
+                        title: "DomainEventDefinitionPanel.triggerByLifeCycleDetailSubTitle6"
+                    }
+                ]
+            }    
         },
         created: function () { },
         beforeDestroy(){

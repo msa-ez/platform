@@ -7,6 +7,8 @@ class GitAPI {
         
         if(window.PROVIDER == "gitlab") {
             this._git = new Gitlab();
+        } else if (window.PROVIDER == "gitea") {
+            this._git = new Gitea(window.GIT);
         } else {
             this._git = new Github();
         }
