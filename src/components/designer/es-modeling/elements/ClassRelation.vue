@@ -259,7 +259,7 @@
                     if (me.canvas.value.relations[me.value.relationView.id]) {
                         //존재
                         if (me.canvas.value && me.canvas.value.elements[sourceId]) {
-                            me.canvas.value.elements[sourceId].dataProjection = 'uimashup'
+                            // me.canvas.value.elements[sourceId].dataProjection = 'uimashup'
                         }
                     }
                 }

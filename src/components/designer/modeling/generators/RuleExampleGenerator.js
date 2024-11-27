@@ -35,9 +35,17 @@ class RuleExampleGenerator extends JsonAIGenerator {
             var itemFields = ""
             var thenAtt = ""
             itemFields = item.name + ' {'+ '\n'
-            item.fieldDescriptors.forEach(function (field){
-                thenAtt = `${thenAtt}    ${field.className} ${field.name}\n`
-            })
+
+            if(item._type.includes("Aggregate")){
+                item.aggregateRoot.fieldDescriptors.forEach(function (field){
+                    thenAtt = `${thenAtt}    ${field.className} ${field.name}\n`
+                })
+            }else{
+                item.fieldDescriptors.forEach(function (field){
+                    thenAtt = `${thenAtt}    ${field.className} ${field.name}\n`
+                })
+            }
+            
             itemFields = itemFields + thenAtt + '}\n' 
             thenFields = thenFields + itemFields
         })
