@@ -28,6 +28,8 @@
                             <v-col v-if="value.personas" v-for="(persona) in value.personas" v-bind:key="persona.name">
                                 <v-card style="text-align: center; min-width:200px; min-height:200px;"
                                     :style="state.persona == persona.persona ? 'border: solid darkturquoise;':''"
+                                    :disabled="!done"
+                                    @click="selectPersona(persona)"
                                 >
                                     <div>
                                         <div style="padding-bottom:20px;">
@@ -65,7 +67,7 @@
                                             </v-card-subtitle>
                                             <v-card-subtitle v-else> {{persona.description}}</v-card-subtitle>
                                             
-                                            <v-card-actions>
+                                            <!-- <v-card-actions>
                                             <v-btn
                                                 class="ms-2"
                                                 variant="outlined"
@@ -76,7 +78,7 @@
                                             >
                                                 NEXT
                                             </v-btn>
-                                            </v-card-actions>
+                                            </v-card-actions> -->
                                         </div>
                                     </div>
                                 </v-card>                                       

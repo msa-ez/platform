@@ -1,5 +1,26 @@
 {
   "message": "ko",
+  "DomainEventDefinitionPanel" : {
+    "triggerByLifeCycleDetailTitle" : "데이터가 저장, 수정, 삭제 등의 생명주기를 거칠 때 특정 시점(전/후)에 실행될 작업을 정의.",
+    "triggerByLifeCycleDetailSubTitle1": "Pre Persist: 데이터가 저장되기 직전에 실행됩니다.",
+    "triggerByLifeCycleDetailSubTitle2": "Post Persist: 데이터가 저장된 직후에 실행됩니다.",
+    "triggerByLifeCycleDetailSubTitle3": "Pre Update: 데이터가 업데이트되기 직전에 실행됩니다.",
+    "triggerByLifeCycleDetailSubTitle4": "Post Update: 데이터가 업데이트된 직후에 실행됩니다.", 
+    "triggerByLifeCycleDetailSubTitle5": "Pre Remove: 데이터가 삭제되기 직전에 실행됩니다.",
+    "triggerByLifeCycleDetailSubTitle6": "Post Remove: 데이터가 삭제된 직후에 실행됩니다."
+  },
+  "EventStormingAttributeEditor" : {
+    "editAggregateMembersByClassDiagramBtn" : "이 메뉴는 도메인 클래스 모델링 도구와 상호작용하여 객체지향 방식으로 유비쿼터스 언어를 정의합니다.",
+    "attributesDetailTitle1" : "사용자가 정의한 엔티티나 값 객체를 포함하여 기본 타입과 비기본 타입을 모두 사용할 수 있습니다.",
+    "attributesDetailTitle2" : "Attribute 속성에는 간단한 데이터 타입만 사용할 수 있습니다.",
+    "attributesDetail1" : "열쇠 아이콘 : key 값으로 사용 중인 데이터입니다. 수정 버튼을 통해 다른 Attribute로 변경 가능",
+    "attributesDetail2_1" : "Display Name : 화면의 스티커와 코드의 프론트엔드 UI에 표시되는 이름입니다.",
+    "attributesDetail2_2" : "Correlation Key : 관련된 이벤트나 프로세스를 추적하고 연결하기 위한 식별자로, 이벤트 간 상관관계를 정의하는 데 사용됩니다.",
+    "attributesDetail2_3" : "List : 속성을 배열로 지정할지를 선택하는 옵션입니다.",
+    "attributesDetail2_4" : "Name : Attributes를 다른 시스템, 프로세스, 또는 코드에서 참조할 때 사용하는 대표 식별자로, 고유성과 명확성을 갖춘 이름을 사용해 데이터와 속성을 일관되게 관리하도록 돕습니다.",
+    "attributesDetail2_5" : "Large Object (LOB) : 이미지나 파일 같은 대용량 데이터를 데이터베이스에 효율적으로 저장하기 위해 LOB 타입(CLOB, BLOB)을 사용할지 결정하는 체크박스입니다. 주로 파일 필드나 대용량 데이터 필드에서 사용됩니다.",
+    "attributesDetail3" : "SYNC ATTRIBUTE 버튼 : Aggregate에 부착된 상태에서 Aggregate 내부의 속성을 동기화하는 버튼입니다."
+  },
   "AggregateDefinitionPanel": {
     "aggregateGenerateTitle": "Bounded Context 내부에 Aggregate가 포함돼있는 상태에서 Description의 내용을 작성하면 버튼이 활성화됩니다.",
     "aggregateGenerateTooltipText1": "어그리거트 기반 생성",
@@ -10,8 +31,8 @@
     "reGenerate": "재생성"
   },
   "CommonPanel": {
-    "nameInfoTitle": "Name은 영문으로 작성합니다.",
-    "nameInfoDetail1": "Name은 코드에 반영되는 이름입니다.\nDisplay Name은 화면의 스티커와 코드의 프론트엔드 UI에 표시되는 이름입니다."
+    "nameInfoTitle": "Name 영문으로 작성합니다.",
+    "nameInfoDetail1": "Name : 코드에 반영되는 이름입니다.\nDisplay Name : 화면의 스티커와 코드의 프론트엔드 UI에 표시되는 이름입니다."
   },
   "DetailComponent": {
     "allDetails": "가이드 보기"

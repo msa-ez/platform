@@ -4,11 +4,11 @@
             <template v-slot:activator="{ on }">
                 <span v-on="on" class="headline">{{label}}</span>
             </template>
-            <span v-if="type == 'org.uengine.modeling.model.Aggregate'">Allowing both primitive types and non-primitive types including user defined Entities or Value Objects.</span>
-            <span v-else>Only primitive types are allowed.</span>
+            <!-- <span v-if="type == 'org.uengine.modeling.model.Aggregate'">{{ $t('EventStormingAttributeEditor.AttributesHover1') }}</span>
+            <span v-else>{{ $t('EventStormingAttributeEditor.AttributesHover2') }}</span> -->
         </v-tooltip>
         <v-layout flat @contextmenu.prevent="handleClick($event, element)">
-            <v-col>
+            <v-col class="pa-0">
                 <draggable
                         v-model="dataValue"
                         v-bind="dragOptions"
@@ -16,9 +16,7 @@
                         @end="drag = false"
                 >
                     <transition-group type="transition" :name="!drag ? 'flip-list' : null">
-                        
                         <div v-for="(element,idx) in value" :key="idx">
-                            
                             <v-row  :class="{'mb-6': !attributeEdit || value.indexOf(element) != attributeEditIndex}" 
                                     no-gutters
                             >
@@ -29,23 +27,19 @@
                                         :disabled="isReadOnly"
                                     ></v-checkbox>
                                 </v-col>
-                                <v-col cols="1" style="margin-right: 4px;">
-                                    <v-icon small
-                                            v-if="element.isKey"
-                                            disabled
+                                <v-col cols="1" class="pa-0 mr-1">
+                                    <v-icon v-if="element.isKey"
+                                        small
+                                        disabled
                                     >
                                         mdi-key
                                     </v-icon>
-                                    <v-icon small 
-                                            v-if="element.isCorrelationKey" 
-                                            disabled
-                                            style="position:absolute;
-                                                left:9px;
-                                                margin-top:5px;"
+                                    <v-icon v-if="element.isCorrelationKey"
+                                        small 
+                                        disabled
                                     >
                                         mdi-link-variant
                                     </v-icon>
-                                    
                                 </v-col>
                                 <v-col cols="3">
                                     <div v-if="!attributeEdit || value.indexOf(element) != attributeEditIndex" :style="isDuplicated(element) ? 'color:red':''">
@@ -70,7 +64,8 @@
                                         @keyup.enter="modifyAttributeItem(element)"
                                     ></v-text-field>
                                 </v-col>
-                                <v-col cols="2">
+                                <v-spacer></v-spacer>
+                                <v-col>
                                     <v-icon
                                         v-if="attributeEdit && value.indexOf(element) == attributeEditIndex "
                                         small
@@ -143,7 +138,7 @@
                     </transition-group>
                 </draggable>
 
-                <v-row justify="center" class="attribute-editor">
+                <v-row justify="center" class="attribute-editor pl-4 pr-4">
                     <v-select 
                             style="width: 30px" 
                             v-model="entityType" 
@@ -179,7 +174,9 @@
                             dark
                     >ADD ATTRIBUTE</v-btn>
                 </v-row>
-                <v-row justify="end" v-if="type == 'org.uengine.modeling.model.Aggregate'">
+                <v-row class="ma-0 pa-0" justify="end" v-if="type == 'org.uengine.modeling.model.Aggregate'"
+                    style="margin-right: -12px !important;"
+                >
                     <v-tooltip top>
                         <template v-slot:activator="{ on }">
                             <v-btn :disabled="isReadOnly" 
@@ -191,10 +188,17 @@
                                 Edit Aggregate Members by Class Diagram
                             </v-btn>
                         </template>
-                        <span>This menu interacts with the Domain Class Modeling Tool to define their ubiquitous language with object-oriented manner.</span>
+                        <span>{{ $t('EventStormingAttributeEditor.editAggregateMembersByClassDiagramBtn') }}</span>
                     </v-tooltip>
-                    
                 </v-row>
+                <detail-component v-if="type == 'org.uengine.modeling.model.Aggregate'" 
+                    :title="$t('EventStormingAttributeEditor.attributesDetailTitle1')"
+                    :details="attributeDetails"
+                ></detail-component>
+                <detail-component v-else
+                    :title="$t('EventStormingAttributeEditor.attributesDetailTitle2')"
+                    :details="attributeDetails"
+                ></detail-component>
             </v-col>
         </v-layout>
 
@@ -244,6 +248,7 @@
 
 <script>
     import draggable from 'vuedraggable'
+import DetailComponent from '../../ui/DetailComponent.vue';
     import umlCanvas from '../class-modeling/UMLClassModelCanvas.vue'
     var changeCase = require('change-case');
 
@@ -273,11 +278,34 @@
         components: {
             draggable,
             umlCanvas,
+                DetailComponent,
         },
         data: function () {
             return {
                 drag: false,
-
+                attributeDetails: [
+                    {
+                        title: "EventStormingAttributeEditor.attributesDetail1"
+                    },
+                    {
+                        title: "EventStormingAttributeEditor.attributesDetail2_1",
+                    },
+                    {
+                        title: "EventStormingAttributeEditor.attributesDetail2_2",
+                    },
+                    {
+                        title: "EventStormingAttributeEditor.attributesDetail2_3",
+                    },
+                    {
+                        title: "EventStormingAttributeEditor.attributesDetail2_4",
+                    },
+                    {
+                        title: "EventStormingAttributeEditor.attributesDetail2_5",
+                    },
+                    {
+                        title: "EventStormingAttributeEditor.attributesDetail3",
+                    },
+                ],
                 entityTypeList: ['Integer', 'String', 'Boolean', 'Float', 'Double', 'Long', 'Date', 'BigDecimal'],
                 entityKey: false,
                 entityType: 'String',
