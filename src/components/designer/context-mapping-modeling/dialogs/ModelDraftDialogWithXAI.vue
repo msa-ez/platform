@@ -10,7 +10,12 @@
         <v-card-subtitle>
             <div class="d-flex align-center">
                 <div v-if="draftUIInfos.leftBoundedContextCount > 0">
-                    <p class="mb-0">{{ draftUIInfos.leftBoundedContextCount }} Bounded Contexts remaining...</p>
+                    <template v-if="draftUIInfos.directMessage">
+                        <p class="mb-0">{{ draftUIInfos.directMessage }}</p>
+                    </template>
+                    <template v-else>
+                        <p class="mb-0">{{ draftUIInfos.leftBoundedContextCount }} Bounded Contexts remaining...</p>
+                    </template>
                 </div>
                 <v-progress-circular
                     v-if="draftUIInfos.leftBoundedContextCount > 0"

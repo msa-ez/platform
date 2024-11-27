@@ -14,7 +14,8 @@ class EventActionsProcessor {
 
     static _createEvent(action, userInfo, esValue, callbacks) {
         const eventObject = EventActionsProcessor.__getEventBase(
-            userInfo, action.args.eventName, "", 
+            userInfo, action.args.eventName, 
+            action.args.eventAlias ? action.args.eventAlias : "", 
             action.ids.boundedContextId, action.ids.aggregateId, 0, 0, action.ids.eventId
         )
 

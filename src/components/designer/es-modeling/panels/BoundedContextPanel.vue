@@ -299,6 +299,8 @@
                 this.executeBeforeDestroy()  //TODO [Refactoring] method 명은 apply() 정도가 좋겠음.
 
                 this.generator.generate();
+                if(this.generator.initRetryCount) this.generator.initRetryCount()
+
                 this.state.startTemplateGenerate = true
                 this.$emit('update:generateDone', false);
                 this.generateDone = false;    

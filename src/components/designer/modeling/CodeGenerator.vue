@@ -2579,13 +2579,11 @@
             } else {
                 git = new Github();
             }
-
-            // const baseURL = 'http://localhost:3000';
-            // const token = '';
-            // git = new Gitea(baseURL, token);
-
-            // this.gitAccessToken = '';
             this.gitAccessToken = localStorage.getItem('gitAccessToken') ? localStorage.getItem('gitAccessToken') : localStorage.getItem('gitToken')
+
+            // git = new Gitea();
+            // this.gitAccessToken = localStorage.getItem('giteaToken');
+            
             this.gitAPI = new GitAPI(git);
             this.core = new CodeGeneratorCore({
                 canvas: me.canvas,
@@ -5795,7 +5793,7 @@ jobs:
                                 // Commit List 받아오는 것.
                                 await me.gitAPI.getTree(org, repo, res)
                                 .then(async function (list) {
-                                    if(me.$manifestsPerBaseTemplate[templateUrl]){
+                                    if(me.$manifestsPerBaseTemplate[templateUrl] && me.templateFrameWorkList[templateUrl]){
                                         resolve();
                                     } else {
                                         await me.gitAPI.setGitList(list, repo, templateUrl)
@@ -5889,7 +5887,7 @@ jobs:
                             // Commit List 받아오는 것.
                             await me.gitAPI.getTree(org, repo, res)
                             .then(async function (list) {
-                                if(me.$manifestsPerToppings[fullUrl]){
+                                if(me.$manifestsPerToppings[fullUrl] && me.gitToppingList[fullUrl]){
                                     resolve();
                                 } else {
                                     await me.gitAPI.setGitList(list, toppingName, fullUrl)

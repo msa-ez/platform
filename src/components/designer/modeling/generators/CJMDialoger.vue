@@ -28,6 +28,8 @@
                             <v-col v-if="value.personas" v-for="(persona) in value.personas" v-bind:key="persona.name">
                                 <v-card style="text-align: center; min-width:200px; min-height:200px;"
                                     :style="state.persona == persona.persona ? 'border: solid darkturquoise;':''"
+                                    :disabled="!done"
+                                    @click="selectPersona(persona)"
                                 >
                                     <div>
                                         <div style="padding-bottom:20px;">
