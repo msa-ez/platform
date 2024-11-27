@@ -20,6 +20,7 @@ class EnumerationActionsProcessor {
         callbacks.afterAllObjectAppliedCallBacks.push((esValue) => {
             const enumObject = EnumerationActionsProcessor.__getEnumerationBase(
                 action.args.enumerationName, 
+                action.args.enumerationAlias ? action.args.enumerationAlias : "",
                 action.args.properties.map(property => {return {"value": property.name}}),
                 0, 0,
                 action.ids.enumerationId
@@ -34,12 +35,13 @@ class EnumerationActionsProcessor {
         })
     }
 
-    static __getEnumerationBase(name, items, x, y, elementUUID) {
+    static __getEnumerationBase(name, displayName, items, x, y, elementUUID) {
         const elementUUIDtoUse = elementUUID ? elementUUID : GlobalPromptUtil.getUUID()
         return {
             "_type": "org.uengine.uml.model.enum",
             "id": elementUUIDtoUse,
             "name": name,
+            "displayName": displayName,
             "nameCamelCase": changeCase.camelCase(name),
             "namePascalCase": changeCase.pascalCase(name),
             "namePlural": pluralize(changeCase.camelCase(name)),

@@ -20,6 +20,7 @@ class ValueObjectActionsProcessor {
         callbacks.afterAllObjectAppliedCallBacks.push((esValue) => {
             const valueObject = ValueObjectActionsProcessor.__getValueObjectBase(
                 action.args.valueObjectName, 
+                action.args.valueObjectAlias ? action.args.valueObjectAlias : "",
                 ValueObjectActionsProcessor.__getFileDescriptors(action.args.properties),
                 0, 0, action.ids.valueObjectId
             )
@@ -33,12 +34,13 @@ class ValueObjectActionsProcessor {
         })
     }
 
-    static __getValueObjectBase (name, fieldDescriptors, x, y, elementUUID) {
+    static __getValueObjectBase(name, displayName, fieldDescriptors, x, y, elementUUID) {
         const elementUUIDtoUse = elementUUID ? elementUUID : GlobalPromptUtil.getUUID()
         return {
             "_type": "org.uengine.uml.model.vo.Class",
             "id": elementUUIDtoUse,
             "name": name,
+            "displayName": displayName,
             "namePascalCase": changeCase.pascalCase(name),
             "nameCamelCase": changeCase.camelCase(name),
             "fieldDescriptors": fieldDescriptors,

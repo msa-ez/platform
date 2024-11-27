@@ -1909,12 +1909,20 @@
                 :draftUIInfos="modelDraftDialogWithXAIDto.draftUIInfos"
                 :isGeneratorButtonEnabled="modelDraftDialogWithXAIDto.isGeneratorButtonEnabled"
                 @generateFromDraft="generateFromDraftWithXAI"
-                @close="modelDraftDialogWithXAIDto.isShow = false"
+                @close="modelDraftDialogWithXAIDto.isShow = false; modelDraftDialogWithXAIDto.actions.stop()"
             ></ModelDraftDialogWithXAI>
           </v-dialog>
 
           
         <!-- <gitAPIMenu></gitAPIMenu> -->
+        <div style="position:absolute; top:75px; right:35px; z-index:999;">
+            <GeneratorProgress
+            :generateDone="generatorProgressDto.generateDone"
+            :displayMessage="generatorProgressDto.displayMessage"
+            :progress="generatorProgressDto.progress"
+            @stopGeneration="generatorProgressDto.actions.stopGeneration"
+            ></GeneratorProgress>
+        </div>
     </div>
 </template>
 
@@ -1957,6 +1965,7 @@
     import TestByUsingCommand from "./mixins/TestByUsingCommand"
     import ModelDraftDialogWithXAI from "../context-mapping-modeling/dialogs/ModelDraftDialogWithXAI.vue"
     import BCReGenerateCreateActionsGenerator from "../modeling/generators/es-ddl-generators/BCReGenerateCreateActionsGenerator"
+    import GeneratorProgress from "./components/GeneratorProgress.vue"
     const prettier = require("prettier");
     const plugins = require("prettier-plugin-java");
     const axios = require("axios");
@@ -2026,7 +2035,8 @@
             MouseCursorComponent,
             ModelDraftDialog,
             ModelDraftDialogForDistribution,
-            ModelDraftDialogWithXAI
+            ModelDraftDialogWithXAI,
+            GeneratorProgress
             // ModelCodeGenerator
         },
         props: {
@@ -2418,9 +2428,21 @@
                     draftUIInfos: {
                         leftBoundedContextCount: 0
                     },
-                    isGeneratorButtonEnabled: true
+                    isGeneratorButtonEnabled: true,
+                    actions: {
+                        stop: () => {}
+                    }
                 },
-                BCRegenerateCreateActionsGeneratorInputs: []
+                BCRegenerateCreateActionsGeneratorInputs: [],
+
+                generatorProgressDto: {
+                    generateDone: true,
+                    displayMessage: '',
+                    progress: 0,
+                    actions: {
+                        stopGeneration: () => {}
+                    }
+                }
             };
         },
         computed: {
@@ -3094,7 +3116,22 @@
                 }
 
                 if(model.generatorName === "BCReGenerateCreateActionsGenerator" && model.modelValue){
-                    console.log("BCReGenerateCreateActionsGenerator", model.modelValue)
+                    if(model.isError || model.isStopped) return
+                    if(model.isDied) {
+                        alert(`[!] 이벤트 스토밍 생성 과정에서 오류가 발생했습니다. 다시 시도해주세요.\n* Error log \n${model.errorMessage}`)
+                        this.modelDraftDialogWithXAIDto = {
+                            ...this.modelDraftDialogWithXAIDto,
+                            isShow: true,
+                            draftUIInfos: {
+                                leftBoundedContextCount: 0
+                            },
+                            isGeneratorButtonEnabled: true
+                        }
+                        this.generatorProgressDto.generateDone = true
+                        return
+                    }
+
+
                     if(model.modelValue.removedElements && model.modelValue.removedElements.length > 0) {
                         model.modelValue.removedElements.forEach(element => {
                             if(this.value.elements[element.id])
@@ -3111,6 +3148,7 @@
                     if(this.BCRegenerateCreateActionsGeneratorInputs.length > 0) {
                         this.input = this.BCRegenerateCreateActionsGeneratorInputs.shift()
                         const generator = new BCReGenerateCreateActionsGenerator(this)
+                        generator.initRetryCount()
                         generator.generate()    
                     }
                     else {
@@ -3122,6 +3160,7 @@
                             },
                             isGeneratorButtonEnabled: true
                         }
+                        this.generatorProgressDto.generateDone = true
                     }
                     return
                 }
@@ -3720,21 +3759,32 @@
             },
 
             _processDraftGeneratorByFunctionsModel(val) {
-                if(val.isError) {
-                    alert("[!] 에러 발생! 다시 시도해주세요.")
+                if(val.isError || val.isStopped) return
+                if(val.isDied) {
+                    alert(`[!] 초안 생성 과정에서 오류가 발생했습니다. 다시 시도해주세요.\n* Error log \n${val.errorMessage}`)
                     this.modelDraftDialogWithXAIDto.isShow = false
                     return
                 }
 
-                if(val.eventBy === "onModelCreated" && val.isFirstResponse) {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: true,
-                        draftOptions: [],
-                        draftUIInfos: {
-                            leftBoundedContextCount: 1
-                        },
-                        isGeneratorButtonEnabled: true
+                if(val.eventBy === "onModelCreated") {
+                    if(val.isFirstResponse) {
+                        this.modelDraftDialogWithXAIDto = {
+                            ...this.modelDraftDialogWithXAIDto,
+                            isShow: true,
+                            draftOptions: [],
+                            draftUIInfos: {
+                                leftBoundedContextCount: 1,
+                                directMessage: val.directMessage
+                            },
+                            isGeneratorButtonEnabled: true,
+                            actions: {
+                                stop: () => {
+                                    this.$EventBus.$emit("BoundedContextGeneratorStop", val.inputedParams.targetBoundedContext.id)
+                                }
+                            }
+                        }
+                    } else {
+                        this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = val.directMessage
                     }
                     return
                 }
@@ -3744,7 +3794,8 @@
                         ...this.modelDraftDialogWithXAIDto,
                         draftOptions: [this.__getXAIDtoDraftOptions(val.modelValue.output, val.inputedParams.targetBoundedContext, val.inputedParams.description)],
                         draftUIInfos: {
-                            leftBoundedContextCount: 0
+                            leftBoundedContextCount: 0,
+                            directMessage: val.directMessage
                         }
                     }
                     return
@@ -3766,21 +3817,50 @@
             },
 
             _processBCReGenerateCreateActionsGenerator(val) {
-                if(val.isError) {
-                    alert("[!] 에러 발생! 다시 시도해주세요.")
+                if(val.isError || val.isStopped) return
+                if(val.isDied) {
+                    alert(`[!] 이벤트 스토밍 생성 과정에서 오류가 발생했습니다. 다시 시도해주세요.\n* Error log \n${val.errorMessage}`)
                     this.modelDraftDialogWithXAIDto.isGeneratorButtonEnabled = true
+                    this.generatorProgressDto.generateDone = true
                     return
                 }
 
                 if(val.isFirstResponse) {
                     this.modelDraftDialogWithXAIDto = {
                         ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
                         draftUIInfos: {
-                            leftBoundedContextCount: 1
+                            leftBoundedContextCount: 1,
+                            directMessage: val.directMessage
+                        },
+                        actions: {
+                            stop: () => {
+                            }
                         },
                         isGeneratorButtonEnabled: false
                     }
-                    return
+
+                    this.generatorProgressDto = {
+                        generateDone: false,
+                        displayMessage: '',
+                        progress: 0,
+                        actions: {
+                            stopGeneration: () => {
+                                val.actions.stopGeneration()
+                                this.generatorProgressDto.generateDone = true
+                            }
+                        }
+                    }
+                } else {
+                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = val.directMessage
+                    this.generatorProgressDto.displayMessage = val.directMessage
+                    this.generatorProgressDto.progress = val.progress
+
+                    if(val.modelValue && val.modelValue.createdESValue) {
+                        this.changedByMe = true
+                        this.$set(this.value, "elements", val.modelValue.createdESValue.elements)
+                        this.$set(this.value, "relations", val.modelValue.createdESValue.relations) 
+                    }
                 }
             },
 
@@ -3800,6 +3880,7 @@
 
                 this.input = this.BCRegenerateCreateActionsGeneratorInputs.shift()
                 const generator = new BCReGenerateCreateActionsGenerator(this)
+                generator.initRetryCount()
                 generator.generate()                
             },
 

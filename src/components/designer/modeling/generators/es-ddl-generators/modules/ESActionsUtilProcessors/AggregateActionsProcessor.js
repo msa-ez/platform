@@ -19,18 +19,19 @@ class AggregateActionsProcessor {
 
     static _createAggregate(action, userInfo, esValue, callbacks) {
         let aggregateObject = AggregateActionsProcessor.__getAggregateBase(
-            userInfo, action.args.aggregateName, "", 
+            userInfo, action.args.aggregateName,
+            action.args.aggregateAlias ? action.args.aggregateAlias : "", 
             action.ids.boundedContextId, 0, 0, action.ids.aggregateId
         )
+        AggregateActionsProcessor.__adjustBoundedContextLayout(esValue, action, aggregateObject)
 
+        
         const VALID_POSITION = AggregateActionsProcessor.__getValidPosition(esValue, action, aggregateObject)
         aggregateObject.elementView.x = VALID_POSITION.x
         aggregateObject.elementView.y = VALID_POSITION.y
 
         action.args.properties = AggregateActionsProcessor.__makePrimaryKeyPropertyIfNotExists(action.args.properties)
         aggregateObject.aggregateRoot.fieldDescriptors = AggregateActionsProcessor.__getFileDescriptors(action.args.properties)
-        
-        AggregateActionsProcessor.__relocateUIPositions(esValue, action, aggregateObject)
         esValue.elements[aggregateObject.id] = aggregateObject
 
 
@@ -113,41 +114,66 @@ class AggregateActionsProcessor {
         return [{name: "id", type: "Long", isKey: true}].concat(properties)
     }
 
-    static __relocateUIPositions(esValue, action, aggregateObject) {
-        const getTargetBoundedContextIds = (esValue, currentBoundedContext) => {
-            let targetBoundedContextIds = []
-            for(const element of Object.values(esValue.elements)) {
-                if(element && element._type === "org.uengine.modeling.model.BoundedContext" && element.id !== currentBoundedContext.id)
-                {
-                    if((currentBoundedContext.elementView.x < element.elementView.x) && 
-                       (currentBoundedContext.elementView.y + currentBoundedContext.elementView.height/2 > element.elementView.y) &&
-                       (currentBoundedContext.elementView.y - currentBoundedContext.elementView.height/2 < element.elementView.y))
-                       targetBoundedContextIds.push(element.id)
+    static __adjustBoundedContextLayout(esValue, action, aggregateObject) {
+        const MIN_CONTEXT_HEIGHT = 590
+        const MIN_CONTEXT_WIDTH = 560
+        const AGGREGATE_SPACING = 450
+        
+        const shiftAdjacentBoundedContexts = (esValue, targetBoundedContext, offsetX, offsetY) => {
+            for(const boundedContextId of findRightSideBoundedContextIds (esValue, targetBoundedContext)) {
+                const boundedContext = esValue.elements[boundedContextId]
+                boundedContext.elementView.x = boundedContext.elementView.x + offsetX
+                esValue.elements[boundedContextId] = {...boundedContext}
+    
+                for(const elementId of ActionsProcessorUtils.getElementIdsInBoundedContext(esValue, boundedContextId)) {
+                    const element = esValue.elements[elementId]
+                    element.elementView.x = element.elementView.x + offsetY
+                    esValue.elements[elementId] = {...element}
                 }
             }
-            return targetBoundedContextIds
+        }
+
+        const findRightSideBoundedContextIds = (esValue, targetBoundedContext) => {
+            let adjacentContextIds = []
+            for(const element of Object.values(esValue.elements)) {
+                if(element && element._type === "org.uengine.modeling.model.BoundedContext" && element.id !== targetBoundedContext.id)
+                {
+                    if((targetBoundedContext.elementView.x < element.elementView.x) && 
+                       (targetBoundedContext.elementView.y + targetBoundedContext.elementView.height/2 > element.elementView.y) &&
+                       (targetBoundedContext.elementView.y - targetBoundedContext.elementView.height/2 < element.elementView.y))
+                       adjacentContextIds .push(element.id)
+                }
+            }
+            return adjacentContextIds 
+        }
+        
+        const targetBoundedContext = esValue.elements[action.ids.boundedContextId]
+        if(targetBoundedContext.elementView.height < MIN_CONTEXT_HEIGHT || targetBoundedContext.elementView.width < MIN_CONTEXT_WIDTH) {
+            const heightDelta = MIN_CONTEXT_HEIGHT - targetBoundedContext.elementView.height
+            const widthDelta  = MIN_CONTEXT_WIDTH - targetBoundedContext.elementView.width
+
+            Object.assign(targetBoundedContext.elementView, {
+                height: targetBoundedContext.elementView.height + heightDelta,
+                width: targetBoundedContext.elementView.width + widthDelta,
+                y: targetBoundedContext.elementView.y + heightDelta/2,
+                x: targetBoundedContext.elementView.x + widthDelta/2
+            })
+
+            esValue.elements[action.ids.boundedContextId] = {...targetBoundedContext}
+            shiftAdjacentBoundedContexts(esValue, targetBoundedContext, widthDelta, heightDelta)
         }
 
         const aggregates = ActionsProcessorUtils.getAllAggregatesInBoundedContext(esValue, action.ids.boundedContextId)
         if(aggregates.length <= 0) return
 
-        const currentBoundedContext = esValue.elements[action.ids.boundedContextId]
-        for(const boundedContextId of getTargetBoundedContextIds(esValue, currentBoundedContext)) {
-            const boundedContext = esValue.elements[boundedContextId]
-            boundedContext.elementView.x = boundedContext.elementView.x + 450
-            esValue.elements[boundedContextId] = {...boundedContext}
+        shiftAdjacentBoundedContexts(esValue, targetBoundedContext, AGGREGATE_SPACING, 0)
+        Object.assign(targetBoundedContext.elementView, {
+            x: targetBoundedContext.elementView.x + AGGREGATE_SPACING/2,
+            width: targetBoundedContext.elementView.width + AGGREGATE_SPACING
+        })
 
-            for(const elementId of ActionsProcessorUtils.getElementIdsInBoundedContext(esValue, boundedContextId)) {
-                const element = esValue.elements[elementId]
-                element.elementView.x = element.elementView.x + 450
-                esValue.elements[elementId] = {...element}
-            }
-        }
-
-        currentBoundedContext.elementView.x = currentBoundedContext.elementView.x + 225
-        currentBoundedContext.elementView.width = currentBoundedContext.elementView.width + 450
-        currentBoundedContext.aggregates = [...currentBoundedContext.aggregates, {"id": aggregateObject.id}]
-        esValue.elements[action.ids.boundedContextId] = {...currentBoundedContext}
+        targetBoundedContext.aggregates = [...targetBoundedContext.aggregates, {"id": aggregateObject.id}]
+        esValue.elements[action.ids.boundedContextId] = {...targetBoundedContext}
     }
 
     static __getFileDescriptorsForRootAggegate(actionProperties) {

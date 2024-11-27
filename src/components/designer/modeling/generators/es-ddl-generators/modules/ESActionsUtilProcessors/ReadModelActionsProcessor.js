@@ -15,7 +15,8 @@ class ReadModelActionsProcessor {
 
     static _createReadModel(action, userInfo, esValue, callbacks) {
         const readModelObject = ReadModelActionsProcessor.__getReadModelBase(
-            userInfo, action.args.readModelName, "", 
+            userInfo, action.args.readModelName,
+            action.args.readModelAlias ? action.args.readModelAlias : "", 
             action.args.isMultipleResult, action.ids.boundedContextId,
             action.ids.aggregateId, 0, 0, action.ids.readModelId
         )

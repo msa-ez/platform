@@ -1,7 +1,7 @@
 const JsonAIGenerator = require("../JsonAIGenerator");
 const GlobalPromptUtil = require("./modules/GlobalPromptUtil");
 const ESActionUtil = require("./modules/ESActionsUtil")
-const ESValueSummarizeUtil = require("./modules/ESValueSummarizeUtil")
+const ESValueSummarizeUtil_OnlyNameWithId = require("./modules/ESValueSummarizeUtil_OnlyNameWithId")
 const ESAliasTransManager = require("./modules/ESAliasTransManager")
 
 class BCReGenerateCreateActionsGenerator extends JsonAIGenerator{
@@ -16,6 +16,15 @@ class BCReGenerateCreateActionsGenerator extends JsonAIGenerator{
         this.preferredLanguage = this.preferredLanguage ? this.preferredLanguage : "English"
         this.temperature = 1.0
         this.top_p = 0.6
+
+        this.MAX_RETRY_COUNT = 3
+        this.leftRetryCount = this.MAX_RETRY_COUNT
+        this.isStopped = false
+    }
+
+    initRetryCount(){
+        this.leftRetryCount = this.MAX_RETRY_COUNT
+        this.isStopped = false
     }
     
 
@@ -29,10 +38,11 @@ class BCReGenerateCreateActionsGenerator extends JsonAIGenerator{
                 targetBoundedContext: this.client.input.targetBoundedContext,
                 description: this.client.input.description,
                 draftOption: this.client.input.draftOption,
-                esValue: this.client.input.esValue,
+                esValue: JSON.parse(JSON.stringify(this.client.input.esValue)),
                 userInfo: this.client.input.userInfo,
                 information: this.client.input.information,
-                isAccumulated: this.client.input.isAccumulated
+                isAccumulated: this.client.input.isAccumulated,
+                targetAggregate: Object.values(this.client.input.draftOption)[0].aggregate
             }
             
             console.log(`[*] ${this.generatorName}에 대한 프롬프트 생성중...`, {inputedParams: this.inputedParams})
@@ -55,14 +65,25 @@ class BCReGenerateCreateActionsGenerator extends JsonAIGenerator{
     }
 
     _getSystemPrompt(){
-        return this.__getFrontGuidePrompt() +
+        return this.__getRoleGuidePrompt() +
+            this.__getWorkGuidePrompt() +
             ESValueSummarizeUtil_OnlyNameWithId.getGuidePrompt() +
             this.__getOutputSyntaxGuidePrompt() +
             this.__getExamplePrompt() +
             GlobalPromptUtil.getJsonCompressGuidePrompt()
     }
 
-    __getFrontGuidePrompt(){
+    __getRoleGuidePrompt(){
+        return `You are an experienced domain-driven design (DDD) architect and event storming specialist. Your expertise lies in:
+- Translating business requirements into well-structured domain models
+- Designing event-driven systems with proper bounded contexts
+- Ensuring consistency and best practices in event sourcing
+- Creating maintainable and scalable software architectures
+
+`
+    }
+
+    __getWorkGuidePrompt(){
         return `In your current event stemming model, you need to write actions to add elements inside a particular Bounded Context, following the structure provided by the user.
 
 Please follow these rules.
@@ -78,7 +99,8 @@ Please follow these rules.
 10. Make sure to create all Aggregates, Entities, and ValueObjects in the user's proposed structure with the appropriate actions.
 11. The ValueObject, Entity, and Enumeration you create must be used as properties in other Aggregates.
 12. Do not recreate ValueObjects, Entities, or Enumerations that already exist. If they do exist, recycle them.
-13. Do not write comments in the output JSON object.
+13. If possible, you should use another appropriate base type rather than the default String type. Ex) startDate > Date, currentCapacity > Integer
+14. Do not write comments in the output JSON object.
 
 `
     }
@@ -443,7 +465,7 @@ We need to implement a basic order management system with the following requirem
 
 [OUTPUT]
 \`\`\`json
-{"thoughtProcess":{"step1-requirementsAnalysis":{"thought":"The requirements describe a simple order system with creation, cancellation, and inquiry functionality.","reflection":"Added inquiry requirement needs a read model for viewing order details.","result":{"requirements":[{"name":"order-creation","description":"Create new orders","matchedUserObjectNames":["Order","ShippingAddress"]},{"name":"order-management","description":"Handle order cancellations","matchedUserObjectNames":["Order"]},{"name":"order-inquiry","description":"View order details","matchedUserObjectNames":["Order","ShippingAddress"]}]}},"step2-designPossibleActions":{"thought":"We need basic commands for order creation and cancellation with their corresponding events.","reflection":"The actions are minimal but sufficient for the basic requirements.","result":{"requirements":{"order-creation":["CreateOrder"],"order-management":["CancelOrder"],"order-inquiry":["GetOrderDetails"]}}},"step3-determineDependencies":{"thought":"Order creation will need to update inventory. Cancellation is a simple status change.","reflection":"The dependencies are minimal and straightforward.","result":{"actions":{"CreateOrder":{"dependencies":["UpdateStock"]}}}},"step4-generateActions":{"thought":"Generate the basic aggregate, commands, and events needed.","reflection":"Keep the structure simple with only essential properties.","result":{"actions":[{"actionName":"DefineOrderAggregate","objectType":"Aggregate","ids":{"aggregateId":"agg-order"},"args":{"aggregateName":"Order","aggregateAlias":"Customer Order","properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"orderStatus","type":"OrderStatus"},{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"}]}},{"actionName":"DefineOrderStatusEnum","objectType":"Enumeration","ids":{"aggregateId":"agg-order","enumerationId":"enum-order-status"},"args":{"enumerationName":"OrderStatus","enumerationAlias":"Order Status","properties":[{"name":"PENDING"},{"name":"CONFIRMED"},{"name":"CANCELLED"}]}},{"actionName":"DefineShippingAddressVO","objectType":"ValueObject","ids":{"aggregateId":"agg-order","valueObjectId":"vo-shipping-address"},"args":{"valueObjectName":"ShippingAddress","valueObjectAlias":"Delivery Address","properties":[{"name":"street"},{"name":"city"},{"name":"zipCode"}]}},{"actionName":"CreateOrder","objectType":"Command","ids":{"aggregateId":"agg-order","commandId":"cmd-create-order"},"args":{"commandName":"CreateOrder","commandAlias":"Create New Order","api_verb":"POST","properties":[{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"},{"name":"shippingAddress","type":"ShippingAddress"}],"outputEventIds":["evt-order-created"],"actor":"Customer"}},{"actionName":"CancelOrder","objectType":"Command","ids":{"aggregateId":"agg-order","commandId":"cmd-cancel-order"},"args":{"commandName":"CancelOrder","commandAlias":"Cancel Order","api_verb":"PUT","properties":[{"name":"orderId","type":"Long","isKey":true}],"outputEventIds":["evt-order-cancelled"],"actor":"Customer"}},{"actionName":"OrderCreated","objectType":"Event","ids":{"aggregateId":"agg-order","eventId":"evt-order-created"},"args":{"eventName":"OrderCreated","eventAlias":"Order Created","properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"}],"outputCommandIds":[{"commandId":"cmd-update-stock","relatedAttribute":"stockQuantity","reason":"Update inventory stock level after order creation"}]}},{"actionName":"OrderCancelled","objectType":"Event","ids":{"aggregateId":"agg-order","eventId":"evt-order-cancelled"},"args":{"eventName":"OrderCancelled","eventAlias":"Order Cancelled","properties":[{"name":"orderId","type":"Long","isKey":true}],"outputCommandIds":[]}},{"actionName":"GetOrderDetails","objectType":"ReadModel","ids":{"aggregateId":"agg-order","readModelId":"read-order-details"},"args":{"readModelName":"OrderDetails","readModelAlias":"Order Details View","isMultipleResult":false,"properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"orderStatus","type":"OrderStatus"},{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"},{"name":"shippingAddress","type":"ShippingAddress"}],"actor":"Customer"}}]}},"step5-evaluateActions":{"thought":"Evaluate the completeness and quality of the generated order management system actions","reflection":"Consider if all requirements are met and best practices are followed","result":{"evaluationCriteria":{"requirementsCoverage":{"score":"95","details":["Order creation with product and shipping details implemented","Order cancellation functionality provided","Order details view with all required information"],"missingAspects":["No explicit confirmation flow defined"]},"domainModelQuality":{"score":"90","details":["Clear separation of Aggregate, ValueObject, and Enumeration","Proper use of ShippingAddress as ValueObject","Well-defined OrderStatus enumeration"],"improvements":["Could consider adding validation rules for quantity and address"]},"eventFlowCompleteness":{"score":"85","details":["Basic event flow for order creation and cancellation","Integration with inventory service through UpdateStock"],"gaps":["No compensation events for failed inventory updates"]},"bestPracticesAlignment":{"score":"90","details":["Commands and events properly named","Aggregate root identified with proper ID","Clear actor specification in commands"],"violations":["Some properties could have more specific types"]},"structureAlignment":{"score":"100","details":["All elements from suggested structure implemented","Order aggregate properly created with required properties","ShippingAddress value object implemented as suggested"],"matchedElements":[{"suggestedElement":"Order","implementedActions":["DefineOrderAggregate","CreateOrder","CancelOrder","GetOrderDetails"],"missingAspects":[]},{"suggestedElement":"ShippingAddress","implementedActions":["DefineShippingAddressVO"],"missingAspects":[]}],"unmatchedElements":[]}},"overallScore":"92","recommendedImprovements":[{"area":"Order Processing","description":"Add explicit order confirmation flow","suggestedActions":["CreateConfirmOrderCommand","AddOrderConfirmedEvent"]},{"area":"Error Handling","description":"Implement compensation logic for inventory updates","suggestedActions":["AddOrderFailedEvent","CreateRollbackInventoryCommand"]}],"needsIteration":false}}}}
+{"thoughtProcess":{"step1-requirementsAnalysis":{"thought":"The requirements describe a simple order system with creation, cancellation, and inquiry functionality.","reflection":"Added inquiry requirement needs a read model for viewing order details.","result":{"requirements":[{"name":"order-creation","description":"Create new orders","matchedUserObjectNames":["Order","ShippingAddress"]},{"name":"order-management","description":"Handle order cancellations","matchedUserObjectNames":["Order"]},{"name":"order-inquiry","description":"View order details","matchedUserObjectNames":["Order","ShippingAddress"]}]}},"step2-designPossibleActions":{"thought":"We need basic commands for order creation and cancellation with their corresponding events.","reflection":"The actions are minimal but sufficient for the basic requirements.","result":{"requirements":{"order-creation":["CreateOrder"],"order-management":["CancelOrder"],"order-inquiry":["GetOrderDetails"]}}},"step3-determineDependencies":{"thought":"Order creation will need to update inventory. Cancellation is a simple status change.","reflection":"The dependencies are minimal and straightforward.","result":{"actions":{"CreateOrder":{"dependencies":["UpdateStock"]}}}},"step4-generateActions":{"thought":"Generate the basic aggregate, commands, and events needed.","reflection":"Keep the structure simple with only essential properties.","result":{"actions":[{"actionName":"DefineOrderAggregate","objectType":"Aggregate","ids":{"aggregateId":"agg-order"},"args":{"aggregateName":"Order","aggregateAlias":"Customer Order","properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"orderStatus","type":"OrderStatus"},{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"},{"name":"shippingAddress","type":"ShippingAddress"},{"name":"orderDate","type":"Date"}]}},{"actionName":"DefineOrderStatusEnum","objectType":"Enumeration","ids":{"aggregateId":"agg-order","enumerationId":"enum-order-status"},"args":{"enumerationName":"OrderStatus","enumerationAlias":"Order Status","properties":[{"name":"PENDING"},{"name":"CONFIRMED"},{"name":"CANCELLED"}]}},{"actionName":"DefineShippingAddressVO","objectType":"ValueObject","ids":{"aggregateId":"agg-order","valueObjectId":"vo-shipping-address"},"args":{"valueObjectName":"ShippingAddress","valueObjectAlias":"Delivery Address","properties":[{"name":"street"},{"name":"city"},{"name":"zipCode"}]}},{"actionName":"CreateOrder","objectType":"Command","ids":{"aggregateId":"agg-order","commandId":"cmd-create-order"},"args":{"commandName":"CreateOrder","commandAlias":"Create New Order","api_verb":"POST","properties":[{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"},{"name":"shippingAddress","type":"ShippingAddress"}],"outputEventIds":["evt-order-created"],"actor":"Customer"}},{"actionName":"CancelOrder","objectType":"Command","ids":{"aggregateId":"agg-order","commandId":"cmd-cancel-order"},"args":{"commandName":"CancelOrder","commandAlias":"Cancel Order","api_verb":"PUT","properties":[{"name":"orderId","type":"Long","isKey":true}],"outputEventIds":["evt-order-cancelled"],"actor":"Customer"}},{"actionName":"OrderCreated","objectType":"Event","ids":{"aggregateId":"agg-order","eventId":"evt-order-created"},"args":{"eventName":"OrderCreated","eventAlias":"Order Created","properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"}],"outputCommandIds":[{"commandId":"cmd-update-stock","relatedAttribute":"stockQuantity","reason":"Update inventory stock level after order creation"}]}},{"actionName":"OrderCancelled","objectType":"Event","ids":{"aggregateId":"agg-order","eventId":"evt-order-cancelled"},"args":{"eventName":"OrderCancelled","eventAlias":"Order Cancelled","properties":[{"name":"orderId","type":"Long","isKey":true}],"outputCommandIds":[]}},{"actionName":"GetOrderDetails","objectType":"ReadModel","ids":{"aggregateId":"agg-order","readModelId":"read-order-details"},"args":{"readModelName":"OrderDetails","readModelAlias":"Order Details View","isMultipleResult":false,"properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"orderStatus","type":"OrderStatus"},{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"},{"name":"shippingAddress","type":"ShippingAddress"},{"name":"orderDate","type":"Date"}],"actor":"Customer"}}]}},"step5-evaluateActions":{"thought":"Evaluate the completeness and quality of the generated order management system actions","reflection":"Consider if all requirements are met and best practices are followed","result":{"evaluationCriteria":{"requirementsCoverage":{"score":"95","details":["Order creation with product and shipping details implemented","Order cancellation functionality provided","Order details view with all required information"],"missingAspects":["No explicit confirmation flow defined"]},"domainModelQuality":{"score":"90","details":["Clear separation of Aggregate, ValueObject, and Enumeration","Proper use of ShippingAddress as ValueObject","Well-defined OrderStatus enumeration"],"improvements":["Could consider adding validation rules for quantity and address"]},"eventFlowCompleteness":{"score":"85","details":["Basic event flow for order creation and cancellation","Integration with inventory service through UpdateStock"],"gaps":["No compensation events for failed inventory updates"]},"bestPracticesAlignment":{"score":"90","details":["Commands and events properly named","Aggregate root identified with proper ID","Clear actor specification in commands"],"violations":["Some properties could have more specific types"]},"structureAlignment":{"score":"100","details":["All elements from suggested structure implemented","Order aggregate properly created with required properties","ShippingAddress value object implemented as suggested"],"matchedElements":[{"suggestedElement":"Order","implementedActions":["DefineOrderAggregate","CreateOrder","CancelOrder","GetOrderDetails"],"missingAspects":[]},{"suggestedElement":"ShippingAddress","implementedActions":["DefineShippingAddressVO"],"missingAspects":[]}],"unmatchedElements":[]}},"overallScore":"92","recommendedImprovements":[{"area":"Order Processing","description":"Add explicit order confirmation flow","suggestedActions":["CreateConfirmOrderCommand","AddOrderConfirmedEvent"]},{"area":"Error Handling","description":"Implement compensation logic for inventory updates","suggestedActions":["AddOrderFailedEvent","CreateRollbackInventoryCommand"]}],"needsIteration":false}}}}
 \`\`\`
 
 `
@@ -476,6 +498,7 @@ ${JSON.stringify(draftOption)}
 * Did you create all of the ValueObjects and Enitities in the user's proposed structure as actions?
 * Are you creating duplicate actions that do the same thing as existing events and commands?
 * Are there any unnecessary actions that recreate ValueObjects, Entities, or Enumerations that already exist?
+* Did you use the right data type for each property name?
 
 [OUTPUT]
 \`\`\`json
@@ -485,16 +508,66 @@ ${JSON.stringify(draftOption)}
 
     createModel(text){
         const isFirstResponse = this.isFirstResponse
+        const aggregateDisplayName = this.inputedParams.targetAggregate.alias ? this.inputedParams.targetAggregate.alias : this.inputedParams.targetAggregate.name
         this.isFirstResponse = false
+
+        
+        let returnObj = {
+            generatorName: this.generatorName,
+            inputedParams: this.inputedParams,
+            modelRawValue: text,
+            isFirstResponse: isFirstResponse,
+            leftRetryCount: this.leftRetryCount,
+            isStopped: this.isStopped,
+            progress: this._getProcessPercentage(text),
+            actions: {
+                stopGeneration: () => {
+                    this.stop()
+                }
+            }
+        }
+
+        // 중지 상태에 대한 별도 처리를 하지 않으면 예외로 인식해서 재시도를 하기 때문에 반드시 있어야 함
+        if(this.state === "stopped") {
+            console.log(`[*] ${this.generatorName}에서 결과 생성 중지됨!`)
+            returnObj.directMessage = `stopped!`
+            this.isStopped = true
+            returnObj.isStopped = true
+            return returnObj
+        }
 
         if(this.state !== 'end') {
             console.log(`[*] ${this.generatorName}에서 결과 생성중... (현재 출력된 문자 수: ${text.length})`)
 
-            return {
-                generatorName: this.generatorName,
-                modelValue: null,
-                modelRawValue: text,
-                isFirstResponse: isFirstResponse
+            // 실시간으로 진행을 보여주기 위해서 가능한 경우, 부분적인 액션이라도 반환함
+            const particalActions = text.match(/({"actionName".*?"objectType".*?"ids".*?"args".*?){"actionName"/g)
+            
+            returnObj.directMessage = `Generating actions for ${aggregateDisplayName} Aggregate... (${text.length} characters generated)`
+            if(!particalActions || particalActions.length === 0)
+                return returnObj
+
+            let actions = []
+            for(let action of particalActions) {
+                try {
+                    const actionObj = GlobalPromptUtil.parseToJson(action.replace(`,{"actionName"`, ""))
+                    actions.push(actionObj)
+                } catch(e) {}
+            }
+            if(actions.length === 0)
+                return returnObj
+
+            try {
+                let {actions: appliedActions, createdESValue: createdESValue, removedElements: removedElements} = this._getActionAppliedESValue(actions)
+                return {
+                    ...returnObj,
+                    modelValue: {
+                        actions: appliedActions,
+                        createdESValue: createdESValue,
+                        removedElements: removedElements
+                    }
+                }
+            } catch(e) {
+                return returnObj
             }
         }
 
@@ -503,48 +576,69 @@ ${JSON.stringify(draftOption)}
             console.log(`[*] ${this.generatorName}에서 결과 파싱중...`, {text})
             const aiOutput = GlobalPromptUtil.parseToJson(text)
             let actions = aiOutput.thoughtProcess["step4-generateActions"].result.actions
-            actions = this.esAliasTransManager.transToUUIDInActions(actions)
-            this._restoreActions(actions, this.inputedParams.esValue, this.inputedParams.targetBoundedContext.name)
-            actions = this._filterActions(actions)
-            
-            let esValueToModify = JSON.parse(JSON.stringify(this.inputedParams.esValue))
+            let {actions: appliedActions, createdESValue: createdESValue, removedElements: removedElements} = this._getActionAppliedESValue(actions)
 
-            let removedElements = []
-            if(!this.inputedParams.isAccumulated)
-                removedElements = this._removePrevBoundedContextRelatedElements(this.inputedParams.targetBoundedContext.name, esValueToModify)
-
-            let createdESValue = ESActionUtil.getActionAppliedESValue(actions, this.inputedParams.userInfo, this.inputedParams.information, esValueToModify)
-
-            const outputResult = {
-                generatorName: this.generatorName,
+            returnObj = {
+                ...returnObj,
                 modelValue: {
-                    actions: actions,
+                    actions: appliedActions,
                     createdESValue: createdESValue,
                     removedElements: removedElements,
                     thoughtProcess: aiOutput.thoughtProcess
                 },
-                modelRawValue: text,
-                inputedParams: this.inputedParams,
-                isFirstResponse: isFirstResponse
-            }
-            console.log(`[*] ${this.generatorName}에서 결과 파싱 완료!`, {outputResult})
+                directMessage: `Generating actions for ${aggregateDisplayName} Aggregate... (${text.length} characters generated)`
+            }    
 
-            return outputResult
+            console.log(`[*] ${this.generatorName}에서 결과 파싱 완료!`, {returnObj})
+            return returnObj
 
         } catch(e) {
 
             console.error(`[!] ${this.modelName}에서 결과 파싱중에 오류 발생!`, {text, error:e})
+            console.error(e)
 
-            return {
-                generatorName: this.generatorName,
-                modelValue: null,
-                modelRawValue: text,
-                inputedParams: this.inputedParams,
-                isError: true,
-                isFirstResponse: isFirstResponse
+            const isDied = this.leftRetryCount <= 0
+            if(this.leftRetryCount > 0) {
+                this.leftRetryCount--
+                this.generate()
             }
 
+            return {
+                ...returnObj,
+                isError: true,
+                isDied: isDied,
+                errorMessage: e.message,
+                leftRetryCount: this.leftRetryCount,
+                directMessage: `An error occurred during creation,` + (isDied ? ' the model has died. please try again.' : ' retrying...(' + this.leftRetryCount + ' retries left)')
+            }
         }
+    }
+
+    _getActionAppliedESValue(actions) {
+        actions = this.esAliasTransManager.transToUUIDInActions(actions)
+        this._restoreActions(actions, this.inputedParams.esValue, this.inputedParams.targetBoundedContext.name)
+        actions = this._filterActions(actions)
+        
+        let esValueToModify = JSON.parse(JSON.stringify(this.inputedParams.esValue))
+
+        let removedElements = []
+        if(!this.inputedParams.isAccumulated)
+            removedElements = this._removePrevBoundedContextRelatedElements(this.inputedParams.targetBoundedContext.name, esValueToModify)
+
+        let createdESValue = ESActionUtil.getActionAppliedESValue(actions, this.inputedParams.userInfo, this.inputedParams.information, esValueToModify)
+
+        return { actions, createdESValue, removedElements }
+    }
+
+    _getProcessPercentage(text){
+        let checkStrings = ["step1-requirementsAnalysis", "\"requirements\"", "step2-designPossibleActions", "step3-determineDependencies", "\"actions\"", "step4-generateActions", "step5-evaluateActions", "\"evaluationCriteria\"", "\"recommendedImprovements\""]
+        
+        let foundCount = 0
+        for(let checkString of checkStrings){
+            if(text.includes(checkString)) foundCount++
+        }
+
+        return Math.round((foundCount / (checkStrings.length+1)) * 100)
     }
 
     _restoreActions(actions, esValue, targetBoundedContextName){
@@ -572,6 +666,14 @@ ${JSON.stringify(draftOption)}
                         ...action.ids
                     }
                     break
+                
+                case "ReadModel": {
+                    action.ids = {
+                        boundedContextId: targetBoundedContext.id,
+                        ...action.ids
+                    }
+                    break
+                }
 
                 case "Enumeration":
                     action.ids = {
@@ -718,167 +820,6 @@ ${JSON.stringify(draftOption)}
         }
         if(!targetBoundedContext) throw new Error(`${targetBoundedContextName}에 대한 정보를 찾을 수 없습니다.`)
         return targetBoundedContext
-    }
-}
-
-class ESValueSummarizeUtil_OnlyNameWithId {
-    static getGuidePrompt() {
-        return `You will receive a JSON object containing summarized information about the event storming model on which you will perform your task.
-The approximate structure is as follows.
-{
-    // The event storming model consists of multiple Bounded Contexts.
-    "<boundedContextId>": {
-        "id": "<boundedContextId>",
-        "name": "<boundedContextName>",
-        "actors": [
-            {
-                "id": "<actorId>",
-                "name": "<actorName>"
-            }
-        ],
-
-        // A Bounded Context has multiple aggregates.
-        "aggregates": {
-            "<aggregateId>": {
-                "id": "<aggregateId>",
-                "name": "<aggregateName>",
-
-                // Definitions of Entity objects used for the Aggregate Root properties.
-                "entities": [
-                    {
-                        "id": "<entityId>",
-                        "name": "<entityName>"
-                    }
-                ],
-                
-                // Definitions of Enum objects used for the Aggregate Root properties.
-                "enumerations": [
-                    {
-                        "id": "<enumerationId>",
-                        "name": "<enumerationName>"
-                    }
-                ],
-                
-                // Definitions of ValueObject objects used for the Aggregate Root properties.
-                "valueObjects": [
-                    {
-                        "id": "<valueObjectId>",
-                        "name": "<valueObjectName>"
-                    }
-                ],
-                
-                // List of commands representing requests through REST API.
-                "commands": [
-                    {
-                        "id": "<commandId>",
-                        "name": "<commandName>",
-                        "api_verb":  <"POST" | "DELETE" | "PUT">,
-                        "outputEvents": [{
-                            "id": "<eventId>",
-                            "name": "<eventName>"
-                        }] // Information about the event that occurs when this command is requested.
-                    }
-                ],
-                
-                // List of events triggered by commands.
-                "events": [
-                    {
-                        "id": "<eventId>",
-                        "name": "<eventName>",
-                        "outputCommands": [{
-                            "id": "<commandId>",
-                            "name": "<commandName>"
-                        }] // Information about the command that occurs when this event is requested.
-                    }
-                ]
-            }
-        }
-    }
-}
-
-`
-    }
-
-    static getFilteredSummarizedESValue(esValue, esAliasTransManager){
-        const summarizedESValue = esAliasTransManager.transToAliasInSummarizedESValue(
-            ESValueSummarizeUtil.getSummarizedESValue(esValue)
-        )
-
-        let filteredSummarizedESValue = {}
-        for(let boundedContext of Object.values(summarizedESValue))
-        {
-            let filteredAggregates = {}
-            for(let aggregate of Object.values(boundedContext.aggregates))
-                filteredAggregates[aggregate.id] = ESValueSummarizeUtil_OnlyNameWithId._getFilteredAggregate(aggregate)
-
-            filteredSummarizedESValue[boundedContext.id] = {
-                id: boundedContext.id,
-                name: boundedContext.name,
-                actors: boundedContext.actors.map(actor => {
-                    return {
-                        id: actor.id,
-                        name: actor.name
-                    }
-                }),
-                aggregates: filteredAggregates
-            }
-        }
-        return filteredSummarizedESValue
-    }
-
-    static _getFilteredAggregate(aggregate){
-        return {
-            id: aggregate.id,
-            name: aggregate.name,
-
-            entities: aggregate.entities.map(entity => {
-                return {
-                    id: entity.id,
-                    name: entity.name
-                }
-            }),
-            
-            enumerations: aggregate.enumerations.map(enumeration => { 
-                return {
-                    id: enumeration.id,
-                    name: enumeration.name
-                }
-            }),
-
-            valueObjects: aggregate.valueObjects.map(valueObject => {
-                return {
-                    id: valueObject.id,
-                    name: valueObject.name
-                }
-            }),
-
-            commands: aggregate.commands.map(command => {
-                return {
-                    id: command.id,
-                    name: command.name,
-                    api_verb: command.api_verb,
-                    outputEvents: (command.outputEvents) ? command.outputEvents.map(event => {
-                        return {
-                            id: event.id,
-                            name: event.name
-                        }
-                    }) : []
-                }
-            }),
-
-            events: aggregate.events.map(event => {
-                return {
-                    id: event.id,
-                    name: event.name,
-                    outputCommands: (event.outputCommands) ? event.outputCommands.map(command => {
-                        return {
-                            id: command.id,
-                            name: command.name
-                        }
-                    }) : []
-                }
-            })
-        }
     }
 }
 
