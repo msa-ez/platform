@@ -67,7 +67,7 @@
                                             </v-card-subtitle>
                                             <v-card-subtitle v-else> {{persona.description}}</v-card-subtitle>
                                             
-                                            <!-- <v-card-actions>
+                                            <v-card-actions>
                                             <v-btn
                                                 class="ms-2"
                                                 variant="outlined"
@@ -78,7 +78,7 @@
                                             >
                                                 NEXT
                                             </v-btn>
-                                            </v-card-actions> -->
+                                            </v-card-actions>
                                         </div>
                                     </div>
                                 </v-card>                                       
