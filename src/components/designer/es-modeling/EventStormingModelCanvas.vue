@@ -5135,7 +5135,7 @@
                         if (!element.fallback) element.fallback = false;
                         if (!element.circuitBreaker) element.circuitBreaker = false
                     }  else if (sourceType.endsWith('View') && targetType.endsWith('Aggregate') ) {
-                        element.name = 'UI-Mashup'
+                        // element.name = 'UI-Mashup'
                     }
                     // end of RelationSetting
 
