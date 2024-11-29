@@ -23,10 +23,6 @@
             Bounded Contexts become a name of the files
         </template>
 
-        <template slot="md-title-side">
-
-        </template>
-
         <template slot="t-edit-user">
             <div
                     v-if="newEditUserImg.length > 0 && isReadOnly"
@@ -50,13 +46,19 @@
         </template>
 
         <template slot="generateWithAi">
-            <div><span>
-                <div>
-                    <v-btn v-if="generateDone" :disabled="!value.description" class="auto-modeling-btn" color="primary" @click="generate()"><v-icon>mdi-auto-fix</v-icon>(RE)Generate Inside</v-btn>
-                    <v-btn v-if="!generateDone" class="auto-modeling-btn" color="primary" @click="stop()"><v-icon>mdi-auto-fix</v-icon>Stop Generation</v-btn>
-                    <!-- <v-btn v-if="!value.description" class="auto-modeling-btn" color="primary" @click="explain()"><v-icon>mdi-auto-fix</v-icon>Generate description</v-btn> -->
-                </div>
-            </span></div>
+            <div>
+                <span>
+                    <div>
+                        <v-btn v-if="generateDone" :disabled="!value.description" 
+                            class="auto-modeling-btn" color="primary" @click="onClickReGenerateInside">
+                            <v-icon>mdi-auto-fix</v-icon>(RE)Generate Inside
+                        </v-btn>
+                        <v-btn v-else class="auto-modeling-btn" color="primary" @click="$emit('onClickStopReGenerateInside')">
+                            <v-icon>mdi-auto-fix</v-icon>Stop Generation
+                        </v-btn>
+                    </div>
+                </span>
+            </div>
         </template>
             
         <template slot="element">
@@ -158,14 +160,12 @@
 <script>
     import CommonPanel from "./CommonPanel";
     import EventStormingModelPanel from "../EventStormingModelPanel";
-    import Explainer from "../../modeling/generators/ModelExplainGenerator";
-    import getParent from "../../../../utils/getParent"
 
     export default {
         mixins: [EventStormingModelPanel],
         name: 'boundedcontext-panel',
         props: {
-            generator: Object
+            generateDone: {type: Boolean, required: true, default: true}
         },
         components: {
             CommonPanel
@@ -191,25 +191,7 @@
                         text: 'Admin',
                         value: 'admin',
                     }
-                ],
-
-                state:{
-                    generator: "BCGenerator",
-                    firstMessageIsTyping: true,
-                    secondMessageIsTyping: true,
-                    userStory: '',
-                    communicationStyle: 'Choreography', // 'Orchestration'
-                    aggregateDetail: false,
-                    uiStyle: this.uiStyle
-                },
-                generateDone: {
-                    type: Boolean,
-                    required: true
-                },
-                generator: null,
-                explainer: null,
-                model: null
-
+                ]
             }
         },
         computed: {
@@ -227,6 +209,7 @@
                 }
                 return result;
             },
+            
             selectedTemplateLists() {
                 var me = this
                 var list = null
@@ -237,17 +220,13 @@
                 }
                 return list
             },
+
             input(){
                 return{ 
                     description: this.value.description,
                     boundedContext: this.value,
                 }
-            },
-
-        },
-        created: function () { },
-        mounted(){
-           this.setExplainer();
+            }
         },
         beforeDestroy(){
             var me = this;
@@ -269,73 +248,20 @@
                 // Common
                 me.$super(EventStormingModelPanel).panelInit()
             },
-            setExplainer(){
-                var me = this;
-                //me.generator
-                me.explainer = new Explainer({
-                    input: {bcName: me.value.name, model: null},
-                    onReceived(explain){
-                        me.value.description = explain;
-                    }
-                })
-            },
+
             onReceived(content){
                 // this.value.description = content;
             },
 
-            onModelCreated(model){
-                this.$EventBus.$emit('createModelInBoundedContext', model);
-            },
-
-            async onGenerationFinished(){
-                this.$emit('update:generateDone', true);
-                this.$EventBus.$emit('generationFinished');
-            },  
-
-            generate(){
-                let modelCanvas = getParent(this.$parent, 'event-storming-model-canvas')
-                this.model = modelCanvas.value
-
-                this.executeBeforeDestroy()  //TODO [Refactoring] method 명은 apply() 정도가 좋겠음.
-
-                this.generator.generate();
-                if(this.generator.initRetryCount) this.generator.initRetryCount()
-
-                this.state.startTemplateGenerate = true
-                this.$emit('update:generateDone', false);
-                this.generateDone = false;    
-            },
-
-            stop(){
-                this.generator.stop()
-                this.generateDone = true
-            },
-
-            explain(){
-
-                let parent = this.$parent;
-                while(parent.$vnode.tag.indexOf('event-storming-model-canvas') == -1) parent = parent.$parent;
-
-                let model = Object.assign([], parent.value)
-
-                this.explainer.client.input.model = model
-                this.explainer.client.input.bcName = this.value.name
-                this.explainer.generate();
-            },
-
-
-            uuid: function () {
-                function s4() {
-                    return Math.floor((1 + Math.random()) * 0x10000)
-                        .toString(16)
-                        .substring(1);
-                }
-
-                return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-                    s4() + '-' + s4() + s4() + s4();
-            },
             updateBCName(){
                 this.$emit('updateBCName')
+            },
+
+            onClickReGenerateInside(){
+                this.$emit('onClickReGenerateInside', {
+                    ...this.value,
+                    description: this.value.description
+                })
             }
         }
     }
