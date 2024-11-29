@@ -277,6 +277,7 @@
                             ...this.boundedContextPanelDto,
                             generateDone: false,
                             actions: {
+                                ...this.boundedContextPanelDto.actions,
                                 onClickStopReGenerateInside: () => {
                                     returnObj.actions.stopGeneration()
                                 }
@@ -306,7 +307,7 @@
                         this.canvas.modelDraftDialogWithXAIDto.draftUIInfos.progress = returnObj.progress
                     },
 
-                    onGenerationFinished: (returnObj) => {
+                    onGenerationSucceeded: (returnObj) => {
                         const getXAIDtoDraftOptions = (output, targetBoundedContext, description) => {
                             return {
                                 boundedContext: targetBoundedContext.name,
@@ -321,7 +322,6 @@
                             }
                         }
 
-                        if(returnObj.isStopped || returnObj.isError) return
                         this.canvas.modelDraftDialogWithXAIDto = {
                             ...this.canvas.modelDraftDialogWithXAIDto,
                             draftOptions: [getXAIDtoDraftOptions(

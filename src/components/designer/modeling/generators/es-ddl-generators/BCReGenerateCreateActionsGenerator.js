@@ -676,7 +676,7 @@ They represent complex domain concepts that don't qualify as Aggregates but need
         let targetBoundedContext = null
         for(let element of Object.values(esValue.elements).filter(element => element)) {
             if(element._type === "org.uengine.modeling.model.BoundedContext") {
-                if(element.name === targetBoundedContextName) targetBoundedContext = element
+                if(element.name.toLowerCase() === targetBoundedContextName.toLowerCase()) targetBoundedContext = element
             }
         }
         if(!targetBoundedContext) throw new Error(`${targetBoundedContextName}에 대한 정보를 찾을 수 없습니다.`)
