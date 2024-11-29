@@ -9,16 +9,28 @@
 
         <v-card-subtitle>
             <div class="d-flex align-center">
-                <div v-if="draftUIInfos.leftBoundedContextCount > 0">
-                    <p class="mb-0">{{ draftUIInfos.leftBoundedContextCount }} Bounded Contexts remaining...</p>
-                </div>
                 <v-progress-circular
                     v-if="draftUIInfos.leftBoundedContextCount > 0"
+                    :value="draftUIInfos.progress"
+                    :indeterminate="draftUIInfos.progress === null"
                     color="primary"
-                    indeterminate
-                    size="24"
-                    class="ml-2"
+                    size="20"
+                    :width="3"
+                    class="mr-3"
                 ></v-progress-circular>
+
+                <div v-if="draftUIInfos.leftBoundedContextCount > 0" 
+                    class="text-body-2"
+                >
+                    <template v-if="draftUIInfos.directMessage">
+                        <span>{{ draftUIInfos.directMessage }}</span>
+                    </template>
+                    <template v-else>
+                        <span>
+                            <strong>{{ draftUIInfos.leftBoundedContextCount }}</strong> Bounded Contexts remaining...
+                        </span>
+                    </template>
+                </div>
             </div>
         </v-card-subtitle>
 
@@ -39,9 +51,9 @@
                         <h3>Bounded Context: {{ boundedContextInfo.boundedContext }}</h3>
                     </div> -->
 
-                    <v-row class="ma-0 pa-0">
+                    <v-row class="ma-0 pa-0" :key="selectedCardKey">
                         <v-col v-for="(option, index) in boundedContextInfo.options" 
-                            :key="selectedCardKey" 
+                            :key="index"
                             class="ma-0 pa-4 pr-4"
                         >
                             <v-card

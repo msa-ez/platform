@@ -12,7 +12,8 @@ class BoundedContextActionsProcessor {
 
     static _createBoundedContext(action, userInfo, information, esValue, callbacks) {
         let boundedContextObject = BoundedContextActionsProcessor.__getBoundedContextBase(
-            userInfo, information, action.args.boundedContextName, "", 
+            userInfo, information, action.args.boundedContextName,
+            action.args.boundedContextAlias ? action.args.boundedContextAlias : "", 
             BoundedContextActionsProcessor.__getValidPortNumber(esValue),
             0, 0, action.ids.boundedContextId
         )

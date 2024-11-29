@@ -1,59 +1,25 @@
-const JsonAIGenerator = require("../JsonAIGenerator");
-const GlobalPromptUtil = require("./modules/GlobalPromptUtil");
+const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
 
-class DraftGeneratorByFunctions extends JsonAIGenerator{
+class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
-        this.model = "gpt-4o-2024-11-20"
-        this.generatorName = 'DraftGeneratorByFunctions'
-        this.inputedParams = null
-        this.isFirstResponse = true
-
-        this.preferredLanguage = this.preferredLanguage ? this.preferredLanguage : "English"
-        this.temperature = 1.0
-        this.top_p = 0.6
-    }
-    
-
-    createPrompt(){
-        try {
-
-            for(let optionKey of ["description", "boundedContext"])
-                if(this.client.input[optionKey] === undefined) 
-                    throw new Error(`${optionKey} 파라미터가 전달되지 않았습니다.`)
-            this.inputedParams = {
-                description: this.client.input.description,
-                targetBoundedContext: this.client.input.boundedContext
-            }
-            
-            console.log(`[*] ${this.generatorName}에 대한 프롬프트 생성중...`, {inputedParams: this.inputedParams})
-
-            const prompt = this._getSystemPrompt() + this._getUserPrompt(
-                this.inputedParams.description
-            )
-
-            console.log(`[*] LLM에게 ${this.generatorName}에서 생성된 프롬프트 전달중...`, {prompt})
-            this.isFirstResponse = true
-            return prompt
-
-        } catch(e) {
-
-            console.error(`[!] ${this.generatorName}에 대한 프롬프트 생성 도중에 오류 발생!`, {inputedParams: this.inputedParams, error:e})
-            console.error(e)
-            throw e
-
-        }
+        this.checkInputParamsKeys = ["description", "boundedContext"]
+        this.progressCheckStrings = ["step1-requirementsAnalysis", "\"requirements\"", "step2-designPossibleAggregates", "\"aggregates\"", "step3-designPossibleOptions", "\"options\"", "step4-evaluateOptions", "\"evaluationCriteria\"", "\"optionEvaluations\"", "\"overallAssessment\""]
     }
 
-    _getSystemPrompt(){
-        return this.__getFrontGuidePrompt() +
-            this.__getOutputSyntaxGuidePrompt() +
-            this.__getExamplePrompt() +
-            GlobalPromptUtil.getJsonCompressGuidePrompt()
+
+    __buildAgentRolePrompt(){
+        return `You are an experienced domain-driven design (DDD) architect specializing in aggregate design. Your expertise lies in:
+- Breaking down complex domains into well-structured aggregates
+- Identifying appropriate boundaries between entities and value objects
+- Ensuring proper encapsulation and consistency within aggregates
+- Designing maintainable and scalable domain models
+- Balancing between different design options based on business requirements
+`
     }
 
-    __getFrontGuidePrompt(){
+    __buildTaskGuidelinesPrompt(){
         return `You are required to write a proposal on how to define multiple Aggregates in a given Bounded Context via a passed in functional requirements.
 
 Please follow these rules.
@@ -68,14 +34,11 @@ Recommendation Instructions to write proposal.
 2. Generate different options based on each of the perspectives provided by ACID.
 3. Create at least two unique, non-duplicate options.
 4. You should ultimately choose the best option out of the several options and write why, which will be selected by default.
-
 `
     }
 
-    __getOutputSyntaxGuidePrompt() {
-        return `You should return a list containing JSON objects for performing specific actions.
-The returned format should be as follows.
-\`\`\`json
+    __buildResponseFormatPrompt() {
+        return super.__buildResponseFormatPrompt(`
 {
     "thoughtProcess": {
         // Analyse the user's needs as much as possible and rewrite the requirements to be specific and clear.
@@ -137,18 +100,69 @@ The returned format should be as follows.
                 "defaultOptionIndex": "The index of the option that is selected by default(starts from 0)",
                 "conclusions": "Write a conclusion for each option, explaining in which cases it would be best to choose that option."
             }
-        }
-    }
-}
-\`\`\`
+        },
 
-`
+        // Evaluate the quality and completeness of the designed options
+        "step4-evaluateOptions": {
+            "thought": "Evaluate the quality and completeness of the designed options",
+           "reflection": "Consider if the options effectively address the requirements and follow DDD best practices",
+           "result": {
+               "evaluationCriteria": {
+                   "domainAlignment": {
+                       "score": "<0-100>",
+                       "details": ["<domain alignment detail>", ...],
+                       "improvements": ["<suggested domain improvement>", ...]
+                   },
+                   "aggregateDesign": {
+                       "score": "<0-100>",
+                       "details": ["<aggregate design detail>", ...],
+                       "issues": ["<identified design issue>", ...]
+                   },
+                   "boundaryConsistency": {
+                       "score": "<0-100>",
+                       "details": ["<boundary consistency detail>", ...],
+                       "inconsistencies": ["<identified inconsistency>", ...]
+                   },
+                   "maintainability": {
+                       "score": "<0-100>",
+                       "details": ["<maintainability detail>", ...],
+                       "concerns": ["<maintainability concern>", ...]
+                   },
+                   "valueObjectUsage": {
+                       "score": "<0-100>",
+                       "details": ["<value object usage detail>", ...],
+                       "opportunities": ["<missed value object opportunity>", ...]
+                   }
+               },
+               "optionEvaluations": [
+                   {
+                       "optionIndex": "<index of option from step3>",
+                       "strengths": ["<strength of this option>", ...],
+                       "weaknesses": ["<weakness of this option>", ...],
+                       "score": "<0-100>"
+                   }
+               ],
+               "overallAssessment": {
+                   "bestOptionIndex": "<index of best option>",
+                   "justification": "<explanation of why this option is best>",
+                   "recommendedImprovements": [
+                       {
+                           "area": "<improvement area>",
+                           "description": "<improvement description>",
+                           "applicableOptions": ["<option index>", ...]
+                       }
+                   ]
+               },
+               "needsRevision": "<true|false>" // true if best option score < 80
+           }
+       }
+    }
+}`)
     }
 
-    __getExamplePrompt(){
-        return `Let me give you an example.
-[INPUT]
-- Functional Requirements
+    __buildExamplePrompt(){
+        const inputs = {
+            "Functional Requirements": `
 We need to create a 'Room Reservation' screen and a 'Reservation Status' screen for managing meeting room reservations.
 
 The 'Room Reservation' screen consists of two main sections: requester information and reservation details. The requester information section displays the requester's name, department, employee ID, office phone, mobile number, request date (YYYY.MM.DD), and approver information. Users can search and select a different approver by clicking a search button that opens a popup.
@@ -159,88 +173,42 @@ The 'Reservation Status' screen shows all reservations made by the user. It incl
 
 The detail popup includes buttons for modification, cancellation, and printing. Modifications are only allowed for reservations in 'pending' status. Cancellation changes the status to 'cancelled' and can only be done before the meeting start time. The print button generates a printable version of the reservation details.
 
-All fields except additional notes are required for submission. The submit button should only be activated when all required fields are filled. All data must be stored in the database upon successful submission.
+All fields except additional notes are required for submission. The submit button should only be activated when all required fields are filled. All data must be stored in the database upon successful submission.`
+        }
 
-[OUTPUT]
-\`\`\`json
-{"thoughtProcess":{"step1-requirementsAnalysis":{"thought":"The requirements describe a meeting room reservation system with two main functionalities: room reservation and reservation management. Let's break down the core requirements and identify key entities.","reflection":"We should consider the relationship between reservations and rooms, and how to handle the approval workflow efficiently.","result":{"requirements":[{"name":"reservation-creation","description":"Users must be able to create room reservations with requester details and meeting specifications"},{"name":"room-management","description":"System needs to manage meeting rooms with their properties and availability"},{"name":"approval-workflow","description":"Reservations require approval process with different status management"},{"name":"equipment-handling","description":"Rooms can have different equipment configurations that need to be tracked"},{"name":"catering-service","description":"Optional catering services can be added to reservations"}]}},"step2-designPossibleAggregates":{"thought":"We need to identify the main aggregates that will form the core of our domain model. The reservation process seems to be the main focus.","reflection":"We should consider separating room management from reservations to allow independent scaling and maintenance.","result":{"aggregates":[{"name":"Reservation","alias":"reservation","entities":["Requester","Approver"],"valueObjects":["ReservationPeriod","CateringDetails"],"usedRequestNames":["reservation-creation","approval-workflow","catering-service"]},{"name":"Room","alias":"room","entities":["Equipment"],"valueObjects":["Location","Capacity"],"usedRequestNames":["room-management","equipment-handling"]}]}},"step3-designPossibleOptions":{"thought":"Let's create different options for organizing these aggregates, considering various trade-offs.","reflection":"We should consider both tight and loose coupling approaches between Room and Reservation.","result":{"options":[{"structure":[{"aggregate":{"name":"Reservation","alias":"Reservation"},"entities":[{"name":"Requester","alias":"Requester"},{"name":"Approver","alias":"Approver"}],"valueObjects":[{"name":"ReservationPeriod","alias":"ReservationPeriod"},{"name":"CateringDetails","alias":"CateringDetails"}]},{"aggregate":{"name":"Room","alias":"Room"},"entities":[{"name":"Equipment","alias":"Equipment"}],"valueObjects":[{"name":"Location","alias":"Location"},{"name":"Capacity","alias":"Capacity"}]}],"pros":"Each aggregate is managed independently providing good scalability, clear separation of responsibilities between room management and reservation management","cons":"Requires querying between two aggregates when checking reservation availability"},{"structure":[{"aggregate":{"name":"RoomReservation","alias":"RoomReservation"},"entities":[{"name":"Room","alias":"Room"},{"name":"Requester","alias":"Requester"},{"name":"Approver","alias":"Approver"}],"valueObjects":[{"name":"ReservationPeriod","alias":"ReservationPeriod"},{"name":"Equipment","alias":"Equipment"},{"name":"CateringDetails","alias":"CateringDetails"}]}],"pros":"All reservation-related information is managed in a single aggregate, making queries simple","cons":"The aggregate may become too large making changes difficult, and room management functionality may be limited to expand"}],"defaultOptionIndex":0,"conclusions":"The first option provides better scalability and maintainability by clearly separating room management and reservation management responsibilities. The second option is easier to implement in simple systems but may become harder to manage as the system grows."}}}}
-\`\`\`
+        const jsonOutput = `
 
-`
+{"thoughtProcess":{"step1-requirementsAnalysis":{"thought":"The requirements describe a meeting room reservation system with two main functionalities: room reservation and reservation management. Let's break down the core requirements and identify key entities.","reflection":"We should consider the relationship between reservations and rooms, and how to handle the approval workflow efficiently.","result":{"requirements":[{"name":"reservation-creation","description":"Users must be able to create room reservations with requester details and meeting specifications"},{"name":"room-management","description":"System needs to manage meeting rooms with their properties and availability"},{"name":"approval-workflow","description":"Reservations require approval process with different status management"},{"name":"equipment-handling","description":"Rooms can have different equipment configurations that need to be tracked"},{"name":"catering-service","description":"Optional catering services can be added to reservations"}]}},"step2-designPossibleAggregates":{"thought":"We need to identify the main aggregates that will form the core of our domain model. The reservation process seems to be the main focus.","reflection":"We should consider separating room management from reservations to allow independent scaling and maintenance.","result":{"aggregates":[{"name":"Reservation","alias":"reservation","entities":["Requester","Approver"],"valueObjects":["ReservationPeriod","CateringDetails"],"usedRequestNames":["reservation-creation","approval-workflow","catering-service"]},{"name":"Room","alias":"room","entities":["Equipment"],"valueObjects":["Location","Capacity"],"usedRequestNames":["room-management","equipment-handling"]}]}},"step3-designPossibleOptions":{"thought":"Let's create different options for organizing these aggregates, considering various trade-offs.","reflection":"We should consider both tight and loose coupling approaches between Room and Reservation.","result":{"options":[{"structure":[{"aggregate":{"name":"Reservation","alias":"Reservation"},"entities":[{"name":"Requester","alias":"Requester"},{"name":"Approver","alias":"Approver"}],"valueObjects":[{"name":"ReservationPeriod","alias":"ReservationPeriod"},{"name":"CateringDetails","alias":"CateringDetails"}]},{"aggregate":{"name":"Room","alias":"Room"},"entities":[{"name":"Equipment","alias":"Equipment"}],"valueObjects":[{"name":"Location","alias":"Location"},{"name":"Capacity","alias":"Capacity"}]}],"pros":"Each aggregate is managed independently providing good scalability, clear separation of responsibilities between room management and reservation management","cons":"Requires querying between two aggregates when checking reservation availability"},{"structure":[{"aggregate":{"name":"RoomReservation","alias":"RoomReservation"},"entities":[{"name":"Room","alias":"Room"},{"name":"Requester","alias":"Requester"},{"name":"Approver","alias":"Approver"}],"valueObjects":[{"name":"ReservationPeriod","alias":"ReservationPeriod"},{"name":"Equipment","alias":"Equipment"},{"name":"CateringDetails","alias":"CateringDetails"}]}],"pros":"All reservation-related information is managed in a single aggregate, making queries simple","cons":"The aggregate may become too large making changes difficult, and room management functionality may be limited to expand"}],"defaultOptionIndex":0,"conclusions":"The first option provides better scalability and maintainability by clearly separating room management and reservation management responsibilities. The second option is easier to implement in simple systems but may become harder to manage as the system grows."}},"step4-evaluateOptions":{"thought":"Let's evaluate both options against key DDD principles and system requirements","reflection":"We need to ensure the chosen design supports scalability, maintainability, and proper domain alignment","result":{"evaluationCriteria":{"domainAlignment":{"score":"90","details":["Both options clearly represent the core domain concepts of reservations and rooms","The separation of concerns aligns well with business operations"],"improvements":["Consider adding domain events for reservation status changes"]},"aggregateDesign":{"score":"85","details":["Option 1 maintains clear aggregate boundaries","Option 2 provides simpler transaction management"],"issues":["Option 2's aggregate might grow too large over time","Option 1 requires careful consistency management between aggregates"]},"boundaryConsistency":{"score":"80","details":["Both options maintain clear bounded contexts","Transaction boundaries are well-defined"],"inconsistencies":["Room availability checking might need eventual consistency in Option 1"]},"maintainability":{"score":"95","details":["Option 1 allows independent evolution of room and reservation features","Separation of concerns makes code organization clearer"],"concerns":["Option 2 might require more frequent changes across the entire aggregate"]},"valueObjectUsage":{"score":"85","details":["Appropriate use of value objects for ReservationPeriod and Location","CateringDetails as value object captures related attributes well"],"opportunities":["Could consider making Equipment a value object in Option 1"]}},"optionEvaluations":[{"optionIndex":0,"strengths":["Clear separation of concerns","Independent scalability","Better maintainability"],"weaknesses":["More complex querying","Eventual consistency challenges"],"score":"88"},{"optionIndex":1,"strengths":["Simpler implementation","Stronger consistency guarantees","Easier querying"],"weaknesses":["Limited scalability","Risk of aggregate growth","Tighter coupling"],"score":"75"}],"overallAssessment":{"bestOptionIndex":0,"justification":"Option 1 provides better long-term maintainability and scalability, which are crucial for a reservation system that might need to handle multiple locations and complex booking rules in the future","recommendedImprovements":[{"area":"Consistency Management","description":"Implement eventual consistency patterns for room availability checks","applicableOptions":["0"]},{"area":"Domain Events","description":"Add domain events for reservation status changes to improve integration","applicableOptions":["0","1"]}]},"needsRevision":false}}}}
+
+        `
+
+        return super.__buildExamplePrompt(inputs, jsonOutput)
     }
 
-    _getUserPrompt(description){
-        return `Now let's process the user's input.
-[INPUT]
-- Functional Requirements
-${description}
+    _buildUserQueryPrompt(){
+        return super._buildUserQueryPrompt({
+            "Functional Requirements": this.client.input.description,
 
-- Final Check List
+            "Final Check List": `
 * Have you adequately addressed all of your users' needs?
 * Are there no Entities, ValueObjects with one property or unnecessary properties?
 * Are there any options that are redundant and effectively meaningless?
 * Did you write the name property of the object you created in English and the alias property in ${this.preferredLanguage} language?
-
-[OUTPUT]
-\`\`\`json
 `
+        })
     }
 
 
-    createModel(text){
-        const isFirstResponse = this.isFirstResponse
-        this.isFirstResponse = false
+    onCreateModelGenerating(returnObj) {
+        returnObj.directMessage = `Generating options for ${this.client.input.boundedContext.name} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        super.onCreateModelGenerating(returnObj)
+    }
 
-        if(this.state !== 'end') {
-            console.log(`[*] ${this.generatorName}에서 결과 생성중... (현재 출력된 문자 수: ${text.length})`)
-
-            return {
-                generatorName: this.generatorName,
-                modelValue: null,
-                modelRawValue: text,
-                isFirstResponse: isFirstResponse
-            }
-        }
-
-        try {
-
-            console.log(`[*] ${this.generatorName}에서 결과 파싱중...`, {text})
-
-
-            let aiOutput = GlobalPromptUtil.parseToJson(text)
-
-
-            const outputResult = {
-                generatorName: this.generatorName,
-                modelValue: {
-                    thoughtProcess: aiOutput.thoughtProcess,
-                    output: aiOutput.thoughtProcess["step3-designPossibleOptions"].result
-                },
-                modelRawValue: text,
-                inputedParams: this.inputedParams,
-                isFirstResponse: isFirstResponse
-            }
-            console.log(`[*] ${this.generatorName}에서 결과 파싱 완료!`, {outputResult})
-
-            return outputResult
-
-        } catch(e) {
-
-            console.error(`[!] ${this.modelName}에서 결과 파싱중에 오류 발생!`, {text, error:e})
-            console.error(e)
-
-            return {
-                generatorName: this.generatorName,
-                modelValue: null,
-                modelRawValue: text,
-                inputedParams: this.inputedParams,
-                isError: true,
-                isFirstResponse: isFirstResponse
-            }
-
-        }
+    onCreateModelFinished(returnObj) {
+        returnObj.modelValue.output = returnObj.modelValue.aiOutput.thoughtProcess["step3-designPossibleOptions"].result
+        returnObj.directMessage = `Generating options for ${this.client.input.boundedContext.name} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        super.onCreateModelFinished(returnObj)
     }
 }
-
 
 module.exports = DraftGeneratorByFunctions;

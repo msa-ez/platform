@@ -1909,12 +1909,20 @@
                 :draftUIInfos="modelDraftDialogWithXAIDto.draftUIInfos"
                 :isGeneratorButtonEnabled="modelDraftDialogWithXAIDto.isGeneratorButtonEnabled"
                 @generateFromDraft="generateFromDraftWithXAI"
-                @close="modelDraftDialogWithXAIDto.isShow = false"
+                @close="modelDraftDialogWithXAIDto.isShow = false; modelDraftDialogWithXAIDto.actions.stop()"
             ></ModelDraftDialogWithXAI>
           </v-dialog>
 
           
         <!-- <gitAPIMenu></gitAPIMenu> -->
+        <div style="position:absolute; top:75px; right:35px; z-index:999;">
+            <GeneratorProgress
+            :generateDone="generatorProgressDto.generateDone"
+            :displayMessage="generatorProgressDto.displayMessage"
+            :progress="generatorProgressDto.progress"
+            @stopGeneration="generatorProgressDto.actions.stopGeneration"
+            ></GeneratorProgress>
+        </div>
     </div>
 </template>
 
@@ -1957,6 +1965,7 @@
     import TestByUsingCommand from "./mixins/TestByUsingCommand"
     import ModelDraftDialogWithXAI from "../context-mapping-modeling/dialogs/ModelDraftDialogWithXAI.vue"
     import BCReGenerateCreateActionsGenerator from "../modeling/generators/es-ddl-generators/BCReGenerateCreateActionsGenerator"
+    import GeneratorProgress from "./components/GeneratorProgress.vue"
     const prettier = require("prettier");
     const plugins = require("prettier-plugin-java");
     const axios = require("axios");
@@ -2026,7 +2035,8 @@
             MouseCursorComponent,
             ModelDraftDialog,
             ModelDraftDialogForDistribution,
-            ModelDraftDialogWithXAI
+            ModelDraftDialogWithXAI,
+            GeneratorProgress
             // ModelCodeGenerator
         },
         props: {
@@ -2418,9 +2428,25 @@
                     draftUIInfos: {
                         leftBoundedContextCount: 0
                     },
-                    isGeneratorButtonEnabled: true
+                    isGeneratorButtonEnabled: true,
+                    actions: {
+                        stop: () => {}
+                    }
                 },
-                BCRegenerateCreateActionsGeneratorInputs: []
+                BCRegenerateCreateActionsGeneratorInputs: [],
+
+                generatorProgressDto: {
+                    generateDone: true,
+                    displayMessage: '',
+                    progress: 0,
+                    actions: {
+                        stopGeneration: () => {}
+                    }
+                },
+
+                generators: {
+                    BCReGenerateCreateActionsGenerator: null
+                }
             };
         },
         computed: {
@@ -2569,16 +2595,103 @@
                     // console.log(getFilePathList)
                 }
             })
+
+            this.generators.BCReGenerateCreateActionsGenerator = new BCReGenerateCreateActionsGenerator({
+                input: null,
+
+                onFirstResponse: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 1,
+                            directMessage: returnObj.directMessage
+                        },
+                        actions: {
+                            stop: () => {
+                            }
+                        },
+                        isGeneratorButtonEnabled: false
+                    }
+
+                    this.generatorProgressDto = {
+                        generateDone: false,
+                        displayMessage: returnObj.directMessage,
+                        progress: 0,
+                        actions: {
+                            stopGeneration: () => {
+                                returnObj.actions.stopGeneration()
+                            }
+                        }
+                    }
+                },
+
+                onModelCreated: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
+                    this.generatorProgressDto.displayMessage = returnObj.directMessage
+                    this.generatorProgressDto.progress = returnObj.progress
+
+                    if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
+                        this.changedByMe = true
+                        this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
+                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
+                    }
+                },
+
+                onGenerationFinished: (returnObj) => {
+                    if(returnObj.isStopped || returnObj.isError) return
+
+                    if(returnObj.modelValue.removedElements && returnObj.modelValue.removedElements.length > 0) {
+                        returnObj.modelValue.removedElements.forEach(element => {
+                            if(this.value.elements[element.id])
+                                this.removeElementAction(this.value.elements[element.id])
+                        })
+                    }
+
+                    if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
+                        this.changedByMe = true
+                        this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
+                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
+                    }
+
+                    if(this.BCRegenerateCreateActionsGeneratorInputs.length > 0) {
+                        this.generators.BCReGenerateCreateActionsGenerator.client.input = this.BCRegenerateCreateActionsGeneratorInputs.shift()
+                        this.generators.BCReGenerateCreateActionsGenerator.generate()
+                    }
+                    else {
+                        this.modelDraftDialogWithXAIDto = {
+                            ...this.modelDraftDialogWithXAIDto,
+                            isShow: false,
+                            draftUIInfos: {
+                                leftBoundedContextCount: 0
+                            },
+                            isGeneratorButtonEnabled: true
+                        }
+                        this.generatorProgressDto.generateDone = true
+                    }
+                },
+
+                onRetry: (returnObj) => {
+                    alert(`[!] 이벤트 스토밍 생성 과정에서 오류가 발생했습니다. 다시 시도해주세요.\n* Error log \n${returnObj.errorMessage}`)
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: true,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onStopped: () => {
+                    this.generatorProgressDto.generateDone = true
+                }
+            })
         },
         mounted: function () {
             var me = this;
             me.$EventBus.$on("modelCreationFinished", this.openCodeViewer);
-
-            // Generate with OpenAI for BoundedContext
-            me.$EventBus.$on("createModelInBoundedContext", function (model, originModel) {
-                me.createModelInBoundedContext = true;
-                me.createModel(model, originModel);
-            });
 
             me.$EventBus.$on("createAggregate", function (model, agg, originModel) {
                 me.createAggregate(model, agg, originModel);
@@ -3093,39 +3206,6 @@
                     this.$set(this.value, "relations", model.modelValue.createdESValue.relations) 
                 }
 
-                if(model.generatorName === "BCReGenerateCreateActionsGenerator" && model.modelValue){
-                    console.log("BCReGenerateCreateActionsGenerator", model.modelValue)
-                    if(model.modelValue.removedElements && model.modelValue.removedElements.length > 0) {
-                        model.modelValue.removedElements.forEach(element => {
-                            if(this.value.elements[element.id])
-                                this.removeElementAction(this.value.elements[element.id])
-                        })
-                    }
-
-
-                    this.changedByMe = true
-                    this.$set(this.value, "elements", model.modelValue.createdESValue.elements)
-                    this.$set(this.value, "relations", model.modelValue.createdESValue.relations) 
-
-
-                    if(this.BCRegenerateCreateActionsGeneratorInputs.length > 0) {
-                        this.input = this.BCRegenerateCreateActionsGeneratorInputs.shift()
-                        const generator = new BCReGenerateCreateActionsGenerator(this)
-                        generator.generate()    
-                    }
-                    else {
-                        this.modelDraftDialogWithXAIDto = {
-                            ...this.modelDraftDialogWithXAIDto,
-                            isShow: false,
-                            draftUIInfos: {
-                                leftBoundedContextCount: 0
-                            },
-                            isGeneratorButtonEnabled: true
-                        }
-                    }
-                    return
-                }
-
                 this.forceRefreshCanvas();
                 // this.openCodeViewer()
             },
@@ -3602,20 +3682,6 @@
 
                 var me = this;
 
-                if(val && val.generatorName) {
-                    switch(val.generatorName) {
-                        case "DraftGeneratorByFunctions":
-                            me._processDraftGeneratorByFunctionsModel(val)
-                            break
-                        case "BCReGenerateCreateActionsGenerator":
-                            me._processBCReGenerateCreateActionsGenerator(val)
-                            break
-                        default:
-                            break
-                    }
-                    return
-                }
-
                 if(val && val.modelName === "DebeziumLogsTabGenerator") {
                     if(val.modelValue) {
                         if(val.modelMode === "generateCommands" || val.modelMode === "mockModelValue") {
@@ -3719,71 +3785,6 @@
                 }
             },
 
-            _processDraftGeneratorByFunctionsModel(val) {
-                if(val.isError) {
-                    alert("[!] 에러 발생! 다시 시도해주세요.")
-                    this.modelDraftDialogWithXAIDto.isShow = false
-                    return
-                }
-
-                if(val.eventBy === "onModelCreated" && val.isFirstResponse) {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: true,
-                        draftOptions: [],
-                        draftUIInfos: {
-                            leftBoundedContextCount: 1
-                        },
-                        isGeneratorButtonEnabled: true
-                    }
-                    return
-                }
-
-                if(val.eventBy === "onGenerationFinished" && val.modelValue) {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        draftOptions: [this.__getXAIDtoDraftOptions(val.modelValue.output, val.inputedParams.targetBoundedContext, val.inputedParams.description)],
-                        draftUIInfos: {
-                            leftBoundedContextCount: 0
-                        }
-                    }
-                    return
-                }
-            },
-
-            __getXAIDtoDraftOptions(output, targetBoundedContext, description) {
-                return {
-                    boundedContext: targetBoundedContext.name,
-                    description: description,
-                    options: output.options.map(option => ({
-                        ...option,
-                        boundedContext: targetBoundedContext,
-                        description: description
-                    })),
-                    conclusions: output.conclusions,
-                    defaultOptionIndex: output.defaultOptionIndex
-                }
-            },
-
-            _processBCReGenerateCreateActionsGenerator(val) {
-                if(val.isError) {
-                    alert("[!] 에러 발생! 다시 시도해주세요.")
-                    this.modelDraftDialogWithXAIDto.isGeneratorButtonEnabled = true
-                    return
-                }
-
-                if(val.isFirstResponse) {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        draftUIInfos: {
-                            leftBoundedContextCount: 1
-                        },
-                        isGeneratorButtonEnabled: false
-                    }
-                    return
-                }
-            },
-
             generateFromDraftWithXAI(draftOption) {
                 console.log("[*] DraftOption을 이용해서 모델 생성 로직이 실행됨", draftOption)
 
@@ -3798,9 +3799,8 @@
                     isAccumulated: index > 0
                 }))
 
-                this.input = this.BCRegenerateCreateActionsGeneratorInputs.shift()
-                const generator = new BCReGenerateCreateActionsGenerator(this)
-                generator.generate()                
+                this.generators.BCReGenerateCreateActionsGenerator.client.input = this.BCRegenerateCreateActionsGeneratorInputs.shift()
+                this.generators.BCReGenerateCreateActionsGenerator.generate()                
             },
 
 
@@ -5054,7 +5054,7 @@
                         if (!element.fallback) element.fallback = false;
                         if (!element.circuitBreaker) element.circuitBreaker = false
                     }  else if (sourceType.endsWith('View') && targetType.endsWith('Aggregate') ) {
-                        element.name = 'UI-Mashup'
+                        // element.name = 'UI-Mashup'
                     }
                     // end of RelationSetting
 
@@ -7549,10 +7549,6 @@
                     this.DDLDraftOptionsForRelocate = []
                     this.draftUIInfosForRelocate.leftBoundedContextCount = 1
                     this.isDraftGeneratorButtonEnabledForRelocate = true
-                }
-
-                if(model && model.generatorName === 'BCReGenerateCreateActionsGenerator') {
-                    this._processBCReGenerateCreateActionsGenerator(model)
                 }
             },
 

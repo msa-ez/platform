@@ -463,7 +463,7 @@
                                      style="min-width: 0px;
                                         width: 100%;"
                                 >
-                                    <div  v-if="searchForContent.onOff" style="margin-left: 12px; width: 100%;">
+                                    <div v-if="searchForContent.onOff" style="margin-left: 12px; width: 90%;">
                                         <v-text-field
                                                 v-model="searchForContent.search"
                                                 append-outer-icon="mdi-close"
@@ -638,14 +638,18 @@
                                                     </template>
                                                     <template v-slot:label="{ item, open }">
                                                         <div v-if="isNotFolderIcon">
-                                                            <div v-if="item.children && item.children.length > 0" > {{item.name}} </div>
-                                                            <div v-else style="font-size:13px; cursor: pointer;" :style="templatePathStyle(item)"> {{item.searchContentLine}} </div>
-                                                        </div>
-                                                        <div v-else>
-                                                            <div v-if="showTemplatePath || showChangedPathLists" style="font-size: 1px; margin-top: 5px;" >
+                                                            <div v-if="showTemplatePath || showChangedPathLists" style="font-size: 12px; margin-top: 5px;" >
                                                                 {{convertTemplatePath (item)}}
                                                             </div>
-                                                            <div style="font-size:13px; cursor: pointer;" :style="templatePathStyle(item)"> {{item.name}} </div>
+                                                            <div v-if="item.children && item.children.length > 0" > {{item.name}} </div>
+                                                            <div v-else-if="searchForContent.search" style="font-size:13px; cursor: pointer;" :style="templatePathStyle(item)">{{item.searchContentLine}}</div>
+                                                            <div v-else style="font-size:13px; cursor: pointer;" :style="templatePathStyle(item)">{{item.name}}</div>
+                                                        </div>
+                                                        <div v-else>
+                                                            <div v-if="showTemplatePath || showChangedPathLists" style="font-size: 12px; margin-top: 5px;" >
+                                                                {{convertTemplatePath (item)}}
+                                                            </div>
+                                                            <div style="font-size:13px; cursor: pointer;" :style="templatePathStyle(item)">{{item.name}}</div>
                                                         </div>
                                                     </template>
                                                     <template v-slot:append="{ item, open }">

@@ -1,68 +1,38 @@
-const JsonAIGenerator = require("../JsonAIGenerator");
-const GlobalPromptUtil = require("./modules/GlobalPromptUtil");
-const ESActionUtil = require("./modules/ESActionsUtil")
-const ESValueSummarizeUtil = require("./modules/ESValueSummarizeUtil")
+
+const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
+const ESActionsUtil = require("./modules/ESActionsUtil")
+const ESFakeActionsUtil = require("./modules/ESFakeActionsUtil")
+const ESValueSummarizeUtil_OnlyNameWithId = require("./modules/ESValueSummarizeUtil_OnlyNameWithId")
 const ESAliasTransManager = require("./modules/ESAliasTransManager")
 
-class BCReGenerateCreateActionsGenerator extends JsonAIGenerator{
+class BCReGenerateCreateActionsGenerator extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
-        
-        this.model = "gpt-4o-2024-11-20"
-        this.generatorName = 'BCReGenerateCreateActionsGenerator'
-        this.inputedParams = null
-        this.isFirstResponse = true
 
-        this.preferredLanguage = this.preferredLanguage ? this.preferredLanguage : "English"
-        this.temperature = 1.0
-        this.top_p = 0.6
-    }
-    
-
-    createPrompt(){
-        try {
-
-            for(let optionKey of ["targetBoundedContext", "description", "draftOption", "esValue", "userInfo", "information", "isAccumulated"])
-                if(this.client.input[optionKey] === undefined) 
-                    throw new Error(`${optionKey} 파라미터가 전달되지 않았습니다.`)
-            this.inputedParams = {
-                targetBoundedContext: this.client.input.targetBoundedContext,
-                description: this.client.input.description,
-                draftOption: this.client.input.draftOption,
-                esValue: this.client.input.esValue,
-                userInfo: this.client.input.userInfo,
-                information: this.client.input.information,
-                isAccumulated: this.client.input.isAccumulated
-            }
-            
-            console.log(`[*] ${this.generatorName}에 대한 프롬프트 생성중...`, {inputedParams: this.inputedParams})
-
-            this.esAliasTransManager = new ESAliasTransManager(this.inputedParams.esValue)
-            const prompt = this._getSystemPrompt() + this._getUserPrompt(
-                this.inputedParams.targetBoundedContext, this.inputedParams.description, this.inputedParams.draftOption, this.inputedParams.esValue, this.inputedParams.isAccumulated, this.esAliasTransManager
-            )
-
-            console.log(`[*] LLM에게 ${this.generatorName}에서 생성된 프롬프트 전달중...`, {prompt})
-            this.isFirstResponse = true
-            return prompt
-
-        } catch(e) {
-
-            console.error(`[!] GetRelatedESValueByDDLGenerator에 대한 프롬프트 생성 도중에 오류 발생!`, {esValue, ddl, error:e})
-            throw e
-
-        }
+        this.checkInputParamsKeys = ["targetBoundedContext", "description", "draftOption", "esValue", "userInfo", "information", "isAccumulated"]
+        this.progressCheckStrings = ["step1-requirementsAnalysis", "\"requirements\"", "step2-designPossibleActions", "step3-determineDependencies", "\"actions\"", "step4-generateActions", "step5-evaluateActions", "\"evaluationCriteria\"", "\"recommendedImprovements\""]
     }
 
-    _getSystemPrompt(){
-        return this.__getFrontGuidePrompt() +
-            ESValueSummarizeUtil_OnlyNameWithId.getGuidePrompt() +
-            this.__getOutputSyntaxGuidePrompt() +
-            this.__getExamplePrompt() +
-            GlobalPromptUtil.getJsonCompressGuidePrompt()
+
+    onGenerateBefore(inputParams){
+        inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
+        inputParams.targetAggregate = Object.values(inputParams.draftOption)[0].aggregate
+        inputParams.aggregateDisplayName = inputParams.targetAggregate.alias ? inputParams.targetAggregate.alias : inputParams.targetAggregate.name
+        this.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
+        super.onGenerateBefore(inputParams)
     }
 
-    __getFrontGuidePrompt(){
+
+    __buildAgentRolePrompt(){
+        return `You are an experienced domain-driven design (DDD) architect and event storming specialist. Your expertise lies in:
+- Translating business requirements into well-structured domain models
+- Designing event-driven systems with proper bounded contexts
+- Ensuring consistency and best practices in event sourcing
+- Creating maintainable and scalable software architectures
+`
+    }
+
+    __buildTaskGuidelinesPrompt(){
         return `In your current event stemming model, you need to write actions to add elements inside a particular Bounded Context, following the structure provided by the user.
 
 Please follow these rules.
@@ -78,16 +48,20 @@ Please follow these rules.
 10. Make sure to create all Aggregates, Entities, and ValueObjects in the user's proposed structure with the appropriate actions.
 11. The ValueObject, Entity, and Enumeration you create must be used as properties in other Aggregates.
 12. Do not recreate ValueObjects, Entities, or Enumerations that already exist. If they do exist, recycle them.
-13. Do not write comments in the output JSON object.
-
+13. If possible, you should use another appropriate base type rather than the default String type. Ex) startDate > Date, currentCapacity > Integer
+14. Write an action that creates and builds a new Aggregate from the given structure. Do not modify any existing Aggregates; use them for reference only.
+15. Create only the Aggregates presented in 'Aggregate to create' as actions.
+16. Don't create duplicate commands or events that already exist.
+17. Do not write comments in the output JSON object.
 `
     }
 
-    __getOutputSyntaxGuidePrompt() {
-        return `You should return a list containing JSON objects for performing specific actions.
-The returned format should be as follows.
-\`\`\`json
-{
+    __buildRequestFormatPrompt(){
+        return ESValueSummarizeUtil_OnlyNameWithId.getGuidePrompt()
+    }
+
+    __buildResponseFormatPrompt() {
+        const jsonFormat = `{
    "thoughtProcess": {
        // Analyse your users' requirements to extract as much of their requirements as you can use for event stemming.
        // Analyse which objects in the user's proposed structure match the requirements.
@@ -208,10 +182,9 @@ The returned format should be as follows.
          }
       }
    }
-}
-\`\`\`
+}`
 
-I will explain the ids and args used in each objectType.
+        const afterJsonFormat = `I will explain the ids and args used in each objectType.
 You cannot use any arbitrary parameters not described in this explanation in ids or args.
 
 # objectType: Aggregate
@@ -408,22 +381,18 @@ They represent complex domain concepts that don't qualify as Aggregates but need
             }
         ]
     }
-}
+}`
 
-`
+        return super.__buildResponseFormatPrompt(jsonFormat, afterJsonFormat)
     }
 
-    __getExamplePrompt(){
-        return `Let me give you an example.
-[INPUT]
-- Summarized Existing EventStorming Model
-{"bc-order":{"id":"bc-order","name":"orderservice","actors":[{"id":"actor-customer","name":"Customer"}],"aggregates":{}},"bc-inventory":{"id":"bc-inventory","name":"inventoryservice","actors":[],"aggregates":{"agg-inventory":{"id":"agg-inventory","name":"Inventory","commands":[{"id":"cmd-update-stock","name":"UpdateStock","api_verb":"PUT","outputEventIds":["evt-stock-updated"]}],"events":[{"id":"evt-stock-updated","name":"StockUpdated","outputCommandIds":[]}]}}}}
+    __buildExamplePrompt(){
+        const inputs = {
+            "Summarized Existing EventStorming Model": `{"bc-order":{"id":"bc-order","name":"orderservice","actors":[{"id":"actor-customer","name":"Customer"}],"aggregates":{}},"bc-inventory":{"id":"bc-inventory","name":"inventoryservice","actors":[],"aggregates":{"agg-inventory":{"id":"agg-inventory","name":"Inventory","commands":[{"id":"cmd-update-stock","name":"UpdateStock","api_verb":"PUT","outputEventIds":["evt-stock-updated"]}],"events":[{"id":"evt-stock-updated","name":"StockUpdated","outputCommandIds":[]}]}}}}`,
 
-- Bounded Context to Generate Actions
-orderservice
+            "Bounded Context to Generate Actions": "orderservice",
 
-- Functional Requirements
-We need to implement a basic order management system with the following requirements:
+            "Functional Requirements": `We need to implement a basic order management system with the following requirements:
 
 1. Order Creation:
 - Customers should be able to create orders with a single item
@@ -436,39 +405,39 @@ We need to implement a basic order management system with the following requirem
 
 3. Order Inquiry:
 - Customers should be able to view their order details
-- Order details should include order status, product information, quantity, and shipping address
+- Order details should include order status, product information, quantity, and shipping address`,
 
-- Suggested Structure
-[{"aggregate":{"name":"Order","alias":"Customer Order"},"valueObjects":[{"name":"ShippingAddress","alias":"Delivery Address"}]}]
+            "Suggested Structure": `[{"aggregate":{"name":"Order","alias":"Customer Order"},"valueObjects":[{"name":"ShippingAddress","alias":"Delivery Address"}]}]`,
 
-[OUTPUT]
-\`\`\`json
-{"thoughtProcess":{"step1-requirementsAnalysis":{"thought":"The requirements describe a simple order system with creation, cancellation, and inquiry functionality.","reflection":"Added inquiry requirement needs a read model for viewing order details.","result":{"requirements":[{"name":"order-creation","description":"Create new orders","matchedUserObjectNames":["Order","ShippingAddress"]},{"name":"order-management","description":"Handle order cancellations","matchedUserObjectNames":["Order"]},{"name":"order-inquiry","description":"View order details","matchedUserObjectNames":["Order","ShippingAddress"]}]}},"step2-designPossibleActions":{"thought":"We need basic commands for order creation and cancellation with their corresponding events.","reflection":"The actions are minimal but sufficient for the basic requirements.","result":{"requirements":{"order-creation":["CreateOrder"],"order-management":["CancelOrder"],"order-inquiry":["GetOrderDetails"]}}},"step3-determineDependencies":{"thought":"Order creation will need to update inventory. Cancellation is a simple status change.","reflection":"The dependencies are minimal and straightforward.","result":{"actions":{"CreateOrder":{"dependencies":["UpdateStock"]}}}},"step4-generateActions":{"thought":"Generate the basic aggregate, commands, and events needed.","reflection":"Keep the structure simple with only essential properties.","result":{"actions":[{"actionName":"DefineOrderAggregate","objectType":"Aggregate","ids":{"aggregateId":"agg-order"},"args":{"aggregateName":"Order","aggregateAlias":"Customer Order","properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"orderStatus","type":"OrderStatus"},{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"}]}},{"actionName":"DefineOrderStatusEnum","objectType":"Enumeration","ids":{"aggregateId":"agg-order","enumerationId":"enum-order-status"},"args":{"enumerationName":"OrderStatus","enumerationAlias":"Order Status","properties":[{"name":"PENDING"},{"name":"CONFIRMED"},{"name":"CANCELLED"}]}},{"actionName":"DefineShippingAddressVO","objectType":"ValueObject","ids":{"aggregateId":"agg-order","valueObjectId":"vo-shipping-address"},"args":{"valueObjectName":"ShippingAddress","valueObjectAlias":"Delivery Address","properties":[{"name":"street"},{"name":"city"},{"name":"zipCode"}]}},{"actionName":"CreateOrder","objectType":"Command","ids":{"aggregateId":"agg-order","commandId":"cmd-create-order"},"args":{"commandName":"CreateOrder","commandAlias":"Create New Order","api_verb":"POST","properties":[{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"},{"name":"shippingAddress","type":"ShippingAddress"}],"outputEventIds":["evt-order-created"],"actor":"Customer"}},{"actionName":"CancelOrder","objectType":"Command","ids":{"aggregateId":"agg-order","commandId":"cmd-cancel-order"},"args":{"commandName":"CancelOrder","commandAlias":"Cancel Order","api_verb":"PUT","properties":[{"name":"orderId","type":"Long","isKey":true}],"outputEventIds":["evt-order-cancelled"],"actor":"Customer"}},{"actionName":"OrderCreated","objectType":"Event","ids":{"aggregateId":"agg-order","eventId":"evt-order-created"},"args":{"eventName":"OrderCreated","eventAlias":"Order Created","properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"}],"outputCommandIds":[{"commandId":"cmd-update-stock","relatedAttribute":"stockQuantity","reason":"Update inventory stock level after order creation"}]}},{"actionName":"OrderCancelled","objectType":"Event","ids":{"aggregateId":"agg-order","eventId":"evt-order-cancelled"},"args":{"eventName":"OrderCancelled","eventAlias":"Order Cancelled","properties":[{"name":"orderId","type":"Long","isKey":true}],"outputCommandIds":[]}},{"actionName":"GetOrderDetails","objectType":"ReadModel","ids":{"aggregateId":"agg-order","readModelId":"read-order-details"},"args":{"readModelName":"OrderDetails","readModelAlias":"Order Details View","isMultipleResult":false,"properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"orderStatus","type":"OrderStatus"},{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"},{"name":"shippingAddress","type":"ShippingAddress"}],"actor":"Customer"}}]}},"step5-evaluateActions":{"thought":"Evaluate the completeness and quality of the generated order management system actions","reflection":"Consider if all requirements are met and best practices are followed","result":{"evaluationCriteria":{"requirementsCoverage":{"score":"95","details":["Order creation with product and shipping details implemented","Order cancellation functionality provided","Order details view with all required information"],"missingAspects":["No explicit confirmation flow defined"]},"domainModelQuality":{"score":"90","details":["Clear separation of Aggregate, ValueObject, and Enumeration","Proper use of ShippingAddress as ValueObject","Well-defined OrderStatus enumeration"],"improvements":["Could consider adding validation rules for quantity and address"]},"eventFlowCompleteness":{"score":"85","details":["Basic event flow for order creation and cancellation","Integration with inventory service through UpdateStock"],"gaps":["No compensation events for failed inventory updates"]},"bestPracticesAlignment":{"score":"90","details":["Commands and events properly named","Aggregate root identified with proper ID","Clear actor specification in commands"],"violations":["Some properties could have more specific types"]},"structureAlignment":{"score":"100","details":["All elements from suggested structure implemented","Order aggregate properly created with required properties","ShippingAddress value object implemented as suggested"],"matchedElements":[{"suggestedElement":"Order","implementedActions":["DefineOrderAggregate","CreateOrder","CancelOrder","GetOrderDetails"],"missingAspects":[]},{"suggestedElement":"ShippingAddress","implementedActions":["DefineShippingAddressVO"],"missingAspects":[]}],"unmatchedElements":[]}},"overallScore":"92","recommendedImprovements":[{"area":"Order Processing","description":"Add explicit order confirmation flow","suggestedActions":["CreateConfirmOrderCommand","AddOrderConfirmedEvent"]},{"area":"Error Handling","description":"Implement compensation logic for inventory updates","suggestedActions":["AddOrderFailedEvent","CreateRollbackInventoryCommand"]}],"needsIteration":false}}}}
-\`\`\`
+            "Aggregate to create": `{"name":"Order","alias":"Customer Order"}`
+        }
 
-`
+        const jsonOutput = `
+        
+{"thoughtProcess":{"step1-requirementsAnalysis":{"thought":"The requirements describe a simple order system with creation, cancellation, and inquiry functionality.","reflection":"Added inquiry requirement needs a read model for viewing order details.","result":{"requirements":[{"name":"order-creation","description":"Create new orders","matchedUserObjectNames":["Order","ShippingAddress"]},{"name":"order-management","description":"Handle order cancellations","matchedUserObjectNames":["Order"]},{"name":"order-inquiry","description":"View order details","matchedUserObjectNames":["Order","ShippingAddress"]}]}},"step2-designPossibleActions":{"thought":"We need basic commands for order creation and cancellation with their corresponding events.","reflection":"The actions are minimal but sufficient for the basic requirements.","result":{"requirements":{"order-creation":["CreateOrder"],"order-management":["CancelOrder"],"order-inquiry":["GetOrderDetails"]}}},"step3-determineDependencies":{"thought":"Order creation will need to update inventory. Cancellation is a simple status change.","reflection":"The dependencies are minimal and straightforward.","result":{"actions":{"CreateOrder":{"dependencies":["UpdateStock"]}}}},"step4-generateActions":{"thought":"Generate the basic aggregate, commands, and events needed.","reflection":"Keep the structure simple with only essential properties.","result":{"actions":[{"actionName":"DefineOrderAggregate","objectType":"Aggregate","ids":{"aggregateId":"agg-order"},"args":{"aggregateName":"Order","aggregateAlias":"Customer Order","properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"orderStatus","type":"OrderStatus"},{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"},{"name":"shippingAddress","type":"ShippingAddress"},{"name":"orderDate","type":"Date"}]}},{"actionName":"DefineOrderStatusEnum","objectType":"Enumeration","ids":{"aggregateId":"agg-order","enumerationId":"enum-order-status"},"args":{"enumerationName":"OrderStatus","enumerationAlias":"Order Status","properties":[{"name":"PENDING"},{"name":"CONFIRMED"},{"name":"CANCELLED"}]}},{"actionName":"DefineShippingAddressVO","objectType":"ValueObject","ids":{"aggregateId":"agg-order","valueObjectId":"vo-shipping-address"},"args":{"valueObjectName":"ShippingAddress","valueObjectAlias":"Delivery Address","properties":[{"name":"street"},{"name":"city"},{"name":"zipCode"}]}},{"actionName":"CreateOrder","objectType":"Command","ids":{"aggregateId":"agg-order","commandId":"cmd-create-order"},"args":{"commandName":"CreateOrder","commandAlias":"Create New Order","api_verb":"POST","properties":[{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"},{"name":"shippingAddress","type":"ShippingAddress"}],"outputEventIds":["evt-order-created"],"actor":"Customer"}},{"actionName":"CancelOrder","objectType":"Command","ids":{"aggregateId":"agg-order","commandId":"cmd-cancel-order"},"args":{"commandName":"CancelOrder","commandAlias":"Cancel Order","api_verb":"PUT","properties":[{"name":"orderId","type":"Long","isKey":true}],"outputEventIds":["evt-order-cancelled"],"actor":"Customer"}},{"actionName":"OrderCreated","objectType":"Event","ids":{"aggregateId":"agg-order","eventId":"evt-order-created"},"args":{"eventName":"OrderCreated","eventAlias":"Order Created","properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"}],"outputCommandIds":[{"commandId":"cmd-update-stock","relatedAttribute":"stockQuantity","reason":"Update inventory stock level after order creation"}]}},{"actionName":"OrderCancelled","objectType":"Event","ids":{"aggregateId":"agg-order","eventId":"evt-order-cancelled"},"args":{"eventName":"OrderCancelled","eventAlias":"Order Cancelled","properties":[{"name":"orderId","type":"Long","isKey":true}],"outputCommandIds":[]}},{"actionName":"GetOrderDetails","objectType":"ReadModel","ids":{"aggregateId":"agg-order","readModelId":"read-order-details"},"args":{"readModelName":"OrderDetails","readModelAlias":"Order Details View","isMultipleResult":false,"properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"orderStatus","type":"OrderStatus"},{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"},{"name":"shippingAddress","type":"ShippingAddress"},{"name":"orderDate","type":"Date"}],"actor":"Customer"}}]}},"step5-evaluateActions":{"thought":"Evaluate the completeness and quality of the generated order management system actions","reflection":"Consider if all requirements are met and best practices are followed","result":{"evaluationCriteria":{"requirementsCoverage":{"score":"95","details":["Order creation with product and shipping details implemented","Order cancellation functionality provided","Order details view with all required information"],"missingAspects":["No explicit confirmation flow defined"]},"domainModelQuality":{"score":"90","details":["Clear separation of Aggregate, ValueObject, and Enumeration","Proper use of ShippingAddress as ValueObject","Well-defined OrderStatus enumeration"],"improvements":["Could consider adding validation rules for quantity and address"]},"eventFlowCompleteness":{"score":"85","details":["Basic event flow for order creation and cancellation","Integration with inventory service through UpdateStock"],"gaps":["No compensation events for failed inventory updates"]},"bestPracticesAlignment":{"score":"90","details":["Commands and events properly named","Aggregate root identified with proper ID","Clear actor specification in commands"],"violations":["Some properties could have more specific types"]},"structureAlignment":{"score":"100","details":["All elements from suggested structure implemented","Order aggregate properly created with required properties","ShippingAddress value object implemented as suggested"],"matchedElements":[{"suggestedElement":"Order","implementedActions":["DefineOrderAggregate","CreateOrder","CancelOrder","GetOrderDetails"],"missingAspects":[]},{"suggestedElement":"ShippingAddress","implementedActions":["DefineShippingAddressVO"],"missingAspects":[]}],"unmatchedElements":[]}},"overallScore":"92","recommendedImprovements":[{"area":"Order Processing","description":"Add explicit order confirmation flow","suggestedActions":["CreateConfirmOrderCommand","AddOrderConfirmedEvent"]},{"area":"Error Handling","description":"Implement compensation logic for inventory updates","suggestedActions":["AddOrderFailedEvent","CreateRollbackInventoryCommand"]}],"needsIteration":false}}}}
+        
+        `
+
+        return super.__buildExamplePrompt(inputs, jsonOutput)
     }
 
-    _getUserPrompt(targetBoundedContext, description, draftOption, esValue, isAccumulated, esAliasTransManager){
-        let targetBCRemovedESValue = JSON.parse(JSON.stringify(esValue))
-        if(!isAccumulated)
-            this._removePrevBoundedContextRelatedElements(targetBoundedContext.name, targetBCRemovedESValue)
+    _buildUserQueryPrompt(){
+        let targetBCRemovedESValue = JSON.parse(JSON.stringify(this.client.input.esValue))
+        if(!this.client.input.isAccumulated)
+            this._removePrevBoundedContextRelatedElements(this.client.input.targetBoundedContext.name, targetBCRemovedESValue)
 
-        return `Now let's process the user's input.
-[INPUT]
-- Summarized Existing EventStorming Model
-${JSON.stringify(ESValueSummarizeUtil_OnlyNameWithId.getFilteredSummarizedESValue(esValue, esAliasTransManager))}
+        return super._buildUserQueryPrompt({
+            "Summarized Existing EventStorming Model": JSON.stringify(ESValueSummarizeUtil_OnlyNameWithId.getFilteredSummarizedESValue(this.client.input.esValue, this.esAliasTransManager)),
 
-- Bounded Context to Generate Actions
-${targetBoundedContext.name}
+            "Bounded Context to Generate Actions": this.client.input.targetBoundedContext.name,
 
-- Functional Requirements
-${description}
+            "Functional Requirements": this.client.input.description,
 
-- Suggested Structure
-${JSON.stringify(draftOption)}
+            "Suggested Structure": JSON.stringify(this.client.input.draftOption),
 
-- Final Check
+            "Aggregate to create": JSON.stringify(this.client.input.targetAggregate),
+
+            "Final Check": `
 * Have you adequately addressed all of your users' needs?
 * Are there any properties that are redundant and unnecessary?
 * Did you write the name property of the object you created in English and the alias property in ${this.preferredLanguage} language?
@@ -476,75 +445,78 @@ ${JSON.stringify(draftOption)}
 * Did you create all of the ValueObjects and Enitities in the user's proposed structure as actions?
 * Are you creating duplicate actions that do the same thing as existing events and commands?
 * Are there any unnecessary actions that recreate ValueObjects, Entities, or Enumerations that already exist?
-
-[OUTPUT]
-\`\`\`json
+* Did you use the right data type for each property name?
+* Did you create the given aggregate and not modify an existing aggregate?
+* Does the command created by the action call the event? Ex) CreateOrder > OrderCreated
+* Have you derived enough Command, Event, and ReadModels to meet the user's requirements?
 `
+        })
     }
 
 
-    createModel(text){
-        const isFirstResponse = this.isFirstResponse
-        this.isFirstResponse = false
+    onCreateModelGenerating(returnObj){
+        returnObj.directMessage = `Generating actions for ${this.client.input.aggregateDisplayName} Aggregate... (${returnObj.modelRawValue.length} characters generated)`
 
-        if(this.state !== 'end') {
-            console.log(`[*] ${this.generatorName}에서 결과 생성중... (현재 출력된 문자 수: ${text.length})`)
+        // 실시간으로 진행을 보여주기 위해서 가능한 경우, 부분적인 액션이라도 반환함
+        const particalActions = returnObj.modelRawValue.match(/({"actionName".*?"objectType".*?"ids".*?"args".*?)(?=,{"actionName")/g)
+        if(!particalActions || particalActions.length === 0) return
 
-            return {
-                generatorName: this.generatorName,
-                modelValue: null,
-                modelRawValue: text,
-                isFirstResponse: isFirstResponse
-            }
+
+        let actions = []
+        for(let action of particalActions) {
+            try {
+                const actionObj = this._parseToJson(action)
+                actions.push(actionObj)
+            } catch(e) {}
         }
+        if(actions.length === 0) return
 
-        try {
 
-            console.log(`[*] ${this.generatorName}에서 결과 파싱중...`, {text})
-            const aiOutput = GlobalPromptUtil.parseToJson(text)
-            let actions = aiOutput.thoughtProcess["step4-generateActions"].result.actions
-            actions = this.esAliasTransManager.transToUUIDInActions(actions)
-            this._restoreActions(actions, this.inputedParams.esValue, this.inputedParams.targetBoundedContext.name)
-            actions = this._filterActions(actions)
-            
-            let esValueToModify = JSON.parse(JSON.stringify(this.inputedParams.esValue))
+        let {actions: appliedActions, createdESValue: createdESValue, removedElements: removedElements} = this._getActionAppliedESValue(actions, true)
 
-            let removedElements = []
-            if(!this.inputedParams.isAccumulated)
-                removedElements = this._removePrevBoundedContextRelatedElements(this.inputedParams.targetBoundedContext.name, esValueToModify)
-
-            let createdESValue = ESActionUtil.getActionAppliedESValue(actions, this.inputedParams.userInfo, this.inputedParams.information, esValueToModify)
-
-            const outputResult = {
-                generatorName: this.generatorName,
-                modelValue: {
-                    actions: actions,
-                    createdESValue: createdESValue,
-                    removedElements: removedElements,
-                    thoughtProcess: aiOutput.thoughtProcess
-                },
-                modelRawValue: text,
-                inputedParams: this.inputedParams,
-                isFirstResponse: isFirstResponse
-            }
-            console.log(`[*] ${this.generatorName}에서 결과 파싱 완료!`, {outputResult})
-
-            return outputResult
-
-        } catch(e) {
-
-            console.error(`[!] ${this.modelName}에서 결과 파싱중에 오류 발생!`, {text, error:e})
-
-            return {
-                generatorName: this.generatorName,
-                modelValue: null,
-                modelRawValue: text,
-                inputedParams: this.inputedParams,
-                isError: true,
-                isFirstResponse: isFirstResponse
-            }
-
+        returnObj.modelValue = {
+            ...returnObj.modelValue,
+            actions: appliedActions,
+            createdESValue: createdESValue,
+            removedElements: removedElements
         }
+        console.log(`[*] 스트리밍 중에 ${this.generatorName}에서 부분적 결과 파싱 완료!`, {returnObj})
+        super.onCreateModelGenerating(returnObj)
+    }
+
+    onCreateModelFinished(returnObj){
+        let actions = returnObj.modelValue.aiOutput.thoughtProcess["step4-generateActions"].result.actions
+        let {actions: appliedActions, createdESValue: createdESValue, removedElements: removedElements} = this._getActionAppliedESValue(actions, false)
+
+        returnObj.modelValue = {
+            ...returnObj.modelValue,
+            actions: appliedActions,
+            createdESValue: createdESValue,
+            removedElements: removedElements
+        }
+        returnObj.directMessage = `Generating actions for ${this.client.input.aggregateDisplayName} Aggregate... (${returnObj.modelRawValue.length} characters generated)`
+        super.onCreateModelFinished(returnObj)
+    }
+
+    _getActionAppliedESValue(actions, isAddFakeActions) {
+        actions = this.esAliasTransManager.transToUUIDInActions(actions)
+        this._restoreActions(actions, this.client.input.esValue, this.client.input.targetBoundedContext.name)
+        actions = this._filterActions(actions)
+        
+        let esValueToModify = JSON.parse(JSON.stringify(this.client.input.esValue))
+
+        // Aggregate별로 분리해서 요청시에는 이전에 생성한 Aggregate 정보를 포함시켜서 요청하기 위해서
+        let removedElements = []
+        if(!this.client.input.isAccumulated)
+            removedElements = this._removePrevBoundedContextRelatedElements(this.client.input.targetBoundedContext.name, esValueToModify)
+
+        // 부분적인 결과를 반환시에는 가짜 액션을 추가해서 버그를 방지하기 위해서
+        if(isAddFakeActions)
+            actions = ESFakeActionsUtil.addFakeActions(actions, esValueToModify)
+
+        let createdESValue = ESActionsUtil.getActionAppliedESValue(actions, this.client.input.userInfo, this.client.input.information, esValueToModify)
+
+        return { actions, createdESValue, removedElements }
     }
 
     _restoreActions(actions, esValue, targetBoundedContextName){
@@ -572,6 +544,14 @@ ${JSON.stringify(draftOption)}
                         ...action.ids
                     }
                     break
+                
+                case "ReadModel": {
+                    action.ids = {
+                        boundedContextId: targetBoundedContext.id,
+                        ...action.ids
+                    }
+                    break
+                }
 
                 case "Enumeration":
                     action.ids = {
@@ -646,23 +626,6 @@ ${JSON.stringify(draftOption)}
 
         return removedElements
     }
-    
-    _removePrevBoundedContextRelatedElements(targetBoundedContextName, esValue){
-        const targetBoundedContext = this.__getTargetBoundedContext(esValue, targetBoundedContextName)
-        const esValueToRemove = this.__getOnlyBoundedContextRelatedSummarizedESValue(esValue, targetBoundedContextName)
-
-        let removedElements = []
-        for(let element of Object.values(esValueToRemove.elements)) {
-            if(element.id === targetBoundedContext.id) continue
-            esValue.elements[element.id] = null
-            removedElements.push(element)
-        }
-
-        for(let relation of Object.values(esValueToRemove.relations))
-            esValue.relations[relation.id] = null
-
-        return removedElements
-    }
 
     __getIdByNameInEsValue(name, actions, esValue){
         for(let action of actions){
@@ -718,167 +681,6 @@ ${JSON.stringify(draftOption)}
         }
         if(!targetBoundedContext) throw new Error(`${targetBoundedContextName}에 대한 정보를 찾을 수 없습니다.`)
         return targetBoundedContext
-    }
-}
-
-class ESValueSummarizeUtil_OnlyNameWithId {
-    static getGuidePrompt() {
-        return `You will receive a JSON object containing summarized information about the event storming model on which you will perform your task.
-The approximate structure is as follows.
-{
-    // The event storming model consists of multiple Bounded Contexts.
-    "<boundedContextId>": {
-        "id": "<boundedContextId>",
-        "name": "<boundedContextName>",
-        "actors": [
-            {
-                "id": "<actorId>",
-                "name": "<actorName>"
-            }
-        ],
-
-        // A Bounded Context has multiple aggregates.
-        "aggregates": {
-            "<aggregateId>": {
-                "id": "<aggregateId>",
-                "name": "<aggregateName>",
-
-                // Definitions of Entity objects used for the Aggregate Root properties.
-                "entities": [
-                    {
-                        "id": "<entityId>",
-                        "name": "<entityName>"
-                    }
-                ],
-                
-                // Definitions of Enum objects used for the Aggregate Root properties.
-                "enumerations": [
-                    {
-                        "id": "<enumerationId>",
-                        "name": "<enumerationName>"
-                    }
-                ],
-                
-                // Definitions of ValueObject objects used for the Aggregate Root properties.
-                "valueObjects": [
-                    {
-                        "id": "<valueObjectId>",
-                        "name": "<valueObjectName>"
-                    }
-                ],
-                
-                // List of commands representing requests through REST API.
-                "commands": [
-                    {
-                        "id": "<commandId>",
-                        "name": "<commandName>",
-                        "api_verb":  <"POST" | "DELETE" | "PUT">,
-                        "outputEvents": [{
-                            "id": "<eventId>",
-                            "name": "<eventName>"
-                        }] // Information about the event that occurs when this command is requested.
-                    }
-                ],
-                
-                // List of events triggered by commands.
-                "events": [
-                    {
-                        "id": "<eventId>",
-                        "name": "<eventName>",
-                        "outputCommands": [{
-                            "id": "<commandId>",
-                            "name": "<commandName>"
-                        }] // Information about the command that occurs when this event is requested.
-                    }
-                ]
-            }
-        }
-    }
-}
-
-`
-    }
-
-    static getFilteredSummarizedESValue(esValue, esAliasTransManager){
-        const summarizedESValue = esAliasTransManager.transToAliasInSummarizedESValue(
-            ESValueSummarizeUtil.getSummarizedESValue(esValue)
-        )
-
-        let filteredSummarizedESValue = {}
-        for(let boundedContext of Object.values(summarizedESValue))
-        {
-            let filteredAggregates = {}
-            for(let aggregate of Object.values(boundedContext.aggregates))
-                filteredAggregates[aggregate.id] = ESValueSummarizeUtil_OnlyNameWithId._getFilteredAggregate(aggregate)
-
-            filteredSummarizedESValue[boundedContext.id] = {
-                id: boundedContext.id,
-                name: boundedContext.name,
-                actors: boundedContext.actors.map(actor => {
-                    return {
-                        id: actor.id,
-                        name: actor.name
-                    }
-                }),
-                aggregates: filteredAggregates
-            }
-        }
-        return filteredSummarizedESValue
-    }
-
-    static _getFilteredAggregate(aggregate){
-        return {
-            id: aggregate.id,
-            name: aggregate.name,
-
-            entities: aggregate.entities.map(entity => {
-                return {
-                    id: entity.id,
-                    name: entity.name
-                }
-            }),
-            
-            enumerations: aggregate.enumerations.map(enumeration => { 
-                return {
-                    id: enumeration.id,
-                    name: enumeration.name
-                }
-            }),
-
-            valueObjects: aggregate.valueObjects.map(valueObject => {
-                return {
-                    id: valueObject.id,
-                    name: valueObject.name
-                }
-            }),
-
-            commands: aggregate.commands.map(command => {
-                return {
-                    id: command.id,
-                    name: command.name,
-                    api_verb: command.api_verb,
-                    outputEvents: (command.outputEvents) ? command.outputEvents.map(event => {
-                        return {
-                            id: event.id,
-                            name: event.name
-                        }
-                    }) : []
-                }
-            }),
-
-            events: aggregate.events.map(event => {
-                return {
-                    id: event.id,
-                    name: event.name,
-                    outputCommands: (event.outputCommands) ? event.outputCommands.map(command => {
-                        return {
-                            id: command.id,
-                            name: command.name
-                        }
-                    }) : []
-                }
-            })
-        }
     }
 }
 
