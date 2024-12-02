@@ -438,17 +438,15 @@ They represent complex domain concepts that don't qualify as Aggregates but need
             "Aggregate to create": JSON.stringify(this.client.input.targetAggregate),
 
             "Final Check": `
-* Have you adequately addressed all of your users' needs?
-* Are there any properties that are redundant and unnecessary?
-* Did you write the name property of the object you created in English and the alias property in ${this.preferredLanguage} language?
-* Are you using the ValueObject, Entity, or Enumeration you created as properties in other Aggregates?
-* Did you create all of the ValueObjects and Enitities in the user's proposed structure as actions?
-* Are you creating duplicate actions that do the same thing as existing events and commands?
-* Are there any unnecessary actions that recreate ValueObjects, Entities, or Enumerations that already exist?
-* Did you use the right data type for each property name?
-* Did you create the given aggregate and not modify an existing aggregate?
-* Does the command created by the action call the event? Ex) CreateOrder > OrderCreated
-* Have you derived enough Command, Event, and ReadModels to meet the user's requirements?
+* Ensure all user needs are adequately addressed
+* Remove any redundant or unnecessary properties
+* Write all object name properties in English and alias properties in ${this.preferredLanguage}
+* Do not create commands, events, or ReadModels that already exist in another Aggregate.
+* Create all ValueObjects and Entities from the user's proposed structure as actions
+* Remove any unnecessary actions that recreate existing ValueObjects, Entities, or Enumerations
+* Use appropriate data types for all property names
+* Ensure each command calls its corresponding event (e.g., CreateOrder > OrderCreated)
+* Include sufficient Commands, Events, and ReadModels to fulfill all user requirements
 `
         })
     }
@@ -603,10 +601,23 @@ They represent complex domain concepts that don't qualify as Aggregates but need
     }
 
     _filterActions(actions){
+        // 이미 존재하는 Aggregate에 수정을 가하는 액션을 막아서 잠재적인 중복 생성을 방지하기 위해서
         let avaliableAggregateIds = actions.filter(action => action.objectType === "Aggregate")
             .map(action => action.ids.aggregateId)
-
         actions = actions.filter(action => avaliableAggregateIds.includes(action.ids.aggregateId))
+
+        // 이미 존재하는 Command, Event, ReadModel을 새로 생성하려는 경우 막아서 중복 생성을 방지하기 위해서
+        const esNames = Object.values(this.client.input.esValue.elements).filter(element => element).map(element => element.name)
+        actions = actions.filter(action => {
+            if(action.objectType === "Command")
+                return !esNames.includes(action.args.commandName)
+            if(action.objectType === "Event")
+                return !esNames.includes(action.args.eventName)
+            if(action.objectType === "ReadModel")
+                return !esNames.includes(action.args.readModelName)
+            return true
+        })
+
         return actions
     }
 
