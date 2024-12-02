@@ -2638,9 +2638,7 @@
                     }
                 },
 
-                onGenerationFinished: (returnObj) => {
-                    if(returnObj.isStopped || returnObj.isError) return
-
+                onGenerationSucceeded: (returnObj) => {
                     if(returnObj.modelValue.removedElements && returnObj.modelValue.removedElements.length > 0) {
                         returnObj.modelValue.removedElements.forEach(element => {
                             if(this.value.elements[element.id])

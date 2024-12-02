@@ -2900,19 +2900,19 @@ jobs:
       run: |
         cd ${me.openCode[0].name}
         mkdir -p ignore_test_file
-        mv src/test/java/${me.projectName}/*.java ignore_test_file/ || true
-        mv ignore_test_file/${me.selectedTestFile.name} src/test/java/${me.projectName}/ || true
+        mv src/test/java/${me.value.scm.repo}/*.java ignore_test_file/ || true
+        mv ignore_test_file/${me.selectedTestFile.name} src/test/java/${me.value.scm.repo}/ || true
     - name: Compile and Run Specific Test
       run: |
         cd ${me.openCode[0].name}
         mvn test-compile
-        mvn test -Dtest=${me.projectName}.${me.selectedTestFile.name.replace('.java', '')} -Dsurefire.useFile=false
+        mvn test -Dtest=${me.value.scm.repo}.${me.selectedTestFile.name.replace('.java', '')} -Dsurefire.useFile=false
     - name: Restore Test Files
       if: always()
       run: |
         cd ${me.openCode[0].name}
         if [ -d "ignore_test_file" ] && [ "$(ls -A ignore_test_file)" ]; then
-          mv ignore_test_file/*.java src/test/java/${me.projectName}/
+          mv ignore_test_file/*.java src/test/java/${me.value.scm.repo}/
         fi
         rm -rf ignore_test_file
     - name: Print Test Results

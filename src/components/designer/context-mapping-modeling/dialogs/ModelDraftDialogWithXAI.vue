@@ -51,9 +51,9 @@
                         <h3>Bounded Context: {{ boundedContextInfo.boundedContext }}</h3>
                     </div> -->
 
-                    <v-row class="ma-0 pa-0" :key="selectedCardKey">
+                    <v-row class="ma-0 pa-0">
                         <v-col v-for="(option, index) in boundedContextInfo.options" 
-                            :key="index"
+                            :key="selectedCardKey"
                             class="ma-0 pa-4 pr-4"
                         >
                             <v-card

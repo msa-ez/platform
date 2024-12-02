@@ -272,6 +272,8 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${value.trim()}
 
             this.onCreateModelFinished(returnObj)
             console.log(`[*] ${this.generatorName}에서 결과 파싱 완료!`, {returnObj})
+
+            if(!returnObj.isStopped && !returnObj.isError) this.onGenerationSucceeded(returnObj)
             return returnObj
 
         } catch(e) {
@@ -317,6 +319,10 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${value.trim()}
     }
     onCreateModelFinished(returnObj){
         if(this.client.onCreateModelFinished) this.client.onCreateModelFinished(returnObj)
+    }
+    // onGenerationFinished는 도중에 생성이 멈추거나 오류가 나도 실행되기 때문에 완전히 성공한 경우에만 호출되는 콜백 함수를 별도로 추가시켜서 공통적으로 이러한 체크 로직이 추가되는 것을 방지함
+    onGenerationSucceeded(returnObj){
+        if(this.client.onGenerationSucceeded) this.client.onGenerationSucceeded(returnObj)
     }
 
     _getProcessPercentage(text){

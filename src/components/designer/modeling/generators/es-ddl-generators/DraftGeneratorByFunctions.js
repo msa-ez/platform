@@ -190,10 +190,10 @@ All fields except additional notes are required for submission. The submit butto
             "Functional Requirements": this.client.input.description,
 
             "Final Check List": `
-* Have you adequately addressed all of your users' needs?
-* Are there no Entities, ValueObjects with one property or unnecessary properties?
-* Are there any options that are redundant and effectively meaningless?
-* Did you write the name property of the object you created in English and the alias property in ${this.preferredLanguage} language?
+* Ensure all user requirements are adequately addressed
+* Verify there are no Entities or ValueObjects with single property or unnecessary properties
+* Remove any redundant or meaningless options
+* Confirm all object name properties are in English and alias properties are in ${this.preferredLanguage} language
 `
         })
     }
