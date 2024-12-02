@@ -102,6 +102,7 @@
                                     v-if="'when-' + rule['whenItems'][0].name + '-' + key == selectedItemPath && selectedItemIndex == ruleIdx"
                                     class="td-component-size" :is="getComponentType(selectedAttType)"
                                     v-model="value['when'][0].value[key]" :label="selectedAttType"
+                                    :items="selectedEnumItems"
                                     @save="closeExampleEditor()" @selectChip="closeExampleEditor"></component>
                                 <div v-else>
                                     <v-chip class="rule-chip" v-if="chipLabels[value['when'][0].value[key]]">{{
@@ -116,7 +117,7 @@
                                     <component
                                         v-if="'then-' + rule['thenItems'][thenIdx].name  + '-' + key == selectedItemPath && selectedItemIndex == ruleIdx"
                                         class="td-component-size" :is="getComponentType(selectedAttType)"
-                                        v-model="then.value[key]" :label="selectedAttType" @save="closeExampleEditor()"
+                                        v-model="then.value[key]" :label="selectedAttType" :items="selectedEnumItems" @save="closeExampleEditor()"
                                         @selectChip="closeExampleEditor"></component>
                                     <div v-else>
                                         <v-chip class="rule-chip" v-if="chipLabels[then.value[key]]">{{
@@ -265,6 +266,8 @@
             removeExample(ruleIdx) {
                 if (this.rule.values.length > 1) {
                     this.rule.values.splice(ruleIdx, 1);
+                } else if(this.rule.values.length == 1){
+                    this.resetExampleDialog()
                 }
             },
             addExample(){
@@ -321,9 +324,17 @@
                 var itemName;
 
                 if (type == 'then') {
-                    selectedItem = me.rule[type + 'Items'].find(x => x.name == thenName).fieldDescriptors.find(x => x.name == key);
-                    if(!selectedItem) {
-                        selectedItem = me.rule[type + 'Items'][thenIdx].fieldDescriptors.find(x => x.name == key);
+                    let selectedData = me.rule[type + 'Items'].find(x => x.name == thenName)
+                    if(selectedData && selectedData._type.includes("Aggregate")){
+                        selectedItem = selectedData.aggregateRoot.fieldDescriptors.find(x => x.name == key);
+                        if(!selectedItem) {
+                            selectedItem = me.rule[type + 'Items'][thenIdx].aggregateRoot.fieldDescriptors.find(x => x.name == key);
+                        }
+                    } else {
+                        selectedItem = selectedData.fieldDescriptors.find(x => x.name == key);
+                        if(!selectedItem) {
+                            selectedItem = me.rule[type + 'Items'][thenIdx].fieldDescriptors.find(x => x.name == key);
+                        }
                     }
                     itemName = me.rule[type + 'Items'][thenIdx].name
                 } else {
