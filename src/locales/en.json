@@ -1,5 +1,8 @@
 {
   "message": "en",
+  "ClassCard": {
+    "enter" : "Enter"
+  },
   "DomainEventDefinitionPanel" : {
     "triggerByLifeCycleDetailTitle" : "Define tasks to be executed at specific points (before/after) during data lifecycle events such as saving, updating, and deleting.",
     "triggerByLifeCycleDetailSubTitle1": "Pre Persist: Executes right before data is saved.",

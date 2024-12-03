@@ -53,10 +53,12 @@
         ></v-checkbox>
 
         <v-img :aspect-ratio="16/9"
-               max-width="400px"
-               max-height="185px"
-               style = "margin-top:12px;"
-               :src="clazz.thumbnail">
+            max-width="400px"
+            max-height="185px"
+            style = "margin-top:12px; cursor: pointer;"
+            :src="clazz.thumbnail"
+            @click="joinClass(clazz)"
+        >
         </v-img>
 
         <v-card-title style="display:flex; margin:-10px 0 -10px; 0;">
@@ -131,11 +133,12 @@
                 </v-speed-dial>
             </div>
             <v-btn  
-            style = "font-weight:700; position:absolute; bottom:5px; right:5px; color:#1E88E5;"
+                style = "font-weight:700; position:absolute; bottom:5px; right:5px; color:#1E88E5;"
                 text
                 :disabled="isDeleted"
-                @click="joinClass(clazz)">
-                Enter
+                @click="joinClass(clazz)"
+            >
+                {{ $t('ClassCard.enter') }}
             </v-btn>
             <div>
                 <v-dialog
