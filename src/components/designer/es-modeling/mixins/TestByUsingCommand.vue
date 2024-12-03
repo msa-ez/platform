@@ -61,6 +61,11 @@ export default {
                     targetBoundedContext: targetBoundedContext,
                     description: description,
                     esValue: this.value
+                },
+                onModelCreated: (returnObj) => {
+                },
+                onGenerationSucceeded: (returnObj) => {
+                    console.log("[onGenerationSucceeded]", returnObj)
                 }
             })
             generator.generate()
