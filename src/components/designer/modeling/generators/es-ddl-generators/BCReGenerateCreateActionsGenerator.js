@@ -604,14 +604,19 @@ They represent complex domain concepts that don't qualify as Aggregates but need
         actions = actions.filter(action => avaliableAggregateIds.includes(action.ids.aggregateId))
 
         // 이미 존재하는 Command, Event, ReadModel을 새로 생성하려는 경우 막아서 중복 생성을 방지하기 위해서
-        const esNames = Object.values(this.client.input.esValue.elements).filter(element => element).map(element => element.name)
+        const esNames = Object.values(this.client.input.esValue.elements)
+            .filter(element => element && element.name)
+            .map(element => element.name)
+        const displayNames = Object.values(this.client.input.esValue.elements)
+            .filter(element => element && element.displayName)
+            .map(element => element.displayName.replace(" ", ""))
         actions = actions.filter(action => {
             if(action.objectType === "Command")
-                return !esNames.includes(action.args.commandName)
+                return !esNames.includes(action.args.commandName) && !displayNames.includes(action.args.commandAlias.replace(" ", ""))
             if(action.objectType === "Event")
-                return !esNames.includes(action.args.eventName)
+                return !esNames.includes(action.args.eventName) && !displayNames.includes(action.args.eventAlias.replace(" ", ""))
             if(action.objectType === "ReadModel")
-                return !esNames.includes(action.args.readModelName)
+                return !esNames.includes(action.args.readModelName) && !displayNames.includes(action.args.readModelAlias.replace(" ", ""))
             return true
         })
 
