@@ -37,8 +37,8 @@ Recommendation Instructions to write proposal.
 `
     }
 
-    __buildResponseFormatPrompt() {
-        return super.__buildResponseFormatPrompt(`
+    __buildJsonResponseFormat() {
+        return `
 {
     "thoughtProcess": {
         // Analyse the user's needs as much as possible and rewrite the requirements to be specific and clear.
@@ -157,11 +157,11 @@ Recommendation Instructions to write proposal.
            }
        }
     }
-}`)
+}`
     }
 
-    __buildExamplePrompt(){
-        const inputs = {
+    __buildJsonExampleInputFormat() {
+        return {
             "Functional Requirements": `
 We need to create a 'Room Reservation' screen and a 'Reservation Status' screen for managing meeting room reservations.
 
@@ -175,18 +175,18 @@ The detail popup includes buttons for modification, cancellation, and printing. 
 
 All fields except additional notes are required for submission. The submit button should only be activated when all required fields are filled. All data must be stored in the database upon successful submission.`
         }
+    }
 
-        const jsonOutput = `
+    __buildJsonExampleOutputFormat() {
+        return JSON.parse(`
 
 {"thoughtProcess":{"step1-requirementsAnalysis":{"thought":"The requirements describe a meeting room reservation system with two main functionalities: room reservation and reservation management. Let's break down the core requirements and identify key entities.","reflection":"We should consider the relationship between reservations and rooms, and how to handle the approval workflow efficiently.","result":{"requirements":[{"name":"reservation-creation","description":"Users must be able to create room reservations with requester details and meeting specifications"},{"name":"room-management","description":"System needs to manage meeting rooms with their properties and availability"},{"name":"approval-workflow","description":"Reservations require approval process with different status management"},{"name":"equipment-handling","description":"Rooms can have different equipment configurations that need to be tracked"},{"name":"catering-service","description":"Optional catering services can be added to reservations"}]}},"step2-designPossibleAggregates":{"thought":"We need to identify the main aggregates that will form the core of our domain model. The reservation process seems to be the main focus.","reflection":"We should consider separating room management from reservations to allow independent scaling and maintenance.","result":{"aggregates":[{"name":"Reservation","alias":"reservation","entities":["Requester","Approver"],"valueObjects":["ReservationPeriod","CateringDetails"],"usedRequestNames":["reservation-creation","approval-workflow","catering-service"]},{"name":"Room","alias":"room","entities":["Equipment"],"valueObjects":["Location","Capacity"],"usedRequestNames":["room-management","equipment-handling"]}]}},"step3-designPossibleOptions":{"thought":"Let's create different options for organizing these aggregates, considering various trade-offs.","reflection":"We should consider both tight and loose coupling approaches between Room and Reservation.","result":{"options":[{"structure":[{"aggregate":{"name":"Reservation","alias":"Reservation"},"entities":[{"name":"Requester","alias":"Requester"},{"name":"Approver","alias":"Approver"}],"valueObjects":[{"name":"ReservationPeriod","alias":"ReservationPeriod"},{"name":"CateringDetails","alias":"CateringDetails"}]},{"aggregate":{"name":"Room","alias":"Room"},"entities":[{"name":"Equipment","alias":"Equipment"}],"valueObjects":[{"name":"Location","alias":"Location"},{"name":"Capacity","alias":"Capacity"}]}],"pros":"Each aggregate is managed independently providing good scalability, clear separation of responsibilities between room management and reservation management","cons":"Requires querying between two aggregates when checking reservation availability"},{"structure":[{"aggregate":{"name":"RoomReservation","alias":"RoomReservation"},"entities":[{"name":"Room","alias":"Room"},{"name":"Requester","alias":"Requester"},{"name":"Approver","alias":"Approver"}],"valueObjects":[{"name":"ReservationPeriod","alias":"ReservationPeriod"},{"name":"Equipment","alias":"Equipment"},{"name":"CateringDetails","alias":"CateringDetails"}]}],"pros":"All reservation-related information is managed in a single aggregate, making queries simple","cons":"The aggregate may become too large making changes difficult, and room management functionality may be limited to expand"}],"defaultOptionIndex":0,"conclusions":"The first option provides better scalability and maintainability by clearly separating room management and reservation management responsibilities. The second option is easier to implement in simple systems but may become harder to manage as the system grows."}},"step4-evaluateOptions":{"thought":"Let's evaluate both options against key DDD principles and system requirements","reflection":"We need to ensure the chosen design supports scalability, maintainability, and proper domain alignment","result":{"evaluationCriteria":{"domainAlignment":{"score":"90","details":["Both options clearly represent the core domain concepts of reservations and rooms","The separation of concerns aligns well with business operations"],"improvements":["Consider adding domain events for reservation status changes"]},"aggregateDesign":{"score":"85","details":["Option 1 maintains clear aggregate boundaries","Option 2 provides simpler transaction management"],"issues":["Option 2's aggregate might grow too large over time","Option 1 requires careful consistency management between aggregates"]},"boundaryConsistency":{"score":"80","details":["Both options maintain clear bounded contexts","Transaction boundaries are well-defined"],"inconsistencies":["Room availability checking might need eventual consistency in Option 1"]},"maintainability":{"score":"95","details":["Option 1 allows independent evolution of room and reservation features","Separation of concerns makes code organization clearer"],"concerns":["Option 2 might require more frequent changes across the entire aggregate"]},"valueObjectUsage":{"score":"85","details":["Appropriate use of value objects for ReservationPeriod and Location","CateringDetails as value object captures related attributes well"],"opportunities":["Could consider making Equipment a value object in Option 1"]}},"optionEvaluations":[{"optionIndex":0,"strengths":["Clear separation of concerns","Independent scalability","Better maintainability"],"weaknesses":["More complex querying","Eventual consistency challenges"],"score":"88"},{"optionIndex":1,"strengths":["Simpler implementation","Stronger consistency guarantees","Easier querying"],"weaknesses":["Limited scalability","Risk of aggregate growth","Tighter coupling"],"score":"75"}],"overallAssessment":{"bestOptionIndex":0,"justification":"Option 1 provides better long-term maintainability and scalability, which are crucial for a reservation system that might need to handle multiple locations and complex booking rules in the future","recommendedImprovements":[{"area":"Consistency Management","description":"Implement eventual consistency patterns for room availability checks","applicableOptions":["0"]},{"area":"Domain Events","description":"Add domain events for reservation status changes to improve integration","applicableOptions":["0","1"]}]},"needsRevision":false}}}}
 
-        `
-
-        return super.__buildExamplePrompt(inputs, jsonOutput)
+        `.trim())
     }
 
-    _buildUserQueryPrompt(){
-        return super._buildUserQueryPrompt({
+    __buildJsonUserQueryInputFormat() {
+        return {
             "Functional Requirements": this.client.input.description,
 
             "Final Check List": `
@@ -195,19 +195,17 @@ All fields except additional notes are required for submission. The submit butto
 * Remove any redundant or meaningless options
 * Confirm all object name properties are in English and alias properties are in ${this.preferredLanguage} language
 `
-        })
+        }
     }
 
 
     onCreateModelGenerating(returnObj) {
         returnObj.directMessage = `Generating options for ${this.client.input.boundedContext.name} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
-        super.onCreateModelGenerating(returnObj)
     }
 
     onCreateModelFinished(returnObj) {
         returnObj.modelValue.output = returnObj.modelValue.aiOutput.thoughtProcess["step3-designPossibleOptions"].result
         returnObj.directMessage = `Generating options for ${this.client.input.boundedContext.name} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
-        super.onCreateModelFinished(returnObj)
     }
 }
 
