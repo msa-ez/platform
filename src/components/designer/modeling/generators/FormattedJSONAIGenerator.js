@@ -164,7 +164,7 @@ ${afterJsonFormat.trim()}
         if(!inputs || !jsonOutput) return ""
         return `Let me give you an example.
 [INPUT]
-${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${value.trim()}`).join("\n\n")}
+${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value === 'string' ? value.trim() : JSON.stringify(value)}`).join("\n\n")}
 
 [OUTPUT]
 \`\`\`json
@@ -198,7 +198,7 @@ ${JSON.stringify(jsonOutput)}
         if(!inputs) return ""
         return `Now let's process the user's input.
 [INPUT]
-${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${value.trim()}`).join("\n\n")}
+${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value === 'string' ? value.trim() : JSON.stringify(value)}`).join("\n\n")}
 
 [OUTPUT]
 \`\`\`json
