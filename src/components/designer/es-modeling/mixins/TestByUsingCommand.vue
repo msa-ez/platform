@@ -7,6 +7,7 @@ import ESValueSummarizeUtil_OnlyName from "../../modeling/generators/es-ddl-gene
 import ESValueSummarizeUtil from "../../modeling/generators/es-ddl-generators/modules/ESValueSummarizeUtil"
 import ESActionsUtil from "../../modeling/generators/es-ddl-generators/modules/ESActionsUtil"
 import GWTGeneratorByFunctions from "../../modeling/generators/es-ddl-generators/GWTGeneratorByFunctions";
+import ESValueSummarizeUtil_WithProperties from "../../modeling/generators/es-ddl-generators/modules/ESValueSummarizeUtil_WithProperties";
 
 export default {
     name: "test-by-using-command",
@@ -62,10 +63,73 @@ export default {
                     description: description,
                     esValue: this.value
                 },
-                onModelCreated: (returnObj) => {
+
+                onFirstResponse: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 1,
+                            directMessage: returnObj.directMessage
+                        },
+                        actions: {
+                            stop: () => {
+                            }
+                        },
+                        isGeneratorButtonEnabled: false
+                    }
+
+                    this.generatorProgressDto = {
+                        generateDone: false,
+                        displayMessage: returnObj.directMessage,
+                        progress: 0,
+                        actions: {
+                            stopGeneration: () => {
+                                returnObj.actions.stopGeneration()
+                            }
+                        }
+                    }
                 },
+
+                onModelCreated: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
+                    this.generatorProgressDto.displayMessage = returnObj.directMessage
+                    this.generatorProgressDto.progress = returnObj.progress
+                },
+
                 onGenerationSucceeded: (returnObj) => {
-                    console.log("[onGenerationSucceeded]", returnObj)
+                    if(returnObj.modelValue && returnObj.modelValue.commandsToReplace) {
+                        for(const command of returnObj.modelValue.commandsToReplace)
+                            this.$set(this.value.elements, command.id, command)
+                        this.changedByMe = true
+                    }
+
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onRetry: (returnObj) => {
+                    alert(`[!] GWT 생성 과정에서 오류가 발생했습니다. 다시 시도해주세요.\n* Error log \n${returnObj.errorMessage}`)
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: true,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onStopped: () => {
+                    this.generatorProgressDto.generateDone = true
                 }
             })
             generator.generate()

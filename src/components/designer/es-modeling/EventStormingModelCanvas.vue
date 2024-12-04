@@ -1965,6 +1965,7 @@
     import TestByUsingCommand from "./mixins/TestByUsingCommand"
     import ModelDraftDialogWithXAI from "../context-mapping-modeling/dialogs/ModelDraftDialogWithXAI.vue"
     import BCReGenerateCreateActionsGenerator from "../modeling/generators/es-ddl-generators/BCReGenerateCreateActionsGenerator"
+    import GWTGeneratorByFunctions from "../modeling/generators/es-ddl-generators/GWTGeneratorByFunctions";
     import GeneratorProgress from "./components/GeneratorProgress.vue"
     const prettier = require("prettier");
     const plugins = require("prettier-plugin-java");
@@ -2433,7 +2434,6 @@
                         stop: () => {}
                     }
                 },
-                BCRegenerateCreateActionsGeneratorInputs: [],
 
                 generatorProgressDto: {
                     generateDone: true,
@@ -2445,7 +2445,18 @@
                 },
 
                 generators: {
-                    BCReGenerateCreateActionsGenerator: null
+                    BCReGenerateCreateActionsGenerator: {
+                        generator: null,
+                        inputs: [],
+                        generateIfInputsExist: () => {},
+                        initInputs: (draftOptions) => {}
+                    },
+                    GWTGeneratorByFunctions: {
+                        generator: null,
+                        inputs: [],
+                        generateIfInputsExist: () => {},
+                        initInputs: (draftOptions) => {}
+                    }
                 }
             };
         },
@@ -2596,7 +2607,7 @@
                 }
             })
 
-            this.generators.BCReGenerateCreateActionsGenerator = new BCReGenerateCreateActionsGenerator({
+            this.generators.BCReGenerateCreateActionsGenerator.generator = new BCReGenerateCreateActionsGenerator({
                 input: null,
 
                 onFirstResponse: (returnObj) => {
@@ -2652,21 +2663,22 @@
                         this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
                     }
 
-                    if(this.BCRegenerateCreateActionsGeneratorInputs.length > 0) {
-                        this.generators.BCReGenerateCreateActionsGenerator.client.input = this.BCRegenerateCreateActionsGeneratorInputs.shift()
-                        this.generators.BCReGenerateCreateActionsGenerator.generate()
+
+                    if(this.generators.BCReGenerateCreateActionsGenerator.generateIfInputsExist())
+                        return
+
+                    if(this.generators.GWTGeneratorByFunctions.generateIfInputsExist())
+                        return
+
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
                     }
-                    else {
-                        this.modelDraftDialogWithXAIDto = {
-                            ...this.modelDraftDialogWithXAIDto,
-                            isShow: false,
-                            draftUIInfos: {
-                                leftBoundedContextCount: 0
-                            },
-                            isGeneratorButtonEnabled: true
-                        }
-                        this.generatorProgressDto.generateDone = true
-                    }
+                    this.generatorProgressDto.generateDone = true
                 },
 
                 onRetry: (returnObj) => {
@@ -2686,6 +2698,127 @@
                     this.generatorProgressDto.generateDone = true
                 }
             })
+            this.generators.BCReGenerateCreateActionsGenerator.generateIfInputsExist = () => {
+                if(this.generators.BCReGenerateCreateActionsGenerator.inputs.length > 0) {
+                    this.generators.BCReGenerateCreateActionsGenerator.generator.client.input = this.generators.BCReGenerateCreateActionsGenerator.inputs.shift()
+                    this.generators.BCReGenerateCreateActionsGenerator.generator.generate()
+                    return true
+                }
+                return false
+            }
+            this.generators.BCReGenerateCreateActionsGenerator.initInputs = (draftOptions) => {
+                let inputs = []
+                for(const eachDraftOption of Object.values(draftOptions)) {
+                    inputs = inputs.concat(
+                        eachDraftOption.structure.map((aggregateStructure, index) => ({
+                            targetBoundedContext: eachDraftOption.boundedContext,
+                            description: eachDraftOption.description,
+                            draftOption: [aggregateStructure],
+                            esValue: this.value,
+                            userInfo: this.userInfo,
+                            information: this.information,
+                            isAccumulated: index > 0
+                        })))
+                }
+                this.generators.BCReGenerateCreateActionsGenerator.inputs = inputs
+            }
+
+            this.generators.GWTGeneratorByFunctions.generator = new GWTGeneratorByFunctions({
+                input: null,
+
+                onFirstResponse: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 1,
+                            directMessage: returnObj.directMessage
+                        },
+                        actions: {
+                            stop: () => {
+                            }
+                        },
+                        isGeneratorButtonEnabled: false
+                    }
+
+                    this.generatorProgressDto = {
+                        generateDone: false,
+                        displayMessage: returnObj.directMessage,
+                        progress: 0,
+                        actions: {
+                            stopGeneration: () => {
+                                returnObj.actions.stopGeneration()
+                            }
+                        }
+                    }
+                },
+
+                onModelCreated: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
+                    this.generatorProgressDto.displayMessage = returnObj.directMessage
+                    this.generatorProgressDto.progress = returnObj.progress
+                },
+
+                onGenerationSucceeded: (returnObj) => {
+                    if(returnObj.modelValue && returnObj.modelValue.commandsToReplace) {
+                        for(const command of returnObj.modelValue.commandsToReplace)
+                            this.$set(this.value.elements, command.id, command)
+                        this.changedByMe = true
+                    }
+
+
+                    if(this.generators.GWTGeneratorByFunctions.generateIfInputsExist())
+                        return
+
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onRetry: (returnObj) => {
+                    alert(`[!] GWT 생성 과정에서 오류가 발생했습니다. 다시 시도해주세요.\n* Error log \n${returnObj.errorMessage}`)
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: true,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onStopped: () => {
+                    this.generatorProgressDto.generateDone = true
+                }
+            })
+            this.generators.GWTGeneratorByFunctions.generateIfInputsExist = () => {
+                if(this.generators.GWTGeneratorByFunctions.inputs.length > 0) {
+                    this.generators.GWTGeneratorByFunctions.generator.client.input = this.generators.GWTGeneratorByFunctions.inputs.shift()
+                    this.generators.GWTGeneratorByFunctions.generator.generate()
+                    return true
+                }
+                return false
+            }
+            this.generators.GWTGeneratorByFunctions.initInputs = (draftOptions) => {
+                let inputs = []
+                for(const eachDraftOption of Object.values(draftOptions)) {
+                    inputs.push(
+                        {
+                            targetBoundedContext: eachDraftOption.boundedContext,
+                            description: eachDraftOption.description,
+                            esValue: this.value
+                        }
+                    )
+                }
+                this.generators.GWTGeneratorByFunctions.inputs = inputs
+            }
         },
         mounted: function () {
             var me = this;
@@ -3783,22 +3916,14 @@
                 }
             },
 
-            generateFromDraftWithXAI(draftOption) {
-                console.log("[*] DraftOption을 이용해서 모델 생성 로직이 실행됨", draftOption)
 
-                const SELECTED_DRAFT_OPTION = Object.values(draftOption)[0]
-                this.BCRegenerateCreateActionsGeneratorInputs = SELECTED_DRAFT_OPTION.structure.map((aggregateStructure, index) => ({
-                    targetBoundedContext: SELECTED_DRAFT_OPTION.boundedContext,
-                    description: SELECTED_DRAFT_OPTION.description,
-                    draftOption: [aggregateStructure],
-                    esValue: this.value,
-                    userInfo: this.userInfo,
-                    information: this.information,
-                    isAccumulated: index > 0
-                }))
+            generateFromDraftWithXAI(draftOptions) {
+                console.log("[*] 유저가 선택한 초안 옵션들을 이용해서 모델 생성 로직이 실행됨", draftOptions)
 
-                this.generators.BCReGenerateCreateActionsGenerator.client.input = this.BCRegenerateCreateActionsGeneratorInputs.shift()
-                this.generators.BCReGenerateCreateActionsGenerator.generate()                
+                this.generators.BCReGenerateCreateActionsGenerator.initInputs(draftOptions)
+                this.generators.GWTGeneratorByFunctions.initInputs(draftOptions)
+
+                this.generators.BCReGenerateCreateActionsGenerator.generateIfInputsExist()
             },
 
 

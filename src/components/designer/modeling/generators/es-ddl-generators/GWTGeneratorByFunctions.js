@@ -748,10 +748,12 @@ All operations should be recorded with timestamps and proper status updates.`
         for(const scenario of Object.values(result)){
             const targetCommandUUID = this.esAliasTransManager.aliasToUUIDDic[scenario.targetCommandId]
             if(!targetCommandUUID) continue
-
-            const targetCommand = JSON.parse(JSON.stringify(this.client.input.esValue.elements[targetCommandUUID]))
+            
+            let targetCommand = this.client.input.esValue.elements[targetCommandUUID]
             if(!targetCommand) continue
-            targetCommand.examples = this.__getExamples(scenario.gwts)
+            targetCommand = JSON.parse(JSON.stringify(targetCommand))
+
+            targetCommand.examples = this._getExamples(scenario.gwts)
             commandsToReplace.push(targetCommand)
         }
         returnObj.modelValue.commandsToReplace = commandsToReplace
@@ -760,17 +762,49 @@ All operations should be recorded with timestamps and proper status updates.`
         returnObj.directMessage = `Generating GWTs for ${this.client.input.targetBoundedContext.name} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
     }
 
-    __getExamples(gwts){
-        let examples = [
-            
-        ]
+    _getExamples(gwts){
+        let examples = []
+        for(const gwt of gwts){
+            if(!gwt.given || !gwt.when || !gwt.then) continue
 
+            const givenElement = this.__findElementByName(gwt.given.name)
+            const whenElement = this.__findElementByName(gwt.when.name)
+            const thenElement = this.__findElementByName(gwt.then.name)
+            if(!givenElement || !whenElement || !thenElement) continue
+            if(!givenElement._type.includes("Aggregate") || !whenElement._type.includes("Command") || !thenElement._type.includes("Event")) continue
 
-        return gwts.map(gwt => ({
-            given: gwt.given,
-            when: gwt.when,
-            then: gwt.then
-        }))
+            examples.push({
+                "given": [{
+                    "type": "Aggregate",
+                    "name": gwt.given.name,
+                    "value": this.__getValuesUsingFieldDescriptors(gwt.given.values, givenElement.aggregateRoot.fieldDescriptors)
+                }],
+
+                "when": [{
+                    "type": "Command",
+                    "name": gwt.when.name,
+                    "value": this.__getValuesUsingFieldDescriptors(gwt.when.values, whenElement.fieldDescriptors)
+                }],
+
+                "then": [{
+                    "type": "Event",
+                    "name": gwt.then.name,
+                    "value": this.__getValuesUsingFieldDescriptors(gwt.then.values, thenElement.fieldDescriptors)
+                }]
+            })
+        }
+        return examples
+    }
+
+    __findElementByName(name) {
+        return Object.values(this.client.input.esValue.elements).find(element => element.name === name)
+    }
+
+    __getValuesUsingFieldDescriptors(values, fieldDescriptors) {
+        let returnValues = {}
+        for(const fieldDescriptor of fieldDescriptors)
+            returnValues[fieldDescriptor.name] = (values.hasOwnProperty(fieldDescriptor.name) ? values[fieldDescriptor.name] : "N/A")
+        return returnValues
     }
 }
 
