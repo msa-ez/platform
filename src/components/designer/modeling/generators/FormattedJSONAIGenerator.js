@@ -79,11 +79,10 @@ class FormattedJSONAIGenerator extends AIGenerator {
         this.leftRetryCount = this.MAX_RETRY_COUNT
 
         this.onGenerateBefore(this.client.input)
+        if(this.client.onGenerateBefore) this.client.onGenerateBefore(this.client.input)
         await super.generate()
     }
-    onGenerateBefore(inputParams){
-        if(this.client.onGenerateBefore) this.client.onGenerateBefore(inputParams)
-    }
+    onGenerateBefore(inputParams){}
     
 
     createPrompt(){
@@ -141,11 +140,10 @@ class FormattedJSONAIGenerator extends AIGenerator {
         return ``
     }
 
-    /**
-     * @example
-     * super.getOutputSyntaxGuidePrompt(`{...}`)
-     */
-    __buildResponseFormatPrompt(jsonFormat, afterJsonFormat=""){
+    __buildResponseFormatPrompt(){
+        const jsonFormat = this.__buildJsonResponseFormat()
+        const afterJsonFormat = this.__buildAfterJsonResponseFormat()
+
         if(!jsonFormat) return ""
         return `You should return a list containing JSON objects for performing specific actions.
 The returned format should be as follows.
@@ -156,23 +154,26 @@ ${jsonFormat.trim()}
 ${afterJsonFormat.trim()}
 `
     }
+    __buildJsonResponseFormat() { return "" }
+    __buildAfterJsonResponseFormat() { return "" }
 
-    /**
-     * @example
-     * __provideExample({input1: "...", input2: "..."}, `{"output1": "...", "output2": "..."}`)
-     */
-    __buildExamplePrompt(inputs, jsonOutput=""){
-        if(!inputs) return ""
+    __buildExamplePrompt(){
+        const inputs = this.__buildJsonExampleInputFormat()
+        const jsonOutput = this.__buildJsonExampleOutputFormat()
+
+        if(!inputs || !jsonOutput) return ""
         return `Let me give you an example.
 [INPUT]
-${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${value.trim()}`).join("\n\n")}
+${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value === 'string' ? value.trim() : JSON.stringify(value)}`).join("\n\n")}
 
 [OUTPUT]
 \`\`\`json
-${jsonOutput.trim()}
+${JSON.stringify(jsonOutput)}
 \`\`\`
 `
     }
+    __buildJsonExampleInputFormat(){ return {} }
+    __buildJsonExampleOutputFormat(){ return {} }
 
     /**
      * JSON 응답을 압축시켜서 토큰 초과 문제 해소 및 출력 속도 개선
@@ -191,20 +192,19 @@ ${jsonOutput.trim()}
 `
     }
 
-    /**
-     * @example
-     * _assembleUserQuery({input1: "...", input2: "..."})
-     */
-    _buildUserQueryPrompt(inputs){
+    _buildUserQueryPrompt(){
+        const inputs = this.__buildJsonUserQueryInputFormat()
+
         if(!inputs) return ""
         return `Now let's process the user's input.
 [INPUT]
-${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${value.trim()}`).join("\n\n")}
+${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value === 'string' ? value.trim() : JSON.stringify(value)}`).join("\n\n")}
 
 [OUTPUT]
 \`\`\`json
 `
     }
+    __buildJsonUserQueryInputFormat(){ return {} }
 
 
     createModel(text){     
@@ -225,6 +225,7 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${value.trim()}
             returnObj.isFirstResponse = this.isFirstResponse
             this.isFirstResponse = false
             this.onFirstResponse(returnObj)
+            if(this.client.onFirstResponse) this.client.onFirstResponse(returnObj)
         }
         else
             returnObj.isFirstResponse = this.isFirstResponse
@@ -238,6 +239,7 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${value.trim()}
             console.log(`[*] ${this.generatorName}에서 결과 생성 중지됨!`)
             returnObj.directMessage = `stopped!`
             this.onStopped(returnObj)
+            if(this.client.onStopped) this.client.onStopped(returnObj)
             return returnObj
         }
         
@@ -250,6 +252,7 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${value.trim()}
                 // 실시간으로 진행중인 결과값을 처리하는 도중에 예외 발생시에는 예외 처리를 하지 않고 그냥 넘어감
                 try {
                     this.onCreateModelGenerating(returnObj)
+                    if(this.client.onCreateModelGenerating) this.client.onCreateModelGenerating(returnObj)
                 } catch(e) {
                     console.error(`[!] ${this.generatorName}에서 부분적인 결과 처리중에 오류 발생!`, {text, error:e})
                     console.error(e)
@@ -271,9 +274,13 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${value.trim()}
             }
 
             this.onCreateModelFinished(returnObj)
+            if(this.client.onCreateModelFinished) this.client.onCreateModelFinished(returnObj)
             console.log(`[*] ${this.generatorName}에서 결과 파싱 완료!`, {returnObj})
 
-            if(!returnObj.isStopped && !returnObj.isError) this.onGenerationSucceeded(returnObj)
+            if(!returnObj.isStopped && !returnObj.isError) {
+                this.onGenerationSucceeded(returnObj)
+                if(this.client.onGenerationSucceeded) this.client.onGenerationSucceeded(returnObj)
+            }
             return returnObj
 
         } catch(e) {
@@ -290,7 +297,12 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${value.trim()}
             }
 
             this.onError(returnObj)
-            if(returnObj.isDied) this.onRetry(returnObj)
+            if(this.client.onError) this.client.onError(returnObj)
+
+            if(returnObj.isDied) {
+                this.onRetry(returnObj)
+                if(this.client.onRetry) this.client.onRetry(returnObj)
+            }
         
             if(this.leftRetryCount > 0) {
                 this.leftRetryCount--
@@ -301,29 +313,15 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${value.trim()}
 
         }
     }
-    onFirstResponse(returnObj){
-        if(this.client.onFirstResponse) this.client.onFirstResponse(returnObj)
-    }
-    onStopped(returnObj){
-        if(this.client.onStopped) this.client.onStopped(returnObj)
-    }
-    onError(returnObj){
-        if(this.client.onError) this.client.onError(returnObj)
-    }
-    onRetry(returnObj){
-        if(this.client.onRetry) this.client.onRetry(returnObj)
-    }
+    onFirstResponse(returnObj){}
+    onStopped(returnObj){}
+    onError(returnObj){}
+    onRetry(returnObj){}
     // onCreateModel을 생성 도중과 생성 완료시로 구분해서 처리하기 위한 확장된 콜백 함수
-    onCreateModelGenerating(returnObj){
-        if(this.client.onCreateModelGenerating) this.client.onCreateModelGenerating(returnObj)
-    }
-    onCreateModelFinished(returnObj){
-        if(this.client.onCreateModelFinished) this.client.onCreateModelFinished(returnObj)
-    }
+    onCreateModelGenerating(returnObj){}
+    onCreateModelFinished(returnObj){}
     // onGenerationFinished는 도중에 생성이 멈추거나 오류가 나도 실행되기 때문에 완전히 성공한 경우에만 호출되는 콜백 함수를 별도로 추가시켜서 공통적으로 이러한 체크 로직이 추가되는 것을 방지함
-    onGenerationSucceeded(returnObj){
-        if(this.client.onGenerationSucceeded) this.client.onGenerationSucceeded(returnObj)
-    }
+    onGenerationSucceeded(returnObj){}
 
     _getProcessPercentage(text){
         let foundCount = 0

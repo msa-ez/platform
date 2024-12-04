@@ -1,5 +1,8 @@
 {
   "message": "ko",
+  "ClassCard": {
+    "enter" : "입장"
+  },
   "DomainEventDefinitionPanel" : {
     "triggerByLifeCycleDetailTitle" : "데이터가 저장, 수정, 삭제 등의 생명주기를 거칠 때 특정 시점(전/후)에 실행될 작업을 정의.",
     "triggerByLifeCycleDetailSubTitle1": "Pre Persist: 데이터가 저장되기 직전에 실행됩니다.",
