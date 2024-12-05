@@ -149,7 +149,7 @@ Generate commands in the aggregate to satisfy the given functional requirements.
         ],
 
         "outputEventNames": ["<outputEventName>"], // Must write existing event names.
-        "actor": "<actorName>" // The name of the actor performing the action. Should include names like user, admin, etc. If there is no specific actor, leave it empty.
+        "actor": "<actorName>" // The name of the actor performing the action. Should include names like user, admin, system, etc.
     }
 }
 

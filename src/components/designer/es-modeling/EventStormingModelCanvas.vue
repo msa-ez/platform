@@ -2457,7 +2457,8 @@
                         generateIfInputsExist: () => {},
                         initInputs: (draftOptions) => {}
                     }
-                }
+                },
+                selectedDraftOptions: []
             };
         },
         computed: {
@@ -2667,6 +2668,7 @@
                     if(this.generators.BCReGenerateCreateActionsGenerator.generateIfInputsExist())
                         return
 
+                    this.generators.GWTGeneratorByFunctions.initInputs(this.selectedDraftOptions)
                     if(this.generators.GWTGeneratorByFunctions.generateIfInputsExist())
                         return
 
@@ -2809,13 +2811,22 @@
             this.generators.GWTGeneratorByFunctions.initInputs = (draftOptions) => {
                 let inputs = []
                 for(const eachDraftOption of Object.values(draftOptions)) {
-                    inputs.push(
-                        {
+                    const targetAggregates = Object.values(this.value.elements).filter(element => element && element._type === "org.uengine.modeling.model.Aggregate" && element.boundedContext.id === eachDraftOption.boundedContext.id)
+
+                    // Aggregate각각마다 존재하는 커맨드에 GWT를 생성하는 요청을 함으로써 다루는 문제영역을 최소화함
+                    for(const targetAggregate of targetAggregates) {
+                        const targetCommandIds = Object.values(this.value.elements)
+                        .filter(element => element && element._type === "org.uengine.modeling.model.Command" && element.aggregate.id === targetAggregate.id)
+                        .map(command => command.id)
+                        if(!targetCommandIds || targetCommandIds.length === 0) continue
+
+                        inputs.push({
                             targetBoundedContext: eachDraftOption.boundedContext,
+                            targetCommandIds: targetCommandIds,
                             description: eachDraftOption.description,
                             esValue: this.value
-                        }
-                    )
+                        })
+                    }
                 }
                 this.generators.GWTGeneratorByFunctions.inputs = inputs
             }
@@ -3919,10 +3930,9 @@
 
             generateFromDraftWithXAI(draftOptions) {
                 console.log("[*] 유저가 선택한 초안 옵션들을 이용해서 모델 생성 로직이 실행됨", draftOptions)
+                this.selectedDraftOptions = draftOptions
 
-                this.generators.BCReGenerateCreateActionsGenerator.initInputs(draftOptions)
-                this.generators.GWTGeneratorByFunctions.initInputs(draftOptions)
-
+                this.generators.BCReGenerateCreateActionsGenerator.initInputs(this.selectedDraftOptions)
                 this.generators.BCReGenerateCreateActionsGenerator.generateIfInputsExist()
             },
 

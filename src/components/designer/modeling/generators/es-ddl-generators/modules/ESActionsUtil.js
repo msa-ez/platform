@@ -14,6 +14,7 @@ class ESActionsUtil {
         let esValue = JSON.parse(JSON.stringify(prevESValue))
 
         ESActionsUtil._restoreActions(actions, esValue)
+        actions = ESActionsUtil._getSortedActions(actions)
         ESActionsUtil._idsToUUIDs(actions, esValue)
         
 
@@ -59,6 +60,25 @@ class ESActionsUtil {
                     else action.type = "create"
                 }
             }
+    }
+
+    static _getSortedActions(actions) {
+        const priorityMap = {
+            'BoundedContext': 1,
+            'Aggregate': 2,
+            'GeneralClass': 3,
+            'ValueObject': 4,
+            'Enumeration': 5,
+            'Event': 6,
+            'Command': 7,
+            'ReadModel': 8
+        }
+
+        return [...actions].sort((a, b) => {
+            const priorityA = priorityMap[a.objectType] || 999
+            const priorityB = priorityMap[b.objectType] || 999
+            return priorityA - priorityB
+        })
     }
 
     /**
