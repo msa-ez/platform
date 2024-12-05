@@ -184,6 +184,15 @@ The approximate structure is as follows.
                 .filter(element => element && element._type === 'org.uengine.modeling.model.BoundedContext')
         }
 
+        let summarizedESValue = {}
+        for(let boundedContext of getAllBoundedContexts(esValue)) {
+            summarizedESValue[boundedContext.id] = ESValueSummarizeUtil.getSummarizedBoundedContextValue(esValue, boundedContext)
+        }
+        return summarizedESValue
+    }
+
+
+    static getSummarizedBoundedContextValue(esValue, boundedContext) {
         /**
          * 주어진 BoundedContext에서 agggregates 속성이 없을 경우를 대비해서, 주어진 이벤트스토밍 값을 통해서 복원
          */
@@ -197,16 +206,6 @@ The approximate structure is as follows.
             }
         }
 
-        let summarizedESValue = {}
-        for(let boundedContext of getAllBoundedContexts(esValue)) {
-            restoreBoundedContextAggregatesProperties(esValue, boundedContext)
-            summarizedESValue[boundedContext.id] = ESValueSummarizeUtil.getSummarizedBoundedContextValue(esValue, boundedContext)
-        }
-        return summarizedESValue
-    }
-
-
-    static getSummarizedBoundedContextValue(esValue, boundedContext) {
         const getAllAggregates = (esValue, boundedContext) => {
             return boundedContext.aggregates.map(aggregate => esValue.elements[aggregate.id])
         }
@@ -231,6 +230,8 @@ The approximate structure is as follows.
             return uniqueActors;
         }
 
+        restoreBoundedContextAggregatesProperties(esValue, boundedContext)
+        
         let summarizedBoundedContextValue = {}
         summarizedBoundedContextValue.id = ESValueSummarizeUtil.__getElementIdSafely(boundedContext)
         summarizedBoundedContextValue.name = boundedContext.name
