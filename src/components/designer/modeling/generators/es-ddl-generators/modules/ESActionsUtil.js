@@ -10,6 +10,8 @@ const ReadModelActionsProcessor = require('./ESActionsUtilProcessors/ReadModelAc
 
 class ESActionsUtil {
     static getActionAppliedESValue(actions, userInfo, information, prevESValue=null) {
+        console.log("[*] 이벤트 스토밍 수정 액션 적용 시도", {actions, userInfo, information, prevESValue})
+
         if(!prevESValue) prevESValue = {elements: {}, relations: {}}
         let esValue = JSON.parse(JSON.stringify(prevESValue))
 
@@ -30,6 +32,7 @@ class ESActionsUtil {
         callbacks.afterAllObjectAppliedCallBacks.forEach(callback => callback(esValue, userInfo, information))
         callbacks.afterAllRelationAppliedCallBacks.forEach(callback => callback(esValue, userInfo, information))
         
+        console.log("[*] 이벤트 스토밍 수정 액션 적용 완료", esValue)
         return esValue
     }
 

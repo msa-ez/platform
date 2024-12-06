@@ -129,6 +129,7 @@ class GeneralClassActionsProcessor {
                         break
                     }
                 }
+                if(!matchedElement) continue
 
                 let isRelationAlreadyExists = false
                 for(const relation of Object.values(entities.relations).filter(relation => relation)) {
