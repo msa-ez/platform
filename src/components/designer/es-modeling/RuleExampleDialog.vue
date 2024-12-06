@@ -834,7 +834,7 @@
                     }
                     let fieldDescriptors = item.fieldDescriptors || item.aggregateRoot.fieldDescriptors
                     fieldDescriptors.forEach(function (field){
-                        if (item.aggregateRoot.entities.elements && item.aggregateRoot.entities.elements[field.classId] && item.aggregateRoot.entities.elements[field.classId].fieldDescriptors) {
+                        if (item.aggregateRoot && item.aggregateRoot.entities && item.aggregateRoot.entities.elements && item.aggregateRoot.entities.elements[field.classId] && item.aggregateRoot.entities.elements[field.classId].fieldDescriptors) {
                             let thenArr = [];
                             let thenObject = {};
                             item.aggregateRoot.entities.elements[field.classId].fieldDescriptors.forEach(function (thenField){

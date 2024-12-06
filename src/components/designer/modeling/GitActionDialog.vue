@@ -479,7 +479,7 @@
                 codeChangeNumber: 0,
                 selectedIdx: null,
                 resultLength: 0,
-                isAutoMode: true,
+                isAutoMode: false,
                 isFirstCommit: true,
                 startGitAction: true,
                 allTestSucceeded: false,

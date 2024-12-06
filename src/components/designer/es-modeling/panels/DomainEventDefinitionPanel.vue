@@ -58,65 +58,73 @@
                     </v-card-text>
                 </v-card>
 
-                <v-card flat>
-                    <div class="pa-4 pb-0">
-                        <v-card-text class="pa-0 pb-2 panel-title">Trigger By LifeCycle</v-card-text>
-                    </div>
-                    <v-card-text class="pt-0 pb-0">
-                        <v-radio-group v-model="value.trigger" style="width: 290px;" :disabled="isReadOnly" class="mt-1">
-                            <v-row dense class="pa-0 ma-0">
-                                <v-col dense class="pa-0">
-                                    <v-radio label="Pre Persist" value="@PrePersist" v-if="lifeCycleCommand.includes('POST')" style="width: 110px" ></v-radio>
-                                    <v-radio label="Pre Update" value="@PreUpdate" v-if="lifeCycleCommand.includes('PATCH')"></v-radio>
-                                    <v-radio label="Pre Update" value="@PreUpdate" v-if="lifeCycleCommand.includes('PUT')"></v-radio>
-                                    <v-radio label="Pre Remove" value="@PreRemove" v-if="lifeCycleCommand.includes('DELETE')"></v-radio>
-                                </v-col>
-                                <v-col dense class="pa-0">
-                                    <v-radio label="Post Persist" value="@PostPersist" v-if="lifeCycleCommand.includes('POST')"></v-radio>
-                                    <v-radio label="Post Update" value="@PostUpdate" v-if="lifeCycleCommand.includes('PATCH')"></v-radio>
-                                    <v-radio label="Post Update" value="@PostUpdate" v-if="lifeCycleCommand.includes('PUT')"></v-radio>
-                                    <v-radio label="Post Remove" value="@PostRemove" v-if="lifeCycleCommand.includes('DELETE')" style="width: 130px" ></v-radio>
-                                </v-col>
-                            </v-row>
-                        </v-radio-group>
-                        <detail-component
-                            :title="$t('DomainEventDefinitionPanel.triggerByLifeCycleDetailTitle')"
-                            :details="triggerByLifeCycleDetailSubTitle"
-                        />
-                    </v-card-text>
-                </v-card>
-
-                <v-card>
-                    <v-card-text class="panel-title">Trigger By Command</v-card-text>
-                    <v-card-text v-if="commandLists && commandLists.length">
-
-                        <v-row style="font-size:16px; padding:20px 0 20px 0;">
-                            <v-col cols="4" v-for="(command,idx) in commandLists" v-bind:key="idx">● {{command.name}}</v-col>
+                <div class="pa-4">
+                    <v-card-text class="pa-0 ma-0 panel-title">Trigger By LifeCycle</v-card-text>
+                    <detail-component
+                        :title="$t('DomainEventDefinitionPanel.triggerByLifeCycleDetailTitle')"
+                        :details="triggerByLifeCycleDetailSubTitle"
+                    />
+                    <v-radio-group v-model="value.trigger" style="width: 290px;" :disabled="isReadOnly" class="mt-1">
+                        <v-row dense class="pa-0 ma-0">
+                            <v-col dense class="pa-0">
+                                <v-radio label="Pre Persist" value="@PrePersist" v-if="lifeCycleCommand.includes('POST')" style="width: 110px" ></v-radio>
+                                <v-radio label="Pre Update" value="@PreUpdate" v-if="lifeCycleCommand.includes('PATCH')"></v-radio>
+                                <v-radio label="Pre Update" value="@PreUpdate" v-if="lifeCycleCommand.includes('PUT')"></v-radio>
+                                <v-radio label="Pre Remove" value="@PreRemove" v-if="lifeCycleCommand.includes('DELETE')"></v-radio>
+                            </v-col>
+                            <v-col dense class="pa-0">
+                                <v-radio label="Post Persist" value="@PostPersist" v-if="lifeCycleCommand.includes('POST')"></v-radio>
+                                <v-radio label="Post Update" value="@PostUpdate" v-if="lifeCycleCommand.includes('PATCH')"></v-radio>
+                                <v-radio label="Post Update" value="@PostUpdate" v-if="lifeCycleCommand.includes('PUT')"></v-radio>
+                                <v-radio label="Post Remove" value="@PostRemove" v-if="lifeCycleCommand.includes('DELETE')" style="width: 130px" ></v-radio>
+                            </v-col>
                         </v-row>
-                    </v-card-text>
-                </v-card>
+                    </v-radio-group>
+                </div>
 
-                <v-card>
-                    <v-card-text class="panel-title">Trigger By Policy</v-card-text>
-                    <v-card-text v-if="policyLists && policyLists.length">
+                <div class="pa-4">
+                    <v-card-text class="panel-title pa-0 ma-0">Trigger By Command</v-card-text>
+                    <detail-component
+                        :title="$t('DomainEventDefinitionPanel.triggerByCommandDetailTitle')"
+                        :details="triggerByCommandDetailSubTitle"
+                    />
+                    <v-row v-if="commandLists && commandLists.length" class="pa-0 ma-0" style="font-size:16px;">
+                        <v-col cols="4" 
+                            v-for="(command,idx) in commandLists" 
+                            v-bind:key="idx"
+                            class="pl-0"
+                        >● {{command.name}}</v-col>
+                    </v-row>
+                </div>
 
-                        <v-row style="font-size:16px; padding:20px 0 20px 0;">
-                            <v-col cols="4" v-for="(policy,idx) in policyLists" v-bind:key="idx">● {{policy.name}}</v-col>
-                        </v-row>
-                    </v-card-text>
-                </v-card>
+                <div class="pa-4">
+                    <v-card-text class="panel-title pa-0 ma-0">Trigger By Policy</v-card-text>
+                    <detail-component
+                        :title="$t('DomainEventDefinitionPanel.triggerByPolicyDetailTitle')"
+                        :details="triggerByPolicyDetailSubTitle"
+                    />
+                    <v-row v-if="policyLists && policyLists.length" class="pa-0 ma-0" style="font-size:16px;">
+                        <v-col cols="4" 
+                            v-for="(policy,idx) in policyLists" 
+                            v-bind:key="idx"
+                            class="pl-0"
+                        >● {{policy.name}}</v-col>
+                    </v-row>
+                </div>
 
-                <v-card>
-                    <v-card-text class="panel-title">Associated Aggregate</v-card-text>
-                    <v-card-text>
-                        <v-text-field
-                                v-model="relatedAggregateName"
-                                label="Attach Aggregate && check Name"
-                                single-line
-                                disabled
-                        ></v-text-field>
-                    </v-card-text>
-                </v-card>
+                <div class="pa-4">
+                    <v-card-text class="panel-title pa-0 ma-0">Associated Aggregate</v-card-text>
+                    <detail-component
+                        :title="$t('DomainEventDefinitionPanel.associatedAggregateTitle')"
+                        :details="associatedAggregateTitle"
+                    />
+                    <v-text-field
+                        v-model="relatedAggregateName"
+                        label="Attach Aggregate && check Name"
+                        single-line
+                        disabled
+                    ></v-text-field>
+                </div>
             </div>
         </template>
 
@@ -169,6 +177,24 @@
                     {
                         title: "DomainEventDefinitionPanel.triggerByLifeCycleDetailSubTitle6"
                     }
+                ],
+                triggerByCommandDetailSubTitle: [
+                    {
+                        title: "DomainEventDefinitionPanel.triggerByCommandDetailSubTitle1",
+                        image: "triggerByCommandDetailSubTitle1.png"
+                    }
+                ],
+                triggerByPolicyDetailSubTitle: [
+                    {
+                        title: "DomainEventDefinitionPanel.triggerByPolicyDetailSubTitle1",
+                        image: "triggerByPolicyDetailSubTitle1.png"
+                    }
+                ],
+                associatedAggregateTitle: [
+                    {
+                        title: "DomainEventDefinitionPanel.associatedAggregateSubTitle1",
+                        image: "associatedAggregateSubTitle1.png"
+                    },
                 ]
             }    
         },

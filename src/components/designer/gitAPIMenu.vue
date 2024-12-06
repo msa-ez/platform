@@ -1759,6 +1759,7 @@
                                 me.gitOrgName = me.value.org
                                 if(me.gitOrgName != me.gitUserName){
                                     me.gitOrganizations.push(me.gitOrgName)
+                                    me.gitOrgName = me.gitUserName
                                 }
                             } else {
                                 me.gitOrgName = me.gitUserName
