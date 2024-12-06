@@ -444,6 +444,7 @@
         },
         data() {
             return {
+                changedSiTestResults: false,
                 openAiMessageList: [],
                 prompt: null,
                 // isFirstGenerate: true,
@@ -554,7 +555,7 @@
             me.generate();
 
             me.$EventBus.$on('handlePushFileError', function () {
-                me.handleGitError();
+                me.handleGitError('onGenerationFinished');
             })
             me.$EventBus.$on('setActionId', function (path) {
                 me.actionPathList.push(path)
@@ -607,14 +608,22 @@
             });
         },
         methods: {
-            handleGitError(){
+            handleGitError(option){
                 this.gitActionSnackBar.timeout = 15000;
                 this.gitActionSnackBar.Text = "오류 검증 및 파일 업데이트 도중 문제가 발생하였습니다. 다시 시도합니다.";
                 this.gitActionSnackBar.Color = "error";
                 this.gitActionSnackBar.icon = "error";
                 this.gitActionSnackBar.title = "Error";
                 this.gitActionSnackBar.show = true;
-                this.regenerate();
+
+                if(this.changedSiTestResults){
+                    this.siTestResults.pop();
+                }
+                setTimeout(() => {
+                    if(option == 'onGenerationFinished'){
+                        this.generate();
+                    }
+                }, 5000);
             },
             async rollBack(sha, idx){
                 var me = this
@@ -757,6 +766,7 @@
             },
             async generate(){
                 var me = this
+                me.changedSiTestResults = false
                 me.commitMsg = null
                 me.model = 'gpt-4o'
                 me.startGitAction = true
@@ -885,9 +895,12 @@
                                 if(!me.siTestResults[me.resultLength + solutionIdx]){
                                     me.siTestResults[me.resultLength + solutionIdx] = {}
                                 }
+                                if (solution && solution.solution) {
                                     me.siTestResults[me.resultLength + solutionIdx].solution = solution.solution + " " + me.systemMsg
                                     me.siTestResults[me.resultLength + solutionIdx].solutionType = solution.solutionType
                                     me.commitMsg = solution.solutionType + ': ' + solution.solution
+                                    me.changedSiTestResults = true
+                                }
                                 if(solution && solution.codeChanges){
                                     solution.codeChanges.forEach(function (changes, changesIdx){
                                         if(changes){
@@ -999,13 +1012,14 @@
                                 // }
                             }
                             me.scrollToBottom();
+                            me.changedSiTestResults = false
                         } else {
                             me.dialogRenderKey++;
                         } 
     
                     } catch(e) {
                         console.log(e)
-                        me.handleGitError();
+                        me.handleGitError(option);
                         // me.startGitAction = false
                     }
                 } else {
@@ -1016,9 +1030,14 @@
                         me.gitActionSnackBar.icon="error"
                         me.gitActionSnackBar.title="Error"
                         me.gitActionSnackBar.show = true
-                        me.generate();
+                        
+                        setTimeout(() => {
+                            if(option == 'onGenerationFinished'){
+                                this.generate();
+                            }
+                        }, 5000);
                     } else {
-                        me.handleGitError();
+                        me.handleGitError(option);
                     }
                 }
             },

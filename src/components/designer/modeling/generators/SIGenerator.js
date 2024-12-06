@@ -69,6 +69,8 @@ ${generationRule}
 The solution must always be returned in the presented json format and must be generated according to all generation rules.
 When presenting modifiedFileCode, numbers for each line must be removed.
 Modifications unrelated to the error, such as comments or line removal, are unnecessary, and the code must be modified to resolve the error.
+
+Since there are many cases where a fatal error occurs due to an answer being provided in a format other than the specified format or an empty value being provided, you should create a value by modifying at least one thing to fit the specified format even if there is nothing to modify. If there is really nothing to modify, you should at least create a value as if you modified the original content of the test file.
 Json format:
 [ 
     {
