@@ -850,7 +850,7 @@ We need to implement an order management system with the following requirements:
     }
 
     __findElementByName(name) {
-        return Object.values(this.client.input.esValue.elements).find(element => element.name === name)
+        return Object.values(this.client.input.esValue.elements).filter(element => element).find(element => element.name === name)
     }
 
     __getValuesUsingFieldDescriptors(values, fieldDescriptors) {

@@ -267,7 +267,11 @@
                 const generator = new DraftGeneratorByFunctions({
                     input: {
                         description: boundedContext.description,
-                        boundedContext: boundedContext
+                        boundedContext: boundedContext,
+                        accumulatedDrafts: DraftGeneratorByFunctions.esValueToAccumulatedDrafts(
+                            this.canvas.value,
+                            boundedContext
+                        )
                     },
 
                     onFirstResponse: (returnObj) => {

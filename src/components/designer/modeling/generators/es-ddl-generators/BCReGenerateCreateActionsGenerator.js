@@ -2,7 +2,8 @@
 const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
 const ESActionsUtil = require("./modules/ESActionsUtil")
 const ESFakeActionsUtil = require("./modules/ESFakeActionsUtil")
-const ESValueSummarizeUtil_OnlyNameWithId = require("./modules/ESValueSummarizeUtil_OnlyNameWithId")
+const ESValueSummarizeUtil = require("./modules/ESValueSummarizeUtil")
+const ActionsProcessorUtils = require("./modules/ESActionsUtilProcessors/ActionsProcessorUtils")
 const ESAliasTransManager = require("./modules/ESAliasTransManager")
 
 class BCReGenerateCreateActionsGenerator extends FormattedJSONAIGenerator{
@@ -52,12 +53,13 @@ Please follow these rules.
 15. Create only the Aggregates presented in 'Aggregate to create' as actions.
 16. Don't create duplicate commands or events that already exist.
 17. Don't create commands and events for simple lookups. Use ReadModels for lookups.
-18. Do not write comments in the output JSON object.
+18. If the ValueObject in the structure passed in by the user has a referencedAggregate, this should be utilised as a foreign key: create an Id to reference that Aggregate, and if it is static data that is used infrequently, you can duplicate and store some of its properties for caching.
+19. Do not write comments in the output JSON object.
 `
     }
 
     __buildRequestFormatPrompt(){
-        return ESValueSummarizeUtil_OnlyNameWithId.getGuidePrompt()
+        return ESValueSummarizeUtil.getGuidePrompt()
     }
 
     __buildJsonResponseFormat() {
@@ -388,7 +390,151 @@ They represent complex domain concepts that don't qualify as Aggregates but need
 
     __buildJsonExampleInputFormat() {
         return {
-            "Summarized Existing EventStorming Model": `{"bc-order":{"id":"bc-order","name":"orderservice","actors":[{"id":"actor-customer","name":"Customer"}],"aggregates":{}},"bc-inventory":{"id":"bc-inventory","name":"inventoryservice","actors":[],"aggregates":{"agg-inventory":{"id":"agg-inventory","name":"Inventory","commands":[{"id":"cmd-update-stock","name":"UpdateStock","api_verb":"PUT","outputEventIds":["evt-stock-updated"]}],"events":[{"id":"evt-stock-updated","name":"StockUpdated","outputCommandIds":[]}]}}}}`,
+            "Summarized Existing EventStorming Model": {
+                "bc-order": {
+                    "id": "bc-order",
+                    "name": "orderservice",
+                    "actors": [
+                        {
+                            "id": "actor-customer",
+                            "name": "Customer"
+                        }
+                    ],
+                    "aggregates": {
+                        "agg-product": {
+                            "id": "agg-product",
+                            "name": "Product",
+                            "properties": [
+                                {
+                                    "name": "productId",
+                                    "type": "Long",
+                                    "isKey": true
+                                },
+                                {
+                                    "name": "name"
+                                },
+                                {
+                                    "name": "price",
+                                    "type": "Money"
+                                },
+                                {
+                                    "name": "status",
+                                    "type": "ProductStatus"
+                                }
+                            ],
+                            "enumerations": [
+                                {
+                                    "id": "enum-product-status",
+                                    "name": "ProductStatus",
+                                    "items": ["AVAILABLE", "OUT_OF_STOCK", "DISCONTINUED"]
+                                }
+                            ],
+                            "valueObjects": [
+                                {
+                                    "id": "vo-product-details",
+                                    "name": "ProductDetails",
+                                    "properties": [
+                                        {
+                                            "name": "description"
+                                        },
+                                        {
+                                            "name": "category"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "commands": [],
+                            "events": [],
+                            "readModels": [
+                                {
+                                    "id": "rm-product-list",
+                                    "name": "ProductList"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "bc-inventory": {
+                    "id": "bc-inventory",
+                    "name": "inventoryservice",
+                    "actors": [],
+                    "aggregates": {
+                        "agg-inventory": {
+                            "id": "agg-inventory",
+                            "name": "Inventory",
+                            "properties": [
+                                {
+                                    "name": "inventoryId",
+                                    "type": "Long",
+                                    "isKey": true
+                                },
+                                {
+                                    "name": "productId",
+                                    "type": "Long",
+                                    "isForeignProperty": true
+                                },
+                                {
+                                    "name": "quantity",
+                                    "type": "Integer"
+                                }
+                            ],
+                            "entities": [
+                                {
+                                    "id": "entity-stock-history",
+                                    "name": "StockHistory",
+                                    "properties": [
+                                        {
+                                            "name": "historyId",
+                                            "type": "Long",
+                                            "isKey": true
+                                        },
+                                        {
+                                            "name": "inventoryId",
+                                            "type": "Long",
+                                            "isForeignProperty": true
+                                        },
+                                        {
+                                            "name": "changeDate",
+                                            "type": "Date"
+                                        },
+                                        {
+                                            "name": "quantity",
+                                            "type": "Integer"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "commands": [
+                                {
+                                    "id": "cmd-update-stock",
+                                    "name": "UpdateStock",
+                                    "api_verb": "PUT",
+                                    "outputEvents": [
+                                        {
+                                            "relationId": "rel-stock-update",
+                                            "id": "evt-stock-updated",
+                                            "name": "StockUpdated"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "events": [
+                                {
+                                    "id": "evt-stock-updated",
+                                    "name": "StockUpdated",
+                                    "outputCommands": []
+                                }
+                            ],
+                            "readModels": [
+                                {
+                                    "id": "rm-inventory-status",
+                                    "name": "InventoryStatus"
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
 
             "Bounded Context to Generate Actions": "orderservice",
 
@@ -396,29 +542,496 @@ They represent complex domain concepts that don't qualify as Aggregates but need
 
 1. Order Creation:
 - Customers should be able to create orders with a single item
-- Each order must include product ID and quantity
+- Each order must include product reference and quantity
 - Orders must have a shipping address
 
 2. Order Management:
 - Customers should be able to cancel orders
 - The system should maintain basic order status (PENDING, CONFIRMED, CANCELLED)
+- The system should maintain product information reference for each order
 
 3. Order Inquiry:
 - Customers should be able to view their order details
-- Order details should include order status, product information, quantity, and shipping address`,
+- Order details should include order status, product information (cached), quantity, and shipping address`,
 
-            "Suggested Structure": `[{"aggregate":{"name":"Order","alias":"Customer Order"},"valueObjects":[{"name":"ShippingAddress","alias":"Delivery Address"}]}]`,
+            "Suggested Structure": [
+                {
+                    "aggregate": {
+                        "name": "Order",
+                        "alias": "Customer Order"
+                    },
+                    "valueObjects": [
+                        {
+                            "name": "ShippingAddress",
+                            "alias": "Delivery Address"
+                        },
+                        {
+                            "name": "ProductReference",
+                            "alias": "Product Information",
+                            "referencedAggregate": {
+                                "name": "Product",
+                                "alias": "Product"
+                            }
+                        }
+                    ]
+                }
+            ],
 
-            "Aggregate to create": `{"name":"Order","alias":"Customer Order"}`
+            "Aggregate to create": {
+                "name": "Order",
+                "alias": "Customer Order"
+            }
         }
     }
 
     __buildJsonExampleOutputFormat() {
-        return JSON.parse(`
-
-{"thoughtProcess":{"step1-requirementsAnalysis":{"thought":"The requirements describe a simple order system with creation, cancellation, and inquiry functionality.","reflection":"Added inquiry requirement needs a read model for viewing order details.","result":{"requirements":[{"name":"order-creation","description":"Create new orders","matchedUserObjectNames":["Order","ShippingAddress"]},{"name":"order-management","description":"Handle order cancellations","matchedUserObjectNames":["Order"]},{"name":"order-inquiry","description":"View order details","matchedUserObjectNames":["Order","ShippingAddress"]}]}},"step2-designPossibleActions":{"thought":"We need basic commands for order creation and cancellation with their corresponding events.","reflection":"The actions are minimal but sufficient for the basic requirements.","result":{"requirements":{"order-creation":["CreateOrder"],"order-management":["CancelOrder"],"order-inquiry":["GetOrderDetails"]}}},"step3-determineDependencies":{"thought":"Order creation will need to update inventory. Cancellation is a simple status change.","reflection":"The dependencies are minimal and straightforward.","result":{"actions":{"CreateOrder":{"dependencies":["UpdateStock"]}}}},"step4-generateActions":{"thought":"Generate the basic aggregate, commands, and events needed.","reflection":"Keep the structure simple with only essential properties.","result":{"actions":[{"actionName":"DefineOrderAggregate","objectType":"Aggregate","ids":{"aggregateId":"agg-order"},"args":{"aggregateName":"Order","aggregateAlias":"Customer Order","properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"orderStatus","type":"OrderStatus"},{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"},{"name":"shippingAddress","type":"ShippingAddress"},{"name":"orderDate","type":"Date"}]}},{"actionName":"DefineOrderStatusEnum","objectType":"Enumeration","ids":{"aggregateId":"agg-order","enumerationId":"enum-order-status"},"args":{"enumerationName":"OrderStatus","enumerationAlias":"Order Status","properties":[{"name":"PENDING"},{"name":"CONFIRMED"},{"name":"CANCELLED"}]}},{"actionName":"DefineShippingAddressVO","objectType":"ValueObject","ids":{"aggregateId":"agg-order","valueObjectId":"vo-shipping-address"},"args":{"valueObjectName":"ShippingAddress","valueObjectAlias":"Delivery Address","properties":[{"name":"street"},{"name":"city"},{"name":"zipCode"}]}},{"actionName":"CreateOrder","objectType":"Command","ids":{"aggregateId":"agg-order","commandId":"cmd-create-order"},"args":{"commandName":"CreateOrder","commandAlias":"Create New Order","api_verb":"POST","properties":[{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"},{"name":"shippingAddress","type":"ShippingAddress"}],"outputEventIds":["evt-order-created"],"actor":"Customer"}},{"actionName":"CancelOrder","objectType":"Command","ids":{"aggregateId":"agg-order","commandId":"cmd-cancel-order"},"args":{"commandName":"CancelOrder","commandAlias":"Cancel Order","api_verb":"PUT","properties":[{"name":"orderId","type":"Long","isKey":true}],"outputEventIds":["evt-order-cancelled"],"actor":"Customer"}},{"actionName":"OrderCreated","objectType":"Event","ids":{"aggregateId":"agg-order","eventId":"evt-order-created"},"args":{"eventName":"OrderCreated","eventAlias":"Order Created","properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"}],"outputCommandIds":[{"commandId":"cmd-update-stock","relatedAttribute":"stockQuantity","reason":"Update inventory stock level after order creation"}]}},{"actionName":"OrderCancelled","objectType":"Event","ids":{"aggregateId":"agg-order","eventId":"evt-order-cancelled"},"args":{"eventName":"OrderCancelled","eventAlias":"Order Cancelled","properties":[{"name":"orderId","type":"Long","isKey":true}],"outputCommandIds":[]}},{"actionName":"GetOrderDetails","objectType":"ReadModel","ids":{"aggregateId":"agg-order","readModelId":"read-order-details"},"args":{"readModelName":"OrderDetails","readModelAlias":"Order Details View","isMultipleResult":false,"properties":[{"name":"orderId","type":"Long","isKey":true},{"name":"orderStatus","type":"OrderStatus"},{"name":"productId","type":"Long"},{"name":"quantity","type":"Integer"},{"name":"shippingAddress","type":"ShippingAddress"},{"name":"orderDate","type":"Date"}],"actor":"Customer"}}]}},"step5-evaluateActions":{"thought":"Evaluate the completeness and quality of the generated order management system actions","reflection":"Consider if all requirements are met and best practices are followed","result":{"evaluationCriteria":{"requirementsCoverage":{"score":"95","details":["Order creation with product and shipping details implemented","Order cancellation functionality provided","Order details view with all required information"],"missingAspects":["No explicit confirmation flow defined"]},"domainModelQuality":{"score":"90","details":["Clear separation of Aggregate, ValueObject, and Enumeration","Proper use of ShippingAddress as ValueObject","Well-defined OrderStatus enumeration"],"improvements":["Could consider adding validation rules for quantity and address"]},"eventFlowCompleteness":{"score":"85","details":["Basic event flow for order creation and cancellation","Integration with inventory service through UpdateStock"],"gaps":["No compensation events for failed inventory updates"]},"bestPracticesAlignment":{"score":"90","details":["Commands and events properly named","Aggregate root identified with proper ID","Clear actor specification in commands"],"violations":["Some properties could have more specific types"]},"structureAlignment":{"score":"100","details":["All elements from suggested structure implemented","Order aggregate properly created with required properties","ShippingAddress value object implemented as suggested"],"matchedElements":[{"suggestedElement":"Order","implementedActions":["DefineOrderAggregate","CreateOrder","CancelOrder","GetOrderDetails"],"missingAspects":[]},{"suggestedElement":"ShippingAddress","implementedActions":["DefineShippingAddressVO"],"missingAspects":[]}],"unmatchedElements":[]}},"overallScore":"92","recommendedImprovements":[{"area":"Order Processing","description":"Add explicit order confirmation flow","suggestedActions":["CreateConfirmOrderCommand","AddOrderConfirmedEvent"]},{"area":"Error Handling","description":"Implement compensation logic for inventory updates","suggestedActions":["AddOrderFailedEvent","CreateRollbackInventoryCommand"]}],"needsIteration":false}}}}
-
-        `.trim())
+        return {
+            "thoughtProcess": {
+               "step1-requirementsAnalysis": {
+                  "thought": "The requirements describe a simple order system with creation, cancellation, and inquiry functionality, including product reference handling.",
+                  "reflection": "Added product reference caching requirement for better query performance.",
+                  "result": {
+                     "requirements": [
+                        {
+                           "name": "order-creation",
+                           "description": "Create new orders with product reference",
+                           "matchedUserObjectNames": [
+                              "Order",
+                              "ShippingAddress",
+                              "ProductReference"
+                           ]
+                        },
+                        {
+                           "name": "order-management",
+                           "description": "Handle order cancellations",
+                           "matchedUserObjectNames": [
+                              "Order"
+                           ]
+                        },
+                        {
+                           "name": "order-inquiry",
+                           "description": "View order details with cached product info",
+                           "matchedUserObjectNames": [
+                              "Order",
+                              "ShippingAddress",
+                              "ProductReference"
+                           ]
+                        }
+                     ]
+                  }
+               },
+               "step2-designPossibleActions": {
+                  "thought": "We need basic commands for order creation and cancellation with their corresponding events.",
+                  "reflection": "The actions need to handle product reference caching.",
+                  "result": {
+                     "requirements": {
+                        "order-creation": [
+                           "CreateOrder"
+                        ],
+                        "order-management": [
+                           "CancelOrder"
+                        ],
+                        "order-inquiry": [
+                           "GetOrderDetails"
+                        ]
+                     }
+                  }
+               },
+               "step3-determineDependencies": {
+                  "thought": "Order creation will need to update inventory and cache product information.",
+                  "reflection": "The dependencies include both inventory update and product reference.",
+                  "result": {
+                     "actions": {
+                        "CreateOrder": {
+                           "dependencies": [
+                              "UpdateStock"
+                           ]
+                        }
+                     }
+                  }
+               },
+               "step4-generateActions": {
+                  "thought": "Generate the basic aggregate, commands, and events needed with product reference handling.",
+                  "reflection": "Include product reference caching in the structure.",
+                  "result": {
+                     "actions": [
+                        {
+                           "actionName": "DefineOrderAggregate",
+                           "objectType": "Aggregate",
+                           "ids": {
+                              "aggregateId": "agg-order"
+                           },
+                           "args": {
+                              "aggregateName": "Order",
+                              "aggregateAlias": "Customer Order",
+                              "properties": [
+                                 {
+                                    "name": "orderId",
+                                    "type": "Long",
+                                    "isKey": true
+                                 },
+                                 {
+                                    "name": "orderStatus",
+                                    "type": "OrderStatus"
+                                 },
+                                 {
+                                    "name": "productReference",
+                                    "type": "ProductReference"
+                                 },
+                                 {
+                                    "name": "quantity",
+                                    "type": "Integer"
+                                 },
+                                 {
+                                    "name": "shippingAddress",
+                                    "type": "ShippingAddress"
+                                 },
+                                 {
+                                    "name": "orderDate",
+                                    "type": "Date"
+                                 }
+                              ]
+                           }
+                        },
+                        {
+                           "actionName": "DefineOrderStatusEnum",
+                           "objectType": "Enumeration",
+                           "ids": {
+                              "aggregateId": "agg-order",
+                              "enumerationId": "enum-order-status"
+                           },
+                           "args": {
+                              "enumerationName": "OrderStatus",
+                              "enumerationAlias": "Order Status",
+                              "properties": [
+                                 {
+                                    "name": "PENDING"
+                                 },
+                                 {
+                                    "name": "CONFIRMED"
+                                 },
+                                 {
+                                    "name": "CANCELLED"
+                                 }
+                              ]
+                           }
+                        },
+                        {
+                           "actionName": "DefineProductReferenceVO",
+                           "objectType": "ValueObject",
+                           "ids": {
+                              "aggregateId": "agg-order",
+                              "valueObjectId": "vo-product-reference"
+                           },
+                           "args": {
+                              "valueObjectName": "ProductReference",
+                              "valueObjectAlias": "Product Information",
+                              "properties": [
+                                 {
+                                    "name": "productId",
+                                    "type": "Long",
+                                    "isForeignProperty": true
+                                 },
+                                 {
+                                    "name": "name"
+                                 },
+                                 {
+                                    "name": "price",
+                                    "type": "Money"
+                                 },
+                                 {
+                                    "name": "lastUpdated",
+                                    "type": "Date"
+                                 }
+                              ]
+                           }
+                        },
+                        {
+                           "actionName": "DefineShippingAddressVO",
+                           "objectType": "ValueObject",
+                           "ids": {
+                              "aggregateId": "agg-order",
+                              "valueObjectId": "vo-shipping-address"
+                           },
+                           "args": {
+                              "valueObjectName": "ShippingAddress",
+                              "valueObjectAlias": "Delivery Address",
+                              "properties": [
+                                 {
+                                    "name": "street"
+                                 },
+                                 {
+                                    "name": "city"
+                                 },
+                                 {
+                                    "name": "zipCode"
+                                 }
+                              ]
+                           }
+                        },
+                        {
+                           "actionName": "CreateOrder",
+                           "objectType": "Command",
+                           "ids": {
+                              "aggregateId": "agg-order",
+                              "commandId": "cmd-create-order"
+                           },
+                           "args": {
+                              "commandName": "CreateOrder",
+                              "commandAlias": "Create New Order",
+                              "api_verb": "POST",
+                              "properties": [
+                                 {
+                                    "name": "productId",
+                                    "type": "Long"
+                                 },
+                                 {
+                                    "name": "quantity",
+                                    "type": "Integer"
+                                 },
+                                 {
+                                    "name": "shippingAddress",
+                                    "type": "ShippingAddress"
+                                 }
+                              ],
+                              "outputEventIds": [
+                                 "evt-order-created"
+                              ],
+                              "actor": "Customer"
+                           }
+                        },
+                        {
+                           "actionName": "CancelOrder",
+                           "objectType": "Command",
+                           "ids": {
+                              "aggregateId": "agg-order",
+                              "commandId": "cmd-cancel-order"
+                           },
+                           "args": {
+                              "commandName": "CancelOrder",
+                              "commandAlias": "Cancel Order",
+                              "api_verb": "PUT",
+                              "properties": [
+                                 {
+                                    "name": "orderId",
+                                    "type": "Long",
+                                    "isKey": true
+                                 }
+                              ],
+                              "outputEventIds": [
+                                 "evt-order-cancelled"
+                              ],
+                              "actor": "Customer"
+                           }
+                        },
+                        {
+                           "actionName": "OrderCreated",
+                           "objectType": "Event",
+                           "ids": {
+                              "aggregateId": "agg-order",
+                              "eventId": "evt-order-created"
+                           },
+                           "args": {
+                              "eventName": "OrderCreated",
+                              "eventAlias": "Order Created",
+                              "properties": [
+                                 {
+                                    "name": "orderId",
+                                    "type": "Long",
+                                    "isKey": true
+                                 },
+                                 {
+                                    "name": "productId",
+                                    "type": "Long"
+                                 },
+                                 {
+                                    "name": "quantity",
+                                    "type": "Integer"
+                                 }
+                              ],
+                              "outputCommandIds": [
+                                 {
+                                    "commandId": "cmd-update-stock",
+                                    "relatedAttribute": "stockQuantity",
+                                    "reason": "Update inventory stock level after order creation"
+                                 }
+                              ]
+                           }
+                        },
+                        {
+                           "actionName": "OrderCancelled",
+                           "objectType": "Event",
+                           "ids": {
+                              "aggregateId": "agg-order",
+                              "eventId": "evt-order-cancelled"
+                           },
+                           "args": {
+                              "eventName": "OrderCancelled",
+                              "eventAlias": "Order Cancelled",
+                              "properties": [
+                                 {
+                                    "name": "orderId",
+                                    "type": "Long",
+                                    "isKey": true
+                                 }
+                              ],
+                              "outputCommandIds": []
+                           }
+                        },
+                        {
+                           "actionName": "GetOrderDetails",
+                           "objectType": "ReadModel",
+                           "ids": {
+                              "aggregateId": "agg-order",
+                              "readModelId": "read-order-details"
+                           },
+                           "args": {
+                              "readModelName": "OrderDetails",
+                              "readModelAlias": "Order Details View",
+                              "isMultipleResult": false,
+                              "properties": [
+                                 {
+                                    "name": "orderId",
+                                    "type": "Long",
+                                    "isKey": true
+                                 },
+                                 {
+                                    "name": "orderStatus",
+                                    "type": "OrderStatus"
+                                 },
+                                 {
+                                    "name": "productReference",
+                                    "type": "ProductReference"
+                                 },
+                                 {
+                                    "name": "quantity",
+                                    "type": "Integer"
+                                 },
+                                 {
+                                    "name": "shippingAddress",
+                                    "type": "ShippingAddress"
+                                 },
+                                 {
+                                    "name": "orderDate",
+                                    "type": "Date"
+                                 }
+                              ],
+                              "actor": "Customer"
+                           }
+                        }
+                     ]
+                  }
+               },
+               "step5-evaluateActions": {
+                  "thought": "Evaluate the completeness and quality of the generated order management system actions",
+                  "reflection": "Consider if all requirements are met and best practices are followed",
+                  "result": {
+                     "evaluationCriteria": {
+                        "requirementsCoverage": {
+                           "score": "95",
+                           "details": [
+                              "Order creation with product reference and shipping details implemented",
+                              "Order cancellation functionality provided",
+                              "Order details view with cached product information"
+                           ],
+                           "missingAspects": [
+                              "No explicit confirmation flow defined"
+                           ]
+                        },
+                        "domainModelQuality": {
+                           "score": "95",
+                           "details": [
+                              "Clear separation of Aggregate, ValueObject, and Enumeration",
+                              "Proper use of ProductReference with foreign key",
+                              "Well-defined OrderStatus enumeration"
+                           ],
+                           "improvements": [
+                              "Could consider adding validation rules for quantity"
+                           ]
+                        },
+                        "eventFlowCompleteness": {
+                           "score": "90",
+                           "details": [
+                              "Basic event flow for order creation and cancellation",
+                              "Integration with inventory service through UpdateStock",
+                              "Product reference caching implemented"
+                           ],
+                           "gaps": [
+                              "No compensation events for failed inventory updates"
+                           ]
+                        },
+                        "bestPracticesAlignment": {
+                           "score": "95",
+                           "details": [
+                              "Commands and events properly named",
+                              "Aggregate root identified with proper ID",
+                              "Clear actor specification in commands",
+                              "Proper foreign key implementation in ProductReference"
+                           ],
+                           "violations": [
+                              "Some properties could have more specific types"
+                           ]
+                        },
+                        "structureAlignment": {
+                           "score": "100",
+                           "details": [
+                              "All elements from suggested structure implemented",
+                              "Order aggregate properly created with required properties",
+                              "ProductReference implemented with proper foreign key relationship"
+                           ],
+                           "matchedElements": [
+                              {
+                                 "suggestedElement": "Order",
+                                 "implementedActions": [
+                                    "DefineOrderAggregate",
+                                    "CreateOrder",
+                                    "CancelOrder",
+                                    "GetOrderDetails"
+                                 ],
+                                 "missingAspects": []
+                              },
+                              {
+                                 "suggestedElement": "ShippingAddress",
+                                 "implementedActions": [
+                                    "DefineShippingAddressVO"
+                                 ],
+                                 "missingAspects": []
+                              },
+                              {
+                                 "suggestedElement": "ProductReference",
+                                 "implementedActions": [
+                                    "DefineProductReferenceVO"
+                                 ],
+                                 "missingAspects": []
+                              }
+                           ],
+                           "unmatchedElements": []
+                        }
+                     },
+                     "overallScore": "95",
+                     "recommendedImprovements": [
+                        {
+                           "area": "Order Processing",
+                           "description": "Add explicit order confirmation flow",
+                           "suggestedActions": [
+                              "CreateConfirmOrderCommand",
+                              "AddOrderConfirmedEvent"
+                           ]
+                        },
+                        {
+                           "area": "Error Handling",
+                           "description": "Implement compensation logic for inventory updates",
+                           "suggestedActions": [
+                              "AddOrderFailedEvent",
+                              "CreateRollbackInventoryCommand"
+                           ]
+                        }
+                     ],
+                     "needsIteration": false
+                  }
+               }
+            }
+         }
     }
 
     __buildJsonUserQueryInputFormat() {
@@ -426,8 +1039,20 @@ They represent complex domain concepts that don't qualify as Aggregates but need
         if(!this.client.input.isAccumulated)
             this._removePrevBoundedContextRelatedElements(this.client.input.targetBoundedContext.name, targetBCRemovedESValue)
 
+        const summarizedESValue = this.esAliasTransManager.transToAliasInSummarizedESValue(
+            ESValueSummarizeUtil.getSummarizedESValue(targetBCRemovedESValue)
+        )
+
+        let commandIds = []
+        for(const boundedContextInfo of Object.values(summarizedESValue)) {
+            for(const aggregateInfo of Object.values(boundedContextInfo.aggregates)) {
+                for(const commandInfo of aggregateInfo.commands)
+                    commandIds.push(commandInfo.id)
+            }
+        }
+
         return {
-            "Summarized Existing EventStorming Model": JSON.stringify(ESValueSummarizeUtil_OnlyNameWithId.getFilteredSummarizedESValue(targetBCRemovedESValue, this.esAliasTransManager)),
+            "Summarized Existing EventStorming Model": JSON.stringify(summarizedESValue),
 
             "Bounded Context to Generate Actions": this.client.input.targetBoundedContext.name,
 
@@ -447,7 +1072,12 @@ They represent complex domain concepts that don't qualify as Aggregates but need
 * Use appropriate data types for all property names
 * Ensure each command calls its corresponding event (e.g., CreateOrder > OrderCreated)
 * Include sufficient Commands, Events, and ReadModels to fulfill all user requirements
-`
+* Try to come up with as many new commands as possible that are not covered by existing commands.
+`,
+
+            "Guidelines": `
+* When generating an event, it checks to see if the command Id presented can fit in the outputCommandIds.: ${(commandIds && commandIds.length > 0) ? commandIds.join(", ") : "None"}
+            `
         }
     }
 
@@ -489,7 +1119,13 @@ They represent complex domain concepts that don't qualify as Aggregates but need
             ...returnObj.modelValue,
             actions: appliedActions,
             createdESValue: createdESValue,
-            removedElements: removedElements
+            removedElements: removedElements,
+            callbacks: {
+                ...returnObj.modelValue.callbacks,
+                addAggregateRelation: (esValue) => {
+                    this._addAggregateRelation(this.client.input.draftOption, esValue)
+                }
+            }
         }
         returnObj.directMessage = `Generating actions for ${this.client.input.aggregateDisplayName} Aggregate... (${returnObj.modelRawValue.length} characters generated)`
     }
@@ -612,6 +1248,22 @@ They represent complex domain concepts that don't qualify as Aggregates but need
             .filter(element => element && element.displayName)
             .map(element => element.displayName.replaceAll(" ", ""))
 
+        actions = actions.filter(action => {
+            // 이미 존재하는 Aggregate에 대한 액션은 제외시켜서 예외적인 상황을 최대한 방지함
+            if(action.ids && action.ids.aggregateId) {
+                if(this.client.input.esValue.elements[action.ids.aggregateId]) return false
+            }
+
+            if(action.objectType === "Command")
+                return !esNames.includes(action.args.commandName) && !displayNames.includes(action.args.commandAlias.replaceAll(" ", "")) && !action.args.commandName.toLowerCase().includes("search") && !action.args.commandName.toLowerCase().includes("filter")
+            if(action.objectType === "Event")
+                return !esNames.includes(action.args.eventName) && !displayNames.includes(action.args.eventAlias.replaceAll(" ", "")) && !action.args.eventName.toLowerCase().includes("search") && !action.args.eventName.toLowerCase().includes("filter")
+            if(action.objectType === "ReadModel")
+                return !esNames.includes(action.args.readModelName) && !displayNames.includes(action.args.readModelAlias.replaceAll(" ", ""))
+            return true
+        })
+
+
         // 아무도 호출하지 않는 이벤트를 제외시키기 위해서
         const outputEventIds = []
         for(let action of actions) {
@@ -620,16 +1272,44 @@ They represent complex domain concepts that don't qualify as Aggregates but need
         }
 
         actions = actions.filter(action => {
-            if(action.objectType === "Command")
-                return !esNames.includes(action.args.commandName) && !displayNames.includes(action.args.commandAlias.replaceAll(" ", ""))
             if(action.objectType === "Event")
-                return !esNames.includes(action.args.eventName) && !displayNames.includes(action.args.eventAlias.replaceAll(" ", "")) && outputEventIds.includes(action.ids.eventId)
-            if(action.objectType === "ReadModel")
-                return !esNames.includes(action.args.readModelName) && !displayNames.includes(action.args.readModelAlias.replaceAll(" ", ""))
+                return outputEventIds.includes(action.ids.eventId)
             return true
         })
 
         return actions
+    }
+
+    _addAggregateRelation(usedDraftOption, esValue){
+        let aggregateRelations = []
+        for (const structureInfo of usedDraftOption) {
+            for(const valueObject of structureInfo.valueObjects){
+                if(valueObject.referencedAggregate)
+                    aggregateRelations.push({
+                        fromAggregateName: structureInfo.aggregate.name,
+                        toAggregateName: valueObject.referencedAggregate.name
+                    })
+            }
+        }
+
+        if(aggregateRelations.length <= 0) return
+        aggregateRelations.forEach(relation => {
+            const fromAggregate = this.__getAggregateByName(esValue, relation.fromAggregateName)
+            const toAggregate = this.__getAggregateByName(esValue, relation.toAggregateName)
+            if(!fromAggregate || !toAggregate) return
+
+            const aggregateRelation = ActionsProcessorUtils.getEventStormingRelationObjectBase(fromAggregate, toAggregate)
+            console.log("[*] 생성된 관계 추가", {aggregateRelation})
+            esValue.relations[aggregateRelation.id] = aggregateRelation
+        })
+    }
+
+    __getAggregateByName(esValue, aggregateName){
+        for(let element of Object.values(esValue.elements).filter(element => element)) {
+            if(element._type === "org.uengine.modeling.model.Aggregate" && element.name === aggregateName && element.id)
+                return element
+        }
+        return null
     }
 
     _removePrevBoundedContextRelatedElements(targetBoundedContextName, esValue){

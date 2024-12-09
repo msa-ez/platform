@@ -2449,7 +2449,10 @@
                         generator: null,
                         inputs: [],
                         generateIfInputsExist: () => {},
-                        initInputs: (draftOptions) => {}
+                        initInputs: (draftOptions) => {},
+                        callbacks: {
+                            addAggregateRelation: []
+                        }
                     },
                     GWTGeneratorByFunctions: {
                         generator: null,
@@ -2664,13 +2667,26 @@
                         this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
                     }
 
+                    if(returnObj.modelValue.callbacks && returnObj.modelValue.callbacks.addAggregateRelation) {
+                        this.generators.BCReGenerateCreateActionsGenerator.callbacks.addAggregateRelation.push((esValue) => {
+                            returnObj.modelValue.callbacks.addAggregateRelation(esValue)
+                        })
+                    }
+
 
                     if(this.generators.BCReGenerateCreateActionsGenerator.generateIfInputsExist())
                         return
 
+                    if(this.generators.BCReGenerateCreateActionsGenerator.callbacks.addAggregateRelation.length > 0) {
+                        this.changedByMe = true
+                        this.generators.BCReGenerateCreateActionsGenerator.callbacks.addAggregateRelation.forEach(callback => callback(this.value))
+                    }
+                    this.forceRefreshCanvas()
+
                     this.generators.GWTGeneratorByFunctions.initInputs(this.selectedDraftOptions)
                     if(this.generators.GWTGeneratorByFunctions.generateIfInputsExist())
                         return
+
 
                     this.modelDraftDialogWithXAIDto = {
                         ...this.modelDraftDialogWithXAIDto,
@@ -2722,6 +2738,7 @@
                             isAccumulated: index > 0
                         })))
                 }
+                this.generators.BCReGenerateCreateActionsGenerator.callbacks.addAggregateRelation = []
                 this.generators.BCReGenerateCreateActionsGenerator.inputs = inputs
             }
 
