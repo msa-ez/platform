@@ -53,7 +53,7 @@
             <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
             <v-card-actions v-if="done" class="auto-modeling-btn-box">
                 <v-btn class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>Try again</v-btn>
-                <v-btn class="auto-modeling-btn" color="primary" @click="jump()">Create Model<v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon></v-btn>
+                <v-btn class="auto-modeling-btn" color="primary" @click="generateDevideBoundedContext()">Create Model<v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon></v-btn>
             </v-card-actions>
         </v-card>
         <div
@@ -67,6 +67,19 @@
                 </div>
             </v-col>
         </div>
+
+        <v-dialog
+                v-model="showDevideBoundedContextDialog"
+                persistent
+                max-width="1200"
+                max-height="800"
+          >
+            <DevideBoundedContextDialog
+                :resultDevideBoundedContext="resultDevideBoundedContext"
+                @createModel="jump"
+                @close="showDevideBoundedContextDialog = false"
+            ></DevideBoundedContextDialog>
+        </v-dialog>
     </div>
 
 </template>
@@ -74,6 +87,8 @@
 <script>
     import { VueTypedJs } from 'vue-typed-js'
     import Generator from './UserStoryGenerator.js'
+    import DevideBoundedContextGenerator from './DevideBoundedContextGenerator.js'
+    import DevideBoundedContextDialog from './DevideBoundedContextDialog.vue'
     //import UserStoryGenerator from './UserStoryGenerator.js'
     // import StorageBase from "../StorageBase";
     import StorageBase from '../../../CommonStorageBase.vue';
@@ -93,7 +108,8 @@
             isServerProject: Boolean
         },
         components: {
-            VueTypedJs
+            VueTypedJs,
+            DevideBoundedContextDialog
         },
         computed: {
             isForeign() {
@@ -150,6 +166,10 @@
                 },
                 done: false,
                 generator: null,
+                showDevideBoundedContextDialog: false,
+                resultDevideBoundedContext: {},
+                devisionAspect: ["Domain", "Organizational", "Persona", "Transaction/Performance", "Infrastructure"],
+                devisionAspectIndex: 0
             }
         },
         methods: {
@@ -178,6 +198,10 @@
             },
 
             onReceived(content){
+                if(this.state.generator === "DevideBoundedContextGenerator"){
+                    return;
+                }
+
                 if(!this.value){
                     this.value = {
                         userStory: ''
@@ -186,8 +210,28 @@
                 this.value.userStory = content;
             },
 
-            async onGenerationFinished(){
+            onModelCreated(model){
+            },
+
+            async onGenerationFinished(model){
                 this.done = true;
+
+                if(this.state.generator === "DevideBoundedContextGenerator"){
+                    if(this.devisionAspectIndex < this.devisionAspect.length - 1) {
+                        if(!this.generator)
+                        this.generator = new DevideBoundedContextGenerator(this);
+                        this.generator.generate();
+                    }else{
+                        this.devisionAspectIndex = 0;
+                    }
+                
+                    this.devisionAspectIndex++;
+                    this.input['devisionAspect'] = this.devisionAspect[this.devisionAspectIndex];
+                    this.$set(this.resultDevideBoundedContext, model.devisionAspect, model)
+                    this.showDevideBoundedContextDialog = true
+                    console.log("output: ", model)
+                    return;
+                }
 
                 this.$emit("input", this.value);
                 this.$emit("change", 'eventStorming');
@@ -226,7 +270,18 @@
                 this.done = true;
             },
 
-            jump(){
+            generateDevideBoundedContext(){
+                this.generator = new DevideBoundedContextGenerator(this);
+                this.state.generator = "DevideBoundedContextGenerator";
+
+                this.devisionAspectIndex = 0;
+                this.input['devisionAspect'] = this.devisionAspect[this.devisionAspectIndex];
+                this.input['userStory'] = this.value.userStory;
+                this.generator.generate();
+                this.showDevideBoundedContextDialog = true;
+            },
+
+            jump(selectedBoundedContext){
                 try{
                     var me = this
                    
