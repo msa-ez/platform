@@ -1,6 +1,11 @@
 <template>
     <v-card :key="Object.keys(resultDevideBoundedContext).length">
-        <v-card-title>Bounded Context Division Result</v-card-title>
+        <v-card-title>
+            Bounded Context Division Result
+            <v-btn :style="{'margin-left': 'auto'}" icon @click="closeDialog()">
+                <v-icon>mdi-close</v-icon>
+            </v-btn>
+        </v-card-title>
         <v-card-subtitle>
             <div class="d-flex align-center">
                 <div v-if="Object.keys(resultDevideBoundedContext).length < 5">
@@ -174,6 +179,9 @@
             selectAspect(aspect) {
                 this.selectedAspect = aspect;
                 this.selectedResultDevideBoundedContext = this.resultDevideBoundedContext[aspect];
+            },
+            closeDialog(){
+                this.$emit("closeDialog");
             }
         }
     }

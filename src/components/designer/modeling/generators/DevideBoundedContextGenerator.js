@@ -37,7 +37,12 @@ The format must be as follows:
     [
         {
             "name":"name of Bounded Context",
-            "aggregates":[Aggregates that can be extracted from this Bounded Context],
+            "aggregates":[ // Aggregates that can be extracted from this Bounded Context.
+                {
+                    "name":"name of Aggregate in PascalCase",
+                    "alias":"alias of Aggregate in korean"
+                }
+            ],
             "requirements":"기존의 요구사항 원문 중, 이 Bounded Context에 해당하는 문제영역만 기존 텍스트 그대로"
         }
       ],
