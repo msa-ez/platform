@@ -58,6 +58,13 @@ The approximate structure is as follows.
                         "name": "<eventName>",
                         "outputCommands": ["<commandName>"] // Information about the command that occurs when this event is requested.
                     }
+                ],
+
+                // List of ReadModels representing data read through REST API.
+                "readModels": [
+                    {
+                        "name": "<readModelName>"
+                    }
                 ]
             }
         }
@@ -124,6 +131,12 @@ The approximate structure is as follows.
                 return {
                     name: event.name,
                     outputCommands: (event.outputCommands) ? event.outputCommands.map(command => command.name) : []
+                }
+            }),
+
+            readModels: aggregate.readModels.map(readModel => {
+                return {
+                    name: readModel.name
                 }
             })
         }

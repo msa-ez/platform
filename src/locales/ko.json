@@ -10,7 +10,13 @@
     "triggerByLifeCycleDetailSubTitle3": "Pre Update: 데이터가 업데이트되기 직전에 실행됩니다.",
     "triggerByLifeCycleDetailSubTitle4": "Post Update: 데이터가 업데이트된 직후에 실행됩니다.", 
     "triggerByLifeCycleDetailSubTitle5": "Pre Remove: 데이터가 삭제되기 직전에 실행됩니다.",
-    "triggerByLifeCycleDetailSubTitle6": "Post Remove: 데이터가 삭제된 직후에 실행됩니다."
+    "triggerByLifeCycleDetailSubTitle6": "Post Remove: 데이터가 삭제된 직후에 실행됩니다.",
+    "triggerByCommandDetailTitle": "특정 명령(Command)에 의해 이벤트가 트리거됩니다. 이는 시스템에서 어떤 작업이 수행될 때 발생하는 이벤트를 정의합니다.",
+    "triggerByCommandDetailSubTitle1": "예시: 사용자가 주문을 생성할 때 orderPlace 명령이 실행되고, 이에 따라 order 이벤트가 발생합니다.",
+    "triggerByPolicyDetailTitle": "특정 정책(Policy)에 의해 이벤트가 트리거됩니다. 이는 비즈니스 규칙이나 정책에 따라 발생하는 이벤트를 정의합니다.",
+    "triggerByPolicyDetailSubTitle1": "예시: 특정 조건이 충족될 때 자동으로 실행되는 정책에 의해 이벤트가 발생할 수 있습니다.",
+    "associatedAggregateTitle": "이벤트와 관련된 집합체의 이름을 표시합니다.",
+    "associatedAggregateSubTitle1": "이벤트가 어떤 집합체와 관련이 있는지를 명확히 하여, 시스템의 구조와 데이터 흐름을 이해하는 데 도움을 줍니다."
   },
   "EventStormingAttributeEditor" : {
     "editAggregateMembersByClassDiagramBtn" : "이 메뉴는 도메인 클래스 모델링 도구와 상호작용하여 객체지향 방식으로 유비쿼터스 언어를 정의합니다.",
