@@ -1,5 +1,9 @@
 {
   "message": "ko",
+  "app": {
+    "showBeta": "베타 보기",
+    "hideBeta": "베타 숨기기"
+  },
   "ClassCard": {
     "enter" : "입장"
   },
