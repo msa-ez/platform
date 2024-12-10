@@ -127,12 +127,10 @@
                             <div v-if="design.some(item => item.tagStatus === 'Stable') || showBeta">
                                 {{$t('making.design')}}
                             </div>
-                            <v-btn @click="toggleBeta" style="margin-left: 16px;"
-                                color="primary"
-                            >
-                                <v-icon style="margin-right: 5px;">{{ showBeta ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
+                            <v-chip @click="toggleBeta" style="margin-left: 16px; cursor: pointer;" color="primary" outlined>
+                                <v-icon left>{{ showBeta ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
                                 {{ showBeta ? $t('app.hideBeta') : $t('app.showBeta') }}
-                            </v-btn>
+                            </v-chip>
                         </v-row>
                         <v-row style="margin:0px;">
                             <v-col class="making-col"
