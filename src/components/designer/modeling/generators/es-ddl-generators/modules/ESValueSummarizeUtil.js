@@ -106,6 +106,14 @@ The approximate structure is as follows.
                             "name": "<commandName>"
                         }] // Information about the command that occurs when this event is requested.
                     }
+                ],
+
+                // List of ReadModels representing data read through REST API.
+                "readModels": [
+                    {
+                        "id": "<readModelId>",
+                        "name": "<readModelName>"
+                    }
                 ]
             }
         }
@@ -268,6 +276,7 @@ The approximate structure is as follows.
         summarizedAggregateValue.valueObjects = ESValueSummarizeUtil.getSummarizedValueObjectValue(aggregate)
         summarizedAggregateValue.commands = ESValueSummarizeUtil.getSummarizedCommandValue(esValue, boundedContext, aggregate)
         summarizedAggregateValue.events = ESValueSummarizeUtil.getSummarizedEventValue(esValue, boundedContext, aggregate)
+        summarizedAggregateValue.readModels = ESValueSummarizeUtil.getSummarizedReadModelValue(esValue, boundedContext, aggregate)
         return summarizedAggregateValue
     }
 
@@ -420,6 +429,25 @@ The approximate structure is as follows.
             }
         }
         return summarizedEventValue
+    }
+
+    static getSummarizedReadModelValue(esValue, boundedContext, aggregate) {
+        const getReadModelInfo = (esValue, element) => {
+            let readModelInfo = {}
+            readModelInfo.id = ESValueSummarizeUtil.__getElementIdSafely(element)
+            readModelInfo.name = element.name
+            return readModelInfo
+        }
+
+        let summarizedReadModelValue = []
+        for(let element of Object.values(esValue.elements)){
+            if(element && (element._type === "org.uengine.modeling.model.View") &&
+            (element.boundedContext.id === boundedContext.id) &&
+            (element.aggregate.id === aggregate.id)){
+                summarizedReadModelValue.push(getReadModelInfo(esValue, element))
+            }
+        }
+        return summarizedReadModelValue
     }
 
     

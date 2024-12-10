@@ -93,8 +93,7 @@ The approximate structure is as follows.
                             {
                                 "name": "<propertyName>",
                                 ["type": "<propertyType>"], // If the type is String, do not specify the type.
-                                ["isKey": true],
-                                ["isForeignProperty": true] // Indicates whether it's a foreign key. If this property references a property in another table, this value should be set to true.
+                                ["isKey": true]
                             }
                         ],
                         "outputEvents": [{
@@ -114,8 +113,7 @@ The approximate structure is as follows.
                             {
                                 "name": "<propertyName>",
                                 ["type": "<propertyType>"], // If the type is String, do not specify the type.
-                                ["isKey": true],
-                                ["isForeignProperty": true] // Indicates whether it's a foreign key. If this property references a property in another table, this value should be set to true.
+                                ["isKey": true]
                             }
                         ],
                         "outputCommands": [{
@@ -124,6 +122,21 @@ The approximate structure is as follows.
                             "name": "<commandName>"
                         }] // Information about the command that occurs when this event is requested.
                     }
+                ],
+            
+                // List of ReadModels representing data read through REST API.
+                "readModels": [
+                    {
+                        "id": "<readModelId>",
+                        "name": "<readModelName>"
+                    },
+                    "properties": [
+                        {
+                            "name": "<propertyName>",
+                            ["type": "<propertyType>"], // If the type is String, do not specify the type.
+                            ["isKey": true]
+                        }
+                    ]
                 ]
             }
         }
@@ -150,20 +163,26 @@ The approximate structure is as follows.
         for(let aggregate of Object.values(boundedContext.aggregates)) {
             for(let command of aggregate.commands) {
                 command.properties = ESValueSummarizeUtil_WithProperties.__getEntityProperties(
-                    esValue.elements[command.id]
+                    esValue.elements[command.id].fieldDescriptors
                 )
             }
 
             for(let event of aggregate.events) {
                 event.properties = ESValueSummarizeUtil_WithProperties.__getEntityProperties(
-                    esValue.elements[event.id]
+                    esValue.elements[event.id].fieldDescriptors
+                )
+            }
+
+            for(let readModel of aggregate.readModels) {
+                readModel.properties = ESValueSummarizeUtil_WithProperties.__getEntityProperties(
+                    esValue.elements[readModel.id].queryParameters
                 )
             }
         }
     }
 
-    static __getEntityProperties(entity) {
-        return entity.fieldDescriptors.map(fieldDescriptor => {
+    static __getEntityProperties(fieldDescriptors) {
+        return fieldDescriptors.map(fieldDescriptor => {
             let property = {
                 name: fieldDescriptor.name
             }

@@ -221,6 +221,8 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
                 }
             }
         }
+        if(!text) return returnObj
+
         if(this.isFirstResponse) {
             returnObj.isFirstResponse = this.isFirstResponse
             this.isFirstResponse = false

@@ -144,6 +144,11 @@ class ESAliasTransManager {
                         })
                 })
             
+            if(aggregate.readModels)
+                aggregate.readModels.forEach(readModel => {
+                    readModel.id = transFunc(readModel.id)
+                })
+            
             return aggregate
         }
 
@@ -199,6 +204,7 @@ class ESAliasTransManager {
                 case "org.uengine.modeling.model.Aggregate": return "agg"
                 case "org.uengine.modeling.model.Command": return "cmd"
                 case "org.uengine.modeling.model.Event": return "evt"
+                case "org.uengine.modeling.model.View": return "rm"
                 case "org.uengine.modeling.model.Actor": return "act"
                 case "org.uengine.uml.model.Class": return element.isAggregateRoot ? "agg-root" : "ent"
                 case "org.uengine.uml.model.Enum": return "enum"

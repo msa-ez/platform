@@ -6,7 +6,7 @@ class GWTGeneratorByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
-        this.checkInputParamsKeys = ["targetBoundedContext", "description", "esValue"]
+        this.checkInputParamsKeys = ["targetBoundedContext", "targetCommandIds", "description", "esValue"]
         this.progressCheckStrings = ["step1-requirementsAnalysis", "\"requirements\"", "step2-testCaseAnalysis", "step3-GWTGeneration", "step4-GWTEvaluation", "\"overallScore\""]
     }
 
@@ -14,6 +14,14 @@ class GWTGeneratorByFunctions extends FormattedJSONAIGenerator{
     onGenerateBefore(inputParams){
         inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
         this.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
+        inputParams.targetCommandAliases = inputParams.targetCommandIds.map(commandId => this.esAliasTransManager.UUIDToAliasDic[commandId])
+        
+        inputParams.targetAggregateNames = inputParams.targetCommandIds.map(commandId => {
+            const commandAggregateId = inputParams.esValue.elements[commandId].aggregate.id
+            const targetAggregate = inputParams.esValue.elements[commandAggregateId]
+            return targetAggregate.displayName ? targetAggregate.displayName : targetAggregate.name
+        })
+        inputParams.targetAggregateNames = Array.from(new Set(inputParams.targetAggregateNames))
     }
 
 
@@ -31,8 +39,8 @@ class GWTGeneratorByFunctions extends FormattedJSONAIGenerator{
         return `You need to extract the right GWT (Given, When, Then) cases from the user's requirements and add them to the right commands in the given bounded context.
 
 Please follow these rules.
-1. Extract GWTs from user requirements that cover as many different cases as possible.
-2. You must add GWT using only the Id of the command in the given Bounded Context.
+1. Extract as many requirements about GWT as possible to add to the command passed in by the user.
+2. All GWTs should be generated only for the ids of the commands passed in by the user.
 3. The generated GWTs will be used later in code generation, so we need unique, non-duplicated GWTs that are sufficiently helpful in code generation.
 4. given is matched against Aggregate, when is matched against Command, and then is matched against Event. You need to make the properties of each target available to GWT.
 5. Do not write comments in the output JSON object.
@@ -172,12 +180,6 @@ Please follow these rules.
             "Current Bounded Context": {
                 "id": "bc-ordermanagement",
                 "name": "ordermanagement",
-                "actors": [
-                    {
-                        "id": "act-customer",
-                        "name": "Customer"
-                    }
-                ],
                 "aggregates": {
                     "agg-order": {
                         "id": "agg-order",
@@ -203,10 +205,6 @@ Please follow these rules.
                             {
                                 "name": "paymentInfo",
                                 "type": "PaymentInfo"
-                            },
-                            {
-                                "name": "createdAt",
-                                "type": "Date"
                             }
                         ],
                         "entities": [
@@ -215,16 +213,20 @@ Please follow these rules.
                                 "name": "Customer",
                                 "properties": [
                                     {
-                                        "name": "customerId"
+                                        "name": "customerId",
+                                        "type": "String"
                                     },
                                     {
-                                        "name": "name"
+                                        "name": "name",
+                                        "type": "String"
                                     },
                                     {
-                                        "name": "email"
+                                        "name": "email",
+                                        "type": "String"
                                     },
                                     {
-                                        "name": "phone"
+                                        "name": "phone",
+                                        "type": "String"
                                     }
                                 ]
                             }
@@ -236,8 +238,16 @@ Please follow these rules.
                                 "items": [
                                     "CREATED",
                                     "PAID",
-                                    "CANCELLED",
-                                    "REFUNDED"
+                                    "CANCELLED"
+                                ]
+                            },
+                            {
+                                "id": "enum-paymentMethod",
+                                "name": "PaymentMethod",
+                                "items": [
+                                    "CREDIT_CARD",
+                                    "BANK_TRANSFER",
+                                    "DIGITAL_WALLET"
                                 ]
                             }
                         ],
@@ -248,10 +258,28 @@ Please follow these rules.
                                 "properties": [
                                     {
                                         "name": "items",
-                                        "type": "Array"
+                                        "type": "List<OrderItem>"
                                     },
                                     {
                                         "name": "totalAmount",
+                                        "type": "Number"
+                                    }
+                                ]
+                            },
+                            {
+                                "id": "vo-orderItem",
+                                "name": "OrderItem",
+                                "properties": [
+                                    {
+                                        "name": "productId",
+                                        "type": "String"
+                                    },
+                                    {
+                                        "name": "quantity",
+                                        "type": "Number"
+                                    },
+                                    {
+                                        "name": "price",
                                         "type": "Number"
                                     }
                                 ]
@@ -261,10 +289,16 @@ Please follow these rules.
                                 "name": "PaymentInfo",
                                 "properties": [
                                     {
-                                        "name": "paymentMethod"
+                                        "name": "paymentMethod",
+                                        "type": "PaymentMethod"
                                     },
                                     {
-                                        "name": "paymentStatus"
+                                        "name": "paymentStatus",
+                                        "type": "String"
+                                    },
+                                    {
+                                        "name": "transactionId",
+                                        "type": "String"
                                     }
                                 ]
                             }
@@ -312,100 +346,168 @@ Please follow these rules.
                                         "type": "PaymentInfo"
                                     }
                                 ]
-                            },
-                            {
-                                "id": "cmd-cancelOrder",
-                                "name": "CancelOrder",
-                                "api_verb": "PUT",
-                                "outputEvents": [
-                                    {
-                                        "id": "evt-orderCancelled",
-                                        "name": "OrderCancelled"
-                                    }
-                                ],
-                                "properties": [
-                                    {
-                                        "name": "orderId",
-                                        "type": "Long",
-                                        "isKey": true
-                                    },
-                                    {
-                                        "name": "reason",
-                                        "type": "String"
-                                    }
-                                ]
                             }
                         ],
                         "events": [
                             {
                                 "id": "evt-orderCreated",
                                 "name": "OrderCreated",
-                                "outputCommands": [],
                                 "properties": [
                                     {
                                         "name": "orderId",
-                                        "type": "Long",
-                                        "isKey": true
+                                        "type": "Long"
                                     },
                                     {
                                         "name": "customer",
                                         "type": "Customer"
                                     },
                                     {
-                                        "name": "orderDetails",
-                                        "type": "OrderDetails"
-                                    },
-                                    {
                                         "name": "orderStatus",
                                         "type": "OrderStatus"
-                                    },
-                                    {
-                                        "name": "createdAt",
-                                        "type": "Date"
                                     }
                                 ]
                             },
                             {
                                 "id": "evt-paymentProcessed",
                                 "name": "PaymentProcessed",
-                                "outputCommands": [],
                                 "properties": [
                                     {
                                         "name": "orderId",
-                                        "type": "Long",
-                                        "isKey": true
-                                    },
-                                    {
-                                        "name": "orderStatus",
-                                        "type": "OrderStatus"
+                                        "type": "Long"
                                     },
                                     {
                                         "name": "paymentInfo",
                                         "type": "PaymentInfo"
                                     }
                                 ]
+                            }
+                        ]
+                    },
+                    "agg-delivery": {
+                        "id": "agg-delivery",
+                        "name": "Delivery",
+                        "properties": [
+                            {
+                                "name": "deliveryId",
+                                "type": "Long",
+                                "isKey": true
                             },
                             {
-                                "id": "evt-orderCancelled",
-                                "name": "OrderCancelled",
-                                "outputCommands": [],
+                                "name": "orderId",
+                                "type": "Long"
+                            },
+                            {
+                                "name": "status",
+                                "type": "DeliveryStatus"
+                            },
+                            {
+                                "name": "address",
+                                "type": "Address"
+                            },
+                            {
+                                "name": "courier",
+                                "type": "Courier"
+                            }
+                        ],
+                        "entities": [
+                            {
+                                "id": "ent-courier",
+                                "name": "Courier",
                                 "properties": [
                                     {
-                                        "name": "orderId",
-                                        "type": "Long",
-                                        "isKey": true
-                                    },
-                                    {
-                                        "name": "orderStatus",
-                                        "type": "OrderStatus"
-                                    },
-                                    {
-                                        "name": "reason",
+                                        "name": "courierId",
                                         "type": "String"
                                     },
                                     {
-                                        "name": "cancelledAt",
-                                        "type": "Date"
+                                        "name": "name",
+                                        "type": "String"
+                                    },
+                                    {
+                                        "name": "contactNumber",
+                                        "type": "String"
+                                    }
+                                ]
+                            }
+                        ],
+                        "enumerations": [
+                            {
+                                "id": "enum-deliveryStatus",
+                                "name": "DeliveryStatus",
+                                "items": [
+                                    "PENDING",
+                                    "IN_PROGRESS",
+                                    "COMPLETED",
+                                    "FAILED"
+                                ]
+                            }
+                        ],
+                        "valueObjects": [
+                            {
+                                "id": "vo-address",
+                                "name": "Address",
+                                "properties": [
+                                    {
+                                        "name": "street",
+                                        "type": "String"
+                                    },
+                                    {
+                                        "name": "city",
+                                        "type": "String"
+                                    },
+                                    {
+                                        "name": "state",
+                                        "type": "String"
+                                    },
+                                    {
+                                        "name": "postalCode",
+                                        "type": "String"
+                                    },
+                                    {
+                                        "name": "country",
+                                        "type": "String"
+                                    }
+                                ]
+                            }
+                        ],
+                        "commands": [
+                            {
+                                "id": "cmd-startDelivery",
+                                "name": "StartDelivery",
+                                "api_verb": "POST",
+                                "outputEvents": [
+                                    {
+                                        "id": "evt-deliveryStarted",
+                                        "name": "DeliveryStarted"
+                                    }
+                                ],
+                                "properties": [
+                                    {
+                                        "name": "orderId",
+                                        "type": "Long"
+                                    },
+                                    {
+                                        "name": "address",
+                                        "type": "Address"
+                                    }
+                                ]
+                            }
+                        ],
+                        "events": [
+                            {
+                                "id": "evt-deliveryStarted",
+                                "name": "DeliveryStarted",
+                                "properties": [
+                                    {
+                                        "name": "deliveryId",
+                                        "type": "Long"
+                                    },
+                                    {
+                                        "name": "orderId",
+                                        "type": "Long"
+                                    },
+                                    {
+                                        "name": "status",
+                                        "type": "DeliveryStatus"
                                     }
                                 ]
                             }
@@ -413,29 +515,27 @@ Please follow these rules.
                     }
                 }
             },
-
+    
             "Functional Requirements": `
-We need to implement an online order management system with the following requirements:
+We need to implement an order management system with the following requirements:
 
 1. Order Creation:
-- Customers should be able to create new orders by providing their information (name, email, phone)
-- Each order must include at least one item and the total amount
-- The system should generate a unique order ID
+- Customers should be able to create new orders with their information (name, email, phone)
+- Each order must include items (product ID, quantity, price) and total amount
 - Initial order status should be set to 'CREATED'
 
 2. Payment Processing:
 - Customers can process payment for their created orders
-- Payment can be made using various methods (credit card, bank transfer)
+- Multiple payment methods should be supported (credit card, bank transfer, digital wallet)
+- Payment information including transaction ID should be recorded
 - After successful payment, order status should change to 'PAID'
-- Payment information should be recorded with the order
 
-3. Order Cancellation:
-- Customers can cancel their orders if they haven't been paid yet
-- Cancelled orders should have status 'CANCELLED'
-- If an order is cancelled after payment, a refund should be initiated
-- Refunded orders should have status 'REFUNDED'
-
-All operations should be recorded with timestamps and proper status updates.`
+3. Delivery Management:
+- After payment, delivery can be started with detailed shipping address
+- Each delivery is assigned to a courier
+- Delivery status should be tracked with tracking number and estimated delivery date`,
+    
+            "Target Command Ids": "cmd-createOrder, cmd-processPayment"
         }
 
     }
@@ -444,61 +544,48 @@ All operations should be recorded with timestamps and proper status updates.`
         return {
             "thoughtProcess": {
                 "step1-requirementsAnalysis": {
-                    "thought": "Analyzing the order management requirements to identify testable scenarios",
-                    "reflection": "The requirements cover order lifecycle from creation to cancellation with various status changes",
+                    "thought": "Analyzing the order management requirements to identify testable scenarios for CreateOrder and ProcessPayment commands",
+                    "reflection": "The requirements clearly outline the order creation and payment processing flows",
                     "result": {
                         "requirements": [
                             {
                                 "name": "order-creation",
-                                "description": "Customer should be able to create new orders",
+                                "description": "Customer creates new order with personal info and order details",
                                 "commandId": "cmd-createOrder"
                             },
                             {
                                 "name": "payment-processing",
-                                "description": "Process payment for created orders",
+                                "description": "Process payment for existing order with payment method",
                                 "commandId": "cmd-processPayment"
-                            },
-                            {
-                                "name": "order-cancellation",
-                                "description": "Cancel orders with different payment states",
-                                "commandId": "cmd-cancelOrder"
                             }
                         ]
                     }
                 },
                 "step2-testCaseAnalysis": {
-                    "thought": "Identifying different scenarios for each requirement",
-                    "reflection": "Need to cover both successful and edge cases",
+                    "thought": "Breaking down each requirement into specific test scenarios",
+                    "reflection": "Ensuring coverage of main flows and edge cases",
                     "result": {
                         "order-creation": {
                             "scenarios": [
                                 {
-                                    "name": "valid-order-creation",
-                                    "description": "Create order with valid customer information and items"
+                                    "name": "successful-order-creation",
+                                    "description": "Customer successfully creates order with valid information"
                                 }
                             ]
                         },
                         "payment-processing": {
                             "scenarios": [
                                 {
-                                    "name": "successful-payment",
-                                    "description": "Process payment for a created order"
-                                }
-                            ]
-                        },
-                        "order-cancellation": {
-                            "scenarios": [
-                                {
-                                    "name": "cancel-unpaid-order",
-                                    "description": "Cancel order before payment"
+                                    "name": "successful-payment-processing",
+                                    "description": "Successfully process payment for existing order"
                                 }
                             ]
                         }
                     }
                 },
                 "step3-GWTGeneration": {
-                    "thought": "Creating GWTs for identified scenarios",
-                    "reflection": "Ensuring proper state transitions and validations",
+                    "thought": "Creating specific GWTs for each identified scenario",
+                    "reflection": "Ensuring proper property coverage in each GWT step",
                     "result": {
                         "order-creation": {
                             "targetCommandId": "cmd-createOrder",
@@ -508,11 +595,15 @@ All operations should be recorded with timestamps and proper status updates.`
                                         "name": "Order",
                                         "values": {
                                             "orderId": null,
-                                            "customer": null,
-                                            "orderStatus": null,
-                                            "orderDetails": null,
-                                            "paymentInfo": null,
-                                            "createdAt": null
+                                            "customer": {
+                                                "customerId": "CUST123",
+                                                "name": "John Doe",
+                                                "email": "john@example.com",
+                                                "phone": "+1234567890"
+                                            },
+                                            "orderStatus": "N/A",
+                                            "orderDetails": "N/A",
+                                            "paymentInfo": "N/A"
                                         }
                                     },
                                     "when": {
@@ -522,30 +613,31 @@ All operations should be recorded with timestamps and proper status updates.`
                                                 "customerId": "CUST123",
                                                 "name": "John Doe",
                                                 "email": "john@example.com",
-                                                "phone": "123-456-7890"
+                                                "phone": "+1234567890"
                                             },
                                             "orderDetails": {
-                                                "items": ["item1", "item2"],
-                                                "totalAmount": 100.00
+                                                "items": [
+                                                    {
+                                                        "productId": "PROD123",
+                                                        "quantity": 2,
+                                                        "price": 100.00
+                                                    }
+                                                ],
+                                                "totalAmount": 200.00
                                             }
                                         }
                                     },
                                     "then": {
                                         "name": "OrderCreated",
                                         "values": {
-                                            "orderId": "ORD123",
+                                            "orderId": 1001,
                                             "customer": {
                                                 "customerId": "CUST123",
                                                 "name": "John Doe",
                                                 "email": "john@example.com",
-                                                "phone": "123-456-7890"
+                                                "phone": "+1234567890"
                                             },
-                                            "orderDetails": {
-                                                "items": ["item1", "item2"],
-                                                "totalAmount": 100.00
-                                            },
-                                            "orderStatus": "CREATED",
-                                            "createdAt": "2024-03-21T10:00:00Z"
+                                            "orderStatus": "CREATED"
                                         }
                                     }
                                 }
@@ -558,83 +650,33 @@ All operations should be recorded with timestamps and proper status updates.`
                                     "given": {
                                         "name": "Order",
                                         "values": {
-                                            "orderId": "ORD123",
+                                            "orderId": 1001,
+                                            "customer": "N/A",
                                             "orderStatus": "CREATED",
-                                            "customer": {
-                                                "customerId": "CUST123",
-                                                "name": "John Doe",
-                                                "email": "john@example.com",
-                                                "phone": "123-456-7890"
-                                            },
-                                            "orderDetails": {
-                                                "items": ["item1", "item2"],
-                                                "totalAmount": 100.00
-                                            },
-                                            "paymentInfo": null,
-                                            "createdAt": "2024-03-21T10:00:00Z"
+                                            "orderDetails": "N/A",
+                                            "paymentInfo": null
                                         }
                                     },
                                     "when": {
                                         "name": "ProcessPayment",
                                         "values": {
-                                            "orderId": "ORD123",
+                                            "orderId": 1001,
                                             "paymentInfo": {
                                                 "paymentMethod": "CREDIT_CARD",
-                                                "paymentStatus": "PENDING"
+                                                "paymentStatus": "PENDING",
+                                                "transactionId": null
                                             }
                                         }
                                     },
                                     "then": {
                                         "name": "PaymentProcessed",
                                         "values": {
-                                            "orderId": "ORD123",
-                                            "orderStatus": "PAID",
+                                            "orderId": 1001,
                                             "paymentInfo": {
                                                 "paymentMethod": "CREDIT_CARD",
-                                                "paymentStatus": "COMPLETED"
+                                                "paymentStatus": "COMPLETED",
+                                                "transactionId": "TXN123456"
                                             }
-                                        }
-                                    }
-                                }
-                            ]
-                        },
-                        "order-cancellation": {
-                            "targetCommandId": "cmd-cancelOrder",
-                            "gwts": [
-                                {
-                                    "given": {
-                                        "name": "Order",
-                                        "values": {
-                                            "orderId": "ORD123",
-                                            "orderStatus": "CREATED",
-                                            "customer": {
-                                                "customerId": "CUST123",
-                                                "name": "John Doe",
-                                                "email": "john@example.com",
-                                                "phone": "123-456-7890"
-                                            },
-                                            "orderDetails": {
-                                                "items": ["item1", "item2"],
-                                                "totalAmount": 100.00
-                                            },
-                                            "paymentInfo": null,
-                                            "createdAt": "2024-03-21T10:00:00Z"
-                                        }
-                                    },
-                                    "when": {
-                                        "name": "CancelOrder",
-                                        "values": {
-                                            "orderId": "ORD123",
-                                            "reason": "Customer requested cancellation"
-                                        }
-                                    },
-                                    "then": {
-                                        "name": "OrderCancelled",
-                                        "values": {
-                                            "orderId": "ORD123",
-                                            "orderStatus": "CANCELLED",
-                                            "reason": "Customer requested cancellation",
-                                            "cancelledAt": "2024-03-21T10:30:00Z"
                                         }
                                     }
                                 }
@@ -643,70 +685,79 @@ All operations should be recorded with timestamps and proper status updates.`
                     }
                 },
                 "step4-GWTEvaluation": {
-                    "thought": "Evaluating the completeness of generated GWTs",
-                    "reflection": "Checking coverage and alignment with requirements",
+                    "thought": "Evaluating the completeness and quality of generated GWTs",
+                    "reflection": "Checking coverage of requirements and alignment with best practices",
                     "result": {
                         "evaluationCriteria": {
                             "requirementsCoverage": {
                                 "score": "90",
-                                "details": ["Covers main order creation flow"],
-                                "missingScenarios": ["Edge cases for invalid input"]
+                                "details": [
+                                    "Covers main order creation flow",
+                                    "Covers payment processing flow"
+                                ],
+                                "missingScenarios": [
+                                    "Order creation with invalid customer data"
+                                ]
                             },
                             "gwtQuality": {
-                                "score": "85",
-                                "details": ["Clear state transitions", "Proper validation checks"],
-                                "improvements": ["Add more specific assertions"]
-                            },
-                            "testScenarioCompleteness": {
                                 "score": "95",
                                 "details": [
-                                    "Covers all main flows",
-                                    "Includes status transitions",
-                                    "Handles payment processing"
+                                    "Clear and specific test conditions",
+                                    "Proper use of property values"
+                                ],
+                                "improvements": [
+                                    "Could add more edge cases"
+                                ]
+                            },
+                            "testScenarioCompleteness": {
+                                "score": "85",
+                                "details": [
+                                    "Core functionality covered",
+                                    "Main success paths implemented"
                                 ],
                                 "gaps": [
-                                    "Missing validation error cases",
-                                    "Missing payment failure scenarios"
+                                    "Error scenarios not fully covered"
                                 ]
                             },
                             "bestPracticesAlignment": {
                                 "score": "90",
                                 "details": [
-                                    "Clear preconditions in Given",
-                                    "Specific actions in When",
-                                    "Verifiable outcomes in Then"
+                                    "Follows GWT format correctly",
+                                    "Properties properly utilized"
                                 ],
                                 "violations": [
-                                    "Some scenarios could be more specific"
+                                    "Some N/A values could be more specific"
                                 ]
                             },
                             "commandAlignment": {
                                 "score": "100",
                                 "details": [
-                                    "All commands have corresponding GWTs",
-                                    "Command parameters properly utilized"
+                                    "All target commands implemented",
+                                    "Command properties properly used"
                                 ],
                                 "matchedCommands": [
                                     {
                                         "commandId": "cmd-createOrder",
-                                        "implementedGWTs": ["valid-order-creation"],
+                                        "implementedGWTs": ["successful-order-creation"],
                                         "missingAspects": []
                                     },
                                     {
                                         "commandId": "cmd-processPayment",
-                                        "implementedGWTs": ["successful-payment"],
-                                        "missingAspects": ["payment-failure"]
-                                    },
-                                    {
-                                        "commandId": "cmd-cancelOrder",
-                                        "implementedGWTs": ["cancel-unpaid-order"],
-                                        "missingAspects": ["cancel-paid-order"]
+                                        "implementedGWTs": ["successful-payment-processing"],
+                                        "missingAspects": []
                                     }
                                 ],
                                 "unmatchedCommands": []
                             }
                         },
-                        "overallScore": "88",
+                        "overallScore": "92",
+                        "recommendedImprovements": [
+                            {
+                                "area": "Error Scenarios",
+                                "description": "Add test cases for invalid inputs and error conditions",
+                                "suggestedGWTs": ["invalid-customer-data", "payment-failure"]
+                            }
+                        ],
                         "needsIteration": false
                     }
                 }
@@ -727,6 +778,8 @@ All operations should be recorded with timestamps and proper status updates.`
 
             "Functional Requirements": this.client.input.description,
 
+            "Target Command Ids": this.client.input.targetCommandAliases.join(", "),
+
             "Final Check List": `
 * Make sure each command has an appropriate GWT from the user's requirements.
 * Make sure your scenarios reflect the best use of GWT in your code generation.
@@ -737,7 +790,7 @@ All operations should be recorded with timestamps and proper status updates.`
 
 
     onCreateModelGenerating(returnObj) {
-        returnObj.directMessage = `Generating GWTs for ${this.client.input.targetBoundedContext.name} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Generating GWTs for ${this.client.input.targetAggregateNames.join(", ")} Aggregates... (${returnObj.modelRawValue.length} characters generated)`
     }
 
     onCreateModelFinished(returnObj) {
@@ -759,7 +812,7 @@ All operations should be recorded with timestamps and proper status updates.`
         returnObj.modelValue.commandsToReplace = commandsToReplace
 
 
-        returnObj.directMessage = `Generating GWTs for ${this.client.input.targetBoundedContext.name} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Generating GWTs for ${this.client.input.targetAggregateNames.join(", ")} Aggregates... (${returnObj.modelRawValue.length} characters generated)`
     }
 
     _getExamples(gwts){
@@ -797,7 +850,7 @@ All operations should be recorded with timestamps and proper status updates.`
     }
 
     __findElementByName(name) {
-        return Object.values(this.client.input.esValue.elements).find(element => element.name === name)
+        return Object.values(this.client.input.esValue.elements).filter(element => element).find(element => element.name === name)
     }
 
     __getValuesUsingFieldDescriptors(values, fieldDescriptors) {
