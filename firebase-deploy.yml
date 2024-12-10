@@ -16,7 +16,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: '14'  # 사용 중인 Node.js 버전
+        node-version: '14.21.3'  # 사용 중인 Node.js 버전
 
     - name: Install dependencies
       run: npm install
