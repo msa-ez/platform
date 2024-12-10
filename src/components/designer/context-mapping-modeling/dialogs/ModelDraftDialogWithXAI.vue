@@ -39,7 +39,7 @@
         >
             <v-tabs v-model="activeTab" class="model-draft-dialog-tab">
                 <v-tab v-for="(boundedContextInfo, index) in draftOptions" :key="index" style="text-transform: none;">
-                {{ boundedContextInfo.boundedContext }}<br>
+                    {{ boundedContextInfo.boundedContext.charAt(0).toUpperCase() + boundedContextInfo.boundedContext.slice(1) }}<br>
                 </v-tab>
             </v-tabs>
 
@@ -47,10 +47,6 @@
                 class="model-draft-dialog-tab-items"
             >
                 <v-tab-item v-for="(boundedContextInfo, index) in draftOptions" :key="index">
-                    <!-- <div class="d-flex align-center mb-2 pl-4 pr-4 pt-4">
-                        <h3>Bounded Context: {{ boundedContextInfo.boundedContext }}</h3>
-                    </div> -->
-
                     <v-row class="ma-0 pa-0">
                         <v-col v-for="(option, index) in boundedContextInfo.options" 
                             :key="selectedCardKey"
@@ -61,9 +57,34 @@
                                 :class="isSelectedCard(boundedContextInfo, index) ? 'model-draft-dialog-selected-card': ''"
                                 :disabled="!isGeneratorButtonEnabled || draftUIInfos.leftBoundedContextCount > 0 || (!selectedOptionItem || Object.keys(selectedOptionItem).length !== draftOptions.length)"
                             >
-                                <!-- <v-card-title class="d-flex justify-space-between">
-                                    <span>Option {{ index + 1 }}</span>
-                                </v-card-title> -->
+                                <v-card-title class="d-flex justify-space-between align-center pa-4 option-title">
+                                    <div class="d-flex align-center">
+                                        <v-chip
+                                            color="primary"
+                                            small
+                                            class="mr-2"
+                                        >
+                                            OPTION {{ index + 1 }}
+                                        </v-chip>
+                                        <v-chip
+                                            v-if="option.isAIRecommended"
+                                            color="info"
+                                            x-small
+                                            class="mr-2"
+                                        >
+                                            <v-icon x-small left>mdi-robot</v-icon>
+                                            AI 추천
+                                        </v-chip>
+                                    </div>
+                                    <v-chip
+                                        v-if="isSelectedCard(boundedContextInfo, index)"
+                                        color="success"
+                                        x-small
+                                        label
+                                    >
+                                        선택됨
+                                    </v-chip>
+                                </v-card-title>
                                 <v-card-text class="pa-0">
                                     <div v-if="option.structure" class="mb-4">
                                         <v-row class="ma-0 pa-0">
@@ -84,8 +105,19 @@
                                                     <div v-if="aggregate.valueObjects.length > 0">
                                                         <span>&lt;&lt; Value Objects &gt;&gt;</span> 
                                                         <div v-for="(valueObject, index) in aggregate.valueObjects" :key="index"
-                                                            class="draft-aggregate-box-text"
-                                                        >{{ valueObject.alias }}</div>
+                                                            class="draft-aggregate-box-text">
+                                                            {{ valueObject.alias }}
+                                                            <v-chip
+                                                                v-if="valueObject.referencedAggregate"
+                                                                x-small
+                                                                class="ml-2"
+                                                                color="info"
+                                                                outlined
+                                                            >
+                                                                <v-icon x-small left>mdi-link-variant</v-icon>
+                                                                {{ valueObject.referencedAggregate.alias }}
+                                                            </v-chip>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </v-col>
@@ -93,10 +125,24 @@
                                     </div>
                                     <div class="pl-4 pr-4 pb-4">
                                         <h4>{{ $t('ModelDraftDialogForDistribution.pros') }}</h4>
-                                        <div>{{ option.pros }}</div><br>
+                                        <v-simple-table dense class="analysis-table">
+                                            <tbody>
+                                                <tr v-for="(value, key) in option.pros" :key="`pros-${key}`">
+                                                    <td class="analysis-key text-capitalize">{{ key }}</td>
+                                                    <td class="analysis-value">{{ value }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </v-simple-table>
 
-                                        <h4>{{ $t('ModelDraftDialogForDistribution.cons') }}</h4>
-                                        <div>{{ option.cons }}</div>
+                                        <h4 class="mt-4">{{ $t('ModelDraftDialogForDistribution.cons') }}</h4>
+                                        <v-simple-table dense class="analysis-table">
+                                            <tbody>
+                                                <tr v-for="(value, key) in option.cons" :key="`cons-${key}`">
+                                                    <td class="analysis-key text-capitalize">{{ key }}</td>
+                                                    <td class="analysis-value">{{ value }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </v-simple-table>
                                     </div>
                                 </v-card-text>
                             </v-card>
@@ -201,3 +247,32 @@
         }
     }
 </script>
+
+<style scoped>
+.analysis-table {
+    background-color: transparent !important;
+}
+.analysis-table ::v-deep .v-data-table__wrapper {
+    overflow-x: hidden;
+}
+.analysis-table ::v-deep table {
+    width: 100%;
+    border-spacing: 0;
+}
+.analysis-table ::v-deep tbody tr:hover {
+    background-color: transparent !important;
+}
+.analysis-key {
+    color: var(--v-primary-base);
+    font-weight: 500;
+    font-size: 0.9rem;
+    width: 120px;
+    vertical-align: top;
+    padding: 4px 8px 4px 0 !important;
+}
+.analysis-value {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    padding: 4px 0 !important;
+}
+</style>

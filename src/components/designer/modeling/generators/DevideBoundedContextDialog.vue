@@ -1,0 +1,215 @@
+<template>
+    <v-card :key="Object.keys(resultDevideBoundedContext).length">
+        <v-card-title>
+            Bounded Context Division Result
+            <v-btn :style="{'margin-left': 'auto'}" icon @click="closeDialog()">
+                <v-icon>mdi-close</v-icon>
+            </v-btn>
+        </v-card-title>
+        <v-card-subtitle>
+            <div class="d-flex align-center">
+                <div v-if="Object.keys(resultDevideBoundedContext).length < 5">
+                    <p class="mb-0">Bounded Contexts generating... ({{ Object.keys(resultDevideBoundedContext).length / 5 * 100 }}%)</p>
+                </div>
+                <v-progress-circular
+                    v-if="Object.keys(resultDevideBoundedContext).length < 5"
+                    color="primary"
+                    indeterminate
+                    size="24"
+                    class="ml-2"
+                ></v-progress-circular>
+            </div>
+        </v-card-subtitle>
+
+        <v-card-text v-if="Object.keys(resultDevideBoundedContext).length > 0">
+            <v-card-title>Aspect of Bounded Contexts</v-card-title>
+            <v-tabs v-model="activeTab">
+                <v-tab v-for="(model, devisionAspect) in resultDevideBoundedContext" :key="devisionAspect">
+                    {{ devisionAspect }}
+                </v-tab>
+            </v-tabs>
+
+            <v-tabs-items v-model="activeTab">
+                <v-tab-item v-for="(model, devisionAspect) in resultDevideBoundedContext" :key="devisionAspect">
+                    <div 
+                        class="mermaid-container"
+                        :class="{ 'selected': selectedAspect === devisionAspect }"
+                        @click="selectAspect(devisionAspect)"
+                    >
+                        <vue-mermaid
+                            v-if="mermaidNodes[devisionAspect]"
+                            :id="`mermaid-${devisionAspect}`"
+                            :key="devisionAspect"
+                            :nodes="mermaidNodes[devisionAspect]"
+                            type="graph TD"
+                            @nodeClick="editNode"
+                            :config="config"
+                        ></vue-mermaid>
+                    </div>
+                    <v-card class="mt-4 pa-4" outlined>
+                        <v-card-title class="text-subtitle-1">Analysis</v-card-title>
+                        <v-card-text>{{ resultDevideBoundedContext[devisionAspect].thoughts }}</v-card-text>
+                    </v-card>
+                </v-tab-item>
+            </v-tabs-items>
+
+            <v-btn :disabled="selectedAspect === null" class="auto-modeling-btn" color="primary" :style="{'margin-top': '15px', 'text-align': 'right'}" @click="createModel()">Create Model<v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon></v-btn><br>
+        </v-card-text>
+
+    </v-card>
+</template>
+
+<script>
+    import VueMermaid from '@/components/VueMermaid.vue';
+
+    export default {
+        name: 'devide-bounded-context-dialog',
+        props: {
+            resultDevideBoundedContext: {
+                type: Object,
+                default: () => ({}),
+                required: false
+            }
+        },
+        components: {
+            VueMermaid
+        },
+        data() {
+            return {
+                activeTab: null,
+                mermaidNodes: {},
+                config: {
+                    theme: 'default',
+                    startOnLoad: true,
+                    securityLevel: 'loose',
+                    flowChart:{
+                        useMaxWidth: false,
+                    }
+                },
+                selectedAspect: null,
+                selectedResultDevideBoundedContext: {}
+            }
+        },
+        mounted() {
+        },
+        watch: {
+            resultDevideBoundedContext: {
+                handler(newVal) {
+                    if(Object.keys(newVal).length == 5){
+                        this.mermaidNodes = this.generateAllNodes(newVal);
+                    }
+                },
+                deep: true
+            },
+            // activeTab: {
+            //     handler(newVal) {
+            //         this.$nextTick(() => {
+            //             // 현재 탭의 다이어그램 강제 리렌더링
+            //             const aspect = Object.keys(this.resultDevideBoundedContext)[this.activeTab];
+            //             if (aspect && this.mermaidNodes[aspect]) {
+            //                 const temp = { ...this.mermaidNodes[aspect] };
+            //                 this.$set(this.mermaidNodes, aspect, null);
+            //                 this.$nextTick(() => {
+            //                     this.$set(this.mermaidNodes, aspect, temp);
+            //                 });
+            //             }
+            //         });
+            //     }
+            // }
+        },
+        methods: {
+            generateNodes(aspect) {
+                const nodes = [];
+                const aspectData = aspect.boundedContexts;
+                const relations = aspect.relations;
+                
+                // 노드 생성
+                aspectData.forEach((bc, index) => {
+                    nodes.push({
+                        id: `BC${index}`,
+                        text: bc.name,
+                        editable: true
+                    });
+                });
+                
+                // 관계 생성
+                relations.forEach((rel) => {
+                    const sourceIndex = aspectData.findIndex(bc => bc.name === rel.upStream);
+                    const targetIndex = aspectData.findIndex(bc => bc.name === rel.downStream);
+                    
+                    if (sourceIndex !== -1 && targetIndex !== -1) {
+                        // 기존 노드에 next 속성 추가
+                        const sourceNode = nodes.find(node => node.id === `BC${sourceIndex}`);
+                        if (sourceNode) {
+                            sourceNode.next = sourceNode.next || [];
+                            sourceNode.next.push(`BC${targetIndex}`);
+                            sourceNode.link = sourceNode.link || [];
+                            sourceNode.link.push(`-->|"${rel.name} (${rel.type})"|`);
+                        }
+                    }
+                });
+                
+                return nodes;
+            },
+            generateAllNodes(data) {
+                const aspects = [
+                    'Domain',
+                    'Organizational',
+                    'Persona',
+                    'Transaction/Performance',
+                    'Infrastructure'
+                ];
+                
+                const allNodes = {};
+                
+                aspects.forEach(aspectName => {
+                    if (data[aspectName]) {
+                        allNodes[aspectName] = this.generateNodes(data[aspectName]);
+                    }
+                });
+                
+                return allNodes;
+            },
+            editNode(node) {
+                console.log("node clicked: ", node);
+            },
+            createModel(){
+                this.$emit("createModel", this.selectedResultDevideBoundedContext);
+            },
+            selectAspect(aspect) {
+                this.selectedAspect = aspect;
+                this.selectedResultDevideBoundedContext = this.resultDevideBoundedContext[aspect];
+            },
+            closeDialog(){
+                this.$emit("closeDialog");
+            }
+        }
+    }
+</script>
+
+<style scoped>
+.v-tab-item {
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+.mermaid-container {
+    padding: 16px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.mermaid-container:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.mermaid-container.selected {
+    border-color: var(--v-primary-base);
+    background-color: rgba(var(--v-primary-base), 0.05);
+}
+</style>

@@ -1912,6 +1912,17 @@
             right:105px !important;
         }
     }
+
+    @media only screen and (max-width: 499px) { 
+        .isForeign-nav-storage-list {
+            top:100px !important;
+            right:47px !important;
+        }
+        .isForeign-not-nav-storage-list {
+            top:100px !important;
+            right:13px !important;
+        }
+    }
 </style>
 
 <style scoped>
@@ -2140,8 +2151,8 @@
 
     @media only screen and (max-width: 499px) {
         .main-nav-tabs-box {
-            max-width: 200px;
-            left: 28%;
+            max-width: 300px;
+            left: 38%;
         }
     }
 </style>

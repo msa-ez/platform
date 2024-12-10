@@ -520,9 +520,11 @@
             checkTopping(){
                 let codeGenerator = getParent(this.$parent, "code-generator")
                 if(!codeGenerator.toppingPlatforms.find(x => x == "https://github.com/msa-ez/topping-unit-test")){
-                    codeGenerator.toppingPlatforms.push("https://github.com/msa-ez/topping-unit-test")
-                    codeGenerator.settingPlatform('TOPPING', codeGenerator.toppingPlatforms);
-                    codeGenerator.refreshCallGenerate();
+                    if(codeGenerator.basePlatform == "https://github.com/msa-ez/template-spring-boot"){
+                        codeGenerator.toppingPlatforms.push("https://github.com/msa-ez/topping-unit-test")
+                        codeGenerator.settingPlatform('TOPPING', codeGenerator.toppingPlatforms);
+                        codeGenerator.refreshCallGenerate();
+                    }
                 } else {
                     if(this.testFileList && this.testFileList.length == 0){
                         codeGenerator.onSelected(this.value)

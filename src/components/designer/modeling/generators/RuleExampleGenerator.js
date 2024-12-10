@@ -15,12 +15,15 @@ class RuleExampleGenerator extends JsonAIGenerator {
         var whenAtt = ""
         var thenFields = ""
         var whenType = 'event'
+        var givenElement = null
+        var thenElement = []
 
         givenFields = rule.givenItems[0].name + ' {'+ '\n'
         rule.givenItems[0].aggregateRoot.fieldDescriptors.forEach(function (field){
             givenAtt = `${givenAtt}    ${field.className} ${field.name}\n`
         })
         givenFields = givenFields + givenAtt + '}'
+        givenElement = rule.givenItems[0].aggregateRoot.entities.elements
 
         if(rule.whenItems[0]._type.includes("Command")){
             whenType = 'command'
@@ -48,6 +51,7 @@ class RuleExampleGenerator extends JsonAIGenerator {
             
             itemFields = itemFields + thenAtt + '}\n' 
             thenFields = thenFields + itemFields
+            thenElement.push(item.aggregateRoot.entities.elements)
         })
 
 
@@ -72,6 +76,16 @@ ${thenFields}
 
 No matter what happens, all events within each field must be generated. 
 Additionally, the value of each event must be generated as a generated value or as a default value (N/A).
+
+given elements:
+${JSON.stringify(givenElement)}
+
+then elements:
+${JSON.stringify(thenElement)}
+
+Please refer to the given and then elements provided to generate values for fields or items.
+If it is an enum class, one of the values ​​of the Items that the element has must be selected.
+If it is a vo.Class, the value of the field of the element must be generated.
 
 please generate the example mappings as json format below:
 [

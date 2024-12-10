@@ -10,10 +10,13 @@ const ReadModelActionsProcessor = require('./ESActionsUtilProcessors/ReadModelAc
 
 class ESActionsUtil {
     static getActionAppliedESValue(actions, userInfo, information, prevESValue=null) {
+        console.log("[*] 이벤트 스토밍 수정 액션 적용 시도", {actions, userInfo, information, prevESValue})
+
         if(!prevESValue) prevESValue = {elements: {}, relations: {}}
         let esValue = JSON.parse(JSON.stringify(prevESValue))
 
         ESActionsUtil._restoreActions(actions, esValue)
+        actions = ESActionsUtil._getSortedActions(actions)
         ESActionsUtil._idsToUUIDs(actions, esValue)
         
 
@@ -29,6 +32,7 @@ class ESActionsUtil {
         callbacks.afterAllObjectAppliedCallBacks.forEach(callback => callback(esValue, userInfo, information))
         callbacks.afterAllRelationAppliedCallBacks.forEach(callback => callback(esValue, userInfo, information))
         
+        console.log("[*] 이벤트 스토밍 수정 액션 적용 완료", esValue)
         return esValue
     }
 
@@ -59,6 +63,25 @@ class ESActionsUtil {
                     else action.type = "create"
                 }
             }
+    }
+
+    static _getSortedActions(actions) {
+        const priorityMap = {
+            'BoundedContext': 1,
+            'Aggregate': 2,
+            'GeneralClass': 3,
+            'ValueObject': 4,
+            'Enumeration': 5,
+            'Event': 6,
+            'Command': 7,
+            'ReadModel': 8
+        }
+
+        return [...actions].sort((a, b) => {
+            const priorityA = priorityMap[a.objectType] || 999
+            const priorityB = priorityMap[b.objectType] || 999
+            return priorityA - priorityB
+        })
     }
 
     /**
