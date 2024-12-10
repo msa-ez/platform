@@ -8,15 +8,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Node.js
+      
+      - name: Install Node.js 14.21.3
         uses: actions/setup-node@v3
         with:
-          node-version: '18.0.0' # Node.js 버전을 프로젝트에 맞게 설정
+          node-version: '14.21.3'
+      
       - name: Install dependencies
         run: npm install
+      
       - name: Build project
-        run: npm run build # 빌드 스크립트 실행
-      - uses: FirebaseExtended/action-hosting-deploy@v0
+        run: npm run build
+
+      - name: Install Node.js 18.0.0
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.0.0'
+      
+      - name: Deploy to Firebase
+        uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EVENTSTORMING_TOOL_DB }}
