@@ -11,7 +11,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '14.21.3' # Node.js 버전을 프로젝트에 맞게 설정
+          node-version: '18.0.0' # Node.js 버전을 프로젝트에 맞게 설정
       - name: Install dependencies
         run: npm install
       - name: Build project
