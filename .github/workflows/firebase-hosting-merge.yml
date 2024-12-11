@@ -27,6 +27,13 @@ jobs:
           VUE_APP_FIREBASE_MESSAGINGSENDERID: ${{ secrets.VUE_APP_FIREBASE_MESSAGINGSENDERID }}
           VUE_APP_FIREBASE_APPID: ${{ secrets.VUE_APP_FIREBASE_APPID }}
           VUE_APP_FIREBASE_MEASUREMENTID: ${{ secrets.VUE_APP_FIREBASE_MEASUREMENTID }}
+          VUE_APP_ALGOLIA_API_KEY: ${{ secrets.VUE_APP_ALGOLIA_API_KEY }}
+          VUE_APP_ALGOLIA_APP_ID: ${{ secrets.VUE_APP_ALGOLIA_APP_ID }}
+          VUE_APP_API_HOST: ${{ secrets.VUE_APP_API_HOST }}
+          VUE_APP_FILE_PATH: ${{ secrets.VUE_APP_FILE_PATH }}
+          VUE_APP_FIREBASE_TRACKINGID: ${{ secrets.VUE_APP_FIREBASE_TRACKINGID }}
+          VUE_APP_IAMPORT_IMPKEY: ${{ secrets.VUE_APP_IAMPORT_IMPKEY }}
+          VUE_APP_TRANSLATE_KEY: ${{ secrets.VUE_APP_TRANSLATE_KEY }}
         run: npm run build
 
       - name: Install Node.js 18.0.0
