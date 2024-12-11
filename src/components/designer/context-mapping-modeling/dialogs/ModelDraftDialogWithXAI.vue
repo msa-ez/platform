@@ -2,9 +2,19 @@
     <v-card>
         <v-card-title class="d-flex justify-space-between align-center">
             <span>{{ $t('ModelDraftDialogForDistribution.reconstructionDraft') }}</span>
-            <v-btn @click="close()" text icon class="pa-0">
-                <v-icon>mdi-close</v-icon>
-            </v-btn>
+            <div class="d-flex align-center">
+                <v-btn @click="retry()" 
+                    text 
+                    icon 
+                    class="pa-0 mr-2"
+                    :disabled="draftUIInfos.leftBoundedContextCount > 0"
+                >
+                    <v-icon>mdi-refresh</v-icon>
+                </v-btn>
+                <v-btn @click="close()" text icon class="pa-0">
+                    <v-icon>mdi-close</v-icon>
+                </v-btn>
+            </div>
         </v-card-title>
 
         <v-card-subtitle>
@@ -236,7 +246,12 @@
             },
             close(){
                 if(confirm('Are you sure you want to close this dialog? All progress will be lost.')) {
-                    this.$emit('close');
+                    this.$emit('onClose');
+                }
+            },
+            retry(){
+                if(confirm('Are you sure you want to retry? All progress will be lost.')) {
+                    this.$emit('onRetry');
                 }
             },
             selectedCard(index, option, key) {

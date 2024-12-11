@@ -1909,7 +1909,8 @@
                 :draftUIInfos="modelDraftDialogWithXAIDto.draftUIInfos"
                 :isGeneratorButtonEnabled="modelDraftDialogWithXAIDto.isGeneratorButtonEnabled"
                 @generateFromDraft="generateFromDraftWithXAI"
-                @close="modelDraftDialogWithXAIDto.isShow = false; modelDraftDialogWithXAIDto.actions.stop()"
+                @onClose="modelDraftDialogWithXAIDto.isShow = false; modelDraftDialogWithXAIDto.actions.stop()"
+                @onRetry="modelDraftDialogWithXAIDto.actions.retry()"
             ></ModelDraftDialogWithXAI>
           </v-dialog>
 
@@ -1964,8 +1965,10 @@
     import ModelDraftDialog from "../modeling/ModelDraftDialog"
     import TestByUsingCommand from "./mixins/TestByUsingCommand"
     import ModelDraftDialogWithXAI from "../context-mapping-modeling/dialogs/ModelDraftDialogWithXAI.vue"
-    import BCReGenerateCreateActionsGenerator from "../modeling/generators/es-ddl-generators/BCReGenerateCreateActionsGenerator"
     import GWTGeneratorByFunctions from "../modeling/generators/es-ddl-generators/GWTGeneratorByFunctions";
+    import CreateAggregateActionsByFunctions from "../modeling/generators/es-ddl-generators/CreateAggregateActionsByFunctions";
+    import CreateCommandActionsByFunctions from "../modeling/generators/es-ddl-generators/CreateCommandActionsByFunctions";
+    import CreatePolicyActionsByFunctions from "../modeling/generators/es-ddl-generators/CreatePolicyActionsByFunctions";
     import GeneratorProgress from "./components/GeneratorProgress.vue"
     const prettier = require("prettier");
     const plugins = require("prettier-plugin-java");
@@ -2431,7 +2434,8 @@
                     },
                     isGeneratorButtonEnabled: true,
                     actions: {
-                        stop: () => {}
+                        stop: () => {},
+                        retry: () => {}
                     }
                 },
 
@@ -2445,7 +2449,7 @@
                 },
 
                 generators: {
-                    BCReGenerateCreateActionsGenerator: {
+                    CreateAggregateActionsByFunctions: {
                         generator: null,
                         inputs: [],
                         generateIfInputsExist: () => {},
@@ -2454,6 +2458,21 @@
                             addAggregateRelation: []
                         }
                     },
+
+                    CreateCommandActionsByFunctions: {
+                        generator: null,
+                        inputs: [],
+                        generateIfInputsExist: () => {},
+                        initInputs: (draftOptions) => {}
+                    },
+
+                    CreatePolicyActionsByFunctions: {
+                        generator: null,
+                        inputs: [],
+                        generateIfInputsExist: () => {},
+                        initInputs: (draftOptions) => {}
+                    },
+
                     GWTGeneratorByFunctions: {
                         generator: null,
                         inputs: [],
@@ -2611,7 +2630,7 @@
                 }
             })
 
-            this.generators.BCReGenerateCreateActionsGenerator.generator = new BCReGenerateCreateActionsGenerator({
+            this.generators.CreateAggregateActionsByFunctions.generator = new CreateAggregateActionsByFunctions({
                 input: null,
 
                 onFirstResponse: (returnObj) => {
@@ -2624,6 +2643,8 @@
                         },
                         actions: {
                             stop: () => {
+                            },
+                            retry: () => {
                             }
                         },
                         isGeneratorButtonEnabled: false
@@ -2668,23 +2689,23 @@
                     }
 
                     if(returnObj.modelValue.callbacks && returnObj.modelValue.callbacks.addAggregateRelation) {
-                        this.generators.BCReGenerateCreateActionsGenerator.callbacks.addAggregateRelation.push((esValue) => {
+                        this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation.push((esValue) => {
                             returnObj.modelValue.callbacks.addAggregateRelation(esValue)
                         })
                     }
 
 
-                    if(this.generators.BCReGenerateCreateActionsGenerator.generateIfInputsExist())
+                    if(this.generators.CreateAggregateActionsByFunctions.generateIfInputsExist())
                         return
 
-                    if(this.generators.BCReGenerateCreateActionsGenerator.callbacks.addAggregateRelation.length > 0) {
+                    if(this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation.length > 0) {
                         this.changedByMe = true
-                        this.generators.BCReGenerateCreateActionsGenerator.callbacks.addAggregateRelation.forEach(callback => callback(this.value))
+                        this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation.forEach(callback => callback(this.value))
                     }
                     this.forceRefreshCanvas()
 
-                    this.generators.GWTGeneratorByFunctions.initInputs(this.selectedDraftOptions)
-                    if(this.generators.GWTGeneratorByFunctions.generateIfInputsExist())
+                    this.generators.CreateCommandActionsByFunctions.initInputs(this.selectedDraftOptions)
+                    if(this.generators.CreateCommandActionsByFunctions.generateIfInputsExist())
                         return
 
 
@@ -2700,7 +2721,7 @@
                 },
 
                 onRetry: (returnObj) => {
-                    alert(`[!] 이벤트 스토밍 생성 과정에서 오류가 발생했습니다. 다시 시도해주세요.\n* Error log \n${returnObj.errorMessage}`)
+                    alert(`[!] An error occurred during aggregate creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
                     this.modelDraftDialogWithXAIDto = {
                         ...this.modelDraftDialogWithXAIDto,
                         isShow: true,
@@ -2716,15 +2737,15 @@
                     this.generatorProgressDto.generateDone = true
                 }
             })
-            this.generators.BCReGenerateCreateActionsGenerator.generateIfInputsExist = () => {
-                if(this.generators.BCReGenerateCreateActionsGenerator.inputs.length > 0) {
-                    this.generators.BCReGenerateCreateActionsGenerator.generator.client.input = this.generators.BCReGenerateCreateActionsGenerator.inputs.shift()
-                    this.generators.BCReGenerateCreateActionsGenerator.generator.generate()
+            this.generators.CreateAggregateActionsByFunctions.generateIfInputsExist = () => {
+                if(this.generators.CreateAggregateActionsByFunctions.inputs.length > 0) {
+                    this.generators.CreateAggregateActionsByFunctions.generator.client.input = this.generators.CreateAggregateActionsByFunctions.inputs.shift()
+                    this.generators.CreateAggregateActionsByFunctions.generator.generate()
                     return true
                 }
                 return false
             }
-            this.generators.BCReGenerateCreateActionsGenerator.initInputs = (draftOptions) => {
+            this.generators.CreateAggregateActionsByFunctions.initInputs = (draftOptions) => {
                 let inputs = []
                 for(const eachDraftOption of Object.values(draftOptions)) {
                     inputs = inputs.concat(
@@ -2738,8 +2759,228 @@
                             isAccumulated: index > 0
                         })))
                 }
-                this.generators.BCReGenerateCreateActionsGenerator.callbacks.addAggregateRelation = []
-                this.generators.BCReGenerateCreateActionsGenerator.inputs = inputs
+                this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation = []
+                this.generators.CreateAggregateActionsByFunctions.inputs = inputs
+            }
+
+            this.generators.CreateCommandActionsByFunctions.generator = new CreateCommandActionsByFunctions({
+                input: null,
+
+                onFirstResponse: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 1,
+                            directMessage: returnObj.directMessage
+                        },
+                        actions: {
+                            stop: () => {
+                            },
+                            retry: () => {
+                            }
+                        },
+                        isGeneratorButtonEnabled: false
+                    }
+
+                    this.generatorProgressDto = {
+                        generateDone: false,
+                        displayMessage: returnObj.directMessage,
+                        progress: 0,
+                        actions: {
+                            stopGeneration: () => {
+                                returnObj.actions.stopGeneration()
+                            }
+                        }
+                    }
+                },
+
+                onModelCreated: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
+                    this.generatorProgressDto.displayMessage = returnObj.directMessage
+                    this.generatorProgressDto.progress = returnObj.progress
+
+                    if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
+                        this.changedByMe = true
+                        this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
+                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
+                    }
+                },
+
+                onGenerationSucceeded: (returnObj) => {
+                    if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
+                        this.changedByMe = true
+                        this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
+                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
+                    }
+
+                    if(this.generators.CreateCommandActionsByFunctions.generateIfInputsExist())
+                        return
+
+                    this.forceRefreshCanvas()
+
+                    this.generators.CreatePolicyActionsByFunctions.initInputs(this.selectedDraftOptions)
+                    if(this.generators.CreatePolicyActionsByFunctions.generateIfInputsExist())
+                        return
+
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onRetry: (returnObj) => {
+                    alert(`[!] An error occurred during command creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: true,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onStopped: () => {
+                    this.generatorProgressDto.generateDone = true
+                }
+            })
+            this.generators.CreateCommandActionsByFunctions.generateIfInputsExist = () => {
+                if(this.generators.CreateCommandActionsByFunctions.inputs.length > 0) {
+                    this.generators.CreateCommandActionsByFunctions.generator.client.input = this.generators.CreateCommandActionsByFunctions.inputs.shift()
+                    this.generators.CreateCommandActionsByFunctions.generator.generate()
+                    return true
+                }
+                return false
+            }
+            this.generators.CreateCommandActionsByFunctions.initInputs = (draftOptions) => {
+                let inputs = []
+                for(const eachDraftOption of Object.values(draftOptions)) {
+                    const targetAggregates = Object.values(this.value.elements).filter(element => element && element._type === "org.uengine.modeling.model.Aggregate" && element.boundedContext.id === eachDraftOption.boundedContext.id)
+
+                    // Aggregate각각마다 커맨드/이벤트/ReadModel 생성 요청을 함으로써 다루는 문제영역을 최소화함
+                    for(const targetAggregate of targetAggregates) {
+                        inputs.push({
+                            targetBoundedContext: eachDraftOption.boundedContext,
+                            targetAggregate: targetAggregate,
+                            description: eachDraftOption.description,
+                            esValue: this.value,
+                            userInfo: this.userInfo,
+                            information: this.information
+                        })
+                    }
+                }
+                this.generators.CreateCommandActionsByFunctions.inputs = inputs
+            }
+
+            this.generators.CreatePolicyActionsByFunctions.generator = new CreatePolicyActionsByFunctions({
+                input: null,
+
+                onFirstResponse: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 1,
+                            directMessage: returnObj.directMessage
+                        },
+                        actions: {
+                            stop: () => {
+                            },
+                            retry: () => {
+                            }
+                        },
+                        isGeneratorButtonEnabled: false
+                    }
+
+                    this.generatorProgressDto = {
+                        generateDone: false,
+                        displayMessage: returnObj.directMessage,
+                        progress: 0,
+                        actions: {
+                            stopGeneration: () => {
+                                returnObj.actions.stopGeneration()
+                            }
+                        }
+                    }
+                },
+
+                onModelCreated: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
+                    this.generatorProgressDto.displayMessage = returnObj.directMessage
+                    this.generatorProgressDto.progress = returnObj.progress
+                },
+
+                onGenerationSucceeded: (returnObj) => {
+                    if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
+                        this.changedByMe = true
+                        this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
+                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
+                    }
+
+                    if(this.generators.CreatePolicyActionsByFunctions.generateIfInputsExist())
+                        return
+
+                    this.forceRefreshCanvas()
+
+                    this.generators.GWTGeneratorByFunctions.initInputs(this.selectedDraftOptions)
+                    if(this.generators.GWTGeneratorByFunctions.generateIfInputsExist())
+                        return
+
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onRetry: (returnObj) => {
+                    alert(`[!] An error occurred during policy creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: true,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onStopped: () => {
+                    this.generatorProgressDto.generateDone = true
+                }
+            })
+            this.generators.CreatePolicyActionsByFunctions.generateIfInputsExist = () => {
+                if(this.generators.CreatePolicyActionsByFunctions.inputs.length > 0) {
+                    this.generators.CreatePolicyActionsByFunctions.generator.client.input = this.generators.CreatePolicyActionsByFunctions.inputs.shift()
+                    this.generators.CreatePolicyActionsByFunctions.generator.generate()
+                    return true
+                }
+                return false
+            }
+            this.generators.CreatePolicyActionsByFunctions.initInputs = (draftOptions) => {
+                let inputs = []
+                for(const eachDraftOption of Object.values(draftOptions)) {
+                    inputs.push({
+                            targetBoundedContext: eachDraftOption.boundedContext,
+                            description: eachDraftOption.description,
+                            esValue: this.value,
+                            userInfo: this.userInfo,
+                            information: this.information
+                        })
+                }
+                this.generators.CreatePolicyActionsByFunctions.inputs = inputs
             }
 
             this.generators.GWTGeneratorByFunctions.generator = new GWTGeneratorByFunctions({
@@ -2755,6 +2996,8 @@
                         },
                         actions: {
                             stop: () => {
+                            },
+                            retry: () => {
                             }
                         },
                         isGeneratorButtonEnabled: false
@@ -3949,8 +4192,8 @@
                 console.log("[*] 유저가 선택한 초안 옵션들을 이용해서 모델 생성 로직이 실행됨", draftOptions)
                 this.selectedDraftOptions = draftOptions
 
-                this.generators.BCReGenerateCreateActionsGenerator.initInputs(this.selectedDraftOptions)
-                this.generators.BCReGenerateCreateActionsGenerator.generateIfInputsExist()
+                this.generators.CreateAggregateActionsByFunctions.initInputs(this.selectedDraftOptions)
+                this.generators.CreateAggregateActionsByFunctions.generateIfInputsExist()
             },
 
 

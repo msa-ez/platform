@@ -31,6 +31,8 @@ class ValueObjectActionsProcessor {
             
             let entities = ActionsProcessorUtils.getEntitiesForAggregate(esValue, action.ids.aggregateId)
             entities.elements[valueObject.id] = valueObject
+
+            ValueObjectActionsProcessor.__makeRelations(action, valueObject, callbacks)
         })
     }
 
@@ -101,7 +103,51 @@ class ValueObjectActionsProcessor {
                 "name": property.name,
                 "nameCamelCase": changeCase.pascalCase(property.name),
                 "namePascalCase": changeCase.camelCase(property.name),
-                "_type": "org.uengine.model.FieldDescriptor"
+                "_type": "org.uengine.model.FieldDescriptor",
+                "referenceClass": property.referenceClass ? property.referenceClass : null
+            }
+        })
+    }
+
+    static __makeRelations(action, valueObject, callbacks) {
+        callbacks.afterAllRelationAppliedCallBacks.push((esValue) => {
+            let entities = ActionsProcessorUtils.getEntitiesForAggregate(esValue, action.ids.aggregateId)
+            const sourceElement = entities.elements[valueObject.id]
+            if(!sourceElement) return
+
+            for(const fieldDescriptor of sourceElement.fieldDescriptors) {
+                let matchedElement = null
+                for(const element of Object.values(entities.elements).filter(element => element)) {
+                    if(fieldDescriptor.className === element.name) {
+                        matchedElement = element
+                        break
+                    }
+                }
+                if(!matchedElement) continue
+
+                let isRelationAlreadyExists = false
+                for(const relation of Object.values(entities.relations).filter(relation => relation)) {
+                    if(relation.from === sourceElement.id && relation.to === matchedElement.id) {
+                        isRelationAlreadyExists = true
+                        break
+                    }
+                }
+                if(isRelationAlreadyExists) continue
+
+                if(matchedElement) {
+                    const ddlRelationObject = ActionsProcessorUtils.getDDLRelationObjectBase(sourceElement, matchedElement)
+
+                    if(!sourceElement.relations) sourceElement.relations = []
+                    sourceElement.relations.push(ddlRelationObject.id)
+
+                    if(!matchedElement.relations) matchedElement.relations = []
+                    matchedElement.relations.push(ddlRelationObject.id)
+
+                    entities.relations[ddlRelationObject.id] = ddlRelationObject
+
+                    
+                    sourceElement.fieldDescriptors = sourceElement.fieldDescriptors.filter(fieldDescriptor => fieldDescriptor.className !== matchedElement.name)
+                }
             }
         })
     }
