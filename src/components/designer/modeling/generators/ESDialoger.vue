@@ -78,6 +78,8 @@
                 :resultDevideBoundedContext="resultDevideBoundedContext"
                 @createModel="jump"
                 @closeDialog="showDevideBoundedContextDialog = false"
+                @stop="stop"
+                @reGenerate="reGenerate"
             ></DevideBoundedContextDialog>
         </v-dialog>
     </div>
@@ -136,6 +138,17 @@
                         this.isCreatedModel = false
                     }
                 },1000)
+            },
+            "showDevideBoundedContextDialog": {
+                handler: function(newVal, oldVal) {
+                    if(newVal){
+                        if(newVal){
+                            this.state.generator = "DevideBoundedContextGenerator";
+                        }else{
+                            this.state.generator = "EventOnlyESGenerator";
+                        }
+                    }
+                }
             }
         },
         mounted(){
@@ -265,14 +278,24 @@
             },
 
             stop(){
+                if(this.state.generator === "DevideBoundedContextGenerator"){
+                    this.resultDevideBoundedContext = {};
+                }
+                
                 this.generator.stop();
                 this.state.startTemplateGenerate = false
                 this.done = true;
             },
 
+            reGenerate(){
+                this.generateDevideBoundedContext();
+            },
+
             generateDevideBoundedContext(){
                 this.generator = new DevideBoundedContextGenerator(this);
                 this.state.generator = "DevideBoundedContextGenerator";
+
+                this.resultDevideBoundedContext = {};
 
                 this.devisionAspectIndex = 0;
                 this.input['devisionAspect'] = this.devisionAspect[this.devisionAspectIndex];

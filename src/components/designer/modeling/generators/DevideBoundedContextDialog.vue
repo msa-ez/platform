@@ -2,17 +2,19 @@
     <v-card :key="Object.keys(resultDevideBoundedContext).length">
         <v-card-title>
             Bounded Context Division Result
+            <v-btn v-if="!isGenerating" text @click="reGenerate()">Re-Generate</v-btn>
+            <v-btn v-if="isGenerating" text @click="stop()">Stop</v-btn>
             <v-btn :style="{'margin-left': 'auto'}" icon @click="closeDialog()">
                 <v-icon>mdi-close</v-icon>
             </v-btn>
         </v-card-title>
         <v-card-subtitle>
             <div class="d-flex align-center">
-                <div v-if="Object.keys(resultDevideBoundedContext).length < 5">
+                <div v-if="isGenerating">
                     <p class="mb-0">Bounded Contexts generating... ({{ Object.keys(resultDevideBoundedContext).length / 5 * 100 }}%)</p>
                 </div>
                 <v-progress-circular
-                    v-if="Object.keys(resultDevideBoundedContext).length < 5"
+                    v-if="isGenerating"
                     color="primary"
                     indeterminate
                     size="24"
@@ -87,7 +89,8 @@
                     }
                 },
                 selectedAspect: null,
-                selectedResultDevideBoundedContext: {}
+                selectedResultDevideBoundedContext: {},
+                isGenerating: true
             }
         },
         mounted() {
@@ -97,6 +100,9 @@
                 handler(newVal) {
                     if(Object.keys(newVal).length == 5){
                         this.mermaidNodes = this.generateAllNodes(newVal);
+                        this.isGenerating = false;
+                    }else if(Object.keys(newVal).length > 0 && Object.keys(newVal).length < 5){
+                        this.isGenerating = true;
                     }
                 },
                 deep: true
@@ -182,6 +188,15 @@
             },
             closeDialog(){
                 this.$emit("closeDialog");
+            },
+            stop(){
+                this.isGenerating = false;
+                this.mermaidNodes = {};
+                this.$emit("stop");
+            },
+            reGenerate(){
+                this.isGenerating = true;
+                this.$emit("reGenerate");
             }
         }
     }
