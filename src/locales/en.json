@@ -1,5 +1,9 @@
 {
   "message": "en",
+  "app": {
+    "showBeta": "Show Beta",
+    "hideBeta": "Hide Beta"
+  },
   "ClassCard": {
     "enter" : "Enter"
   },

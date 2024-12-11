@@ -7,7 +7,7 @@ class GWTGeneratorByFunctions extends FormattedJSONAIGenerator{
         super(client);
 
         this.checkInputParamsKeys = ["targetBoundedContext", "targetCommandIds", "description", "esValue"]
-        this.progressCheckStrings = ["step1-requirementsAnalysis", "\"requirements\"", "step2-testCaseAnalysis", "step3-GWTGeneration", "step4-GWTEvaluation", "\"overallScore\""]
+        this.progressCheckStrings = ["thoughts", "inference", "reflection", "targetCommandId"]
     }
 
 
@@ -26,25 +26,52 @@ class GWTGeneratorByFunctions extends FormattedJSONAIGenerator{
 
 
     __buildAgentRolePrompt(){
-        return `You are an experienced test engineer and behavior-driven development (BDD) specialist. Your expertise lies in:
-- Creating comprehensive test scenarios using Given-When-Then format
-- Analyzing business requirements to identify testable behaviors
-- Ensuring test coverage across different use cases
-- Designing maintainable and reusable test cases
-- Understanding domain-driven design concepts and event-driven systems
+        return `You are an expert in Domain-Driven Design (DDD) and test engineering, specializing in:
+- Writing precise Given-When-Then scenarios for event-driven systems
+- Converting business rules into testable acceptance criteria
+- Validating command-event flows in bounded contexts
+- Ensuring test coverage for aggregate state transitions
+- Maintaining consistency between commands, events, and aggregate states
 `
     }
 
     __buildTaskGuidelinesPrompt(){
         return `You need to extract the right GWT (Given, When, Then) cases from the user's requirements and add them to the right commands in the given bounded context.
 
-Please follow these rules.
-1. Extract as many requirements about GWT as possible to add to the command passed in by the user.
-2. All GWTs should be generated only for the ids of the commands passed in by the user.
-3. The generated GWTs will be used later in code generation, so we need unique, non-duplicated GWTs that are sufficiently helpful in code generation.
-4. given is matched against Aggregate, when is matched against Command, and then is matched against Event. You need to make the properties of each target available to GWT.
-5. Do not write comments in the output JSON object.
+Please follow these rules:
+1. Requirements Analysis:
+   - Extract all relevant GWT scenarios from the provided requirements
+   - Each GWT must be directly related to the specified command IDs
+   - Ensure full coverage of acceptance criteria and business rules
 
+2. GWT Structure:
+   - Given: Must reference valid Aggregate state with realistic property values
+   - When: Must match Command properties exactly as defined in the schema
+   - Then: Must include all mandatory Event properties with expected outcomes
+
+3. Quality Guidelines:
+   - Generate unique, non-duplicated GWT scenarios
+   - Each scenario should test a specific aspect or business rule
+   - Include both positive and negative test scenarios
+   - Ensure property values are realistic and type-compatible
+
+4. Property Mapping:
+   - Given: Use only properties defined in the Aggregate
+   - When: Include all required Command parameters
+   - Then: Map to all relevant Event properties
+   - Use "N/A" only for truly unrelated properties
+
+5. Validation Rules:
+   - Verify all business constraints are covered
+   - Include boundary conditions and edge cases
+   - Consider state transitions and their validity
+   - Check for proper error scenarios
+
+6. Output Format:
+   - Provide clean JSON without comments
+   - Use consistent property naming
+   - Ensure all required fields are populated
+   - Maintain proper value types for each property
 `
     }
 
@@ -55,165 +82,117 @@ Please follow these rules.
     __buildJsonResponseFormat() {
         return `
 {
-    "thoughtProcess": {
-        // From the requirements requested by the user, derive scenarios that can be tested with the given commands.
-        "step1-requirementsAnalysis": {
-            "thought": "thought process for request analysis",
-            "reflection": "re-evaluate your thought to see if there's anything you can strengthen.",
-            "result": {
-                "requirements": [
-                    {"name": "requirement-name", "description": "requirement-description", "commandId": "command-id"},
-                    ...
-                ]
-            }
+    "thoughts": {
+        "summary": "Test scenario analysis and validation requirements",
+        "details": {
+            "businessOperations": "Core test cases for business operations",
+            "commandFlow": "Command validation and test coverage requirements",
+            "eventFlow": "Event verification and state transition tests",
+            "readModelPurpose": "Query validation and view testing requirements",
+            "actorInteractions": "User interaction test scenarios"
         },
+        "additionalConsiderations": "Test environment and data setup requirements"
+    },
 
-        // Analyse the different scenarios in which GWTs can be derived from the requirements identified in Step 1.
-        "step2-testCaseAnalysis": {
-            "thought": "thought process for request analysis",
-            "reflection": "re-evaluate your thought to see if there's anything you can strengthen.",
-            "result": {
-                "<requirement-name>": {
-                    "scenarios": [
-                        {"name": "scenario-name", "description": "scenario-description"},
-                        ...
-                    ]
-                }
-            }
+    "inference": {
+        "summary": "Test strategy and coverage implications",
+        "details": {
+            "cascadingCommands": "Integration test scenarios for command chains",
+            "stateTransitions": "State machine testing requirements",
+            "validationRules": "Input validation test cases",
+            "queryPatterns": "Performance and load test scenarios",
+            "eventChains": "Event propagation test coverage"
         },
+        "additionalInferences": "Edge cases and error scenarios to test"
+    },
 
-        // Based on your analysis in steps 1 and 2, create a set of possible GWTs for each requirement.
-        // Generate the appropriate GWTs for each scenario analysed in STEP2.
-        "step3-GWTGeneration": {
-            "thought": "thought process for GWT generation",
-            "reflection": "re-evaluate your thought to see if there's anything you can strengthen.",
-            "result": {
-                "<requirement-name>": {
-                    "targetCommandId": "<targetCommandId>",
-                    "gwts": [
-                        {
-                            "given": {
-                                "name": "<givenName>", // You can write the name of Aggregate
-                                "values": {
-                                    // There are three types of attribute values you can write.
-                                    // 1. Write an actual possible value(You can write String, Number, Boolean, Array, Object, etc.)
-                                    // 2. If the current value is empty, write null.
-                                    // 3. If the attribute seems unrelated to this GWT, write "N/A".
-                                    "<attributeName>": <attributeValue|null|"N/A">
-                                }
-                            },
+    "reflection": {
+        "summary": "Test implementation and maintenance considerations",
+        "details": {
+            "consistency": "Data consistency test requirements",
+            "performance": "Performance test metrics and thresholds",
+            "scalability": "Load and stress test considerations",
+            "maintainability": "Test suite maintenance strategy",
+            "security": "Security testing requirements"
+        },
+        "additionalReflections": "Test automation and CI/CD integration"
+    },
 
-                            "when": {
-                                "name": "<whenName>", // You can write the name of Command
-                                "values": {
-                                    "<attributeName>": <attributeValue|null|"N/A">
-                                }
-                            },
-
-                            "then": {
-                                "name": "<thenName>", // You can write the name of Event
-                                "values": {
-                                    "<attributeName>": <attributeValue|null|"N/A">
-                                }
-                            }
+   "result": [
+        {
+            "targetCommandId": "<targetCommandId>",
+            "gwts": [
+                {
+                    "given": {
+                        "name": "<givenName>", // You can write the name of Aggregate
+                        "values": {
+                            // There are three types of attribute values you can write.
+                            // 1. Write an actual possible value(You can write String, Number, Boolean, Array, Object, etc.)
+                            // 2. If the current value is empty, write null.
+                            // 3. If the attribute seems unrelated to this GWT, write "N/A".
+                            "<attributeName>": <attributeValue|null|"N/A">
                         }
-                    ]
-                }
-            }
-        },
+                    },
 
-        "step4-GWTEvaluation": {
-            "thought": "Evaluate the completeness and quality of generated GWTs",
-            "reflection": "Consider if the GWTs fully cover all scenarios and follow best practices",
-            "result": {
-                "evaluationCriteria": {
-                    "requirementsCoverage": {
-                        "score": "<0-100>",
-                        "details": ["<requirement coverage detail>", ...],
-                        "missingScenarios": ["<missing scenario>", ...]
+                    "when": {
+                        "name": "<whenName>", // You can write the name of Command
+                        "values": {
+                            "<attributeName>": <attributeValue|null|"N/A">
+                        }
                     },
-                    "gwtQuality": {
-                        "score": "<0-100>",
-                        "details": ["<GWT quality detail>", ...],
-                        "improvements": ["<suggested improvement>", ...]
-                    },
-                    "testScenarioCompleteness": {
-                        "score": "<0-100>",
-                        "details": ["<test scenario detail>", ...],
-                        "gaps": ["<identified gap>", ...]
-                    },
-                    "bestPracticesAlignment": {
-                        "score": "<0-100>",
-                        "details": ["<best practice alignment detail>", ...],
-                        "violations": ["<best practice violation>", ...]
-                    },
-                    "commandAlignment": {
-                        "score": "<0-100>",
-                        "details": ["<command alignment detail>", ...],
-                        "matchedCommands": [
-                            {
-                                "commandId": "<command id>",
-                                "implementedGWTs": ["<GWT name>", ...],
-                                "missingAspects": ["<missing aspect>", ...]
-                            }
-                        ],
-                        "unmatchedCommands": ["<command without GWT>", ...]
+
+                    "then": {
+                        "name": "<thenName>", // You can write the name of Event
+                        "values": {
+                            "<attributeName>": <attributeValue|null|"N/A">
+                        }
                     }
-                },
-                "overallScore": "<0-100>",
-                "recommendedImprovements": [
-                    {
-                        "area": "<improvement area>",
-                        "description": "<improvement description>",
-                        "suggestedGWTs": ["<GWT name>", ...]
-                    }
-                ],
-                "needsIteration": "<true|false>" // true if overallScore < 80
-            }
+                }
+            ]
         }
-    }
+    ]
 }`
     }
 
     __buildJsonExampleInputFormat() {
         return {
             "Current Bounded Context": {
-                "id": "bc-ordermanagement",
-                "name": "ordermanagement",
+                "id": "bc-inventory",
+                "name": "inventory",
                 "aggregates": {
-                    "agg-order": {
-                        "id": "agg-order",
-                        "name": "Order",
+                    "agg-product": {
+                        "id": "agg-product",
+                        "name": "Product",
                         "properties": [
                             {
-                                "name": "orderId",
-                                "type": "Long",
+                                "name": "productId",
+                                "type": "String",
                                 "isKey": true
                             },
                             {
-                                "name": "customer",
-                                "type": "Customer"
+                                "name": "name",
+                                "type": "String"
                             },
                             {
-                                "name": "orderStatus",
-                                "type": "OrderStatus"
+                                "name": "quantity",
+                                "type": "Integer"
                             },
                             {
-                                "name": "orderDetails",
-                                "type": "OrderDetails"
+                                "name": "status",
+                                "type": "ProductStatus"
                             },
                             {
-                                "name": "paymentInfo",
-                                "type": "PaymentInfo"
+                                "name": "category",
+                                "type": "Category"
                             }
                         ],
                         "entities": [
                             {
-                                "id": "ent-customer",
-                                "name": "Customer",
+                                "id": "ent-category",
+                                "name": "Category",
                                 "properties": [
                                     {
-                                        "name": "customerId",
+                                        "name": "categoryId",
                                         "type": "String"
                                     },
                                     {
@@ -221,11 +200,7 @@ Please follow these rules.
                                         "type": "String"
                                     },
                                     {
-                                        "name": "email",
-                                        "type": "String"
-                                    },
-                                    {
-                                        "name": "phone",
+                                        "name": "description",
                                         "type": "String"
                                     }
                                 ]
@@ -233,42 +208,26 @@ Please follow these rules.
                         ],
                         "enumerations": [
                             {
-                                "id": "enum-orderStatus",
-                                "name": "OrderStatus",
+                                "id": "enum-productStatus",
+                                "name": "ProductStatus",
                                 "items": [
-                                    "CREATED",
-                                    "PAID",
-                                    "CANCELLED"
-                                ]
-                            },
-                            {
-                                "id": "enum-paymentMethod",
-                                "name": "PaymentMethod",
-                                "items": [
-                                    "CREDIT_CARD",
-                                    "BANK_TRANSFER",
-                                    "DIGITAL_WALLET"
+                                    "AVAILABLE",
+                                    "OUT_OF_STOCK",
+                                    "DISCONTINUED"
                                 ]
                             }
                         ],
-                        "valueObjects": [
+                        "commands": [
                             {
-                                "id": "vo-orderDetails",
-                                "name": "OrderDetails",
-                                "properties": [
+                                "id": "cmd-addStock",
+                                "name": "AddStock",
+                                "api_verb": "PUT",
+                                "outputEvents": [
                                     {
-                                        "name": "items",
-                                        "type": "List<OrderItem>"
-                                    },
-                                    {
-                                        "name": "totalAmount",
-                                        "type": "Number"
+                                        "id": "evt-stockAdded",
+                                        "name": "StockAdded"
                                     }
-                                ]
-                            },
-                            {
-                                "id": "vo-orderItem",
-                                "name": "OrderItem",
+                                ],
                                 "properties": [
                                     {
                                         "name": "productId",
@@ -276,238 +235,66 @@ Please follow these rules.
                                     },
                                     {
                                         "name": "quantity",
-                                        "type": "Number"
-                                    },
-                                    {
-                                        "name": "price",
-                                        "type": "Number"
+                                        "type": "Integer"
                                     }
                                 ]
                             },
                             {
-                                "id": "vo-paymentInfo",
-                                "name": "PaymentInfo",
-                                "properties": [
-                                    {
-                                        "name": "paymentMethod",
-                                        "type": "PaymentMethod"
-                                    },
-                                    {
-                                        "name": "paymentStatus",
-                                        "type": "String"
-                                    },
-                                    {
-                                        "name": "transactionId",
-                                        "type": "String"
-                                    }
-                                ]
-                            }
-                        ],
-                        "commands": [
-                            {
-                                "id": "cmd-createOrder",
-                                "name": "CreateOrder",
-                                "api_verb": "POST",
-                                "outputEvents": [
-                                    {
-                                        "id": "evt-orderCreated",
-                                        "name": "OrderCreated"
-                                    }
-                                ],
-                                "properties": [
-                                    {
-                                        "name": "customer",
-                                        "type": "Customer"
-                                    },
-                                    {
-                                        "name": "orderDetails",
-                                        "type": "OrderDetails"
-                                    }
-                                ]
-                            },
-                            {
-                                "id": "cmd-processPayment",
-                                "name": "ProcessPayment",
+                                "id": "cmd-discontinueProduct",
+                                "name": "DiscontinueProduct",
                                 "api_verb": "PUT",
                                 "outputEvents": [
                                     {
-                                        "id": "evt-paymentProcessed",
-                                        "name": "PaymentProcessed"
+                                        "id": "evt-productDiscontinued",
+                                        "name": "ProductDiscontinued"
                                     }
                                 ],
                                 "properties": [
                                     {
-                                        "name": "orderId",
-                                        "type": "Long",
-                                        "isKey": true
+                                        "name": "productId",
+                                        "type": "String"
                                     },
                                     {
-                                        "name": "paymentInfo",
-                                        "type": "PaymentInfo"
+                                        "name": "reason",
+                                        "type": "String"
                                     }
                                 ]
                             }
                         ],
                         "events": [
                             {
-                                "id": "evt-orderCreated",
-                                "name": "OrderCreated",
+                                "id": "evt-stockAdded",
+                                "name": "StockAdded",
                                 "properties": [
                                     {
-                                        "name": "orderId",
-                                        "type": "Long"
+                                        "name": "productId",
+                                        "type": "String"
                                     },
                                     {
-                                        "name": "customer",
-                                        "type": "Customer"
+                                        "name": "quantity",
+                                        "type": "Integer"
                                     },
                                     {
-                                        "name": "orderStatus",
-                                        "type": "OrderStatus"
+                                        "name": "newTotalQuantity",
+                                        "type": "Integer"
                                     }
                                 ]
                             },
                             {
-                                "id": "evt-paymentProcessed",
-                                "name": "PaymentProcessed",
+                                "id": "evt-productDiscontinued",
+                                "name": "ProductDiscontinued",
                                 "properties": [
                                     {
-                                        "name": "orderId",
-                                        "type": "Long"
-                                    },
-                                    {
-                                        "name": "paymentInfo",
-                                        "type": "PaymentInfo"
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    "agg-delivery": {
-                        "id": "agg-delivery",
-                        "name": "Delivery",
-                        "properties": [
-                            {
-                                "name": "deliveryId",
-                                "type": "Long",
-                                "isKey": true
-                            },
-                            {
-                                "name": "orderId",
-                                "type": "Long"
-                            },
-                            {
-                                "name": "status",
-                                "type": "DeliveryStatus"
-                            },
-                            {
-                                "name": "address",
-                                "type": "Address"
-                            },
-                            {
-                                "name": "courier",
-                                "type": "Courier"
-                            }
-                        ],
-                        "entities": [
-                            {
-                                "id": "ent-courier",
-                                "name": "Courier",
-                                "properties": [
-                                    {
-                                        "name": "courierId",
+                                        "name": "productId",
                                         "type": "String"
                                     },
                                     {
-                                        "name": "name",
+                                        "name": "reason",
                                         "type": "String"
                                     },
                                     {
-                                        "name": "contactNumber",
-                                        "type": "String"
-                                    }
-                                ]
-                            }
-                        ],
-                        "enumerations": [
-                            {
-                                "id": "enum-deliveryStatus",
-                                "name": "DeliveryStatus",
-                                "items": [
-                                    "PENDING",
-                                    "IN_PROGRESS",
-                                    "COMPLETED",
-                                    "FAILED"
-                                ]
-                            }
-                        ],
-                        "valueObjects": [
-                            {
-                                "id": "vo-address",
-                                "name": "Address",
-                                "properties": [
-                                    {
-                                        "name": "street",
-                                        "type": "String"
-                                    },
-                                    {
-                                        "name": "city",
-                                        "type": "String"
-                                    },
-                                    {
-                                        "name": "state",
-                                        "type": "String"
-                                    },
-                                    {
-                                        "name": "postalCode",
-                                        "type": "String"
-                                    },
-                                    {
-                                        "name": "country",
-                                        "type": "String"
-                                    }
-                                ]
-                            }
-                        ],
-                        "commands": [
-                            {
-                                "id": "cmd-startDelivery",
-                                "name": "StartDelivery",
-                                "api_verb": "POST",
-                                "outputEvents": [
-                                    {
-                                        "id": "evt-deliveryStarted",
-                                        "name": "DeliveryStarted"
-                                    }
-                                ],
-                                "properties": [
-                                    {
-                                        "name": "orderId",
-                                        "type": "Long"
-                                    },
-                                    {
-                                        "name": "address",
-                                        "type": "Address"
-                                    }
-                                ]
-                            }
-                        ],
-                        "events": [
-                            {
-                                "id": "evt-deliveryStarted",
-                                "name": "DeliveryStarted",
-                                "properties": [
-                                    {
-                                        "name": "deliveryId",
-                                        "type": "Long"
-                                    },
-                                    {
-                                        "name": "orderId",
-                                        "type": "Long"
-                                    },
-                                    {
-                                        "name": "status",
-                                        "type": "DeliveryStatus"
+                                        "name": "discontinuedDate",
+                                        "type": "Date"
                                     }
                                 ]
                             }
@@ -515,253 +302,147 @@ Please follow these rules.
                     }
                 }
             },
-    
-            "Functional Requirements": `
-We need to implement an order management system with the following requirements:
-
-1. Order Creation:
-- Customers should be able to create new orders with their information (name, email, phone)
-- Each order must include items (product ID, quantity, price) and total amount
-- Initial order status should be set to 'CREATED'
-
-2. Payment Processing:
-- Customers can process payment for their created orders
-- Multiple payment methods should be supported (credit card, bank transfer, digital wallet)
-- Payment information including transaction ID should be recorded
-- After successful payment, order status should change to 'PAID'
-
-3. Delivery Management:
-- After payment, delivery can be started with detailed shipping address
-- Each delivery is assigned to a courier
-- Delivery status should be tracked with tracking number and estimated delivery date`,
-    
-            "Target Command Ids": "cmd-createOrder, cmd-processPayment"
+            
+            "Functional Requirements": {
+                "userStories": [
+                    {
+                        "title": "Add Stock to Product",
+                        "description": "As an inventory manager, I want to add stock to existing products so that we can maintain accurate inventory levels",
+                        "acceptance": [
+                            "Stock quantity must be a positive number",
+                            "Product must exist in the system",
+                            "System should update total quantity after addition",
+                            "Stock addition should be logged for audit"
+                        ]
+                    },
+                    {
+                        "title": "Discontinue Product",
+                        "description": "As a product manager, I want to discontinue products that are no longer sold so that they are not available for future orders",
+                        "acceptance": [
+                            "Must provide reason for discontinuation",
+                            "Product status should be updated to DISCONTINUED",
+                            "Discontinuation date should be recorded",
+                            "Cannot discontinue already discontinued products"
+                        ]
+                    }
+                ],
+                "businessRules": [
+                    {
+                        "name": "StockQuantityValidation",
+                        "description": "Stock quantity must be greater than zero"
+                    },
+                    {
+                        "name": "DiscontinuationReason",
+                        "description": "Reason for discontinuation is mandatory and must be descriptive"
+                    }
+                ]
+            },
+            
+            "Target Command Ids": "cmd-addStock, cmd-discontinueProduct"
         }
-
     }
 
     __buildJsonExampleOutputFormat() {
         return {
-            "thoughtProcess": {
-                "step1-requirementsAnalysis": {
-                    "thought": "Analyzing the order management requirements to identify testable scenarios for CreateOrder and ProcessPayment commands",
-                    "reflection": "The requirements clearly outline the order creation and payment processing flows",
-                    "result": {
-                        "requirements": [
-                            {
-                                "name": "order-creation",
-                                "description": "Customer creates new order with personal info and order details",
-                                "commandId": "cmd-createOrder"
-                            },
-                            {
-                                "name": "payment-processing",
-                                "description": "Process payment for existing order with payment method",
-                                "commandId": "cmd-processPayment"
-                            }
-                        ]
-                    }
+            "thoughts": {
+                "summary": "Comprehensive analysis of inventory management test scenarios focusing on stock management and product lifecycle",
+                "details": {
+                    "businessOperations": "Core inventory operations including stock updates and product discontinuation with proper validation rules",
+                    "commandFlow": "Sequential validation of commands ensuring business rule compliance and data integrity",
+                    "eventFlow": "Event chain verification for stock updates and status changes with proper state tracking",
+                    "readModelPurpose": "Real-time inventory tracking and product status monitoring for accurate stock management",
+                    "actorInteractions": "Role-based operations for inventory managers and product managers with proper authorization"
                 },
-                "step2-testCaseAnalysis": {
-                    "thought": "Breaking down each requirement into specific test scenarios",
-                    "reflection": "Ensuring coverage of main flows and edge cases",
-                    "result": {
-                        "order-creation": {
-                            "scenarios": [
-                                {
-                                    "name": "successful-order-creation",
-                                    "description": "Customer successfully creates order with valid information"
+                "additionalConsiderations": "Data consistency across inventory updates and proper audit trail maintenance"
+            },
+
+            "inference": {
+                "summary": "Strategic approach to inventory management testing with focus on data integrity and business rule validation",
+                "details": {
+                    "cascadingCommands": "Stock updates affecting product availability status and inventory levels",
+                    "stateTransitions": "Product lifecycle states from AVAILABLE through OUT_OF_STOCK to DISCONTINUED",
+                    "validationRules": "Stock quantity validation and mandatory discontinuation reason checks",
+                    "queryPatterns": "Stock level monitoring and product status verification scenarios",
+                    "eventChains": "Stock update propagation and status change notification flows"
+                },
+                "additionalInferences": "Edge cases including zero stock handling and invalid state transitions"
+            },
+
+            "reflection": {
+                "summary": "Implementation considerations focusing on maintainability and system reliability",
+                "details": {
+                    "consistency": "Atomic operations for stock updates and status changes",
+                    "performance": "Efficient stock update processing and status change propagation",
+                    "scalability": "Handling multiple concurrent stock updates and status changes",
+                    "maintainability": "Clear separation of stock management and product lifecycle concerns",
+                    "security": "Role-based access control for inventory operations"
+                },
+                "additionalReflections": "Integration with inventory monitoring and alerting systems"
+            },
+
+            "result": [
+                {
+                    "targetCommandId": "cmd-addStock",
+                    "gwts": [
+                        {
+                            "given": {
+                                "name": "Product",
+                                "values": {
+                                    "productId": "PROD-001",
+                                    "name": "Sample Product",
+                                    "quantity": 100,
+                                    "status": "AVAILABLE"
                                 }
-                            ]
-                        },
-                        "payment-processing": {
-                            "scenarios": [
-                                {
-                                    "name": "successful-payment-processing",
-                                    "description": "Successfully process payment for existing order"
+                            },
+                            "when": {
+                                "name": "AddStock",
+                                "values": {
+                                    "productId": "PROD-001",
+                                    "quantity": 50
                                 }
-                            ]
+                            },
+                            "then": {
+                                "name": "StockAdded",
+                                "values": {
+                                    "productId": "PROD-001",
+                                    "quantity": 50,
+                                    "newTotalQuantity": 150
+                                }
+                            }
                         }
-                    }
+                    ]
                 },
-                "step3-GWTGeneration": {
-                    "thought": "Creating specific GWTs for each identified scenario",
-                    "reflection": "Ensuring proper property coverage in each GWT step",
-                    "result": {
-                        "order-creation": {
-                            "targetCommandId": "cmd-createOrder",
-                            "gwts": [
-                                {
-                                    "given": {
-                                        "name": "Order",
-                                        "values": {
-                                            "orderId": null,
-                                            "customer": {
-                                                "customerId": "CUST123",
-                                                "name": "John Doe",
-                                                "email": "john@example.com",
-                                                "phone": "+1234567890"
-                                            },
-                                            "orderStatus": "N/A",
-                                            "orderDetails": "N/A",
-                                            "paymentInfo": "N/A"
-                                        }
-                                    },
-                                    "when": {
-                                        "name": "CreateOrder",
-                                        "values": {
-                                            "customer": {
-                                                "customerId": "CUST123",
-                                                "name": "John Doe",
-                                                "email": "john@example.com",
-                                                "phone": "+1234567890"
-                                            },
-                                            "orderDetails": {
-                                                "items": [
-                                                    {
-                                                        "productId": "PROD123",
-                                                        "quantity": 2,
-                                                        "price": 100.00
-                                                    }
-                                                ],
-                                                "totalAmount": 200.00
-                                            }
-                                        }
-                                    },
-                                    "then": {
-                                        "name": "OrderCreated",
-                                        "values": {
-                                            "orderId": 1001,
-                                            "customer": {
-                                                "customerId": "CUST123",
-                                                "name": "John Doe",
-                                                "email": "john@example.com",
-                                                "phone": "+1234567890"
-                                            },
-                                            "orderStatus": "CREATED"
-                                        }
-                                    }
+                {
+                    "targetCommandId": "cmd-discontinueProduct",
+                    "gwts": [
+                        {
+                            "given": {
+                                "name": "Product",
+                                "values": {
+                                    "productId": "PROD-001",
+                                    "name": "Sample Product",
+                                    "status": "AVAILABLE"
                                 }
-                            ]
-                        },
-                        "payment-processing": {
-                            "targetCommandId": "cmd-processPayment",
-                            "gwts": [
-                                {
-                                    "given": {
-                                        "name": "Order",
-                                        "values": {
-                                            "orderId": 1001,
-                                            "customer": "N/A",
-                                            "orderStatus": "CREATED",
-                                            "orderDetails": "N/A",
-                                            "paymentInfo": null
-                                        }
-                                    },
-                                    "when": {
-                                        "name": "ProcessPayment",
-                                        "values": {
-                                            "orderId": 1001,
-                                            "paymentInfo": {
-                                                "paymentMethod": "CREDIT_CARD",
-                                                "paymentStatus": "PENDING",
-                                                "transactionId": null
-                                            }
-                                        }
-                                    },
-                                    "then": {
-                                        "name": "PaymentProcessed",
-                                        "values": {
-                                            "orderId": 1001,
-                                            "paymentInfo": {
-                                                "paymentMethod": "CREDIT_CARD",
-                                                "paymentStatus": "COMPLETED",
-                                                "transactionId": "TXN123456"
-                                            }
-                                        }
-                                    }
+                            },
+                            "when": {
+                                "name": "DiscontinueProduct",
+                                "values": {
+                                    "productId": "PROD-001",
+                                    "reason": "Product replaced by newer model"
                                 }
-                            ]
+                            },
+                            "then": {
+                                "name": "ProductDiscontinued",
+                                "values": {
+                                    "productId": "PROD-001",
+                                    "reason": "Product replaced by newer model",
+                                    "discontinuedDate": "2024-03-20T00:00:00Z"
+                                }
+                            }
                         }
-                    }
-                },
-                "step4-GWTEvaluation": {
-                    "thought": "Evaluating the completeness and quality of generated GWTs",
-                    "reflection": "Checking coverage of requirements and alignment with best practices",
-                    "result": {
-                        "evaluationCriteria": {
-                            "requirementsCoverage": {
-                                "score": "90",
-                                "details": [
-                                    "Covers main order creation flow",
-                                    "Covers payment processing flow"
-                                ],
-                                "missingScenarios": [
-                                    "Order creation with invalid customer data"
-                                ]
-                            },
-                            "gwtQuality": {
-                                "score": "95",
-                                "details": [
-                                    "Clear and specific test conditions",
-                                    "Proper use of property values"
-                                ],
-                                "improvements": [
-                                    "Could add more edge cases"
-                                ]
-                            },
-                            "testScenarioCompleteness": {
-                                "score": "85",
-                                "details": [
-                                    "Core functionality covered",
-                                    "Main success paths implemented"
-                                ],
-                                "gaps": [
-                                    "Error scenarios not fully covered"
-                                ]
-                            },
-                            "bestPracticesAlignment": {
-                                "score": "90",
-                                "details": [
-                                    "Follows GWT format correctly",
-                                    "Properties properly utilized"
-                                ],
-                                "violations": [
-                                    "Some N/A values could be more specific"
-                                ]
-                            },
-                            "commandAlignment": {
-                                "score": "100",
-                                "details": [
-                                    "All target commands implemented",
-                                    "Command properties properly used"
-                                ],
-                                "matchedCommands": [
-                                    {
-                                        "commandId": "cmd-createOrder",
-                                        "implementedGWTs": ["successful-order-creation"],
-                                        "missingAspects": []
-                                    },
-                                    {
-                                        "commandId": "cmd-processPayment",
-                                        "implementedGWTs": ["successful-payment-processing"],
-                                        "missingAspects": []
-                                    }
-                                ],
-                                "unmatchedCommands": []
-                            }
-                        },
-                        "overallScore": "92",
-                        "recommendedImprovements": [
-                            {
-                                "area": "Error Scenarios",
-                                "description": "Add test cases for invalid inputs and error conditions",
-                                "suggestedGWTs": ["invalid-customer-data", "payment-failure"]
-                            }
-                        ],
-                        "needsIteration": false
-                    }
+                    ]
                 }
-            }
+            ]
         }
     }
 
@@ -794,8 +475,7 @@ We need to implement an order management system with the following requirements:
     }
 
     onCreateModelFinished(returnObj) {
-        const result = returnObj.modelValue.aiOutput.thoughtProcess["step3-GWTGeneration"].result
-
+        const result = returnObj.modelValue.aiOutput.result
 
         let commandsToReplace = []
         for(const scenario of Object.values(result)){
@@ -850,7 +530,7 @@ We need to implement an order management system with the following requirements:
     }
 
     __findElementByName(name) {
-        return Object.values(this.client.input.esValue.elements).find(element => element.name === name)
+        return Object.values(this.client.input.esValue.elements).filter(element => element).find(element => element.name === name)
     }
 
     __getValuesUsingFieldDescriptors(values, fieldDescriptors) {

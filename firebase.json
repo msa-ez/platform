@@ -8,24 +8,6 @@
         "**/.*",
         "**/node_modules/**"
       ]
-    },
-    {
-      "site": "labs-msaez",
-      "public": "dist",
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ]
-    },
-    {
-      "site": "prod-msaez",
-      "public": "dist",
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ]
     }
   ],
   "headers": [

@@ -409,6 +409,8 @@ The approximate structure is as follows.
             eventInfo.outputCommands = []
             for(let policyRelation of getRelationsForType(esValue, element, "org.uengine.modeling.model.Policy")) {
                 const targetPolicy = esValue.elements[policyRelation.targetElement.id]
+                if(!targetPolicy) continue
+                
                 for(let commandRelation of getRelationsForType(esValue, targetPolicy, "org.uengine.modeling.model.Command")) {
                     eventInfo.outputCommands.push({
                         relationId: ESValueSummarizeUtil.__getElementIdSafely(commandRelation),

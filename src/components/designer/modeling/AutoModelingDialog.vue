@@ -1,8 +1,7 @@
 <template>
     <div v-if="showChat">
         <v-card v-if="autoModelingInput"
-            class="mx-auto"
-            style="max-width: 70%; background-color: aliceblue;"
+            class="mx-auto auto-modeling-dialog-card"
         >
             <v-row class="justify-start main-auto-modeling-chip-row">
                 <v-col class="text-left" style="padding:0px;">
@@ -77,70 +76,32 @@
                                 </v-col>
                                 
                                 <v-card style="margin-top: 10px; display: inline-block; background-color: #DAF5FF;">
-                                    <v-tabs>
-                                        <v-tab>Stable</v-tab>
-                                        <v-tab>Beta</v-tab>
-                                        
-                                        <!-- stable tab -->
-                                        <v-tab-item style="background-color: #DAF5FF;">
-                                            <v-row lg="3" md="3" sm="6" cols="12" style="padding:10px;">
-                                                <v-col v-for="(item, index) in cardItems.filter(item => item.chipText === 'Stable')"
-                                                    :key="index"
-                                                    style="text-align: center;"
-                                                >
-                                                    <v-card :style="genType == item.type ? 'border: solid darkturquoise;' : 'background-color: white;'" :class="item.class">
-                                                        <v-chip :style="item.chipText == 'Stable' ? 'color: white;' : ''"
-                                                            x-small
-                                                            :outlined="item.chipOutlined"
-                                                            :color="item.chipColor"
-                                                            style="position: absolute; right: 5px; top: 5px; z-index: 1;"
-                                                        >{{ item.chipText }}</v-chip>
-                                                        <div @click="checkLogin(item.type)" style="cursor: pointer;">
-                                                            <v-avatar class="ma-3" size="125" rounded="0">
-                                                                <v-img :src="item.imgSrc"></v-img>
-                                                            </v-avatar>
-                                                            <v-card-text style="justify-content: center; margin-top: -10px;">
-                                                                <div :style="genType == item.type ? 'background-color: #DAF5FF;' : ''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
-                                                                    <v-icon v-if="genType == item.type" small color="success">mdi-check</v-icon>
-                                                                    {{ $t(item.textKey) }}
-                                                                </div>
-                                                            </v-card-text>
+                                    <v-row lg="3" md="3" sm="6" cols="12" style="padding:10px;">
+                                        <v-col v-for="(item, index) in cardItems"
+                                            :key="index"
+                                            style="text-align: center;"
+                                        >
+                                            <v-card :style="genType == item.type ? 'border: solid darkturquoise;' : 'background-color: white;'" :class="item.class">
+                                                <!-- <v-chip :style="item.chipText == 'Stable' ? 'color: white;' : ''"
+                                                    x-small
+                                                    :outlined="item.chipOutlined"
+                                                    :color="item.chipColor"
+                                                    style="position: absolute; right: 5px; top: 5px; z-index: 1;"
+                                                >{{ item.chipText }}</v-chip> -->
+                                                <div @click="checkLogin(item.type)" style="cursor: pointer;">
+                                                    <v-avatar class="ma-3" size="125" rounded="0">
+                                                        <v-img :src="item.imgSrc"></v-img>
+                                                    </v-avatar>
+                                                    <v-card-text style="justify-content: center; margin-top: -10px;">
+                                                        <div :style="genType == item.type ? 'background-color: #DAF5FF;' : ''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
+                                                            <v-icon v-if="genType == item.type" small color="success">mdi-check</v-icon>
+                                                            {{ $t(item.textKey) }}
                                                         </div>
-                                                    </v-card>
-                                                </v-col>
-                                            </v-row>
-                                        </v-tab-item>
-
-                                        <!-- beta tab -->
-                                        <v-tab-item style="background-color: #DAF5FF;">
-                                            <v-row lg="3" md="3" sm="6" cols="12" style="padding:10px;">
-                                                <v-col v-for="(item, index) in cardItems.filter(item => item.chipText === 'Beta')"
-                                                    :key="index"
-                                                    style="text-align: center;"
-                                                >
-                                                    <v-card :style="genType == item.type ? 'border: solid darkturquoise;' : 'background-color: white;'" :class="item.class">
-                                                        <v-chip :style="item.chipText == 'Stable' ? 'color: white;' : ''"
-                                                            x-small
-                                                            :outlined="item.chipOutlined"
-                                                            :color="item.chipColor"
-                                                            style="position: absolute; right: 5px; top: 5px; z-index: 1;"
-                                                        >{{ item.chipText }}</v-chip>
-                                                        <div @click="checkLogin(item.type)" style="cursor: pointer;">
-                                                            <v-avatar class="ma-3" size="125" rounded="0">
-                                                                <v-img :src="item.imgSrc"></v-img>
-                                                            </v-avatar>
-                                                            <v-card-text style="justify-content: center; margin-top: -10px;">
-                                                                <div :style="genType == item.type ? 'background-color: #DAF5FF;' : ''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
-                                                                    <v-icon v-if="genType == item.type" small color="success">mdi-check</v-icon>
-                                                                    {{ $t(item.textKey) }}
-                                                                </div>
-                                                            </v-card-text>
-                                                        </div>
-                                                    </v-card>
-                                                </v-col>
-                                            </v-row>
-                                        </v-tab-item>
-                                    </v-tabs>
+                                                    </v-card-text>
+                                                </div>
+                                            </v-card>
+                                        </v-col>
+                                    </v-row>
                                 </v-card>
                                 <div v-if="startCrateModel && genType == 'BM'" style="margin-top: 10px; margin-left: 5px;">
                                     <v-progress-circular
@@ -824,12 +785,22 @@
     margin:0px 0px -5px 0px;
 }
 
+.auto-modeling-dialog-card {
+    max-width: 70%;
+    background-color: aliceblue !important;
+}
+
 @media only screen and (max-width:672px) {
     .main-auto-modeling-chip {
         margin-top:10px;
     }
     .main-auto-modeling-chip-row { 
         padding:0px 0px 0px 10px;
+    }
+
+    .auto-modeling-dialog-card {
+        max-width: 95%;
+        background-color: aliceblue !important;
     }
     
 }

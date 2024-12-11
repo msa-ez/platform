@@ -4,13 +4,15 @@ const ActionsProcessorUtils = require('./ActionsProcessorUtils')
 const GlobalPromptUtil = require('../GlobalPromptUtil')
 
 class PolicyProcessor {
-    static createNewPolicy(esValue, userInfo, eventObject, commandId, updateReason) {
+    static createNewPolicy(esValue, userInfo, eventObject, commandId, updateReason, name, displayName) {
         const commandObject = esValue.elements[commandId]
         if(!commandObject || !eventObject) return
         if(commandObject.aggregate.id === eventObject.aggregate.id) return
 
         const policyObject = PolicyProcessor._getPolicyBase(
-            userInfo, commandObject.name + " Policy", commandObject.name + " Policy", 
+            userInfo, 
+            (name ? name : commandObject.name + " Policy"), 
+            (displayName ? displayName : commandObject.name + " Policy"), 
             commandObject.boundedContext.id, updateReason, 0, 0
         )
 

@@ -5234,6 +5234,10 @@ jobs:
                 var me = this
                 me.showApplyBaseTemplateDialog = false
                 // BC Apply
+                if (me.filteredTreeLists.length !== me.treeLists.length || 
+                    !me.filteredTreeLists.every((value, index) => value === me.treeLists[index])) {
+                    me.filteredTreeLists = [...me.treeLists];
+                }
                 if(applyAll && me.filteredTreeLists.length > 0){
                     me.$emit('changedByMe', true);
                     me.filteredTreeLists.filter(tree=>tree.bcId).forEach(function(item){

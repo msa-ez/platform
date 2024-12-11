@@ -218,9 +218,14 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
             actions: {
                 stopGeneration: () => {
                     this.stop()
+                },
+                retryGeneration: () => {
+                    this.generate()
                 }
             }
         }
+        if(!text) return returnObj
+
         if(this.isFirstResponse) {
             returnObj.isFirstResponse = this.isFirstResponse
             this.isFirstResponse = false

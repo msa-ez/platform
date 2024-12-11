@@ -26,12 +26,12 @@ export default {
 
 
         promptCommand() {
-            const COMMAND = "TestGWTGeneratorByFunctions" // prompt("테스트 커맨드 입력")
+            const COMMAND = "TestPolicyGenerator" // prompt("테스트 커맨드 입력")
             if(!COMMAND) return
 
             const commands = {
                 TestESValueSummarizeUtilOnlyName: () => this._test_ESValueSummarizeUtilOnlyName(),
-                TestGWTGeneratorByFunctions: () => this._test_GWTGeneratorByFunctions()
+                TestPolicyGenerator: () => this._test_PolicyGenerator()
             }
 
             const commandFunction = commands[COMMAND]
@@ -48,179 +48,113 @@ export default {
             console.log(summarizeESValue)
         },
 
-        _test_GWTGeneratorByFunctions() {
-            const targetBoundedContext = Object.values(this.value.elements).find(element => element._type === "org.uengine.modeling.model.BoundedContext")
-
-            const description = `차를 assign 받기 위해 '배차신청' 화면과 assign 받은 차량을 조회하는 '신청현황' 화면을 각각 만들려고 해.
-
-'배차 신청' 화면에는 등록자 정보를 조회하여 보여주는 테이블과 신청내용을 작성하는 테이블로 구분되어 있어. 등록자 정보 테이블은 등록자 이름, 소속(org), 직번(employee number), 전화번호(office number), 휴대전화(mobile number), 신청일자(YYYY.MM.DD), 결재자 정보, 결재자 직책이 조회 됨. 조회된 결재자 정보는 돋보기 버튼을 눌러 다른 사람을 검색하고 선택할 수 있어야 해. 돋보기 버튼을 누르면 팝업이 뜨는 형태야. 신청내용 테이블에는 이름, 사용구분, 사용목적, 운행구간 설정, 주관부서, 승차인원, 차종, 운행기간, 운전자 포함여부, 운행구간 설정, 비고, 탑승자 연락처, 첨부문서 칸으로 구성되어 있어. 이름은 직원이름을 검색할 수 있어야 해. 돋보기 버튼을 누르면 다른 사람을 검색하고 선택할 수 있어야 해. 사용구분은 업무지원, 대외활동 값을 dropdown menu에서 선택할 수 있어야 해. 사용목적은 text type으로 입력할 수 있어야 해. 운행구간 설정은 radio button으로 시내와 시외 중 선택할 수 있어야 해. 그리고, 편도와 왕복 중 dropdown menu로 선택할 수 있어야 해. 주관부서는 서울(포스코센터), 포항제철소, 광양제철소 중 dropdown menu로 선택할 수 있어야 해. 승차인원은 text type으로 입력할 수 있어야 해. 차종은 radio button으로 승용차, 승합차, 화물차 중 선택할 수 있어야 해. 운행기간은 from~to date를 YYYY.MM.DD 형식으로 캘린더에서 선택할 수 있어야 해. 운전자 포함여부는 radio button으로 YES와 NO 중 선택할 수 있어야 해. 운행구간 설정은 text type으로 입력할 수 있어야 하고, default 값으로 -출발지: 출발시간 포함작성 \n- 경유지: 도착시간 포함작성\n-도착지 : 도착시간 포함작성 이 입력되어 있어야 해. 비고는 text type으로 입력할 수 있어야 하고, default 값으로 -기타 요청사항 : 이 입력되어 있어야 해. 탑승자 연락처는 text type을 입력할 수 있어야 해. 첨부문서는 찾아보기 버튼을 눌렀을 시 API 호출이 가능해야 해. 비고 를 제외한 나머지 field는 required 한 항목으로 입력 값이 없으면 신청 버튼이 활성화 되지 않도록 해야해. 비고를 제외한 나머지 field 가 채워져 있으면 신청 버튼을 눌렀을 시 모든 값이 DB에 저장되어야 해.
-
-신청현황 화면에는 등록자가 등록한 신청내용의 모든 기록이 조회되는 화면이야. 신청현황 화면에는 조회를 위한 필터로 조회구분, 진행단계가 있어. 조회구분은 결재일, 신청일, 운행일을 dropdown menu로 선택할 수 있고, from~to date를 선택할 수 있어. from~to date는 YYYY.MM.DD 형식이고, 캘린더 아이콘을 눌렀을 시 달력이 나타나고, 선택된 날짜가 from~to date로 선택되어 조회되는 구조야. 진행단계는 전체, 접수, 반려, 배차완료가 dropdown memu로 조회되어야 해. 선택된 조회 필터 값들을 조회 버튼을 눌러 조회하면 테이블 형태로 기존 신청내용이 조회가 되고, 테이블은 번호, 운행목적, 소속, 이름, 직번, 직능자격, 운행일, 신청일, 결재일, 진행단계 컬럼이 있어. 개별 신청 내용은 팝업 형태로 조회될 수 있어야 하고, 조회된 팝업화면에는 수정, 신청취소, 인쇄 버튼이 있어야 해. 수정 버튼을 누르면 진행단계 '접수'에서는 배차신청 내용이 수정될 수 있어야 해. 신청취소 버튼을 누르면 진행단계 '접수'에서 '배차취소' 단계로 변경되어야 해. 인쇄 버튼을 누르면 팝업 화면이 출력될 수 있어야 해.`
-
+        _test_PolicyGenerator() {
             const draftOptions = {
-    "assingservice": {
+    "loanService": {
         "structure": [
             {
                 "aggregate": {
-                    "name": "DispatchRequest",
-                    "alias": "배차신청"
+                    "name": "Loan",
+                    "alias": "도서 대출"
                 },
-                "entities": [
-                    {
-                        "name": "Requester",
-                        "alias": "등록자"
-                    },
-                    {
-                        "name": "Approver",
-                        "alias": "결재자"
-                    }
-                ],
+                "entities": [],
                 "valueObjects": [
                     {
-                        "name": "DispatchPeriod",
-                        "alias": "운행기간"
+                        "name": "Member",
+                        "alias": "회원"
                     },
                     {
-                        "name": "RouteDetails",
-                        "alias": "운행구간"
-                    },
-                    {
-                        "name": "PassengerContact",
-                        "alias": "탑승자연락처"
+                        "name": "LoanStatus",
+                        "alias": "대출 상태"
                     }
                 ]
             },
             {
                 "aggregate": {
-                    "name": "Vehicle",
-                    "alias": "차량"
+                    "name": "LoanDetail",
+                    "alias": "대출 세부사항"
                 },
-                "entities": [
-                    {
-                        "name": "VehicleType",
-                        "alias": "차종"
-                    }
-                ],
+                "entities": [],
                 "valueObjects": [
                     {
-                        "name": "RouteConfiguration",
-                        "alias": "운행구간설정"
+                        "name": "Loan",
+                        "alias": "대출 참조",
+                        "referencedAggregate": {
+                            "name": "Loan",
+                            "alias": "도서 대출"
+                        }
+                    },
+                    {
+                        "name": "LoanPeriod",
+                        "alias": "대출 기간"
+                    },
+                    {
+                        "name": "PickupMethod",
+                        "alias": "수령 방법"
                     }
                 ]
             }
         ],
-        "pros": "각 Aggregate가 독립적으로 관리되어 확장성과 유지보수성이 높음. 차량 관리와 배차 신청의 책임이 명확히 분리됨.",
-        "cons": "Aggregate 간 데이터 참조가 필요할 경우 추가적인 쿼리나 이벤트 처리가 필요함.",
-        "boundedContext": targetBoundedContext,
-        "description": "차를 assign 받기 위해 '배차신청' 화면과 assign 받은 차량을 조회하는 '신청현황' 화면을 각각 만들려고 해.\n\n'배차 신청' 화면에는 등록자 정보를 조회하여 보여주는 테이블과 신청내용을 작성하는 테이블로 구분되어 있어. 등록자 정보 테이블은 등록자 이름, 소속(org), 직번(employee number), 전화번호(office number), 휴대전화(mobile number), 신청일자(YYYY.MM.DD), 결재자 정보, 결재자 직책이 조회 됨. 조회된 결재자 정보는 돋보기 버튼을 눌러 다른 사람을 검색하고 선택할 수 있어야 해. 돋보기 버튼을 누르면 팝업이 뜨는 형태야. 신청내용 테이블에는 이름, 사용구분, 사용목적, 운행구간 설정, 주관부서, 승차인원, 차종, 운행기간, 운전자 포함여부, 운행구간 설정, 비고, 탑승자 연락처, 첨부문서 칸으로 구성되어 있어. 이름은 직원이름을 검색할 수 있어야 해. 돋보기 버튼을 누르면 다른 사람을 검색하고 선택할 수 있어야 해. 사용구분은 업무지원, 대외활동 값을 dropdown menu에서 선택할 수 있어야 해. 사용목적은 text type으로 입력할 수 있어야 해. 운행구간 설정은 radio button으로 시내와 시외 중 선택할 수 있어야 해. 그리고, 편도와 왕복 중 dropdown menu로 선택할 수 있어야 해. 주관부서는 서울(포스코센터), 포항제철소, 광양제철소 중 dropdown menu로 선택할 수 있어야 해. 승차인원은 text type으로 입력할 수 있어야 해. 차종은 radio button으로 승용차, 승합차, 화물차 중 선택할 수 있어야 해. 운행기간은 from~to date를 YYYY.MM.DD 형식으로 캘린더에서 선택할 수 있어야 해. 운전자 포함여부는 radio button으로 YES와 NO 중 선택할 수 있어야 해. 운행구간 설정은 text type으로 입력할 수 있어야 하고, default 값으로 -출발지: 출발시간 포함작성 \\n- 경유지: 도착시간 포함작성\\n-도착지 : 도착시간 포함작성 이 입력되어 있어야 해. 비고는 text type으로 입력할 수 있어야 하고, default 값으로 -기타 요청사항 : 이 입력되어 있어야 해. 탑승자 연락처는 text type을 입력할 수 있어야 해. 첨부문서는 찾아보기 버튼을 눌렀을 시 API 호출이 가능해야 해. 비고 를 제외한 나머지 field는 required 한 항목으로 입력 값이 없으면 신청 버튼이 활성화 되지 않도록 해야해. 비고를 제외한 나머지 field 가 채워져 있으면 신청 버튼을 눌렀을 시 모든 값이 DB에 저장되어야 해.\n\n신청현황 화면에는 등록자가 등록한 신청내용의 모든 기록이 조회되는 화면이야. 신청현황 화면에는 조회를 위한 필터로 조회구분, 진행단계가 있어. 조회구분은 결재일, 신청일, 운행일을 dropdown menu로 선택할 수 있고, from~to date를 선택할 수 있어. from~to date는 YYYY.MM.DD 형식이고, 캘린더 아이콘을 눌렀을 시 달력이 나타나고, 선택된 날짜가 from~to date로 선택되어 조회되는 구조야. 진행단계는 전체, 접수, 반려, 배차완료가 dropdown memu로 조회되어야 해. 선택된 조회 필터 값들을 조회 버튼을 눌러 조회하면 테이블 형태로 기존 신청내용이 조회가 되고, 테이블은 번호, 운행목적, 소속, 이름, 직번, 직능자격, 운행일, 신청일, 결재일, 진행단계 컬럼이 있어. 개별 신청 내용은 팝업 형태로 조회될 수 있어야 하고, 조회된 팝업화면에는 수정, 신청취소, 인쇄 버튼이 있어야 해. 수정 버튼을 누르면 진행단계 '접수'에서는 배차신청 내용이 수정될 수 있어야 해. 신청취소 버튼을 누르면 진행단계 '접수'에서 '배차취소' 단계로 변경되어야 해. 인쇄 버튼을 누르면 팝업 화면이 출력될 수 있어야 해."
+        "pros": {
+            "cohesion": "대출과 세부사항의 명확한 분리",
+            "coupling": "핵심 대출과 세부사항의 명확한 분리",
+            "consistency": "핵심 대출과 별도로 세부사항 관리 가능",
+            "encapsulation": "다양한 측면의 더 나은 캡슐화",
+            "complexity": "책임의 명확한 분리",
+            "independence": "대출 세부사항을 독립적으로 발전 가능",
+            "performance": "세부사항을 필요 시 로드 가능"
+        },
+        "cons": {
+            "cohesion": "관련 개념의 분리",
+            "coupling": "aggregate 간 일관성 유지 필요",
+            "consistency": "더 복잡한 트랜잭션 관리 필요",
+            "encapsulation": "더 복잡한 관계 관리 필요",
+            "complexity": "추가 aggregate 관리 필요",
+            "independence": "aggregate 간 변경 조정 필요",
+            "performance": "전체 대출 정보를 위한 다중 쿼리 필요"
+        },
+        "isAIRecommended": true,
+        "boundedContext": {
+            "_type": "org.uengine.modeling.model.BoundedContext",
+            "id": "ed0c6cb0-aa76-7dbe-60a4-af33facf66e5",
+            "name": "loanService",
+            "oldName": "",
+            "displayName": "",
+            "description": "도서를 대출하기 위한 '도서대출' 화면과 대출 이력을 조회하는 '대출현황' 화면을 각각 만들려고 해.\n\n'도서대출' 화면에는 회원 정보를 조회하는 테이블과 대출 신청 내용을 작성하는 테이블로 구분되어 있어. 회원 정보 테이블은 회원 이름, 회원번호, 회원등급(일반/프리미엄), 연락처, 이메일, 현재 대출 권수가 조회 됨. 대출 신청 테이블에는 도서명, ISBN, 대출기간, 수령방법, 예약여부, 특이사항 칸으로 구성되어 있어. 도서명은 검색할 수 있어야 하고, 돋보기 버튼을 누르면 도서 검색 팝업이 뜨도록 해야 해. ISBN은 자동으로 입력되어야 해. 대출기간은 dropdown menu로 7일/14일/30일 중 선택할 수 있어야 해. 수령방법은 radio button으로 '직접수령'과 '배송' 중 선택할 수 있어야 해. 예약여부는 해당 도서가 현재 대출 중일 경우 checkbox로 선택할 수 있어야 해. 특이사항은 text type으로 입력할 수 있어야 해. 특이사항을 제외한 모든 필드는 required이며, 입력되지 않으면 대출 버튼이 활성화되지 않아야 해.\n\n'대출현황' 화면에는 회원의 전체 대출 이력이 조회되는 화면이야. 조회 필터로 기간과 상태가 있어. 기간은 대출일 기준으로 from~to date를 YYYY.MM.DD 형식으로 선택할 수 있어야 해. 상태는 전체/대출중/반납완료/연체 중에서 dropdown menu로 선택할 수 있어야 해. 조회 결과는 테이블 형태로 표시되며, 대출번호, 도서명, ISBN, 대출일, 반납예정일, 실제반납일, 상태 컬럼이 있어. 각 행을 클릭하면 상세 정보를 팝업으로 볼 수 있어야 하고, 대출 중인 도서는 연장 또는 반납 처리가 가능해야 해.",
+            "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+            "aggregates": [],
+            "policies": [],
+            "members": [],
+            "views": [],
+            "gitURL": null,
+            "elementView": {
+                "_type": "org.uengine.modeling.model.BoundedContext",
+                "id": "ed0c6cb0-aa76-7dbe-60a4-af33facf66e5",
+                "x": 291,
+                "y": 281,
+                "width": 350,
+                "height": 350,
+                "style": "{}"
+            },
+            "hexagonalView": {
+                "_type": "org.uengine.modeling.model.BoundedContextHexagonal",
+                "id": "ed0c6cb0-aa76-7dbe-60a4-af33facf66e5",
+                "x": 299,
+                "y": 321,
+                "width": 350,
+                "height": 350,
+                "style": "{}"
+            },
+            "portGenerated": 0,
+            "tempId": "",
+            "templatePerElements": {},
+            "preferredPlatform": "spring-boot",
+            "preferredPlatformConf": {},
+            "rotateStatus": false
+        },
+        "description": "{\"userStories\":[{\"title\":\"새로운 도서 대출 신청\",\"description\":\"회원으로서, 나는 도서를 대출 신청하여 읽고 싶습니다.\",\"acceptance\":[\"모든 필수 회원 정보가 제공되어야 합니다.\",\"도서명은 검색 팝업을 통해 선택되어야 합니다.\",\"대출 기간은 유효한 옵션 중 하나로 선택되어야 합니다.\",\"수령 방법은 라디오 버튼을 통해 선택되어야 합니다.\",\"대출 버튼은 모든 필수 필드가 입력되었을 때만 활성화됩니다.\"]},{\"title\":\"대출 이력 조회 및 관리\",\"description\":\"회원으로서, 나는 나의 대출 이력을 조회하고 현재 대출 중인 도서를 관리하고 싶습니다.\",\"acceptance\":[\"대출 이력은 기간 및 상태로 필터링할 수 있습니다.\",\"행을 클릭하면 상세 대출 정보가 팝업으로 표시됩니다.\",\"대출 중인 도서는 연장 또는 반납 처리가 가능합니다.\",\"모든 대출 정보는 정리된 테이블 형식으로 표시됩니다.\"]}],\"entities\":{\"Member\":{\"properties\":[{\"name\":\"memberId\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"name\",\"type\":\"string\",\"required\":true},{\"name\":\"membershipLevel\",\"type\":\"enum\",\"required\":true,\"values\":[\"일반\",\"프리미엄\"]},{\"name\":\"contactNumber\",\"type\":\"string\",\"required\":true},{\"name\":\"email\",\"type\":\"string\",\"required\":true}]},\"Loan\":{\"properties\":[{\"name\":\"loanNumber\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"memberId\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"bookTitle\",\"type\":\"string\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"string\",\"required\":true},{\"name\":\"loanPeriod\",\"type\":\"enum\",\"required\":true,\"values\":[\"7일\",\"14일\",\"30일\"]},{\"name\":\"pickupMethod\",\"type\":\"enum\",\"required\":true,\"values\":[\"직접수령\",\"배송\"]},{\"name\":\"reservation\",\"type\":\"boolean\",\"required\":true},{\"name\":\"specialNotes\",\"type\":\"string\",\"required\":false},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출중\",\"반납완료\",\"연체\"]},{\"name\":\"loanDate\",\"type\":\"date\",\"required\":true},{\"name\":\"returnDueDate\",\"type\":\"date\",\"required\":true},{\"name\":\"actualReturnDate\",\"type\":\"date\",\"required\":false}]},\"businessRules\":[{\"name\":\"ValidLoanPeriod\",\"description\":\"대출 기간은 유효한 옵션 중 하나로 선택되어야 합니다.\"},{\"name\":\"RequiredFields\",\"description\":\"특이사항을 제외한 모든 필드는 필수입니다.\"},{\"name\":\"ActiveLoanManagement\",\"description\":\"대출 중인 도서만 연장 또는 반납 처리가 가능합니다.\"}],\"interfaces\":{\"BookLoan\":{\"sections\":[{\"name\":\"MemberInformation\",\"type\":\"table\",\"fields\":[{\"name\":\"name\",\"type\":\"text\",\"required\":true},{\"name\":\"memberId\",\"type\":\"text\",\"required\":true},{\"name\":\"membershipLevel\",\"type\":\"select\",\"required\":true},{\"name\":\"contactNumber\",\"type\":\"text\",\"required\":true},{\"name\":\"email\",\"type\":\"email\",\"required\":true}]},{\"name\":\"LoanApplication\",\"type\":\"form\",\"fields\":[{\"name\":\"bookTitle\",\"type\":\"search\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"text\",\"required\":true},{\"name\":\"loanPeriod\",\"type\":\"select\",\"required\":true},{\"name\":\"pickupMethod\",\"type\":\"radio\",\"required\":true},{\"name\":\"reservation\",\"type\":\"checkbox\",\"required\":true},{\"name\":\"specialNotes\",\"type\":\"textarea\",\"required\":false}],\"actions\":[\"Submit\",\"Clear\"]}]},\"LoanStatus\":{\"sections\":[{\"name\":\"LoanHistory\",\"type\":\"table\",\"filters\":[\"dateRange\",\"loanStatus\"],\"resultTable\":{\"columns\":[\"loanNumber\",\"bookTitle\",\"ISBN\",\"loanDate\",\"returnDueDate\",\"actualReturnDate\",\"status\"],\"actions\":[\"viewDetails\",\"extend\",\"return\"]}}]}}}}"
     }
 }
-
-            this.generators.GWTGeneratorByFunctions.generator = new GWTGeneratorByFunctions({
-                input: null,
-
-                onFirstResponse: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: false,
-                        draftUIInfos: {
-                            leftBoundedContextCount: 1,
-                            directMessage: returnObj.directMessage
-                        },
-                        actions: {
-                            stop: () => {
-                            }
-                        },
-                        isGeneratorButtonEnabled: false
-                    }
-
-                    this.generatorProgressDto = {
-                        generateDone: false,
-                        displayMessage: returnObj.directMessage,
-                        progress: 0,
-                        actions: {
-                            stopGeneration: () => {
-                                returnObj.actions.stopGeneration()
-                            }
-                        }
-                    }
-                },
-
-                onModelCreated: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
-                    this.generatorProgressDto.displayMessage = returnObj.directMessage
-                    this.generatorProgressDto.progress = returnObj.progress
-                },
-
-                onGenerationSucceeded: (returnObj) => {
-                    if(returnObj.modelValue && returnObj.modelValue.commandsToReplace) {
-                        for(const command of returnObj.modelValue.commandsToReplace)
-                            this.$set(this.value.elements, command.id, command)
-                        this.changedByMe = true
-                    }
-
-
-                    if(this.generators.GWTGeneratorByFunctions.generateIfInputsExist())
-                        return
-
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: false,
-                        draftUIInfos: {
-                            leftBoundedContextCount: 0
-                        },
-                        isGeneratorButtonEnabled: true
-                    }
-                    this.generatorProgressDto.generateDone = true
-                },
-
-                onRetry: (returnObj) => {
-                    alert(`[!] GWT 생성 과정에서 오류가 발생했습니다. 다시 시도해주세요.\n* Error log \n${returnObj.errorMessage}`)
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: true,
-                        draftUIInfos: {
-                            leftBoundedContextCount: 0
-                        },
-                        isGeneratorButtonEnabled: true
-                    }
-                    this.generatorProgressDto.generateDone = true
-                },
-
-                onStopped: () => {
-                    this.generatorProgressDto.generateDone = true
-                }
-            })
-            this.generators.GWTGeneratorByFunctions.generateIfInputsExist = () => {
-                if(this.generators.GWTGeneratorByFunctions.inputs.length > 0) {
-                    this.generators.GWTGeneratorByFunctions.generator.client.input = this.generators.GWTGeneratorByFunctions.inputs.shift()
-                    this.generators.GWTGeneratorByFunctions.generator.generate()
-                    return true
-                }
-                return false
-            }
-            this.generators.GWTGeneratorByFunctions.initInputs = (draftOptions) => {
-                let inputs = []
-                for(const eachDraftOption of Object.values(draftOptions)) {
-                    const targetAggregates = Object.values(this.value.elements).filter(element => element && element._type === "org.uengine.modeling.model.Aggregate" && element.boundedContext.id === eachDraftOption.boundedContext.id)
-
-                    // Aggregate각각마다 존재하는 커맨드에 GWT를 생성하는 요청을 함으로써 다루는 문제영역을 최소화함
-                    for(const targetAggregate of targetAggregates) {
-                        const targetCommandIds = Object.values(this.value.elements)
-                        .filter(element => element && element._type === "org.uengine.modeling.model.Command" && element.aggregate.id === targetAggregate.id)
-                        .map(command => command.id)
-                        if(!targetCommandIds || targetCommandIds.length === 0) continue
-
-                        inputs.push({
-                            targetBoundedContext: eachDraftOption.boundedContext,
-                            targetCommandIds: targetCommandIds,
-                            description: eachDraftOption.description,
-                            esValue: this.value
-                        })
-                    }
-                }
-                this.generators.GWTGeneratorByFunctions.inputs = inputs
-            }
 
             this.generators.GWTGeneratorByFunctions.initInputs(draftOptions)
             this.generators.GWTGeneratorByFunctions.generateIfInputsExist()

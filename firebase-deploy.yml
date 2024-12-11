@@ -1,0 +1,32 @@
+name: Build and Deploy to Firebase
+
+on:
+  push:
+    branches:
+      - main  # main 브랜치에 푸시될 때 트리거
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14.21.3'  # 사용 중인 Node.js 버전
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build project
+      run: npm run build  # 프로젝트에 맞는 빌드 명령어 사용
+
+    - name: Deploy to Firebase (dev only)
+      uses: w9jds/firebase-action@v1
+      with:
+        args: deploy --only hosting:eventstorming-tool-db -m "$(date +'%Y-%m-%d %H:%M:%S')"
+      env:
+        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
