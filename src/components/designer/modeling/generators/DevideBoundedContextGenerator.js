@@ -36,7 +36,8 @@ The format must be as follows:
     "boundedContexts":
     [
         {
-            "name":"name of Bounded Context",
+            "name":"name of Bounded Context in PascalCase",
+            "alias":"alias of Bounded Context in korean",
             "aggregates":[ // Aggregates that can be extracted from this Bounded Context.
                 {
                     "name":"name of Aggregate in PascalCase",
