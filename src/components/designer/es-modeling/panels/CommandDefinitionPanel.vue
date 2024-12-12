@@ -71,18 +71,17 @@
                 <RuleExampleDialog v-if="openExample" v-model="value" @closeExampleDialog="closeExampleDialog()" />
                 <v-card flat>
                     <v-card-text>
-                        <v-col>
-                            <span class="panel-title" style="margin-left:-10px;">Associated Aggregate</span>
+                        <v-col class="pa-0">
+                            <span class="panel-title">Associated Aggregate</span>
                             <v-text-field
                                     v-model="relatedAggregateName"
                                     label="Attach Aggregate && check Name"
                                     single-line
                                     disabled
-                                    style="margin-left:-10px; margin-top:-15px; min-width:105%;"
                             ></v-text-field>
 
 
-                            <span class="panel-title" style="margin-left:-10px;">Method</span>
+                            <span class="panel-title">Method</span>
                             <!-- <v-alert
                                 color="grey darken-1"
                                 text
@@ -93,30 +92,31 @@
                             메소드의 목적을 설정하세요. <br>
                             Default: 기본 RESTful API // Extend: 확장된 URI
                             </v-alert> -->
-                            <v-radio-group v-model="value.isRestRepository" :disabled="isReadOnly"
-                                           style="margin-left:-13px;" row>
+                            <v-radio-group v-model="value.isRestRepository" :disabled="isReadOnly" row>
                                 <v-radio label="Default Verbs" :value="true"></v-radio>
                                 <v-radio label="Extend Verb URI" :value="false"></v-radio>
                             </v-radio-group>
+                            <detail-component
+                                :title="$t('CommandDefinitionPanel.commandMethodDetailTitle')"
+                                :details="commandMethodDetailTitles"
+                            />
 
-                            <v-col v-if="value.isRestRepository">
+                            <v-col class="pa-0" v-if="value.isRestRepository">
                                 <v-autocomplete
                                         :disabled="isReadOnly"
                                         v-model="value.restRepositoryInfo.method"
                                         :items="getRestfulList"
-                                        style="margin-left: -22px; min-width:111%;"
                                         label="Method"
                                         persistent-hint>
                                 </v-autocomplete>
                             </v-col>
 
 
-                            <v-col v-else>
-                                <v-row style="align-items: center">
+                            <v-col class="pa-0" v-else>
+                                <v-row class="pa-0 ma-0" style="align-items: center">
                                     <v-text-field
                                             v-model="value.controllerInfo.apiPath"
                                             :disabled="isReadOnly"
-                                            style="margin-left: -10px; min-width:105%;"
                                             label="API Path"
                                             :prefix="`${elementPrefix}`"
                                     ></v-text-field>
@@ -124,11 +124,14 @@
                                 <v-autocomplete
                                         v-model="value.controllerInfo.method"
                                         :disabled="isReadOnly"
-                                        style="margin-left: -22px; min-width:111%;"
                                         label="Method"
                                         persistent-hint
                                         :items="getControllerList"
                                 ></v-autocomplete>
+                                <detail-component
+                                    :title="$t('CommandDefinitionPanel.commandUsageDetailTitle')"
+                                    :details="commandUsageDetailTitles"
+                                />
                                 <!-- <v-alert
                                     color="grey darken-1"
                                     text
@@ -139,22 +142,22 @@
                                 메소드의 타입을 설정하세요. <br>
                                 POST: 등록 // PUT, PATCH: 수정 // DELETE: 삭제
                                 </v-alert> -->
-                                <event-storming-attribute
+                                <event-storming-attribute class="cm-attribute"
                                         label="Request Body"
                                         v-model="value.fieldDescriptors"
                                         :entities="entities"
                                         :isReadOnly="isReadOnly"
                                         :type="value._type"
                                         :elementId="value.elementView.id"
-                                        style="margin-left: -22px; margin-right: -22px;"
                                         @sync-attribute="syncFromAggregate"
                                 ></event-storming-attribute>
                             </v-col>
 
-                            <span class="panel-title" style="margin-left:-10px;">Httpie command usages</span>
-                            <v-row style="align-items: center;">
+                            <span class="panel-title">Httpie command usages</span>
+                            <v-row class="pa-0 ma-0" style="align-items: center;">
                                 <v-btn icon small @click="copyRestRepositoryMethod()"
-                                       style="align-self: start; margin-top: 15px;">
+                                    style="align-self: start; margin-top: 15px;"
+                                >
                                     <v-icon small> mdi-content-copy</v-icon>
                                 </v-btn>
                                 <v-textarea
@@ -162,7 +165,7 @@
                                         solo
                                         class="mx-2"
                                         style="margin-top: 20px;"
-                                        rows="3"
+                                        auto-grow
                                 ></v-textarea>
                             </v-row>
                         </v-col>
@@ -205,7 +208,32 @@
                 httpCommand: null,
                 commandExample: null,
                 relatedAggregate: null,
-                exampleAvailable: false
+                exampleAvailable: false,
+                commandMethodDetailTitles: [
+                    {
+                        title: "CommandDefinitionPanel.commandMethodDetailSubTitle1" 
+                    },
+                    {
+                        title: "CommandDefinitionPanel.commandMethodDetailSubTitle2" 
+                    },
+                    {
+                        title: "CommandDefinitionPanel.commandMethodDetailSubTitle3" 
+                    },
+                    {
+                        title: "CommandDefinitionPanel.commandMethodDetailSubTitle4" 
+                    },
+                    {
+                        title: "CommandDefinitionPanel.commandMethodDetailSubTitle5" 
+                    },
+                    {
+                        title: "CommandDefinitionPanel.commandMethodDetailSubTitle6" 
+                    },
+                ],
+                commandUsageDetailTitles: [
+                    {
+                        title: "CommandDefinitionPanel.commandUsageDetailSubTitle1" 
+                    },
+                ]
             }
         },
         computed: {
@@ -474,3 +502,10 @@
         }
     }
 </script>
+
+<style>
+.cm-attribute .layout {
+    margin-top: 16px !important;
+    margin-left: -2px !important;
+}
+</style>
