@@ -5233,14 +5233,16 @@ jobs:
             applyBaseTemplateDialog( applyAll ){
                 var me = this
                 me.showApplyBaseTemplateDialog = false
+                var filteredLists = []
                 // BC Apply
-                if (me.filteredTreeLists.length !== me.treeLists.length || 
-                    !me.filteredTreeLists.every((value, index) => value === me.treeLists[index])) {
-                    me.filteredTreeLists = [...me.treeLists];
+                if (me.filteredTreeLists.length != me.treeLists.length){
+                    filteredLists = [...me.treeLists];
+                }else{
+                    filteredLists = [...me.filteredTreeLists];
                 }
-                if(applyAll && me.filteredTreeLists.length > 0){
+                if(applyAll && filteredLists.length > 0){
                     me.$emit('changedByMe', true);
-                    me.filteredTreeLists.filter(tree=>tree.bcId).forEach(function(item){
+                    filteredLists.filter(tree=>tree.bcId).forEach(function(item){
                         var bcId = item ? item.bcId : null
                         if(bcId && me.value.elements[bcId]){
                             me.value.elements[bcId].preferredPlatform = JSON.parse(JSON.stringify(me.basePlatform));
