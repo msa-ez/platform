@@ -82,9 +82,12 @@
                                                     </v-list-item>
                                                 </v-list-group>
                                             </div>
-                                            <span class="panel-title">Basic Info</span>
+                                            <v-row class="pa-0 ma-0" align="center">
+                                                <div class="panel-title">Basic Info</div>
+                                                <slot name="md-level-btn"></slot>
+                                                <slot name="md-title-side"></slot>
+                                            </v-row>
                                         </slot>
-                                        <slot name="md-title-side"></slot>
                                         <div>
                                             <slot name="md-name-panel">
                                                 <v-text-field
