@@ -7,6 +7,18 @@
   "ClassCard": {
     "enter" : "Enter"
   },
+  "CommandDefinitionPanel" : {
+    "implementationSettings": "Design Level",
+    "commandMethodDetailTitle" : "Method Configuration: Select API paths and operation modes to perform data operations.",
+    "commandMethodDetailSubTitle1" : "Default Verbs: Uses standard paths for basic data operations (create, update, delete). This is suitable for common data manipulation.",
+    "commandMethodDetailSubTitle2" : "Extend Verb URI: Uses extended paths for specific requirements or additional functionality beyond basic operations. This is useful when processing data under specific conditions.",
+    "commandUsageDetailTitle" : "Extend Verb URI provides extended paths for performing specific operations in addition to basic API paths.",
+    "commandMethodDetailSubTitle3" : "POST: Used to create new resources on the server. For example, when creating a new user account.",
+    "commandMethodDetailSubTitle4" : "PUT: Used to update existing resources or create them if they don't exist. Suitable for updating entire data sets.",
+    "commandMethodDetailSubTitle5" : "PATCH: Used to update parts of a resource. Useful when changing specific fields rather than the entire resource.",
+    "commandMethodDetailSubTitle6" : "DELETE: Used to remove resources from the server. For example, when removing a specific user's account.",
+    "commandUsageDetailSubTitle1" : "/attached Aggregate's namePlural / Aggregate's ID class / command name"
+  },
   "DomainEventDefinitionPanel" : {
     "triggerByLifeCycleDetailTitle" : "Define tasks to be executed at specific points (before/after) during data lifecycle events such as saving, updating, and deleting.",
     "triggerByLifeCycleDetailSubTitle1": "Pre Persist: Executes right before data is saved.",

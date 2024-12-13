@@ -7,6 +7,18 @@
   "ClassCard": {
     "enter" : "입장"
   },
+  "CommandDefinitionPanel" : {
+    "implementationSettings": "디자인 레벨",
+    "commandMethodDetailTitle" : "Method 설정: API 경로와 동작 방식을 선택하여 데이터 작업을 수행합니다.",
+    "commandMethodDetailSubTitle1" : "Default Verbs: 기본적인 데이터 작업(생성, 업데이트, 삭제)을 수행하는 표준 경로를 사용합니다. 이는 일반적인 데이터 조작에 적합합니다.",
+    "commandMethodDetailSubTitle2" : "Extend Verb URI: 기본 작업 외에, 특정한 요구사항이나 추가 기능을 위해 확장된 경로를 사용합니다. 예를 들어, 특정 조건에 맞는 데이터를 처리할 때 유용합니다.",
+    "commandUsageDetailTitle" : "Extend Verb URI는 기본적인 API 경로 외에, 특정 작업을 수행하기 위해 확장된 경로를 제공합니다.",
+    "commandMethodDetailSubTitle3" : "POST: 서버에 새로운 리소스를 생성할 때 사용합니다. 예를 들어, 새로운 사용자 계정을 만들 때 사용됩니다.",
+    "commandMethodDetailSubTitle4" : "PUT: 기존 리소스를 업데이트하거나, 리소스가 없으면 새로 생성할 때 사용합니다. 전체 데이터를 갱신할 때 적합합니다.",
+    "commandMethodDetailSubTitle5" : "PATCH: 리소스의 일부를 업데이트할 때 사용합니다. 전체가 아닌 특정 필드만 변경할 때 유용합니다.",
+    "commandMethodDetailSubTitle6" : "DELETE: 서버에서 리소스를 삭제할 때 사용합니다. 예를 들어, 특정 사용자의 계정을 제거할 때 사용됩니다.",
+    "commandUsageDetailSubTitle1" : "/부착된 Aggregate의 namePlural / Aggregate의ID클래스 / command 이름"
+  },
   "DomainEventDefinitionPanel" : {
     "triggerByLifeCycleDetailTitle" : "데이터가 저장, 수정, 삭제 등의 생명주기를 거칠 때 특정 시점(전/후)에 실행될 작업을 정의.",
     "triggerByLifeCycleDetailSubTitle1": "Pre Persist: 데이터가 저장되기 직전에 실행됩니다.",
