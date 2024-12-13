@@ -8,6 +8,7 @@
     "enter" : "Enter"
   },
   "CommandDefinitionPanel" : {
+    "implementationSettings": "Design Level",
     "commandMethodDetailTitle" : "Method Configuration: Select API paths and operation modes to perform data operations.",
     "commandMethodDetailSubTitle1" : "Default Verbs: Uses standard paths for basic data operations (create, update, delete). This is suitable for common data manipulation.",
     "commandMethodDetailSubTitle2" : "Extend Verb URI: Uses extended paths for specific requirements or additional functionality beyond basic operations. This is useful when processing data under specific conditions.",

@@ -11,6 +11,13 @@
             @close="closePanel"
             @changeTranslate="changeTranslate"
     >
+        <template slot="md-level-btn">
+            <v-chip @click="toggleDesignLevel" style="margin-left: 16px; cursor: pointer;" color="primary" outlined>
+                <v-icon left>{{ isDesignLevelVisible ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
+                {{ $t('CommandDefinitionPanel.implementationSettings') }}
+            </v-chip>
+        </template>
+        
         <template slot="t-description-text">
             {{ $t('panelInfo.CommandDefinitionPanel') }}
         </template>
@@ -44,11 +51,10 @@
 
         <template slot="md-title-side">
             <v-btn
-                    text
-                    color="primary"
-                    style="margin-left: 10px; margin-top: -12px;"
-                    :disabled="isReadOnly || !exampleAvailable"
-                    @click="openExampleDialog()"
+                text
+                color="primary"
+                :disabled="isReadOnly || !exampleAvailable"
+                @click="openExampleDialog()"
             >Examples</v-btn>
             <v-tooltip bottom v-if="!exampleAvailable">
                 <template v-slot:activator="{ on, attrs }">
@@ -81,93 +87,95 @@
                             ></v-text-field>
 
 
-                            <span class="panel-title">Method</span>
-                            <!-- <v-alert
-                                color="grey darken-1"
-                                text
-                                type="info"
-                                class="pa-2 alert-text"
-                                style="margin-left: -10px;"
-                            >
-                            메소드의 목적을 설정하세요. <br>
-                            Default: 기본 RESTful API // Extend: 확장된 URI
-                            </v-alert> -->
-                            <v-radio-group v-model="value.isRestRepository" :disabled="isReadOnly" row>
-                                <v-radio label="Default Verbs" :value="true"></v-radio>
-                                <v-radio label="Extend Verb URI" :value="false"></v-radio>
-                            </v-radio-group>
-                            <detail-component
-                                :title="$t('CommandDefinitionPanel.commandMethodDetailTitle')"
-                                :details="commandMethodDetailTitles"
-                            />
-
-                            <v-col class="pa-0" v-if="value.isRestRepository">
-                                <v-autocomplete
-                                        :disabled="isReadOnly"
-                                        v-model="value.restRepositoryInfo.method"
-                                        :items="getRestfulList"
-                                        label="Method"
-                                        persistent-hint>
-                                </v-autocomplete>
-                            </v-col>
-
-
-                            <v-col class="pa-0" v-else>
-                                <v-row class="pa-0 ma-0" style="align-items: center">
-                                    <v-text-field
-                                            v-model="value.controllerInfo.apiPath"
-                                            :disabled="isReadOnly"
-                                            label="API Path"
-                                            :prefix="`${elementPrefix}`"
-                                    ></v-text-field>
-                                </v-row>
-                                <v-autocomplete
-                                        v-model="value.controllerInfo.method"
-                                        :disabled="isReadOnly"
-                                        label="Method"
-                                        persistent-hint
-                                        :items="getControllerList"
-                                ></v-autocomplete>
-                                <detail-component
-                                    :title="$t('CommandDefinitionPanel.commandUsageDetailTitle')"
-                                    :details="commandUsageDetailTitles"
-                                />
+                            <div v-show="isDesignLevelVisible">
+                                <span class="panel-title">Method</span>
                                 <!-- <v-alert
                                     color="grey darken-1"
                                     text
                                     type="info"
                                     class="pa-2 alert-text"
-                                    style="margin-left: -20px;"
+                                    style="margin-left: -10px;"
                                 >
-                                메소드의 타입을 설정하세요. <br>
-                                POST: 등록 // PUT, PATCH: 수정 // DELETE: 삭제
+                                메소드의 목적을 설정하세요. <br>
+                                Default: 기본 RESTful API // Extend: 확장된 URI
                                 </v-alert> -->
-                                <event-storming-attribute class="cm-attribute"
-                                        label="Request Body"
-                                        v-model="value.fieldDescriptors"
-                                        :entities="entities"
-                                        :isReadOnly="isReadOnly"
-                                        :type="value._type"
-                                        :elementId="value.elementView.id"
-                                        @sync-attribute="syncFromAggregate"
-                                ></event-storming-attribute>
-                            </v-col>
+                                <v-radio-group v-model="value.isRestRepository" :disabled="isReadOnly" row>
+                                    <v-radio label="Default Verbs" :value="true"></v-radio>
+                                    <v-radio label="Extend Verb URI" :value="false"></v-radio>
+                                </v-radio-group>
+                                <detail-component
+                                    :title="$t('CommandDefinitionPanel.commandMethodDetailTitle')"
+                                    :details="commandMethodDetailTitles"
+                                />
 
-                            <span class="panel-title">Httpie command usages</span>
-                            <v-row class="pa-0 ma-0" style="align-items: center;">
-                                <v-btn icon small @click="copyRestRepositoryMethod()"
-                                    style="align-self: start; margin-top: 15px;"
-                                >
-                                    <v-icon small> mdi-content-copy</v-icon>
-                                </v-btn>
-                                <v-textarea
-                                        v-model="commandExample"
-                                        solo
-                                        class="mx-2"
-                                        style="margin-top: 20px;"
-                                        auto-grow
-                                ></v-textarea>
-                            </v-row>
+                                <v-col class="pa-0" v-if="value.isRestRepository">
+                                    <v-autocomplete
+                                            :disabled="isReadOnly"
+                                            v-model="value.restRepositoryInfo.method"
+                                            :items="getRestfulList"
+                                            label="Method"
+                                            persistent-hint>
+                                    </v-autocomplete>
+                                </v-col>
+
+
+                                <v-col class="pa-0" v-else>
+                                    <v-row class="pa-0 ma-0" style="align-items: center">
+                                        <v-text-field
+                                                v-model="value.controllerInfo.apiPath"
+                                                :disabled="isReadOnly"
+                                                label="API Path"
+                                                :prefix="`${elementPrefix}`"
+                                        ></v-text-field>
+                                    </v-row>
+                                    <v-autocomplete
+                                            v-model="value.controllerInfo.method"
+                                            :disabled="isReadOnly"
+                                            label="Method"
+                                            persistent-hint
+                                            :items="getControllerList"
+                                    ></v-autocomplete>
+                                    <detail-component
+                                        :title="$t('CommandDefinitionPanel.commandUsageDetailTitle')"
+                                        :details="commandUsageDetailTitles"
+                                    />
+                                    <!-- <v-alert
+                                        color="grey darken-1"
+                                        text
+                                        type="info"
+                                        class="pa-2 alert-text"
+                                        style="margin-left: -20px;"
+                                    >
+                                    메소드의 타입을 설정하세요. <br>
+                                    POST: 등록 // PUT, PATCH: 수정 // DELETE: 삭제
+                                    </v-alert> -->
+                                    <event-storming-attribute class="cm-attribute"
+                                            label="Request Body"
+                                            v-model="value.fieldDescriptors"
+                                            :entities="entities"
+                                            :isReadOnly="isReadOnly"
+                                            :type="value._type"
+                                            :elementId="value.elementView.id"
+                                            @sync-attribute="syncFromAggregate"
+                                    ></event-storming-attribute>
+                                </v-col>
+
+                                <span class="panel-title">Httpie command usages</span>
+                                <v-row class="pa-0 ma-0" style="align-items: center;">
+                                    <v-btn icon small @click="copyRestRepositoryMethod()"
+                                        style="align-self: start; margin-top: 15px;"
+                                    >
+                                        <v-icon small> mdi-content-copy</v-icon>
+                                    </v-btn>
+                                    <v-textarea
+                                            v-model="commandExample"
+                                            solo
+                                            class="mx-2"
+                                            style="margin-top: 20px;"
+                                            auto-grow
+                                    ></v-textarea>
+                                </v-row>
+                            </div>
                         </v-col>
                     </v-card-text>
                 </v-card>

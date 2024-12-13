@@ -8,6 +8,7 @@
     "enter" : "입장"
   },
   "CommandDefinitionPanel" : {
+    "implementationSettings": "디자인 레벨",
     "commandMethodDetailTitle" : "Method 설정: API 경로와 동작 방식을 선택하여 데이터 작업을 수행합니다.",
     "commandMethodDetailSubTitle1" : "Default Verbs: 기본적인 데이터 작업(생성, 업데이트, 삭제)을 수행하는 표준 경로를 사용합니다. 이는 일반적인 데이터 조작에 적합합니다.",
     "commandMethodDetailSubTitle2" : "Extend Verb URI: 기본 작업 외에, 특정한 요구사항이나 추가 기능을 위해 확장된 경로를 사용합니다. 예를 들어, 특정 조건에 맞는 데이터를 처리할 때 유용합니다.",
