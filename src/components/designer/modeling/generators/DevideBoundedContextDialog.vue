@@ -2,8 +2,8 @@
     <v-card :key="Object.keys(resultDevideBoundedContext).length">
         <v-card-title>
             Bounded Context Division Result
-            <v-btn v-if="!isGenerating" text @click="reGenerate()">Re-Generate</v-btn>
-            <v-btn v-if="isGenerating" text @click="stop()">Stop</v-btn>
+            <v-btn v-if="!isGenerating" text color="primary" @click="reGenerate()">Re-Generate</v-btn>
+            <v-btn v-if="isGenerating" text color="primary" @click="stop()">Stop</v-btn>
             <v-btn :style="{'margin-left': 'auto'}" icon @click="closeDialog()">
                 <v-icon>mdi-close</v-icon>
             </v-btn>
@@ -27,7 +27,13 @@
             <v-card-title>Aspect of Bounded Contexts</v-card-title>
             <v-tabs v-model="activeTab">
                 <v-tab v-for="(model, devisionAspect) in resultDevideBoundedContext" :key="devisionAspect">
-                    {{ devisionAspect }}
+                    {{ devisionAspect }} Aspect
+                    <v-icon v-if="selectedAspect === devisionAspect" 
+                        color="primary" 
+                        small 
+                        class="ml-2">
+                        mdi-check
+                    </v-icon>
                 </v-tab>
             </v-tabs>
 
@@ -150,7 +156,7 @@
                             sourceNode.next = sourceNode.next || [];
                             sourceNode.next.push(`BC${targetIndex}`);
                             sourceNode.link = sourceNode.link || [];
-                            sourceNode.link.push(`-->|"${rel.name} (${rel.type})"|`);
+                            sourceNode.link.push(`-->|"${rel.type}"|`);
                         }
                     }
                 });

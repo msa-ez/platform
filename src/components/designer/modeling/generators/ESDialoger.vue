@@ -30,32 +30,44 @@
                 </v-card>
             </v-col>
         </div>
-        <v-card v-if="!state.secondMessageIsTyping" class="auto-modeling-user-story-card">
-            <v-card-subtitle>{{$t('autoModeling.explanation')}}</v-card-subtitle>
-            <v-card-text class="auto-modling-textarea">
-                <v-textarea 
-                        v-model="value.userStory"
-                        flat
-                        class="elevation-0"
-                        dense
-                        auto-grow
-                        rows="2"
-                        solo
-                >
-                </v-textarea>
-                <!--                <div-->
-                <!--                    v-for="modelId in value.modelList"-->
-                <!--                    :key="modelId"-->
-                <!--                >-->
-                <!--                    <v-btn x-small @click="jumpToModel(modelId)">{{ modelId }}</v-btn>    -->
-                <!--                </div>-->
-            </v-card-text>
-            <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
-            <v-card-actions v-if="done" class="auto-modeling-btn-box">
-                <v-btn class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>Try again</v-btn>
-                <v-btn class="auto-modeling-btn" color="primary" @click="generateDevideBoundedContext()">Create Bounded Context</v-btn>
-            </v-card-actions>
-        </v-card>
+        <div style="display: flex; flex-direction: column;">
+            <v-card v-if="!state.secondMessageIsTyping" class="auto-modeling-user-story-card">
+                <v-card-subtitle>{{$t('autoModeling.explanation')}}</v-card-subtitle>
+                <v-card-text class="auto-modling-textarea">
+                    <v-textarea 
+                            v-model="value.userStory"
+                            flat
+                            class="elevation-0"
+                            dense
+                            auto-grow
+                            rows="2"
+                            solo
+                    >
+                    </v-textarea>
+                    <!--                <div-->
+                    <!--                    v-for="modelId in value.modelList"-->
+                    <!--                    :key="modelId"-->
+                    <!--                >-->
+                    <!--                    <v-btn x-small @click="jumpToModel(modelId)">{{ modelId }}</v-btn>    -->
+                    <!--                </div>-->
+                </v-card-text>
+                <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
+                <v-card-actions v-if="done" class="auto-modeling-btn-box">
+                    <v-btn class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>Try again</v-btn>
+                    <v-btn class="auto-modeling-btn" color="primary" @click="generateDevideBoundedContext()">Create Bounded Context</v-btn>
+                </v-card-actions>
+            </v-card>
+
+            <v-card v-if="showDevideBoundedContextDialog" class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
+                <DevideBoundedContextDialog
+                    :resultDevideBoundedContext="resultDevideBoundedContext"
+                    @createModel="jump"
+                    @closeDialog="showDevideBoundedContextDialog = false"
+                    @stop="stop"
+                    @reGenerate="reGenerate"
+                ></DevideBoundedContextDialog>
+            </v-card>
+        </div>
         <div
              class="auto-modeling-message-card"
              style="margin-top:25px; height: 100%; width: 20%;">
@@ -68,7 +80,7 @@
             </v-col>
         </div>
 
-        <v-dialog
+        <!-- <v-dialog
                 v-model="showDevideBoundedContextDialog"
                 persistent
                 max-width="1200"
@@ -81,7 +93,7 @@
                 @stop="stop"
                 @reGenerate="reGenerate"
             ></DevideBoundedContextDialog>
-        </v-dialog>
+        </v-dialog> -->
     </div>
 
 </template>
