@@ -4876,7 +4876,7 @@ jobs:
                 });
 
                 window.$HandleBars.registerHelper("camelCase", function(str){
-                    return str.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
+                    return str.replace(/[^가-힣a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
                 });
 
                 window.$HandleBars.registerHelper("pascalCase", function(str){
