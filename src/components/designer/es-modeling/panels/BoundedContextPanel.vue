@@ -231,7 +231,7 @@
         beforeDestroy(){
             var me = this;
             if(me.value._type.endsWith('BoundedContext') && me.value.name){
-                if(/[-._]/.test(me.value.name))me.value.name = me.value.name.replace(/[-._]/g, '');
+                if(/[-._\s]/.test(me.value.name)) me.value.name = me.value.name.replace(/[-._\s]/g, '');
                 if(me.value.name.match(/[A-Z]/)) me.value.name = me.value.name.toLowerCase();
             }
         },

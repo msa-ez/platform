@@ -167,7 +167,7 @@
                                         :type="value._type"
                                         :dataProjection="value.dataProjection"
                                         :elementId="value.elementView.id"
-                                        @sync-attribute="syncFromAggregate"
+                                        @sync-attribute="syncFromAggregate('queryParameters')"
                                         :entities="relatedAggregate ? relatedAggregate.aggregateRoot.entities : null"
                                         :fields="relatedAggregate ? relatedAggregate.aggregateRoot.fieldDescriptors : null"
                                 ></event-storming-attribute>
@@ -179,8 +179,9 @@
                                         v-model="value.fieldDescriptors"
                                         :isReadOnly="isReadOnly"
                                         :type="value._type"
+                                        :dataProjection="value.dataProjection"
                                         :elementId="value.elementView.id"
-                                        @sync-attribute="syncFromAggregate"
+                                        @sync-attribute="syncFromAggregate('fieldDescriptors')"
                                         :entities="relatedAggregate ? relatedAggregate.aggregateRoot.entities : null"
                                         :fields="relatedAggregate ? relatedAggregate.aggregateRoot.fieldDescriptors : null"
                                 ></event-storming-attribute>
@@ -355,7 +356,7 @@
             });
         },
         methods: {
-            syncFromAggregate() {
+            syncFromAggregate(type) {
                 var me = this
                 var aggregateField = null
                 var entityTypeList =  ['Integer', 'String', 'Boolean', 'Float', 'Double', 'Long', 'Date']
@@ -379,9 +380,17 @@
                                 }
 
                                 if (eventKey == -1) {
-                                    me.value.queryParameters.push(aggField)
+                                    if(type === 'queryParameters'){
+                                        me.value.queryParameters.push(aggField)
+                                    }else{
+                                        me.value.fieldDescriptors.push(aggField)
+                                    }
                                 } else {
-                                    me.value.queryParameters[eventKey] = aggField
+                                    if(type === 'queryParameters'){
+                                        me.value.queryParameters[eventKey] = aggField
+                                    }else{
+                                        me.value.fieldDescriptors[eventKey] = aggField
+                                    }
                                 }
                                 me.value.queryParameters.__ob__.dep.notify();
                             })
