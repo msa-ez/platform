@@ -101,8 +101,8 @@ class ValueObjectActionsProcessor {
                 "isKey": property.isKey ? true : false,
                 "label": "- " + property.name + ": " + (property.type ? property.type : "String"),
                 "name": property.name,
-                "nameCamelCase": changeCase.pascalCase(property.name),
-                "namePascalCase": changeCase.camelCase(property.name),
+                "nameCamelCase": changeCase.camelCase(property.name),
+                "namePascalCase": changeCase.pascalCase(property.name),
                 "_type": "org.uengine.model.FieldDescriptor",
                 "referenceClass": property.referenceClass ? property.referenceClass : null
             }

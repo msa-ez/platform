@@ -101,8 +101,8 @@ class GeneralClassActionsProcessor {
             return {
                 "_type": "org.uengine.model.FieldDescriptor",
                 "name": property.name,
-                "nameCamelCase": changeCase.pascalCase(property.name),
-                "namePascalCase": changeCase.camelCase(property.name),
+                "nameCamelCase": changeCase.camelCase(property.name),
+                "namePascalCase": changeCase.pascalCase(property.name),
                 "className": property.type ? property.type : "String",
                 "isKey": property.isKey ? true : false,
                 "isName": false,
