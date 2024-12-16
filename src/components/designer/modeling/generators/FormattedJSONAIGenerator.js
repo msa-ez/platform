@@ -71,6 +71,10 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
 
     async generate() {
+        this.onInputParamsCheckBefore(this.client.input, this.generatorName)
+        if(this.client.onInputParamsCheckBefore) this.client.onInputParamsCheckBefore(this.client.input, this.generatorName)
+
+
         for(let key of this.checkInputParamsKeys)
             if(this.client.input[key] === undefined)
                 throw new Error(`${key} 파라미터가 전달되지 않았습니다.`)
@@ -78,12 +82,15 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
         this.leftRetryCount = this.MAX_RETRY_COUNT
 
-        this.onGenerateBefore(this.client.input)
-        if(this.client.onGenerateBefore) this.client.onGenerateBefore(this.client.input)
+
+        this.onGenerateBefore(this.client.input, this.generatorName)
+        if(this.client.onGenerateBefore) this.client.onGenerateBefore(this.client.input, this.generatorName)
         await super.generate()
     }
-    onGenerateBefore(inputParams){}
-    
+    // generate() 호출 전에 파라미터를 완전히 구성하기 어려운 특수한 케이스에서 사용됨
+    // Ex) 새로운 이벤트 스토밍 캔버스를 새 탭으로 열고, GeneraterUI에 의해서 즉시 실행되어서, 대상 Bounded Context와 같은 파라미터를 전달하기 어려운 경우
+    onInputParamsCheckBefore(inputParams, generatorName){}
+    onGenerateBefore(inputParams, generatorName){}
 
     createPrompt(){
         try {

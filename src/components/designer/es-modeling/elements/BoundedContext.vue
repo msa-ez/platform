@@ -550,6 +550,7 @@
                         const getXAIDtoDraftOptions = (output, targetBoundedContext, description) => {
                             return {
                                 boundedContext: targetBoundedContext.name,
+                                boundedContextAlias: targetBoundedContext.displayName,
                                 description: description,
                                 options: output.options.map(option => ({
                                     ...option,
