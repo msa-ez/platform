@@ -80,7 +80,8 @@
     "cons": "Cons:",
     "conclusions": "Conclusions:",
     "create": "Create",
-    "reconstructionDraft": "BoundedContext Reconstruction Draft"
+    "reconstructionDraft": "BoundedContext Reconstruction Draft",
+    "reconstructionAggregateDraft": "Aggregate Design Draft"
   },
   "RuleExampleDialog": {
     "generateExamples": "Generate Examples",

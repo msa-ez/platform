@@ -7,10 +7,12 @@ class DevideBoundedContextGenerator extends JsonAIGenerator {
 
         this.model = "gpt-4o"
         this.temperature = 0.3
+
+        this.modelName = "DevideBoundedContextGenerator"
     }
 
     createPrompt(){
-        return `
+        let prompt = `
 다음 요구사항을 여러개의 Bounded Context로 적절하게 분리해라. 요구사항의 문제영역을 2개 이상으로 적절히 분리하면 됀다.
 
 아래의 분해관점을 중점으로 분리해라:
@@ -59,6 +61,9 @@ The format must be as follows:
     "thoughts": "Bounded Contexte들의 도출 경위에 대한 설명 (응집도&결합도 측면, 업무 전문성, 기술 응집도, 페르소나 기준 등)"
 }
  `
+
+        console.log(`[*] ${this.modelName}에 프롬프트가 전달됨`, {prompt, input: this.client.input})
+        return prompt;
     }
 
     createModel(text){
@@ -73,6 +78,10 @@ The format must be as follows:
 
         model['devisionAspect'] = this.client.input['devisionAspect'];
         
+        if(this.state === "end")
+            console.log(`[*] ${this.modelName}의 모델 생성이 완료됨`, {model, text, input: this.client.input})
+        else
+            console.log(`[*] ${this.modelName}의 모델 생성이 진행중임`, {textLength: text.length})
         return model;
     }
 

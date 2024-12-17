@@ -99,6 +99,9 @@ Please adhere to the following guidelines:
 8. Ensure that any Aggregate referenced via a ValueObject exists in accumulatedDrafts or is created within the current option.
 9. If a similar Aggregate already exists in 'Accumulated Drafts' for an Entity analysed in 'Functional Requirements', you need to create a ValueObject reference to that Aggregate instead of creating it yourself.
 10. Do not include comments in the output JSON object.
+11. **Avoid creating bidirectional references between Aggregates. Aggregate references should be unidirectional. For example, if 'Order' references 'Customer', 'Customer' should not directly reference 'Order'.**
+    * **When deciding which Aggregate should reference another, consider the ownership and immutability. Typically, the Aggregate that owns the other or has a lifecycle dependency on the other should hold the reference. For example, 'Order' should reference 'Customer' because an order is always associated with a customer, and the customer's lifecycle is independent of the order. Conversely, 'Customer' should not reference 'Order' because a customer can exist without any orders.**
+
 
 Proposal Writing Recommendations:
 1. Aggregates should represent complete business capabilities and maintain their invariants:
@@ -632,32 +635,48 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
         returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
     }
 
-    // existingAggregates를 다시 Aggregate로 생성하는 유효하지 않은 옵션을 필터링함
     _removeOptionsWithExistingAggregates(output) {
-        if(!output || !output.options) return
+        if(!output || !output.options) return;
 
-        const filteredOptions = []
-        for(const option of output.options) {
-            if(!option.structure) continue
+        const optionsByAggregateCount = {};
+        const filteredOptions = [];
 
-            for(const aggregateInfo of option.structure) {
-                if(this.client.input.existingAggregates.includes(aggregateInfo.aggregate.name)) continue
+        for (const option of output.options) {
+            if (!option.structure) continue;
+
+            let hasExistingAggregate = false;
+            for (const aggregateInfo of option.structure) {
+                if (this.client.input.existingAggregates.includes(aggregateInfo.aggregate.name)) {
+                    hasExistingAggregate = true;
+                    break;
+                }
             }
+            if (hasExistingAggregate) continue;
 
-            filteredOptions.push(option)
+            const aggregateCount = option.structure.length;
+            if (!optionsByAggregateCount[aggregateCount]) {
+                optionsByAggregateCount[aggregateCount] = [];
+            }
+            optionsByAggregateCount[aggregateCount].push(option);
         }
 
-        output.options = filteredOptions
+        for (const count in optionsByAggregateCount) {
+            if (optionsByAggregateCount[count].length > 0) {
+                filteredOptions.push(optionsByAggregateCount[count][0]);
+            }
+        }
+
+        output.options = filteredOptions;
     }
 
     // 적절한 참조 요소를 추가하지 않은 경우, 추가시켜 줌
     _linkValueObjectsToReferencedAggregates(output) {
         if(!output || !output.options) return
 
-        let validAggregateNames = this.__getValidAggregateNames(output)
         for(const option of output.options) {
             if(!option.structure) continue
 
+            let validAggregateNames = this.__getValidAggregateNames(option)
             for(const aggregate of option.structure) {
                 if(!aggregate.valueObjects) continue
 
@@ -680,10 +699,10 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
     _enrichValueObjectsWithAggregateDetails(output) {
         if(!output || !output.options) return
 
-        let validAggregateNames = this.__getValidAggregateNames(output)
         for(const option of output.options) {
             if(!option.structure) continue
 
+            let validAggregateNames = this.__getValidAggregateNames(option)
             for(const aggregate of option.structure) {
                 if(!aggregate.valueObjects) continue
 
@@ -712,10 +731,11 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
         }
     }
 
-    __getValidAggregateNames(output) {
+    // usedOption: 초안에서 옵션들은 서로 배타적인 관계이기 때문에 다른 옵션을 기반으로 참조를 생성할 수 없음
+    __getValidAggregateNames(usedOption) {
         let validAggregateNames = this.client.input.validAggregateNames ? this.client.input.validAggregateNames : []
 
-        for(const option of output.options) {
+        for(const option of [usedOption]) {
             if(!option.structure) continue
             
             for(const aggregate of option.structure)

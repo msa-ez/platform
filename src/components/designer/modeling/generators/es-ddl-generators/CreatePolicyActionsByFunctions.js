@@ -405,6 +405,32 @@ Please follow these rules:
                 continue
             }
 
+
+            let isAlreadyConnected = false
+            let targetPolicies = []
+            for(let relation of Object.values(this.client.input.esValue.relations)) {
+                if(!relation || !relation.sourceElement || !relation.targetElement) continue
+                if(relation.sourceElement.id === eventObject.id && 
+                   relation.targetElement._type === "org.uengine.modeling.model.Policy") {
+                    targetPolicies.push(relation.targetElement)
+                }
+            }
+
+            if(targetPolicies.length > 0) {
+                for(let targetPolicy of targetPolicies) {
+                    for(let relation of Object.values(this.client.input.esValue.relations)) {
+                        if(!relation || !relation.sourceElement || !relation.targetElement) continue
+                        if(relation.sourceElement.id === targetPolicy.id && 
+                           relation.targetElement.id === commandObject.id) {
+                            isAlreadyConnected = true
+                            break
+                        }
+                    }
+                }
+            }
+            if(isAlreadyConnected) continue
+
+            
             actions.push({
                 "objectType": "Event",
                 "type": "update",
