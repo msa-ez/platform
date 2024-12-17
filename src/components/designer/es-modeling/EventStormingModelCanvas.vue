@@ -659,7 +659,7 @@
                                                                     @click="openInviteUsers()"
                                                                 >
                                                                     <v-icon>{{icon.share}}</v-icon>
-                                                                    <div class="es-hide-share"> SHARE123123 </div>
+                                                                    <div class="es-hide-share"> SHARE </div>
                                                                     <v-avatar
                                                                         v-if="requestCount"
                                                                         size="25"
