@@ -51,7 +51,11 @@ class RuleExampleGenerator extends JsonAIGenerator {
             
             itemFields = itemFields + thenAtt + '}\n' 
             thenFields = thenFields + itemFields
-            thenElement.push(item.aggregateRoot.entities.elements)
+            if(item._type.includes("Aggregate")){
+                thenElement.push(item.aggregateRoot.entities.elements)
+            }else{
+                thenElement.push(item)
+            }
         })
 
 

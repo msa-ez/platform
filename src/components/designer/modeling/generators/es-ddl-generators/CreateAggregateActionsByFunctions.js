@@ -947,6 +947,7 @@ They represent complex domain concepts that don't qualify as Aggregates but need
         actions = this.esAliasTransManager.transToUUIDInActions(actions)
         this._restoreActions(actions, this.client.input.esValue, this.client.input.targetBoundedContext.name)
         actions = this._filterActions(actions)
+        this._processReferenceClassValueObject(actions)
         
         let esValueToModify = JSON.parse(JSON.stringify(this.client.input.esValue))
 
@@ -1032,6 +1033,27 @@ They represent complex domain concepts that don't qualify as Aggregates but need
         actions = actions.filter(action => avaliableAggregateIds.includes(action.ids.aggregateId))
 
         return actions
+    }
+
+    // 다른 Aggregate를 참조하는 ValueObject인 경우, 반드시 "참조 Class명" + "Id" 형태 이름 및 참조 Long id 필드를 가져야 인식이 됨
+    _processReferenceClassValueObject(actions){
+        const valueObjectActions = actions.filter(action => action.objectType === "ValueObject");
+        
+        for (let action of valueObjectActions) {
+            if (!action.args || !action.args.properties) continue;
+            
+            const referencedProperties = action.args.properties.filter(prop => prop.referenceClass);
+            if (referencedProperties.length <= 0) continue
+
+            const referenceProperty = referencedProperties[0]  
+            action.args.properties = [{
+                name: `${referenceProperty.referenceClass}Id`,
+                type: "Long",
+                isKey: true,
+                isForeignKey: true,
+                referenceClass: referenceProperty.referenceClass
+            }]
+        }
     }
 
     _addAggregateRelation(usedDraftOption, esValue){

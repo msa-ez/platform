@@ -24,7 +24,7 @@
         </v-card-subtitle>
 
         <v-card-text v-if="Object.keys(resultDevideBoundedContext).length > 0">
-            <v-card-title>Aspect of Bounded Contexts</v-card-title>
+            <v-card-title>Aspects of Bounded Contexts</v-card-title>
             <v-tabs v-model="activeTab">
                 <v-tab v-for="(model, devisionAspect) in resultDevideBoundedContext" :key="devisionAspect">
                     {{ devisionAspect }} Aspect
@@ -57,11 +57,15 @@
                     <v-card class="mt-4 pa-4" outlined>
                         <v-card-title class="text-subtitle-1">Analysis</v-card-title>
                         <v-card-text>{{ resultDevideBoundedContext[devisionAspect].thoughts }}</v-card-text>
+
+                        <v-textarea v-model="feedback" label="Feedback" rows="3"></v-textarea>
                     </v-card>
                 </v-tab-item>
             </v-tabs-items>
 
-            <v-btn :disabled="selectedAspect === null" class="auto-modeling-btn" color="primary" :style="{'margin-top': '15px', 'text-align': 'right'}" @click="createModel()">Create Model<v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon></v-btn><br>
+            <v-card-actions>
+                <v-btn :disabled="selectedAspect === null" class="auto-modeling-btn" color="primary" :style="{'margin-top': '15px'}" @click="createModel()">Create Model<v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon></v-btn><br>
+            </v-card-actions>
         </v-card-text>
 
     </v-card>
@@ -96,16 +100,23 @@
                 },
                 selectedAspect: null,
                 selectedResultDevideBoundedContext: {},
-                isGenerating: true
+                isGenerating: true,
+                feedback: ''
             }
         },
         mounted() {
         },
         watch: {
             resultDevideBoundedContext: {
-                handler(newVal) {
+                handler(newVal, oldVal) {
+                    // 새로운 aspect가 추가될 때마다 해당 aspect의 노드 생성
+                    Object.keys(newVal).forEach(aspect => {
+                        if (newVal[aspect] && !this.mermaidNodes[aspect]) {
+                            this.$set(this.mermaidNodes, aspect, this.generateNodes(newVal[aspect]));
+                        }
+                    });
+
                     if(Object.keys(newVal).length == 5){
-                        this.mermaidNodes = this.generateAllNodes(newVal);
                         this.isGenerating = false;
                     }else if(Object.keys(newVal).length > 0 && Object.keys(newVal).length < 5){
                         this.isGenerating = true;
@@ -113,21 +124,14 @@
                 },
                 deep: true
             },
-            // activeTab: {
-            //     handler(newVal) {
-            //         this.$nextTick(() => {
-            //             // 현재 탭의 다이어그램 강제 리렌더링
-            //             const aspect = Object.keys(this.resultDevideBoundedContext)[this.activeTab];
-            //             if (aspect && this.mermaidNodes[aspect]) {
-            //                 const temp = { ...this.mermaidNodes[aspect] };
-            //                 this.$set(this.mermaidNodes, aspect, null);
-            //                 this.$nextTick(() => {
-            //                     this.$set(this.mermaidNodes, aspect, temp);
-            //                 });
-            //             }
-            //         });
-            //     }
-            // }
+            activeTab: {
+                handler(newVal) {
+                    if (newVal !== null) {
+                        const aspect = Object.keys(this.resultDevideBoundedContext)[newVal];
+                        this.selectAspect(aspect);
+                    }
+                }
+            }
         },
         methods: {
             generateNodes(aspect) {
