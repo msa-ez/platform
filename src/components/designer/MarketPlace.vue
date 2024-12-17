@@ -408,6 +408,13 @@
                                 }
                                 me.templateLists.push(obj);
                             }
+                            var userInfo = localStorage.email
+                            if(!userInfo.includes('@posco.com')){
+                                const index = me.templateLists.findIndex(template => template.name.includes('posco'));
+                                if (index > -1) {
+                                    me.templateLists.splice(index, 1);
+                                }
+                            }
                         } catch (e) {
                             console.error(e);
                         }

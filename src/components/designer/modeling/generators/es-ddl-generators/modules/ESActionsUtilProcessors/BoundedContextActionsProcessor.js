@@ -15,6 +15,7 @@ class BoundedContextActionsProcessor {
             userInfo, information, action.args.boundedContextName,
             action.args.boundedContextAlias ? action.args.boundedContextAlias : "", 
             BoundedContextActionsProcessor.__getValidPortNumber(esValue),
+            action.args.description ? action.args.description : "",
             0, 0, action.ids.boundedContextId
         )
 
@@ -31,13 +32,13 @@ class BoundedContextActionsProcessor {
         return maxPortNumber + 1
     }
 
-    static __getBoundedContextBase(userInfo, information, name, displayName, portNumber, x, y, elementUUID) {
+    static __getBoundedContextBase(userInfo, information, name, displayName, portNumber, description, x, y, elementUUID) {
         const elementUUIDtoUse = elementUUID ? elementUUID : GlobalPromptUtil.getUUID();
         return {
             _type: "org.uengine.modeling.model.BoundedContext",
             aggregates: [],
             author: userInfo.uid,
-            description: null,
+            description: description,
             id: elementUUIDtoUse,
             elementView: {
                 _type: "org.uengine.modeling.model.BoundedContext",

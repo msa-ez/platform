@@ -59,6 +59,9 @@ The format must be as follows:
     "thoughts": "Explain why each relationship type was chosen and how the contexts interact with each other"
 }
  `
+
+        console.log(`[*] ${this.modelName}에 프롬프트가 전달됨`, {prompt, input: this.client.input})
+        return prompt;
     }
 
     createModel(text){
@@ -73,6 +76,10 @@ The format must be as follows:
 
         model['devisionAspect'] = this.client.input['devisionAspect'];
         
+        if(this.state === "end")
+            console.log(`[*] ${this.modelName}의 모델 생성이 완료됨`, {model, text, input: this.client.input})
+        else
+            console.log(`[*] ${this.modelName}의 모델 생성이 진행중임`, {textLength: text.length})
         return model;
     }
 

@@ -4,6 +4,12 @@
     "showBeta": "베타 보기",
     "hideBeta": "베타 숨기기"
   },
+  "AlgoliaModelLists" : {
+    "pet" : "펫샵",
+    "food" : "음식배달앱",
+    "googleDrive": "구글드라이브",
+    "shop" : "쇼핑몰"
+  },
   "ClassCard": {
     "enter" : "입장"
   },
@@ -73,7 +79,8 @@
     "cons": "단점:",
     "conclusions": "결론:",
     "create": "생성",
-    "reconstructionDraft": "바운디드 컨텍스트 재구성 초안"
+    "reconstructionDraft": "바운디드 컨텍스트 재구성 초안",
+    "reconstructionAggregateDraft": "어그리거트 디자인 초안"
   },
   "RuleExampleDialog": {
     "generateExamples": "예제 생성",

@@ -128,15 +128,15 @@ The approximate structure is as follows.
                 "readModels": [
                     {
                         "id": "<readModelId>",
-                        "name": "<readModelName>"
-                    },
-                    "properties": [
-                        {
-                            "name": "<propertyName>",
-                            ["type": "<propertyType>"], // If the type is String, do not specify the type.
-                            ["isKey": true]
-                        }
-                    ]
+                        "name": "<readModelName>",
+                        "properties": [
+                            {
+                                "name": "<propertyName>",
+                                ["type": "<propertyType>"], // If the type is String, do not specify the type.
+                                ["isKey": true]
+                            }
+                        ]
+                    }
                 ]
             }
         }

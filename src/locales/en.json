@@ -4,6 +4,12 @@
     "showBeta": "Show Beta",
     "hideBeta": "Hide Beta"
   },
+  "AlgoliaModelLists" : {
+    "pet" : "Pet Shop",
+    "food" : "Food Delivery App",
+    "googleDrive": "Google Drive",
+    "shop" : "Shopping Mall"
+  },
   "ClassCard": {
     "enter" : "Enter"
   },
@@ -74,7 +80,8 @@
     "cons": "Cons:",
     "conclusions": "Conclusions:",
     "create": "Create",
-    "reconstructionDraft": "BoundedContext Reconstruction Draft"
+    "reconstructionDraft": "BoundedContext Reconstruction Draft",
+    "reconstructionAggregateDraft": "Aggregate Design Draft"
   },
   "RuleExampleDialog": {
     "generateExamples": "Generate Examples",

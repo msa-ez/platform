@@ -1,7 +1,7 @@
 <template>
     <v-card>
         <v-card-title class="d-flex justify-space-between align-center">
-            <span>{{ $t('ModelDraftDialogForDistribution.reconstructionDraft') }}</span>
+            <span>{{ $t('ModelDraftDialogForDistribution.reconstructionAggregateDraft') }}</span>
             <div class="d-flex align-center">
                 <v-btn @click="retry()" 
                     text 
@@ -49,7 +49,7 @@
         >
             <v-tabs v-model="activeTab" class="model-draft-dialog-tab">
                 <v-tab v-for="(boundedContextInfo, index) in draftOptions" :key="index" style="text-transform: none;">
-                    {{ boundedContextInfo.boundedContext.charAt(0).toUpperCase() + boundedContextInfo.boundedContext.slice(1) }}<br>
+                    {{ (boundedContextInfo.boundedContextAlias) ? boundedContextInfo.boundedContextAlias : (boundedContextInfo.boundedContext.charAt(0).toUpperCase() + boundedContextInfo.boundedContext.slice(1)) }}<br>
                 </v-tab>
             </v-tabs>
 
@@ -211,6 +211,8 @@
             draftOptions: {
                 handler(newVal) {
                     if(newVal.length === 0) return
+                    if(newVal.length === Object.keys(this.selectedCardIndex).length) return
+
                     Object.keys(this.selectedCardIndex).forEach(key => {
                         if(!newVal.some(option => option.boundedContext === key)) {
                             delete this.selectedCardIndex[key];

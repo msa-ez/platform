@@ -355,7 +355,14 @@ Please follow these rules:
         return {
             "Summarized Existing EventStorming Model": JSON.stringify(summarizedESValue),
 
-            "Functional Requirements": this.client.input.description
+            "Functional Requirements": this.client.input.description,
+
+            "Final Check": `
+* Do not create a duplicate policy if there is already any existing policy connecting the same Event to the same Command
+* Do not create a policy where an Event triggers a Command within the same Aggregate
+* Ensure all policies cross Aggregate or Bounded Context boundaries
+* Verify that each policy serves a distinct business purpose and is not redundant
+`
         }
     }
 
@@ -405,6 +412,32 @@ Please follow these rules:
                 continue
             }
 
+
+            let isAlreadyConnected = false
+            let targetPolicies = []
+            for(let relation of Object.values(this.client.input.esValue.relations)) {
+                if(!relation || !relation.sourceElement || !relation.targetElement) continue
+                if(relation.sourceElement.id === eventObject.id && 
+                   relation.targetElement._type === "org.uengine.modeling.model.Policy") {
+                    targetPolicies.push(relation.targetElement)
+                }
+            }
+
+            if(targetPolicies.length > 0) {
+                for(let targetPolicy of targetPolicies) {
+                    for(let relation of Object.values(this.client.input.esValue.relations)) {
+                        if(!relation || !relation.sourceElement || !relation.targetElement) continue
+                        if(relation.sourceElement.id === targetPolicy.id && 
+                           relation.targetElement.id === commandObject.id) {
+                            isAlreadyConnected = true
+                            break
+                        }
+                    }
+                }
+            }
+            if(isAlreadyConnected) continue
+
+            
             actions.push({
                 "objectType": "Event",
                 "type": "update",

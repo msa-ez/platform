@@ -9,6 +9,11 @@ class PreProcessingFunctionsGenerator extends FormattedJSONAIGenerator{
     }
 
 
+    onGenerateBefore(inputParams){
+        inputParams.boundedContextDisplayName = inputParams.boundedContext.displayName ? inputParams.boundedContext.displayName : inputParams.boundedContext.name
+    }
+
+
     __buildAgentRolePrompt(){
         return `You are an expert requirements analyst and domain modeler specializing in structured documentation. Your expertise includes:
 - Comprehensive analysis of business requirements and technical specifications
@@ -279,12 +284,12 @@ The 'Reservation Status' screen should show all booking history for guests. It s
 
 
     onCreateModelGenerating(returnObj) {
-        returnObj.directMessage = `Analysing user requirements for ${this.client.input.boundedContext.name} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Analysing user requirements for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
     }
 
     onCreateModelFinished(returnObj) {
         returnObj.modelValue.output = returnObj.modelValue.aiOutput.result
-        returnObj.directMessage = `Analysing user requirements for ${this.client.input.boundedContext.name} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Analysing user requirements for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
     }
 }
 
