@@ -355,7 +355,14 @@ Please follow these rules:
         return {
             "Summarized Existing EventStorming Model": JSON.stringify(summarizedESValue),
 
-            "Functional Requirements": this.client.input.description
+            "Functional Requirements": this.client.input.description,
+
+            "Final Check": `
+* Do not create a duplicate policy if there is already any existing policy connecting the same Event to the same Command
+* Do not create a policy where an Event triggers a Command within the same Aggregate
+* Ensure all policies cross Aggregate or Bounded Context boundaries
+* Verify that each policy serves a distinct business purpose and is not redundant
+`
         }
     }
 
