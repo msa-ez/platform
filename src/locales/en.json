@@ -4,6 +4,12 @@
     "showBeta": "Show Beta",
     "hideBeta": "Hide Beta"
   },
+  "AlgoliaModelLists" : {
+    "pet" : "Pet Shop",
+    "food" : "Food Delivery App",
+    "googleDrive": "Google Drive",
+    "shop" : "Shopping Mall"
+  },
   "ClassCard": {
     "enter" : "Enter"
   },

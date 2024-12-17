@@ -5,39 +5,20 @@
                 <div>
                     <div :class="isForeign ? 'isForeign-main-nav-tabs-box' : 'main-nav-tabs-box' ">
                         <v-tabs class="main-nav-tabs" background-color="transparent" show-arrows color="none">
-                            <v-tab to="/"
-                                class="main-nav-tab main-nav-tab-home"
-                            >
+                            <v-tab to="/" class="main-nav-tab main-nav-tab-home">
                                 <v-icon style="margin-top:10px;">mdi-home</v-icon>
                             </v-tab>
-                            <v-tab @click="wikiOpen('introduction')"
+                            <!-- v-for를 사용하여 중복된 탭 요소를 간결하게 렌더링 -->
+                            <v-tab
+                                v-for="navTab in navigationTabs"
+                                :key="navTab.key"
+                                @click="navTab.action"
                                 class="main-nav-tab"
-                            >{{$t('mainNav.introduction')}}
+                            >
+                                {{$t(navTab.label)}}
                             </v-tab>
-                            <v-tab @click="wikiOpen('company')"
-                                class="main-nav-tab"
-                            >{{$t('mainNav.company')}}
-                            </v-tab>
-                            <v-tab @click="wikiOpen('pricing')"
-                                class="main-nav-tab"
-                            >{{$t('mainNav.pricing')}}
-                            </v-tab>
-                            <v-tab @click="wikiOpen('partnership')"
-                                class="main-nav-tab"
-                            >{{$t('mainNav.partnership')}}
-                            </v-tab>
-                            <v-tab @click="nationLearnNavDialog"
-                                class="main-nav-tab"
-                            >{{$t('mainNav.learn')}}
-                            </v-tab>
-                            <!-- <v-tab @click="openMakingDialog()"
-                                class="main-nav-tab main-nav-tab-display"
-                            >{{$t('making.title')}}
-                            </v-tab> -->
-                            <v-icon @click="searchOpen = !searchOpen"
-                                class="main-nav-tab"
-                                style="margin-left:10px;"
-                            >mdi-magnify
+                            <v-icon @click="searchOpen = !searchOpen" class="main-nav-tab" style="margin-left:10px;">
+                                mdi-magnify
                             </v-icon>
                         </v-tabs>
                     </div>
@@ -96,7 +77,7 @@
                                 >
                                     <v-card style="height:100%;"
                                         outlined
-                                        @click="wikiOpen('business')"
+                                        @click="wikiOpen(item.url)"
                                     >
                                         <v-card-title class="justify-center">{{ $t(item.title) }}</v-card-title>
                                         <v-img 
@@ -393,13 +374,43 @@
                                 :showDialog="false"
                                 :showChat="true"
                             ></AutoModelingDialog>
-                        <div style="margin-top:30px;">
-                            <carousel :perPageCustom="[[0, 1], [576, 2], [768, 3], [992, 4], [1200, 5]]">
-                                <slide v-for="(logo, index) in logos" :key="index">
-                                    <img :src="logo.url" :alt="logo.alt">
-                                </slide>
-                            </carousel>
-                        </div>
+                            <div class="title-page-title">{{$t('examples.modeling')}}</div>
+                            <v-row class="ma-0 pa-0" style="width: 72%; margin: 0 auto !important;">
+                                <v-col class="pa-4" v-for="(mainPublicModel, index) in mainPublicModeling" :key="index"
+                                    cols="12"
+                                    sm="6"
+                                    md="3"
+                                    lg="3"
+                                >
+                                    <v-card @click="openPublicModeling(mainPublicModel.url)" 
+                                        class="public-model-card"
+                                    >
+                                        <v-row class="ma-0 pa-2">
+                                            <v-card-sub-title class="pa-0">{{ $t(mainPublicModel.title) }}</v-card-sub-title>
+                                            <v-spacer></v-spacer>
+                                            <v-chip outlined color="gray" small>Sample</v-chip>
+                                        </v-row>
+                                        <div class="pa-2">
+                                            <v-card style="height: 150px; overflow: hidden;" outlined>
+                                                <v-img 
+                                                    :src="mainPublicModel.imageUrl" 
+                                                    height="100%"
+                                                    width="100%"
+                                                    contain
+                                                    style="max-width: 100%; max-height: 100%; object-fit: contain;"
+                                                />
+                                            </v-card>
+                                        </div>
+                                    </v-card>
+                                </v-col>
+                            </v-row>
+                            <div style="margin-top:30px;">
+                                <carousel :perPageCustom="[[0, 1], [576, 2], [768, 3], [992, 4], [1200, 5]]">
+                                    <slide v-for="(logo, index) in logos" :key="index">
+                                        <img :src="logo.url" :alt="logo.alt">
+                                    </slide>
+                                </carousel>
+                            </div>
                         </v-tab-item>
                         <v-tab-item v-else-if="0 < selectedTabIndex && selectedTabIndex < 4" :value="selectedTabIndex" :key="selectedTabIndex">
                             <!-- MINE, SHARE,PUBLIC -->
@@ -652,6 +663,7 @@
                         subtitle: 'mainNavSubCard.tutorial-inst',
                         dialogType: 'tutorial',
                         dialog: false,
+                        url: 'https://www.msaez.io/#/courses/fea33dd0-8030-11ed-9757-3db21672e322/1f2deec0-c856-11ed-aa53-950d34db487f/ddd-google-drive-associate'
                     },
                     // {
                     //     title: 'mainNavSubCard.examples',
@@ -795,6 +807,18 @@
                         dialog: false,
                     }
                 ],
+                navigationTabs: [
+                    //제품소개
+                    { key: 'introduction', label: 'mainNav.introduction', action: () => this.wikiOpen('introduction') },
+                    //사용기업
+                    // { key: 'company', label: 'mainNav.company', action: () => this.wikiOpen('company') },
+                    //가격정책
+                    // { key: 'pricing', label: 'mainNav.pricing', action: () => this.wikiOpen('pricing') },
+                    //파트너십  
+                    // { key: 'partnership', label: 'mainNav.partnership', action: () => this.wikiOpen('partnership') },
+                    //학습하기
+                    { key: 'learn', label: 'mainNav.learn', action: this.nationLearnNavDialog }
+                ],
 
                 learnNavDialog: false,
                 projectUid: "",
@@ -883,6 +907,28 @@
                 forthVideo: false,
                 fifthVideo: false,
                 renderTabId: 0,
+                mainPublicModeling: [
+                    {
+                        title: 'AlgoliaModelLists.pet',
+                        url: 'https://www.msaez.io/#/storming/e25a97f84aa34376697cc220496a9608',
+                        imageUrl: 'static/image/mainPublicModling1.png'
+                    },
+                    {
+                        title: 'AlgoliaModelLists.food',
+                        url: 'https://www.msaez.io/#/storming/2737b4f61c1ea85e3de602479ddc1e3a',
+                        imageUrl: 'static/image/mainPublicModling2.png'
+                    },
+                    {
+                        title: 'AlgoliaModelLists.googleDrive',
+                        url: 'https://www.msaez.io/#/storming/d8525abb1acc3cf621b6aacf371fa4be',
+                        imageUrl: 'static/image/mainPublicModling3.png'
+                    },
+                    {
+                        title: 'AlgoliaModelLists.shop',
+                        url: 'https://www.msaez.io/#/storming/0f89dcccd80e9ec9fb6540c3236cfe2b',
+                        imageUrl: 'static/image/mainPublicModling2.png'
+                    }
+                ]
             }
         },
         beforeDestroy() {
@@ -1162,6 +1208,9 @@
             },
         },
         methods: {
+            openPublicModeling(url) {
+                window.open(url, '_blank')
+            },
             nationLearnNavDialog() {
                 if (!this.isForeign) {
                     this.learnNavDialog = true;
@@ -1178,6 +1227,9 @@
                 if (link) {
                     const url = this.isForeign ? link.en : link.ko;
                     window.open(url, "_blank");
+                } else {
+                    // linkType이 일반 URL일 경우 바로 열기
+                    window.open(linkType, "_blank");
                 }
             },
             toggleDialog(item) {
@@ -1835,6 +1887,9 @@
 </script>
 
 <style>
+    .public-model-card:hover {
+        background-color: #F5F5F5 !important;  /* 이미지의 회색과 동일한 색상 */
+    }
     .isNotForeign-storage-main-list-text {
         margin-top:3px; 
         font-size:14px;
@@ -1962,7 +2017,7 @@
     }
 
     .title-page-title {
-        margin: 10px 0 20px 0;
+        margin: 10px 0 10px 0;
         font-size: 20px;
         font-weight: 500;
         text-align: center;

@@ -4,6 +4,12 @@
     "showBeta": "베타 보기",
     "hideBeta": "베타 숨기기"
   },
+  "AlgoliaModelLists" : {
+    "pet" : "펫샵",
+    "food" : "음식배달앱",
+    "googleDrive": "구글드라이브",
+    "shop" : "쇼핑몰"
+  },
   "ClassCard": {
     "enter" : "입장"
   },

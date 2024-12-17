@@ -271,13 +271,13 @@
                                     <v-tooltip bottom>
                                         <template v-slot:activator="{ on }">
                                             <v-btn
-                                                    class="gs-model-z-index-2 gs-redo-opacity-hover"
-                                                    :disabled="isRedoDisabled"
-                                                    text
-                                                    small
-                                                    right
-                                                    @click.native="redo()"
-                                                    v-on="on"
+                                                class="gs-model-z-index-2 gs-redo-opacity-hover"
+                                                :disabled="isRedoDisabled"
+                                                text
+                                                small
+                                                right
+                                                @click.native="redo()"
+                                                v-on="on"
                                             >
                                                 <v-icon medium>mdi-redo</v-icon>
                                             </v-btn>
@@ -290,13 +290,11 @@
                                 <slot name="top">
                                     <v-row>
                                         <v-row
-                                                class="gs-model-z-index-1 es-is-mobile-project-name"
-                                                style="
-                                                margin: 5px 5px 0px 0px;
-                                                height: 64px;
-                                                max-width: 200px;
-                                                background-color: transparent;
-                                            "
+                                            class="gs-model-z-index-1 es-is-mobile-project-name"
+                                            style="margin: 5px 5px 0px 0px;
+                                            height: 64px;
+                                            max-width: 200px;
+                                            background-color: transparent;"
                                         >
                                             <div class="eventstorming-mobile-home-button">
                                                 <router-link to="/">
@@ -309,13 +307,11 @@
                                                 </router-link>
                                             </div>
                                             <v-icon
-                                                    style="
-                                                    height: 24px;
-                                                    margin-top: 38px;
-                                                "
-                                                    :disabled="disableBtn"
-                                                    @click="openExportDialog()"
-                                                    color="#8d8d8d"
+                                                style="height: 24px;
+                                                margin-top: 38px;"
+                                                :disabled="disableBtn"
+                                                @click="openExportDialog()"
+                                                color="#8d8d8d"
                                             >mdi-cog
                                             </v-icon>
                                             <slot name="projectName">
@@ -337,11 +333,126 @@
                                             z-index: 1;"
                                         >
                                             <v-row
-                                                    justify="end"
-                                                    align="start"
-                                                    style="margin-right: 15px"
+                                                justify="end"
+                                                align="start"
+                                                style="margin-right: 15px"
                                             >
                                                 <slot name="menu-buttons">
+                                                    <v-menu
+                                                        offset-y
+                                                        open-on-hover
+                                                        left
+                                                    >
+                                                        <template
+                                                            v-slot:activator="{ on,}"
+                                                        >
+                                                            <div>
+                                                                <v-btn
+                                                                    class="gs-model-z-index-1"
+                                                                    style="margin-right: 5px;"
+                                                                    color="primary"
+                                                                    text
+                                                                    @click="openCodeViewer()"
+                                                                    :disabled="!initLoad"
+                                                                    v-on="on"
+                                                                >
+                                                                    <v-icon>{{ icon.code }}</v-icon>
+                                                                    <div>CODE</div>
+                                                                    <v-progress-circular
+                                                                            indeterminate
+                                                                            v-if="
+                                                                            ideWindow
+                                                                        "
+                                                                    ></v-progress-circular>
+                                                                </v-btn>
+                                                            </div>
+                                                        </template>
+                                                        <v-list
+                                                            style="width: 175px"
+                                                        >
+                                                            <v-list-item
+                                                                v-for="( item, index ) in codeItems"
+                                                                :key="index"
+                                                                    @click="functionSelect(item.title,index)"
+                                                            >
+                                                                <v-list-item-title>{{ item.title }}</v-list-item-title>
+                                                            </v-list-item>
+                                                        </v-list>
+                                                    </v-menu>
+
+                                                    <v-menu
+                                                        class="pa-2"
+                                                        open-on-hover
+                                                        offset-y
+                                                        left
+                                                    >
+                                                        <template v-slot:activator="{ on }">
+                                                            <div v-if="isReadOnlyModel">
+                                                                <v-btn
+                                                                    class="gs-model-z-index-1 es-hide-fork-btn"
+                                                                    text
+                                                                    :disabled="disableBtn"
+                                                                    @click="saveComposition('fork')"
+                                                                    style="margin-right: 5px;"
+                                                                >
+                                                                    <v-icon>{{ icon.fork }}</v-icon>
+                                                                    <div class="es-hide-fork">FORK</div>
+                                                                </v-btn>
+                                                                <v-btn v-if="!projectVersion"
+                                                                    class="gs-model-z-index-1 es-hide-join-btn"
+                                                                    :color="joinRequestedText.show ? 'primary' : 'success'"
+                                                                    :disabled="disableBtn"
+                                                                    @click="requestInviteUser()"
+                                                                    style="margin-right: 5px;"
+                                                                    text
+                                                                >
+                                                                    <div v-if="joinRequestedText.show">
+                                                                        <v-icon>{{ icon.join }}</v-icon>
+                                                                    </div>
+                                                                    <div class="es-hide-join">
+                                                                        {{joinRequestedText.text}}
+                                                                    </div>
+                                                                </v-btn>
+                                                            </div>
+                                                            <div v-else>
+                                                                <v-btn
+                                                                    class="gs-model-z-index-1 es-hide-save-btn"
+                                                                    text
+                                                                    v-if="showSaveBtn"
+                                                                    style="margin-right: 5px;"
+                                                                    :disabled="disableBtn"
+                                                                    @click="saveComposition('save')"
+                                                                    v-on="on"
+                                                                >
+                                                                    <v-icon>{{ icon.save }}</v-icon>
+                                                                    <div class="es-hide-save">SAVE</div>
+                                                                </v-btn>
+                                                                <v-btn
+                                                                    class="gs-model-z-index-1"
+                                                                    text
+                                                                    v-else
+                                                                    :disabled="disableBtn"
+                                                                    @click="saveComposition('fork')"
+                                                                    style="margin-right: 5px;"
+                                                                    v-on="on"
+                                                                >
+                                                                    <v-icon>{{ icon.fork }}</v-icon>
+                                                                    <div class="es-hide-fork">
+                                                                        FORK
+                                                                    </div>
+                                                                </v-btn>
+                                                            </div>
+                                                        </template>
+                                                        <v-list v-if="!isClazzModeling">
+                                                            <v-list-item
+                                                                v-for="(item, index) in filteredSaveItems"
+                                                                :key="index"
+                                                                @click="functionSelect(item.title,index)"
+                                                            >
+                                                                <v-list-item-title>{{item.title}}</v-list-item-title>
+                                                            </v-list-item>
+                                                        </v-list>
+                                                    </v-menu>
                                                     <v-menu
                                                             class="pa-2"
                                                             open-on-hover
@@ -349,9 +460,7 @@
                                                             left
                                                     >
                                                         <template
-                                                                v-slot:activator="{
-                                                                on,
-                                                            }"
+                                                            v-slot:activator="{ on, }"
                                                         >
                                                             <div>
                                                                 <v-btn
@@ -375,24 +484,18 @@
                                                             offset-y
                                                             left
                                                     >
-                                                        <template
-                                                                v-slot:activator="{on,}"
-                                                        >
+                                                        <template v-slot:activator="{on,}">
                                                             <div>
                                                                 <v-btn
-                                                                        class="gs-model-z-index-1"
-                                                                        v-if="isHexagonal"
-                                                                        text
-                                                                        style="
-                                                                        margin-right: 5px;
-                                                                    "
-                                                                        @click="generateModel()"
-                                                                        :disabled="disableBtn"
-                                                                        v-on="on"
+                                                                    class="gs-model-z-index-1"
+                                                                    v-if="isHexagonal"
+                                                                    text
+                                                                    style="margin-right: 5px;"
+                                                                    @click="generateModel()"
+                                                                    :disabled="disableBtn"
+                                                                    v-on="on"
                                                                 >
-                                                                    <v-icon
-                                                                    >mdi-hexagon-outline</v-icon
-                                                                    >
+                                                                    <v-icon>mdi-hexagon-outline</v-icon>
                                                                     <div>
                                                                         Hexagonal
                                                                     </div>
@@ -413,16 +516,14 @@
                                                         </template>
 
                                                         <v-list
-                                                                style="overflow: hidden;"
+                                                            style="overflow: hidden;"
                                                         >
                                                             <v-list-item
-                                                                    v-for="(item, index) in conversionItems"
-                                                                    :key="index"
-                                                                    @click="functionSelect(item.title,index)"
+                                                                v-for="(item, index) in conversionItems"
+                                                                :key="index"
+                                                                @click="functionSelect(item.title,index)"
                                                             >
-                                                                <v-list-item-title
-                                                                >{{item.title}}
-                                                                </v-list-item-title>
+                                                                <v-list-item-title>{{item.title}}</v-list-item-title>
                                                             </v-list-item>
                                                         </v-list>
                                                     </v-menu>
@@ -473,29 +574,23 @@
                                                     <!--                                                        </v-list>-->
                                                     <!--                                                    </v-menu>-->
 
-                                                    <v-menu
-                                                            v-if="
-                                                            isServerModel &&
-                                                            !isClazzModeling
-                                                        "
-                                                            class="pa-2"
-                                                            open-on-click
-                                                            offset-y
-                                                            left
+                                                    <v-menu v-if="isServerModel && !isClazzModeling"
+                                                        class="pa-2"
+                                                        open-on-click
+                                                        offset-y
+                                                        left
                                                     >
                                                         <template
-                                                                v-slot:activator="{
-                                                                on,
-                                                            }"
+                                                            v-slot:activator="{ on, }"
                                                         >
                                                             <div>
                                                                 <v-btn
-                                                                        class="gs-model-z-index-1 es-hide-replay-btn"
-                                                                        text
-                                                                        style="margin-right: 5px;"
-                                                                        @click="loadVersions()"
-                                                                        :disabled="disableBtn"
-                                                                        v-on="on"
+                                                                    class="gs-model-z-index-1 es-hide-replay-btn"
+                                                                    text
+                                                                    style="margin-right: 5px;"
+                                                                    @click="loadVersions()"
+                                                                    :disabled="disableBtn"
+                                                                    v-on="on"
                                                                 >
                                                                     <v-icon>mdi-restart</v-icon>
                                                                     <div class="es-hide-replay">Versions</div>
@@ -509,33 +604,25 @@
                                                                 <v-divider></v-divider>
                                                                 <div style="overflow-y: scroll; height: 200px;">
                                                                     <v-list-item
-                                                                            v-for="(item,index) in filteredVersionLists"
-                                                                            :key="index"
-                                                                            @click="moveToVersion(item)"
-                                                                            two-line
+                                                                        v-for="(item,index) in filteredVersionLists"
+                                                                        :key="index"
+                                                                        @click="moveToVersion(item)"
+                                                                        two-line
                                                                             dense
                                                                     >
                                                                         <v-list-item-content>
-                                                                            <v-list-item-title
-                                                                                    style="font-size: medium;">
-                                                                                {{item.version}}
-                                                                            </v-list-item-title>
-                                                                            <v-list-item-subtitle
-                                                                                    style="font-size: 10px;"
-                                                                            >{{convertTimeStampToDate(item.timeStamp)}}</v-list-item-subtitle
-                                                                            >
+                                                                            <v-list-item-title style="font-size: medium;">{{item.version}}</v-list-item-title>
+                                                                            <v-list-item-subtitle style="font-size: 10px;">{{convertTimeStampToDate(item.timeStamp)}}</v-list-item-subtitle>
                                                                         </v-list-item-content>
                                                                     </v-list-item>
                                                                 </div>
                                                                 <v-divider></v-divider>
                                                             </div>
                                                             <v-list-item
-                                                                    @click="saveComposition('save')"
-                                                                    style="
-                                                                    margin-top: -5px;
-                                                                    margin-bottom: -10px;
-                                                                    text-align: start;
-                                                                "
+                                                                @click="saveComposition('save')"
+                                                                style="margin-top: -5px;
+                                                                margin-bottom: -10px;
+                                                                text-align: start;"
                                                             >
                                                                 <v-list-item-title>
                                                                     <v-icon small>{{icon.save}}</v-icon>
@@ -543,95 +630,14 @@
                                                                 </v-list-item-title>
                                                             </v-list-item>
                                                             <v-list-item
-                                                                    @click="showReplay()"
-                                                                    style="
-                                                                    margin-top: -5px;
-                                                                    margin-bottom: -10px;
-                                                                    text-align: start;
-                                                                "
+                                                                @click="showReplay()"
+                                                                style="margin-top: -5px;
+                                                                margin-bottom: -10px;
+                                                                text-align: start;"
                                                             >
                                                                 <v-list-item-title>
                                                                     <v-icon small>mdi-restart</v-icon>REPLAY
                                                                 </v-list-item-title>
-                                                            </v-list-item>
-                                                        </v-list>
-                                                    </v-menu>
-
-                                                    <v-menu
-                                                            class="pa-2"
-                                                            open-on-hover
-                                                            offset-y
-                                                            left
-                                                    >
-                                                        <template v-slot:activator="{ on }">
-                                                            <div v-if="isReadOnlyModel">
-                                                                <v-btn
-                                                                        class="gs-model-z-index-1 es-hide-fork-btn"
-                                                                        text
-                                                                        :disabled="disableBtn"
-                                                                        @click="saveComposition('fork')"
-                                                                        style="margin-right: 5px;"
-                                                                >
-                                                                    <v-icon>{{ icon.fork }}</v-icon>
-                                                                    <div class="es-hide-fork">
-                                                                        FORK
-                                                                    </div>
-                                                                </v-btn>
-                                                                <v-btn
-                                                                        class="gs-model-z-index-1 es-hide-join-btn"
-                                                                        v-if="!projectVersion"
-                                                                        :color="joinRequestedText.show ? 'primary' : 'success'"
-                                                                        :disabled="disableBtn"
-                                                                        @click="requestInviteUser()"
-                                                                        style="margin-right: 5px;"
-                                                                        text
-                                                                >
-                                                                    <div v-if="joinRequestedText.show">
-                                                                        <v-icon>{{ icon.join }}</v-icon>
-                                                                    </div>
-                                                                    <div class="es-hide-join">
-                                                                        {{joinRequestedText.text}}
-                                                                    </div>
-                                                                </v-btn>
-                                                            </div>
-                                                            <div v-else>
-                                                                <v-btn
-                                                                    class="gs-model-z-index-1 es-hide-save-btn"
-                                                                    text
-                                                                    v-if="showSaveBtn"
-                                                                    style="margin-right: 5px;"
-                                                                    :disabled="disableBtn"
-                                                                    @click="saveComposition('save')"
-                                                                    v-on="on"
-                                                                >
-                                                                    <v-icon>{{ icon.save }}</v-icon>
-                                                                    <div class="es-hide-save">
-                                                                        SAVE
-                                                                    </div>
-                                                                </v-btn>
-                                                                <v-btn
-                                                                    class="gs-model-z-index-1"
-                                                                    text
-                                                                    v-else
-                                                                    :disabled="disableBtn"
-                                                                    @click="saveComposition('fork')"
-                                                                    style="margin-right: 5px;"
-                                                                    v-on="on"
-                                                                >
-                                                                    <v-icon>{{ icon.fork }}</v-icon>
-                                                                    <div class="es-hide-fork">
-                                                                        FORK
-                                                                    </div>
-                                                                </v-btn>
-                                                            </div>
-                                                        </template>
-                                                        <v-list v-if="!isClazzModeling">
-                                                            <v-list-item
-                                                                v-for="(item, index) in filteredSaveItems"
-                                                                :key="index"
-                                                                @click="functionSelect(item.title,index)"
-                                                            >
-                                                                <v-list-item-title>{{item.title}}</v-list-item-title>
                                                             </v-list-item>
                                                         </v-list>
                                                     </v-menu>
@@ -653,7 +659,7 @@
                                                                     @click="openInviteUsers()"
                                                                 >
                                                                     <v-icon>{{icon.share}}</v-icon>
-                                                                    <div class="es-hide-share"> SHARE </div>
+                                                                    <div class="es-hide-share"> SHARE123123 </div>
                                                                     <v-avatar
                                                                         v-if="requestCount"
                                                                         size="25"
@@ -687,53 +693,6 @@
                                                         <div class="es-hide-code">chatGPT</div>
                                                     </v-btn> -->
                                                     <!-- v-if="isOwnModel || isServerModel || isClazzModeling" -->
-                                                    <v-menu
-                                                            offset-y
-                                                            open-on-hover
-                                                            left
-                                                    >
-                                                        <template
-                                                                v-slot:activator="{
-                                                                on,
-                                                            }"
-                                                        >
-                                                            <div>
-                                                                <v-btn
-                                                                    class="gs-model-z-index-1"
-                                                                    style="margin-right: 5px;"
-                                                                    color="primary"
-                                                                    text
-                                                                    @click="openCodeViewer()"
-                                                                    :disabled="!initLoad"
-                                                                    v-on="on"
-                                                                >
-                                                                    <v-icon>{{ icon.code }}</v-icon>
-                                                                    <div>
-                                                                        CODE
-                                                                    </div>
-                                                                    <v-progress-circular
-                                                                            indeterminate
-                                                                            v-if="
-                                                                            ideWindow
-                                                                        "
-                                                                    ></v-progress-circular>
-                                                                </v-btn>
-                                                            </div>
-                                                        </template>
-                                                        <v-list
-                                                                style="width: 175px"
-                                                        >
-                                                            <v-list-item
-                                                                    v-for="( item, index ) in codeItems"
-                                                                    :key="index"
-                                                                    @click="functionSelect(item.title,index)"
-                                                            >
-                                                                <v-list-item-title
-                                                                >{{ item.title }}
-                                                                </v-list-item-title>
-                                                            </v-list-item>
-                                                        </v-list>
-                                                    </v-menu>
                                                 </slot>
                                             </v-row>
                                         </div>
