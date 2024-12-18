@@ -133,6 +133,13 @@
                                             style="font-size: small;"
                                     ></v-checkbox>
                                 </v-row>
+                                <v-row v-if="useMonitoring" style="margin-top: -30px;">
+                                    <v-checkbox
+                                            v-model="element.isSearchKey"
+                                            label="Use Search Key in Monitoring"
+                                            style="font-size: small;"
+                                    ></v-checkbox>
+                                </v-row>
                             </v-col>
                         </div>
                     </transition-group>
@@ -248,7 +255,7 @@
 
 <script>
     import draggable from 'vuedraggable'
-import DetailComponent from '../../ui/DetailComponent.vue';
+    import DetailComponent from '../../ui/DetailComponent.vue';
     import umlCanvas from '../class-modeling/UMLClassModelCanvas.vue'
     var changeCase = require('change-case');
 
@@ -274,11 +281,15 @@ import DetailComponent from '../../ui/DetailComponent.vue';
                     return []
                 }
             },
+            useMonitoring: {
+                type: Boolean,
+                default: false
+            }
         },
         components: {
             draggable,
             umlCanvas,
-                DetailComponent,
+            DetailComponent,
         },
         data: function () {
             return {
@@ -401,6 +412,9 @@ import DetailComponent from '../../ui/DetailComponent.vue';
             },
             editAttributeItem(item) {
                 var me = this
+                if(me.useMonitoring && !item.isSearchKey) {
+                    item.isSearchKey = false
+                }
                 me.attributeEditIndex = me.value.indexOf(item)
                 me.attributeEdit = true
             },
@@ -423,7 +437,8 @@ import DetailComponent from '../../ui/DetailComponent.vue';
                     "isVO": item.isVO,
                     "isLob": item.isLob,
                     'isCorrelationKey': item.isCorrelationKey,
-                    "displayName": item.displayName
+                    "displayName": item.displayName,
+                    "isSearchKey": item.isSearchKey || false
                 }
 
                 if(me.voList.includes(tmpObject['className'])) {
@@ -515,6 +530,7 @@ import DetailComponent from '../../ui/DetailComponent.vue';
                         "isVO": false,
                         "isLob": false,
                         'isCorrelationKey': false,
+                        'isSearchKey': false
                     }
 
                     if(me.voList.includes(tmpObject['className'])) {

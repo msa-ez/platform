@@ -136,6 +136,15 @@
                     return
                 }
 
+                if (this.isProgress) {
+                    style['stroke'] = this.progressColor;
+                    style['stroke-width'] = 2.5;
+                    style['stroke-opacity'] = 1;
+                } else {
+                    style['stroke'] = 'grey';
+                    style['stroke-width'] = 1.4;
+                }
+
                 return style
             },
             createNew(canvas, elementId, from, to, vertices) {

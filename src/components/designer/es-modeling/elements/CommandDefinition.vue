@@ -77,9 +77,9 @@
                         'fill-r': 1,
                         'fill-cx': .1,
                         'fill-cy': .1,
-                        'stroke-width': 1.4,
-                        'stroke': '#5099F7',
-                        fill: '#5099F7',
+                        'stroke-width': isProgress ? 5 : 1.4,
+                        'stroke': isProgress ? progressColor : '#5099F7',
+                        'fill': '#5099F7',
                         'fill-opacity': 1,
                         r: '1', 'z-index': '998'
                     }"
@@ -90,6 +90,23 @@
             </sub-elements>
 
             <sub-elements>
+                <rectangle-element
+                    v-if="isProgress"
+                    :sub-width="25"
+                    :sub-height="25"
+                    :sub-top="0"
+                    :sub-left="0"
+                    :sub-style="{
+                        'font-size': '15', 
+                        'font-weight': 'bold',
+                        'font-color': '#ffffff',
+                        'stroke': progressColor,
+                        'fill': progressColor,
+                        'fill-opacity': 1
+                    }"
+                    :label.sync="progressEventSequence"
+                ></rectangle-element>
+                
                 <geometry-point
                         :coordinate="[95,5]"
                         :_style="statusCompleteStyle">

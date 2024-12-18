@@ -54,6 +54,7 @@
                                 :type="value._type"
                                 :elementId="value.elementView.id"
                                 @sync-attribute="syncFromAggregate"
+                                :useMonitoring="useMonitoring"
                         ></event-storming-attribute>
                     </v-card-text>
                 </v-card>
@@ -142,6 +143,10 @@
         props: {
             test:Object,
             isPBCModel: Boolean,
+            useMonitoring: {
+                type: Boolean,
+                default: false
+            }
         },
         components: {
             CommonPanel
