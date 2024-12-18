@@ -1,5 +1,30 @@
 {
   "message": "en",
+  "app": {
+    "showBeta": "Show Beta",
+    "hideBeta": "Hide Beta"
+  },
+  "AlgoliaModelLists" : {
+    "pet" : "Pet Shop",
+    "food" : "Food Delivery App",
+    "googleDrive": "Google Drive",
+    "shop" : "Shopping Mall"
+  },
+  "ClassCard": {
+    "enter" : "Enter"
+  },
+  "CommandDefinitionPanel" : {
+    "implementationSettings": "Design Level",
+    "commandMethodDetailTitle" : "Method Configuration: Select API paths and operation modes to perform data operations.",
+    "commandMethodDetailSubTitle1" : "Default Verbs: Uses standard paths for basic data operations (create, update, delete). This is suitable for common data manipulation.",
+    "commandMethodDetailSubTitle2" : "Extend Verb URI: Uses extended paths for specific requirements or additional functionality beyond basic operations. This is useful when processing data under specific conditions.",
+    "commandUsageDetailTitle" : "Extend Verb URI provides extended paths for performing specific operations in addition to basic API paths.",
+    "commandMethodDetailSubTitle3" : "POST: Used to create new resources on the server. For example, when creating a new user account.",
+    "commandMethodDetailSubTitle4" : "PUT: Used to update existing resources or create them if they don't exist. Suitable for updating entire data sets.",
+    "commandMethodDetailSubTitle5" : "PATCH: Used to update parts of a resource. Useful when changing specific fields rather than the entire resource.",
+    "commandMethodDetailSubTitle6" : "DELETE: Used to remove resources from the server. For example, when removing a specific user's account.",
+    "commandUsageDetailSubTitle1" : "/attached Aggregate's namePlural / Aggregate's ID class / command name"
+  },
   "DomainEventDefinitionPanel" : {
     "triggerByLifeCycleDetailTitle" : "Define tasks to be executed at specific points (before/after) during data lifecycle events such as saving, updating, and deleting.",
     "triggerByLifeCycleDetailSubTitle1": "Pre Persist: Executes right before data is saved.",
@@ -7,7 +32,13 @@
     "triggerByLifeCycleDetailSubTitle3": "Pre Update: Executes right before data is updated.",
     "triggerByLifeCycleDetailSubTitle4": "Post Update: Executes immediately after data is updated.",
     "triggerByLifeCycleDetailSubTitle5": "Pre Remove: Executes right before data is deleted.",
-    "triggerByLifeCycleDetailSubTitle6": "Post Remove: Executes immediately after data is deleted."
+    "triggerByLifeCycleDetailSubTitle6": "Post Remove: Executes immediately after data is deleted.",
+    "triggerByCommandDetailTitle": "Events are triggered by specific Commands. This defines events that occur when certain operations are performed in the system.",
+    "triggerByCommandDetailSubTitle1": "Example: When a user creates an order, the orderPlace command is executed, which triggers the order event.",
+    "triggerByPolicyDetailTitle": "Events are triggered by specific Policies. This defines events that occur according to business rules or policies.",
+    "triggerByPolicyDetailSubTitle1": "Example: Events can be triggered by policies that automatically execute when certain conditions are met.",
+    "associatedAggregateTitle": "Displays the name of the aggregate associated with the event.",
+    "associatedAggregateSubTitle1": "Helps understand the system structure and data flow by clearly showing which aggregate the event is related to."
   },
   "EventStormingAttributeEditor" : {
     "editAggregateMembersByClassDiagramBtn" : "This menu interacts with the Domain Class Modeling Tool to define their ubiquitous language with object-oriented manner.",
@@ -49,7 +80,8 @@
     "cons": "Cons:",
     "conclusions": "Conclusions:",
     "create": "Create",
-    "reconstructionDraft": "BoundedContext Reconstruction Draft"
+    "reconstructionDraft": "BoundedContext Reconstruction Draft",
+    "reconstructionAggregateDraft": "Aggregate Design Draft"
   },
   "RuleExampleDialog": {
     "generateExamples": "Generate Examples",

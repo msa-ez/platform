@@ -50,9 +50,13 @@
                         </div>
                     </div>
                     <div v-if="isGeneratorDone && openCodeFileName" class="gs-code-title"> - {{ openCodeFileName }}</div>
+                    <v-spacer></v-spacer>
+                    <v-icon @click="closeSeparate()"
+                        style="margin-right: 12px; cursor: pointer;"
+                    >mdi-close</v-icon>
                 </v-row>
                 <v-row v-if="isGeneratorDone"
-                        style="z-index: 1; margin:0px;"
+                        style="z-index: 1; margin: 0px;"
                 >
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
@@ -2734,6 +2738,9 @@
             me.openaiToken = await me.getToken();
         },
         methods: {
+            closeSeparate(){
+                this.$emit('close')
+            },
             getToken() {
                 var me = this
                 return new Promise(async function (resolve, reject) {
@@ -2900,19 +2907,19 @@ jobs:
       run: |
         cd ${me.openCode[0].name}
         mkdir -p ignore_test_file
-        mv src/test/java/${me.projectName}/*.java ignore_test_file/ || true
-        mv ignore_test_file/${me.selectedTestFile.name} src/test/java/${me.projectName}/ || true
+        mv src/test/java/${me.value.scm.repo}/*.java ignore_test_file/
+        mv ignore_test_file/${me.selectedTestFile.name} src/test/java/${me.value.scm.repo}/
     - name: Compile and Run Specific Test
       run: |
         cd ${me.openCode[0].name}
-        mvn test-compile
-        mvn test -Dtest=${me.projectName}.${me.selectedTestFile.name.replace('.java', '')} -Dsurefire.useFile=false
+        mvn clean install -DskipTests
+        mvn test -Dtest=${me.value.scm.repo}.${me.selectedTestFile.name.replace('.java', '')} -Dsurefire.useFile=false
     - name: Restore Test Files
       if: always()
       run: |
         cd ${me.openCode[0].name}
         if [ -d "ignore_test_file" ] && [ "$(ls -A ignore_test_file)" ]; then
-          mv ignore_test_file/*.java src/test/java/${me.projectName}/
+          mv ignore_test_file/*.java src/test/java/${me.value.scm.repo}/
         fi
         rm -rf ignore_test_file
     - name: Print Test Results
@@ -4283,7 +4290,7 @@ jobs:
                         // }
                         if (!set.has(item.code)) {
                             codeBag.push("# "+ item.name + ": \n" + item.code);
-                            if((option && option.keyword == "si") && item.name.includes("Test.java") && item.template === "https://github.com/msa-ez/topping-unit-test"){
+                            if((option && option.keyword == "si") && item.name.includes("Test.java")){
                                 me.testFileList.push(item)
                             }
                             if(option && option.keyword == "si"){
@@ -4876,7 +4883,7 @@ jobs:
                 });
 
                 window.$HandleBars.registerHelper("camelCase", function(str){
-                    return str.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
+                    return str.replace(/[^가-힣a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
                 });
 
                 window.$HandleBars.registerHelper("pascalCase", function(str){
@@ -5233,10 +5240,16 @@ jobs:
             applyBaseTemplateDialog( applyAll ){
                 var me = this
                 me.showApplyBaseTemplateDialog = false
+                var filteredLists = []
                 // BC Apply
-                if(applyAll && me.filteredTreeLists.length > 0){
+                if (me.filteredTreeLists.length != me.treeLists.length){
+                    filteredLists = [...me.treeLists];
+                }else{
+                    filteredLists = [...me.filteredTreeLists];
+                }
+                if(applyAll && filteredLists.length > 0){
                     me.$emit('changedByMe', true);
-                    me.filteredTreeLists.filter(tree=>tree.bcId).forEach(function(item){
+                    filteredLists.filter(tree=>tree.bcId).forEach(function(item){
                         var bcId = item ? item.bcId : null
                         if(bcId && me.value.elements[bcId]){
                             me.value.elements[bcId].preferredPlatform = JSON.parse(JSON.stringify(me.basePlatform));
@@ -7135,7 +7148,10 @@ jobs:
                     if(me.fileLoadCnt == 0){
                         me.fileLoadCnt = me.javaFileList.length
                         me.javaFileList.forEach(async function(data){
-                            let file = await me.gitAPI.getFile(me.value.scm.org, me.value.scm.repo, data.path) 
+                            let file = {'data':data.code}
+                            // if(!me.basePlatform == 'https://github.com/msa-ez/template-posco'){
+                            //     file = await me.gitAPI.getFile(me.value.scm.org, me.value.scm.repo, data.path) 
+                            // }
                             if(file){
                                 me.selectedCodeList[data.name] = file.data
                                 me.fileLoadCnt--;
@@ -7162,7 +7178,12 @@ jobs:
                     me.javaFileList = []
                     
                     try {
-                        let src = await me.gitAPI.getFolder(me.value.scm.org, me.value.scm.repo, me.openCode[0].name + '/src');
+                        let src = {}
+                        // if(me.basePlatform == 'https://github.com/msa-ez/template-posco'){
+                        src['data'] = me.collectFiles(me.openCode[0])
+                        // }else{
+                        //     src = await me.gitAPI.getFolder(me.value.scm.org, me.value.scm.repo, me.openCode[0].name + '/src');
+                        // }
                         if(src){
                             me.getJavaFileList(src.data)
                         }
@@ -7190,6 +7211,31 @@ jobs:
                         }
                     }
                 }
+            },
+            collectFiles(node, files = []) {
+                // 기본 검사
+                if (!node) return files;
+                
+                // 파일 정보가 있는 경우 수집
+                if (node.path && node.code) {
+                    // 이미 존재하는 파일인지 확인
+                    const isDuplicate = files.some(file => file.path === node.path);
+                    if (!isDuplicate) {
+                        files.push({
+                            name: node.name,
+                            path: node.path,
+                            code: node.code,
+                            type: node.file ? "file" : ""
+                        });
+                    }
+                }
+                
+                // children이 있는 경우 재귀적으로 처리
+                if (Array.isArray(node.children)) {
+                    node.children.forEach(child => this.collectFiles(child, files));
+                }
+                
+                return files;
             },
             editBreakPoint(debuggerPoint){
                 var me = this

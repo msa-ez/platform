@@ -1489,6 +1489,10 @@
         async mounted() {
             var me = this
 
+            me.$EventBus.$on('login', function() {
+                // 새로고침 수행
+                window.location.reload();
+            });
             window.addEventListener("paste", this.myFunction);
             me.courseInfo = await this.getCourseInfo();
             if (me.courseInfo) {
@@ -1765,7 +1769,7 @@
         methods: {
             loginToUseLab(){
                 var me = this
-                if(!me.isLogin) {
+                if (!me.isLogin) {
                     me.$EventBus.$emit('showLoginDialog');
                 }
             },

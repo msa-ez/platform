@@ -1,0 +1,50 @@
+name: Deploy to Firebase Hosting on merge
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Node.js 14.21.3
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14.21.3'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Build project
+        env:
+          VUE_APP_FIREBASE_apiKey: ${{ secrets.VUE_APP_FIREBASE_APIKEY }}
+          VUE_APP_FIREBASE_authDomain: ${{ secrets.VUE_APP_FIREBASE_AUTHDOMAIN }}
+          VUE_APP_FIREBASE_databaseURL: ${{ secrets.VUE_APP_FIREBASE_DATABASEURL }}
+          VUE_APP_FIREBASE_projectId: ${{ secrets.VUE_APP_FIREBASE_PROJECTID }}
+          VUE_APP_FIREBASE_storageBucket: ${{ secrets.VUE_APP_FIREBASE_STORAGEBUCKET }}
+          VUE_APP_FIREBASE_messagingSenderId: ${{ secrets.VUE_APP_FIREBASE_MESSAGINGSENDERID }}
+          VUE_APP_FIREBASE_appId: ${{ secrets.VUE_APP_FIREBASE_APPID }}
+          VUE_APP_FIREBASE_measurementId: ${{ secrets.VUE_APP_FIREBASE_MEASUREMENTID }}
+          VUE_APP_ALGOLIA_API_KEY: ${{ secrets.VUE_APP_ALGOLIA_API_KEY }}
+          VUE_APP_ALGOLIA_APP_ID: ${{ secrets.VUE_APP_ALGOLIA_APP_ID }}
+          VUE_APP_API_HOST: ${{ secrets.VUE_APP_API_HOST }}
+          VUE_APP_FILE_PATH: ${{ secrets.VUE_APP_FILE_PATH }}
+          VUE_APP_FIREBASE_trackingId: ${{ secrets.VUE_APP_FIREBASE_TRACKINGID }}
+          VUE_APP_IAMPORT_ImpKey: ${{ secrets.VUE_APP_IAMPORT_IMPKEY }}
+          VUE_APP_TRANSLATE_KEY: ${{ secrets.VUE_APP_TRANSLATE_KEY }}
+        run: npm run build
+
+      - name: Install Node.js 18.0.0
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.0.0'
+      
+      - name: Deploy to Firebase
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EVENTSTORMING_TOOL_DB }}
+          channelId: live
+          projectId: eventstorming-tool-db

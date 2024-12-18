@@ -809,6 +809,21 @@ code[class*=language-]:nth-child(1) {
 }
 
 
+.delete-input-detail {
+    margin: 0px !important;
+}
+
+.delete-input-detail .v-text-field__details {
+    display: none !important;
+}
+.delete-raido-detail .v-input__control .v-messages {
+    display: none !important;
+}
+
+.delete-raido-detail .v-input__control .v-input__slot {
+    margin-bottom: 0px !important;
+}
+
 .alert-text .v-alert__wrapper .v-alert__content {
     margin-left: -10px;
 }

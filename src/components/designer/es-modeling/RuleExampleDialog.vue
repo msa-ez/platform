@@ -56,7 +56,7 @@
                     <template v-for="(value, ruleIdx) in rule.values">
                         <tr class="tr-divider tr-input" style="border-bottom: 1px solid #E0E0E0;">
                             <template v-for="(given, key) in value['given'][0].value">
-                                <template v-if="checkGivenType(given)">
+                                <template v-if="checkItemType(given)">
                                     <td @click="selectTableData(ruleIdx, 'given', key)">
                                         <component
                                             v-if="'given-' + rule['givenItems'][0].name + '-' + key == selectedItemPath && selectedItemIndex == ruleIdx"
@@ -91,9 +91,9 @@
                                                 <template v-else>{{ givenValue[givenArrKey] }}</template>
                                             </div>
                                         </td>
-                                        <v-icon @click="removeGivenExample(key, ruleIdx, givenIdx)">mdi-delete</v-icon>
+                                        <v-icon @click="removeExampleItem('given', key, ruleIdx, givenIdx, 0)">mdi-delete</v-icon>
                                     </tr>
-                                    <v-icon @click="addGivenExample(key, ruleIdx)">mdi-plus</v-icon>
+                                    <v-icon @click="addExampleItem('given', key, ruleIdx, 0)">mdi-plus</v-icon>
                                 </table>
                             </template>
                             <td v-for="key in Object.keys(value['when'][0].value)"
@@ -112,20 +112,44 @@
                             </td>
 
                             <template v-for="(then, thenIdx) in value['then']">
-                                <td v-for="key in Object.keys(then.value)"
-                                    @click="selectTableData(ruleIdx, 'then', key, thenIdx, then.name)">
-                                    <component
-                                        v-if="'then-' + rule['thenItems'][thenIdx].name  + '-' + key == selectedItemPath && selectedItemIndex == ruleIdx"
-                                        class="td-component-size" :is="getComponentType(selectedAttType)"
-                                        v-model="then.value[key]" :label="selectedAttType" :items="selectedEnumItems" @save="closeExampleEditor()"
-                                        @selectChip="closeExampleEditor"></component>
-                                    <div v-else>
-                                        <v-chip class="rule-chip" v-if="chipLabels[then.value[key]]">{{
-                                            chipLabels[then.value[key]] }}</v-chip>
-                                        <template v-else>{{ then.value[key] }}</template>
-                                    </div>
-                                </td>
-                            </template>
+                                <template v-for="key in Object.keys(then.value)">
+                                    <template v-if="checkItemType(then.value[key])">
+                                        <td @click="selectTableData(ruleIdx, 'then', key, thenIdx, then.name)">
+                                            <component
+                                                v-if="'then-' + rule['thenItems'][thenIdx].name + '-' + key == selectedItemPath && selectedItemIndex == ruleIdx"
+                                                class="td-component-size" :is="getComponentType(selectedAttType)"
+                                                v-model="then.value[key]" :label="selectedAttType" :items="selectedEnumItems" @save="closeExampleEditor()"
+                                                @selectChip="closeExampleEditor"></component>
+                                            <div v-else>
+                                                <v-chip class="rule-chip" v-if="chipLabels[then.value[key]]">{{ chipLabels[then.value[key]] }}</v-chip>
+                                                <template v-else>{{ then.value[key] }}</template>
+                                            </div>
+                                        </td>
+                                    </template>
+                                    <table v-else class="rules-table" style="width: 100%;">
+                                        <tr>
+                                            <td v-for="(thenArrValue, thenArrKey) in then.value[key][0]" :key="thenArrKey"
+                                                class="given-td-uml">{{ thenArrKey }}</td>
+                                        </tr>
+                                        <tr v-for="(thenValue, thenItemIdx) in then.value[key]" :key="thenItemIdx">
+                                            <td v-for="(thenArrValue, thenArrKey) in thenValue" :key="thenArrKey"
+                                                @click="selectTableData(ruleIdx, 'then', thenArrKey, thenIdx, then.name)">
+                                                <component
+                                                    v-if="'then-' + rule['thenItems'][thenIdx].name + '-' + thenArrKey == selectedItemPath && selectedItemIndex == ruleIdx"
+                                                    class="td-component-size" :is="getComponentType(selectedAttType)"
+                                                    v-model="thenValue[thenArrKey]" :label="selectedAttType" @save="closeExampleEditor()" @selectChip="closeExampleEditor">
+                                                </component>
+                                                <div v-else>
+                                                    <v-chip class="rule-chip" v-if="chipLabels[thenValue[thenArrKey]]">{{ chipLabels[thenValue[thenArrKey]] }}</v-chip>
+                                                    <template v-else>{{ thenValue[thenArrKey] }}</template>
+                                                </div>
+                                            </td>
+                                            <v-icon @click="removeExampleItem('then', key, ruleIdx, thenItemIdx, thenIdx)">mdi-delete</v-icon>
+                                        </tr>
+                                        <v-icon @click="addExampleItem('then', key, ruleIdx, thenIdx)">mdi-plus</v-icon>
+                                    </table>
+                                </template>
+                            </template> 
                             <v-tooltip bottom>
                                 <template v-slot:activator="{ on, attrs }">
                                     <v-icon style="position: absolute; right: 15px; margin-top: 8px;" v-bind="attrs"
@@ -242,13 +266,18 @@
             }
         },
         methods: {
-            checkGivenType(given) {
-                var isArray = Array.isArray(given);
-                var isObject = typeof given == 'object';
+            checkItemType(item) {
+                var isArray = Array.isArray(item);
+                var isObject = typeof item == 'object';
                 return !isArray || !isObject;
             },
-            removeGivenExample(key, ruleIdx, givenIdx) {
-                const items = this.rule.values[ruleIdx]['given'][0].value[key];
+            removeExampleItem(type, key, ruleIdx, itemIdx, thenIdx) {
+                let items;
+                if(type == 'given'){
+                    items = this.rule.values[ruleIdx]['given'][0].value[key];
+                } else {
+                    items = this.rule.values[ruleIdx][type][thenIdx].value[key];
+                }
                 if (!items) {
                     console.error('No items found');
                     return;
@@ -257,12 +286,44 @@
                     console.error('Cannot delete as only one item remains');
                     return;
                 }
-                if (givenIdx >= items.length) {
+                if (itemIdx >= items.length) {
                     console.error('Invalid index to delete');
                     return;
                 }
-                items.splice(givenIdx, 1);
+                items.splice(itemIdx, 1);
             },
+            addExampleItem(type, key, ruleIdx, thenIdx) {
+                var me = this;
+                let exampeObject = {};
+                if(type == 'given'){
+                    var field = me.rule.givenItems[0].aggregateRoot.fieldDescriptors.find(x => x.name == key);
+                    if (me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId]) {
+                        me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId].fieldDescriptors.forEach(function (givenField) {
+                            exampeObject[givenField.name] = "N/A";
+                        });
+                        if (!me.rule.values[0]['given'][0].value[field.name]) {
+                            me.$set(me.rule.values[0]['given'][0].value, field.name, []);
+                        }
+                        me.rule.values[ruleIdx]['given'][0].value[field.name].push(exampeObject);
+                    } else {
+                        console.error('Field classId not found in entities.elements');
+                    }
+                } else {
+                    var field = me.rule.thenItems[thenIdx].aggregateRoot.fieldDescriptors.find(x => x.name == key);
+                    if (me.rule.thenItems[thenIdx].aggregateRoot.entities.elements[field.classId]) {
+                        me.rule.thenItems[thenIdx].aggregateRoot.entities.elements[field.classId].fieldDescriptors.forEach(function (thenField) {
+                            exampeObject[thenField.name] = "N/A";
+                        });
+                        if (!me.rule.values[0]['then'][thenIdx].value[field.name]) {
+                            me.$set(me.rule.values[0]['then'][thenIdx].value, field.name, []);
+                        }
+                        me.rule.values[ruleIdx]['then'][thenIdx].value[field.name].push(exampeObject);
+                    } else {
+                        console.error('Field classId not found in entities.elements');
+                    }
+                }
+            },
+            
             removeExample(ruleIdx) {
                 if (this.rule.values.length > 1) {
                     this.rule.values.splice(ruleIdx, 1);
@@ -277,23 +338,6 @@
                 }
                 if(me.exampleFrameWork){
                     me.rule.values.push(JSON.parse(JSON.stringify(me.exampleFrameWork)))
-                }
-            },
-            addGivenExample(key, ruleIdx) {
-                var me = this;
-                var field = me.rule.givenItems[0].aggregateRoot.fieldDescriptors.find(x => x.name == key);
-                let givenObject = {};
-
-                if (me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId]) {
-                    me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId].fieldDescriptors.forEach(function (givenField) {
-                        givenObject[givenField.name] = "N/A";
-                    });
-                    if (!me.rule.values[0]['given'][0].value[field.name]) {
-                        me.$set(me.rule.values[0]['given'][0].value, field.name, []);
-                    }
-                    me.rule.values[ruleIdx]['given'][0].value[field.name].push(givenObject);
-                } else {
-                    console.error('Field classId not found in entities.elements');
                 }
             },
             getComponentType(type) {
@@ -760,19 +804,12 @@
                 me.rule.givenItems[0].aggregateRoot.fieldDescriptors.forEach(function (field){
                     var givenArr = [];
                     let givenObject = {};
-                    if(me.rule.givenItems[0].aggregateRoot.entities.elements && me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId]) {
-                        if(me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId]._type == "org.uengine.uml.model.enum"){
-                            givenObject = "N/A";
-                            // me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId].items.forEach(function (item){
-                            //     givenObject.push(item.value)
-                            // });
-                        } else {
-                            me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId].fieldDescriptors.forEach(function (givenField){
-                                givenObject[givenField.name] = "N/A";
-                            });
-                            givenArr.push(givenObject);
-                            givenObject = givenArr;
-                        }
+                    if(me.rule.givenItems[0].aggregateRoot.entities.elements && me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId] && me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId].fieldDescriptors) {
+                        me.rule.givenItems[0].aggregateRoot.entities.elements[field.classId].fieldDescriptors.forEach(function (givenField){
+                            givenObject[givenField.name] = "N/A";
+                        });
+                        givenArr.push(givenObject);
+                        givenObject = givenArr;
                     } else {
                         givenObject = "N/A";
                     }
@@ -797,7 +834,17 @@
                     }
                     let fieldDescriptors = item.fieldDescriptors || item.aggregateRoot.fieldDescriptors
                     fieldDescriptors.forEach(function (field){
-                        obj.value[field.name] = "N/A";
+                        if (item.aggregateRoot && item.aggregateRoot.entities && item.aggregateRoot.entities.elements && item.aggregateRoot.entities.elements[field.classId] && item.aggregateRoot.entities.elements[field.classId].fieldDescriptors) {
+                            let thenArr = [];
+                            let thenObject = {};
+                            item.aggregateRoot.entities.elements[field.classId].fieldDescriptors.forEach(function (thenField){
+                                thenObject[thenField.name] = "N/A";
+                            });
+                            thenArr.push(thenObject);
+                            obj.value[field.name] = thenArr;
+                        } else {
+                            obj.value[field.name] = "N/A";
+                        }
                     });
                     values['then'].push(obj);
                     me.thenAttLength[item.name] = fieldDescriptors.length;

@@ -271,13 +271,13 @@
                                     <v-tooltip bottom>
                                         <template v-slot:activator="{ on }">
                                             <v-btn
-                                                    class="gs-model-z-index-2 gs-redo-opacity-hover"
-                                                    :disabled="isRedoDisabled"
-                                                    text
-                                                    small
-                                                    right
-                                                    @click.native="redo()"
-                                                    v-on="on"
+                                                class="gs-model-z-index-2 gs-redo-opacity-hover"
+                                                :disabled="isRedoDisabled"
+                                                text
+                                                small
+                                                right
+                                                @click.native="redo()"
+                                                v-on="on"
                                             >
                                                 <v-icon medium>mdi-redo</v-icon>
                                             </v-btn>
@@ -290,13 +290,11 @@
                                 <slot name="top">
                                     <v-row>
                                         <v-row
-                                                class="gs-model-z-index-1 es-is-mobile-project-name"
-                                                style="
-                                                margin: 5px 5px 0px 0px;
-                                                height: 64px;
-                                                max-width: 200px;
-                                                background-color: transparent;
-                                            "
+                                            class="gs-model-z-index-1 es-is-mobile-project-name"
+                                            style="margin: 5px 5px 0px 0px;
+                                            height: 64px;
+                                            max-width: 200px;
+                                            background-color: transparent;"
                                         >
                                             <div class="eventstorming-mobile-home-button">
                                                 <router-link to="/">
@@ -309,13 +307,11 @@
                                                 </router-link>
                                             </div>
                                             <v-icon
-                                                    style="
-                                                    height: 24px;
-                                                    margin-top: 38px;
-                                                "
-                                                    :disabled="disableBtn"
-                                                    @click="openExportDialog()"
-                                                    color="#8d8d8d"
+                                                style="height: 24px;
+                                                margin-top: 38px;"
+                                                :disabled="disableBtn"
+                                                @click="openExportDialog()"
+                                                color="#8d8d8d"
                                             >mdi-cog
                                             </v-icon>
                                             <slot name="projectName">
@@ -337,11 +333,126 @@
                                             z-index: 1;"
                                         >
                                             <v-row
-                                                    justify="end"
-                                                    align="start"
-                                                    style="margin-right: 15px"
+                                                justify="end"
+                                                align="start"
+                                                style="margin-right: 15px"
                                             >
                                                 <slot name="menu-buttons">
+                                                    <v-menu
+                                                        offset-y
+                                                        open-on-hover
+                                                        left
+                                                    >
+                                                        <template
+                                                            v-slot:activator="{ on,}"
+                                                        >
+                                                            <div>
+                                                                <v-btn
+                                                                    class="gs-model-z-index-1"
+                                                                    style="margin-right: 5px;"
+                                                                    color="primary"
+                                                                    text
+                                                                    @click="openCodeViewer()"
+                                                                    :disabled="!initLoad"
+                                                                    v-on="on"
+                                                                >
+                                                                    <v-icon>{{ icon.code }}</v-icon>
+                                                                    <div>CODE</div>
+                                                                    <v-progress-circular
+                                                                            indeterminate
+                                                                            v-if="
+                                                                            ideWindow
+                                                                        "
+                                                                    ></v-progress-circular>
+                                                                </v-btn>
+                                                            </div>
+                                                        </template>
+                                                        <v-list
+                                                            style="width: 175px"
+                                                        >
+                                                            <v-list-item
+                                                                v-for="( item, index ) in codeItems"
+                                                                :key="index"
+                                                                    @click="functionSelect(item.title,index)"
+                                                            >
+                                                                <v-list-item-title>{{ item.title }}</v-list-item-title>
+                                                            </v-list-item>
+                                                        </v-list>
+                                                    </v-menu>
+
+                                                    <v-menu
+                                                        class="pa-2"
+                                                        open-on-hover
+                                                        offset-y
+                                                        left
+                                                    >
+                                                        <template v-slot:activator="{ on }">
+                                                            <div v-if="isReadOnlyModel">
+                                                                <v-btn
+                                                                    class="gs-model-z-index-1 es-hide-fork-btn"
+                                                                    text
+                                                                    :disabled="disableBtn"
+                                                                    @click="saveComposition('fork')"
+                                                                    style="margin-right: 5px;"
+                                                                >
+                                                                    <v-icon>{{ icon.fork }}</v-icon>
+                                                                    <div class="es-hide-fork">FORK</div>
+                                                                </v-btn>
+                                                                <v-btn v-if="!projectVersion"
+                                                                    class="gs-model-z-index-1 es-hide-join-btn"
+                                                                    :color="joinRequestedText.show ? 'primary' : 'success'"
+                                                                    :disabled="disableBtn"
+                                                                    @click="requestInviteUser()"
+                                                                    style="margin-right: 5px;"
+                                                                    text
+                                                                >
+                                                                    <div v-if="joinRequestedText.show">
+                                                                        <v-icon>{{ icon.join }}</v-icon>
+                                                                    </div>
+                                                                    <div class="es-hide-join">
+                                                                        {{joinRequestedText.text}}
+                                                                    </div>
+                                                                </v-btn>
+                                                            </div>
+                                                            <div v-else>
+                                                                <v-btn
+                                                                    class="gs-model-z-index-1 es-hide-save-btn"
+                                                                    text
+                                                                    v-if="showSaveBtn"
+                                                                    style="margin-right: 5px;"
+                                                                    :disabled="disableBtn"
+                                                                    @click="saveComposition('save')"
+                                                                    v-on="on"
+                                                                >
+                                                                    <v-icon>{{ icon.save }}</v-icon>
+                                                                    <div class="es-hide-save">SAVE</div>
+                                                                </v-btn>
+                                                                <v-btn
+                                                                    class="gs-model-z-index-1"
+                                                                    text
+                                                                    v-else
+                                                                    :disabled="disableBtn"
+                                                                    @click="saveComposition('fork')"
+                                                                    style="margin-right: 5px;"
+                                                                    v-on="on"
+                                                                >
+                                                                    <v-icon>{{ icon.fork }}</v-icon>
+                                                                    <div class="es-hide-fork">
+                                                                        FORK
+                                                                    </div>
+                                                                </v-btn>
+                                                            </div>
+                                                        </template>
+                                                        <v-list v-if="!isClazzModeling">
+                                                            <v-list-item
+                                                                v-for="(item, index) in filteredSaveItems"
+                                                                :key="index"
+                                                                @click="functionSelect(item.title,index)"
+                                                            >
+                                                                <v-list-item-title>{{item.title}}</v-list-item-title>
+                                                            </v-list-item>
+                                                        </v-list>
+                                                    </v-menu>
                                                     <v-menu
                                                             class="pa-2"
                                                             open-on-hover
@@ -349,9 +460,7 @@
                                                             left
                                                     >
                                                         <template
-                                                                v-slot:activator="{
-                                                                on,
-                                                            }"
+                                                            v-slot:activator="{ on, }"
                                                         >
                                                             <div>
                                                                 <v-btn
@@ -375,24 +484,18 @@
                                                             offset-y
                                                             left
                                                     >
-                                                        <template
-                                                                v-slot:activator="{on,}"
-                                                        >
+                                                        <template v-slot:activator="{on,}">
                                                             <div>
                                                                 <v-btn
-                                                                        class="gs-model-z-index-1"
-                                                                        v-if="isHexagonal"
-                                                                        text
-                                                                        style="
-                                                                        margin-right: 5px;
-                                                                    "
-                                                                        @click="generateModel()"
-                                                                        :disabled="disableBtn"
-                                                                        v-on="on"
+                                                                    class="gs-model-z-index-1"
+                                                                    v-if="isHexagonal"
+                                                                    text
+                                                                    style="margin-right: 5px;"
+                                                                    @click="generateModel()"
+                                                                    :disabled="disableBtn"
+                                                                    v-on="on"
                                                                 >
-                                                                    <v-icon
-                                                                    >mdi-hexagon-outline</v-icon
-                                                                    >
+                                                                    <v-icon>mdi-hexagon-outline</v-icon>
                                                                     <div>
                                                                         Hexagonal
                                                                     </div>
@@ -413,16 +516,14 @@
                                                         </template>
 
                                                         <v-list
-                                                                style="overflow: hidden;"
+                                                            style="overflow: hidden;"
                                                         >
                                                             <v-list-item
-                                                                    v-for="(item, index) in conversionItems"
-                                                                    :key="index"
-                                                                    @click="functionSelect(item.title,index)"
+                                                                v-for="(item, index) in conversionItems"
+                                                                :key="index"
+                                                                @click="functionSelect(item.title,index)"
                                                             >
-                                                                <v-list-item-title
-                                                                >{{item.title}}
-                                                                </v-list-item-title>
+                                                                <v-list-item-title>{{item.title}}</v-list-item-title>
                                                             </v-list-item>
                                                         </v-list>
                                                     </v-menu>
@@ -473,29 +574,23 @@
                                                     <!--                                                        </v-list>-->
                                                     <!--                                                    </v-menu>-->
 
-                                                    <v-menu
-                                                            v-if="
-                                                            isServerModel &&
-                                                            !isClazzModeling
-                                                        "
-                                                            class="pa-2"
-                                                            open-on-click
-                                                            offset-y
-                                                            left
+                                                    <v-menu v-if="isServerModel && !isClazzModeling"
+                                                        class="pa-2"
+                                                        open-on-click
+                                                        offset-y
+                                                        left
                                                     >
                                                         <template
-                                                                v-slot:activator="{
-                                                                on,
-                                                            }"
+                                                            v-slot:activator="{ on, }"
                                                         >
                                                             <div>
                                                                 <v-btn
-                                                                        class="gs-model-z-index-1 es-hide-replay-btn"
-                                                                        text
-                                                                        style="margin-right: 5px;"
-                                                                        @click="loadVersions()"
-                                                                        :disabled="disableBtn"
-                                                                        v-on="on"
+                                                                    class="gs-model-z-index-1 es-hide-replay-btn"
+                                                                    text
+                                                                    style="margin-right: 5px;"
+                                                                    @click="loadVersions()"
+                                                                    :disabled="disableBtn"
+                                                                    v-on="on"
                                                                 >
                                                                     <v-icon>mdi-restart</v-icon>
                                                                     <div class="es-hide-replay">Versions</div>
@@ -509,33 +604,25 @@
                                                                 <v-divider></v-divider>
                                                                 <div style="overflow-y: scroll; height: 200px;">
                                                                     <v-list-item
-                                                                            v-for="(item,index) in filteredVersionLists"
-                                                                            :key="index"
-                                                                            @click="moveToVersion(item)"
-                                                                            two-line
+                                                                        v-for="(item,index) in filteredVersionLists"
+                                                                        :key="index"
+                                                                        @click="moveToVersion(item)"
+                                                                        two-line
                                                                             dense
                                                                     >
                                                                         <v-list-item-content>
-                                                                            <v-list-item-title
-                                                                                    style="font-size: medium;">
-                                                                                {{item.version}}
-                                                                            </v-list-item-title>
-                                                                            <v-list-item-subtitle
-                                                                                    style="font-size: 10px;"
-                                                                            >{{convertTimeStampToDate(item.timeStamp)}}</v-list-item-subtitle
-                                                                            >
+                                                                            <v-list-item-title style="font-size: medium;">{{item.version}}</v-list-item-title>
+                                                                            <v-list-item-subtitle style="font-size: 10px;">{{convertTimeStampToDate(item.timeStamp)}}</v-list-item-subtitle>
                                                                         </v-list-item-content>
                                                                     </v-list-item>
                                                                 </div>
                                                                 <v-divider></v-divider>
                                                             </div>
                                                             <v-list-item
-                                                                    @click="saveComposition('save')"
-                                                                    style="
-                                                                    margin-top: -5px;
-                                                                    margin-bottom: -10px;
-                                                                    text-align: start;
-                                                                "
+                                                                @click="saveComposition('save')"
+                                                                style="margin-top: -5px;
+                                                                margin-bottom: -10px;
+                                                                text-align: start;"
                                                             >
                                                                 <v-list-item-title>
                                                                     <v-icon small>{{icon.save}}</v-icon>
@@ -543,95 +630,14 @@
                                                                 </v-list-item-title>
                                                             </v-list-item>
                                                             <v-list-item
-                                                                    @click="showReplay()"
-                                                                    style="
-                                                                    margin-top: -5px;
-                                                                    margin-bottom: -10px;
-                                                                    text-align: start;
-                                                                "
+                                                                @click="showReplay()"
+                                                                style="margin-top: -5px;
+                                                                margin-bottom: -10px;
+                                                                text-align: start;"
                                                             >
                                                                 <v-list-item-title>
                                                                     <v-icon small>mdi-restart</v-icon>REPLAY
                                                                 </v-list-item-title>
-                                                            </v-list-item>
-                                                        </v-list>
-                                                    </v-menu>
-
-                                                    <v-menu
-                                                            class="pa-2"
-                                                            open-on-hover
-                                                            offset-y
-                                                            left
-                                                    >
-                                                        <template v-slot:activator="{ on }">
-                                                            <div v-if="isReadOnlyModel">
-                                                                <v-btn
-                                                                        class="gs-model-z-index-1 es-hide-fork-btn"
-                                                                        text
-                                                                        :disabled="disableBtn"
-                                                                        @click="saveComposition('fork')"
-                                                                        style="margin-right: 5px;"
-                                                                >
-                                                                    <v-icon>{{ icon.fork }}</v-icon>
-                                                                    <div class="es-hide-fork">
-                                                                        FORK
-                                                                    </div>
-                                                                </v-btn>
-                                                                <v-btn
-                                                                        class="gs-model-z-index-1 es-hide-join-btn"
-                                                                        v-if="!projectVersion"
-                                                                        :color="joinRequestedText.show ? 'primary' : 'success'"
-                                                                        :disabled="disableBtn"
-                                                                        @click="requestInviteUser()"
-                                                                        style="margin-right: 5px;"
-                                                                        text
-                                                                >
-                                                                    <div v-if="joinRequestedText.show">
-                                                                        <v-icon>{{ icon.join }}</v-icon>
-                                                                    </div>
-                                                                    <div class="es-hide-join">
-                                                                        {{joinRequestedText.text}}
-                                                                    </div>
-                                                                </v-btn>
-                                                            </div>
-                                                            <div v-else>
-                                                                <v-btn
-                                                                    class="gs-model-z-index-1 es-hide-save-btn"
-                                                                    text
-                                                                    v-if="showSaveBtn"
-                                                                    style="margin-right: 5px;"
-                                                                    :disabled="disableBtn"
-                                                                    @click="saveComposition('save')"
-                                                                    v-on="on"
-                                                                >
-                                                                    <v-icon>{{ icon.save }}</v-icon>
-                                                                    <div class="es-hide-save">
-                                                                        SAVE
-                                                                    </div>
-                                                                </v-btn>
-                                                                <v-btn
-                                                                    class="gs-model-z-index-1"
-                                                                    text
-                                                                    v-else
-                                                                    :disabled="disableBtn"
-                                                                    @click="saveComposition('fork')"
-                                                                    style="margin-right: 5px;"
-                                                                    v-on="on"
-                                                                >
-                                                                    <v-icon>{{ icon.fork }}</v-icon>
-                                                                    <div class="es-hide-fork">
-                                                                        FORK
-                                                                    </div>
-                                                                </v-btn>
-                                                            </div>
-                                                        </template>
-                                                        <v-list v-if="!isClazzModeling">
-                                                            <v-list-item
-                                                                v-for="(item, index) in filteredSaveItems"
-                                                                :key="index"
-                                                                @click="functionSelect(item.title,index)"
-                                                            >
-                                                                <v-list-item-title>{{item.title}}</v-list-item-title>
                                                             </v-list-item>
                                                         </v-list>
                                                     </v-menu>
@@ -687,54 +693,6 @@
                                                         <div class="es-hide-code">chatGPT</div>
                                                     </v-btn> -->
                                                     <!-- v-if="isOwnModel || isServerModel || isClazzModeling" -->
-                                                    <v-menu
-                                                            offset-y
-                                                            open-on-hover
-                                                            left
-                                                    >
-                                                        <template
-                                                                v-slot:activator="{
-                                                                on,
-                                                            }"
-                                                        >
-                                                            <div>
-                                                                <v-btn
-                                                                    class="gs-model-z-index-1"
-                                                                    style="margin-right: 5px;"
-                                                                    color="primary"
-                                                                    text
-                                                                    @click="openCodeViewer()"
-                                                                    :disabled="!initLoad"
-                                                                    v-on="on"
-                                                                >
-                                                                    <v-icon>{{ icon.code }}</v-icon>
-                                                                    <div>
-                                                                        CODE
-                                                                    </div>
-                                                                    <v-progress-circular
-                                                                            indeterminate
-                                                                            v-if="
-                                                                            ideWindow
-                                                                        "
-                                                                    ></v-progress-circular>
-                                                                </v-btn>
-                                                            </div>
-                                                        </template>
-                                                        <v-list
-                                                                style="width: 175px"
-                                                        >
-                                                            <v-list-item
-                                                                    v-for="( item, index ) in codeItems"
-                                                                    :key="index"
-                                                                    @click="functionSelect(item.title,index)"
-                                                            >
-                                                                <v-list-item-title
-                                                                >{{ item.title }}
-                                                                </v-list-item-title>
-                                                            </v-list-item>
-                                                        </v-list>
-                                                    </v-menu>
-
                                                     <v-menu v-if="useMonitoring" class="pa-2" offset-y left>
                                                         <template v-slot:activator="{ on, attrs }">
                                                             <div>
@@ -1258,6 +1216,11 @@
                             @clearModelValue="clearModelValue"
                             @showContinueBtn="showContinue = true"
                             @isPauseQueue="setIsPauseQueue"
+                            @onInputParamsCheckBefore="onInputParamsCheckBefore"
+                            @onFirstResponse="onFirstResponse"
+                            @onGenerationSucceeded="onGenerationSucceeded"
+                            @onRetry="onRetry"
+                            @onStopped="onStopped"
                             :generatorStep="generatorStep"
                             :defaultInputData="defaultGeneratorUiInputData"
                             :modelValue="value"
@@ -1295,6 +1258,11 @@
                             @onGenerationFinished="onGenerationFinished"
                             @clearModelValue="clearModelValue"
                             @isPauseQueue="setIsPauseQueue"
+                            @onInputParamsCheckBefore="onInputParamsCheckBefore"
+                            @onFirstResponse="onFirstResponse"
+                            @onGenerationSucceeded="onGenerationSucceeded"
+                            @onRetry="onRetry"
+                            @onStopped="onStopped"
                             :generatorStep="generatorStep"
                             :modelValue="value"
                             :tabs="tabs"
@@ -1797,11 +1765,6 @@
                                         <template v-slot:append>
                                             <v-icon @click="fetchFilteredEvents(correlationKey)">mdi-magnify</v-icon>
                                         </template>
-                                        <template v-slot:append-outer>
-                                            <v-btn icon @click="addEventSearchKey()">
-                                                <v-icon>mdi-plus</v-icon>
-                                            </v-btn>
-                                        </template>
                                     </v-text-field>
                                     <v-text-field
                                         v-if="eventSearchKey"
@@ -1936,6 +1899,7 @@
                         @changedByMe="settingChangedByMe"
                         @editModelData="editModelData"
                         @setInformation="setInformation"
+                        @close="closeSeparatePanel()"
                         canvas-name="event-storming-model-canvas"
                 ></CodeGenerator>
             </template>
@@ -2029,7 +1993,8 @@
                 :draftUIInfos="modelDraftDialogWithXAIDto.draftUIInfos"
                 :isGeneratorButtonEnabled="modelDraftDialogWithXAIDto.isGeneratorButtonEnabled"
                 @generateFromDraft="generateFromDraftWithXAI"
-                @close="modelDraftDialogWithXAIDto.isShow = false; modelDraftDialogWithXAIDto.actions.stop()"
+                @onClose="modelDraftDialogWithXAIDto.isShow = false; modelDraftDialogWithXAIDto.actions.stop()"
+                @onRetry="modelDraftDialogWithXAIDto.actions.retry()"
             ></ModelDraftDialogWithXAI>
           </v-dialog>
 
@@ -2082,10 +2047,16 @@
     import ModelDraftDialogForDistribution from "../context-mapping-modeling/dialogs/ModelDraftDialogForDistribution.vue"
     import BoundedContextRelocateActionsGenerator from "../modeling/generators/es-ddl-generators/BoundedContextRelocateActionsGenerator"
     import ModelDraftDialog from "../modeling/ModelDraftDialog"
-    import TestByUsingCommand from "./mixins/TestByUsingCommand"
+    import EventStormingTestTerminal from "./testTerminals/EventStormingTestTerminal.vue";
     import ModelDraftDialogWithXAI from "../context-mapping-modeling/dialogs/ModelDraftDialogWithXAI.vue"
-    import BCReGenerateCreateActionsGenerator from "../modeling/generators/es-ddl-generators/BCReGenerateCreateActionsGenerator"
+    import GWTGeneratorByFunctions from "../modeling/generators/es-ddl-generators/GWTGeneratorByFunctions";
+    import DraftGeneratorByFunctions from "../modeling/generators/es-ddl-generators/DraftGeneratorByFunctions";
+    import CreateAggregateActionsByFunctions from "../modeling/generators/es-ddl-generators/CreateAggregateActionsByFunctions";
+    import CreateCommandActionsByFunctions from "../modeling/generators/es-ddl-generators/CreateCommandActionsByFunctions";
+    import CreatePolicyActionsByFunctions from "../modeling/generators/es-ddl-generators/CreatePolicyActionsByFunctions";
     import GeneratorProgress from "./components/GeneratorProgress.vue"
+    import PreProcessingFunctionsGenerator from "../modeling/generators/es-ddl-generators/PreProcessingFunctionsGenerator";
+    import ESActionsUtil from "../modeling/generators/es-ddl-generators/modules/ESActionsUtil"
     const prettier = require("prettier");
     const plugins = require("prettier-plugin-java");
     const axios = require("axios");
@@ -2125,7 +2096,7 @@
     // import ModelCodeGenerator from "../modeling/ModelCodeGenerator";
     export default {
         name: "event-storming-model-canvas",
-        mixins: [ModelCanvas, TestByUsingCommand],
+        mixins: [ModelCanvas, EventStormingTestTerminal],
         components: {
             UIWizardDialoger,
             AutoModelingDialog,
@@ -2569,10 +2540,10 @@
                     },
                     isGeneratorButtonEnabled: true,
                     actions: {
-                        stop: () => {}
+                        stop: () => {},
+                        retry: () => {}
                     }
                 },
-                BCRegenerateCreateActionsGeneratorInputs: [],
 
                 generatorProgressDto: {
                     generateDone: true,
@@ -2584,8 +2555,62 @@
                 },
 
                 generators: {
-                    BCReGenerateCreateActionsGenerator: null
-                }
+                    CreateAggregateActionsByFunctions: {
+                        generator: null,
+                        inputs: [],
+                        generateIfInputsExist: () => {},
+                        initInputs: (draftOptions) => {},
+                        callbacks: {
+                            addAggregateRelation: []
+                        }
+                    },
+
+                    CreateCommandActionsByFunctions: {
+                        generator: null,
+                        inputs: [],
+                        generateIfInputsExist: () => {},
+                        initInputs: (draftOptions) => {}
+                    },
+
+                    CreatePolicyActionsByFunctions: {
+                        generator: null,
+                        inputs: [],
+                        generateIfInputsExist: () => {},
+                        initInputs: (draftOptions) => {}
+                    },
+
+                    GWTGeneratorByFunctions: {
+                        generator: null,
+                        inputs: [],
+                        generateIfInputsExist: () => {},
+                        initInputs: (draftOptions) => {}
+                    },
+
+                    DraftGeneratorByFunctions: {
+                        generator: null,
+                        initialAccumulatedDrafts: {},
+                        accumulatedDrafts: {},
+                        generate: (structuredDescription, boundedContext) => {},
+                        updateAccumulatedDrafts: (output, targetBoundedContext) => {}
+                    },
+
+                    PreProcessingFunctionsGenerator: {
+                        generator: null
+                    }
+                },
+
+                generatorsInGeneratorUI: {
+                    PreProcessingFunctionsGenerator: {
+                        callbacks: {},
+                        initialInputs: [],
+                        inputs: [],
+                        buildInitialInputs: () => {},
+                        initInputs: () => {},
+                        generateIfInputsExist: () => {}
+                    }
+                },
+
+                selectedDraftOptions: []
             };
         },
         computed: {
@@ -2744,7 +2769,7 @@
                 }
             })
 
-            this.generators.BCReGenerateCreateActionsGenerator = new BCReGenerateCreateActionsGenerator({
+            this.generators.CreateAggregateActionsByFunctions.generator = new CreateAggregateActionsByFunctions({
                 input: null,
 
                 onFirstResponse: (returnObj) => {
@@ -2757,6 +2782,8 @@
                         },
                         actions: {
                             stop: () => {
+                            },
+                            retry: () => {
                             }
                         },
                         isGeneratorButtonEnabled: false
@@ -2800,25 +2827,40 @@
                         this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
                     }
 
-                    if(this.BCRegenerateCreateActionsGeneratorInputs.length > 0) {
-                        this.generators.BCReGenerateCreateActionsGenerator.client.input = this.BCRegenerateCreateActionsGeneratorInputs.shift()
-                        this.generators.BCReGenerateCreateActionsGenerator.generate()
+                    if(returnObj.modelValue.callbacks && returnObj.modelValue.callbacks.addAggregateRelation) {
+                        this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation.push((esValue) => {
+                            returnObj.modelValue.callbacks.addAggregateRelation(esValue)
+                        })
                     }
-                    else {
-                        this.modelDraftDialogWithXAIDto = {
-                            ...this.modelDraftDialogWithXAIDto,
-                            isShow: false,
-                            draftUIInfos: {
-                                leftBoundedContextCount: 0
-                            },
-                            isGeneratorButtonEnabled: true
-                        }
-                        this.generatorProgressDto.generateDone = true
+
+
+                    if(this.generators.CreateAggregateActionsByFunctions.generateIfInputsExist())
+                        return
+
+                    if(this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation.length > 0) {
+                        this.changedByMe = true
+                        this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation.forEach(callback => callback(this.value))
                     }
+                    this.forceRefreshCanvas()
+
+                    this.generators.CreateCommandActionsByFunctions.initInputs(this.selectedDraftOptions)
+                    if(this.generators.CreateCommandActionsByFunctions.generateIfInputsExist())
+                        return
+
+
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
                 },
 
                 onRetry: (returnObj) => {
-                    alert(`[!] 이벤트 스토밍 생성 과정에서 오류가 발생했습니다. 다시 시도해주세요.\n* Error log \n${returnObj.errorMessage}`)
+                    alert(`[!] An error occurred during aggregate creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
                     this.modelDraftDialogWithXAIDto = {
                         ...this.modelDraftDialogWithXAIDto,
                         isShow: true,
@@ -2834,6 +2876,558 @@
                     this.generatorProgressDto.generateDone = true
                 }
             })
+            this.generators.CreateAggregateActionsByFunctions.generateIfInputsExist = () => {
+                if(this.generators.CreateAggregateActionsByFunctions.inputs.length > 0) {
+                    this.generators.CreateAggregateActionsByFunctions.generator.client.input = this.generators.CreateAggregateActionsByFunctions.inputs.shift()
+                    this.generators.CreateAggregateActionsByFunctions.generator.generate()
+                    return true
+                }
+                return false
+            }
+            this.generators.CreateAggregateActionsByFunctions.initInputs = (draftOptions) => {
+                let inputs = []
+                for(const eachDraftOption of Object.values(draftOptions)) {
+                    inputs = inputs.concat(
+                        eachDraftOption.structure.map((aggregateStructure, index) => ({
+                            targetBoundedContext: eachDraftOption.boundedContext,
+                            description: eachDraftOption.description,
+                            draftOption: [aggregateStructure],
+                            esValue: this.value,
+                            userInfo: this.userInfo,
+                            information: this.information,
+                            isAccumulated: index > 0
+                        })))
+                }
+                this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation = []
+                this.generators.CreateAggregateActionsByFunctions.inputs = inputs
+            }
+
+            this.generators.CreateCommandActionsByFunctions.generator = new CreateCommandActionsByFunctions({
+                input: null,
+
+                onFirstResponse: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 1,
+                            directMessage: returnObj.directMessage
+                        },
+                        actions: {
+                            stop: () => {
+                            },
+                            retry: () => {
+                            }
+                        },
+                        isGeneratorButtonEnabled: false
+                    }
+
+                    this.generatorProgressDto = {
+                        generateDone: false,
+                        displayMessage: returnObj.directMessage,
+                        progress: 0,
+                        actions: {
+                            stopGeneration: () => {
+                                returnObj.actions.stopGeneration()
+                            }
+                        }
+                    }
+                },
+
+                onModelCreated: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
+                    this.generatorProgressDto.displayMessage = returnObj.directMessage
+                    this.generatorProgressDto.progress = returnObj.progress
+
+                    if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
+                        this.changedByMe = true
+                        this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
+                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
+                    }
+                },
+
+                onGenerationSucceeded: (returnObj) => {
+                    if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
+                        this.changedByMe = true
+                        this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
+                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
+                    }
+
+                    if(this.generators.CreateCommandActionsByFunctions.generateIfInputsExist())
+                        return
+
+                    this.forceRefreshCanvas()
+
+                    this.generators.CreatePolicyActionsByFunctions.initInputs(this.selectedDraftOptions)
+                    if(this.generators.CreatePolicyActionsByFunctions.generateIfInputsExist())
+                        return
+
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onRetry: (returnObj) => {
+                    alert(`[!] An error occurred during command creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: true,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onStopped: () => {
+                    this.generatorProgressDto.generateDone = true
+                }
+            })
+            this.generators.CreateCommandActionsByFunctions.generateIfInputsExist = () => {
+                if(this.generators.CreateCommandActionsByFunctions.inputs.length > 0) {
+                    this.generators.CreateCommandActionsByFunctions.generator.client.input = this.generators.CreateCommandActionsByFunctions.inputs.shift()
+                    this.generators.CreateCommandActionsByFunctions.generator.generate()
+                    return true
+                }
+                return false
+            }
+            this.generators.CreateCommandActionsByFunctions.initInputs = (draftOptions) => {
+                let inputs = []
+                for(const eachDraftOption of Object.values(draftOptions)) {
+                    const targetAggregates = Object.values(this.value.elements).filter(element => element && element._type === "org.uengine.modeling.model.Aggregate" && element.boundedContext.id === eachDraftOption.boundedContext.id)
+
+                    // Aggregate각각마다 커맨드/이벤트/ReadModel 생성 요청을 함으로써 다루는 문제영역을 최소화함
+                    for(const targetAggregate of targetAggregates) {
+                        inputs.push({
+                            targetBoundedContext: eachDraftOption.boundedContext,
+                            targetAggregate: targetAggregate,
+                            description: eachDraftOption.description,
+                            esValue: this.value,
+                            userInfo: this.userInfo,
+                            information: this.information
+                        })
+                    }
+                }
+                this.generators.CreateCommandActionsByFunctions.inputs = inputs
+            }
+
+            this.generators.CreatePolicyActionsByFunctions.generator = new CreatePolicyActionsByFunctions({
+                input: null,
+
+                onFirstResponse: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 1,
+                            directMessage: returnObj.directMessage
+                        },
+                        actions: {
+                            stop: () => {
+                            },
+                            retry: () => {
+                            }
+                        },
+                        isGeneratorButtonEnabled: false
+                    }
+
+                    this.generatorProgressDto = {
+                        generateDone: false,
+                        displayMessage: returnObj.directMessage,
+                        progress: 0,
+                        actions: {
+                            stopGeneration: () => {
+                                returnObj.actions.stopGeneration()
+                            }
+                        }
+                    }
+                },
+
+                onModelCreated: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
+                    this.generatorProgressDto.displayMessage = returnObj.directMessage
+                    this.generatorProgressDto.progress = returnObj.progress
+                },
+
+                onGenerationSucceeded: (returnObj) => {
+                    if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
+                        this.changedByMe = true
+                        this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
+                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
+                    }
+
+                    if(this.generators.CreatePolicyActionsByFunctions.generateIfInputsExist())
+                        return
+
+                    this.forceRefreshCanvas()
+
+                    this.generators.GWTGeneratorByFunctions.initInputs(this.selectedDraftOptions)
+                    if(this.generators.GWTGeneratorByFunctions.generateIfInputsExist())
+                        return
+
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onRetry: (returnObj) => {
+                    alert(`[!] An error occurred during policy creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: true,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onStopped: () => {
+                    this.generatorProgressDto.generateDone = true
+                }
+            })
+            this.generators.CreatePolicyActionsByFunctions.generateIfInputsExist = () => {
+                if(this.generators.CreatePolicyActionsByFunctions.inputs.length > 0) {
+                    this.generators.CreatePolicyActionsByFunctions.generator.client.input = this.generators.CreatePolicyActionsByFunctions.inputs.shift()
+                    this.generators.CreatePolicyActionsByFunctions.generator.generate()
+                    return true
+                }
+                return false
+            }
+            this.generators.CreatePolicyActionsByFunctions.initInputs = (draftOptions) => {
+                let inputs = []
+                for(const eachDraftOption of Object.values(draftOptions)) {
+                    inputs.push({
+                            targetBoundedContext: eachDraftOption.boundedContext,
+                            description: eachDraftOption.description,
+                            esValue: this.value,
+                            userInfo: this.userInfo,
+                            information: this.information
+                        })
+                }
+                this.generators.CreatePolicyActionsByFunctions.inputs = inputs
+            }
+
+            this.generators.GWTGeneratorByFunctions.generator = new GWTGeneratorByFunctions({
+                input: null,
+
+                onFirstResponse: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 1,
+                            directMessage: returnObj.directMessage
+                        },
+                        actions: {
+                            stop: () => {
+                            },
+                            retry: () => {
+                            }
+                        },
+                        isGeneratorButtonEnabled: false
+                    }
+
+                    this.generatorProgressDto = {
+                        generateDone: false,
+                        displayMessage: returnObj.directMessage,
+                        progress: 0,
+                        actions: {
+                            stopGeneration: () => {
+                                returnObj.actions.stopGeneration()
+                            }
+                        }
+                    }
+                },
+
+                onModelCreated: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
+                    this.generatorProgressDto.displayMessage = returnObj.directMessage
+                    this.generatorProgressDto.progress = returnObj.progress
+                },
+
+                onGenerationSucceeded: (returnObj) => {
+                    if(returnObj.modelValue && returnObj.modelValue.commandsToReplace) {
+                        for(const command of returnObj.modelValue.commandsToReplace)
+                            this.$set(this.value.elements, command.id, command)
+                        this.changedByMe = true
+                    }
+
+
+                    if(this.generators.GWTGeneratorByFunctions.generateIfInputsExist())
+                        return
+
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onRetry: (returnObj) => {
+                    alert(`[!] GWT 생성 과정에서 오류가 발생했습니다. 다시 시도해주세요.\n* Error log \n${returnObj.errorMessage}`)
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: true,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onStopped: () => {
+                    this.generatorProgressDto.generateDone = true
+                }
+            })
+            this.generators.GWTGeneratorByFunctions.generateIfInputsExist = () => {
+                if(this.generators.GWTGeneratorByFunctions.inputs.length > 0) {
+                    this.generators.GWTGeneratorByFunctions.generator.client.input = this.generators.GWTGeneratorByFunctions.inputs.shift()
+                    this.generators.GWTGeneratorByFunctions.generator.generate()
+                    return true
+                }
+                return false
+            }
+            this.generators.GWTGeneratorByFunctions.initInputs = (draftOptions) => {
+                let inputs = []
+                for(const eachDraftOption of Object.values(draftOptions)) {
+                    const targetAggregates = Object.values(this.value.elements).filter(element => element && element._type === "org.uengine.modeling.model.Aggregate" && element.boundedContext.id === eachDraftOption.boundedContext.id)
+
+                    // Aggregate각각마다 존재하는 커맨드에 GWT를 생성하는 요청을 함으로써 다루는 문제영역을 최소화함
+                    for(const targetAggregate of targetAggregates) {
+                        const targetCommandIds = Object.values(this.value.elements)
+                        .filter(element => element && element._type === "org.uengine.modeling.model.Command" && element.aggregate.id === targetAggregate.id)
+                        .map(command => command.id)
+                        if(!targetCommandIds || targetCommandIds.length === 0) continue
+
+                        inputs.push({
+                            targetBoundedContext: eachDraftOption.boundedContext,
+                            targetCommandIds: targetCommandIds,
+                            description: eachDraftOption.description,
+                            esValue: this.value
+                        })
+                    }
+                }
+                this.generators.GWTGeneratorByFunctions.inputs = inputs
+            }
+
+            // 이 Generator의 호출은 ESDialoger.jump()에서 간접적으로 이루어짐
+            this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.callbacks = {
+                onInputParamsCheckBefore: (inputParams) => {
+                    if(this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.initialInputs.length > 0)
+                        return
+
+                    this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.buildInitialInputs(inputParams.passedGeneratorInputs)
+                    this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.initInputs()
+                    this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.inputs.shift() // 이미 대상이 된 옵션 제거
+                },
+
+                onFirstResponse: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: true,
+                        draftUIInfos: {
+                            leftBoundedContextCount: this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.inputs.length + 1,
+                            directMessage: "",
+                            progress: 0
+                        },
+                        isGeneratorButtonEnabled: true,
+                        actions: {
+                            stop: () => {
+                                returnObj.actions.stopGeneration()
+                            },
+                            retry: () => {
+                                this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.initInputs()
+                                this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.generateIfInputsExist()
+                            }
+                        }
+                    }
+                },
+
+                onModelCreated: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
+                    this.modelDraftDialogWithXAIDto.draftUIInfos.progress = returnObj.progress
+                },
+
+                onGenerationSucceeded: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        draftUIInfos: {
+                            leftBoundedContextCount: this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.inputs.length + 1,
+                            directMessage: returnObj.directMessage,
+                            progress: 100
+                        }
+                    }
+
+                    this.generators.DraftGeneratorByFunctions.generate(JSON.stringify(returnObj.modelValue.output), returnObj.inputParams.boundedContext)
+                },
+
+                onRetry: (returnObj) => {
+                    alert(`[!] An error occurred while analysing your requirements, please try again..\n* Error log \n${returnObj.errorMessage}`)
+                    this.modelDraftDialogWithXAIDto.isShow = false
+                },
+
+                onStopped: () => {
+                    this.modelDraftDialogWithXAIDto.isShow = false
+                }
+            }
+            this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.buildInitialInputs = (passedGeneratorInputs) => {
+                this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.initialInputs = JSON.parse(JSON.stringify(passedGeneratorInputs))
+
+                // 제공된 정보를 기반으로 아직 생성되지는 않았으나, 참조할 수 있는 초안 정보를 미리 생성함
+                // 이 정보는 추후에 AI가 초안을 실제 생성한 경우, AI의 디폴트 선택 옵션의 내용으로 순차적으로 업데이트됨
+                const accumulatedDrafts = {};
+                passedGeneratorInputs.forEach(item => {
+                    const boundedContext = item.boundedContext;
+                    if (boundedContext && boundedContext.aggregates && boundedContext.aggregates.length > 0) {
+                        const aggregates = boundedContext.aggregates.map(aggregate => ({
+                            aggregate: {
+                                name: aggregate.name,
+                                alias: aggregate.alias
+                            },
+                            entities: [],
+                            valueObjects: [] 
+                        }));
+                        accumulatedDrafts[boundedContext.name] = aggregates;
+                    }
+                });
+                this.generators.DraftGeneratorByFunctions.initialAccumulatedDrafts = accumulatedDrafts;
+            }
+            this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.initInputs = () => {
+                this.modelDraftDialogWithXAIDto.draftOptions = []
+
+                this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.inputs = JSON.parse(JSON.stringify(
+                        this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.initialInputs
+                ))
+
+                this.generators.DraftGeneratorByFunctions.accumulatedDrafts = JSON.parse(JSON.stringify(
+                    this.generators.DraftGeneratorByFunctions.initialAccumulatedDrafts
+                ))
+            }
+            this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.generateIfInputsExist = () => {
+                if(this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.inputs.length > 0) {
+                    this.generators.PreProcessingFunctionsGenerator.generator.client.input = this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.inputs.shift()
+                    this.generators.PreProcessingFunctionsGenerator.generator.generate()
+                    return true
+                }
+                return false
+            }
+
+            this.generators.PreProcessingFunctionsGenerator.generator = new PreProcessingFunctionsGenerator({
+                input: null,
+                ...this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.callbacks
+            })
+            
+            this.generators.DraftGeneratorByFunctions.generator = new DraftGeneratorByFunctions({
+                input: null,
+
+                onFirstResponse: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: true,
+                        draftUIInfos: {
+                            leftBoundedContextCount: this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.inputs.length + 1,
+                            directMessage: "",
+                            progress: 0
+                        },
+                        isGeneratorButtonEnabled: true,
+                        actions: {
+                            ...this.modelDraftDialogWithXAIDto.actions,
+                            stop: () => {
+                                returnObj.actions.stopGeneration()
+                            }
+                        }
+                    }
+                },
+
+                onModelCreated: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
+                    this.modelDraftDialogWithXAIDto.draftUIInfos.progress = returnObj.progress
+                },
+
+                onGenerationSucceeded: (returnObj) => {
+                    const getXAIDtoDraftOptions = (output, targetBoundedContext, description) => {
+                        return {
+                            boundedContext: targetBoundedContext.name,
+                            boundedContextAlias: targetBoundedContext.displayName,
+                            description: description,
+                            options: output.options.map(option => ({
+                                ...option,
+                                boundedContext: targetBoundedContext,
+                                description: description
+                            })),
+                            conclusions: output.conclusions,
+                            defaultOptionIndex: output.defaultOptionIndex
+                        }
+                    }
+
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        draftOptions: [
+                            ...this.modelDraftDialogWithXAIDto.draftOptions,
+                            getXAIDtoDraftOptions(
+                                returnObj.modelValue.output,
+                                returnObj.inputParams.boundedContext,
+                                returnObj.inputParams.description
+                            )
+                        ],
+                        draftUIInfos: {
+                            leftBoundedContextCount: this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.inputs.length,
+                            directMessage: returnObj.directMessage,
+                            progress: 100
+                        }
+                    }
+
+                    this.generators.DraftGeneratorByFunctions.updateAccumulatedDrafts(returnObj.modelValue.output, returnObj.inputParams.boundedContext)
+                    if(!this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.generateIfInputsExist())
+                        return
+                },
+
+                onRetry: (returnObj) => {
+                    alert(`[!] There was an error creating your draft, please try again.\n* Error log \n${returnObj.errorMessage}`)
+                    this.modelDraftDialogWithXAIDto.isShow = false
+                },
+
+                onStopped: () => {
+                    this.modelDraftDialogWithXAIDto.isShow = false
+                }
+            })
+            this.generators.DraftGeneratorByFunctions.generate = (structuredDescription, boundedContext) => {
+                // 해당 초안은 새롭게 생성시킬 대상이기 때문에 초가화된 상태로 전달함
+                this.generators.DraftGeneratorByFunctions.accumulatedDrafts[boundedContext.name] = []
+
+                this.generators.DraftGeneratorByFunctions.generator.client.input = {
+                    description: structuredDescription,
+                    boundedContext: boundedContext,
+                    accumulatedDrafts: this.generators.DraftGeneratorByFunctions.accumulatedDrafts
+                }
+                this.generators.DraftGeneratorByFunctions.generator.generate()
+            }
+            this.generators.DraftGeneratorByFunctions.updateAccumulatedDrafts = (output, targetBoundedContext) => {
+                this.generators.DraftGeneratorByFunctions.accumulatedDrafts = {
+                    ...this.generators.DraftGeneratorByFunctions.accumulatedDrafts,
+                    ...DraftGeneratorByFunctions.outputToAccumulatedDrafts(output, targetBoundedContext)
+                }
+            }
         },
         mounted: function () {
             var me = this;
@@ -3854,6 +4448,11 @@
                     changeQueryElementIds(modelValue, queryIdChangeDic)
                 }
 
+                if(this.generatorsInGeneratorUI[val.generatorName] && 
+                   this.generatorsInGeneratorUI[val.generatorName].callbacks && 
+                   this.generatorsInGeneratorUI[val.generatorName].callbacks.onModelCreated)
+                    this.generatorsInGeneratorUI[val.generatorName].callbacks.onModelCreated(val)
+
                 var me = this;
 
                 if(val && val.modelName === "DebeziumLogsTabGenerator") {
@@ -3959,22 +4558,77 @@
                 }
             },
 
-            generateFromDraftWithXAI(draftOption) {
-                console.log("[*] DraftOption을 이용해서 모델 생성 로직이 실행됨", draftOption)
 
-                const SELECTED_DRAFT_OPTION = Object.values(draftOption)[0]
-                this.BCRegenerateCreateActionsGeneratorInputs = SELECTED_DRAFT_OPTION.structure.map((aggregateStructure, index) => ({
-                    targetBoundedContext: SELECTED_DRAFT_OPTION.boundedContext,
-                    description: SELECTED_DRAFT_OPTION.description,
-                    draftOption: [aggregateStructure],
-                    esValue: this.value,
-                    userInfo: this.userInfo,
-                    information: this.information,
-                    isAccumulated: index > 0
-                }))
+            generateFromDraftWithXAI(draftOptions) {
+                console.log("[*] 유저가 선택한 초안 옵션들을 이용해서 모델 생성 로직이 실행됨", draftOptions)
+                this.selectedDraftOptions = draftOptions
 
-                this.generators.BCReGenerateCreateActionsGenerator.client.input = this.BCRegenerateCreateActionsGeneratorInputs.shift()
-                this.generators.BCReGenerateCreateActionsGenerator.generate()                
+                this._removeInvalidReferencedAggregateProperties(draftOptions)
+                this._createBoundedContextsIfNotExists(draftOptions)
+
+                this.generators.CreateAggregateActionsByFunctions.initInputs(this.selectedDraftOptions)
+                this.generators.CreateAggregateActionsByFunctions.generateIfInputsExist()
+            },
+
+            _removeInvalidReferencedAggregateProperties(draftOptions) {
+                for (const context of Object.values(draftOptions)) {
+                    for (const aggregateInfo of context.structure) {
+                        if (aggregateInfo.valueObjects) {
+                            for (const valueObject of aggregateInfo.valueObjects) {
+
+                                if (valueObject.referencedAggregate) {
+                                    const referencedAggregateName = valueObject.referencedAggregate.name;
+                                    const isValidReference = Object.values(draftOptions).some(otherContext =>
+                                        otherContext.structure.some(otherAggregateInfo =>
+                                            otherAggregateInfo.aggregate.name === referencedAggregateName
+                                        )
+                                    );
+                                    if (!isValidReference) {
+                                        delete valueObject.referencedAggregate;
+                                        valueObject.name = valueObject.name.replace("Reference", "").trim()
+                                        valueObject.alias = valueObject.alias.replace("참조", "").trim()
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                }
+            },
+
+            _createBoundedContextsIfNotExists(draftOptions) {
+                let isBoundedContextCreated = false
+                for(const context of Object.values(draftOptions)) {
+                    const bcNameToCheck = context.boundedContext.name
+                    const isBoundedContextExists = Object.values(this.value.elements).some((element) => 
+                        element && element._type === "org.uengine.modeling.model.BoundedContext" && element.name.toLowerCase() === bcNameToCheck.toLowerCase()
+                    )
+                    if(isBoundedContextExists) continue
+                    isBoundedContextCreated = true
+
+                    const appliedESValue = ESActionsUtil.getActionAppliedESValue([
+                        {
+                            "objectType": "BoundedContext",
+                            "type": "create",
+                            "ids": {
+                                "boundedContextId": `bc-${context.boundedContext.name}`
+                            },
+                            "args": {
+                                "boundedContextName": context.boundedContext.name,
+                                "boundedContextAlias": context.boundedContext.displayName,
+                                "description": context.boundedContext.description
+                            }
+                        }
+                    ], this.userInfo, this.information, this.value)
+
+                    this.changedByMe = true
+                    this.$set(this.value, "elements", appliedESValue.elements)
+                    this.$set(this.value, "relations", appliedESValue.relations)   
+                    
+                    context.boundedContext = Object.values(this.value.elements).find(element => element && element._type === "org.uengine.modeling.model.BoundedContext" && element.name.toLowerCase() === context.boundedContext.name.toLowerCase())
+                }
+
+                if(isBoundedContextCreated) this.forceRefreshCanvas()
             },
 
 
@@ -7713,6 +8367,11 @@
             },
             
             onModelCreated(model){
+                if(this.generatorsInGeneratorUI[model.generatorName] && 
+                   this.generatorsInGeneratorUI[model.generatorName].callbacks && 
+                   this.generatorsInGeneratorUI[model.generatorName].callbacks.onModelCreated)
+                    this.generatorsInGeneratorUI[model.generatorName].callbacks.onModelCreated(model)
+
                 if(model && (model.generatorName === 'DDLGenerator' || model.generatorName === 'DDLDraftGenerator')) {                    
                     this.isGeneratorButtonEnabled = true
                     this.showDDLDraftDialog = true
@@ -7772,6 +8431,7 @@
                 let generator = new BoundedContextRelocateActionsGenerator(me)
                 generator.generate()
             },
+
 
             toggleMonitoringDialog() {
                 var me = this;
@@ -7945,11 +8605,42 @@
                     me.expandedLogs = [eventLog];
                 }
             },
-            addEventSearchKey() {
-                var me = this;
-                console.log()
+            
+            
+            onInputParamsCheckBefore(inputParams, generatorName){
+                if(this.generatorsInGeneratorUI[generatorName] && 
+                   this.generatorsInGeneratorUI[generatorName].callbacks && 
+                   this.generatorsInGeneratorUI[generatorName].callbacks.onInputParamsCheckBefore)
+                    this.generatorsInGeneratorUI[generatorName].callbacks.onInputParamsCheckBefore(inputParams)
             },
 
+            onFirstResponse(returnObj){
+                if(this.generatorsInGeneratorUI[returnObj.generatorName] && 
+                   this.generatorsInGeneratorUI[returnObj.generatorName].callbacks && 
+                   this.generatorsInGeneratorUI[returnObj.generatorName].callbacks.onFirstResponse)
+                    this.generatorsInGeneratorUI[returnObj.generatorName].callbacks.onFirstResponse(returnObj)
+            },
+
+            onGenerationSucceeded(returnObj){
+                if(this.generatorsInGeneratorUI[returnObj.generatorName] && 
+                   this.generatorsInGeneratorUI[returnObj.generatorName].callbacks && 
+                   this.generatorsInGeneratorUI[returnObj.generatorName].callbacks.onGenerationSucceeded)
+                    this.generatorsInGeneratorUI[returnObj.generatorName].callbacks.onGenerationSucceeded(returnObj)
+            },
+
+            onRetry(returnObj){
+                if(this.generatorsInGeneratorUI[returnObj.generatorName] && 
+                   this.generatorsInGeneratorUI[returnObj.generatorName].callbacks && 
+                   this.generatorsInGeneratorUI[returnObj.generatorName].callbacks.onRetry)
+                    this.generatorsInGeneratorUI[returnObj.generatorName].callbacks.onRetry(returnObj)
+            },
+
+            onStopped(returnObj){
+                if(this.generatorsInGeneratorUI[returnObj.generatorName] && 
+                   this.generatorsInGeneratorUI[returnObj.generatorName].callbacks && 
+                   this.generatorsInGeneratorUI[returnObj.generatorName].callbacks.onStopped)
+                    this.generatorsInGeneratorUI[returnObj.generatorName].callbacks.onStopped(returnObj)
+            }
         },
     };
 </script>

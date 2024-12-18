@@ -1,213 +1,782 @@
 const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
+const ESValueSummarizeUtil = require("./modules/ESValueSummarizeUtil");
 
 class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
-        this.checkInputParamsKeys = ["description", "boundedContext"]
-        this.progressCheckStrings = ["step1-requirementsAnalysis", "\"requirements\"", "step2-designPossibleAggregates", "\"aggregates\"", "step3-designPossibleOptions", "\"options\"", "step4-evaluateOptions", "\"evaluationCriteria\"", "\"optionEvaluations\"", "\"overallAssessment\""]
+        this.checkInputParamsKeys = ["description", "boundedContext", "accumulatedDrafts"]
+        this.progressCheckStrings = ["thoughts", "inference", "reflection", "options", "structure", "pros",  "defaultOptionIndex", "conclusions"]
+    }
+
+    static outputToAccumulatedDrafts(output, targetBoundedContext){
+        return {
+            [targetBoundedContext.name]: output.options[output.defaultOptionIndex].structure
+        }
+    }
+
+    static esValueToAccumulatedDrafts(esValue, targetBoundedContext){
+        let accumulatedDrafts = {}
+
+        const summarizedESValue = ESValueSummarizeUtil.getSummarizedESValue(esValue)
+        for(const boundedContextInfo of Object.values(summarizedESValue)){
+            let structure = []
+
+            if(boundedContextInfo.name !== targetBoundedContext.name) {
+                for(const aggregateInfo of Object.values(boundedContextInfo.aggregates)){
+                    let selectedOption = {}
+
+                    const targetAggregate = esValue.elements[aggregateInfo.id]
+                    selectedOption.aggregate = {
+                        name: aggregateInfo.name,
+                        alias: (targetAggregate && targetAggregate.displayName) ? targetAggregate.displayName : aggregateInfo.name
+                    }
+
+                    let aggregateElements = null
+                    if(targetAggregate && targetAggregate.aggregateRoot && targetAggregate.aggregateRoot.entities &&
+                    targetAggregate.aggregateRoot.entities.elements
+                    ){
+                        aggregateElements = targetAggregate.aggregateRoot.entities.elements
+                    }
+
+                    selectedOption.entities = aggregateInfo.entities.map(entityInfo => ({
+                        name: entityInfo.name,
+                        alias: (aggregateElements && aggregateElements[entityInfo.id]) ? aggregateElements[entityInfo.id].displayName : entityInfo.name
+                    }))
+
+                    selectedOption.valueObjects = aggregateInfo.valueObjects.map(valueObjectInfo => ({
+                        name: valueObjectInfo.name,
+                        alias: (aggregateElements && aggregateElements[valueObjectInfo.id]) ? aggregateElements[valueObjectInfo.id].displayName : valueObjectInfo.name
+                    }))
+
+                    structure.push(selectedOption)
+                }
+            }
+
+            accumulatedDrafts[boundedContextInfo.name] = structure
+        }
+
+        return accumulatedDrafts
+    }
+
+
+    onGenerateBefore(inputParams){
+        const existingAggregates = []
+        for(const aggregateInfos of Object.values(inputParams.accumulatedDrafts)) {
+            for(const aggregateInfo of aggregateInfos) {
+                if(aggregateInfo.aggregate) existingAggregates.push(aggregateInfo.aggregate.name)
+            }
+        }
+        inputParams.existingAggregates = existingAggregates
+        inputParams.boundedContextDisplayName = inputParams.boundedContext.displayName ? inputParams.boundedContext.displayName : inputParams.boundedContext.name
     }
 
 
     __buildAgentRolePrompt(){
-        return `You are an experienced domain-driven design (DDD) architect specializing in aggregate design. Your expertise lies in:
-- Breaking down complex domains into well-structured aggregates
-- Identifying appropriate boundaries between entities and value objects
-- Ensuring proper encapsulation and consistency within aggregates
-- Designing maintainable and scalable domain models
-- Balancing between different design options based on business requirements
+        return `You are a seasoned DDD architect with expertise in:
+- Structuring complex domains into aggregates
+- Defining boundaries for entities and value objects
+- Ensuring encapsulation and consistency
+- Creating scalable domain models
+- Weighing design options against business needs
 `
     }
 
     __buildTaskGuidelinesPrompt(){
-        return `You are required to write a proposal on how to define multiple Aggregates in a given Bounded Context via a passed in functional requirements.
+        return `You are tasked with drafting a proposal for defining multiple Aggregates within a given Bounded Context based on provided functional requirements.
 
-Please follow these rules.
-1. Generate suggestions that match all functional requirements requested by users.
-2. Instead of putting all properties into a single Aggregate, put multiple Aggregates or some properties into ValueObjects and Entities for better maintainability.
-3. Avoid creating unnecessary ValueObjects and Entities with only one property, and only create them if they are useful enough.
-4. In the draft, the name of each object should be written in English, and the rest of the content (alias, pros, cons, conclusions, etc.) should be written in ${this.preferredLanguage} language so that it is easily understood by the user.
-5. Do not write comments in the output JSON object.
+Please adhere to the following guidelines:
+1. Ensure all suggestions align with the user's functional requirements.
+2. Maintain transactional consistency by keeping transaction-critical data within a single Aggregate:
+   - Do not split core transaction data (e.g., loan and loan details, order and order items)
+   - Keep data that must be updated atomically in the same Aggregate
+   - Consider business invariants when defining Aggregate boundaries
+3. Distribute properties across ValueObjects and Entities within an Aggregate to enhance maintainability.
+4. Avoid creating ValueObjects and Entities with only a single property unless they provide significant value.
+5. Object names should be in English, while aliases, pros, cons, conclusions, etc., should be in ${this.preferredLanguage} language for clarity.
+6. If an Aggregate already exists in another Bounded Context, avoid duplication. Instead, create a ValueObject that references the existing Aggregate via a foreign key.
+7. Aggregates that reference other Aggregates must include a ValueObject for the referenced Aggregate, using a foreign key.
+8. Ensure that any Aggregate referenced via a ValueObject exists in accumulatedDrafts or is created within the current option.
+9. If a similar Aggregate already exists in 'Accumulated Drafts' for an Entity analysed in 'Functional Requirements', you need to create a ValueObject reference to that Aggregate instead of creating it yourself.
+10. Do not include comments in the output JSON object.
+11. **Avoid creating bidirectional references between Aggregates. Aggregate references should be unidirectional. For example, if 'Order' references 'Customer', 'Customer' should not directly reference 'Order'.**
+    * **When deciding which Aggregate should reference another, consider the ownership and immutability. Typically, the Aggregate that owns the other or has a lifecycle dependency on the other should hold the reference. For example, 'Order' should reference 'Customer' because an order is always associated with a customer, and the customer's lifecycle is independent of the order. Conversely, 'Customer' should not reference 'Order' because a customer can exist without any orders.**
 
-Recommendation Instructions to write proposal.
-1. Aggregates inside a bounded context can have ValueObjects or Entities, and they can have relationships between them.
-2. Generate different options based on each of the perspectives provided by ACID.
-3. Create at least two unique, non-duplicate options.
-4. You should ultimately choose the best option out of the several options and write why, which will be selected by default.
+
+Proposal Writing Recommendations:
+1. Aggregates should represent complete business capabilities and maintain their invariants:
+   - Keep transaction-critical data together
+   - Consider lifecycle dependencies
+   - Ensure business rules can be enforced within the Aggregate boundary
+2. Generate distinct options considering:
+   - Transactional consistency requirements
+   - Business invariants
+   - Performance implications
+   - Scalability needs
+3. Select the best option from the generated options and explain the rationale for its selection, marking it as the default choice.
+
+Best Option Selection Guidelines:
+1. Transactional Consistency
+   - Maintains atomic operations within aggregate boundaries
+   - Preserves business invariants effectively
+   - Handles concurrent operations safely
+
+2. Performance & Scalability
+   - Minimizes cross-aggregate references
+   - Enables efficient querying patterns
+   - Supports independent scaling of components
+
+3. Domain Alignment
+   - Reflects natural business boundaries
+   - Captures essential business rules
+   - Maintains semantic clarity
+
+4. Maintainability
+   - Clear separation of concerns
+   - Minimal duplication
+   - Sustainable complexity level
+
+5. Future Flexibility
+   - Accommodates expected changes
+   - Supports business growth
+   - Allows feature extensions
+
+Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexibility
 `
     }
 
-    __buildResponseFormatPrompt() {
-        return super.__buildResponseFormatPrompt(`
+    __buildJsonResponseFormat() {
+        return `
 {
-    "thoughtProcess": {
-        // Analyse the user's needs as much as possible and rewrite the requirements to be specific and clear.
-        "step1-requirementsAnalysis": {
-            "thought": "thought process for request analysis",
-            "reflection": "re-evaluate your thought to see if there's anything you can strengthen.",
-            "result": {
-                "requirements": [
-                    {name: "requirement-name", description: "requirement-description"},
-                    ...
-                ]
-            }
+    "thoughts": {
+        "summary": "Analysis of aggregate design considerations for the bounded context",
+        "details": {
+            "coreDomainConcepts": "Key domain concepts that could form aggregates",
+            "aggregateRoots": "Potential aggregate roots and their responsibilities",
+            "invariants": "Business rules that must be maintained within aggregates",
+            "transactionBoundaries": "Transaction boundaries and consistency requirements",
+            "existingAggregates": "Analysis of existing aggregates that need to be referenced rather than recreated",
+            "referenceStrategy": "Strategy for referencing existing aggregates through value objects"
         },
+        "additionalConsiderations": "Technical constraints and architectural considerations for aggregate design"
+    },
 
-        // Figure out how Aggregate, ValueObject, and Entity can be configured with the requirements you identified in step 1.
-        "step2-designPossibleAggregates": {
-            "thought": "thought process for aggregate design",
-            "reflection": "re-evaluate your thought to see if there's anything you can strengthen.",
-            "result": {
-                "aggregates": [
+    "inference": {
+        "summary": "Derived aggregate design patterns and relationships",
+        "details": {
+            "implicitAggregates": "Additional aggregates implied by the requirements",
+            "relationships": "Inter-aggregate relationships and references",
+            "consistency": "Consistency requirements between aggregates",
+            "performance": "Performance implications of aggregate boundaries",
+            "referencePatterns": "Patterns for referencing existing aggregates",
+            "valueObjectDesign": "Design considerations for value objects that reference existing aggregates"
+        },
+        "additionalInferences": "Additional patterns and design considerations for aggregate structure"
+    },
+
+    "reflection": {
+        "summary": "Evaluation of aggregate design choices",
+        "details": {
+            "tradeoffs": "Trade-offs between different aggregate designs",
+            "scalability": "Scalability considerations for chosen aggregate boundaries",
+            "maintainability": "Long-term maintainability of aggregate structure",
+            "evolution": "Potential evolution paths for the aggregate design",
+            "referenceImpact": "Impact of using references to existing aggregates",
+            "boundaryAlignment": "Alignment with existing aggregate boundaries"
+        },
+        "additionalReflections": "Further considerations for aggregate design optimization including reference patterns"
+    },
+
+    "result": {
+        "options": [
+            {
+                "structure": [
                     {
-                        "name": "aggregate-name",
-                        "alias": "aggregate-alias",
-                        "entities": ["entity-name-1", ...],
-                        "valueObjects": ["value-object-name-1", ...],
-                        "usedRequestNames": ["requirement-name-1", ...]
+                        "aggregate": {
+                            "name": "aggregate-name",
+                            "alias": "aggregate-alias"
+                        },
+                        "entities": [{
+                            "name": "entity-name",
+                            "alias": "entity-alias"
+                        }],
+                        "valueObjects": [{
+                            "name": "value-object-name",
+                            "alias": "value-object-alias",
+                            ["referencedAggregateName": "aggregate-name"] // Optional. If there is a referencedAggregateName, it means that the ValueObject is used to reference the Aggregate. You can write the name of an Aggregate created from the same option, as well as an existing Aggregate.
+                        }]
+                    }
+                ],
+                "analysis": {
+                    "transactionalConsistency": "Transactional consistency for this option",
+                    "performanceScalability": "Performance & Scalability for this option",
+                    "domainAlignment": "Domain Alignment for this option",
+                    "maintainability": "Maintainability for this option",
+                    "futureFlexibility": "Future Flexibility for this option"
+                },
+                "pros": {
+                    "cohesion": "cohesion for this option",
+                    "coupling": "coupling for this option",
+                    "consistency": "consistency for this option",
+                    "encapsulation": "encapsulation for this option",
+                    "complexity": "complexity for this option",
+                    "independence": "independence for this option",
+                    "performance": "performance for this option"
+                },
+                "cons": {
+                    "cohesion": "cohesion for this option",
+                    "coupling": "coupling for this option",
+                    "consistency": "consistency for this option",
+                    "encapsulation": "encapsulation for this option",
+                    "complexity": "complexity for this option",
+                    "independence": "independence for this option",
+                    "performance": "performance for this option"
+                }
+            }
+        ],
+
+        // Based on our analysis of each option, we'll recommend a default option that's right for you.
+        "defaultOptionIndex": "The index of the option that is selected by default(starts from 1)",
+        "conclusions": "Write a conclusion for each option, explaining in which cases it would be best to choose that option."
+    }        
+}
+`
+    }
+
+    __buildJsonExampleInputFormat() {
+        return {
+            "Accumulated Drafts": {
+                "GuestManagement": [
+                    {
+                        "aggregate": {
+                            "name": "Guest",
+                            "alias": "Hotel Guest Profile"
+                        },
+                        "entities": [{
+                            "name": "GuestPreference",
+                            "alias": "Guest Stay Preferences"
+                        }],
+                        "valueObjects": [{
+                            "name": "GuestContact",
+                            "alias": "Guest Contact Information"
+                        }]
+                    }
+                ],
+                "RoomManagement": [
+                    {
+                        "aggregate": {
+                            "name": "Room",
+                            "alias": "Hotel Room"
+                        },
+                        "entities": [{
+                            "name": "RoomInventory",
+                            "alias": "Room Availability Management"
+                        }],
+                        "valueObjects": [{
+                            "name": "RoomRate",
+                            "alias": "Room Price Information"
+                        }]
                     }
                 ]
-            }
-        },
+            },
 
-        // Consider how you can leverage the Aggregates you configured in step2 to create your own options.
-        "step3-designPossibleOptions": {
-            "thought": "thought process for option design",
-            "reflection": "re-evaluate your thought to see if there's anything you can strengthen.",
+            "Target Bounded Context Name": "BookingManagement",
+
+            "Functional Requirements": {
+                "userStories": [
+                    {
+                        "title": "Create New Room Booking",
+                        "description": "As a guest, I want to book a hotel room with my preferences so that I can secure my stay",
+                        "acceptance": [
+                            "All required guest information must be provided",
+                            "Room type must be selected through search popup",
+                            "Valid check-in and check-out dates must be selected",
+                            "Meal plan must be chosen from available options",
+                            "Booking button activates only when all required fields are filled"
+                        ]
+                    },
+                    {
+                        "title": "View Reservation Status",
+                        "description": "As a guest, I want to view my booking history and manage active reservations",
+                        "acceptance": [
+                            "Bookings are filterable by date range and status",
+                            "Detailed booking information shows in popup on row click",
+                            "Active bookings can be modified or cancelled",
+                            "All booking details are displayed in organized table format"
+                        ]
+                    }
+                ],
+                "entities": {
+                    "Guest": {
+                        "properties": [
+                            {"name": "guestId", "type": "string", "required": true, "isPrimaryKey": true},
+                            {"name": "name", "type": "string", "required": true},
+                            {"name": "membershipLevel", "type": "enum", "required": true, "values": ["standard", "VIP"]},
+                            {"name": "phoneNumber", "type": "string", "required": true},
+                            {"name": "email", "type": "string", "required": true}
+                        ]
+                    },
+                    "Booking": {
+                        "properties": [
+                            {"name": "bookingNumber", "type": "string", "required": true, "isPrimaryKey": true},
+                            {"name": "guestId", "type": "string", "required": true, "isForeignKey": true, "foreignEntity": "Guest"},
+                            {"name": "roomType", "type": "string", "required": true},
+                            {"name": "checkInDate", "type": "date", "required": true},
+                            {"name": "checkOutDate", "type": "date", "required": true},
+                            {"name": "numberOfGuests", "type": "integer", "required": true},
+                            {"name": "mealPlan", "type": "enum", "required": true, "values": ["No Meal", "Breakfast Only", "Half Board", "Full Board"]},
+                            {"name": "specialRequests", "type": "string", "required": false},
+                            {"name": "status", "type": "enum", "required": true, "values": ["Active", "Completed", "Cancelled"]},
+                            {"name": "totalAmount", "type": "decimal", "required": true}
+                        ]
+                    }
+                },
+                "businessRules": [
+                    {
+                        "name": "ValidBookingDates",
+                        "description": "Check-out date must be after check-in date"
+                    },
+                    {
+                        "name": "RequiredFields",
+                        "description": "All fields except special requests are mandatory for booking"
+                    },
+                    {
+                        "name": "ActiveBookingModification",
+                        "description": "Only active bookings can be modified or cancelled"
+                    }
+                ],
+                "interfaces": {
+                    "RoomBooking": {
+                        "sections": [
+                            {
+                                "name": "GuestInformation",
+                                "type": "form",
+                                "fields": [
+                                    {"name": "name", "type": "text", "required": true},
+                                    {"name": "guestId", "type": "text", "required": true},
+                                    {"name": "membershipLevel", "type": "select", "required": true},
+                                    {"name": "phoneNumber", "type": "text", "required": true},
+                                    {"name": "email", "type": "email", "required": true}
+                                ]
+                            },
+                            {
+                                "name": "BookingDetails",
+                                "type": "form",
+                                "fields": [
+                                    {"name": "roomType", "type": "search", "required": true},
+                                    {"name": "checkInDate", "type": "date", "required": true},
+                                    {"name": "checkOutDate", "type": "date", "required": true},
+                                    {"name": "numberOfGuests", "type": "number", "required": true},
+                                    {"name": "mealPlan", "type": "select", "required": true},
+                                    {"name": "specialRequests", "type": "textarea", "required": false}
+                                ],
+                                "actions": ["Submit", "Clear"]
+                            }
+                        ]
+                    },
+                    "ReservationStatus": {
+                        "sections": [
+                            {
+                                "name": "BookingHistory",
+                                "type": "table",
+                                "filters": ["dateRange", "bookingStatus"],
+                                "resultTable": {
+                                    "columns": ["bookingNumber", "roomType", "checkInDate", "checkOutDate", "totalAmount", "status"],
+                                    "actions": ["viewDetails", "modify", "cancel"]
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }
+
+    __buildJsonExampleOutputFormat() {
+        return {
+            "thoughts": {
+                "summary": "Analysis of aggregate design considerations for the bounded context",
+                "details": {
+                    "coreDomainConcepts": "Booking and BookingDetail as core domain concepts managing reservation lifecycle",
+                    "aggregateRoots": "Booking as primary aggregate root with potential split into BookingDetail",
+                    "invariants": "Booking dates validity, room availability, and booking status transitions",
+                    "transactionBoundaries": "Booking creation and modification as atomic operations",
+                    "existingAggregates": "Guest and Room aggregates must be referenced rather than recreated",
+                    "referenceStrategy": "Using value objects with foreign keys to reference Guest and Room aggregates"
+                },
+                "additionalConsiderations": "Concurrent booking handling and eventual consistency for booking history"
+            },
+            "inference": {
+                "summary": "Derived aggregate design patterns and relationships",
+                "details": {
+                    "implicitAggregates": "BookingDetail could be separated for better maintainability",
+                    "relationships": "Booking must maintain references to Guest and Room through value objects",
+                    "consistency": "Strong consistency needed for booking operations, eventual for queries",
+                    "performance": "Query optimization needed for booking history and availability checks",
+                    "referencePatterns": "Value objects with foreign keys for Guest and Room references",
+                    "valueObjectDesign": "Specialized value objects for period, status, and aggregate references"
+                },
+                "additionalInferences": "Consider caching strategies and eventual consistency patterns"
+            },
+            "reflection": {
+                "summary": "Evaluation of aggregate design choices",
+                "details": {
+                    "tradeoffs": "Balance between atomic operations and separate concerns",
+                    "scalability": "Potential for independent scaling of booking and detail components",
+                    "maintainability": "Separation of concerns vs operational complexity",
+                    "evolution": "Flexibility for future booking types and features",
+                    "referenceImpact": "Dependency management through value object references",
+                    "boundaryAlignment": "Alignment with existing Guest and Room aggregate boundaries"
+                },
+                "additionalReflections": "Consider impact of reference patterns on system evolution"
+            },
             "result": {
                 "options": [
                     {
                         "structure": [
                             {
                                 "aggregate": {
-                                    "name": "aggregate-name",
-                                    "alias": "aggregate-alias"
+                                    "name": "Booking",
+                                    "alias": "Room Reservation"
                                 },
-                                "entities": [{
-                                    "name": "entity-name",
-                                    "alias": "entity-alias"
-                                }],
-                                "valueObjects": [{
-                                    "name": "value-object-name",
-                                    "alias": "value-object-alias"
-                                }]
+                                "entities": [
+                                    {
+                                        "name": "BookingDetail",
+                                        "alias": "Reservation Details"
+                                    }
+                                ],
+                                "valueObjects": [
+                                    {
+                                        "name": "Guest",
+                                        "alias": "Guest Reference",
+                                        "referencedAggregateName": "Guest"
+                                    },
+                                    {
+                                        "name": "Room",
+                                        "alias": "Room Reference",
+                                        "referencedAggregateName": "Room"
+                                    },
+                                    {
+                                        "name": "StayPeriod",
+                                        "alias": "Booking Period"
+                                    },
+                                    {
+                                        "name": "BookingStatus",
+                                        "alias": "Reservation Status"
+                                    }
+                                ]
                             }
                         ],
-                        "pros": "pros keyword: pros for this option",
-                        "cons": "cons keyword: cons for this option"
+                        "analysis": {
+                            "transactionalConsistency": "Strong consistency within single aggregate boundary ensures atomic operations for booking lifecycle",
+                            "performanceScalability": "Good performance for basic operations but may face scaling challenges with complex queries",
+                            "domainAlignment": "Closely aligned with core booking domain concepts and business rules",
+                            "maintainability": "Simple structure makes maintenance straightforward but may become complex as features grow",
+                            "futureFlexibility": "Limited flexibility for extensive feature additions without structural changes"
+                        },
+                        "pros": {
+                            "cohesion": "High cohesion with clear booking focus",
+                            "coupling": "Minimal coupling through value object references",
+                            "consistency": "Strong consistency within booking boundary",
+                            "encapsulation": "Well-encapsulated booking logic",
+                            "complexity": "Simple and straightforward structure",
+                            "independence": "Can evolve independently of Guest and Room",
+                            "performance": "Efficient booking operations"
+                        },
+                        "cons": {
+                            "cohesion": "May need to split if booking features grow",
+                            "coupling": "Depends on Guest and Room aggregates",
+                            "consistency": "Requires careful transaction management",
+                            "encapsulation": "Some booking rules may leak to UI",
+                            "complexity": "Must handle reference synchronization",
+                            "independence": "Cannot operate without Guest and Room",
+                            "performance": "Multiple aggregate lookups needed"
+                        }
+                    },
+                    {
+                        "structure": [
+                            {
+                                "aggregate": {
+                                    "name": "Booking",
+                                    "alias": "Room Reservation"
+                                },
+                                "entities": [],
+                                "valueObjects": [
+                                    {
+                                        "name": "Guest",
+                                        "alias": "Guest Reference",
+                                        "referencedAggregateName": "Guest"
+                                    },
+                                    {
+                                        "name": "Room",
+                                        "alias": "Room Reference",
+                                        "referencedAggregateName": "Room"
+                                    },
+                                    {
+                                        "name": "BookingStatus",
+                                        "alias": "Reservation Status"
+                                    }
+                                ]
+                            },
+                            {
+                                "aggregate": {
+                                    "name": "BookingDetail",
+                                    "alias": "Reservation Details"
+                                },
+                                "entities": [],
+                                "valueObjects": [
+                                    {
+                                        "name": "Booking",
+                                        "alias": "Booking Reference",
+                                        "referencedAggregateName": "Booking"
+                                    },
+                                    {
+                                        "name": "StayPeriod",
+                                        "alias": "Booking Period"
+                                    },
+                                    {
+                                        "name": "MealPlan",
+                                        "alias": "Meal Selection"
+                                    }
+                                ]
+                            }
+                        ],
+                        "analysis": {
+                            "transactionalConsistency": "Requires careful coordination between booking and detail aggregates but enables fine-grained consistency control",
+                            "performanceScalability": "Better scalability through separate scaling of booking and detail components",
+                            "domainAlignment": "Clear separation of core booking concepts from supplementary details reflects domain complexity",
+                            "maintainability": "Separated concerns enable focused maintenance and evolution of each component",
+                            "futureFlexibility": "High flexibility for adding new features to either booking core or details independently"
+                        },
+                        "pros": {
+                            "cohesion": "Separate concerns for booking and details",
+                            "coupling": "Clear separation of core booking and details",
+                            "consistency": "Can manage details separately from core booking",
+                            "encapsulation": "Better encapsulation of different aspects",
+                            "complexity": "Clear separation of responsibilities",
+                            "independence": "Can evolve booking details independently",
+                            "performance": "Can load details on demand"
+                        },
+                        "cons": {
+                            "cohesion": "Split of related concepts",
+                            "coupling": "Need to maintain consistency between aggregates",
+                            "consistency": "More complex transaction management",
+                            "encapsulation": "More complex relationship management",
+                            "complexity": "Additional aggregate to manage",
+                            "independence": "Must coordinate changes across aggregates",
+                            "performance": "Multiple queries for full booking info"
+                        }
                     }
                 ],
-                "defaultOptionIndex": "The index of the option that is selected by default(starts from 0)",
-                "conclusions": "Write a conclusion for each option, explaining in which cases it would be best to choose that option."
+                "defaultOptionIndex": 2,
+                "conclusions": "Option 1 offers strong transactional consistency and simpler maintenance but limited scalability, while Option 2 provides better scalability and flexibility through separation of concerns at the cost of more complex transaction management - recommended for systems expecting growth in booking features and query requirements."
             }
-        },
-
-        // Evaluate the quality and completeness of the designed options
-        "step4-evaluateOptions": {
-            "thought": "Evaluate the quality and completeness of the designed options",
-           "reflection": "Consider if the options effectively address the requirements and follow DDD best practices",
-           "result": {
-               "evaluationCriteria": {
-                   "domainAlignment": {
-                       "score": "<0-100>",
-                       "details": ["<domain alignment detail>", ...],
-                       "improvements": ["<suggested domain improvement>", ...]
-                   },
-                   "aggregateDesign": {
-                       "score": "<0-100>",
-                       "details": ["<aggregate design detail>", ...],
-                       "issues": ["<identified design issue>", ...]
-                   },
-                   "boundaryConsistency": {
-                       "score": "<0-100>",
-                       "details": ["<boundary consistency detail>", ...],
-                       "inconsistencies": ["<identified inconsistency>", ...]
-                   },
-                   "maintainability": {
-                       "score": "<0-100>",
-                       "details": ["<maintainability detail>", ...],
-                       "concerns": ["<maintainability concern>", ...]
-                   },
-                   "valueObjectUsage": {
-                       "score": "<0-100>",
-                       "details": ["<value object usage detail>", ...],
-                       "opportunities": ["<missed value object opportunity>", ...]
-                   }
-               },
-               "optionEvaluations": [
-                   {
-                       "optionIndex": "<index of option from step3>",
-                       "strengths": ["<strength of this option>", ...],
-                       "weaknesses": ["<weakness of this option>", ...],
-                       "score": "<0-100>"
-                   }
-               ],
-               "overallAssessment": {
-                   "bestOptionIndex": "<index of best option>",
-                   "justification": "<explanation of why this option is best>",
-                   "recommendedImprovements": [
-                       {
-                           "area": "<improvement area>",
-                           "description": "<improvement description>",
-                           "applicableOptions": ["<option index>", ...]
-                       }
-                   ]
-               },
-               "needsRevision": "<true|false>" // true if best option score < 80
-           }
-       }
-    }
-}`)
-    }
-
-    __buildExamplePrompt(){
-        const inputs = {
-            "Functional Requirements": `
-We need to create a 'Room Reservation' screen and a 'Reservation Status' screen for managing meeting room reservations.
-
-The 'Room Reservation' screen consists of two main sections: requester information and reservation details. The requester information section displays the requester's name, department, employee ID, office phone, mobile number, request date (YYYY.MM.DD), and approver information. Users can search and select a different approver by clicking a search button that opens a popup.
-
-The reservation details section includes room selection, purpose, meeting type, number of participants, required equipment, reservation period, catering service, and additional notes. Room selection allows users to search available rooms with filters for location (building/floor) and capacity. Meeting type can be selected from a dropdown menu (internal, client meeting, training). The number of participants must be entered as a number. Required equipment can be selected from multiple checkboxes (projector, video conference system, whiteboard). Reservation period requires both date (YYYY.MM.DD) and time (HH:MM) selection using a calendar and time picker. Catering service is optional and includes meal type selection and number of meals if selected. Additional notes is a text field for special requests.
-
-The 'Reservation Status' screen shows all reservations made by the user. It includes filters for date range (reservation date or meeting date) and status (all, pending, approved, rejected, cancelled). The result table displays reservation number, meeting purpose, department, requester name, employee ID, meeting date, request date, approval date, and status. Users can click on individual reservations to view details in a popup window.
-
-The detail popup includes buttons for modification, cancellation, and printing. Modifications are only allowed for reservations in 'pending' status. Cancellation changes the status to 'cancelled' and can only be done before the meeting start time. The print button generates a printable version of the reservation details.
-
-All fields except additional notes are required for submission. The submit button should only be activated when all required fields are filled. All data must be stored in the database upon successful submission.`
         }
-
-        const jsonOutput = `
-
-{"thoughtProcess":{"step1-requirementsAnalysis":{"thought":"The requirements describe a meeting room reservation system with two main functionalities: room reservation and reservation management. Let's break down the core requirements and identify key entities.","reflection":"We should consider the relationship between reservations and rooms, and how to handle the approval workflow efficiently.","result":{"requirements":[{"name":"reservation-creation","description":"Users must be able to create room reservations with requester details and meeting specifications"},{"name":"room-management","description":"System needs to manage meeting rooms with their properties and availability"},{"name":"approval-workflow","description":"Reservations require approval process with different status management"},{"name":"equipment-handling","description":"Rooms can have different equipment configurations that need to be tracked"},{"name":"catering-service","description":"Optional catering services can be added to reservations"}]}},"step2-designPossibleAggregates":{"thought":"We need to identify the main aggregates that will form the core of our domain model. The reservation process seems to be the main focus.","reflection":"We should consider separating room management from reservations to allow independent scaling and maintenance.","result":{"aggregates":[{"name":"Reservation","alias":"reservation","entities":["Requester","Approver"],"valueObjects":["ReservationPeriod","CateringDetails"],"usedRequestNames":["reservation-creation","approval-workflow","catering-service"]},{"name":"Room","alias":"room","entities":["Equipment"],"valueObjects":["Location","Capacity"],"usedRequestNames":["room-management","equipment-handling"]}]}},"step3-designPossibleOptions":{"thought":"Let's create different options for organizing these aggregates, considering various trade-offs.","reflection":"We should consider both tight and loose coupling approaches between Room and Reservation.","result":{"options":[{"structure":[{"aggregate":{"name":"Reservation","alias":"Reservation"},"entities":[{"name":"Requester","alias":"Requester"},{"name":"Approver","alias":"Approver"}],"valueObjects":[{"name":"ReservationPeriod","alias":"ReservationPeriod"},{"name":"CateringDetails","alias":"CateringDetails"}]},{"aggregate":{"name":"Room","alias":"Room"},"entities":[{"name":"Equipment","alias":"Equipment"}],"valueObjects":[{"name":"Location","alias":"Location"},{"name":"Capacity","alias":"Capacity"}]}],"pros":"Each aggregate is managed independently providing good scalability, clear separation of responsibilities between room management and reservation management","cons":"Requires querying between two aggregates when checking reservation availability"},{"structure":[{"aggregate":{"name":"RoomReservation","alias":"RoomReservation"},"entities":[{"name":"Room","alias":"Room"},{"name":"Requester","alias":"Requester"},{"name":"Approver","alias":"Approver"}],"valueObjects":[{"name":"ReservationPeriod","alias":"ReservationPeriod"},{"name":"Equipment","alias":"Equipment"},{"name":"CateringDetails","alias":"CateringDetails"}]}],"pros":"All reservation-related information is managed in a single aggregate, making queries simple","cons":"The aggregate may become too large making changes difficult, and room management functionality may be limited to expand"}],"defaultOptionIndex":0,"conclusions":"The first option provides better scalability and maintainability by clearly separating room management and reservation management responsibilities. The second option is easier to implement in simple systems but may become harder to manage as the system grows."}},"step4-evaluateOptions":{"thought":"Let's evaluate both options against key DDD principles and system requirements","reflection":"We need to ensure the chosen design supports scalability, maintainability, and proper domain alignment","result":{"evaluationCriteria":{"domainAlignment":{"score":"90","details":["Both options clearly represent the core domain concepts of reservations and rooms","The separation of concerns aligns well with business operations"],"improvements":["Consider adding domain events for reservation status changes"]},"aggregateDesign":{"score":"85","details":["Option 1 maintains clear aggregate boundaries","Option 2 provides simpler transaction management"],"issues":["Option 2's aggregate might grow too large over time","Option 1 requires careful consistency management between aggregates"]},"boundaryConsistency":{"score":"80","details":["Both options maintain clear bounded contexts","Transaction boundaries are well-defined"],"inconsistencies":["Room availability checking might need eventual consistency in Option 1"]},"maintainability":{"score":"95","details":["Option 1 allows independent evolution of room and reservation features","Separation of concerns makes code organization clearer"],"concerns":["Option 2 might require more frequent changes across the entire aggregate"]},"valueObjectUsage":{"score":"85","details":["Appropriate use of value objects for ReservationPeriod and Location","CateringDetails as value object captures related attributes well"],"opportunities":["Could consider making Equipment a value object in Option 1"]}},"optionEvaluations":[{"optionIndex":0,"strengths":["Clear separation of concerns","Independent scalability","Better maintainability"],"weaknesses":["More complex querying","Eventual consistency challenges"],"score":"88"},{"optionIndex":1,"strengths":["Simpler implementation","Stronger consistency guarantees","Easier querying"],"weaknesses":["Limited scalability","Risk of aggregate growth","Tighter coupling"],"score":"75"}],"overallAssessment":{"bestOptionIndex":0,"justification":"Option 1 provides better long-term maintainability and scalability, which are crucial for a reservation system that might need to handle multiple locations and complex booking rules in the future","recommendedImprovements":[{"area":"Consistency Management","description":"Implement eventual consistency patterns for room availability checks","applicableOptions":["0"]},{"area":"Domain Events","description":"Add domain events for reservation status changes to improve integration","applicableOptions":["0","1"]}]},"needsRevision":false}}}}
-
-        `
-
-        return super.__buildExamplePrompt(inputs, jsonOutput)
     }
 
-    _buildUserQueryPrompt(){
-        return super._buildUserQueryPrompt({
+    __buildJsonUserQueryInputFormat() {
+        return {
+            "Accumulated Drafts": this.client.input.accumulatedDrafts,
+
+            "Target Bounded Context Name": this.client.input.boundedContext.name,
+
             "Functional Requirements": this.client.input.description,
 
             "Final Check List": `
-* Have you adequately addressed all of your users' needs?
-* Are there no Entities, ValueObjects with one property or unnecessary properties?
-* Are there any options that are redundant and effectively meaningless?
-* Did you write the name property of the object you created in English and the alias property in ${this.preferredLanguage} language?
+* Validate that all functional requirements and business rules are properly addressed in the design
+* Ensure proper aggregate boundaries and consistency rules are maintained
+* Check that all Entities and ValueObjects have meaningful properties and business value
+* Verify that no single-property objects exist without clear domain significance
+* Confirm naming conventions:
+  - All object names must be in English and follow PascalCase
+  - All aliases must be in ${this.preferredLanguage}
+* Verify aggregate references:
+  - Existing aggregates must be referenced via ValueObjects with foreign keys
+  - New aggregates must not duplicate existing ones
+* Review aggregate relationships:
+  - Consider using foreign key references between related aggregates
+  - Example: Order aggregate should reference Customer via CustomerReference ValueObject
+* Evaluate each option for:
+  - Technical feasibility
+  - Maintainability
+  - Scalability
+  - Consistency with DDD principles
+* The entities in Functional Requirements serve as a reference point only:
+  - You can propose alternative aggregate structures that better align with DDD principles
+  - Feel free to suggest different entity groupings and relationships
+  - You may introduce new entities or combine existing ones if it improves the domain model
+  - Focus on creating a design that best serves the business requirements and maintains consistency
+* For each option, create a different number of Aggregates configured. Ex) Option 1 consists of one Aggregate, Option 2 consists of two Aggregates.
+`,
+
+            "Guidelines": `
+* The following Aggregate should not be created because it already exists, but should be made to reference a ValueObject.: ${(this.client.input.existingAggregates && this.client.input.existingAggregates.length > 0) ? this.client.input.existingAggregates.join(", ") : "None"}
 `
-        })
+        }
     }
 
 
     onCreateModelGenerating(returnObj) {
-        returnObj.directMessage = `Generating options for ${this.client.input.boundedContext.name} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
-        super.onCreateModelGenerating(returnObj)
+        returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
     }
 
     onCreateModelFinished(returnObj) {
-        returnObj.modelValue.output = returnObj.modelValue.aiOutput.thoughtProcess["step3-designPossibleOptions"].result
-        returnObj.directMessage = `Generating options for ${this.client.input.boundedContext.name} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
-        super.onCreateModelFinished(returnObj)
+        returnObj.modelValue.output = returnObj.modelValue.aiOutput.result
+        returnObj.modelValue.output.defaultOptionIndex = returnObj.modelValue.output.defaultOptionIndex - 1
+        
+        this._removeOptionsWithExistingAggregates(returnObj.modelValue.output)
+        if(returnObj.modelValue.output.options.length === 0) 
+            throw new Error("No valid options found")
+
+        this._linkValueObjectsToReferencedAggregates(returnObj.modelValue.output)
+        this._enrichValueObjectsWithAggregateDetails(returnObj.modelValue.output)
+        this._markRecommendedOption(returnObj.modelValue.output)
+
+        returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+    }
+
+    _removeOptionsWithExistingAggregates(output) {
+        if(!output || !output.options) return;
+
+        const optionsByAggregateCount = {};
+        const filteredOptions = [];
+
+        for (const option of output.options) {
+            if (!option.structure) continue;
+
+            let hasExistingAggregate = false;
+            for (const aggregateInfo of option.structure) {
+                if (this.client.input.existingAggregates.includes(aggregateInfo.aggregate.name)) {
+                    hasExistingAggregate = true;
+                    break;
+                }
+            }
+            if (hasExistingAggregate) continue;
+
+            const aggregateCount = option.structure.length;
+            if (!optionsByAggregateCount[aggregateCount]) {
+                optionsByAggregateCount[aggregateCount] = [];
+            }
+            optionsByAggregateCount[aggregateCount].push(option);
+        }
+
+        for (const count in optionsByAggregateCount) {
+            if (optionsByAggregateCount[count].length > 0) {
+                filteredOptions.push(optionsByAggregateCount[count][0]);
+            }
+        }
+
+        output.options = filteredOptions;
+    }
+
+    // 적절한 참조 요소를 추가하지 않은 경우, 추가시켜 줌
+    _linkValueObjectsToReferencedAggregates(output) {
+        if(!output || !output.options) return
+
+        for(const option of output.options) {
+            if(!option.structure) continue
+
+            let validAggregateNames = this.__getValidAggregateNames(option)
+            for(const aggregate of option.structure) {
+                if(!aggregate.valueObjects) continue
+
+                for(const valueObject of aggregate.valueObjects) {
+                    if(validAggregateNames.includes(valueObject.name)) {
+                        valueObject.referencedAggregateName = valueObject.name
+                        break
+                    }
+
+                    if(validAggregateNames.includes(valueObject.name.replace("Reference", ""))) {
+                        valueObject.referencedAggregateName = valueObject.name.replace("Reference", "")
+                        break
+                    }
+                }
+            }
+        }
+    }
+
+    // 추가된 Alias는 추후에 초안에 관련된 사항 표시에 활용됨
+    _enrichValueObjectsWithAggregateDetails(output) {
+        if(!output || !output.options) return
+
+        for(const option of output.options) {
+            if(!option.structure) continue
+
+            let validAggregateNames = this.__getValidAggregateNames(option)
+            for(const aggregate of option.structure) {
+                if(!aggregate.valueObjects) continue
+
+                for(const valueObject of aggregate.valueObjects) {
+                    if(!valueObject.referencedAggregateName) {
+                        valueObject.name = valueObject.name.replace("Reference", "").trim()
+                        valueObject.alias = valueObject.alias.replace("Reference", "").replace("참조", "").trim()
+                        continue
+                    }
+
+                    if(!validAggregateNames.includes(valueObject.referencedAggregateName)){
+                        delete valueObject.referencedAggregateName
+                        valueObject.name = valueObject.name.replace("Reference", "").trim()
+                        valueObject.alias = valueObject.alias.replace("Reference", "").replace("참조", "").trim()
+                        continue
+                    }
+
+                    valueObject.referencedAggregate = {
+                        name: valueObject.referencedAggregateName,
+                        alias: this.__findAggregateAliasByName(valueObject.referencedAggregateName, output)
+                    }
+
+                    delete valueObject.referencedAggregateName
+                }
+            }
+        }
+    }
+
+    // usedOption: 초안에서 옵션들은 서로 배타적인 관계이기 때문에 다른 옵션을 기반으로 참조를 생성할 수 없음
+    __getValidAggregateNames(usedOption) {
+        let validAggregateNames = this.client.input.validAggregateNames ? this.client.input.validAggregateNames : []
+
+        for(const option of [usedOption]) {
+            if(!option.structure) continue
+            
+            for(const aggregate of option.structure)
+                if(!validAggregateNames.includes(aggregate.aggregate.name))
+                    validAggregateNames.push(aggregate.aggregate.name)
+        }
+
+        for(const accumulatedDraft of Object.values(this.client.input.accumulatedDrafts)) {
+            for(const aggregateInfo of accumulatedDraft) {
+                if(!validAggregateNames.includes(aggregateInfo.aggregate.name))
+                    validAggregateNames.push(aggregateInfo.aggregate.name)
+            }
+        }
+
+        return validAggregateNames
+    }
+
+    __findAggregateAliasByName(aggregateName, output) {
+        for(const aggregateInfos of Object.values(this.client.input.accumulatedDrafts)) {
+            for(const aggregateInfo of aggregateInfos)
+                if(aggregateInfo.aggregate.name === aggregateName) return aggregateInfo.aggregate.alias
+        }
+
+        for(const option of output.options) {
+            if(!option.structure) continue
+
+            for(const aggregate of option.structure) {
+                if(aggregate.aggregate.name === aggregateName) return aggregate.aggregate.alias
+            }
+        }
+
+        return aggregateName
+    }
+
+    // 추가된 AI 추천 여부는 추후에 초안에 관련된 사항 표시에 활용됨
+    _markRecommendedOption(output) {
+        if(!output || !output.options) return
+
+        for(let i = 0; i < output.options.length; i++) {
+            output.options[i].isAIRecommended = i === output.defaultOptionIndex
+        }
     }
 }
 

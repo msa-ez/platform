@@ -12,10 +12,14 @@
             @changeTranslate="changeTranslate"
     >
 
-
-
         <template slot="t-title-name">ReadModel</template>
 
+        <template slot="md-level-btn">
+            <v-chip @click="toggleDesignLevel" style="margin-left: 16px; cursor: pointer;" color="primary" outlined>
+                <v-icon left>{{ isDesignLevelVisible ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
+                {{ $t('CommandDefinitionPanel.implementationSettings') }}
+            </v-chip>
+        </template>
 
         <template slot="t-description-text">
             {{ $t('panelInfo.ViewDefinitionPanel') }}
@@ -60,14 +64,13 @@
             <v-btn
                     text
                     color="primary"
-                    style="margin-left: 10px; margin-top: -12px;"
                     :disabled="isReadOnly || !exampleAvailable || value.dataProjection != 'query-for-aggregate'"
                     @click="openExampleDialog()"
             >Examples</v-btn>
             <v-tooltip bottom v-if="!exampleAvailable">
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn icon v-bind="attrs" v-on="on"
-                        style="margin-left: -8px; margin-top: -15px; width: 10px; height: 10px;">
+                    >
                         <v-icon color="grey lighten-1">mdi-help-circle</v-icon>
                     </v-btn>
                 </template>
@@ -81,189 +84,185 @@
         </template>
 
         <template slot="element">
-            <RuleExampleDialog v-if="openExample" v-model="value" @closeExampleDialog="closeExampleDialog()" />
-            <v-card flat>
-                <v-card-text>
-                    <v-radio-group :disabled="isReadOnly"
-                                   v-model="value.dataProjection" row>
-                        <v-radio :disabled="isOnlyCQRS" label="CQRS" value="cqrs"></v-radio>
-                        <v-radio label="Query For Aggregate" value="query-for-aggregate"></v-radio>
-                        <v-radio label="Query For Multiple Aggregate" value="query-for-multiple-aggregate"></v-radio>
-                        <v-radio disabled label="GraphQL" value="graphql"></v-radio>
-                    </v-radio-group>
-                    <!-- <v-alert
-                        color="grey darken-1"
-                        text
-                        type="info"
-                        class="pa-2 alert-text"
-                        v-if="titleName != 'External' && titleName != 'Issue' && titleName != 'UI' "
-                    >
-                    ReadModel의 사용 목적을 설정하세요 <br>
-                    </v-alert> -->
+            <div v-show="isDesignLevelVisible" class="pa-4 pt-0">
+                <RuleExampleDialog v-if="openExample" v-model="value" @closeExampleDialog="closeExampleDialog()" />
+                <v-card flat>
+                    <v-card-text class="pa-0">
+                        <v-radio-group class="ma-0 pa-0 delete-raido-detail"
+                            :disabled="isReadOnly"
+                            v-model="value.dataProjection" row
+                        >
+                            <v-radio :disabled="isOnlyCQRS" label="CQRS" value="cqrs"></v-radio>
+                            <v-radio label="Query For Aggregate" value="query-for-aggregate"></v-radio>
+                            <v-radio label="Query For Multiple Aggregate" value="query-for-multiple-aggregate"></v-radio>
+                            <v-radio disabled label="GraphQL" value="graphql"></v-radio>
+                        </v-radio-group>
+                        <!-- <v-alert
+                            color="grey darken-1"
+                            text
+                            type="info"
+                            class="pa-2 alert-text"
+                            v-if="titleName != 'External' && titleName != 'Issue' && titleName != 'UI' "
+                        >
+                        ReadModel의 사용 목적을 설정하세요 <br>
+                        </v-alert> -->
 
-                    <div v-if="value.dataProjection == 'query-for-aggregate'">
-
-                        <div style="margin-left:15px;">
-                            <span class="panel-title">Associated Aggregate</span>
-                            <v-text-field
-                                    v-model="relatedAggregateName"
-                                    label="Position the sticker adjacent to the Aggregate sticker"
-                                    single-line
-                                    disabled
-                                    style="margin-top:-15px;"
-                            ></v-text-field>
-
-
-
-                            <v-radio-group v-model="value.queryOption.useDefaultUri" :disabled="isReadOnly" row>
-                                <v-radio label="Default GET URI" :value="true"></v-radio>
-                                <v-radio label="Extended GET URI" :value="false"></v-radio>
-                            </v-radio-group>
-
-                            <v-row style="align-items: center" v-if="!value.queryOption.useDefaultUri">
+                        <div class="mt-4" v-if="value.dataProjection == 'query-for-aggregate'">
+                            <div>
+                                <span class="panel-title">Associated Aggregate</span>
                                 <v-text-field
-                                        v-model="value.queryOption.apiPath"
-                                        :disabled="isReadOnly"
-                                        style="margin-left: 10px;"
-                                        label="Get Path"
+                                        v-model="relatedAggregateName"
+                                        label="Position the sticker adjacent to the Aggregate sticker"
+                                        single-line
+                                        disabled
                                 ></v-text-field>
-                            </v-row>
 
+                                <v-radio-group class="delete-raido-detail" v-model="value.queryOption.useDefaultUri" :disabled="isReadOnly" row>
+                                    <v-radio label="Default GET URI" :value="true"></v-radio>
+                                    <v-radio label="Extended GET URI" :value="false"></v-radio>
+                                </v-radio-group>
 
-                            <v-radio-group v-model="value.queryOption.multipleResult" :disabled="isReadOnly" row>
-                                <v-radio label="Single Result" :value="false"></v-radio>
-                                <v-radio label="Multiple Result" :value="true"></v-radio>
-                            </v-radio-group>
+                                <v-row style="align-items: center" v-if="!value.queryOption.useDefaultUri">
+                                    <v-text-field
+                                            v-model="value.queryOption.apiPath"
+                                            :disabled="isReadOnly"
+                                            label="Get Path"
+                                    ></v-text-field>
+                                </v-row>
+
+                                <v-radio-group class="delete-raido-detail" v-model="value.queryOption.multipleResult" :disabled="isReadOnly" row>
+                                    <v-radio label="Single Result" :value="false"></v-radio>
+                                    <v-radio label="Multiple Result" :value="true"></v-radio>
+                                </v-radio-group>
+                            </div>
+
+                            <v-card flat>
+                                <v-card-text class="pa-0 pt-4">
+                                    <event-storming-attribute
+                                            label="Query Parameters"
+                                            v-model="value.queryParameters"
+                                            :isReadOnly="isReadOnly"
+                                            :type="value._type"
+                                            :dataProjection="value.dataProjection"
+                                            :elementId="value.elementView.id"
+                                            @sync-attribute="syncFromAggregate"
+                                            :entities="relatedAggregate ? relatedAggregate.aggregateRoot.entities : null"
+                                            :fields="relatedAggregate ? relatedAggregate.aggregateRoot.fieldDescriptors : null"
+                                    ></event-storming-attribute>
+                                </v-card-text>
+                            </v-card>
                         </div>
 
-                        <v-card flat>
-                            <v-card-text>
-                                <event-storming-attribute
-                                        label="Query Parameters"
-                                        v-model="value.queryParameters"
-                                        :isReadOnly="isReadOnly"
-                                        :type="value._type"
-                                        :dataProjection="value.dataProjection"
-                                        :elementId="value.elementView.id"
-                                        @sync-attribute="syncFromAggregate"
-                                        :entities="relatedAggregate ? relatedAggregate.aggregateRoot.entities : null"
-                                        :fields="relatedAggregate ? relatedAggregate.aggregateRoot.fieldDescriptors : null"
-                                ></event-storming-attribute>
-                            </v-card-text>
-                        </v-card>
+                        <div v-if="value.dataProjection == 'query-for-multiple-aggregate'">
+                            <v-card flat>
+                                <v-card-text class="pa-0 pt-4">
+                                    <event-storming-attribute
+                                            label="Query Parameters"
+                                            v-model="value.queryParameters"
+                                            :isReadOnly="isReadOnly"
+                                            :type="value._type"
+                                            :dataProjection="value.dataProjection"
+                                            :elementId="value.elementView.id"
+                                            @sync-attribute="syncFromAggregate('queryParameters')"
+                                            :entities="relatedAggregate ? relatedAggregate.aggregateRoot.entities : null"
+                                            :fields="relatedAggregate ? relatedAggregate.aggregateRoot.fieldDescriptors : null"
+                                    ></event-storming-attribute>
+                                </v-card-text>
 
+                                <v-card-text class="pa-0">
+                                    <event-storming-attribute
+                                            label="Read Model Attributes"
+                                            v-model="value.fieldDescriptors"
+                                            :isReadOnly="isReadOnly"
+                                            :type="value._type"
+                                            :dataProjection="value.dataProjection"
+                                            :elementId="value.elementView.id"
+                                            @sync-attribute="syncFromAggregate('fieldDescriptors')"
+                                            :entities="relatedAggregate ? relatedAggregate.aggregateRoot.entities : null"
+                                            :fields="relatedAggregate ? relatedAggregate.aggregateRoot.fieldDescriptors : null"
+                                    ></event-storming-attribute>
+                                </v-card-text>
+                            </v-card>
+                        </div>
 
+                        <div v-if="value.dataProjection == 'cqrs'">
+                            <v-card flat>
+                                <v-card-text class="pa-0">
+                                    <event-storming-attribute
+                                            label="Read Model Attributes"
+                                            v-model="value.fieldDescriptors"
+                                            :isReadOnly="isReadOnly"
+                                            :type="value._type"
+                                            :elementId="value.elementView.id"
+                                            @sync-attribute="syncFromAggregate"
+                                    ></event-storming-attribute>
+                                </v-card-text>
+                            </v-card>
 
+                            <v-col class="pa-0" v-for="(item,key) in value.createRules">
+                                <ViewCreate
+                                        v-model="value"
+                                        :createItem="item"
+                                        :index="key"
+                                        :isRead="isReadOnly"
+                                ></ViewCreate>
+                            </v-col>
+                            <v-row align="start" justify="end">
+                                <v-tooltip left>
+                                    <template v-slot:activator="{ on }">
+                                        <v-btn v-on="on" class="cqrs-add-btn" outlined :disabled="isReadOnly"
+                                            @click="viewMainRowAdd('create')">
+                                            <v-icon> mdi-plus</v-icon>
+                                        </v-btn>
+                                    </template>
+                                    <span>Add "CREATE" Card</span>
+                                </v-tooltip>
+                            </v-row>
 
-                    </div>
+                            <v-col class="pa-0" v-for="(item,key) in value.updateRules">
+                                <ViewUpdate
+                                        v-model="value"
+                                        :updateItem="item"
+                                        :index="key"
+                                        :isRead="isReadOnly"
+                                >
+                                </ViewUpdate>
+                            </v-col>
+                            <v-row align="center" justify="end">
+                                <v-tooltip left>
+                                    <template v-slot:activator="{ on }">
+                                        <v-btn v-on="on" class="cqrs-add-btn" outlined :disabled="isReadOnly"
+                                            @click="viewMainRowAdd('update')">
+                                            <v-icon> mdi-plus</v-icon>
+                                        </v-btn>
+                                    </template>
+                                    <span>Add "UPDATE" Card</span>
+                                </v-tooltip>
+                            </v-row>
 
-                    <div v-if="value.dataProjection == 'query-for-multiple-aggregate'">
-                        <v-card flat>
-                            <v-card-text style="padding-top: 10px;">
-                                <event-storming-attribute
-                                        label="Query Parameters"
-                                        v-model="value.queryParameters"
-                                        :isReadOnly="isReadOnly"
-                                        :type="value._type"
-                                        :dataProjection="value.dataProjection"
-                                        :elementId="value.elementView.id"
-                                        @sync-attribute="syncFromAggregate"
-                                        :entities="relatedAggregate ? relatedAggregate.aggregateRoot.entities : null"
-                                        :fields="relatedAggregate ? relatedAggregate.aggregateRoot.fieldDescriptors : null"
-                                ></event-storming-attribute>
-                            </v-card-text>
-
-                            <v-card-text class="pa-0">
-                                <event-storming-attribute
-                                        label="Read Model Attributes"
-                                        v-model="value.fieldDescriptors"
-                                        :isReadOnly="isReadOnly"
-                                        :type="value._type"
-                                        :elementId="value.elementView.id"
-                                        @sync-attribute="syncFromAggregate"
-                                        :entities="relatedAggregate ? relatedAggregate.aggregateRoot.entities : null"
-                                        :fields="relatedAggregate ? relatedAggregate.aggregateRoot.fieldDescriptors : null"
-                                ></event-storming-attribute>
-                            </v-card-text>
-                        </v-card>
-                    </div>
-
-                    <div v-if="value.dataProjection == 'cqrs'">
-                        <v-card flat>
-                            <v-card-text class="pa-0">
-                                <event-storming-attribute
-                                        label="Read Model Attributes"
-                                        v-model="value.fieldDescriptors"
-                                        :isReadOnly="isReadOnly"
-                                        :type="value._type"
-                                        :elementId="value.elementView.id"
-                                ></event-storming-attribute>
-                            </v-card-text>
-                        </v-card>
-
-                        <v-col v-for="(item,key) in value.createRules">
-                            <ViewCreate
-                                    v-model="value"
-                                    :createItem="item"
-                                    :index="key"
-                                    :isRead="isReadOnly"
-                            ></ViewCreate>
-                        </v-col>
-                        <v-row align="start" justify="end">
-                            <v-tooltip left>
-                                <template v-slot:activator="{ on }">
-                                    <v-btn v-on="on" class="cqrs-add-btn" outlined :disabled="isReadOnly"
-                                           @click="viewMainRowAdd('create')">
-                                        <v-icon> mdi-plus</v-icon>
-                                    </v-btn>
-                                </template>
-                                <span>Add "CREATE" Card</span>
-                            </v-tooltip>
-                        </v-row>
-
-                        <v-col v-for="(item,key) in value.updateRules">
-                            <ViewUpdate
-                                    v-model="value"
-                                    :updateItem="item"
-                                    :index="key"
-                                    :isRead="isReadOnly"
-                            >
-                            </ViewUpdate>
-                        </v-col>
-                        <v-row align="center" justify="end">
-                            <v-tooltip left>
-                                <template v-slot:activator="{ on }">
-                                    <v-btn v-on="on" class="cqrs-add-btn" outlined :disabled="isReadOnly"
-                                           @click="viewMainRowAdd('update')">
-                                        <v-icon> mdi-plus</v-icon>
-                                    </v-btn>
-                                </template>
-                                <span>Add "UPDATE" Card</span>
-                            </v-tooltip>
-                        </v-row>
-
-                        <v-col v-for="(item,key) in value.deleteRules">
-                            <ViewDelete
-                                    v-model="value"
-                                    :deleteItem="item"
-                                    :index="key"
-                                    :isRead="isReadOnly"
-                            ></ViewDelete>
-                        </v-col>
-                        <v-row align="start" justify="end">
-                            <v-tooltip left>
-                                <template v-slot:activator="{ on }">
-                                    <v-btn v-on="on" class="cqrs-add-btn" outlined :disabled="isReadOnly"
-                                           @click="viewMainRowAdd('delete')">
-                                        <v-icon>mdi-plus</v-icon>
-                                    </v-btn>
-                                </template>
-                                <span>Add "DELETE" Card</span>
-                            </v-tooltip>
-                        </v-row>
-                    </div>
-                </v-card-text>
-            </v-card>
+                            <v-col class="pa-0" v-for="(item,key) in value.deleteRules">
+                                <ViewDelete
+                                        v-model="value"
+                                        :deleteItem="item"
+                                        :index="key"
+                                        :isRead="isReadOnly"
+                                ></ViewDelete>
+                            </v-col>
+                            <v-row align="start" justify="end">
+                                <v-tooltip left>
+                                    <template v-slot:activator="{ on }">
+                                        <v-btn v-on="on" class="cqrs-add-btn" outlined :disabled="isReadOnly"
+                                            @click="viewMainRowAdd('delete')">
+                                            <v-icon>mdi-plus</v-icon>
+                                        </v-btn>
+                                    </template>
+                                    <span>Add "DELETE" Card</span>
+                                </v-tooltip>
+                            </v-row>
+                        </div>
+                    </v-card-text>
+                </v-card>
+            </div>
         </template>
     </common-panel>
 
@@ -355,7 +354,7 @@
             });
         },
         methods: {
-            syncFromAggregate() {
+            syncFromAggregate(type) {
                 var me = this
                 var aggregateField = null
                 var entityTypeList =  ['Integer', 'String', 'Boolean', 'Float', 'Double', 'Long', 'Date']
@@ -379,9 +378,17 @@
                                 }
 
                                 if (eventKey == -1) {
-                                    me.value.queryParameters.push(aggField)
+                                    if(type === 'queryParameters'){
+                                        me.value.queryParameters.push(aggField)
+                                    }else{
+                                        me.value.fieldDescriptors.push(aggField)
+                                    }
                                 } else {
-                                    me.value.queryParameters[eventKey] = aggField
+                                    if(type === 'queryParameters'){
+                                        me.value.queryParameters[eventKey] = aggField
+                                    }else{
+                                        me.value.fieldDescriptors[eventKey] = aggField
+                                    }
                                 }
                                 me.value.queryParameters.__ob__.dep.notify();
                             })

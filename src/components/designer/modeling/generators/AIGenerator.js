@@ -186,10 +186,10 @@ class AIGenerator {
                                 responseCnt = 0;
                             } else {
                                 me.stop();
-                                if(me.client.onGenerationFinished) {
-                                    me.client.onGenerationFinished(me.savedModel)
-                                    resolve(null); 
-                                }
+                                // if(me.client.onGenerationFinished) {
+                                    // me.client.onGenerationFinished(me.savedModel)
+                                    // resolve(null); 
+                                // }
                             }
                         } else {
                             responseCnt++;

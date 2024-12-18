@@ -69,7 +69,7 @@ export default {
     },
     methods: {
         getImagePath(imgName) {
-            return `/assets/images/detailImage/${imgName}`;
+            return `/static/image/detailImage/${imgName}`;
         }
     }
 };
