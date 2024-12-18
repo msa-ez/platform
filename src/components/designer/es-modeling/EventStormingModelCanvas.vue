@@ -1785,6 +1785,7 @@
                         @changedByMe="settingChangedByMe"
                         @editModelData="editModelData"
                         @setInformation="setInformation"
+                        @close="closeSeparatePanel()"
                         canvas-name="event-storming-model-canvas"
                 ></CodeGenerator>
             </template>

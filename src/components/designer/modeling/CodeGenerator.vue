@@ -50,9 +50,13 @@
                         </div>
                     </div>
                     <div v-if="isGeneratorDone && openCodeFileName" class="gs-code-title"> - {{ openCodeFileName }}</div>
+                    <v-spacer></v-spacer>
+                    <v-icon @click="closeSeparate()"
+                        style="margin-right: 12px; cursor: pointer;"
+                    >mdi-close</v-icon>
                 </v-row>
                 <v-row v-if="isGeneratorDone"
-                        style="z-index: 1; margin:0px;"
+                        style="z-index: 1; margin: 0px;"
                 >
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
@@ -2734,6 +2738,9 @@
             me.openaiToken = await me.getToken();
         },
         methods: {
+            closeSeparate(){
+                this.$emit('close')
+            },
             getToken() {
                 var me = this
                 return new Promise(async function (resolve, reject) {
