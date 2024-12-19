@@ -400,6 +400,14 @@
             this.useMonitoring = this.canvas.useMonitoring
         },
         methods: {
+            openPanel() {
+                this.useMonitoring = this.canvas.useMonitoring
+                if(this.propertyPanel) {
+                    this.propertyPanel = false
+                }
+                this.propertyPanel = true
+                this.staySelected = false
+            },
             onChangedElementName(newVal, oldVal){
                 this.setMirrorElementId();
             },
