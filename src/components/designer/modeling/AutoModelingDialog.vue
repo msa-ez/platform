@@ -48,7 +48,7 @@
                             </v-row>
 
                             <!-- autofocus -->
-                            <v-text-field
+                            <v-text-field class="auto-modeling-input"
                                 v-model="projectInfo.prompt"
                                 style="margin-bottom: -30px; padding: 10px; width: 80%; float: right; margin-top: 10px;"
                                 :style="!openAiResult && openAiResult == '' ? 'margin-top: 15px;':''"
@@ -726,8 +726,13 @@
                     }
                 });
             },
-            startGen(){
-                this.reGenKey++;
+            startGen(type) {
+                if (!type) {
+                    this.checkLogin('ES2');
+                    this.reGenKey++;
+                } else {
+                    this.reGenKey++;
+                }
             },
             show(options){
                 ///
