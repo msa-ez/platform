@@ -1,10 +1,9 @@
 <template>
     <v-card
-            outlined
-            :disabled="isRead"
-            min-width="450px"
-            max-width="450px"
-            style="margin:-15px 0 0 -13px;"
+        outlined
+        :disabled="isRead"
+        min-width="450px"
+        max-width="450px"
     >
         <v-row align="center" justify="end" dense>
             <v-btn style="margin:5px 5px 0 0;" text v-if="value.deleteRules.length != 1"  @click.native="removeMainRow(index)">
@@ -16,13 +15,13 @@
             <v-col align="start" justify="start" style="padding-top: 10px">
                 <v-row align="start" justify="start" style=" margin-left: 5px; margin-right: 5px;">
                     <v-autocomplete
-                            v-model="deleteItem.when"
-                            :items="eventLists"
-                            item-text="name"
-                            return-object
-                            prefix="DELETE WHEN"
-                            label=" Select Event"
-                            style="font-size: 15px"
+                        v-model="deleteItem.when"
+                        :items="eventLists"
+                        item-text="name"
+                        return-object
+                        prefix="DELETE WHEN"
+                        label=" Select Event"
+                        style="font-size: 15px"
                     ></v-autocomplete>
                 </v-row>
 
@@ -30,7 +29,7 @@
                 <div style="font-size: 15px; margin-left: 13px;">WHERE</div>
 
                 <v-simple-table
-                        dense style="margin-left: 5px; margin-right:5px;"
+                    dense style="margin-left: 5px; margin-right:5px;"
                 >
                     <template v-slot:default>
                         <thead>
