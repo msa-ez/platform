@@ -1752,28 +1752,46 @@
                         <v-card-text>
                             <v-tabs-items v-model="monitoringTab">
                                 <v-tab-item v-for="tab in monitoringTabs" :key="tab">
-                                    <v-text-field
-                                        v-if="tab === 'filtered'"
-                                        v-model="correlationKey"
-                                        label="Search Correlation Key"
-                                        clearable
-                                        outlined
-                                        dense
-                                        @keydown.enter="fetchFilteredEvents(correlationKey)"
-                                        @click:clear="clearEventProgress()"
-                                    >
-                                        <template v-slot:append>
-                                            <v-icon @click="fetchFilteredEvents(correlationKey)">mdi-magnify</v-icon>
-                                        </template>
-                                    </v-text-field>
-                                    <v-text-field
-                                        v-if="eventSearchKey"
-                                        v-model="eventSearchKey"
-                                        label="Search Key"
-                                        clearable
-                                        outlined
-                                        dense
-                                    ></v-text-field>
+                                    <div v-if="tab === 'filtered'">
+                                        <div v-for="(eventSearchKey, index) in eventSearchKeys" 
+                                            class="d-flex justify-space-between my-2">
+                                            <v-select 
+                                                v-if="index > 0"
+                                                v-model="eventSearchKey.key" 
+                                                :items="searchKeyList" 
+                                                item-text="name"
+                                                item-value="nameCamelCase"
+                                                outlined 
+                                                dense 
+                                                hide-details
+                                                class="mr-2"
+                                            ></v-select>
+                                            <v-text-field
+                                                v-model="eventSearchKey.value"
+                                                :label="eventSearchKey.key"
+                                                clearable
+                                                outlined
+                                                dense
+                                                hide-details
+                                                @keydown.enter="fetchFilteredEvents(eventSearchKeys)"
+                                                @click:clear="clearEventProgress()"
+                                            >
+                                                <template v-slot:append>
+                                                    <v-icon @click="fetchFilteredEvents(eventSearchKeys)">mdi-magnify</v-icon>
+                                                </template>
+                                            </v-text-field>
+                                            <v-btn v-if="index > 0" icon @click="removeEventSearchKey(index)" class="ml-1">
+                                                <v-icon>mdi-minus</v-icon>
+                                            </v-btn>
+                                            <v-btn v-else 
+                                                icon 
+                                                @click="addEventSearchKey(index)"
+                                                class="ml-1"
+                                            >
+                                                <v-icon>mdi-plus</v-icon>
+                                            </v-btn>
+                                        </div>
+                                    </div>
 
                                     <v-data-table
                                         v-if="isEventLogsFetched"
@@ -2140,7 +2158,6 @@
                 monitoringDialog: false,
                 monitoringTab: 0,
                 monitoringTabs: ["recent", "filtered"],
-                correlationKey: "",
                 isEventLogsFetched: false,
                 eventHeaders: [
                     { text: 'Key', value: 'correlationKey' },
@@ -2153,7 +2170,11 @@
                 expandedLogs: [],
                 selectedEventIdx: -1,
                 fetchEventInterval: null,
-                eventSearchKey: null,
+                searchKeyList: [],
+                eventSearchKeys: [{
+                    key: "correlationKey",
+                    value: ""
+                }],
 
                 showContinue: false,
                 defaultGeneratorUiInputData: {
@@ -3565,11 +3586,6 @@
                     }
                 }
             },
-            correlationKey(newVal, oldVal) {
-                if (!newVal && this.fetchEventInterval && this.monitoringDialog) {
-                    this.fetchFilteredEvents(newVal);
-                }
-            },
             monitoringTab(newVal, oldVal) {
                 if (newVal !== oldVal) {
                     this.eventLogs = [];
@@ -3581,10 +3597,9 @@
                     }
                 }
                 if (newVal === 0) {
-                    this.correlationKey = "";
                     this.fetchRecentEvents();
-                } else if (newVal === 1 && this.correlationKey) {
-                    this.fetchFilteredEvents(this.correlationKey);
+                } else if (newVal === 1 && this.eventSearchKeys) {
+                    this.fetchFilteredEvents(this.eventSearchKeys);
                 }
             }
         },
@@ -8437,7 +8452,6 @@
                 var me = this;
                 me.clearEventProgress();
                 me.eventLogs = [];
-                me.correlationKey = '';
                 me.monitoringDialog = !me.monitoringDialog;
 
                 if (me.monitoringDialog) {
@@ -8446,12 +8460,23 @@
                     me.fetchRecentEvents();
                 }
             },
-            async fetchEventCollections(correlationKey) {
+            async fetchEventCollections(eventSearchKeys) {
                 var me = this
                 var reqUrl = 'http://localhost:9999/eventCollectors'
                 var result = [];
-                if (correlationKey && correlationKey.length > 0) {
-                    reqUrl += '/search/findByCorrelationKey?correlationKey=' + correlationKey;
+                if (eventSearchKeys && eventSearchKeys.length > 0) {
+                    if (eventSearchKeys.length == 1) {
+                        reqUrl += '/search/findByCorrelationKey?correlationKey=' + eventSearchKeys[0].value;
+                    } else {
+                        reqUrl += '/search/findBySearchKey';
+                        eventSearchKeys.forEach((item, index) => {
+                            if (index == 0) {
+                                reqUrl += `?${item.key}=${item.value}`;
+                            } else {
+                                reqUrl += `&${item.key}=${item.value}`;
+                            }
+                        });
+                    }
                 } else {
                     const timestamp = new Date().getTime() - 60 * 60 * 1000;
                     reqUrl += '/search/findRecentEvents?timestamp=' + timestamp;
@@ -8482,15 +8507,15 @@
                 } else {
                     me.eventLogs = [];
                 }
-                if (!me.fetchEventInterval) {
-                    me.fetchEventLogs();
-                }
+                // if (!me.fetchEventInterval) {
+                //     me.fetchEventLogs();
+                // }
                 me.isEventLogsFetched = true;
             },
-            async fetchFilteredEvents(correlationKey) {
+            async fetchFilteredEvents(eventSearchKeys) {
                 var me = this;
-                if (correlationKey && correlationKey.length > 0) {
-                    const events = await me.fetchEventCollections(correlationKey);
+                if (eventSearchKeys && eventSearchKeys.length > 0) {
+                    const events = await me.fetchEventCollections(eventSearchKeys);
                     me.eventLogs = events;
                     if (me.eventLogs.length > 0) {
                         me.eventLogs.forEach((eventLog, index) => {
@@ -8545,7 +8570,7 @@
             selectedProgressByEvent(event, index) {
                 var me = this;
                 if (me.monitoringTab === 0) {
-                    me.correlationKey = event.correlationKey;
+                    me.eventSearchKeys = [{key: "correlationKey", value: event.correlationKey}];
                     me.monitoringTab = 1;
                 } else {
                     if (me.selectedEventIdx === index) {
@@ -8587,9 +8612,9 @@
                     clearInterval(me.fetchEventInterval);
                     me.fetchEventInterval = null;
                 }
-                if (me.correlationKey) {
+                if (me.monitoringTab === 1) {
                     me.fetchEventInterval = setInterval(() => {
-                        me.fetchFilteredEvents(me.correlationKey);
+                        me.fetchFilteredEvents(me.eventSearchKeys);
                     }, 5000);
                 } else {
                     me.fetchEventInterval = setInterval(() => {
@@ -8604,6 +8629,32 @@
                 } else {
                     me.expandedLogs = [eventLog];
                 }
+            },
+            addEventSearchKey() {
+                var me = this;
+                if (!me.eventSearchKeys) {
+                    me.eventSearchKeys = [];
+                }
+                const eventElements = Object.values(me.value.elements).filter(element => element && element._type.endsWith('Event'));
+                me.searchKeyList = [];
+                const searchKeySet = new Set();
+                eventElements.forEach(element => {
+                    const keys = element.fieldDescriptors.filter(field => field.isSearchKey);
+                    keys.forEach(key => {
+                        if (!searchKeySet.has(key.name)) {
+                            searchKeySet.add(key.name);
+                            me.searchKeyList.push(key);
+                        }
+                    });
+                });
+                me.eventSearchKeys.push({
+                    key: '',
+                    value: ''
+                });
+            },
+            removeEventSearchKey(index) {
+                var me = this;
+                me.eventSearchKeys.splice(index, 1);
             },
             
             
