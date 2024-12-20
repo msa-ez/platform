@@ -4,6 +4,17 @@
     "showBeta": "베타 보기",
     "hideBeta": "베타 숨기기"
   },
+  "ViewDefinitionPanel" : {
+    "CQRSDetailTitle" : "CQRS 패턴에서 Read Model의 \"CREATE\" 설정은 이벤트 발생 시 데이터를 조회 가능한 형태로 저장하는 역할을 합니다.",
+    "CQRSDetailSubTitle1" : "CREATE WHEN: 특정 이벤트가 발생할 때 Read Model을 생성합니다. 예를 들어, 새로운 주문이 생성되면 해당 주문 정보를 Read Model에 저장합니다.",
+    "CQRSDetailSubTitle2" : "SET: Read Model의 필드를 이벤트의 필드 값으로 설정합니다. 이는 데이터가 어떻게 저장될지를 정의합니다. 예를 들어, readModelField에 eventField의 값을 할당합니다.",
+    "CQRSDetailSubTitle3" : "Operator: 필드 간의 연산자를 설정합니다. 일반적으로 할당(=) 연산자를 사용하여 이벤트 필드의 값을 Read Model 필드에 저장합니다.",
+    "QueryForAggregateDetailTitle" : "Query for Aggregate 설정은 부착된 Aggregate의 데이터를 조회하기 위한 쿼리를 정의합니다.",
+    "QueryForAggregateDetailSubTitle1" : "Default GET URI: 기본적인 GET 요청을 통해 Aggregate 데이터를 조회합니다. 이는 표준 URI 경로를 사용하여 데이터를 가져오는 방식입니다.",
+    "QueryForAggregateDetailSubTitle2": "Extended GET URI: 기본 경로 외에 추가적인 요구사항을 충족하기 위해 확장된 URI를 사용합니다. 특정 조건이나 필터링이 필요한 경우 유용합니다.",
+    "QueryForAggregateDetailSubTitle3": "Single Result: 쿼리 결과가 단일 객체일 때 사용됩니다. 특정 ID나 고유 식별자를 통해 하나의 Aggregate 데이터를 조회합니다.",
+    "QueryForAggregateDetailSubTitle4": "Multiple Result: 쿼리 결과가 여러 객체일 때 사용됩니다. 조건에 맞는 여러 Aggregate 데이터를 리스트 형태로 조회합니다."
+  },
   "AlgoliaModelLists" : {
     "pet" : "펫샵",
     "food" : "음식배달앱",

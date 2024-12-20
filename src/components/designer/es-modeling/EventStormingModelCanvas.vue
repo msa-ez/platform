@@ -659,7 +659,7 @@
                                                                     @click="openInviteUsers()"
                                                                 >
                                                                     <v-icon>{{icon.share}}</v-icon>
-                                                                    <div class="es-hide-share"> SHARE123123 </div>
+                                                                    <div class="es-hide-share"> SHARE </div>
                                                                     <v-avatar
                                                                         v-if="requestCount"
                                                                         size="25"
@@ -693,6 +693,22 @@
                                                         <div class="es-hide-code">chatGPT</div>
                                                     </v-btn> -->
                                                     <!-- v-if="isOwnModel || isServerModel || isClazzModeling" -->
+                                                    <v-menu v-if="useMonitoring" class="pa-2" offset-y left>
+                                                        <template v-slot:activator="{ on, attrs }">
+                                                            <div>
+                                                                <v-btn v-on="on"
+                                                                        v-bind="attrs"
+                                                                        class="gs-model-z-index-1"
+                                                                        text
+                                                                        style="margin-right: 5px;"
+                                                                        :disabled="!initLoad"
+                                                                        @click="toggleMonitoringDialog()"
+                                                                >
+                                                                    <div>MONITORING</div>
+                                                                </v-btn>
+                                                            </div>
+                                                        </template>
+                                                    </v-menu>
                                                 </slot>
                                             </v-row>
                                         </div>
@@ -920,6 +936,21 @@
                                                         <v-list-item-title>{{ item.title }}</v-list-item-title>
                                                     </v-list-item>
                                                 </v-list>
+                                            </v-menu>
+
+                                            <v-menu v-if="useMonitoring" offset-y>
+                                                <template v-slot:activator="{ on }">
+                                                    <div>
+                                                        <v-btn v-on="on"
+                                                                class="gs-model-z-index-1 mobile-btn"
+                                                                text
+                                                                :disabled="!initLoad"
+                                                                @click="toggleMonitoringDialog()"
+                                                        >
+                                                            <v-icon>mdi-monitor</v-icon>
+                                                        </v-btn>
+                                                    </div>
+                                                </template>
                                             </v-menu>
                                         </v-row>
                                     </div>
@@ -1705,6 +1736,107 @@
                         </v-card>
                     </v-dialog>
 
+                    <v-card v-if="monitoringDialog" class="monitoring-dialog">
+                        <div class="d-flex justify-space-between">
+                            <div>
+                                <v-tabs v-model="monitoringTab">
+                                    <v-tab v-for="tab in monitoringTabs" :key="tab">
+                                        {{ tab.toUpperCase() }} Events
+                                    </v-tab>
+                                </v-tabs>
+                            </div>
+                            <v-btn icon @click="toggleMonitoringDialog()" class="ma-2">
+                                <v-icon>mdi-close</v-icon>
+                            </v-btn>
+                        </div>
+                        <v-card-text>
+                            <v-tabs-items v-model="monitoringTab">
+                                <v-tab-item v-for="tab in monitoringTabs" :key="tab">
+                                    <div v-if="tab === 'filtered'">
+                                        <div v-for="(eventSearchKey, index) in eventSearchKeys" 
+                                            class="d-flex justify-space-between my-2">
+                                            <v-select 
+                                                v-if="index > 0"
+                                                v-model="eventSearchKey.key" 
+                                                :items="searchKeyList" 
+                                                item-text="name"
+                                                item-value="nameCamelCase"
+                                                outlined 
+                                                dense 
+                                                hide-details
+                                                class="mr-2"
+                                            ></v-select>
+                                            <v-text-field
+                                                v-model="eventSearchKey.value"
+                                                :label="eventSearchKey.key"
+                                                clearable
+                                                outlined
+                                                dense
+                                                hide-details
+                                                @keydown.enter="fetchFilteredEvents(eventSearchKeys)"
+                                                @click:clear="clearEventProgress()"
+                                            >
+                                                <template v-slot:append>
+                                                    <v-icon @click="fetchFilteredEvents(eventSearchKeys)">mdi-magnify</v-icon>
+                                                </template>
+                                            </v-text-field>
+                                            <v-btn v-if="index > 0" icon @click="removeEventSearchKey(index)" class="ml-1">
+                                                <v-icon>mdi-minus</v-icon>
+                                            </v-btn>
+                                            <v-btn v-else 
+                                                icon 
+                                                @click="addEventSearchKey(index)"
+                                                class="ml-1"
+                                            >
+                                                <v-icon>mdi-plus</v-icon>
+                                            </v-btn>
+                                        </div>
+                                    </div>
+
+                                    <v-data-table
+                                        v-if="isEventLogsFetched"
+                                        :headers="eventHeaders"
+                                        :items="eventLogs"
+                                        item-key="key"
+                                        :items-per-page="5"
+                                        show-expand
+                                        single-expand
+                                        :expanded.sync="expandedLogs"
+                                    >
+                                        <template v-slot:item="{ item, index }">
+                                            <tr @click="selectedProgressByEvent(item, index)"
+                                                :style="selectedEventIdx === index ? 'background-color: #E0F2F1;' : ''"
+                                                style="cursor: pointer;"
+                                            >
+                                                <td>{{ item.correlationKey }}</td>
+                                                <td>{{ item.type }}</td>
+                                                <td>{{ item.timestamp }}</td>
+                                                <td @click.stop="toggleEventPayload(item)">
+                                                    <v-icon>
+                                                        {{ expandedLogs.includes(item) ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
+                                                    </v-icon>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                        <template v-slot:expanded-item="{ headers, item }">
+                                            <td :colspan="headers.length">
+                                                <div class="pa-1">
+                                                    <tree-view :data="item.payload"></tree-view>
+                                                </div>
+                                            </td>
+                                        </template>
+                                    </v-data-table>
+                                    <v-skeleton-loader
+                                        v-else
+                                        ref="skeleton"
+                                        type="card"
+                                        class="mx-auto"
+                                    ></v-skeleton-loader>
+                                </v-tab-item>
+                            </v-tabs-items>
+                        </v-card-text>
+                    </v-card>
+
                     <!--        <modal name="ide-modal" :height='"80%"' :width="'80%'" :draggable="true" :hash-name="hashName"-->
                     <!--               :resizable="true">-->
                     <!--            <ide-loading-page></ide-loading-page>-->
@@ -1785,6 +1917,7 @@
                         @changedByMe="settingChangedByMe"
                         @editModelData="editModelData"
                         @setInformation="setInformation"
+                        @close="closeSeparatePanel()"
                         canvas-name="event-storming-model-canvas"
                 ></CodeGenerator>
             </template>
@@ -2021,6 +2154,28 @@
         },
         data() {
             return {
+                //monitoring
+                monitoringDialog: false,
+                monitoringTab: 0,
+                monitoringTabs: ["recent", "filtered"],
+                isEventLogsFetched: false,
+                eventHeaders: [
+                    { text: 'Key', value: 'correlationKey' },
+                    { text: 'Type', value: 'type' },
+                    { text: 'Timestamp', value: 'timestamp' },
+                    { text: 'Payload', value: 'data-table-expand' }
+                ],
+                eventLogs: [],
+                allElementsInProgress: [],
+                expandedLogs: [],
+                selectedEventIdx: -1,
+                fetchEventInterval: null,
+                searchKeyList: [],
+                eventSearchKeys: [{
+                    key: "correlationKey",
+                    value: ""
+                }],
+
                 showContinue: false,
                 defaultGeneratorUiInputData: {
                     generator: "EventOnlyESGenerator", // EventOnlyESGenerator
@@ -2601,6 +2756,15 @@
                 modelForElements.Command = Object.values(me.attachedLists().commandLists).filter(x=>x)
                 modelForElements.Command = modelForElements.Command.map((element) => element = Object.assign({},element, {selectedPBC: element.visibility == "private" ? false:true}))
                 return modelForElements;
+            },
+            useMonitoring() {
+                var me = this;
+                if (me.value.toppingPlatforms && me.value.toppingPlatforms.length > 0 &&
+                    me.value.toppingPlatforms.some(link => link.includes("topping-eda-monitoring"))
+                ) {
+                    return true;
+                }
+                return false;
             },
         },
         created: async function () {
@@ -3357,6 +3521,12 @@
                 me.repairBoundedContext(boundedContext)
             })
         },
+        beforeDestroy() {
+            if (this.fetchEventInterval) {
+                clearInterval(this.fetchEventInterval);
+                this.fetchEventInterval = null
+            }
+        },
         watch: {
             "initLoad":function(newVal){
                 if(newVal){
@@ -3416,6 +3586,22 @@
                     }
                 }
             },
+            monitoringTab(newVal, oldVal) {
+                if (newVal !== oldVal) {
+                    this.eventLogs = [];
+                    this.expandedLogs = [];
+                    this.clearEventProgress();
+                    if (this.fetchEventInterval) {
+                        clearInterval(this.fetchEventInterval);
+                        this.fetchEventInterval = null;
+                    }
+                }
+                if (newVal === 0) {
+                    this.fetchRecentEvents();
+                } else if (newVal === 1 && this.eventSearchKeys) {
+                    this.fetchFilteredEvents(this.eventSearchKeys);
+                }
+            }
         },
         methods: {
             attachedLists() {
@@ -8261,6 +8447,216 @@
                 generator.generate()
             },
 
+
+            toggleMonitoringDialog() {
+                var me = this;
+                me.clearEventProgress();
+                me.eventLogs = [];
+                me.monitoringDialog = !me.monitoringDialog;
+
+                if (me.monitoringDialog) {
+                    me.isEventLogsFetched = false;
+                    me.monitoringTab = 0;
+                    me.fetchRecentEvents();
+                }
+            },
+            async fetchEventCollections(eventSearchKeys) {
+                var me = this
+                var reqUrl = 'http://localhost:9999/eventCollectors'
+                var result = [];
+                if (eventSearchKeys && eventSearchKeys.length > 0) {
+                    if (eventSearchKeys.length == 1) {
+                        reqUrl += '/search/findByCorrelationKey?correlationKey=' + eventSearchKeys[0].value;
+                    } else {
+                        reqUrl += '/search/findBySearchKey';
+                        eventSearchKeys.forEach((item, index) => {
+                            if (index == 0) {
+                                reqUrl += `?${item.key}=${item.value}`;
+                            } else {
+                                reqUrl += `&${item.key}=${item.value}`;
+                            }
+                        });
+                    }
+                } else {
+                    const timestamp = new Date().getTime() - 60 * 60 * 1000;
+                    reqUrl += '/search/findRecentEvents?timestamp=' + timestamp;
+                }
+                await me.$http.get(reqUrl).then(response => {
+                    result = response.data._embedded.eventCollectors;
+                    result.sort((a, b) => a.timestamp - b.timestamp);
+                }).catch(error => {
+                    console.log(error)
+                    me.isEventLogsFetched = true;
+                    if (me.fetchEventInterval) {
+                        clearInterval(me.fetchEventInterval);
+                        me.fetchEventInterval = null;
+                    }
+                });
+                return result;
+            },
+            async fetchRecentEvents() {
+                var me = this;
+                const events = await me.fetchEventCollections();
+                if (events.length > 0) {
+                    me.eventLogs = events;
+                    me.eventLogs.forEach((eventLog) => {
+                        eventLog.key = eventLog.type + eventLog.correlationKey;
+                        eventLog.timestamp = new Date(eventLog.timestamp).toLocaleString();
+                        eventLog.payload = JSON.parse(eventLog.payload);
+                    });
+                } else {
+                    me.eventLogs = [];
+                }
+                // if (!me.fetchEventInterval) {
+                //     me.fetchEventLogs();
+                // }
+                me.isEventLogsFetched = true;
+            },
+            async fetchFilteredEvents(eventSearchKeys) {
+                var me = this;
+                if (eventSearchKeys && eventSearchKeys.length > 0) {
+                    const events = await me.fetchEventCollections(eventSearchKeys);
+                    me.eventLogs = events;
+                    if (me.eventLogs.length > 0) {
+                        me.eventLogs.forEach((eventLog, index) => {
+                            eventLog.key = eventLog.type + eventLog.correlationKey;
+                            eventLog.timestamp = new Date(eventLog.timestamp).toLocaleString();
+                            eventLog.eventSequence = index + 1;
+                            eventLog.payload = JSON.parse(eventLog.payload);
+                            me.showProgressByEvent(eventLog, false);
+                        });
+                        if (!me.fetchEventInterval) {
+                            me.fetchEventLogs();
+                        }
+                    }
+                } else {
+                    me.clearEventProgress();
+                    me.eventLogs = [];
+                    if (me.fetchEventInterval) {
+                        clearInterval(me.fetchEventInterval);
+                        me.fetchEventInterval = null;
+                    }
+                }
+                me.isEventLogsFetched = true;
+            },
+            showProgressByEvent(event, isSelected) {
+                var me = this;
+                const eventElements = Object.values(me.value.elements).filter(element => 
+                    element && element._type.endsWith('Event') && element.name === event.type
+                );
+                const relationElements = Object.values(me.value.relations).filter(relation => 
+                    relation && 
+                    (relation.sourceElement.name === event.type || 
+                    relation.targetElement.name === event.type)
+                );
+                const otherElements = Object.values(me.value.elements).filter(element => 
+                    element && 
+                    (relationElements.some(relation => relation.targetElement.id === element.id) || 
+                    relationElements.some(relation => relation.sourceElement.id === element.id))
+                );
+                const allElements = [...eventElements, ...relationElements, ...otherElements];
+
+                if (isSelected) {
+                    allElements.forEach(element => {
+                        me.$EventBus.$emit('showParticularProgress', element.id);
+                    });
+                } else {
+                    allElements.forEach(element => {
+                        me.$EventBus.$emit('showProgress', element.id, event.eventSequence);
+                    });
+                }
+                me.allElementsInProgress = [...me.allElementsInProgress, ...allElements];
+            },
+            selectedProgressByEvent(event, index) {
+                var me = this;
+                if (me.monitoringTab === 0) {
+                    me.eventSearchKeys = [{key: "correlationKey", value: event.correlationKey}];
+                    me.monitoringTab = 1;
+                } else {
+                    if (me.selectedEventIdx === index) {
+                        me.selectedEventIdx = -1;
+                        me.eventLogs.forEach(async (eventLog) => {
+                            await me.showProgressByEvent(eventLog, false);
+                        });
+                    } else {
+                        me.selectedEventIdx = index;
+                        me.eventLogs.forEach(async (eventLog) => {
+                            await me.showProgressByEvent(eventLog, false);
+                        });
+                        me.showProgressByEvent(event, true);
+                    }
+                }
+            },
+            clearEventProgress() {
+                var me = this;
+                if (me.fetchEventInterval) {
+                    clearInterval(me.fetchEventInterval);
+                    me.fetchEventInterval = null;
+                }
+                me.selectedEventIdx = -1;
+                me.allElementsInProgress = [];
+                Object.values(me.value.elements).forEach(async element => {
+                    if (element) {
+                        await me.$EventBus.$emit('hideProgress', element.id);
+                    }
+                });
+                Object.values(me.value.relations).forEach(async relation => {
+                    if (relation) {
+                        await me.$EventBus.$emit('hideProgress', relation.id);
+                    }
+                });
+            },
+            fetchEventLogs() {
+                var me = this;
+                if (me.fetchEventInterval) {
+                    clearInterval(me.fetchEventInterval);
+                    me.fetchEventInterval = null;
+                }
+                if (me.monitoringTab === 1) {
+                    me.fetchEventInterval = setInterval(() => {
+                        me.fetchFilteredEvents(me.eventSearchKeys);
+                    }, 5000);
+                } else {
+                    me.fetchEventInterval = setInterval(() => {
+                        me.fetchRecentEvents();
+                    }, 5000);
+                }
+            },
+            toggleEventPayload(eventLog) {
+                var me = this;
+                if (me.expandedLogs.includes(eventLog)) {
+                    me.expandedLogs = me.expandedLogs.filter(log => log !== eventLog);
+                } else {
+                    me.expandedLogs = [eventLog];
+                }
+            },
+            addEventSearchKey() {
+                var me = this;
+                if (!me.eventSearchKeys) {
+                    me.eventSearchKeys = [];
+                }
+                const eventElements = Object.values(me.value.elements).filter(element => element && element._type.endsWith('Event'));
+                me.searchKeyList = [];
+                const searchKeySet = new Set();
+                eventElements.forEach(element => {
+                    const keys = element.fieldDescriptors.filter(field => field.isSearchKey);
+                    keys.forEach(key => {
+                        if (!searchKeySet.has(key.name)) {
+                            searchKeySet.add(key.name);
+                            me.searchKeyList.push(key);
+                        }
+                    });
+                });
+                me.eventSearchKeys.push({
+                    key: '',
+                    value: ''
+                });
+            },
+            removeEventSearchKey(index) {
+                var me = this;
+                me.eventSearchKeys.splice(index, 1);
+            },
+            
             
             onInputParamsCheckBefore(inputParams, generatorName){
                 if(this.generatorsInGeneratorUI[generatorName] && 
@@ -8585,6 +8981,20 @@
 
     .es-is-mobile {
         display: none !important;
+    }
+
+    .monitoring-dialog {
+        width: 450px;
+        max-height: 600px;
+        position: absolute;
+        bottom: 0px;
+        right: 0px;
+        overflow: auto;
+        z-index: 9999;
+    }
+
+    .selected-event-row {
+        background-color: #E0F2F1;
     }
 
     @media only screen and (max-width: 1430px) {
