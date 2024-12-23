@@ -343,16 +343,14 @@ import { group } from "d3";
             })
 
             // monitoring
-            me.$EventBus.$on('showProgress', (id, eventSequence) => {
+            me.$EventBus.$on('showProgress', (id, eventSequence, isParticular) => {
                 if(id == me.value.id) {
                     me.isProgress = true;
                     me.progressColor = '#43A047';
                     me.progressEventSequence = eventSequence.toString();
-                }
-            });
-            me.$EventBus.$on('showParticularProgress', (id) => {
-                if(id == me.value.id) {
-                    me.progressColor = '#00E5FF';
+                    if (isParticular) {
+                        me.progressColor = '#00E5FF';
+                    }
                 }
             });
             me.$EventBus.$on('hideProgress', (id) => {

@@ -1812,29 +1812,6 @@
 </script>
 
 <style>
-    .calendar-float {
-        float: left;
-        margin-top: 25px;
-    }
-
-    .new-class-check {
-        margin-top: -15px;
-        width: 100px;
-        height: 50px;
-    }
-
-    .new-class-check:nth-child(2), .new-class-check:nth-child(3) {
-        margin-left: 45px;
-    }
-
-    .new-class-check:nth-child(1), .new-class-check:nth-child(2), .new-class-check:nth-child(3) {
-        float: left;
-    }
-
-    .new-class-check, #enterprise-check {
-        margin-top: 5px;
-    }
-
     #enterprise-check {
         margin-top: -28px;
     }

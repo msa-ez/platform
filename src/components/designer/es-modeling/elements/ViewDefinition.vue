@@ -586,7 +586,6 @@
 
 <style scoped lang="scss" rel="stylesheet/scss">
     .cqrs-add-btn {
-        margin:5px 30px 50px 0;
         color: #757575;
     }
 </style>

@@ -4,6 +4,17 @@
     "showBeta": "Show Beta",
     "hideBeta": "Hide Beta"
   },
+  "ViewDefinitionPanel" : {
+    "CQRSDetailTitle" : "In the CQRS pattern, the \"CREATE\" configuration of the Read Model is responsible for storing data in a queryable format when events occur.",
+    "CQRSDetailSubTitle1" : "CREATE WHEN: Creates a Read Model when specific events occur. For example, when a new order is created, its information is stored in the Read Model.",
+    "CQRSDetailSubTitle2" : "SET: Configures Read Model fields with event field values. This defines how data will be stored. For example, assigning an eventField value to a readModelField.",
+    "CQRSDetailSubTitle3" : "Operator: Sets operators between fields. Typically uses the assignment (=) operator to store event field values in Read Model fields.",
+    "QueryForAggregateDetailTitle" : "Query for Aggregate configuration defines queries for retrieving data from the attached Aggregate.",
+    "QueryForAggregateDetailSubTitle1" : "Default GET URI: Retrieves Aggregate data through basic GET requests. This uses standard URI paths to fetch data.",
+    "QueryForAggregateDetailSubTitle2": "Extended GET URI: Uses extended URIs beyond the default path to meet additional requirements. This is useful when specific conditions or filtering is needed.",
+    "QueryForAggregateDetailSubTitle3": "Single Result: Used when the query returns a single object. Retrieves one Aggregate data item using a specific ID or unique identifier.",
+    "QueryForAggregateDetailSubTitle4": "Multiple Result: Used when the query returns multiple objects. Retrieves multiple Aggregate data items that match certain conditions in list form."
+  },
   "AlgoliaModelLists" : {
     "pet" : "Pet Shop",
     "food" : "Food Delivery App",
