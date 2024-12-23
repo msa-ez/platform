@@ -710,10 +710,16 @@
                                 return false;
                             }
                             // Compare keys in the 'value' object
-                            const keys1 = Object.keys(arr1[i].value);
+                            const keys1 = Object.keys(arr1[i].value); 
                             const keys2 = Object.keys(arr2[i].value);
                             if (keys1.length !== keys2.length || !keys1.every(key => keys2.includes(key))) {
                                 return false;
+                            } else {
+                                for (let key of keys1) {
+                                    if (typeof arr1[i].value[key] !== typeof arr2[i].value[key]) {
+                                        return false;
+                                    }
+                                }
                             }
                         }
                         return true;
@@ -742,7 +748,9 @@
                                 if (sourceItem) {
                                     Object.keys(frameworkItem.value).forEach(key => {
                                         if (sourceItem.value[key] !== undefined) {
-                                            frameworkItem.value[key] = sourceItem.value[key];
+                                            if(typeof sourceItem.value[key] == typeof frameworkItem.value[key]){
+                                                frameworkItem.value[key] = sourceItem.value[key];
+                                            }
                                         } else {
                                             frameworkItem.value[key] = "N/A";
                                         }
