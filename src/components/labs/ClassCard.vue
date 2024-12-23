@@ -260,7 +260,7 @@
                                         <v-col
                                             style = "height:50px; margin-top: -20px;"
                                             cols="10"
-                                            >
+                                        >
                                             <!-- :rules="rules.overlap" -->
                                             <validation-provider
                                                 v-slot="{ errors }"
@@ -440,56 +440,43 @@
                 >
                     <v-card 
                         outlined
-                        style="height: 680px;"
+                        class="pa-4"
                     >
-                        <v-card-title style="margin-top:-1px;">Copy Class</v-card-title>
+                        <v-row class="ma-0 pa-0">
+                            <v-card-title class="pa-0">Copy Class</v-card-title>
+                            <v-spacer></v-spacer>
+                            <v-icon
+                                @click="cancelCopy()"
+                                text
+                            >mdi-close
+                            </v-icon>
+                        </v-row>
                         <!-- <input ref="imageInput" type="file" hidden @change="onChangeImages"> -->
                         <!-- @click="onClickImageUpload()" -->
-                        <div style="display:flex; padding:0px 15px;">
-                            <v-switch
-                                v-model="newClassData.active"
-                                label="Active"
-                            ></v-switch>
-                            <v-spacer></v-spacer>
-                            <div style="margin-top:13px;">
-                                <v-btn
-                                    @click="cancelCopy()"
-                                    text
-                                >cancel
-                                </v-btn>
-
-                                <v-btn @click="addClass(clazz, newClassData)"
-                                    color="primary"
-                                    type="submit"
-                                    :disabled="invalid"
-                                    style = "margin:0px 10px 0px 10px;"
-                                >copy
-                                </v-btn>
-                            </div>
-                        </div>
 
                         <v-card outlined
                             style="width: 480px; height: 250px;
-                                margin:0 auto;
-                                text-align:center;
-                                line-height:250px;
-                                background-color:white"
-                                @click="openAlbum = true"
+                            margin:0 auto;
+                            text-align:center;
+                            line-height:250px;
+                            background-color:white"
+                            @click="openAlbum = true"
                         >
-                                <v-icon 
+                            <v-icon 
                                 color="primary"
                                 fab
                                 x-large
-                                dark>mdi-camera-enhance</v-icon>
-                                <v-img
-                                    style="height: 248px;
-                                            margin:0 auto;
-                                            margin-top:-250px;
-                                            text-align:center;"
-                                    v-if="imageUrl" :src="imageUrl"
-                                ></v-img>
+                                dark
+                            >mdi-camera-enhance</v-icon>
+                            <v-img
+                                style="height: 248px;
+                                        margin:0 auto;
+                                        margin-top:-250px;
+                                        text-align:center;"
+                                v-if="imageUrl" :src="imageUrl"
+                            ></v-img>
                         </v-card>
-                        <div style = "margin-left:25px;">
+                        <div>
                             <validation-observer
                                     ref="observer"
                                     v-slot="{ invalid }"
@@ -502,20 +489,13 @@
                                             rules="required"
                                         >
                                             <v-text-field
-                                            style = "width:315px;
-                                                margin-left:10px;
-                                                margin-top:-12px;"
-                                            color="#0080FF"
-                                            label="ClassName"
-                                            :error-messages="errors"
-                                            v-model="newClassData.newClassName"
+                                                color="#0080FF"
+                                                label="ClassName"
+                                                :error-messages="errors"
+                                                v-model="newClassData.newClassName"
                                             ></v-text-field>
                                         </validation-provider>
-                                    <div>
-                                        <v-col
-                                            style = "height:50px; margin-top: -20px;"
-                                            cols="10"
-                                            >
+                                        <div>
                                             <!-- :rules="rules.overlap" -->
                                             <validation-provider
                                                 v-slot="{ errors }"
@@ -523,117 +503,32 @@
                                                 rules="required|alpha_dash"
                                             >
                                                 <v-text-field
-                                                    style = "width:310px;"
                                                     label="ClassId"
                                                     :error-messages="errors"
                                                     v-model="newClassData.newClassId"
                                                 ></v-text-field>
                                             </validation-provider>
-                                            <div class = "row" style="margin-top: 40px; margin-left:0;">
-                                                <v-checkbox
-                                                        class="new-class-check"
-                                                        v-model="newClassData.setRecommendClass"
-                                                        label="추천 강의">
-                                                </v-checkbox>
-                                                <v-checkbox
-                                                        class="new-class-check"
-                                                        style = "margin-left:22px;"
-                                                        v-model="newClassData.setFreeClass"
-                                                        :disabled="newClassData.setEnterpriseClass"
-                                                        label="공개 강의">
-                                                </v-checkbox>
-                                                <v-checkbox
-                                                        class="new-class-check"
-                                                        style = "margin-left:22px;"
-                                                        v-model="newClassData.setPaidClass"
-                                                        :disabled="newClassData.setEnterpriseClass"
-                                                        label="유료 강의">
-                                                </v-checkbox>
-                                                <v-row style="margin-left:auto; position:absolute; margin-top:50px;">
-                                                    <v-checkbox
-                                                        class="new-class-check"
-                                                        v-model="newClassData.setEnterpriseClass"
-                                                        :disabled="newClassData.setFreeClass || newClassData.setPaidClass"
-                                                        label="기업 강의">
-                                                    </v-checkbox>
-                                                    <div v-if="newClassData.setEnterpriseClass" style="margin-left: 10px; margin-top:-24px;">
-                                                        <v-col>
-                                                            <v-text-field
-                                                                    label="connectionKey"
-                                                                    v-model="newClassData.selecteConnectionKey"
-                                                            ></v-text-field>
-                                                        </v-col>
-                                                    </div>
-                                                </v-row>
-                                            </div>
-                                            <!-- <div style = "margin-top:50px;">
-                                                <validation-provider
-                                                v-slot="{ errors }"
-                                                name="Name"
+                                            <v-row class="ma-0 pa-0">
+                                                <v-dialog
+                                                    v-model="menu"
+                                                    width="290px"
                                                 >
+                                                    <template v-slot:activator="{ on, attrs }">
                                                     <v-text-field
-                                                        style = "width:336px;"
-                                                        label="serverUrl"
-                                                        :error-messages="errors"
-                                                        v-model="newClassData.newServerUrl"
+                                                        v-model="newClassData.StartDate"
+                                                        label="StartDate"
+                                                        readonly
+                                                        v-bind="attrs"
+                                                        v-on="on"
                                                     ></v-text-field>
-                                                </validation-provider>
-                                                <validation-provider
-                                                v-slot="{ errors }"
-                                                name="Name"
-                                                >
-                                                    <v-text-field
-                                                        style = "width:336px; margin-top:-15px;"
-                                                        label="ideUrl"
-                                                        :error-messages="errors"
-                                                        v-model="newClassData.newIdeUrl"
-                                                    ></v-text-field>
-                                                </validation-provider>
-                                                <validation-provider
-                                                v-slot="{ errors }"
-                                                name="Name"
-                                                >
-                                                    <v-text-field
-                                                        style = "width:336px; margin-top:-15px;"
-                                                        label="token"
-                                                        :error-messages="errors"
-                                                        v-model="newClassData.newToken"
-                                                    ></v-text-field>
-                                                </validation-provider>
-                                            </div> -->
-                                        </v-col>
-                                        <v-col
-                                            style ="width:162px; margin-left:0; margin-top:3px;"
-                                            class = "calendar-float"
-                                        >
-                                            <v-dialog
-                                                v-model="menu"
-                                                width="290px"
-                                            >
-                                                <template v-slot:activator="{ on, attrs }">
-                                                <v-text-field
+                                                    </template>
+                                                    <v-date-picker
                                                     v-model="newClassData.StartDate"
-                                                    label="StartDate"
-                                                    prepend-icon="mdi-calendar"
-                                                    readonly
-                                                    v-bind="attrs"
-                                                    v-on="on"
-                                                ></v-text-field>
-                                                </template>
-                                                <v-date-picker
-                                                v-model="newClassData.StartDate"
-                                                :min="new Date().toISOString().substr(0, 10)"
-                                                @input="menu = false"
-                                                ></v-date-picker>
-                                            </v-dialog>
-                                        </v-col>
-                                        <v-icon class = "calendar-float"
-                                                style = "margin-top:30px;">mdi-arrow-right-bold
-                                        </v-icon>
-                                            <v-col
-                                                class = "calendar-float"
-                                                style ="width:152px; margin-top:3px;"
-                                            >
+                                                    :min="new Date().toISOString().substr(0, 10)"
+                                                    @input="menu = false"
+                                                    ></v-date-picker>
+                                                </v-dialog>
+                                                <v-icon class="pl-4 pr-4">mdi-arrow-right-bold</v-icon>
                                                 <v-dialog
                                                     v-model="menu2"
                                                     width="290px"
@@ -649,36 +544,78 @@
                                                     </template>
 
                                                     <v-date-picker
-                                                    v-model="newClassData.EndDate"
-                                                    :min="newClassData.StartDate"
-                                                    @input="menu2 = false"
+                                                        v-model="newClassData.EndDate"
+                                                        :min="newClassData.StartDate"
+                                                        @input="menu2 = false"
                                                     >
                                                     </v-date-picker>
                                                 </v-dialog>
-                                            </v-col>
+                                            </v-row>
+                                            <v-row class="ma-0 pa-0">
+                                                <v-col class="pa-0">
+                                                    <v-checkbox
+                                                        class="new-class-check delete-raido-detail"
+                                                        v-model="newClassData.setRecommendClass"
+                                                        label="추천 강의"
+                                                    >
+                                                    </v-checkbox>
+                                                </v-col>
+                                                <v-col class="pa-0">
+                                                    <v-checkbox
+                                                        class="new-class-check delete-raido-detail"
+                                                        v-model="newClassData.setFreeClass"
+                                                        :disabled="newClassData.setEnterpriseClass"
+                                                        label="공개 강의"
+                                                    >
+                                                    </v-checkbox>
+                                                </v-col>
+                                                <v-col class="pa-0">
+                                                    <v-checkbox
+                                                        class="new-class-check delete-raido-detail"
+                                                        v-model="newClassData.setPaidClass"
+                                                        :disabled="newClassData.setEnterpriseClass"
+                                                        label="유료 강의"
+                                                    >
+                                                    </v-checkbox>
+                                                </v-col>
+                                            </v-row>
+                                            <v-row class="ma-0 pa-0">
+                                                <v-col class="pa-0">
+                                                    <v-checkbox
+                                                        class="new-class-check delete-raido-detail"
+                                                        v-model="newClassData.setEnterpriseClass"
+                                                        :disabled="newClassData.setFreeClass || newClassData.setPaidClass"
+                                                        label="기업 강의">
+                                                    </v-checkbox>
+                                                </v-col>    
+                                                <v-col>
+                                                    <div v-if="newClassData.setEnterpriseClass">
+                                                        <v-text-field
+                                                            label="connectionKey"
+                                                            v-model="newClassData.selecteConnectionKey"
+                                                        ></v-text-field>
+                                                    </div>
+                                                </v-col>
+                                            </v-row>
                                         </div>
                                     </div>
-                                    <!-- <div style = "margin-right: 10px; bottom: 10px; position: absolute; right: 0;">
-                                        <v-btn
-                                            @click="cancelCopy()"
-                                            text
-                                            style = "width:85px;"
-                                        >cancel
-                                        </v-btn>
-
-                                        <v-btn @click="addClass(clazz, newClassData)"
-                                            color="#3F51B5"
-                                            text
-                                            type="submit"
-                                            :disabled="invalid"
-                                            style = "width:85px;
-                                                    margin-left:10px;"
-                                        >copy
-                                        </v-btn>
-                                    </div> -->
                                 </form>
                             </validation-observer>
                         </div>
+
+                        <v-row class="ma-0 pa-0" align="center">
+                            <v-switch
+                                v-model="newClassData.active"
+                                label="Active"
+                            ></v-switch>
+                            <v-spacer></v-spacer>
+                            <v-btn @click="addClass(clazz, newClassData)"
+                                color="primary"
+                                type="submit"
+                                :disabled="invalid"
+                            >copy
+                            </v-btn>
+                        </v-row>
                     </v-card>
                 </v-dialog>
             </div>
@@ -1239,5 +1176,4 @@
 </script>
 
 <style scoped>
-    .calendar-float{float:left; margin-top:25px;}
 </style>
