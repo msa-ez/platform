@@ -2,7 +2,7 @@
 const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
 const ESActionsUtil = require("./modules/ESActionsUtil")
 const ESFakeActionsUtil = require("./modules/ESFakeActionsUtil")
-const ESValueSummarizeUtil = require("./modules/ESValueSummarizeUtil")
+const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil")
 const ActionsProcessorUtils = require("./modules/ESActionsUtilProcessors/ActionsProcessorUtils")
 const ESAliasTransManager = require("./modules/ESAliasTransManager")
 
@@ -121,7 +121,7 @@ Constraints:
     }
 
     __buildRequestFormatPrompt(){
-        return ESValueSummarizeUtil.getGuidePrompt()
+        return ESValueSummarizeWithFilterUtil.getGuidePrompt()
     }
 
     __buildJsonResponseFormat() {
@@ -297,81 +297,83 @@ They represent complex domain concepts that don't qualify as Aggregates but need
     __buildJsonExampleInputFormat() {
         return {
             "Summarized Existing EventStorming Model": {
-                "bc-hotel": {
-                    "id": "bc-hotel",
-                    "name": "hotelservice",
-                    "actors": [
-                        {
-                            "id": "actor-guest",
-                            "name": "Guest"
-                        },
-                        {
-                            "id": "actor-staff",
-                            "name": "HotelStaff"
-                        }
-                    ],
-                    "aggregates": {
-                        "agg-room": {
-                            "id": "agg-room",
-                            "name": "Room",
-                            "properties": [
-                                {
-                                    "name": "roomId",
-                                    "type": "Long",
-                                    "isKey": true
-                                },
-                                {
-                                    "name": "roomNumber",
-                                    "type": "String"
-                                },
-                                {
-                                    "name": "type",
-                                    "type": "RoomType"
-                                },
-                                {
-                                    "name": "rate",
-                                    "type": "Money"
-                                },
-                                {
-                                    "name": "status",
-                                    "type": "RoomStatus"
-                                }
-                            ],
-                            "enumerations": [
-                                {
-                                    "id": "enum-room-type",
-                                    "name": "RoomType",
-                                    "items": ["STANDARD", "DELUXE", "SUITE", "PRESIDENTIAL"]
-                                },
-                                {
-                                    "id": "enum-room-status",
-                                    "name": "RoomStatus",
-                                    "items": ["AVAILABLE", "OCCUPIED", "MAINTENANCE", "RESERVED"]
-                                }
-                            ],
-                            "valueObjects": [
-                                {
-                                    "id": "vo-room-amenities",
-                                    "name": "RoomAmenities",
-                                    "properties": [
-                                        {
-                                            "name": "hasMinibar",
-                                            "type": "Boolean"
-                                        },
-                                        {
-                                            "name": "hasWifi",
-                                            "type": "Boolean"
-                                        },
-                                        {
-                                            "name": "viewType",
-                                            "type": "String"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
+                "deletedProperties": ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.aggregateOuterStickers,
+                "boundedContexts": [
+                    {
+                        "id": "bc-hotel",
+                        "name": "hotelservice",
+                        "actors": [
+                            {
+                                "id": "act-guest",
+                                "name": "Guest"
+                            },
+                            {
+                                "id": "act-staff",
+                                "name": "HotelStaff"
+                            }
+                        ],
+                        "aggregates": [
+                            {
+                                "id": "agg-room",
+                                "name": "Room",
+                                "properties": [
+                                    {
+                                        "name": "roomId",
+                                        "type": "Long",
+                                        "isKey": true
+                                    },
+                                    {
+                                        "name": "roomNumber"
+                                    },
+                                    {
+                                        "name": "type",
+                                        "type": "RoomType"
+                                    },
+                                    {
+                                        "name": "rate",
+                                        "type": "Money"
+                                    },
+                                    {
+                                        "name": "status",
+                                        "type": "RoomStatus"
+                                    }
+                                ],
+                                "entities": [],
+                                "enumerations": [
+                                    {
+                                        "id": "enum-room-type",
+                                        "name": "RoomType",
+                                        "items": ["STANDARD", "DELUXE", "SUITE", "PRESIDENTIAL"]
+                                    },
+                                    {
+                                        "id": "enum-room-status",
+                                        "name": "RoomStatus",
+                                        "items": ["AVAILABLE", "OCCUPIED", "MAINTENANCE", "RESERVED"]
+                                    }
+                                ],
+                                "valueObjects": [
+                                    {
+                                        "id": "vo-room-amenities",
+                                        "name": "RoomAmenities",
+                                        "properties": [
+                                            {
+                                                "name": "hasMinibar",
+                                                "type": "Boolean"
+                                            },
+                                            {
+                                                "name": "hasWifi",
+                                                "type": "Boolean"
+                                            },
+                                            {
+                                                "name": "viewType"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
                     }
-                }
+                ]
             },
 
             "Bounded Context to Generate Actions": "hotelservice",
@@ -824,19 +826,8 @@ They represent complex domain concepts that don't qualify as Aggregates but need
         if(!this.client.input.isAccumulated)
             this._removePrevBoundedContextRelatedElements(this.client.input.targetBoundedContext.name, targetBCRemovedESValue)
 
-        const summarizedESValue = this.esAliasTransManager.transToAliasInSummarizedESValue(
-            ESValueSummarizeUtil.getSummarizedESValue(targetBCRemovedESValue)
-        )
-
-        // Aggregate에 대한 액션만을 생성하기 때문에 해당 정보는 불필요함
-        for(let bcInfos of Object.values(summarizedESValue)) {
-            for(let aggregateInfos of Object.values(bcInfos.aggregates)) {
-                delete aggregateInfos.commands
-                delete aggregateInfos.events
-                delete aggregateInfos.readModels
-            }
-        }
-
+        const summarizedESValue = ESValueSummarizeWithFilterUtil.getSummarizedESValue(targetBCRemovedESValue, 
+            ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.aggregateOuterStickers, this.esAliasTransManager)
 
         return {
             "Summarized Existing EventStorming Model": JSON.stringify(summarizedESValue),

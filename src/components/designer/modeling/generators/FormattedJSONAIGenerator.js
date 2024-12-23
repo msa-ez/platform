@@ -11,7 +11,7 @@ const DEFAULT_CONFIG = {
     MODEL: "gpt-4o-2024-11-20",
     MAX_RETRY_COUNT: 3,
     TEMPERATURE: 1.0,
-    TOP_P: 0.6,
+    TOP_P: 0.9,
     DEFAULT_LANGUAGE: "English"
 };
 

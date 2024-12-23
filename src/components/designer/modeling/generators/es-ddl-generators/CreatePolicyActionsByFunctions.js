@@ -1,7 +1,7 @@
 
 const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
 const ESActionsUtil = require("./modules/ESActionsUtil")
-const ESValueSummarizeUtil_OnlyNameWithId = require("./modules/ESValueSummarizeUtil_OnlyNameWithId")
+const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil")
 const ESAliasTransManager = require("./modules/ESAliasTransManager")
 
 class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
@@ -61,7 +61,7 @@ Please follow these rules:
     }
 
     __buildRequestFormatPrompt(){
-        return ESValueSummarizeUtil_OnlyNameWithId.getGuidePrompt()
+        return ESValueSummarizeWithFilterUtil.getGuidePrompt()
     }
 
     __buildJsonResponseFormat() {
@@ -121,122 +121,126 @@ Please follow these rules:
     __buildJsonExampleInputFormat() {
         return {
             "Summarized Existing EventStorming Model": {
-                "bc-reservation": {
-                    "id": "bc-reservation",
-                    "name": "reservationservice",
-                    "actors": [
-                        {
-                            "id": "actor-customer",
-                            "name": "Customer"
-                        },
-                        {
-                            "id": "actor-staff",
-                            "name": "RestaurantStaff"
-                        }
-                    ],
-                    "aggregates": {
-                        "agg-reservation": {
-                            "id": "agg-reservation",
-                            "name": "Reservation",
-                            "commands": [
-                                {
-                                    "id": "cmd-create-reservation",
-                                    "name": "CreateReservation",
-                                    "api_verb": "POST",
-                                    "outputEvents": [
-                                        {
-                                            "id": "evt-reservation-created",
-                                            "name": "ReservationCreated"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "id": "cmd-confirm-reservation",
-                                    "name": "ConfirmReservation",
-                                    "api_verb": "PUT",
-                                    "outputEvents": [
-                                        {
-                                            "id": "evt-reservation-confirmed",
-                                            "name": "ReservationConfirmed"
-                                        }
-                                    ]
-                                }
-                            ],
-                            "events": [
-                                {
-                                    "id": "evt-reservation-created",
-                                    "name": "ReservationCreated",
-                                    "outputCommands": []
-                                },
-                                {
-                                    "id": "evt-reservation-confirmed",
-                                    "name": "ReservationConfirmed",
-                                    "outputCommands": []
-                                }
-                            ]
-                        }
+                "deletedProperties": ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.aggregateInnerStickers
+                    .concat(ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.detailedProperties),
+                "boundedContexts": [
+                    {
+                        "id": "bc-reservation",
+                        "name": "reservationservice",
+                        "actors": [
+                            {
+                                "id": "act-customer",
+                                "name": "Customer"
+                            },
+                            {
+                                "id": "act-staff",
+                                "name": "RestaurantStaff"
+                            }
+                        ],
+                        "aggregates": [
+                            {
+                                "id": "agg-reservation",
+                                "name": "Reservation",
+                                "commands": [
+                                    {
+                                        "id": "cmd-create-reservation",
+                                        "name": "CreateReservation",
+                                        "api_verb": "POST",
+                                        "outputEvents": [
+                                            {
+                                                "id": "evt-reservation-created",
+                                                "name": "ReservationCreated"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "id": "cmd-confirm-reservation",
+                                        "name": "ConfirmReservation",
+                                        "api_verb": "PATCH",
+                                        "outputEvents": [
+                                            {
+                                                "id": "evt-reservation-confirmed",
+                                                "name": "ReservationConfirmed"
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "events": [
+                                    {
+                                        "id": "evt-reservation-created",
+                                        "name": "ReservationCreated",
+                                        "outputCommands": []
+                                    },
+                                    {
+                                        "id": "evt-reservation-confirmed",
+                                        "name": "ReservationConfirmed",
+                                        "outputCommands": []
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "bc-kitchen",
+                        "name": "kitchenservice",
+                        "aggregates": [
+                            {
+                                "id": "agg-kitchen",
+                                "name": "Kitchen",
+                                "commands": [
+                                    {
+                                        "id": "cmd-prepare-kitchen",
+                                        "name": "PrepareKitchen",
+                                        "api_verb": "POST",
+                                        "outputEvents": [
+                                            {
+                                                "id": "evt-kitchen-prepared",
+                                                "name": "KitchenPrepared"
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "events": [
+                                    {
+                                        "id": "evt-kitchen-prepared",
+                                        "name": "KitchenPrepared",
+                                        "outputCommands": []
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "bc-table",
+                        "name": "tableservice",
+                        "aggregates": [
+                            {
+                                "id": "agg-table",
+                                "name": "Table",
+                                "commands": [
+                                    {
+                                        "id": "cmd-assign-table",
+                                        "name": "AssignTable",
+                                        "api_verb": "PATCH",
+                                        "outputEvents": [
+                                            {
+                                                "id": "evt-table-assigned",
+                                                "name": "TableAssigned"
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "events": [
+                                    {
+                                        "id": "evt-table-assigned",
+                                        "name": "TableAssigned",
+                                        "outputCommands": []
+                                    }
+                                ]
+                            }
+                        ]
                     }
-                },
-                "bc-kitchen": {
-                    "id": "bc-kitchen",
-                    "name": "kitchenservice",
-                    "aggregates": {
-                        "agg-kitchen": {
-                            "id": "agg-kitchen",
-                            "name": "Kitchen",
-                            "commands": [
-                                {
-                                    "id": "cmd-prepare-kitchen",
-                                    "name": "PrepareKitchen",
-                                    "api_verb": "POST",
-                                    "outputEvents": [
-                                        {
-                                            "id": "evt-kitchen-prepared",
-                                            "name": "KitchenPrepared"
-                                        }
-                                    ]
-                                }
-                            ],
-                            "events": [
-                                {
-                                    "id": "evt-kitchen-prepared",
-                                    "name": "KitchenPrepared",
-                                    "outputCommands": []
-                                }
-                            ]
-                        }
-                    }
-                },
-                "bc-table": {
-                    "id": "bc-table",
-                    "name": "tableservice",
-                    "aggregates": {
-                        "agg-table": {
-                            "id": "agg-table",
-                            "name": "Table",
-                            "commands": [
-                                {
-                                    "id": "cmd-assign-table",
-                                    "name": "AssignTable",
-                                    "api_verb": "PUT",
-                                    "outputEvents": [
-                                        {
-                                            "id": "evt-table-assigned",
-                                            "name": "TableAssigned"
-                                        }
-                                    ]
-                                }
-                            ],
-                            "events": [
-                                {
-                                    "id": "evt-table-assigned",
-                                    "name": "TableAssigned",
-                                    "outputCommands": []
-                                }
-                            ]
-                        }
-                    }
-                }
+                ]
             },
             "Functional Requirements": {
                 "userStories": [
@@ -348,8 +352,11 @@ Please follow these rules:
     }
 
     __buildJsonUserQueryInputFormat() {
-        const summarizedESValue = ESValueSummarizeUtil_OnlyNameWithId.getFilteredSummarizedESValue(
-            JSON.parse(JSON.stringify(this.client.input.esValue)), this.esAliasTransManager
+        const summarizedESValue = ESValueSummarizeWithFilterUtil.getSummarizedESValue(
+            JSON.parse(JSON.stringify(this.client.input.esValue)), 
+            ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.aggregateInnerStickers
+                .concat(ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.detailedProperties),
+            this.esAliasTransManager
         )
 
         return {

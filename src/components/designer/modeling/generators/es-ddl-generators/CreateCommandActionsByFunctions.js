@@ -2,7 +2,7 @@
 const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
 const ESActionsUtil = require("./modules/ESActionsUtil")
 const ESFakeActionsUtil = require("./modules/ESFakeActionsUtil")
-const ESValueSummarizeUtil = require("./modules/ESValueSummarizeUtil")
+const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil")
 const ESAliasTransManager = require("./modules/ESAliasTransManager")
 
 class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
@@ -108,7 +108,7 @@ Best Practices:
     }
 
     __buildRequestFormatPrompt(){
-        return ESValueSummarizeUtil.getGuidePrompt()
+        return ESValueSummarizeWithFilterUtil.getGuidePrompt()
     }
 
     __buildJsonResponseFormat() {
@@ -193,7 +193,7 @@ Generate commands in the aggregate to satisfy the given functional requirements.
     "args": {
         "commandName": "<commandName>",
         "commandAlias": "<commandAlias>",
-        "api_verb": <"POST" | "DELETE" | "PUT">,
+        "api_verb": <"POST" | "PUT" | "PATCH" | "DELETE">,
 
         "properties": [
             {
@@ -266,224 +266,271 @@ Generate read models in the aggregate to satisfy the given functional requiremen
     __buildJsonExampleInputFormat() {
         return {
             "Summarized Existing EventStorming Model": {
-                "bc-hotel": {
-                    "id": "bc-hotel",
-                    "name": "hotelservice",
-                    "actors": [
-                        {
-                            "id": "actor-guest",
-                            "name": "Guest"
-                        },
-                        {
-                            "id": "actor-system",
-                            "name": "System"
-                        }
-                    ],
-                    "aggregates": {
-                        "agg-booking": {
-                            "id": "agg-booking",
-                            "name": "Booking",
-                            "properties": [
-                                {
-                                    "name": "bookingId",
-                                    "type": "Long",
-                                    "isKey": true
-                                },
-                                {
-                                    "name": "guestId",
-                                    "type": "Long",
-                                    "isForeignProperty": true
-                                },
-                                {
-                                    "name": "roomId",
-                                    "type": "Long",
-                                    "isForeignProperty": true
-                                },
-                                {
-                                    "name": "checkInDate",
-                                    "type": "Date"
-                                },
-                                {
-                                    "name": "checkOutDate",
-                                    "type": "Date"
-                                },
-                                {
-                                    "name": "status",
-                                    "type": "BookingStatus"
-                                },
-                                {
-                                    "name": "totalAmount",
-                                    "type": "Money"
-                                }
-                            ],
-                            "enumerations": [
-                                {
-                                    "id": "enum-booking-status",
-                                    "name": "BookingStatus",
-                                    "items": ["PENDING", "CONFIRMED", "CHECKED_IN", "CHECKED_OUT", "CANCELLED"]
-                                },
-                                {
-                                    "id": "enum-meal-plan",
-                                    "name": "MealPlan",
-                                    "items": ["NO_MEAL", "BREAKFAST_ONLY", "HALF_BOARD", "FULL_BOARD"]
-                                }
-                            ],
-                            "valueObjects": [
-                                {
-                                    "id": "vo-guest-details",
-                                    "name": "GuestDetails",
-                                    "properties": [
-                                        {
-                                            "name": "name",
-                                            "type": "String"
-                                        },
-                                        {
-                                            "name": "email",
-                                            "type": "Email"
-                                        },
-                                        {
-                                            "name": "phoneNumber",
-                                            "type": "String"
-                                        },
-                                        {
-                                            "name": "membershipLevel",
-                                            "type": "String"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "id": "vo-booking-preferences",
-                                    "name": "BookingPreferences",
-                                    "properties": [
-                                        {
-                                            "name": "numberOfGuests",
-                                            "type": "Integer"
-                                        },
-                                        {
-                                            "name": "mealPlan",
-                                            "type": "MealPlan"
-                                        },
-                                        {
-                                            "name": "specialRequests",
-                                            "type": "String"
-                                        }
-                                    ]
-                                }
-                            ],
-                            "commands": [
-                                {
-                                    "id": "cmd-check-room-availability",
-                                    "name": "CheckRoomAvailability",
-                                    "api_verb": "GET",
-                                    "outputEvents": [
-                                        {
-                                            "relationId": "rel-room-availability",
-                                            "id": "evt-room-availability-checked",
-                                            "name": "RoomAvailabilityChecked"
-                                        }
-                                    ]
-                                }
-                            ],
-                            "events": [
-                                {
-                                    "id": "evt-room-availability-checked",
-                                    "name": "RoomAvailabilityChecked",
-                                    "outputCommands": [
-                                        {
-                                            "commandId": "cmd-calculate-room-price",
-                                            "relatedAttribute": "roomId",
-                                            "reason": "Calculate room price based on availability and season"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "id": "evt-room-price-calculated",
-                                    "name": "RoomPriceCalculated",
-                                    "outputCommands": []
-                                }
-                            ],
-                            "readModels": []
-                        },
-                        "agg-room": {
-                            "id": "agg-room",
-                            "name": "Room",
-                            "properties": [
-                                {
-                                    "name": "roomId",
-                                    "type": "Long",
-                                    "isKey": true
-                                },
-                                {
-                                    "name": "roomNumber",
-                                    "type": "String"
-                                },
-                                {
-                                    "name": "roomType",
-                                    "type": "RoomType"
-                                },
-                                {
-                                    "name": "basePrice",
-                                    "type": "Money"
-                                },
-                                {
-                                    "name": "status",
-                                    "type": "RoomStatus"
-                                }
-                            ],
-                            "enumerations": [
-                                {
-                                    "id": "enum-room-type",
-                                    "name": "RoomType",
-                                    "items": ["STANDARD", "DELUXE", "SUITE"]
-                                },
-                                {
-                                    "id": "enum-room-status",
-                                    "name": "RoomStatus",
-                                    "items": ["AVAILABLE", "OCCUPIED", "MAINTENANCE"]
-                                }
-                            ],
-                            "commands": [
-                                {
-                                    "id": "cmd-calculate-room-price",
-                                    "name": "CalculateRoomPrice",
-                                    "api_verb": "POST",
-                                    "outputEvents": [
-                                        {
-                                            "relationId": "rel-room-price",
-                                            "id": "evt-room-price-calculated",
-                                            "name": "RoomPriceCalculated"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "id": "cmd-update-room-status",
-                                    "name": "UpdateRoomStatus",
-                                    "api_verb": "PUT",
-                                    "outputEvents": [
-                                        {
-                                            "relationId": "rel-room-status",
-                                            "id": "evt-room-status-updated",
-                                            "name": "RoomStatusUpdated"
-                                        }
-                                    ]
-                                }
-                            ],
-                            "events": [
-                                {
-                                    "id": "evt-room-status-updated",
-                                    "name": "RoomStatusUpdated",
-                                    "outputCommands": [
-                                        {
-                                            "commandId": "cmd-notify-housekeeping",
-                                            "relatedAttribute": "roomId",
-                                            "reason": "Notify housekeeping when room status changes"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
+                "deletedProperties": [],
+                "boundedContexts": [
+                    {
+                        "id": "bc-hotel",
+                        "name": "hotelservice",
+                        "actors": [
+                            {
+                                "id": "act-guest",
+                                "name": "Guest"
+                            },
+                            {
+                                "id": "act-system",
+                                "name": "System"
+                            }
+                        ],
+                        "aggregates": [
+                            {
+                                "id": "agg-booking",
+                                "name": "Booking",
+                                "properties": [
+                                    {
+                                        "name": "bookingId",
+                                        "type": "Long",
+                                        "isKey": true
+                                    },
+                                    {
+                                        "name": "guestId",
+                                        "type": "Long",
+                                        "isForeignProperty": true
+                                    },
+                                    {
+                                        "name": "roomId",
+                                        "type": "Long",
+                                        "isForeignProperty": true
+                                    },
+                                    {
+                                        "name": "checkInDate",
+                                        "type": "Date"
+                                    },
+                                    {
+                                        "name": "checkOutDate",
+                                        "type": "Date"
+                                    },
+                                    {
+                                        "name": "status",
+                                        "type": "BookingStatus"
+                                    },
+                                    {
+                                        "name": "totalAmount",
+                                        "type": "Money"
+                                    }
+                                ],
+                                "enumerations": [
+                                    {
+                                        "id": "enum-booking-status",
+                                        "name": "BookingStatus",
+                                        "items": ["PENDING", "CONFIRMED", "CHECKED_IN", "CHECKED_OUT", "CANCELLED"]
+                                    },
+                                    {
+                                        "id": "enum-meal-plan",
+                                        "name": "MealPlan",
+                                        "items": ["NO_MEAL", "BREAKFAST_ONLY", "HALF_BOARD", "FULL_BOARD"]
+                                    }
+                                ],
+                                "valueObjects": [
+                                    {
+                                        "id": "vo-guest-details",
+                                        "name": "GuestDetails",
+                                        "properties": [
+                                            {
+                                                "name": "name"
+                                            },
+                                            {
+                                                "name": "email",
+                                                "type": "Email"
+                                            },
+                                            {
+                                                "name": "phoneNumber"
+                                            },
+                                            {
+                                                "name": "membershipLevel"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "id": "vo-booking-preferences",
+                                        "name": "BookingPreferences",
+                                        "properties": [
+                                            {
+                                                "name": "numberOfGuests",
+                                                "type": "Integer"
+                                            },
+                                            {
+                                                "name": "mealPlan",
+                                                "type": "MealPlan"
+                                            },
+                                            {
+                                                "name": "specialRequests"
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "commands": [
+                                    {
+                                        "id": "cmd-check-room-availability",
+                                        "name": "CheckRoomAvailability",
+                                        "api_verb": "GET",
+                                        "isRestRepository": false,
+                                        "properties": [
+                                            {
+                                                "name": "checkInDate",
+                                                "type": "Date"
+                                            },
+                                            {
+                                                "name": "checkOutDate",
+                                                "type": "Date"
+                                            }
+                                        ],
+                                        "outputEvents": [
+                                            {
+                                                "id": "evt-room-availability-checked",
+                                                "name": "RoomAvailabilityChecked"
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "events": [
+                                    {
+                                        "id": "evt-room-availability-checked",
+                                        "name": "RoomAvailabilityChecked",
+                                        "outputCommands": [
+                                            {
+                                                "id": "cmd-calculate-room-price",
+                                                "name": "CalculateRoomPrice",
+                                                "policyId": "pol-roomPriceCalculation",
+                                                "policyName": "RoomPriceCalculation"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "id": "evt-room-price-calculated",
+                                        "name": "RoomPriceCalculated",
+                                        "outputCommands": []
+                                    }
+                                ],
+                                "readModels": []
+                            },
+                            {
+                                "id": "agg-room",
+                                "name": "Room",
+                                "properties": [
+                                    {
+                                        "name": "roomId",
+                                        "type": "Long",
+                                        "isKey": true
+                                    },
+                                    {
+                                        "name": "roomNumber"
+                                    },
+                                    {
+                                        "name": "roomType",
+                                        "type": "RoomType"
+                                    },
+                                    {
+                                        "name": "basePrice",
+                                        "type": "Money"
+                                    },
+                                    {
+                                        "name": "status",
+                                        "type": "RoomStatus"
+                                    }
+                                ],
+                                "enumerations": [
+                                    {
+                                        "id": "enum-room-type",
+                                        "name": "RoomType",
+                                        "items": ["STANDARD", "DELUXE", "SUITE"]
+                                    },
+                                    {
+                                        "id": "enum-room-status",
+                                        "name": "RoomStatus",
+                                        "items": ["AVAILABLE", "OCCUPIED", "MAINTENANCE"]
+                                    }
+                                ],
+                                "commands": [
+                                    {
+                                        "id": "cmd-calculate-room-price",
+                                        "name": "CalculateRoomPrice",
+                                        "api_verb": "POST",
+                                        "isRestRepository": false,
+                                        "properties": [
+                                            {
+                                                "name": "roomId",
+                                                "type": "Long",
+                                                "isKey": true
+                                            },
+                                            {
+                                                "name": "checkInDate",
+                                                "type": "Date"
+                                            },
+                                            {
+                                                "name": "checkOutDate",
+                                                "type": "Date"
+                                            },
+                                            {
+                                                "name": "numberOfGuests",
+                                                "type": "Integer"
+                                            },
+                                            {
+                                                "name": "roomType",
+                                                "type": "RoomType"
+                                            }
+                                        ],
+                                        "outputEvents": [
+                                            {
+                                                "id": "evt-room-price-calculated",
+                                                "name": "RoomPriceCalculated"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "id": "cmd-update-room-status",
+                                        "name": "UpdateRoomStatus",
+                                        "api_verb": "PATCH",
+                                        "isRestRepository": true,
+                                        "properties": [
+                                            {
+                                                "name": "roomId",
+                                                "type": "Long",
+                                                "isKey": true
+                                            },
+                                            {
+                                                "name": "status",
+                                                "type": "RoomStatus"
+                                            },
+                                            {
+                                                "name": "reason"
+                                            }
+                                        ],
+                                        "outputEvents": [
+                                            {
+                                                "id": "evt-room-status-updated",
+                                                "name": "RoomStatusUpdated"
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "events": [
+                                    {
+                                        "id": "evt-room-status-updated",
+                                        "name": "RoomStatusUpdated",
+                                        "outputCommands": [
+                                            {
+                                                "id": "cmd-notify-housekeeping",
+                                                "name": "NotifyHousekeeping",
+                                                "policyId": "pol-notifyHousekeeping",
+                                                "policyName": "NotifyHousekeeping"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
                     }
-                }
+                ]
             },
 
             "Functional Requirements": {
@@ -693,7 +740,7 @@ Generate read models in the aggregate to satisfy the given functional requiremen
                         "args": {
                             "commandName": "ConfirmBooking",
                             "commandAlias": "Confirm Booking",
-                            "api_verb": "PUT",
+                            "api_verb": "PATCH",
                             "properties": [
                                 {
                                     "name": "bookingId",
@@ -746,7 +793,7 @@ Generate read models in the aggregate to satisfy the given functional requiremen
                         "args": {
                             "commandName": "CancelBooking",
                             "commandAlias": "Cancel Booking",
-                            "api_verb": "PUT",
+                            "api_verb": "PATCH",
                             "properties": [
                                 {
                                     "name": "bookingId",
@@ -893,8 +940,8 @@ Generate read models in the aggregate to satisfy the given functional requiremen
     }
 
     __buildJsonUserQueryInputFormat() {
-        const summarizedESValue = this.esAliasTransManager.transToAliasInSummarizedESValue(
-            ESValueSummarizeUtil.getSummarizedESValue(JSON.parse(JSON.stringify(this.client.input.esValue)))
+        const summarizedESValue = ESValueSummarizeWithFilterUtil.getSummarizedESValue(
+            JSON.parse(JSON.stringify(this.client.input.esValue)), [], this.esAliasTransManager
         )
 
         return {

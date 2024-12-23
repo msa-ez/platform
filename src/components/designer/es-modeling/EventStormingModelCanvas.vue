@@ -4552,11 +4552,16 @@
 
 
             generateFromDraftWithXAI(draftOptions) {
-                console.log("[*] 유저가 선택한 초안 옵션들을 이용해서 모델 생성 로직이 실행됨", draftOptions)
+                console.log("[*] 유저가 선택한 초안 옵션들을 이용해서 모델 생성 로직이 실행됨",
+                    {prevDraftOptions: JSON.parse(JSON.stringify(draftOptions))}
+                )
+
                 this.selectedDraftOptions = draftOptions
 
                 this._removeInvalidReferencedAggregateProperties(draftOptions)
                 this._createBoundedContextsIfNotExists(draftOptions)
+
+                console.log("[*] 초안 전처리 완료", {afterDraftOptions: JSON.parse(JSON.stringify(draftOptions))})
 
                 this.generators.CreateAggregateActionsByFunctions.initInputs(this.selectedDraftOptions)
                 this.generators.CreateAggregateActionsByFunctions.generateIfInputsExist()
