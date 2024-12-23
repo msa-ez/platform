@@ -1753,44 +1753,20 @@
                             <v-tabs-items v-model="monitoringTab">
                                 <v-tab-item v-for="tab in monitoringTabs" :key="tab">
                                     <div v-if="tab === 'filtered'">
-                                        <div v-for="(eventSearchKey, index) in eventSearchKeys" 
-                                            class="d-flex justify-space-between my-2">
-                                            <v-select 
-                                                v-if="index > 0"
-                                                v-model="eventSearchKey.key" 
-                                                :items="searchKeyList" 
-                                                item-text="name"
-                                                item-value="nameCamelCase"
-                                                outlined 
-                                                dense 
-                                                hide-details
-                                                class="mr-2"
-                                            ></v-select>
-                                            <v-text-field
-                                                v-model="eventSearchKey.value"
-                                                :label="eventSearchKey.key"
-                                                clearable
-                                                outlined
-                                                dense
-                                                hide-details
-                                                @keydown.enter="fetchFilteredEvents(eventSearchKeys)"
-                                                @click:clear="clearEventProgress()"
-                                            >
-                                                <template v-slot:append>
-                                                    <v-icon @click="fetchFilteredEvents(eventSearchKeys)">mdi-magnify</v-icon>
-                                                </template>
-                                            </v-text-field>
-                                            <v-btn v-if="index > 0" icon @click="removeEventSearchKey(index)" class="ml-1">
-                                                <v-icon>mdi-minus</v-icon>
-                                            </v-btn>
-                                            <v-btn v-else 
-                                                icon 
-                                                @click="addEventSearchKey(index)"
-                                                class="ml-1"
-                                            >
-                                                <v-icon>mdi-plus</v-icon>
-                                            </v-btn>
-                                        </div>
+                                        <v-text-field
+                                            v-model="searchKeyword"
+                                            label="Search"
+                                            clearable
+                                            outlined
+                                            dense
+                                            persistent-hint
+                                            :hint="'Search by event ' + searchKeyList.join(', ')"
+                                            @keydown.enter="searchEventByKeyword()"
+                                        >
+                                            <template v-slot:append>
+                                                <v-icon @click="searchEventByKeyword()">mdi-magnify</v-icon>
+                                            </template>
+                                        </v-text-field>
                                     </div>
 
                                     <v-data-table
@@ -1804,7 +1780,7 @@
                                         :expanded.sync="expandedLogs"
                                     >
                                         <template v-slot:item="{ item, index }">
-                                            <tr @click="selectedProgressByEvent(item, index)"
+                                            <tr @click="selectedEventProgress(item, index)"
                                                 :style="selectedEventIdx === index ? 'background-color: #E0F2F1;' : ''"
                                                 style="cursor: pointer;"
                                             >
@@ -2166,15 +2142,12 @@
                     { text: 'Payload', value: 'data-table-expand' }
                 ],
                 eventLogs: [],
-                allElementsInProgress: [],
                 expandedLogs: [],
                 selectedEventIdx: -1,
                 fetchEventInterval: null,
-                searchKeyList: [],
-                eventSearchKeys: [{
-                    key: "correlationKey",
-                    value: ""
-                }],
+                searchKeyList: ['correlationKey'],
+                searchKeyword: "",
+                progressElements: [],
 
                 showContinue: false,
                 defaultGeneratorUiInputData: {
@@ -3587,21 +3560,25 @@
                 }
             },
             monitoringTab(newVal, oldVal) {
+                var me = this;
                 if (newVal !== oldVal) {
-                    this.eventLogs = [];
-                    this.expandedLogs = [];
-                    this.clearEventProgress();
-                    if (this.fetchEventInterval) {
-                        clearInterval(this.fetchEventInterval);
-                        this.fetchEventInterval = null;
+                    me.eventLogs = [];
+                    me.expandedLogs = [];
+                    me.clearEventProgress();
+                    if (me.fetchEventInterval) {
+                        clearInterval(me.fetchEventInterval);
+                        me.fetchEventInterval = null;
                     }
                 }
                 if (newVal === 0) {
-                    this.fetchRecentEvents();
-                } else if (newVal === 1 && this.eventSearchKeys) {
-                    this.fetchFilteredEvents(this.eventSearchKeys);
+                    me.searchKeyword = "";
+                    me.isEventLogsFetched = false;
+                    me.fetchRecentEvents();
+                } else {
+                    me.setEventSearchKey();
                 }
-            }
+            },
+
         },
         methods: {
             attachedLists() {
@@ -8448,37 +8425,37 @@
             },
 
 
-            toggleMonitoringDialog() {
+            async toggleMonitoringDialog() {
                 var me = this;
-                me.clearEventProgress();
                 me.eventLogs = [];
+                me.isEventLogsFetched = false;
+                me.searchKeyword = '';
+                me.searchKeyList = ['correlationKey'];
                 me.monitoringDialog = !me.monitoringDialog;
 
                 if (me.monitoringDialog) {
-                    me.isEventLogsFetched = false;
+                    await me.setProgressElements();
                     me.monitoringTab = 0;
                     me.fetchRecentEvents();
+                } else {
+                    me.clearEventProgress();
                 }
             },
-            async fetchEventCollections(eventSearchKeys) {
+            async fetchEventCollections() {
                 var me = this
                 var reqUrl = 'http://localhost:9999/eventCollectors'
                 var result = [];
-                if (eventSearchKeys && eventSearchKeys.length > 0) {
-                    if (eventSearchKeys.length == 1) {
-                        reqUrl += '/search/findByCorrelationKey?correlationKey=' + eventSearchKeys[0].value;
-                    } else {
-                        reqUrl += '/search/findBySearchKey';
-                        eventSearchKeys.forEach((item, index) => {
-                            if (index == 0) {
-                                reqUrl += `?${item.key}=${item.value}`;
-                            } else {
-                                reqUrl += `&${item.key}=${item.value}`;
-                            }
-                        });
-                    }
+                if (me.searchKeyword && me.searchKeyword.length > 0) {
+                    reqUrl += '/search/findBySearchKey';
+                    me.searchKeyList.forEach((key, index) => {
+                        if (index == 0) {
+                            reqUrl += `?${key}=${me.searchKeyword}`;
+                        } else {
+                            reqUrl += `&${key}=${me.searchKeyword}`;
+                        }
+                    });
                 } else {
-                    const timestamp = new Date().getTime() - 60 * 60 * 1000;
+                    const timestamp = new Date().getTime() - 5 * 60 * 1000;
                     reqUrl += '/search/findRecentEvents?timestamp=' + timestamp;
                 }
                 await me.$http.get(reqUrl).then(response => {
@@ -8512,18 +8489,23 @@
                 // }
                 me.isEventLogsFetched = true;
             },
-            async fetchFilteredEvents(eventSearchKeys) {
+            async searchEventByKeyword() {
                 var me = this;
-                if (eventSearchKeys && eventSearchKeys.length > 0) {
-                    const events = await me.fetchEventCollections(eventSearchKeys);
+                me.selectedEventIdx = -1;
+                me.expandedLogs = [];
+                me.isEventLogsFetched = false;
+                await me.fetchFilteredEvents()
+            },  
+            async fetchFilteredEvents() {
+                var me = this;
+                if (me.searchKeyword && me.searchKeyword.length > 0) {
+                    const events = await me.fetchEventCollections();
                     me.eventLogs = events;
                     if (me.eventLogs.length > 0) {
-                        me.eventLogs.forEach((eventLog, index) => {
+                        me.eventLogs.forEach(eventLog => {
                             eventLog.key = eventLog.type + eventLog.correlationKey;
                             eventLog.timestamp = new Date(eventLog.timestamp).toLocaleString();
-                            eventLog.eventSequence = index + 1;
                             eventLog.payload = JSON.parse(eventLog.payload);
-                            me.showProgressByEvent(eventLog, false);
                         });
                         if (!me.fetchEventInterval) {
                             me.fetchEventLogs();
@@ -8532,6 +8514,7 @@
                 } else {
                     me.clearEventProgress();
                     me.eventLogs = [];
+                    me.isEventLogsFetched = false
                     if (me.fetchEventInterval) {
                         clearInterval(me.fetchEventInterval);
                         me.fetchEventInterval = null;
@@ -8539,71 +8522,72 @@
                 }
                 me.isEventLogsFetched = true;
             },
-            showProgressByEvent(event, isSelected) {
+            setProgressElements(){
                 var me = this;
-                const eventElements = Object.values(me.value.elements).filter(element => 
-                    element && element._type.endsWith('Event') && element.name === event.type
-                );
-                const relationElements = Object.values(me.value.relations).filter(relation => 
-                    relation && 
-                    (relation.sourceElement.name === event.type || 
-                    relation.targetElement.name === event.type)
-                );
-                const otherElements = Object.values(me.value.elements).filter(element => 
-                    element && 
-                    (relationElements.some(relation => relation.targetElement.id === element.id) || 
-                    relationElements.some(relation => relation.sourceElement.id === element.id))
-                );
-                const allElements = [...eventElements, ...relationElements, ...otherElements];
-
-                if (isSelected) {
-                    allElements.forEach(element => {
-                        me.$EventBus.$emit('showParticularProgress', element.id);
-                    });
-                } else {
-                    allElements.forEach(element => {
-                        me.$EventBus.$emit('showProgress', element.id, event.eventSequence);
-                    });
-                }
-                me.allElementsInProgress = [...me.allElementsInProgress, ...allElements];
+                me.progressElements = [];
+                Object.values(me.value.elements).forEach(element => {
+                    if (element && element._type.endsWith("Event")) {
+                        me.progressElements.push({ id: element.id, name: element.name });
+                    }
+                });
+                Object.values(me.value.relations).forEach(relation => {
+                    if (relation && (relation.sourceElement._type.endsWith("Event") || 
+                        relation.targetElement._type.endsWith("Event"))
+                    ) {
+                        if (relation.sourceElement._type.endsWith("Event")) {
+                            me.progressElements.push({ id: relation.id, name: relation.sourceElement.name });
+                            me.progressElements.push({ id: relation.targetElement.id, name: relation.sourceElement.name });
+                        } else if (relation.targetElement._type.endsWith("Event")) {
+                            me.progressElements.push({ id: relation.id, name: relation.targetElement.name });
+                            me.progressElements.push({ id: relation.sourceElement.id, name: relation.targetElement.name });
+                        }
+                    }
+                });
             },
-            selectedProgressByEvent(event, index) {
+            async showEventProgress(event) {
+                var me = this;
+                var eventLogs = [];
+                var progressEvents = [];
+                eventLogs = me.eventLogs.filter(eventLog => eventLog.correlationKey === event.correlationKey);
+                eventLogs.forEach((eventLog, index) => {
+                    if (me.progressElements.length > 0) {
+                        me.progressElements.forEach(el => {
+                            me.$EventBus.$emit('hideProgress', el.id);
+                            if (el.name === eventLog.type) {
+                                if (event && event.type === eventLog.type) {
+                                    progressEvents.push({id: el.id, isParticular: true, sequence: index + 1});
+                                } else {
+                                    progressEvents.push({id: el.id, isParticular: false, sequence: index + 1});
+                                }
+                            }
+                        })
+                    }
+                });
+                progressEvents.forEach(el => {
+                    me.$EventBus.$emit('showProgress', el.id, el.sequence, el.isParticular);
+                });
+            },
+            async selectedEventProgress(event, index) {
                 var me = this;
                 if (me.monitoringTab === 0) {
-                    me.eventSearchKeys = [{key: "correlationKey", value: event.correlationKey}];
+                    me.searchKeyword = event.correlationKey;
                     me.monitoringTab = 1;
+                    me.searchEventByKeyword();
                 } else {
                     if (me.selectedEventIdx === index) {
                         me.selectedEventIdx = -1;
-                        me.eventLogs.forEach(async (eventLog) => {
-                            await me.showProgressByEvent(eventLog, false);
-                        });
+                        me.clearEventProgress();
                     } else {
                         me.selectedEventIdx = index;
-                        me.eventLogs.forEach(async (eventLog) => {
-                            await me.showProgressByEvent(eventLog, false);
-                        });
-                        me.showProgressByEvent(event, true);
+                        await me.showEventProgress(event);
                     }
                 }
             },
             clearEventProgress() {
                 var me = this;
-                if (me.fetchEventInterval) {
-                    clearInterval(me.fetchEventInterval);
-                    me.fetchEventInterval = null;
-                }
                 me.selectedEventIdx = -1;
-                me.allElementsInProgress = [];
-                Object.values(me.value.elements).forEach(async element => {
-                    if (element) {
-                        await me.$EventBus.$emit('hideProgress', element.id);
-                    }
-                });
-                Object.values(me.value.relations).forEach(async relation => {
-                    if (relation) {
-                        await me.$EventBus.$emit('hideProgress', relation.id);
-                    }
+                me.progressElements.forEach((el) => {
+                    me.$EventBus.$emit('hideProgress', el.id);
                 });
             },
             fetchEventLogs() {
@@ -8614,7 +8598,7 @@
                 }
                 if (me.monitoringTab === 1) {
                     me.fetchEventInterval = setInterval(() => {
-                        me.fetchFilteredEvents(me.eventSearchKeys);
+                        me.fetchFilteredEvents();
                     }, 5000);
                 } else {
                     me.fetchEventInterval = setInterval(() => {
@@ -8630,33 +8614,23 @@
                     me.expandedLogs = [eventLog];
                 }
             },
-            addEventSearchKey() {
+            setEventSearchKey() {
                 var me = this;
-                if (!me.eventSearchKeys) {
-                    me.eventSearchKeys = [];
-                }
-                const eventElements = Object.values(me.value.elements).filter(element => element && element._type.endsWith('Event'));
-                me.searchKeyList = [];
+                const eventElements = Object.values(me.value.elements).filter(element => 
+                    element && element._type.endsWith("Event")
+                );
+                me.searchKeyList = ['correlationKey'];
                 const searchKeySet = new Set();
                 eventElements.forEach(element => {
                     const keys = element.fieldDescriptors.filter(field => field.isSearchKey);
                     keys.forEach(key => {
-                        if (!searchKeySet.has(key.name)) {
-                            searchKeySet.add(key.name);
-                            me.searchKeyList.push(key);
+                        if (!searchKeySet.has(key.nameCamelCase)) {
+                            searchKeySet.add(key.nameCamelCase);
+                            me.searchKeyList.push(key.nameCamelCase);
                         }
                     });
                 });
-                me.eventSearchKeys.push({
-                    key: '',
-                    value: ''
-                });
             },
-            removeEventSearchKey(index) {
-                var me = this;
-                me.eventSearchKeys.splice(index, 1);
-            },
-            
             
             onInputParamsCheckBefore(inputParams, generatorName){
                 if(this.generatorsInGeneratorUI[generatorName] && 
