@@ -2733,7 +2733,7 @@
             useMonitoring() {
                 var me = this;
                 if (me.value.toppingPlatforms && me.value.toppingPlatforms.length > 0 &&
-                    me.value.toppingPlatforms.some(link => link.includes("topping-eda-monitoring"))
+                    me.value.toppingPlatforms.some(link => link.includes("topping-event-monitoring"))
                 ) {
                     return true;
                 }
