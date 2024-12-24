@@ -52,24 +52,25 @@
             style="margin: 10px; margin-bottom: -35px;"
         ></v-checkbox>
 
-        <v-img :aspect-ratio="16/9"
-            max-width="400px"
-            max-height="185px"
-            style = "margin-top:12px; cursor: pointer;"
-            :src="clazz.thumbnail"
-            @click="joinClass(clazz)"
-        >
-        </v-img>
+        <div style="cursor: pointer;" @click="joinClass(clazz)">
+            <v-img :aspect-ratio="16/9"
+                max-width="400px"
+                max-height="185px"
+                style = "margin-top:12px; cursor: pointer;"
+                :src="clazz.thumbnail"
+            >
+            </v-img>
 
-        <v-card-title style="display:flex; margin:-10px 0 -10px; 0;">
-            <!--                        {{course}}-->
-            <p>{{clazz.className}}<v-icon style="margin-top:-5px; margin-left:5px;" v-if="clazz.active == false">mdi-eye-off</v-icon></p>
-        </v-card-title>
-        <v-card-text>
-            코스명 : {{clazz.course ? clazz.course.courseDesc : clazz.courseId}} <br>
-            클래스 시작 : {{clazz.classStartDate}} <br>
-            클래스 종료 : {{clazz.classEndDate}} <br>
-        </v-card-text>
+            <v-card-title style="display:flex; margin:-10px 0 -10px 0;">
+                <!--                        {{course}}-->
+                <p>{{clazz.className}}<v-icon style="margin-top:-5px; margin-left:5px;" v-if="clazz.active == false">mdi-eye-off</v-icon></p>
+            </v-card-title>
+            <v-card-text>
+                코스명 : {{clazz.course ? clazz.course.courseDesc : clazz.courseId}} <br>
+                클래스 시작 : {{clazz.classStartDate}} <br>
+                클래스 종료 : {{clazz.classEndDate}} <br>
+            </v-card-text>
+        </div>
         <v-card-actions>
             <v-spacer></v-spacer>
             <div style="position: absolute; bottom:5px; left:-10px;">
