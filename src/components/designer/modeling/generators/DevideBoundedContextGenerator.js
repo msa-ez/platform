@@ -19,6 +19,8 @@ ${this.client.input['devisionAspect']}
 Requirements:
 ${this.client.input['userStory']}
 
+${this.client.input['feedback'] ? this.feedbackPrompt() : ''}
+
 Key principles:
 - High cohesion, low coupling
 - Group related behaviors and data together
@@ -56,12 +58,31 @@ The format must be as follows:
             "downStream": "name of downstream Bounded Context"
         }
     ],
-    "thoughts": "Explain why each relationship type was chosen and how the contexts interact with each other"
+    "thoughts": "Bounded Contexte들의 도출 경위에 대한 설명 (응집도&결합도 측면, 업무 전문성, 기술 응집도, 페르소나 기준 등)",
+    "explanations": 
+    [
+        {
+            "sourceContext": "Source Bounded Context name",
+            "targetContext": "Target Bounded Context name",
+            "relationType": "Relationship type",
+            "reason": "Explanation of why this type was chosen",
+            "interactionPattern": "Description of how these contexts interact (e.g., Pub/Sub, Req/Res, REST, gRPC, etc.)"
+        }
+    ]
 }
  `
+    }
 
-        console.log(`[*] ${this.modelName}에 프롬프트가 전달됨`, {prompt, input: this.client.input})
-        return prompt;
+    feedbackPrompt(){
+        return `
+You previously created a model like this: 
+${JSON.stringify(this.client.input['previousAspectModel'], null, 2)}
+
+Please refer to the added feedback below to create a new model.
+
+Feedback:
+${this.client.input['feedback']}
+`
     }
 
     createModel(text){
@@ -77,9 +98,9 @@ The format must be as follows:
         model['devisionAspect'] = this.client.input['devisionAspect'];
         
         if(this.state === "end")
-            console.log(`[*] ${this.modelName}의 모델 생성이 완료됨`, {model, text, input: this.client.input})
+            console.log(`[*] ${this.client.input['devisionAspect']}의 모델 생성이 완료됨`, {model, text, input: this.client.input})
         else
-            console.log(`[*] ${this.modelName}의 모델 생성이 진행중임`, {textLength: text.length})
+            console.log(`[*] ${this.client.input['devisionAspect']}의 모델 생성이 진행중임`, {textLength: text.length})
         return model;
     }
 

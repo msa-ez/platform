@@ -1,17 +1,17 @@
 <template>
     <v-card :key="Object.keys(resultDevideBoundedContext).length">
         <v-card-title>
-            {{ $t('DevideBoundedContextDialog.boundedContextDivisionResult') }}
-            <v-btn v-if="!isGenerating" text color="primary" @click="reGenerate()">{{ $t('DevideBoundedContextDialog.reGenerate') }}</v-btn>
-            <v-btn v-if="isGenerating" text color="primary" @click="stop()">{{ $t('DevideBoundedContextDialog.stop') }}</v-btn>
+            Seperating into multiple Bounded Contexts
+            <v-btn v-if="!isGenerating" text color="primary" @click="reGenerate()">Re-Generate</v-btn>
+            <!-- <v-btn v-if="isGenerating" text color="primary" @click="stop()">Stop</v-btn> -->
             <v-btn :style="{'margin-left': 'auto'}" icon @click="closeDialog()">
                 <v-icon>mdi-close</v-icon>
             </v-btn>
         </v-card-title>
         <v-card-subtitle>
             <div class="d-flex align-center">
-                <div v-if="isGenerating">
-                    <p class="mb-0">{{ $t('DevideBoundedContextDialog.lodingMessage') }} ({{ Object.keys(resultDevideBoundedContext).length / 5 * 100 }}%)</p>
+                <div v-if="isGenerating && Object.keys(resultDevideBoundedContext).length < 5">
+                    <p class="mb-0">Bounded Contexts generating... ({{ Object.keys(resultDevideBoundedContext).length / 5 * 100 }}%)</p>
                 </div>
                 <v-progress-circular
                     v-if="isGenerating"
@@ -24,7 +24,6 @@
         </v-card-subtitle>
 
         <v-card-text v-if="Object.keys(resultDevideBoundedContext).length > 0">
-            <v-card-title>{{ $t('DevideBoundedContextDialog.aspectsOfBoundedContexts') }}</v-card-title>
             <v-tabs v-model="activeTab">
                 <v-tab v-for="(model, devisionAspect) in resultDevideBoundedContext" :key="devisionAspect"
                     style="text-transform: none;"
@@ -48,34 +47,57 @@
                     >
                         <vue-mermaid
                             v-if="mermaidNodes[devisionAspect]"
-                            :id="`mermaid-${devisionAspect}`"
-                            :key="devisionAspect"
+                            :id="`mermaid-${devisionAspect}-${reGenerateRenderKey}`"
+                            :key="`mermaid-${devisionAspect}-${reGenerateRenderKey}`"
                             :nodes="mermaidNodes[devisionAspect]"
                             type="graph TD"
                             @nodeClick="editNode"
                             :config="config"
                         ></vue-mermaid>
+                        
+                        <v-card-title class="text-h6">Analysis</v-card-title>
+                        <v-card class="pa-4">
+                            <v-card-title class="text-subtitle-1">Reason of separation</v-card-title>
+                            <v-card-text>
+                                {{ resultDevideBoundedContext[devisionAspect].thoughts }}
+                            </v-card-text><v-divider class="my-4"></v-divider>
+
+                            <v-card-title class="text-subtitle-1">Decription of each Bounded Context</v-card-title>
+                            <v-data-table
+                                :items="getBoundedContextRequirements(resultDevideBoundedContext[devisionAspect])"
+                                :headers="requirementsHeaders"
+                                class="elevation-1"
+                                :hide-default-footer="true"
+                            ></v-data-table><br><v-divider class="my-4"></v-divider>
+
+                            <v-card-title class="text-subtitle-1">Relations</v-card-title>
+                            <v-data-table 
+                                style="margin-top: 15px;"
+                                :items="resultDevideBoundedContext[devisionAspect].explanations" 
+                                :headers="explanationsHeaders" 
+                                class="elevation-1"
+                                :hide-default-footer="true"
+                            ></v-data-table><br>
+                        </v-card>
                     </div>
-                    <v-card class="mt-4 pa-4" outlined>
-                        <v-card-title class="text-subtitle-1">{{ $t('DevideBoundedContextDialog.analysis') }}</v-card-title>
-                        <v-card-text>{{ resultDevideBoundedContext[devisionAspect].thoughts }}</v-card-text>
-                        <v-textarea v-model="feedback" :label="$t('DevideBoundedContextDialog.feedback')" rows="3"></v-textarea>
-                    </v-card>
                 </v-tab-item>
             </v-tabs-items>
 
-            <v-row class="ma-0 pa-0" align="center">
-                <v-spacer></v-spacer>
-                <v-btn @click="createModel()"
-                    :disabled="selectedAspect === null"
+            <v-card class="mt-4 pa-4" outlined>
+                <v-textarea :disabled="isGenerating" v-model="feedback" label="Feedback" rows="3"></v-textarea>
+                <v-btn :disabled="feedback === '' || isGenerating" class="auto-modeling-btn" @click="reGenerateAspect(selectedAspect)">Re-Generate {{ selectedAspect }} Aspect</v-btn>
+            </v-card>
+            <div class="d-flex justify-end mt-4">
+                <v-btn 
+                    :disabled="selectedAspect === null || isGenerating" 
                     class="auto-modeling-btn" 
-                    color="primary"
-                    :style="{'margin-top': '15px'}"
+                    color="primary" 
+                    @click="createModel()"
                 >
-                    {{ $t('DevideBoundedContextDialog.createModel') }}
+                    Create Model
                     <v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon>
                 </v-btn>
-            </v-row>
+            </div>
         </v-card-text>
     </v-card>
 </template>
@@ -110,7 +132,19 @@
                 selectedAspect: null,
                 selectedResultDevideBoundedContext: {},
                 isGenerating: true,
-                feedback: ''
+                feedback: '',
+                requirementsHeaders: [
+                    { text: 'Bounded Context Name', value: 'name' },
+                    { text: 'Requirements', value: 'requirements' }
+                ],
+                explanationsHeaders: [
+                    { text: 'Source Context', value: 'sourceContext' },
+                    { text: 'Target Context', value: 'targetContext' },
+                    { text: 'Relation Type', value: 'relationType' },
+                    { text: 'Reason', value: 'reason' },
+                    { text: 'Interaction Pattern', value: 'interactionPattern' }
+                ],
+                reGenerateRenderKey: 0
             }
         },
         mounted() {
@@ -127,9 +161,17 @@
 
                     if(Object.keys(newVal).length == 5){
                         this.isGenerating = false;
+                        if(this.selectedAspect && Object.keys(newVal[this.selectedAspect]).length == 0){
+                            this.isGenerating = true;
+                        }else{
+                            this.$set(this.mermaidNodes, this.selectedAspect, this.generateNodes(newVal[this.selectedAspect]));
+                            this.reGenerateRenderKey++;
+                        }
                     }else if(Object.keys(newVal).length > 0 && Object.keys(newVal).length < 5){
                         this.isGenerating = true;
                     }
+                    
+                    this.reGenerateRenderKey++;
                 },
                 deep: true
             },
@@ -153,7 +195,8 @@
                     nodes.push({
                         id: `BC${index}`,
                         text: bc.name,
-                        editable: true
+                        editable: true,
+                        edgeType: 'circle'
                     });
                 });
                 
@@ -211,11 +254,28 @@
             stop(){
                 this.isGenerating = false;
                 this.mermaidNodes = {};
+                this.reGenerateRenderKey++;
                 this.$emit("stop");
             },
             reGenerate(){
                 this.isGenerating = true;
+                this.feedback = '';
+                this.mermaidNodes = {};
+                this.reGenerateRenderKey++;
                 this.$emit("reGenerate");
+            },
+            reGenerateAspect(aspect){
+                this.isGenerating = true;
+                this.mermaidNodes[aspect] = {};
+                this.reGenerateRenderKey++;
+                this.$emit("reGenerateAspect", aspect, this.feedback);
+            },
+            getBoundedContextRequirements(aspectData) {
+                if (!aspectData || !aspectData.boundedContexts) return [];
+                return aspectData.boundedContexts.map(bc => ({
+                    name: bc.name,
+                    requirements: bc.requirements
+                }));
             }
         }
     }
