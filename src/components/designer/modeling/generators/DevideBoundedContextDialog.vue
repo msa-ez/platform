@@ -24,8 +24,8 @@
         </v-card-subtitle>
 
         <v-card-text v-if="Object.keys(resultDevideBoundedContext).length > 0">
-            <v-tabs v-model="activeTab" :disabled="Object.keys(resultDevideBoundedContext[selectedAspect]).length == 0">
-                <v-tab v-for="(model, devisionAspect) in resultDevideBoundedContext" :key="devisionAspect" :disabled="Object.keys(resultDevideBoundedContext[selectedAspect]).length == 0">
+            <v-tabs v-model="activeTab">
+                <v-tab v-for="(model, devisionAspect) in resultDevideBoundedContext" :key="devisionAspect">
                     {{ devisionAspect }} Aspect
                     <v-icon v-if="selectedAspect === devisionAspect" 
                         color="primary" 
