@@ -9,20 +9,30 @@
     "createBoundedContext": "Bounded Context 생성"
   },
   "DevideBoundedContextDialog" : {
-    "boundedContextDivisionResult": "Bounded Context 분할 결과",
+    "boundedContextDivisionResult": "문제영역(Bounded context) 생성(분할) 결과",
     "aspectsOfBoundedContexts": "Bounded Context 주요 관점",
     "domainAspect": "도메인",
     "organizationalAspect": "조직적",
     "personaAspect": "페르소나",
     "transactionPerformanceAspect": "거래/성능",
     "infrastructureAspect": "인프라",
-    "lodingMessage": "Bounded Contexts generating...",
+    "lodingMessage": "관점별 Bounded Context 생성 중...",
+    "reasonOfSeparation": "분할 이유",
     "aspect" : "관점",
     "reGenerate": "재생성",
     "stop": "중지",
     "analysis": "분석",
     "feedback": "피드백",
-    "createModel": "모델 생성"
+    "createModel": "모델 생성",
+    "descriptionOfEachBoundedContext": "각 Bounded Context의 설명",
+    "relations": "관계",
+    "boundedContextName": "Bounded Context 이름",
+    "requirements": "요구사항",
+    "sourceContext": "소스 컨텍스트",
+    "targetContext": "타겟 컨텍스트", 
+    "relationType": "관계 유형",
+    "reason": "이유",
+    "interactionPattern": "상호작용 패턴"
   },
   "ViewDefinitionPanel" : {
     "CQRSDetailTitle" : "CQRS 패턴에서 Read Model의 \"CREATE\" 설정은 이벤트 발생 시 데이터를 조회 가능한 형태로 저장하는 역할을 합니다.",
