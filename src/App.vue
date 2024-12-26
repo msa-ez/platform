@@ -168,9 +168,9 @@
                                     <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
                                     <v-card-actions style="position: absolute; right:0px; bottom:0px;">
                                         <v-spacer></v-spacer>
-                                        <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
-                                        <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
-                                        <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                        <v-btn depressed text class="making-btn" @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                        <v-btn depressed text class="making-btn" @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                        <v-btn depressed text class="making-btn" style="color:#1E88E5;"
                                             @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
                                         </v-btn>
                                     </v-card-actions>
@@ -219,9 +219,9 @@
                                     <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
                                     <v-card-actions style="position: absolute; right:0px; bottom:0px;">
                                         <v-spacer></v-spacer>
-                                        <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
-                                        <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
-                                        <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                        <v-btn depressed text class="making-btn" @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                        <v-btn depressed text class="making-btn" @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                        <v-btn depressed text class="making-btn" style="color:#1E88E5;"
                                             @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
                                         </v-btn>
                                     </v-card-actions>
@@ -270,9 +270,9 @@
                                     <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
                                     <v-card-actions style="position: absolute; right:0px; bottom:0px;">
                                         <v-spacer></v-spacer>
-                                        <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
-                                        <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
-                                        <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                        <v-btn depressed text class="making-btn" @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                        <v-btn depressed text class="making-btn" @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                        <v-btn depressed text class="making-btn" style="color:#1E88E5;"
                                             @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
                                         </v-btn>
                                     </v-card-actions>
@@ -321,9 +321,9 @@
                                     <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
                                     <v-card-actions style="position: absolute; right:0px; bottom:0px;">
                                         <v-spacer></v-spacer>
-                                        <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
-                                        <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
-                                        <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                        <v-btn depressed text class="making-btn" @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                        <v-btn depressed text class="making-btn" @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                        <v-btn depressed text class="making-btn" style="color:#1E88E5;"
                                             @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
                                         </v-btn>
                                     </v-card-actions>
@@ -372,9 +372,9 @@
                                     <div style="font-size:14px; color:#757575; margin: 10px 0px 30px 0px;">{{ $t(item.subtitle) }}</div>
                                     <v-card-actions style="position: absolute; right:0px; bottom:0px;">
                                         <v-spacer></v-spacer>
-                                        <v-btn small depressed text @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
-                                        <v-btn small depressed text @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
-                                        <v-btn small depressed text style="color:#1E88E5; font-weight:850;"
+                                        <v-btn depressed text class="making-btn" @click="goTutorials(item.type)" :disabled="item.disabled">{{ $t('tools.tutorial-btn') }}</v-btn>
+                                        <v-btn depressed text class="making-btn" @click="goVideo(item.type)" :disabled="item.disabled">{{ $t('tools.video-btn') }}</v-btn>
+                                        <v-btn depressed text class="making-btn" style="color:#1E88E5;"
                                             @click.native="moveToModel(item.type)">{{ $t('tools.create-btn') }}
                                         </v-btn>
                                     </v-card-actions>
@@ -2186,6 +2186,10 @@
 
 </script>
 <style>
+    .making-btn {
+        font-size:16px !important;
+        font-weight: 500;
+    }
     .question-btn {
         position: absolute;
         top:15px; right:95px;

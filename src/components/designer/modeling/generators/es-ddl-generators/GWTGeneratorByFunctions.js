@@ -1,6 +1,6 @@
 const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
 const ESAliasTransManager = require("./modules/ESAliasTransManager")
-const ESValueSummarizeUtil_WithProperties = require("./modules/ESValueSummarizeUtil_WithProperties")
+const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil")
 
 class GWTGeneratorByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
@@ -76,7 +76,7 @@ Please follow these rules:
     }
 
     __buildRequestFormatPrompt(){
-        return ESValueSummarizeUtil_WithProperties.getGuidePrompt()
+        return ESValueSummarizeWithFilterUtil.getGuidePrompt()
     }
 
     __buildJsonResponseFormat() {
@@ -157,150 +157,157 @@ Please follow these rules:
     __buildJsonExampleInputFormat() {
         return {
             "Current Bounded Context": {
-                "id": "bc-inventory",
-                "name": "inventory",
-                "aggregates": {
-                    "agg-product": {
-                        "id": "agg-product",
-                        "name": "Product",
-                        "properties": [
+                "deletedProperties": [],
+                "boundedContexts": [
+                    {
+                        "id": "bc-inventory",
+                        "name": "inventory",
+                        "aggregates": [
                             {
-                                "name": "productId",
-                                "type": "String",
-                                "isKey": true
-                            },
-                            {
-                                "name": "name",
-                                "type": "String"
-                            },
-                            {
-                                "name": "quantity",
-                                "type": "Integer"
-                            },
-                            {
-                                "name": "status",
-                                "type": "ProductStatus"
-                            },
-                            {
-                                "name": "category",
-                                "type": "Category"
-                            }
-                        ],
-                        "entities": [
-                            {
-                                "id": "ent-category",
-                                "name": "Category",
+                                "id": "agg-product",
+                                "name": "Product",
                                 "properties": [
                                     {
-                                        "name": "categoryId",
-                                        "type": "String"
+                                        "name": "productId",
+                                        "type": "String",
+                                        "isKey": true
                                     },
                                     {
                                         "name": "name",
                                         "type": "String"
                                     },
                                     {
-                                        "name": "description",
-                                        "type": "String"
+                                        "name": "quantity",
+                                        "type": "Integer"
+                                    },
+                                    {
+                                        "name": "status",
+                                        "type": "ProductStatus"
+                                    },
+                                    {
+                                        "name": "category",
+                                        "type": "Category"
                                     }
-                                ]
-                            }
-                        ],
-                        "enumerations": [
-                            {
-                                "id": "enum-productStatus",
-                                "name": "ProductStatus",
-                                "items": [
-                                    "AVAILABLE",
-                                    "OUT_OF_STOCK",
-                                    "DISCONTINUED"
-                                ]
-                            }
-                        ],
-                        "commands": [
-                            {
-                                "id": "cmd-addStock",
-                                "name": "AddStock",
-                                "api_verb": "PUT",
-                                "outputEvents": [
+                                ],
+                                "entities": [
+                                    {
+                                        "id": "ent-category",
+                                        "name": "Category",
+                                        "properties": [
+                                            {
+                                                "name": "categoryId",
+                                                "type": "String"
+                                            },
+                                            {
+                                                "name": "name",
+                                                "type": "String"
+                                            },
+                                            {
+                                                "name": "description",
+                                                "type": "String"
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "enumerations": [
+                                    {
+                                        "id": "enum-productStatus",
+                                        "name": "ProductStatus",
+                                        "items": [
+                                            "AVAILABLE",
+                                            "OUT_OF_STOCK",
+                                            "DISCONTINUED"
+                                        ]
+                                    }
+                                ],
+                                "commands": [
+                                    {
+                                        "id": "cmd-addStock",
+                                        "name": "AddStock",
+                                        "api_verb": "PATCH",
+                                        "isRestRepository": true,
+                                        "outputEvents": [
+                                            {
+                                                "id": "evt-stockAdded",
+                                                "name": "StockAdded"
+                                            }
+                                        ],
+                                        "properties": [
+                                            {
+                                                "name": "productId",
+                                                "type": "String"
+                                            },
+                                            {
+                                                "name": "quantity",
+                                                "type": "Integer"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "id": "cmd-discontinueProduct",
+                                        "name": "DiscontinueProduct",
+                                        "api_verb": "PATCH",
+                                        "isRestRepository": true,
+                                        "outputEvents": [
+                                            {
+                                                "id": "evt-productDiscontinued",
+                                                "name": "ProductDiscontinued"
+                                            }
+                                        ],
+                                        "properties": [
+                                            {
+                                                "name": "productId",
+                                                "type": "String"
+                                            },
+                                            {
+                                                "name": "reason",
+                                                "type": "String"
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "events": [
                                     {
                                         "id": "evt-stockAdded",
-                                        "name": "StockAdded"
-                                    }
-                                ],
-                                "properties": [
-                                    {
-                                        "name": "productId",
-                                        "type": "String"
+                                        "name": "StockAdded",
+                                        "properties": [
+                                            {
+                                                "name": "productId",
+                                                "type": "String"
+                                            },
+                                            {
+                                                "name": "quantity",
+                                                "type": "Integer"
+                                            },
+                                            {
+                                                "name": "newTotalQuantity",
+                                                "type": "Integer"
+                                            }
+                                        ]
                                     },
-                                    {
-                                        "name": "quantity",
-                                        "type": "Integer"
-                                    }
-                                ]
-                            },
-                            {
-                                "id": "cmd-discontinueProduct",
-                                "name": "DiscontinueProduct",
-                                "api_verb": "PUT",
-                                "outputEvents": [
                                     {
                                         "id": "evt-productDiscontinued",
-                                        "name": "ProductDiscontinued"
-                                    }
-                                ],
-                                "properties": [
-                                    {
-                                        "name": "productId",
-                                        "type": "String"
-                                    },
-                                    {
-                                        "name": "reason",
-                                        "type": "String"
-                                    }
-                                ]
-                            }
-                        ],
-                        "events": [
-                            {
-                                "id": "evt-stockAdded",
-                                "name": "StockAdded",
-                                "properties": [
-                                    {
-                                        "name": "productId",
-                                        "type": "String"
-                                    },
-                                    {
-                                        "name": "quantity",
-                                        "type": "Integer"
-                                    },
-                                    {
-                                        "name": "newTotalQuantity",
-                                        "type": "Integer"
-                                    }
-                                ]
-                            },
-                            {
-                                "id": "evt-productDiscontinued",
-                                "name": "ProductDiscontinued",
-                                "properties": [
-                                    {
-                                        "name": "productId",
-                                        "type": "String"
-                                    },
-                                    {
-                                        "name": "reason",
-                                        "type": "String"
-                                    },
-                                    {
-                                        "name": "discontinuedDate",
-                                        "type": "Date"
+                                        "name": "ProductDiscontinued",
+                                        "properties": [
+                                            {
+                                                "name": "productId",
+                                                "type": "String"
+                                            },
+                                            {
+                                                "name": "reason",
+                                                "type": "String"
+                                            },
+                                            {
+                                                "name": "discontinuedDate",
+                                                "type": "Date"
+                                            }
+                                        ]
                                     }
                                 ]
                             }
                         ]
                     }
-                }
+                ]
             },
             
             "Functional Requirements": {
@@ -447,12 +454,17 @@ Please follow these rules:
     }
 
     __buildJsonUserQueryInputFormat() {
-        const summarizedBoundedContext = Object.values(this.esAliasTransManager.transToAliasInSummarizedESValue({
-            "targetBoundedContext": ESValueSummarizeUtil_WithProperties.getSummarizedBoundedContextValue(
-                this.client.input.esValue,
-                this.client.input.targetBoundedContext
-            )
-        }))[0]
+        const summarizedBoundedContext = {
+            "deletedProperties": [],
+            "boundedContexts": [
+                ESValueSummarizeWithFilterUtil.getSummarizedBoundedContextValue(
+                    this.client.input.esValue,
+                    this.client.input.targetBoundedContext,
+                    [],
+                    this.esAliasTransManager
+                )
+            ]
+        }
 
         return {
             "Current Bounded Context": JSON.stringify(summarizedBoundedContext),

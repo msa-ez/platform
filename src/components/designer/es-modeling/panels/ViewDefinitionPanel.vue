@@ -97,6 +97,16 @@
                             <v-radio label="Query For Multiple Aggregate" value="query-for-multiple-aggregate"></v-radio>
                             <v-radio disabled label="GraphQL" value="graphql"></v-radio>
                         </v-radio-group>
+
+                        <detail-component v-if="value.dataProjection == 'cqrs'"
+                            :title="$t('ViewDefinitionPanel.CQRSDetailTitle')"
+                            :details="CQRSDetails"
+                        />
+
+                        <detail-component v-if="value.dataProjection == 'query-for-aggregate'"
+                            :title="$t('ViewDefinitionPanel.QueryForAggregateDetailTitle')"
+                            :details="QueryForAggregateDetails"
+                        />
                         <!-- <v-alert
                             color="grey darken-1"
                             text
@@ -153,7 +163,7 @@
                             </v-card>
                         </div>
 
-                        <div v-if="value.dataProjection == 'query-for-multiple-aggregate'">
+                        <div class="mt-4" v-if="value.dataProjection == 'query-for-multiple-aggregate'">
                             <v-card flat>
                                 <v-card-text class="pa-0 pt-4">
                                     <event-storming-attribute
@@ -185,7 +195,7 @@
                             </v-card>
                         </div>
 
-                        <div v-if="value.dataProjection == 'cqrs'">
+                        <div class="mt-4" v-if="value.dataProjection == 'cqrs'">
                             <v-card flat>
                                 <v-card-text class="pa-0">
                                     <event-storming-attribute
@@ -207,16 +217,17 @@
                                         :isRead="isReadOnly"
                                 ></ViewCreate>
                             </v-col>
-                            <v-row align="start" justify="end">
-                                <v-tooltip left>
-                                    <template v-slot:activator="{ on }">
-                                        <v-btn v-on="on" class="cqrs-add-btn" outlined :disabled="isReadOnly"
-                                            @click="viewMainRowAdd('create')">
-                                            <v-icon> mdi-plus</v-icon>
-                                        </v-btn>
-                                    </template>
-                                    <span>Add "CREATE" Card</span>
-                                </v-tooltip>
+                            <v-row class="ma-0 pa-0">
+                                <v-btn
+                                    class="cqrs-add-btn"
+                                    outlined
+                                    :disabled="isReadOnly"
+                                    @click="viewMainRowAdd('create')"
+                                    block
+                                >
+                                    <v-icon left>mdi-plus</v-icon>
+                                    Add "CREATE" Card
+                                </v-btn>
                             </v-row>
 
                             <v-col class="pa-0" v-for="(item,key) in value.updateRules">
@@ -228,16 +239,18 @@
                                 >
                                 </ViewUpdate>
                             </v-col>
-                            <v-row align="center" justify="end">
-                                <v-tooltip left>
-                                    <template v-slot:activator="{ on }">
-                                        <v-btn v-on="on" class="cqrs-add-btn" outlined :disabled="isReadOnly"
-                                            @click="viewMainRowAdd('update')">
-                                            <v-icon> mdi-plus</v-icon>
-                                        </v-btn>
-                                    </template>
-                                    <span>Add "UPDATE" Card</span>
-                                </v-tooltip>
+                            <v-row class="ma-0 pa-0">
+                                <v-spacer></v-spacer>
+                                <v-btn
+                                    class="cqrs-add-btn"
+                                    outlined
+                                    :disabled="isReadOnly"
+                                    @click="viewMainRowAdd('update')"
+                                    block
+                                >
+                                    <v-icon left>mdi-plus</v-icon>
+                                    Add "UPDATE" Card
+                                </v-btn>
                             </v-row>
 
                             <v-col class="pa-0" v-for="(item,key) in value.deleteRules">
@@ -248,16 +261,18 @@
                                         :isRead="isReadOnly"
                                 ></ViewDelete>
                             </v-col>
-                            <v-row align="start" justify="end">
-                                <v-tooltip left>
-                                    <template v-slot:activator="{ on }">
-                                        <v-btn v-on="on" class="cqrs-add-btn" outlined :disabled="isReadOnly"
-                                            @click="viewMainRowAdd('delete')">
-                                            <v-icon>mdi-plus</v-icon>
-                                        </v-btn>
-                                    </template>
-                                    <span>Add "DELETE" Card</span>
-                                </v-tooltip>
+                            <v-row class="ma-0 pa-0">
+                                <v-spacer></v-spacer>
+                                <v-btn
+                                    class="cqrs-add-btn"
+                                    outlined
+                                    :disabled="isReadOnly"
+                                    @click="viewMainRowAdd('delete')"
+                                    block
+                                >
+                                    <v-icon left>mdi-plus</v-icon>
+                                    Add "DELETE" Card
+                                </v-btn>
                             </v-row>
                         </div>
                     </v-card-text>
@@ -304,7 +319,31 @@
                 },
                 // generateDone: true,
                 exampleAvailable: false,
-
+                CQRSDetails: [
+                    {
+                        title : "ViewDefinitionPanel.CQRSDetailSubTitle1",  
+                    },
+                    {
+                        title : "ViewDefinitionPanel.CQRSDetailSubTitle2",
+                    },
+                    {
+                        title : "ViewDefinitionPanel.CQRSDetailSubTitle3",
+                    }
+                ],
+                QueryForAggregateDetails: [
+                    {
+                        title : "ViewDefinitionPanel.QueryForAggregateDetailSubTitle1",
+                    },
+                    {
+                        title : "ViewDefinitionPanel.QueryForAggregateDetailSubTitle2",
+                    },
+                    {
+                        title : "ViewDefinitionPanel.QueryForAggregateDetailSubTitle3",
+                    },
+                    {
+                        title : "ViewDefinitionPanel.QueryForAggregateDetailSubTitle4",
+                    }
+                ]
             }
         },
         computed: {
@@ -486,7 +525,8 @@
 
 <style scoped lang="scss" rel="stylesheet/scss">
     .cqrs-add-btn {
-        margin:5px 30px 50px 0;
         color: #757575;
+        width: 100%;
+        margin: 4px 0px 16px 0px;
     }
 </style>

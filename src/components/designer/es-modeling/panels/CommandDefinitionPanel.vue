@@ -399,8 +399,59 @@
                         if(me.relatedAggregate && me.relatedAggregate.aggregateRoot && me.relatedAggregate.aggregateRoot.fieldDescriptors.length > 1 ){
                             fieldDescriptorsName = ''
                             me.relatedAggregate.aggregateRoot.fieldDescriptors.forEach(function (fieldItem) {
-                                if(!fieldItem.isKey){
-                                    fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}="value" ` )
+                                if(!fieldItem.isKey && !fieldItem.isVO && (fieldItem.className == 'String' || fieldItem.className == 'Long' || fieldItem.className == 'Integer' || fieldItem.className == 'Double' || fieldItem.className == 'BigDecimal')){
+                                    switch(fieldItem.className){
+                                        case "String":
+                                            fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}="value" ` )
+                                            break;
+                                        case "Long":
+                                        case "Integer":
+                                        case "Float":
+                                        case "BigDecimal":
+                                        case "Double":
+                                            fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}=0 ` )
+                                            break;
+                                        case "Boolean":
+                                            fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}=true ` )
+                                            break;
+                                    }
+                                }
+                                else if(!fieldItem.isKey && (fieldItem.className != 'String' || fieldItem.className != 'Long' || fieldItem.className != 'Integer' || fieldItem.className != 'Double' || fieldItem.className != 'BigDecimal')){
+                                    Object.values((me.relatedAggregate.aggregateRoot.entities.relations) || {})
+                                    .filter(relation =>  relation.targetElement.namePascalCase === fieldItem.className)
+                                    .forEach((field) => {
+                                        var target = field.targetElement;
+                                        var tempField = '';
+                                        if(target.isVO){
+                                            var field = target.fieldDescriptors
+                                            for(var i = 0; i < field.length; i++){
+                                                var voField = '';
+                                                
+                                                switch(field[i].className){
+                                                    case "String":
+                                                        tempField = tempField.concat(`"${field[i].nameCamelCase}":"value"`, ", ");
+                                                        break;
+                                                    case "Long":
+                                                    case "Integer":
+                                                    case "Float":
+                                                    case "BigDecimal":
+                                                    case "Double":
+                                                        tempField = tempField.concat(`"${field[i].nameCamelCase}":"0"`, ", ");
+                                                        break;
+                                                    case "Boolean":
+                                                        tempField = tempField.concat(`"${field[i].nameCamelCase}":"true"`, ", ");
+                                                        break;
+                                                }
+                                            }
+                                            tempField = tempField.slice(0, -2);
+                                            fieldDescriptorsName = fieldDescriptorsName.concat(`${target.nameCamelCase}:='{${tempField}}' `);
+
+                                        }else{
+                                            if(target._type.endsWith("enum")){
+                                                fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}="${target.items[0].value}" ` )
+                                            }
+                                        }
+                                    });
                                 }
                             })
                         }

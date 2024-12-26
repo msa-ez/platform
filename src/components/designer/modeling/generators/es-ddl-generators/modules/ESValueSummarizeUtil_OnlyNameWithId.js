@@ -1,5 +1,9 @@
 const ESValueSummarizeUtil = require('./ESValueSummarizeUtil')
 
+/**
+ * @deprecated 이 클래스는 레거시 코드입니다. 대신 ESValueSummarizeWithFilterUtil 클래스를 사용해주세요.
+ * 새로운 기능과 개선된 성능을 위해 ESValueSummarizeWithFilterUtil로 마이그레이션을 권장합니다.
+*/
 class ESValueSummarizeUtil_OnlyNameWithId {
     static getGuidePrompt() {
         return `You will receive a JSON object containing summarized information about the event storming model on which you will perform your task.

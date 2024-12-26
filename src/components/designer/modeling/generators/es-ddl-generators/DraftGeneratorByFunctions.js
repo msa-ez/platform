@@ -1,5 +1,5 @@
 const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
-const ESValueSummarizeUtil = require("./modules/ESValueSummarizeUtil");
+const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil");
 
 class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
@@ -18,12 +18,12 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     static esValueToAccumulatedDrafts(esValue, targetBoundedContext){
         let accumulatedDrafts = {}
 
-        const summarizedESValue = ESValueSummarizeUtil.getSummarizedESValue(esValue)
-        for(const boundedContextInfo of Object.values(summarizedESValue)){
+        const summarizedESValue = ESValueSummarizeWithFilterUtil.getSummarizedESValue(esValue)
+        for(const boundedContextInfo of summarizedESValue.boundedContexts){
             let structure = []
 
             if(boundedContextInfo.name !== targetBoundedContext.name) {
-                for(const aggregateInfo of Object.values(boundedContextInfo.aggregates)){
+                for(const aggregateInfo of boundedContextInfo.aggregates){
                     let selectedOption = {}
 
                     const targetAggregate = esValue.elements[aggregateInfo.id]

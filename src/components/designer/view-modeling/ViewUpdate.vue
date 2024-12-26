@@ -1,9 +1,8 @@
 <template>
     <v-card
-            outlined
-            :disabled="isRead"
-            min-width="450px"
-            style="margin:-15px 0 0 -13px;"
+        outlined
+        :disabled="isRead"
+        min-width="450px"
     >
         <v-row align="center" justify="end" dense>
             <v-btn style="margin:5px 5px 0 0;" text small v-if="value.updateRules.length != 1" @click.native="removeMainRow(index)">
@@ -15,13 +14,13 @@
             <v-col align="start" justify="start" style="padding-top: 10px;">
                 <v-row align="start" justify="start" style=" margin-left: 5px; margin-right: 5px;">
                     <v-autocomplete
-                            v-model="updateItem.when"
-                            :items="eventLists"
-                            item-text="name"
-                            return-object
-                            prefix="UPDATE WHEN"
-                            label=" Select Event"
-                            style="font-size: 15px"
+                        v-model="updateItem.when"
+                        :items="eventLists"
+                        item-text="name"
+                        return-object
+                        prefix="UPDATE WHEN"
+                        label=" Select Event"
+                        style="font-size: 15px"
                     ></v-autocomplete>
                 </v-row>
 

@@ -48,7 +48,8 @@
         <template slot="generateWithAi">
             <div>
                 <span>
-                    <div>
+                    <v-row class="ma-0 pa-0">
+                        <v-spacer></v-spacer>
                         <v-btn v-if="generateDone" :disabled="!value.description" 
                             class="auto-modeling-btn" color="primary" @click="onClickReGenerateInside">
                             <v-icon>mdi-auto-fix</v-icon>(RE)Generate Inside
@@ -56,7 +57,7 @@
                         <v-btn v-else class="auto-modeling-btn" color="primary" @click="$emit('onClickStopReGenerateInside')">
                             <v-icon>mdi-auto-fix</v-icon>Stop Generation
                         </v-btn>
-                    </div>
+                    </v-row>
                 </span>
             </div>
         </template>
