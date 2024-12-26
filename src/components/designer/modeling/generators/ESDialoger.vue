@@ -65,6 +65,7 @@
                     @closeDialog="showDevideBoundedContextDialog = false"
                     @stop="stop"
                     @reGenerate="reGenerate"
+                    @reGenerateAspect="reGenerateAspect"
                 ></DevideBoundedContextDialog>
             </v-card>
         </div>
@@ -252,6 +253,9 @@
                         this.generator.generate();
                     }else{
                         this.devisionAspectIndex = 0;
+                        
+                        this.generator = new Generator(this);
+                        this.state.generator = "EventOnlyESGenerator";
                     }
                 
                     this.devisionAspectIndex++;
@@ -307,14 +311,26 @@
                 this.generateDevideBoundedContext();
             },
 
-            generateDevideBoundedContext(){
+            reGenerateAspect(aspect, feedback){
+                this.generateDevideBoundedContext(aspect, feedback);
+            },
+
+            generateDevideBoundedContext(aspect, feedback){
                 this.generator = new DevideBoundedContextGenerator(this);
                 this.state.generator = "DevideBoundedContextGenerator";
-
-                this.resultDevideBoundedContext = {};
-
-                this.devisionAspectIndex = 0;
-                this.input['devisionAspect'] = this.devisionAspect[this.devisionAspectIndex];
+                
+                if(!aspect){
+                    this.resultDevideBoundedContext = {};
+                    this.devisionAspectIndex = 0;
+                    this.input['devisionAspect'] = this.devisionAspect[this.devisionAspectIndex];
+                }else{
+                    this.input['previousAspectModel'] = this.resultDevideBoundedContext[aspect];
+                    this.resultDevideBoundedContext[aspect] = {};
+                    this.devisionAspectIndex = 5;
+                    this.input['devisionAspect'] = aspect;
+                    this.input['feedback'] = feedback;
+                }
+                
                 this.input['userStory'] = this.value.userStory;
                 this.generator.generate();
                 this.showDevideBoundedContextDialog = true;
