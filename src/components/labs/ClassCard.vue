@@ -580,7 +580,7 @@
                                                     </v-checkbox>
                                                 </v-col>
                                             </v-row>
-                                            <v-row class="ma-0 pa-0">
+                                            <v-row class="ma-0 pa-0" align="center">
                                                 <v-col class="pa-0">
                                                     <v-checkbox
                                                         class="new-class-check delete-raido-detail"
@@ -589,13 +589,11 @@
                                                         label="기업 강의">
                                                     </v-checkbox>
                                                 </v-col>    
-                                                <v-col>
-                                                    <div v-if="newClassData.setEnterpriseClass">
-                                                        <v-text-field
-                                                            label="connectionKey"
-                                                            v-model="newClassData.selecteConnectionKey"
-                                                        ></v-text-field>
-                                                    </div>
+                                                <v-col v-if="newClassData.setEnterpriseClass">
+                                                    <v-text-field
+                                                        label="connectionKey"
+                                                        v-model="newClassData.selecteConnectionKey"
+                                                    ></v-text-field>
                                                 </v-col>
                                             </v-row>
                                         </div>

@@ -4,6 +4,26 @@
     "showBeta": "Show Beta",
     "hideBeta": "Hide Beta"
   },
+  "ESDialoger" : {
+    "tryAgain": "Try Again",
+    "createBoundedContext": "Create Bounded Context"
+  },
+  "DevideBoundedContextDialog" : {
+    "boundedContextDivisionResult": "Bounded Context Division Result",
+    "aspectsOfBoundedContexts": "Key Aspects of Bounded Context",
+    "domainAspect": "Domain",
+    "organizationalAspect": "Organizational",
+    "personaAspect": "Persona",
+    "transactionPerformanceAspect": "Transaction/Performance",
+    "infrastructureAspect": "Infrastructure", 
+    "lodingMessage": "Bounded Contexts generating...",
+    "aspect": "Aspect",
+    "reGenerate": "Regenerate",
+    "stop": "Stop",
+    "analysis": "Analysis",
+    "feedback": "Feedback",
+    "createModel": "Create Model"
+  },
   "ViewDefinitionPanel" : {
     "CQRSDetailTitle" : "In the CQRS pattern, the \"CREATE\" configuration of the Read Model is responsible for storing data in a queryable format when events occur.",
     "CQRSDetailSubTitle1" : "CREATE WHEN: Creates a Read Model when specific events occur. For example, when a new order is created, its information is stored in the Read Model.",

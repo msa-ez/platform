@@ -1,9 +1,9 @@
 <template>
     <v-card :key="Object.keys(resultDevideBoundedContext).length">
         <v-card-title>
-            Bounded Context Division Result
-            <v-btn v-if="!isGenerating" text color="primary" @click="reGenerate()">Re-Generate</v-btn>
-            <v-btn v-if="isGenerating" text color="primary" @click="stop()">Stop</v-btn>
+            {{ $t('DevideBoundedContextDialog.boundedContextDivisionResult') }}
+            <v-btn v-if="!isGenerating" text color="primary" @click="reGenerate()">{{ $t('DevideBoundedContextDialog.reGenerate') }}</v-btn>
+            <v-btn v-if="isGenerating" text color="primary" @click="stop()">{{ $t('DevideBoundedContextDialog.stop') }}</v-btn>
             <v-btn :style="{'margin-left': 'auto'}" icon @click="closeDialog()">
                 <v-icon>mdi-close</v-icon>
             </v-btn>
@@ -11,7 +11,7 @@
         <v-card-subtitle>
             <div class="d-flex align-center">
                 <div v-if="isGenerating">
-                    <p class="mb-0">Bounded Contexts generating... ({{ Object.keys(resultDevideBoundedContext).length / 5 * 100 }}%)</p>
+                    <p class="mb-0">{{ $t('DevideBoundedContextDialog.lodingMessage') }} ({{ Object.keys(resultDevideBoundedContext).length / 5 * 100 }}%)</p>
                 </div>
                 <v-progress-circular
                     v-if="isGenerating"
@@ -24,10 +24,12 @@
         </v-card-subtitle>
 
         <v-card-text v-if="Object.keys(resultDevideBoundedContext).length > 0">
-            <v-card-title>Aspects of Bounded Contexts</v-card-title>
+            <v-card-title>{{ $t('DevideBoundedContextDialog.aspectsOfBoundedContexts') }}</v-card-title>
             <v-tabs v-model="activeTab">
-                <v-tab v-for="(model, devisionAspect) in resultDevideBoundedContext" :key="devisionAspect">
-                    {{ devisionAspect }} Aspect
+                <v-tab v-for="(model, devisionAspect) in resultDevideBoundedContext" :key="devisionAspect"
+                    style="text-transform: none;"
+                >
+                    {{ devisionAspect }} {{ $t('DevideBoundedContextDialog.aspect') }}
                     <v-icon v-if="selectedAspect === devisionAspect" 
                         color="primary" 
                         small 
@@ -55,19 +57,26 @@
                         ></vue-mermaid>
                     </div>
                     <v-card class="mt-4 pa-4" outlined>
-                        <v-card-title class="text-subtitle-1">Analysis</v-card-title>
+                        <v-card-title class="text-subtitle-1">{{ $t('DevideBoundedContextDialog.analysis') }}</v-card-title>
                         <v-card-text>{{ resultDevideBoundedContext[devisionAspect].thoughts }}</v-card-text>
-
-                        <v-textarea v-model="feedback" label="Feedback" rows="3"></v-textarea>
+                        <v-textarea v-model="feedback" :label="$t('DevideBoundedContextDialog.feedback')" rows="3"></v-textarea>
                     </v-card>
                 </v-tab-item>
             </v-tabs-items>
 
-            <v-card-actions>
-                <v-btn :disabled="selectedAspect === null" class="auto-modeling-btn" color="primary" :style="{'margin-top': '15px'}" @click="createModel()">Create Model<v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon></v-btn><br>
-            </v-card-actions>
+            <v-row class="ma-0 pa-0" align="center">
+                <v-spacer></v-spacer>
+                <v-btn @click="createModel()"
+                    :disabled="selectedAspect === null"
+                    class="auto-modeling-btn" 
+                    color="primary"
+                    :style="{'margin-top': '15px'}"
+                >
+                    {{ $t('DevideBoundedContextDialog.createModel') }}
+                    <v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon>
+                </v-btn>
+            </v-row>
         </v-card-text>
-
     </v-card>
 </template>
 
