@@ -6,13 +6,17 @@ const EnumerationActionsProcessor = require('./ESActionsUtilProcessors/Enumerati
 const EventActionsProcessor = require('./ESActionsUtilProcessors/EventActionsProcessor')
 const CommandActionsProcessor = require('./ESActionsUtilProcessors/CommandActionsProcessor')
 const GeneralClassActionsProcessor = require('./ESActionsUtilProcessors/GeneralClassActionsProcessor')
+const ReadModelActionsProcessor = require('./ESActionsUtilProcessors/ReadModelActionsProcessor')
 
 class ESActionsUtil {
     static getActionAppliedESValue(actions, userInfo, information, prevESValue=null) {
+        console.log("[*] 이벤트 스토밍 수정 액션 적용 시도", {actions, userInfo, information, prevESValue})
+
         if(!prevESValue) prevESValue = {elements: {}, relations: {}}
         let esValue = JSON.parse(JSON.stringify(prevESValue))
 
         ESActionsUtil._restoreActions(actions, esValue)
+        actions = ESActionsUtil._getSortedActions(actions)
         ESActionsUtil._idsToUUIDs(actions, esValue)
         
 
@@ -28,6 +32,7 @@ class ESActionsUtil {
         callbacks.afterAllObjectAppliedCallBacks.forEach(callback => callback(esValue, userInfo, information))
         callbacks.afterAllRelationAppliedCallBacks.forEach(callback => callback(esValue, userInfo, information))
         
+        console.log("[*] 이벤트 스토밍 수정 액션 적용 완료", esValue)
         return esValue
     }
 
@@ -50,6 +55,7 @@ class ESActionsUtil {
                         case "Event": idToSearch = action.ids.eventId; break
                         case "Command": idToSearch = action.ids.commandId; break
                         case "GeneralClass": idToSearch = action.ids.generalClassId; break
+                        case "ReadModel": idToSearch = action.ids.readModelId; break
                     }
 
                     if(!idToSearch) action.type = "create"
@@ -57,6 +63,25 @@ class ESActionsUtil {
                     else action.type = "create"
                 }
             }
+    }
+
+    static _getSortedActions(actions) {
+        const priorityMap = {
+            'BoundedContext': 1,
+            'Aggregate': 2,
+            'GeneralClass': 3,
+            'ValueObject': 4,
+            'Enumeration': 5,
+            'Event': 6,
+            'Command': 7,
+            'ReadModel': 8
+        }
+
+        return [...actions].sort((a, b) => {
+            const priorityA = priorityMap[a.objectType] || 999
+            const priorityB = priorityMap[b.objectType] || 999
+            return priorityA - priorityB
+        })
     }
 
     /**
@@ -117,6 +142,9 @@ class ESActionsUtil {
                 break
             case "Command":
                 CommandActionsProcessor.getActionAppliedESValue(action, userInfo, esValue, callbacks);
+                break
+            case "ReadModel":
+                ReadModelActionsProcessor.getActionAppliedESValue(action, userInfo, esValue, callbacks);
                 break
         }
     }

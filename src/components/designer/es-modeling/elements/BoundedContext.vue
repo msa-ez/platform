@@ -1,13 +1,6 @@
 <template>
 <!--    <div v-if="visible">-->
     <div>
-        <v-row v-if="!generateDone" style="position:absolute; top:75px; right:35px; z-index:999;">
-            <v-progress-circular
-                indeterminate
-                color="primary"
-            ></v-progress-circular>
-            <div style="margin:5px 0px 0px 5px;">Creating {{ value.name }}... <v-btn @click="stop" text>stop</v-btn></div>
-        </v-row>
         <group-element
                 :selectable="selectable"
                 :movable="movable"
@@ -162,8 +155,9 @@
                 @close="closePanel"
                 @changedPanelValue="changedPanelValue"
                 @updateBCName="updateBCName()"
-                :generateDone.sync="generateDone"
-                :generator="generator"
+                @onClickReGenerateInside="boundedContextPanelDto.actions.onClickReGenerateInside"
+                @onClickStopReGenerateInside="boundedContextPanelDto.actions.onClickStopReGenerateInside"
+                :generateDone="boundedContextPanelDto.generateDone"
         ></bounded-context-panel>
 
     </div>
@@ -178,7 +172,8 @@
     import StormingSubController from "../../modeling/StormingSubController";
     import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
     import isAttached from '../../../../utils/isAttached';
-    import Generator from "../../modeling/generators/BoundedContextGenerator";
+    import DraftGeneratorByFunctions from "../../modeling/generators/es-ddl-generators/DraftGeneratorByFunctions";
+    import PreProcessingFunctionsGenerator from '../../modeling/generators/es-ddl-generators/PreProcessingFunctionsGenerator';
 
     var _ = require('lodash')
     export default {
@@ -256,13 +251,22 @@
 
                 // UML Class Diagram
                 aggregateRoots: [],
-                generateDone: true,
-                generator: null,
-                originModel: null,
+
+                boundedContextPanelDto: {
+                    generateDone: true,
+                    actions: {
+                        onClickReGenerateInside: () => {
+                        },
+                        onClickStopReGenerateInside: () => {
+                        }
+                    }
+                }
             };
         },
         created: function () {
-            this.init() // generator
+            this.boundedContextPanelDto.actions.onClickReGenerateInside = (boundedContext) => {
+                this.generateWithPreProcessingFunctionsGenerator(boundedContext)
+            }
         },
         watch: {
             "value.members": {
@@ -283,35 +287,8 @@
                 var $tr = $('#' + me.value.elementView.id);
                 $tr.parent().children().first().before($tr)
             }
-
-        },
-        beforeUnmount: function(){
-            this.stop()
         },
         methods: {
-            init(){
-                this.generator = new Generator(this);
-                if(this.generateDone) {
-                    this.originModel = JSON.parse(JSON.stringify(this.canvas.value));
-                }
-            },
-            onModelCreated(model){
-                this.$EventBus.$emit('createModelInBoundedContext', model, this.originModel);
-            },
-            async onGenerationFinished(model){
-                this.generateDone = true;
-                this.$emit('update:generateDone', true);
-                this.$EventBus.$emit('createModelInBoundedContext', model, this.originModel);
-                this.canvas.setIsPauseQueue(false);
-            },  
-            generate(){
-                this.generator.generate();
-                this.generateDone = false;    
-            },
-            stop(){
-                this.generator.stop()
-                this.generateDone = true
-            },
             async selectMain(){
                 var me = this
                 // if( me.canvas.viewId ){
@@ -441,6 +418,179 @@
             updateBCName(){
                 this.value.name = this.value.name.replace(/[-._]/g, '');
                 this.value.name = this.value.name.toLowerCase();
+            },
+
+            generateWithPreProcessingFunctionsGenerator(boundedContext){
+                const generator = new PreProcessingFunctionsGenerator({
+                    input: {
+                        description: boundedContext.description,
+                        boundedContext: boundedContext
+                    },
+                    
+                    onFirstResponse: (returnObj) => {
+                        this.closePanel()
+
+                        this.boundedContextPanelDto = {
+                            ...this.boundedContextPanelDto,
+                            generateDone: false,
+                            actions: {
+                                ...this.boundedContextPanelDto.actions,
+                                onClickStopReGenerateInside: () => {
+                                    returnObj.actions.stopGeneration()
+                                }
+                            }
+                        }
+
+                        this.canvas.modelDraftDialogWithXAIDto = {
+                            ...this.canvas.modelDraftDialogWithXAIDto,
+                            isShow: true,
+                            draftOptions: [],
+                            draftUIInfos: {
+                                leftBoundedContextCount: 1,
+                                directMessage: "",
+                                progress: 0
+                            },
+                            isGeneratorButtonEnabled: true,
+                            actions: {
+                                stop: () => {
+                                    returnObj.actions.stopGeneration()
+                                },
+                                retry: () => {
+                                    returnObj.actions.retryGeneration()
+                                }
+                            }
+                        }
+                    },
+
+                    onModelCreated: (returnObj) => {
+                        this.canvas.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
+                        this.canvas.modelDraftDialogWithXAIDto.draftUIInfos.progress = returnObj.progress
+                    },
+
+                    onGenerationSucceeded: (returnObj) => {
+                        this.canvas.modelDraftDialogWithXAIDto = {
+                            ...this.canvas.modelDraftDialogWithXAIDto,
+                            draftUIInfos: {
+                                leftBoundedContextCount: 1,
+                                directMessage: returnObj.directMessage,
+                                progress: 100
+                            }
+                        }
+
+                        this.generateWithDraftGeneratorByFunctions(boundedContext, JSON.stringify(returnObj.modelValue.output))
+                    },
+
+                    onRetry: (returnObj) => {
+                        alert(`[!] An error occurred while analysing your requirements, please try again..\n* Error log \n${returnObj.errorMessage}`)
+                        this.boundedContextPanelDto.generateDone = true
+                        this.canvas.modelDraftDialogWithXAIDto.isShow = false
+                    },
+
+                    onStopped: () => {
+                        this.boundedContextPanelDto.generateDone = true
+                        this.canvas.modelDraftDialogWithXAIDto.isShow = false
+                    }
+                })
+                generator.generate()
+            },
+
+            generateWithDraftGeneratorByFunctions(boundedContext, structuredDescription){
+                const generator = new DraftGeneratorByFunctions({
+                    input: {
+                        description: structuredDescription,
+                        boundedContext: boundedContext,
+                        accumulatedDrafts: DraftGeneratorByFunctions.esValueToAccumulatedDrafts(
+                            this.canvas.value,
+                            boundedContext
+                        )
+                    },
+
+                    onFirstResponse: (returnObj) => {
+                        this.closePanel()
+
+                        this.boundedContextPanelDto = {
+                            ...this.boundedContextPanelDto,
+                            generateDone: false,
+                            actions: {
+                                ...this.boundedContextPanelDto.actions,
+                                onClickStopReGenerateInside: () => {
+                                    returnObj.actions.stopGeneration()
+                                }
+                            }
+                        }
+
+                        this.canvas.modelDraftDialogWithXAIDto = {
+                            ...this.canvas.modelDraftDialogWithXAIDto,
+                            isShow: true,
+                            draftOptions: [],
+                            draftUIInfos: {
+                                leftBoundedContextCount: 1,
+                                directMessage: "",
+                                progress: 0
+                            },
+                            isGeneratorButtonEnabled: true,
+                            actions: {
+                                ...this.canvas.modelDraftDialogWithXAIDto.actions,
+                                stop: () => {
+                                    returnObj.actions.stopGeneration()
+                                },
+                                retry: () => {
+                                    returnObj.actions.retryGeneration()
+                                }
+                            }
+                        }
+                    },
+
+                    onModelCreated: (returnObj) => {
+                        this.canvas.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
+                        this.canvas.modelDraftDialogWithXAIDto.draftUIInfos.progress = returnObj.progress
+                    },
+
+                    onGenerationSucceeded: (returnObj) => {
+                        const getXAIDtoDraftOptions = (output, targetBoundedContext, description) => {
+                            return {
+                                boundedContext: targetBoundedContext.name,
+                                boundedContextAlias: targetBoundedContext.displayName,
+                                description: description,
+                                options: output.options.map(option => ({
+                                    ...option,
+                                    boundedContext: targetBoundedContext,
+                                    description: description
+                                })),
+                                conclusions: output.conclusions,
+                                defaultOptionIndex: output.defaultOptionIndex
+                            }
+                        }
+
+                        this.canvas.modelDraftDialogWithXAIDto = {
+                            ...this.canvas.modelDraftDialogWithXAIDto,
+                            draftOptions: [getXAIDtoDraftOptions(
+                                returnObj.modelValue.output,
+                                returnObj.inputParams.boundedContext,
+                                returnObj.inputParams.description
+                            )],
+                            draftUIInfos: {
+                                leftBoundedContextCount: 0,
+                                directMessage: returnObj.directMessage,
+                                progress: 100
+                            }
+                        }
+
+                        this.boundedContextPanelDto.generateDone = true
+                    },
+
+                    onRetry: (returnObj) => {
+                        alert(`[!] There was an error creating your draft, please try again.\n* Error log \n${returnObj.errorMessage}`)
+                        this.boundedContextPanelDto.generateDone = true
+                        this.canvas.modelDraftDialogWithXAIDto.isShow = false
+                    },
+
+                    onStopped: () => {
+                        this.boundedContextPanelDto.generateDone = true
+                        this.canvas.modelDraftDialogWithXAIDto.isShow = false
+                    }
+                })
+                generator.generate()
             }
         }
     }

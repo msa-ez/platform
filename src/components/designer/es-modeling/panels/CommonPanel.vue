@@ -82,9 +82,12 @@
                                                     </v-list-item>
                                                 </v-list-group>
                                             </div>
-                                            <span class="panel-title">Basic Info</span>
+                                            <v-row class="pa-0 ma-0" align="center">
+                                                <div class="panel-title">Basic Info</div>
+                                                <slot name="md-level-btn"></slot>
+                                                <slot name="md-title-side"></slot>
+                                            </v-row>
                                         </slot>
-                                        <slot name="md-title-side"></slot>
                                         <div>
                                             <slot name="md-name-panel">
                                                 <v-text-field
@@ -107,7 +110,10 @@
                                                     class="delete-input-detail"
                                                 >
                                                 </v-text-field>
-                                                
+                                                <detail-component
+                                                    :title="$t('CommonPanel.nameInfoTitle')"
+                                                    :details="nameInfoDetails"
+                                                />
                                             </slot>
 
                                             <slot name="md-name-panel-translate">
@@ -240,12 +246,16 @@
                 descriptionPanel: '',
                 relatedUrlDialog: false,
                 openValidationLists: false,
-                validationLevelIcon:
+                validationLevelIcon: {
+                    'error' : {icon: 'mdi-close-circle-outline', color:'#E53935'},
+                    'warning' : {icon: 'mdi-alert-outline', color:'#FFA726'},
+                    'info' : {icon: 'mdi-information-outline', color:'#29B6F6'},
+                },
+                nameInfoDetails: [
                     {
-                        'error' : {icon: 'mdi-close-circle-outline', color:'#E53935'},
-                        'warning' : {icon: 'mdi-alert-outline', color:'#FFA726'},
-                        'info' : {icon: 'mdi-information-outline', color:'#29B6F6'},
+                        title: "CommonPanel.nameInfoDetail1"
                     },
+                ],
             }
         },
         beforeDestroy(){

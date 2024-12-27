@@ -21,7 +21,7 @@ class Github extends Git {
             Accept: 'application/vnd.github+json'
         }
     }
-getUserInfo() {
+    getUserInfo() {
         let me = this
         return new Promise(async function (resolve, reject) {
             let patchMainResult = await axios.get(`https://api.github.com/user`, { headers: me.getHeader() })

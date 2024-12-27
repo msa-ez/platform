@@ -6,13 +6,10 @@
             class="pa-2 mt-1 mb-4"
         >
             <v-row class="ma-0 pa-0">
-                <!-- 왼쪽의 info 아이콘 -->
-                <!-- <v-icon color="#757575" class="mr-2">mdi-information</v-icon> -->
-                
                 <!-- 접혀진 상태에서 기본으로 보이는 텍스트 -->
                 <v-col :cols="details ? 11 : 12" class="pa-0">
                     <v-card-title class="pa-0">
-                        <div style="font-size:12px; line-height: 20px;">{{ title }}</div>
+                        <div style="font-size:12px; line-height: 20px; font-weight: 700;">{{ title }}</div>
                         <a v-if="detailUrl" :href="detailUrl" target="_blank" class="detail-link">{{ $t('DetailComponent.allDetails') }}</a>
                     </v-card-title>
                 </v-col>
@@ -72,7 +69,7 @@ export default {
     },
     methods: {
         getImagePath(imgName) {
-            return `/assets/images/detailImage/${imgName}`;
+            return `/static/image/detailImage/${imgName}`;
         }
     }
 };

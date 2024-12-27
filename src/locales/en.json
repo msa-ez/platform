@@ -1,5 +1,99 @@
 {
   "message": "en",
+  "app": {
+    "showBeta": "Show Beta",
+    "hideBeta": "Hide Beta"
+  },
+  "ESDialoger" : {
+    "tryAgain": "Try Again",
+    "createBoundedContext": "Create Bounded Context"
+  },
+  "DevideBoundedContextDialog" : {
+    "boundedContextDivisionResult": "Seperating into multiple Bounded Contexts",
+    "aspectsOfBoundedContexts": "Key Aspects of Bounded Context",
+    "domainAspect": "Domain",
+    "organizationalAspect": "Organizational", 
+    "personaAspect": "Persona",
+    "transactionPerformanceAspect": "Transaction/Performance",
+    "infrastructureAspect": "Infrastructure",
+    "lodingMessage": "Bounded Contexts generating...",
+    "reasonOfSeparation": "Reason of Separation",
+    "aspect": "Aspect",
+    "reGenerate": "Regenerate",
+    "stop": "Stop", 
+    "analysis": "Analysis",
+    "feedback": "Feedback",
+    "createModel": "Create Model",
+    "descriptionOfEachBoundedContext": "Description of Each Bounded Context",
+    "relations": "Relations",
+    "boundedContextName": "Bounded Context Name",
+    "requirements": "Requirements",
+    "sourceContext": "Source Context",
+    "targetContext": "Target Context",
+    "relationType": "Relation Type", 
+    "reason": "Reason",
+    "interactionPattern": "Interaction Pattern"
+  },
+  "ViewDefinitionPanel" : {
+    "CQRSDetailTitle" : "In the CQRS pattern, the \"CREATE\" configuration of the Read Model is responsible for storing data in a queryable format when events occur.",
+    "CQRSDetailSubTitle1" : "CREATE WHEN: Creates a Read Model when specific events occur. For example, when a new order is created, its information is stored in the Read Model.",
+    "CQRSDetailSubTitle2" : "SET: Configures Read Model fields with event field values. This defines how data will be stored. For example, assigning an eventField value to a readModelField.",
+    "CQRSDetailSubTitle3" : "Operator: Sets operators between fields. Typically uses the assignment (=) operator to store event field values in Read Model fields.",
+    "QueryForAggregateDetailTitle" : "Query for Aggregate configuration defines queries for retrieving data from the attached Aggregate.",
+    "QueryForAggregateDetailSubTitle1" : "Default GET URI: Retrieves Aggregate data through basic GET requests. This uses standard URI paths to fetch data.",
+    "QueryForAggregateDetailSubTitle2": "Extended GET URI: Uses extended URIs beyond the default path to meet additional requirements. This is useful when specific conditions or filtering is needed.",
+    "QueryForAggregateDetailSubTitle3": "Single Result: Used when the query returns a single object. Retrieves one Aggregate data item using a specific ID or unique identifier.",
+    "QueryForAggregateDetailSubTitle4": "Multiple Result: Used when the query returns multiple objects. Retrieves multiple Aggregate data items that match certain conditions in list form."
+  },
+  "AlgoliaModelLists" : {
+    "pet" : "Pet Shop",
+    "food" : "Food Delivery App",
+    "googleDrive": "Google Drive",
+    "shop" : "Shopping Mall"
+  },
+  "ClassCard": {
+    "enter" : "Enter"
+  },
+  "CommandDefinitionPanel" : {
+    "implementationSettings": "Design Level",
+    "commandMethodDetailTitle" : "Method Configuration: Select API paths and operation modes to perform data operations.",
+    "commandMethodDetailSubTitle1" : "Default Verbs: Uses standard paths for basic data operations (create, update, delete). This is suitable for common data manipulation.",
+    "commandMethodDetailSubTitle2" : "Extend Verb URI: Uses extended paths for specific requirements or additional functionality beyond basic operations. This is useful when processing data under specific conditions.",
+    "commandUsageDetailTitle" : "Extend Verb URI provides extended paths for performing specific operations in addition to basic API paths.",
+    "commandMethodDetailSubTitle3" : "POST: Used to create new resources on the server. For example, when creating a new user account.",
+    "commandMethodDetailSubTitle4" : "PUT: Used to update existing resources or create them if they don't exist. Suitable for updating entire data sets.",
+    "commandMethodDetailSubTitle5" : "PATCH: Used to update parts of a resource. Useful when changing specific fields rather than the entire resource.",
+    "commandMethodDetailSubTitle6" : "DELETE: Used to remove resources from the server. For example, when removing a specific user's account.",
+    "commandUsageDetailSubTitle1" : "/attached Aggregate's namePlural / Aggregate's ID class / command name"
+  },
+  "DomainEventDefinitionPanel" : {
+    "triggerByLifeCycleDetailTitle" : "Define tasks to be executed at specific points (before/after) during data lifecycle events such as saving, updating, and deleting.",
+    "triggerByLifeCycleDetailSubTitle1": "Pre Persist: Executes right before data is saved.",
+    "triggerByLifeCycleDetailSubTitle2": "Post Persist: Executes immediately after data is saved.", 
+    "triggerByLifeCycleDetailSubTitle3": "Pre Update: Executes right before data is updated.",
+    "triggerByLifeCycleDetailSubTitle4": "Post Update: Executes immediately after data is updated.",
+    "triggerByLifeCycleDetailSubTitle5": "Pre Remove: Executes right before data is deleted.",
+    "triggerByLifeCycleDetailSubTitle6": "Post Remove: Executes immediately after data is deleted.",
+    "triggerByCommandDetailTitle": "Events are triggered by specific Commands. This defines events that occur when certain operations are performed in the system.",
+    "triggerByCommandDetailSubTitle1": "Example: When a user creates an order, the orderPlace command is executed, which triggers the order event.",
+    "triggerByPolicyDetailTitle": "Events are triggered by specific Policies. This defines events that occur according to business rules or policies.",
+    "triggerByPolicyDetailSubTitle1": "Example: Events can be triggered by policies that automatically execute when certain conditions are met.",
+    "associatedAggregateTitle": "Displays the name of the aggregate associated with the event.",
+    "associatedAggregateSubTitle1": "Helps understand the system structure and data flow by clearly showing which aggregate the event is related to."
+  },
+  "EventStormingAttributeEditor" : {
+    "editAggregateMembersByClassDiagramBtn" : "This menu interacts with the Domain Class Modeling Tool to define their ubiquitous language with object-oriented manner.",
+    "AttributesHover1" : "Allowing both primitive types and non-primitive types including user defined Entities or Value Objects.",
+    "AttributesHover2" : "Only primitive types are allowed.",
+    "attributesDetailTitle" : "Only simple data types can be used for Attributes.",
+    "attributesDetail1" : "Key icon: Indicates data being used as a key value. Can be changed to another Attribute using the edit button",
+    "attributesDetail2_1" : "Display Name: The name that appears on screen stickers and in the frontend UI code.",
+    "attributesDetail2_2" : "Correlation Key: An identifier used to track and link related events or processes, defining correlations between events.",
+    "attributesDetail2_3" : "List: An option to specify whether the attribute should be treated as an array.",
+    "attributesDetail2_4" : "Name: The primary identifier used when referencing Attributes in other systems, processes, or code. Use names with uniqueness and clarity to help manage data and properties consistently.",
+    "attributesDetail2_5" : "Large Object (LOB): A checkbox to determine whether to use LOB types (CLOB, BLOB) for efficiently storing large data like images or files in the database. Commonly used for file fields or large data fields.",
+    "attributesDetail3" : "SYNC ATTRIBUTE button: A button that synchronizes properties within an Aggregate when attached to it."
+  },
   "AggregateDefinitionPanel": {
     "aggregateGenerateTitle": "The button will be activated when you write the Description content while having an Aggregate included within the Bounded Context.",
     "aggregateGenerateTooltipText1": "Generate Based on Aggregate",
@@ -8,6 +102,10 @@
     "aggregateGenerateSubTitle2": "Regenerate: Removes and recreates everything related to the aggregate based on its internal properties.",
     "generate": "Generate",
     "reGenerate": "Regenerate"
+  },
+  "CommonPanel": {
+    "nameInfoTitle": "Name should be written in English.",
+    "nameInfoDetail1": "Name is reflected in the code.\nDisplay Name appears on screen stickers and frontend UI of the code."
   },
   "DetailComponent": {
     "allDetails": "View Guide"
@@ -23,7 +121,8 @@
     "cons": "Cons:",
     "conclusions": "Conclusions:",
     "create": "Create",
-    "reconstructionDraft": "BoundedContext Reconstruction Draft"
+    "reconstructionDraft": "BoundedContext Reconstruction Draft",
+    "reconstructionAggregateDraft": "Aggregate Design Draft"
   },
   "RuleExampleDialog": {
     "generateExamples": "Generate Examples",
@@ -238,7 +337,8 @@
     "chip1": "Google Drive",
     "chip2": "Food Delivery App",
     "chip3": "Fishery ERP",
-    "chip4": "Internet Banking"
+    "chip4": "Internet Banking",
+    "editPersona": "Edit persona name and details"
   },
   "UIWizardDialoger": {
     "imageMessage": "Here are a logo for this service:",

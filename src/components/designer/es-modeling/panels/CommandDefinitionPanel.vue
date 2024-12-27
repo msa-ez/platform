@@ -11,6 +11,13 @@
             @close="closePanel"
             @changeTranslate="changeTranslate"
     >
+        <template slot="md-level-btn">
+            <v-chip @click="toggleDesignLevel" style="margin-left: 16px; cursor: pointer;" color="primary" outlined>
+                <v-icon left>{{ isDesignLevelVisible ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
+                {{ $t('CommandDefinitionPanel.implementationSettings') }}
+            </v-chip>
+        </template>
+        
         <template slot="t-description-text">
             {{ $t('panelInfo.CommandDefinitionPanel') }}
         </template>
@@ -44,11 +51,10 @@
 
         <template slot="md-title-side">
             <v-btn
-                    text
-                    color="primary"
-                    style="margin-left: 10px; margin-top: -12px;"
-                    :disabled="isReadOnly || !exampleAvailable"
-                    @click="openExampleDialog()"
+                text
+                color="primary"
+                :disabled="isReadOnly || !exampleAvailable"
+                @click="openExampleDialog()"
             >Examples</v-btn>
             <v-tooltip bottom v-if="!exampleAvailable">
                 <template v-slot:activator="{ on, attrs }">
@@ -71,100 +77,105 @@
                 <RuleExampleDialog v-if="openExample" v-model="value" @closeExampleDialog="closeExampleDialog()" />
                 <v-card flat>
                     <v-card-text>
-                        <v-col>
-                            <span class="panel-title" style="margin-left:-10px;">Associated Aggregate</span>
+                        <v-col class="pa-0">
+                            <span class="panel-title">Associated Aggregate</span>
                             <v-text-field
                                     v-model="relatedAggregateName"
                                     label="Attach Aggregate && check Name"
                                     single-line
                                     disabled
-                                    style="margin-left:-10px; margin-top:-15px; min-width:105%;"
                             ></v-text-field>
 
 
-                            <span class="panel-title" style="margin-left:-10px;">Method</span>
-                            <!-- <v-alert
-                                color="grey darken-1"
-                                text
-                                type="info"
-                                class="pa-2 alert-text"
-                                style="margin-left: -10px;"
-                            >
-                            메소드의 목적을 설정하세요. <br>
-                            Default: 기본 RESTful API // Extend: 확장된 URI
-                            </v-alert> -->
-                            <v-radio-group v-model="value.isRestRepository" :disabled="isReadOnly"
-                                           style="margin-left:-13px;" row>
-                                <v-radio label="Default Verbs" :value="true"></v-radio>
-                                <v-radio label="Extend Verb URI" :value="false"></v-radio>
-                            </v-radio-group>
-
-                            <v-col v-if="value.isRestRepository">
-                                <v-autocomplete
-                                        :disabled="isReadOnly"
-                                        v-model="value.restRepositoryInfo.method"
-                                        :items="getRestfulList"
-                                        style="margin-left: -22px; min-width:111%;"
-                                        label="Method"
-                                        persistent-hint>
-                                </v-autocomplete>
-                            </v-col>
-
-
-                            <v-col v-else>
-                                <v-row style="align-items: center">
-                                    <v-text-field
-                                            v-model="value.controllerInfo.apiPath"
-                                            :disabled="isReadOnly"
-                                            style="margin-left: -10px; min-width:105%;"
-                                            label="API Path"
-                                            :prefix="`${elementPrefix}`"
-                                    ></v-text-field>
-                                </v-row>
-                                <v-autocomplete
-                                        v-model="value.controllerInfo.method"
-                                        :disabled="isReadOnly"
-                                        style="margin-left: -22px; min-width:111%;"
-                                        label="Method"
-                                        persistent-hint
-                                        :items="getControllerList"
-                                ></v-autocomplete>
+                            <div v-show="isDesignLevelVisible">
+                                <span class="panel-title">Method</span>
                                 <!-- <v-alert
                                     color="grey darken-1"
                                     text
                                     type="info"
                                     class="pa-2 alert-text"
-                                    style="margin-left: -20px;"
+                                    style="margin-left: -10px;"
                                 >
-                                메소드의 타입을 설정하세요. <br>
-                                POST: 등록 // PUT, PATCH: 수정 // DELETE: 삭제
+                                메소드의 목적을 설정하세요. <br>
+                                Default: 기본 RESTful API // Extend: 확장된 URI
                                 </v-alert> -->
-                                <event-storming-attribute
-                                        label="Request Body"
-                                        v-model="value.fieldDescriptors"
-                                        :entities="entities"
-                                        :isReadOnly="isReadOnly"
-                                        :type="value._type"
-                                        :elementId="value.elementView.id"
-                                        style="margin-left: -22px; margin-right: -22px;"
-                                        @sync-attribute="syncFromAggregate"
-                                ></event-storming-attribute>
-                            </v-col>
+                                <v-radio-group v-model="value.isRestRepository" :disabled="isReadOnly" row>
+                                    <v-radio label="Default Verbs" :value="true"></v-radio>
+                                    <v-radio label="Extend Verb URI" :value="false"></v-radio>
+                                </v-radio-group>
+                                <detail-component
+                                    :title="$t('CommandDefinitionPanel.commandMethodDetailTitle')"
+                                    :details="commandMethodDetailTitles"
+                                />
 
-                            <span class="panel-title" style="margin-left:-10px;">Httpie command usages</span>
-                            <v-row style="align-items: center;">
-                                <v-btn icon small @click="copyRestRepositoryMethod()"
-                                       style="align-self: start; margin-top: 15px;">
-                                    <v-icon small> mdi-content-copy</v-icon>
-                                </v-btn>
-                                <v-textarea
-                                        v-model="commandExample"
-                                        solo
-                                        class="mx-2"
-                                        style="margin-top: 20px;"
-                                        rows="3"
-                                ></v-textarea>
-                            </v-row>
+                                <v-col class="pa-0" v-if="value.isRestRepository">
+                                    <v-autocomplete
+                                            :disabled="isReadOnly"
+                                            v-model="value.restRepositoryInfo.method"
+                                            :items="getRestfulList"
+                                            label="Method"
+                                            persistent-hint>
+                                    </v-autocomplete>
+                                </v-col>
+
+
+                                <v-col class="pa-0" v-else>
+                                    <v-row class="pa-0 ma-0" style="align-items: center">
+                                        <v-text-field
+                                                v-model="value.controllerInfo.apiPath"
+                                                :disabled="isReadOnly"
+                                                label="API Path"
+                                                :prefix="`${elementPrefix}`"
+                                        ></v-text-field>
+                                    </v-row>
+                                    <v-autocomplete
+                                            v-model="value.controllerInfo.method"
+                                            :disabled="isReadOnly"
+                                            label="Method"
+                                            persistent-hint
+                                            :items="getControllerList"
+                                    ></v-autocomplete>
+                                    <detail-component
+                                        :title="$t('CommandDefinitionPanel.commandUsageDetailTitle')"
+                                        :details="commandUsageDetailTitles"
+                                    />
+                                    <!-- <v-alert
+                                        color="grey darken-1"
+                                        text
+                                        type="info"
+                                        class="pa-2 alert-text"
+                                        style="margin-left: -20px;"
+                                    >
+                                    메소드의 타입을 설정하세요. <br>
+                                    POST: 등록 // PUT, PATCH: 수정 // DELETE: 삭제
+                                    </v-alert> -->
+                                    <event-storming-attribute class="cm-attribute"
+                                            label="Request Body"
+                                            v-model="value.fieldDescriptors"
+                                            :entities="entities"
+                                            :isReadOnly="isReadOnly"
+                                            :type="value._type"
+                                            :elementId="value.elementView.id"
+                                            @sync-attribute="syncFromAggregate"
+                                    ></event-storming-attribute>
+                                </v-col>
+
+                                <span class="panel-title">Httpie command usages</span>
+                                <v-row class="pa-0 ma-0" style="align-items: center;">
+                                    <v-btn icon small @click="copyRestRepositoryMethod()"
+                                        style="align-self: start; margin-top: 15px;"
+                                    >
+                                        <v-icon small> mdi-content-copy</v-icon>
+                                    </v-btn>
+                                    <v-textarea
+                                            v-model="commandExample"
+                                            solo
+                                            class="mx-2"
+                                            style="margin-top: 20px;"
+                                            auto-grow
+                                    ></v-textarea>
+                                </v-row>
+                            </div>
                         </v-col>
                     </v-card-text>
                 </v-card>
@@ -205,7 +216,32 @@
                 httpCommand: null,
                 commandExample: null,
                 relatedAggregate: null,
-                exampleAvailable: false
+                exampleAvailable: false,
+                commandMethodDetailTitles: [
+                    {
+                        title: "CommandDefinitionPanel.commandMethodDetailSubTitle1" 
+                    },
+                    {
+                        title: "CommandDefinitionPanel.commandMethodDetailSubTitle2" 
+                    },
+                    {
+                        title: "CommandDefinitionPanel.commandMethodDetailSubTitle3" 
+                    },
+                    {
+                        title: "CommandDefinitionPanel.commandMethodDetailSubTitle4" 
+                    },
+                    {
+                        title: "CommandDefinitionPanel.commandMethodDetailSubTitle5" 
+                    },
+                    {
+                        title: "CommandDefinitionPanel.commandMethodDetailSubTitle6" 
+                    },
+                ],
+                commandUsageDetailTitles: [
+                    {
+                        title: "CommandDefinitionPanel.commandUsageDetailSubTitle1" 
+                    },
+                ]
             }
         },
         computed: {
@@ -266,6 +302,7 @@
             },
             "value.controllerInfo.method": function(newVal) {
                 this.setApiPath()
+                this.setHttpCommand()
             },
             "value.restRepositoryInfo.method":function(newVal){
                 this.setHttpCommand()
@@ -363,8 +400,57 @@
                         if(me.relatedAggregate && me.relatedAggregate.aggregateRoot && me.relatedAggregate.aggregateRoot.fieldDescriptors.length > 1 ){
                             fieldDescriptorsName = ''
                             me.relatedAggregate.aggregateRoot.fieldDescriptors.forEach(function (fieldItem) {
-                                if(!fieldItem.isKey){
-                                    fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}="value" ` )
+                                if(!fieldItem.isKey && !fieldItem.isVO && (fieldItem.className == 'String' || fieldItem.className == 'Long' || fieldItem.className == 'Integer' || fieldItem.className == 'Double' || fieldItem.className == 'BigDecimal')){
+                                    switch(fieldItem.className){
+                                        case "String":
+                                            fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}="value" ` )
+                                            break;
+                                        case "Long":
+                                        case "Integer":
+                                        case "Float":
+                                        case "BigDecimal":
+                                        case "Double":
+                                            fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}=0 ` )
+                                            break;
+                                        case "Boolean":
+                                            fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}=true ` )
+                                            break;
+                                    }
+                                }
+                                else if(!fieldItem.isKey && (fieldItem.className != 'String' || fieldItem.className != 'Long' || fieldItem.className != 'Integer' || fieldItem.className != 'Double' || fieldItem.className != 'BigDecimal')){
+                                    Object.values((me.relatedAggregate.aggregateRoot.entities.relations) || {})
+                                    .filter(relation =>  relation.targetElement.namePascalCase === fieldItem.className)
+                                    .forEach((field) => {
+                                        var target = field.targetElement;
+                                        var tempField = '';
+                                        if(target.isVO){
+                                            var field = target.fieldDescriptors
+                                            field.forEach(item => {
+                                                switch(item.className) {
+                                                    case "String":
+                                                        tempField = tempField.concat(`"${item.nameCamelCase}":"value"`, ", ");
+                                                        break;
+                                                    case "Long":
+                                                    case "Integer":
+                                                    case "Float":
+                                                    case "BigDecimal":
+                                                    case "Double":
+                                                        tempField = tempField.concat(`"${item.nameCamelCase}":"0"`, ", ");
+                                                        break;
+                                                    case "Boolean":
+                                                        tempField = tempField.concat(`"${item.nameCamelCase}":"true"`, ", ");
+                                                        break;
+                                                }
+                                            });
+                                            tempField = tempField.slice(0, -2);
+                                            fieldDescriptorsName = fieldDescriptorsName.concat(`${target.nameCamelCase}:='{${tempField}}' `);
+
+                                        }else{
+                                            if(target._type.endsWith("enum")){
+                                                fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}="${target.items[0].value}" ` )
+                                            }
+                                        }
+                                    });
                                 }
                             })
                         }
@@ -399,8 +485,56 @@
                         if(me.value.fieldDescriptors && me.value.fieldDescriptors.length > 0 ){
                             fieldDescriptorsName = ''
                             me.value.fieldDescriptors.forEach(function (fieldItem) {
-                                if(!fieldItem.isKey){
-                                    fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}="value" ` )
+                                if(!fieldItem.isKey && !fieldItem.isVO && (fieldItem.className == 'String' || fieldItem.className == 'Long' || fieldItem.className == 'Integer' || fieldItem.className == 'Double' || fieldItem.className == 'BigDecimal')){
+                                    switch(fieldItem.className){
+                                        case "String":
+                                            fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}="value" ` )
+                                            break;
+                                        case "Long":
+                                        case "Integer":
+                                        case "Float":
+                                        case "BigDecimal":
+                                        case "Double":
+                                            fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}=0 ` )
+                                            break;
+                                        case "Boolean":
+                                            fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}=true ` )
+                                            break;
+                                    }
+                                }else if(!fieldItem.isKey && (fieldItem.className != 'String' || fieldItem.className != 'Long' || fieldItem.className != 'Integer' || fieldItem.className != 'Double' || fieldItem.className != 'BigDecimal')){
+                                    Object.values((me.relatedAggregate.aggregateRoot.entities.relations) || {})
+                                    .filter(relation =>  relation.targetElement.namePascalCase === fieldItem.className)
+                                    .forEach((field) => {
+                                        var target = field.targetElement;
+                                        var tempField = '';
+                                        if(target.isVO){
+                                            var field = target.fieldDescriptors
+                                            field.forEach(item => {
+                                                switch(item.className) {
+                                                    case "String":
+                                                        tempField = tempField.concat(`"${item.nameCamelCase}":"value"`, ", ");
+                                                        break;
+                                                    case "Long":
+                                                    case "Integer":
+                                                    case "Float":
+                                                    case "BigDecimal":
+                                                    case "Double":
+                                                        tempField = tempField.concat(`"${item.nameCamelCase}":"0"`, ", ");
+                                                        break;
+                                                    case "Boolean":
+                                                        tempField = tempField.concat(`"${item.nameCamelCase}":"true"`, ", ");
+                                                        break;
+                                                }
+                                            });
+                                            tempField = tempField.slice(0, -2);
+                                            fieldDescriptorsName = fieldDescriptorsName.concat(`${target.nameCamelCase}:='{${tempField}}' `);
+
+                                        }else{
+                                            if(target._type.endsWith("enum")){
+                                                fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}="${target.items[0].value}" ` )
+                                            }
+                                        }
+                                    });
                                 }
                             })
                         }
@@ -415,11 +549,11 @@
                     } else {
                         // Controller -> Extend Verb
                         if(me.value.controllerInfo.method == 'POST'){
-                            me.commandExample = `http POST localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))} ${fieldDescriptorsName}`
+                            me.commandExample = `http POST localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))}${me.value.controllerInfo.apiPath} ${fieldDescriptorsName}`
                         }else if(me.value.controllerInfo.method == 'PUT'){
-                            me.commandExample = `http PUT localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))}/1/${me.value.controllerInfo.apiPath} ${descriptorName}="{value}"`
+                            me.commandExample = `http PUT localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))}/1/${me.value.controllerInfo.apiPath} ${fieldDescriptorsName}`
                         }else if(me.value.controllerInfo.method == 'DELETE'){
-                            me.commandExample = `http DELETE localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))}/1/${me.value.controllerInfo.apiPath} ${descriptorName}="{value}"`
+                            me.commandExample = `http DELETE localhost:8080/${pluralize(changeCase.camelCase(me.relatedAggregateName))}/1/${me.value.controllerInfo.apiPath} ${fieldDescriptorsName}`
                         }
                         me.setApiPath()
                     }
@@ -474,3 +608,10 @@
         }
     }
 </script>
+
+<style>
+.cm-attribute .layout {
+    margin-top: 16px !important;
+    margin-left: -2px !important;
+}
+</style>

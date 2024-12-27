@@ -14,45 +14,6 @@ class ESAliasTransManager {
         this._initUUIDAliasForRelations()
     }
 
-
-    /**
-     * summarizedESValue에 존재하는 UUID를 의미있는 별칭으로 변환
-     * @param {*} summarizedESValue 요약된 이벤트 스토밍 정보
-     * @example
-     * const summarizedESValue = ESValueSummarizeUtil.getSummarizedESValue(this.value)
-     * const esAliasTransManager = new ESAliasTransManager(this.value)
-     * const transToAliasInSummarizedESValue = esAliasTransManager.transToAliasInSummarizedESValue(summarizedESValue)
-     * @returns UUID가 별칭으로 변환된 요약된 이벤트 스토밍 정보
-     */
-    transToAliasInSummarizedESValue(summarizedESValue){
-        return this._transSummarizedESValue(summarizedESValue, (uuid) => this.__getAliasSafely(uuid))
-    }
-
-    /**
-     * summarizedESValue에 존재하는 별칭을 기존의 UUID로 변환
-     * @param {*} summarizedESValue 요약된 이벤트 스토밍 정보
-     * @example
-     * const summarizedESValue = ESValueSummarizeUtil.getSummarizedESValue(this.value)
-     * const esAliasTransManager = new ESAliasTransManager(this.value)
-     * const transToUUIDInSummarizedESValue = esAliasTransManager.transToUUIDInSummarizedESValue(summarizedESValue)
-     * @returns 별칭이 UUID로 변환된 요약된 이벤트 스토밍 정보
-     */
-    transToUUIDInSummarizedESValue(summarizedESValue){
-        return this._transSummarizedESValue(summarizedESValue, (alias) => this.__getUUIDSafely(alias))
-    }
-
-    transToAliasInActions(actions){
-        return this._transActions(actions, (uuid) => this.__getAliasSafely(uuid))
-    }
-
-    transToUUIDInActions(actions){
-        return this._transActions(actions, (alias) => this.__getUUIDSafelyWithNewUUID(alias))
-    }
-
-
-    /**
-     * 현재 존재하는 이벤트 스토밍 정보를 토대로 엘리먼트에 대한 UUID를 의미있는 별칭으로 변환하기 위한 딕셔너리 초기화
-     */
     _initUUIDAliasForElements() {
         Object.keys(this.esValue.elements).forEach(key => {
             const element = this.esValue.elements[key]
@@ -78,9 +39,6 @@ class ESAliasTransManager {
         })
     }
 
-    /**
-     * 현재 존재하는 이벤트 스토밍 정보를 토대로 릴레이션에 대한 UUID를 의미있는 별칭으로 변환하기 위한 딕셔너리 초기화
-     */
     _initUUIDAliasForRelations() {
         const getAliasForRelation = (relation) => {
             const sourceAlias = this.__makeAliasToUse(relation.sourceElement)
@@ -98,6 +56,99 @@ class ESAliasTransManager {
         })
     }
 
+    /**
+     * 각 엘리먼트 타입마다 충돌되지 않는 의미있는 별칭을 LLM에게 제공하기 위함
+     */
+    __makeAliasToUse(element) {
+        const getFrontId = (element) => {
+            switch(element._type.toLowerCase()) {
+                case "org.uengine.modeling.model.boundedcontext": return "bc"
+                case "org.uengine.modeling.model.aggregate": return "agg"
+                case "org.uengine.modeling.model.command": return "cmd"
+                case "org.uengine.modeling.model.event": return "evt"
+                case "org.uengine.modeling.model.view": return "rm"
+                case "org.uengine.modeling.model.actor": return "act"
+                case "org.uengine.uml.model.class": return element.isAggregateRoot ? "agg-root" : "ent"
+                case "org.uengine.uml.model.enum": return "enum"
+                case "org.uengine.uml.model.vo.class": return "vo"
+                case "org.uengine.modeling.model.policy": return "pol"
+                default: return "obj"
+            }
+        }
+
+
+        if(this.UUIDToAliasDic[element.id]) 
+            return this.UUIDToAliasDic[element.id]
+
+        let aliasToUse = `${getFrontId(element)}-${changeCase.camelCase(element.name)}`
+        let i = 1
+        while(this.aliasToUUIDDic[aliasToUse]) {
+            aliasToUse = `${aliasToUse}-${i}`
+            i++
+        }
+        return aliasToUse
+    }
+
+
+    getAliasSafely(uuid){
+        if(this.UUIDToAliasDic[uuid]) return this.UUIDToAliasDic[uuid]
+        return uuid
+    }
+
+    getElementAliasSafely(element) {
+        if(element.id) return this.getAliasSafely(element.id)
+        if(element.elementView) return this.getAliasSafely(element.elementView.id)
+        return element.id
+    }
+
+    getUUIDSafely(alias){
+        if(this.aliasToUUIDDic[alias]) return this.aliasToUUIDDic[alias]
+        return alias
+    }
+
+    getUUIDSafelyWithNewUUID(alias){
+        if(this.aliasToUUIDDic[alias]) return this.aliasToUUIDDic[alias]
+
+        const newUUID = GlobalPromptUtil.getUUID()
+        this.aliasToUUIDDic[alias] = newUUID
+        this.UUIDToAliasDic[newUUID] = alias
+        return newUUID
+    }
+
+
+    /**
+     * summarizedESValue에 존재하는 UUID를 의미있는 별칭으로 변환
+     * @param {*} summarizedESValue 요약된 이벤트 스토밍 정보
+     * @example
+     * const summarizedESValue = ESValueSummarizeUtil.getSummarizedESValue(this.value)
+     * const esAliasTransManager = new ESAliasTransManager(this.value)
+     * const transToAliasInSummarizedESValue = esAliasTransManager.transToAliasInSummarizedESValue(summarizedESValue)
+     * @returns UUID가 별칭으로 변환된 요약된 이벤트 스토밍 정보
+     */
+    transToAliasInSummarizedESValue(summarizedESValue){
+        return this._transSummarizedESValue(summarizedESValue, (uuid) => this.getAliasSafely(uuid))
+    }
+
+    /**
+     * summarizedESValue에 존재하는 별칭을 기존의 UUID로 변환
+     * @param {*} summarizedESValue 요약된 이벤트 스토밍 정보
+     * @example
+     * const summarizedESValue = ESValueSummarizeUtil.getSummarizedESValue(this.value)
+     * const esAliasTransManager = new ESAliasTransManager(this.value)
+     * const transToUUIDInSummarizedESValue = esAliasTransManager.transToUUIDInSummarizedESValue(summarizedESValue)
+     * @returns 별칭이 UUID로 변환된 요약된 이벤트 스토밍 정보
+     */
+    transToUUIDInSummarizedESValue(summarizedESValue){
+        return this._transSummarizedESValue(summarizedESValue, (alias) => this.getUUIDSafely(alias))
+    }
+
+    transToAliasInActions(actions){
+        return this._transActions(actions, (uuid) => this.getAliasSafely(uuid))
+    }
+
+    transToUUIDInActions(actions){
+        return this._transActions(actions, (alias) => this.getUUIDSafelyWithNewUUID(alias))
+    }
 
     /**
      * 주어진 요약된 이벤트 스토밍 정보를 토대로 엘리먼트 이름을 변환하는 함수를 적용해서 반환
@@ -144,6 +195,11 @@ class ESAliasTransManager {
                         })
                 })
             
+            if(aggregate.readModels)
+                aggregate.readModels.forEach(readModel => {
+                    readModel.id = transFunc(readModel.id)
+                })
+            
             return aggregate
         }
 
@@ -186,57 +242,6 @@ class ESAliasTransManager {
                 })
         }
         return actions
-    }
-
-
-    /**
-     * 주어진 엘리먼트 정보를 토대로 의미있는 별칭을 생성해서 딕셔너리에 저장시키고, 반환함
-     */
-    __makeAliasToUse(element) {
-        const getFrontId = (element) => {
-            switch(element._type) {
-                case "org.uengine.modeling.model.BoundedContext": return "bc"
-                case "org.uengine.modeling.model.Aggregate": return "agg"
-                case "org.uengine.modeling.model.Command": return "cmd"
-                case "org.uengine.modeling.model.Event": return "evt"
-                case "org.uengine.modeling.model.Actor": return "act"
-                case "org.uengine.uml.model.Class": return element.isAggregateRoot ? "agg-root" : "ent"
-                case "org.uengine.uml.model.Enum": return "enum"
-                case "org.uengine.uml.model.vo.Class": return "vo"
-                default: return "obj"
-            }
-        }
-
-
-        if(this.UUIDToAliasDic[element.id]) 
-            return this.UUIDToAliasDic[element.id]
-
-        let aliasToUse = `${getFrontId(element)}-${changeCase.camelCase(element.name)}`
-        let i = 1
-        while(this.aliasToUUIDDic[aliasToUse]) {
-            aliasToUse = `${aliasToUse}-${i}`
-            i++
-        }
-        return aliasToUse
-    }
-
-    __getAliasSafely(uuid){
-        if(this.UUIDToAliasDic[uuid]) return this.UUIDToAliasDic[uuid]
-        return uuid
-    }
-
-    __getUUIDSafely(alias){
-        if(this.aliasToUUIDDic[alias]) return this.aliasToUUIDDic[alias]
-        return alias
-    }
-
-    __getUUIDSafelyWithNewUUID(alias){
-        if(this.aliasToUUIDDic[alias]) return this.aliasToUUIDDic[alias]
-
-        const newUUID = GlobalPromptUtil.getUUID()
-        this.aliasToUUIDDic[alias] = newUUID
-        this.UUIDToAliasDic[newUUID] = alias
-        return newUUID
     }
 }
 

@@ -1,8 +1,9 @@
 const ESValueSummarizeUtil = require('./ESValueSummarizeUtil')
 
 /**
- * ESValueSummarizeUtil에서 name속성들만 반환하도록 만듬
- */
+ * @deprecated 이 클래스는 레거시 코드입니다. 대신 ESValueSummarizeWithFilterUtil 클래스를 사용해주세요.
+ * 새로운 기능과 개선된 성능을 위해 ESValueSummarizeWithFilterUtil로 마이그레이션을 권장합니다.
+*/
 class ESValueSummarizeUtil_OnlyName {
     static getGuidePrompt() {
         return `You will receive a JSON object containing summarized information about the event storming model on which you will perform your task.
@@ -57,6 +58,13 @@ The approximate structure is as follows.
                     {
                         "name": "<eventName>",
                         "outputCommands": ["<commandName>"] // Information about the command that occurs when this event is requested.
+                    }
+                ],
+
+                // List of ReadModels representing data read through REST API.
+                "readModels": [
+                    {
+                        "name": "<readModelName>"
                     }
                 ]
             }
@@ -124,6 +132,12 @@ The approximate structure is as follows.
                 return {
                     name: event.name,
                     outputCommands: (event.outputCommands) ? event.outputCommands.map(command => command.name) : []
+                }
+            }),
+
+            readModels: aggregate.readModels.map(readModel => {
+                return {
+                    name: readModel.name
                 }
             })
         }

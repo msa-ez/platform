@@ -710,10 +710,7 @@ code[class*=language-]:nth-child(1) {
 
 .auto-modeling-user-story-card {
     white-space: pre !important;
-    margin: 10px !important;
     margin-bottom: -10px !important;
-    float: right !important;
-    width: 90% !important;
 }
 
 .lab-list-group-box .v-list-group__items{
@@ -808,6 +805,20 @@ code[class*=language-]:nth-child(1) {
     display: none !important;
 }
 
+.delete-input-detail {
+    margin: 0px !important;
+}
+
+.delete-input-detail .v-text-field__details {
+    display: none !important;
+}
+.delete-raido-detail .v-input__control .v-messages {
+    display: none !important;
+}
+
+.delete-raido-detail .v-input__control .v-input__slot {
+    margin-bottom: 0px !important;
+}
 
 .alert-text .v-alert__wrapper .v-alert__content {
     margin-left: -10px;

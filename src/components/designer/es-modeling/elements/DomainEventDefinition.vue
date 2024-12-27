@@ -77,8 +77,8 @@
                     'fill-r': 1,
                     'fill-cx': .1,
                     'fill-cy': .1,
-                    'stroke-width': 1.4,
-                    'stroke': '#F1A746',
+                    'stroke-width': isProgress ? 5 : 1.4,
+                    'stroke': isProgress ? progressColor : '#F1A746',
                     'fill': '#F1A746',
                     'fill-opacity': 1,
                     'r': '1',
@@ -91,6 +91,23 @@
             </sub-elements>
 
             <sub-elements>
+                <rectangle-element
+                    v-if="isProgress"
+                    :sub-width="25"
+                    :sub-height="25"
+                    :sub-top="0"
+                    :sub-left="0"
+                    :sub-style="{
+                        'font-size': '15', 
+                        'font-weight': 'bold',
+                        'font-color': '#ffffff',
+                        'stroke': progressColor,
+                        'fill': progressColor,
+                        'fill-opacity': 1
+                    }"
+                    :label.sync="progressEventSequence"
+                ></rectangle-element>
+
                 <geometry-point
                         :coordinate="[95,5]"
                         :_style="statusCompleteStyle">
@@ -192,6 +209,7 @@
                 @close="closePanel"
                 @changedPanelValue="changedPanelValue"
                 :isPBCModel="isPBCModel"
+                :useMonitoring="useMonitoring"
         ></domain-event-definition-panel>
 
     </div>
@@ -361,7 +379,7 @@
                 titleH: (this.value.classReference ? 60 : 30),
                 reference: this.value.classReference != null,
                 referenceClassName: this.value.classReference,
-
+                useMonitoring: false
             };
         },
         watch: {
@@ -379,8 +397,17 @@
         },
         mounted() {
             this.setMirrorElementId()
+            this.useMonitoring = this.canvas.useMonitoring
         },
         methods: {
+            openPanel() {
+                this.useMonitoring = this.canvas.useMonitoring
+                if(this.propertyPanel) {
+                    this.propertyPanel = false
+                }
+                this.propertyPanel = true
+                this.staySelected = false
+            },
             onChangedElementName(newVal, oldVal){
                 this.setMirrorElementId();
             },

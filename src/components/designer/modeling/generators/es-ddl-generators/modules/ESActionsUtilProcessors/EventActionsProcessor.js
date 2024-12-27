@@ -9,12 +9,16 @@ class EventActionsProcessor {
             case "create":
                 EventActionsProcessor._createEvent(action, userInfo, esValue, callbacks)
                 break
+            case "update":
+                EventActionsProcessor._updateEvent(action, userInfo, esValue, callbacks)
+                break
         }
     }
 
     static _createEvent(action, userInfo, esValue, callbacks) {
         const eventObject = EventActionsProcessor.__getEventBase(
-            userInfo, action.args.eventName, "", 
+            userInfo, action.args.eventName, 
+            action.args.eventAlias ? action.args.eventAlias : "", 
             action.ids.boundedContextId, action.ids.aggregateId, 0, 0, action.ids.eventId
         )
 
@@ -139,6 +143,22 @@ class EventActionsProcessor {
                 "_type": "org.uengine.model.FieldDescriptor"
             }
         })
+    }
+
+    static _updateEvent(action, userInfo, esValue, callbacks) {
+        const eventObject = esValue.elements[action.ids.eventId]
+        if(!eventObject) {
+            console.error("[!] Event to update not found", action)
+            return
+        }
+
+        if(action.args.outputCommandIds) {
+            callbacks.afterAllObjectAppliedCallBacks.push((esValue) => {
+                action.args.outputCommandIds.forEach(outputCommandId => {
+                    PolicyProcessor.createNewPolicy(esValue, userInfo, eventObject, outputCommandId.commandId, outputCommandId.reason, outputCommandId.name, outputCommandId.alias)
+                })
+            })
+        }
     }
 }
 

@@ -1,3 +1,7 @@
+/**
+ * @deprecated 이 클래스는 레거시 코드입니다. 대신 ESValueSummarizeWithFilterUtil 클래스를 사용해주세요.
+ * 새로운 기능과 개선된 성능을 위해 ESValueSummarizeWithFilterUtil로 마이그레이션을 권장합니다.
+*/
 class ESValueSummarizeUtil {
     /**
      * getSummarizedESValue() 함수에서 반환된 값에 대한 상세한 AI 프롬프트 설명을 반환
@@ -106,6 +110,14 @@ The approximate structure is as follows.
                             "name": "<commandName>"
                         }] // Information about the command that occurs when this event is requested.
                     }
+                ],
+
+                // List of ReadModels representing data read through REST API.
+                "readModels": [
+                    {
+                        "id": "<readModelId>",
+                        "name": "<readModelName>"
+                    }
                 ]
             }
         }
@@ -184,6 +196,15 @@ The approximate structure is as follows.
                 .filter(element => element && element._type === 'org.uengine.modeling.model.BoundedContext')
         }
 
+        let summarizedESValue = {}
+        for(let boundedContext of getAllBoundedContexts(esValue)) {
+            summarizedESValue[boundedContext.id] = ESValueSummarizeUtil.getSummarizedBoundedContextValue(esValue, boundedContext)
+        }
+        return summarizedESValue
+    }
+
+
+    static getSummarizedBoundedContextValue(esValue, boundedContext) {
         /**
          * 주어진 BoundedContext에서 agggregates 속성이 없을 경우를 대비해서, 주어진 이벤트스토밍 값을 통해서 복원
          */
@@ -197,16 +218,6 @@ The approximate structure is as follows.
             }
         }
 
-        let summarizedESValue = {}
-        for(let boundedContext of getAllBoundedContexts(esValue)) {
-            restoreBoundedContextAggregatesProperties(esValue, boundedContext)
-            summarizedESValue[boundedContext.id] = ESValueSummarizeUtil.getSummarizedBoundedContextValue(esValue, boundedContext)
-        }
-        return summarizedESValue
-    }
-
-
-    static getSummarizedBoundedContextValue(esValue, boundedContext) {
         const getAllAggregates = (esValue, boundedContext) => {
             return boundedContext.aggregates.map(aggregate => esValue.elements[aggregate.id])
         }
@@ -231,6 +242,8 @@ The approximate structure is as follows.
             return uniqueActors;
         }
 
+        restoreBoundedContextAggregatesProperties(esValue, boundedContext)
+        
         let summarizedBoundedContextValue = {}
         summarizedBoundedContextValue.id = ESValueSummarizeUtil.__getElementIdSafely(boundedContext)
         summarizedBoundedContextValue.name = boundedContext.name
@@ -267,6 +280,7 @@ The approximate structure is as follows.
         summarizedAggregateValue.valueObjects = ESValueSummarizeUtil.getSummarizedValueObjectValue(aggregate)
         summarizedAggregateValue.commands = ESValueSummarizeUtil.getSummarizedCommandValue(esValue, boundedContext, aggregate)
         summarizedAggregateValue.events = ESValueSummarizeUtil.getSummarizedEventValue(esValue, boundedContext, aggregate)
+        summarizedAggregateValue.readModels = ESValueSummarizeUtil.getSummarizedReadModelValue(esValue, boundedContext, aggregate)
         return summarizedAggregateValue
     }
 
@@ -399,6 +413,8 @@ The approximate structure is as follows.
             eventInfo.outputCommands = []
             for(let policyRelation of getRelationsForType(esValue, element, "org.uengine.modeling.model.Policy")) {
                 const targetPolicy = esValue.elements[policyRelation.targetElement.id]
+                if(!targetPolicy) continue
+                
                 for(let commandRelation of getRelationsForType(esValue, targetPolicy, "org.uengine.modeling.model.Command")) {
                     eventInfo.outputCommands.push({
                         relationId: ESValueSummarizeUtil.__getElementIdSafely(commandRelation),
@@ -419,6 +435,25 @@ The approximate structure is as follows.
             }
         }
         return summarizedEventValue
+    }
+
+    static getSummarizedReadModelValue(esValue, boundedContext, aggregate) {
+        const getReadModelInfo = (esValue, element) => {
+            let readModelInfo = {}
+            readModelInfo.id = ESValueSummarizeUtil.__getElementIdSafely(element)
+            readModelInfo.name = element.name
+            return readModelInfo
+        }
+
+        let summarizedReadModelValue = []
+        for(let element of Object.values(esValue.elements)){
+            if(element && (element._type === "org.uengine.modeling.model.View") &&
+            (element.boundedContext.id === boundedContext.id) &&
+            (element.aggregate.id === aggregate.id)){
+                summarizedReadModelValue.push(getReadModelInfo(esValue, element))
+            }
+        }
+        return summarizedReadModelValue
     }
 
     

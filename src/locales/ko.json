@@ -1,5 +1,98 @@
 {
   "message": "ko",
+  "app": {
+    "showBeta": "베타 보기",
+    "hideBeta": "베타 숨기기"
+  },
+  "ESDialoger" : {
+    "tryAgain": "재생성",
+    "createBoundedContext": "Bounded Context 생성"
+  },
+  "DevideBoundedContextDialog" : {
+    "boundedContextDivisionResult": "문제영역(Bounded context) 생성(분할) 결과",
+    "aspectsOfBoundedContexts": "Bounded Context 주요 관점",
+    "domainAspect": "도메인",
+    "organizationalAspect": "조직적",
+    "personaAspect": "페르소나",
+    "transactionPerformanceAspect": "거래/성능",
+    "infrastructureAspect": "인프라",
+    "lodingMessage": "관점별 Bounded Context 생성 중...",
+    "reasonOfSeparation": "분할 이유",
+    "aspect" : "관점",
+    "reGenerate": "재생성",
+    "stop": "중지",
+    "analysis": "분석",
+    "feedback": "피드백",
+    "createModel": "모델 생성",
+    "descriptionOfEachBoundedContext": "각 Bounded Context의 설명",
+    "relations": "관계",
+    "boundedContextName": "Bounded Context 이름",
+    "requirements": "요구사항",
+    "sourceContext": "소스 컨텍스트",
+    "targetContext": "타겟 컨텍스트", 
+    "relationType": "관계 유형",
+    "reason": "이유",
+    "interactionPattern": "상호작용 패턴"
+  },
+  "ViewDefinitionPanel" : {
+    "CQRSDetailTitle" : "CQRS 패턴에서 Read Model의 \"CREATE\" 설정은 이벤트 발생 시 데이터를 조회 가능한 형태로 저장하는 역할을 합니다.",
+    "CQRSDetailSubTitle1" : "CREATE WHEN: 특정 이벤트가 발생할 때 Read Model을 생성합니다. 예를 들어, 새로운 주문이 생성되면 해당 주문 정보를 Read Model에 저장합니다.",
+    "CQRSDetailSubTitle2" : "SET: Read Model의 필드를 이벤트의 필드 값으로 설정합니다. 이는 데이터가 어떻게 저장될지를 정의합니다. 예를 들어, readModelField에 eventField의 값을 할당합니다.",
+    "CQRSDetailSubTitle3" : "Operator: 필드 간의 연산자를 설정합니다. 일반적으로 할당(=) 연산자를 사용하여 이벤트 필드의 값을 Read Model 필드에 저장합니다.",
+    "QueryForAggregateDetailTitle" : "Query for Aggregate 설정은 부착된 Aggregate의 데이터를 조회하기 위한 쿼리를 정의합니다.",
+    "QueryForAggregateDetailSubTitle1" : "Default GET URI: 기본적인 GET 요청을 통해 Aggregate 데이터를 조회합니다. 이는 표준 URI 경로를 사용하여 데이터를 가져오는 방식입니다.",
+    "QueryForAggregateDetailSubTitle2": "Extended GET URI: 기본 경로 외에 추가적인 요구사항을 충족하기 위해 확장된 URI를 사용합니다. 특정 조건이나 필터링이 필요한 경우 유용합니다.",
+    "QueryForAggregateDetailSubTitle3": "Single Result: 쿼리 결과가 단일 객체일 때 사용됩니다. 특정 ID나 고유 식별자를 통해 하나의 Aggregate 데이터를 조회합니다.",
+    "QueryForAggregateDetailSubTitle4": "Multiple Result: 쿼리 결과가 여러 객체일 때 사용됩니다. 조건에 맞는 여러 Aggregate 데이터를 리스트 형태로 조회합니다."
+  },
+  "AlgoliaModelLists" : {
+    "pet" : "펫샵",
+    "food" : "음식배달앱",
+    "googleDrive": "구글드라이브",
+    "shop" : "쇼핑몰"
+  },
+  "ClassCard": {
+    "enter" : "입장"
+  },
+  "CommandDefinitionPanel" : {
+    "implementationSettings": "디자인 레벨",
+    "commandMethodDetailTitle" : "Method 설정: API 경로와 동작 방식을 선택하여 데이터 작업을 수행합니다.",
+    "commandMethodDetailSubTitle1" : "Default Verbs: 기본적인 데이터 작업(생성, 업데이트, 삭제)을 수행하는 표준 경로를 사용합니다. 이는 일반적인 데이터 조작에 적합합니다.",
+    "commandMethodDetailSubTitle2" : "Extend Verb URI: 기본 작업 외에, 특정한 요구사항이나 추가 기능을 위해 확장된 경로를 사용합니다. 예를 들어, 특정 조건에 맞는 데이터를 처리할 때 유용합니다.",
+    "commandUsageDetailTitle" : "Extend Verb URI는 기본적인 API 경로 외에, 특정 작업을 수행하기 위해 확장된 경로를 제공합니다.",
+    "commandMethodDetailSubTitle3" : "POST: 서버에 새로운 리소스를 생성할 때 사용합니다. 예를 들어, 새로운 사용자 계정을 만들 때 사용됩니다.",
+    "commandMethodDetailSubTitle4" : "PUT: 기존 리소스를 업데이트하거나, 리소스가 없으면 새로 생성할 때 사용합니다. 전체 데이터를 갱신할 때 적합합니다.",
+    "commandMethodDetailSubTitle5" : "PATCH: 리소스의 일부를 업데이트할 때 사용합니다. 전체가 아닌 특정 필드만 변경할 때 유용합니다.",
+    "commandMethodDetailSubTitle6" : "DELETE: 서버에서 리소스를 삭제할 때 사용합니다. 예를 들어, 특정 사용자의 계정을 제거할 때 사용됩니다.",
+    "commandUsageDetailSubTitle1" : "/부착된 Aggregate의 namePlural / Aggregate의ID클래스 / command 이름"
+  },
+  "DomainEventDefinitionPanel" : {
+    "triggerByLifeCycleDetailTitle" : "데이터가 저장, 수정, 삭제 등의 생명주기를 거칠 때 특정 시점(전/후)에 실행될 작업을 정의.",
+    "triggerByLifeCycleDetailSubTitle1": "Pre Persist: 데이터가 저장되기 직전에 실행됩니다.",
+    "triggerByLifeCycleDetailSubTitle2": "Post Persist: 데이터가 저장된 직후에 실행됩니다.",
+    "triggerByLifeCycleDetailSubTitle3": "Pre Update: 데이터가 업데이트되기 직전에 실행됩니다.",
+    "triggerByLifeCycleDetailSubTitle4": "Post Update: 데이터가 업데이트된 직후에 실행됩니다.", 
+    "triggerByLifeCycleDetailSubTitle5": "Pre Remove: 데이터가 삭제되기 직전에 실행됩니다.",
+    "triggerByLifeCycleDetailSubTitle6": "Post Remove: 데이터가 삭제된 직후에 실행됩니다.",
+    "triggerByCommandDetailTitle": "특정 명령(Command)에 의해 이벤트가 트리거됩니다. 이는 시스템에서 어떤 작업이 수행될 때 발생하는 이벤트를 정의합니다.",
+    "triggerByCommandDetailSubTitle1": "예시: 사용자가 주문을 생성할 때 orderPlace 명령이 실행되고, 이에 따라 order 이벤트가 발생합니다.",
+    "triggerByPolicyDetailTitle": "특정 정책(Policy)에 의해 이벤트가 트리거됩니다. 이는 비즈니스 규칙이나 정책에 따라 발생하는 이벤트를 정의합니다.",
+    "triggerByPolicyDetailSubTitle1": "예시: 특정 조건이 충족될 때 자동으로 실행되는 정책에 의해 이벤트가 발생할 수 있습니다.",
+    "associatedAggregateTitle": "이벤트와 관련된 집합체의 이름을 표시합니다.",
+    "associatedAggregateSubTitle1": "이벤트가 어떤 집합체와 관련이 있는지를 명확히 하여, 시스템의 구조와 데이터 흐름을 이해하는 데 도움을 줍니다."
+  },
+  "EventStormingAttributeEditor" : {
+    "editAggregateMembersByClassDiagramBtn" : "이 메뉴는 도메인 클래스 모델링 도구와 상호작용하여 객체지향 방식으로 유비쿼터스 언어를 정의합니다.",
+    "attributesDetailTitle1" : "사용자가 정의한 엔티티나 값 객체를 포함하여 기본 타입과 비기본 타입을 모두 사용할 수 있습니다.",
+    "attributesDetailTitle2" : "Attribute 속성에는 간단한 데이터 타입만 사용할 수 있습니다.",
+    "attributesDetail1" : "열쇠 아이콘 : key 값으로 사용 중인 데이터입니다. 수정 버튼을 통해 다른 Attribute로 변경 가능",
+    "attributesDetail2_1" : "Display Name : 화면의 스티커와 코드의 프론트엔드 UI에 표시되는 이름입니다.",
+    "attributesDetail2_2" : "Correlation Key : 관련된 이벤트나 프로세스를 추적하고 연결하기 위한 식별자로, 이벤트 간 상관관계를 정의하는 데 사용됩니다.",
+    "attributesDetail2_3" : "List : 속성을 배열로 지정할지를 선택하는 옵션입니다.",
+    "attributesDetail2_4" : "Name : Attributes를 다른 시스템, 프로세스, 또는 코드에서 참조할 때 사용하는 대표 식별자로, 고유성과 명확성을 갖춘 이름을 사용해 데이터와 속성을 일관되게 관리하도록 돕습니다.",
+    "attributesDetail2_5" : "Large Object (LOB) : 이미지나 파일 같은 대용량 데이터를 데이터베이스에 효율적으로 저장하기 위해 LOB 타입(CLOB, BLOB)을 사용할지 결정하는 체크박스입니다. 주로 파일 필드나 대용량 데이터 필드에서 사용됩니다.",
+    "attributesDetail3" : "SYNC ATTRIBUTE 버튼 : Aggregate에 부착된 상태에서 Aggregate 내부의 속성을 동기화하는 버튼입니다."
+  },
   "AggregateDefinitionPanel": {
     "aggregateGenerateTitle": "Bounded Context 내부에 Aggregate가 포함돼있는 상태에서 Description의 내용을 작성하면 버튼이 활성화됩니다.",
     "aggregateGenerateTooltipText1": "어그리거트 기반 생성",
@@ -8,6 +101,10 @@
     "aggregateGenerateSubTitle2": "재생성 : 어그리거트 내부의 속성들을 기반으로 관련된 모든 것을 제거 후 재생성합니다.",
     "generate": "생성",
     "reGenerate": "재생성"
+  },
+  "CommonPanel": {
+    "nameInfoTitle": "Name 영문으로 작성합니다.",
+    "nameInfoDetail1": "Name : 코드에 반영되는 이름입니다.\nDisplay Name : 화면의 스티커와 코드의 프론트엔드 UI에 표시되는 이름입니다."
   },
   "DetailComponent": {
     "allDetails": "가이드 보기"
@@ -23,7 +120,8 @@
     "cons": "단점:",
     "conclusions": "결론:",
     "create": "생성",
-    "reconstructionDraft": "바운디드 컨텍스트 재구성 초안"
+    "reconstructionDraft": "바운디드 컨텍스트 재구성 초안",
+    "reconstructionAggregateDraft": "어그리거트 디자인 초안"
   },
   "RuleExampleDialog": {
     "generateExamples": "예제 생성",
@@ -237,7 +335,8 @@
     "chip1": "구글 드라이브",
     "chip2": "음식 배달 앱",
     "chip3": "생선 유통 ERP",
-    "chip4": "인터넷 뱅킹"
+    "chip4": "인터넷 뱅킹",
+    "editPersona": "페르소나의 이름과 내용을 수정합니다."
   },
   "UIWizardDialoger": {
     "imageMessage": "다음은 이 서비스에 대한 이미지 추천입니다.",

@@ -1,6 +1,6 @@
 <template>
     <div style="margin-top: 10px;">
-        <div class="auto-modeling-message-border">
+        <div>
             <v-col class="auto-modeling-message-box">
                 <v-card class="auto-modeling-message-card">
                     <v-card-text class="auto-modeling-message">

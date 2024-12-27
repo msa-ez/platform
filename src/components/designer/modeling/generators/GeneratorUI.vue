@@ -299,6 +299,7 @@
     import DDLGenerator from './DDLGenerator.js'
     import DDLDraftGenerator from './DDLDraftGenerator.js'
     import DDLBoundedContextDistributeGenerator from './es-ddl-generators/DDLBoundedContextDistributeGenerator.js'
+    import PreProcessingFunctionsGenerator from './es-ddl-generators/PreProcessingFunctionsGenerator.js'
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
 
@@ -530,6 +531,7 @@
                         case "DDLGenerator": this.generatorComponent = new DDLGenerator(this); break;
                         case "DDLDraftGenerator": this.generatorComponent = new DDLDraftGenerator(this); break;
                         case "DDLBoundedContextDistributeGenerator": this.generatorComponent = new DDLBoundedContextDistributeGenerator(this); break;
+                        case "PreProcessingFunctionsGenerator": this.generatorComponent = new PreProcessingFunctionsGenerator(this); break;
                     }
 
                     return this.generatorComponent;
@@ -710,6 +712,10 @@
                     this.$emit("showContinueBtn")
                     this.showGenerateBtn = false
                 }
+
+                if(this.generatorName === "PreProcessingFunctionsGenerator") {
+                    this.openGeneratorUI = false
+                }
             },
             switchGenerator(mode, isShowGenerateBtn, isShowContinueBtn, isShowStopBtn, isShowRegenerateBtn){
                 // CHAT 탭엔 경우에는 GENERATE 버튼이 보여지지 않게 만듬
@@ -878,6 +884,13 @@
             removeBoundedContext(index) {
                 this.boundedContextLists.splice(index, 1);
             },
+
+
+            onInputParamsCheckBefore(inputParams, generatorName){this.$emit("onInputParamsCheckBefore", inputParams, generatorName)},
+            onFirstResponse(returnObj){this.$emit("onFirstResponse", returnObj)},
+            onGenerationSucceeded(returnObj){this.$emit("onGenerationSucceeded", returnObj)},
+            onRetry(returnObj){this.$emit("onRetry", returnObj)},
+            onStopped(returnObj){this.$emit("onStopped", returnObj)}
         }
     }
 </script>

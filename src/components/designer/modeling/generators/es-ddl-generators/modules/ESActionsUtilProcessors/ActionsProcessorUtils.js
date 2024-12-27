@@ -42,6 +42,15 @@ class ActionsProcessorUtils {
         })
     }
 
+    static getAggregateReadModels(esValue, targetAggregateId) {
+        return Object.values(esValue.elements).filter((element) => {
+            return element &&
+                element._type === "org.uengine.modeling.model.View" &&
+                element.aggregate &&
+                element.aggregate.id === targetAggregateId
+        })
+    }
+
     static getAggregateEvents (esValue, targetAggregateId) {
         return Object.values(esValue.elements).filter((element) => {
             return element &&
@@ -145,7 +154,7 @@ class ActionsProcessorUtils {
 
     
     /**
-     * 주어진 Aggregate 내부의 Element가 Aggregate나 Bounded Context를 벗어나지 않도록 수직으로 크기를 재조정 함
+     * 주어진 Aggregate 내부의 Element가 Aggregate나 Bounded Context를 벗어나지 않도록 만들기 위해, 필요시 수직으로 크기를 재조정 함
      */
     static reseizeAggregateVertically(esValue, aggElementObject) {
         const RESIZE_HEIGHT = 150
@@ -153,8 +162,11 @@ class ActionsProcessorUtils {
         const bcObject = esValue.elements[aggElementObject.boundedContext.id]
         const aggObject = esValue.elements[aggElementObject.aggregate.id]
         if(!bcObject || !aggObject) return
-        if(aggElementObject.elementView.y <= aggObject.elementView.y + Math.round(aggObject.elementView.height/2)) return
+        // 불필요한 리사이징을 방지하기 위해, Aggregate의 높이보다 밑에 엘리먼트 위치시, 중단
+        if(aggElementObject.elementView.y <= aggObject.elementView.y + Math.round(aggObject.elementView.height/2)) return 
 
+
+        // Aggregate의 높이를 늘렸을때, BC의 높이를 넘어설 수 있기 때문에, BC의 높이를 늘려줌
         if(aggObject.elementView.y + Math.round(aggObject.elementView.height/2) + RESIZE_HEIGHT > bcObject.elementView.y + Math.round(bcObject.elementView.height/2)) {
             const BC_RESIZE_HEIGHT = Math.round(RESIZE_HEIGHT * 0.90)
             bcObject.elementView.height += BC_RESIZE_HEIGHT
@@ -162,10 +174,13 @@ class ActionsProcessorUtils {
             esValue.elements[bcObject.id] = {...bcObject}
         }
 
+
         aggObject.elementView.height += RESIZE_HEIGHT
         aggObject.elementView.y += Math.round(RESIZE_HEIGHT/2)
         esValue.elements[aggObject.id] = {...aggObject}
 
+
+        // 해당 Bounded Context 아래에 있는 엘리먼트들이 겹쳐질 수 있기 때문에, 해당 엘리먼트들을 아래로 내려줌
         for(const bcElement of ActionsProcessorUtils._getAllBcBelowBc(esValue, bcObject)) {
             bcElement.elementView.y += RESIZE_HEIGHT
             esValue.elements[bcElement.id] = {...bcElement}

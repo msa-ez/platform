@@ -844,9 +844,7 @@
                 git = new Github();
             }
 
-            // const baseURL = 'http://localhost:3000';
-            // const token = '';
-            // git = new Gitea(baseURL, token);
+            // git = new Gitea();
 
             this.git = new GitAPI(git);
         },
@@ -1761,6 +1759,7 @@
                                 me.gitOrgName = me.value.org
                                 if(me.gitOrgName != me.gitUserName){
                                     me.gitOrganizations.push(me.gitOrgName)
+                                    me.gitOrgName = me.gitUserName
                                 }
                             } else {
                                 me.gitOrgName = me.gitUserName

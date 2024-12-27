@@ -20,6 +20,7 @@ class GeneralClassActionsProcessor {
     static _createGeneralClass(action, callbacks) {
         const generalClass = GeneralClassActionsProcessor.__getGeneralClassBase(
             action.args.generalClassName, 
+            action.args.generalClassAlias ? action.args.generalClassAlias : "",
             GeneralClassActionsProcessor.__getFileDescriptors(action.args.properties),
             0, 0, action.ids.generalClassId
         )
@@ -36,12 +37,13 @@ class GeneralClassActionsProcessor {
         GeneralClassActionsProcessor.__makeRelations(action, generalClass, callbacks)
     }
 
-    static __getGeneralClassBase (name, fieldDescriptors, x, y, elementUUID) {
+    static __getGeneralClassBase(name, displayName, fieldDescriptors, x, y, elementUUID) {
         const elementUUIDtoUse = elementUUID ? elementUUID : GlobalPromptUtil.getUUID()
         return {
             "_type": "org.uengine.uml.model.Class",
             "id": elementUUIDtoUse,
             "name": name,
+            "displayName": displayName,
             "namePascalCase": changeCase.pascalCase(name),
             "nameCamelCase": changeCase.camelCase(name),
             "namePlural": pluralize(changeCase.camelCase(name)),
@@ -99,8 +101,8 @@ class GeneralClassActionsProcessor {
             return {
                 "_type": "org.uengine.model.FieldDescriptor",
                 "name": property.name,
-                "nameCamelCase": changeCase.pascalCase(property.name),
-                "namePascalCase": changeCase.camelCase(property.name),
+                "nameCamelCase": changeCase.camelCase(property.name),
+                "namePascalCase": changeCase.pascalCase(property.name),
                 "className": property.type ? property.type : "String",
                 "isKey": property.isKey ? true : false,
                 "isName": false,
@@ -127,6 +129,7 @@ class GeneralClassActionsProcessor {
                         break
                     }
                 }
+                if(!matchedElement) continue
 
                 let isRelationAlreadyExists = false
                 for(const relation of Object.values(entities.relations).filter(relation => relation)) {

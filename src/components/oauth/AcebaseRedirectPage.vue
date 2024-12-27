@@ -8,6 +8,7 @@
     import Gitlab from "../../utils/Gitlab"
     import Github from "../../utils/Github"
     import CommonStorageBase from "../CommonStorageBase"
+import Gitea from "../../utils/Gitea";
 
     export default {
         name: "GitlabRedirectPage",
@@ -75,7 +76,38 @@
                         window.localStorage.setItem("authorized", 'student');
                     }
                     me.writeUserData(result.user.uid, result.user.displayName, result.user.email, result.user.picture)
-                    let origin = window.GITLAB ? window.GITLAB : window.location.hostname.replace("www.", "");
+                    // let origin = window.GITLAB ? window.GITLAB : window.location.hostname.replace("www.", "");
+                    var getUsers = await git.getUserInfo()
+                    .then(function (res) {
+                        console.log(res)
+                        me.$EventBus.$emit('login', result.accessToken)
+                        me.$emit('close')
+                        window.location.replace(window.location.origin)
+                    })
+                    .catch(e => console.log(e));
+                } else if (result.provider.name == 'gitea') {
+                    git = new Git(new Gitea())
+                    window.localStorage.setItem("gitAuthor", result.user.email);
+                    window.localStorage.setItem("gitUserName", result.user.displayName);
+                    window.localStorage.setItem("gitEmail", result.user.email);
+                    window.localStorage.setItem(
+                        "gitToken",
+                        result.provider.access_token
+                    );
+                    
+                    window.localStorage.setItem("author", result.user.email)
+                    window.localStorage.setItem("userName", result.user.displayName)
+                    window.localStorage.setItem("email", result.user.email)
+                    window.localStorage.setItem("picture", result.user.picture)
+                    window.localStorage.setItem("accessToken", result.accessToken)
+                    window.localStorage.setItem("uid", result.user.uid)
+                    if (result.user.email && result.user.email.includes('@uengine.org')) {
+                        window.localStorage.setItem("authorized", 'admin');
+                    } else {
+                        window.localStorage.setItem("authorized", 'student');
+                    }
+                    me.writeUserData(result.user.uid, result.user.displayName, result.user.email, result.user.picture)
+                    // let origin = window.GITLAB ? window.GITLAB : window.location.hostname.replace("www.", "");
                     var getUsers = await git.getUserInfo()
                     .then(function (res) {
                         console.log(res)

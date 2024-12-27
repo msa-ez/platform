@@ -11,7 +11,7 @@
                 <v-tabs-slider color="green lighten-2"></v-tabs-slider>
 
                 <v-tab
-                        v-for="(tab,index,keys) in fillteredlabsTabLists"
+                        v-for="(tab,index,keys) in fillteredlabsTabLists()"
                         :key="keys"
                         :value="keys"
                 >
@@ -62,21 +62,55 @@
                         </div>
                     </v-card>
                 </v-dialog>
-
                 <v-tab-item
-                        v-for="(tab,index,keys) in labsTabLists"
-                        :key="keys"
-                        :value="keys"
+                    v-for="(tab, index, keys) in fillteredlabsTabLists()"
+                    :key="keys"
+                    :value="keys"
                 >
-                    <!--
-                        selectedTab
-                        0: 추천강의 - 수강 가능 한 클래스
-                        1: 기업강의 - connectionKey가 있는 Class
-                        2: 수강중인 강의 - 본인 계정 정보 하위에 등록되어있는 클래스 ( 구현 필요함 )
-                        3: 종료된 강의 - 현행 유지..
-                        4: 강의중인강의 - 현행 유지
-                    -->
-                    <div style="margin:12px 0 12px 0;" v-if="selectedTab == 0">
+                    <!-- 로그인하지 않았을 때 공개 강의만 표시 -->
+                    <div v-if="!isLogin && tab.key === 'free'" style="margin:12px 0 12px 0;">
+                        <v-row>
+                            <v-row v-if="filteredFreeClassList == undefined && typeof filteredFreeClassList != 'object'">
+                                <v-col
+                                    v-for="idx in 8"
+                                    cols="12"
+                                    sm="3">
+                                    <v-card
+                                        outlined
+                                        class="mx-auto"
+                                        style="width: 95%; height: 400px; justify-content: center;"
+                                        align="center"
+                                        indeterminate
+                                    >
+                                        <v-skeleton-loader
+                                            ref="skeleton"
+                                            type="card"
+                                            class="mx-auto"
+                                        >
+                                        </v-skeleton-loader>
+                                    </v-card>
+                                </v-col>
+                            </v-row>
+                            <v-col v-else-if="filteredFreeClassList == null" style="margin-left:15px;">
+                                <div style="text-align: center;height: 600px;">
+                                    강의가 없습니다.
+                                </div>
+                            </v-col>
+                            <v-col v-else-if="filteredFreeClassList.length > 0"
+                                v-for="(clazz, index) in filteredFreeClassList" :key="index" md="3">
+                                <class-card
+                                    :clazz="clazz" :clazzIdList="clazzIdList"
+                                    :teacherClassList="teacherClassList"
+                                    :selectedTab="selectedTab"
+                                    @changeSelectedTab="setSelectedTab"
+                                    @changeTeacherClassList="setTeacherClassList"
+                                ></class-card>
+                            </v-col>
+                        </v-row>
+                    </div>
+                    <!-- 로그인한 경우 기존 로직 유지 -->
+                    <div v-else style="margin:12px 0 12px 0;">
+                        <div style="margin:12px 0 12px 0;" v-if="selectedTab == 0">
                         <v-row>
                             <v-row v-if="filteredRecommendClassList == undefined  && typeof filteredRecommendClassList != 'object'">
                                 <v-col
@@ -283,21 +317,22 @@
                         <v-row>
                             <v-row v-if="filteredTeacherClazzList == undefined && typeof filteredTeacherClazzList != 'object'">
                                 <v-col
-                                        v-for="idx in 8"
-                                        cols="12"
-                                        sm="3">
+                                    v-for="idx in 8"
+                                    cols="12"
+                                    sm="3"
+                                >
                                     <v-card
-                                            outlined
-                                            class="mx-auto"
-                                            style="width: 95%; height: 400px; justify-content: center;"
-                                            align="center"
-                                            indeterminate
+                                        outlined
+                                        class="mx-auto"
+                                        style="width: 95%; height: 400px; justify-content: center;"
+                                        align="center"
+                                        indeterminate
 
                                     >
                                         <v-skeleton-loader
-                                                ref="skeleton"
-                                                type="card"
-                                                class="mx-auto"
+                                            ref="skeleton"
+                                            type="card"
+                                            class="mx-auto"
                                         >
                                         </v-skeleton-loader>
                                     </v-card>
@@ -311,209 +346,180 @@
                             <v-col v-else-if="filteredTeacherClazzList.length > 0 "
                                    v-for="(clazz, index) in filteredTeacherClazzList" :key="index" md="3">
                                 <class-card :clazz="clazz" :clazzIdList="clazzIdList"
-                                            :teacherClassList="teacherClassList"
-                                            :selectedTab="selectedTab"
-                                            @changeTeacherClassList="setTeacherClassList"
-                                            @changeSelectedTab="setSelectedTab"
+                                    :teacherClassList="teacherClassList"
+                                    :selectedTab="selectedTab"
+                                    @changeTeacherClassList="setTeacherClassList"
+                                    @changeSelectedTab="setSelectedTab"
                                 ></class-card>
                             </v-col>
                         </v-row>
                     </div>
-                    <div style="margin:12px 0 12px 0;" v-else-if="selectedTab == 6">
+                    <div style="margin: 12px 0 12px 0;" v-else-if="selectedTab == 6">
                         <div v-if="isLogin">
-                            <v-row justify="center">
+                            <v-row class="ma-0 pa-0" justify="center">
                                 <v-card outlined
-                                        style="width: 450px; height: 630px; margin-top:20px; margin-bottom:20px;">
-                                    <v-card-title>
-                                        <span style="margin-left:15px;" class="headline">{{newClass.newName}}</span>
-                                    </v-card-title>
-                                    <v-switch
-                                            v-model="newClass.active"
-                                            label="Active"
-                                            style="margin-bottom: -15px; margin-top: -5px; margin-left: 30px;"
-                                    ></v-switch>
-                                    <div style="position:absolute; right:20px; margin-top:-37px;">
-                                        <v-btn
-                                                color="primary"
-                                                style="width:85px; font-weight:900; margin:-5px 12px 0px 0px;"
-                                                :disabled="invalid || isLoading"
-                                                type="submit"
-                                                @click="createNewClazz(newClass)"
-                                        >강의 생성
-                                        </v-btn>
-                                    </div>
+                                    class="pa-4 pt-0 pb-0"
+                                >
+                                    <v-card-title class="ma-0 pa-0">{{newClass.newName}}</v-card-title>
                                     <v-card outlined
-                                            style="width:385px;
-                                                    margin-top:-10px;
-                                                    height:202px;
-                                                    margin:0 auto;
-                                                    text-align:center;
-                                                    line-height:202px;
-                                                    background-color:white"
-                                            @click="openAlbum = true"
+                                        style=" margin-top: -10px;
+                                        height: 202px;
+                                        margin: 0 auto;
+                                        text-align: center;
+                                        line-height: 202px;
+                                        background-color: white"
+                                        @click="openAlbum = true"
                                     >
                                         <v-icon
-                                                v-if="!imgURL"
-                                                color="primary"
-                                                fab
-                                                x-large
-                                                dark
+                                            v-if="!imgURL"
+                                            color="primary"
+                                            fab
+                                            x-large
+                                            dark
                                         >
                                             mdi-file-image
                                         </v-icon>
                                         <v-img
-                                                v-if="imgURL"
-                                                style="height: 200px;
-                                                margin:0 auto;
-                                                margin-top:0px;
-                                                text-align:center;"
-                                                :src="imgURL"
+                                            v-if="imgURL"
+                                            style="height: 200px;
+                                            margin: 0 auto;
+                                            margin-top: 0px;
+                                            text-align: center;"
+                                            :src="imgURL"
                                         ></v-img>
                                     </v-card>
                                     <validation-observer
-                                            ref="observer"
-                                            v-slot="{ invalid }"
+                                        ref="observer"
+                                        v-slot="{ invalid }"
                                     >
                                         <form @submit.prevent="submit">
-                                            <v-card-text>
-                                                <v-container>
-                                                    <v-row>
-                                                        <v-col cols="12">
-                                                            <validation-provider
-                                                                    v-slot="{ errors }"
-                                                                    name="Name"
-                                                                    rules="required"
-                                                            >
-                                                                <v-text-field
-                                                                        style="width:380px;
-                                                                            margin-left:5px;
-                                                                            margin-top:-15px;"
-                                                                        color="#0080FF"
-                                                                        label="강의제목"
-                                                                        :error-messages="errors"
-                                                                        v-model="newClass.newName"
-                                                                ></v-text-field>
-                                                            </validation-provider>
-                                                        </v-col>
-                                                        <v-col cols="12">
-                                                            <validation-provider
-                                                                    v-slot="{ errors }"
-                                                                    name="Name"
-                                                                    rules="required|alpha_dash"
-
-                                                            >
-                                                                <v-text-field
-                                                                        style=
-                                                                                "width:380px;
-                                                                            margin-left:5px;
-                                                                            margin-top:-30px;"
-                                                                        label="강의코드"
-                                                                        :error-messages="errors"
-                                                                        v-model="newClass.newId"
-                                                                ></v-text-field>
-                                                            </validation-provider>
-                                                        </v-col>
-                                                        <span style="margin-left: 3px;">
-                                                            <v-col
-                                                                    style="width:191px; margin-top:-20px;"
-                                                                    class="calendar-float"
-                                                            >
-                                                                <v-dialog
-                                                                        v-model="StartDateMenu"
-                                                                        width="290px"
-                                                                >
-                                                                    <template v-slot:activator="{ on, attrs }">
-                                                                    <v-text-field
-                                                                            v-model="newClass.newStartDate"
-                                                                            label="StartDate"
-                                                                            prepend-icon="mdi-calendar"
-                                                                            readonly
-                                                                            v-bind="attrs"
-                                                                            v-on="on"
-                                                                    ></v-text-field>
-                                                                    </template>
-                                                                    <v-date-picker
-                                                                            v-model="newClass.newStartDate"
-                                                                            :min="new Date().toISOString().substr(0, 10)"
-                                                                            @input="StartDateMenu = false"
-                                                                    ></v-date-picker>
-                                                                </v-dialog>
-                                                            </v-col>
-                                                            <v-icon class="calendar-float"
-                                                                    style="margin-top:10px;">mdi-arrow-right-bold</v-icon>
-                                                            <v-col
-                                                                    class="calendar-float"
-                                                                    style="width:191px; margin-top:-20px;"
-                                                            >
-                                                                <v-dialog
-                                                                        v-model="EndDateMenu"
-                                                                        width="290px"
-                                                                >
-                                                                    <template v-slot:activator="{ on, attrs }">
-                                                                    <v-text-field
-                                                                            v-model="newClass.newEndDate"
-                                                                            label="EndDate"
-                                                                            readonly
-                                                                            v-bind="attrs"
-                                                                            v-on="on"
-                                                                    ></v-text-field>
-                                                                    </template>
-                                                                    <v-date-picker
-                                                                            v-model="newClass.newEndDate"
-                                                                            :min="newClass.newStartDate"
-                                                                            @input="EndDateMenu = false"
-                                                                    ></v-date-picker>
-                                                                </v-dialog>
-                                                            </v-col>
-                                                        </span>
-                                                        <div class="clearfix"
-                                                             style="margin-left: 15px; margin-top:-20px;">
-                                                            <v-checkbox
-                                                                    class="new-class-check"
-                                                                    v-model="newClass.setRecommendClass"
-                                                                    label="추천 강의">
-                                                            </v-checkbox>
-                                                            <v-checkbox
-                                                                    class="new-class-check"
-                                                                    v-model="newClass.setFreeClass"
-                                                                    :disabled="newClass.setEnterpriseClass"
-                                                                    label="공개 강의">
-                                                            </v-checkbox>
-                                                            <v-checkbox
-                                                                    class="new-class-check"
-                                                                    v-model="newClass.setPaidClass"
-                                                                    :disabled="newClass.setEnterpriseClass"
-                                                                    label="유료 강의">
-                                                            </v-checkbox>
-                                                            <div style="position:absolute; margin-top:50px; width:400px;">
-                                                                <v-checkbox
-                                                                        class="new-class-check"
-                                                                        v-model="newClass.setEnterpriseClass"
-                                                                        :disabled="newClass.setFreeClass || newClass.setPaidClass"
-                                                                        label="기업 강의">
-                                                                </v-checkbox>
-                                                                <div v-if="newClass.setEnterpriseClass"
-                                                                     id="enterprise-check">
-                                                                    <div style="margin-top: 2px;">
-                                                                        <v-col>
-                                                                            <v-text-field
-                                                                                    style="width: fit-content;"
-                                                                                    label="connectionKey"
-                                                                                    v-model="newClass.selecteConnectionKey"
-                                                                            ></v-text-field>
-                                                                        </v-col>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </v-row>
-                                                </v-container>
-                                            </v-card-text>
+                                            <div>
+                                                <validation-provider
+                                                    v-slot="{ errors }"
+                                                    name="Name"
+                                                    rules="required"
+                                                >
+                                                    <v-text-field
+                                                        color="#0080FF"
+                                                        label="강의제목"
+                                                        :error-messages="errors"
+                                                        v-model="newClass.newName"
+                                                    ></v-text-field>
+                                                </validation-provider>
+                                                <validation-provider
+                                                    v-slot="{ errors }"
+                                                    name="Name"
+                                                    rules="required|alpha_dash"
+                                                >
+                                                    <v-text-field
+                                                        label="강의 코드"
+                                                        :error-messages="errors"
+                                                        v-model="newClass.newId"
+                                                    ></v-text-field>
+                                                </validation-provider>
+                                                <v-row class="ma-0 pa-0">
+                                                    <v-dialog v-model="StartDateMenu"
+                                                        width="290px"
+                                                    >
+                                                        <template v-slot:activator="{ on, attrs }">
+                                                            <v-text-field
+                                                                v-model="newClass.newStartDate"
+                                                                label="StartDate"
+                                                                readonly
+                                                                v-bind="attrs"
+                                                                v-on="on"
+                                                            ></v-text-field>
+                                                        </template>
+                                                        <v-date-picker
+                                                            v-model="newClass.newStartDate"
+                                                            :min="new Date().toISOString().substr(0, 10)"
+                                                            @input="StartDateMenu = false"
+                                                        ></v-date-picker>
+                                                    </v-dialog>
+                                                    <v-icon class="pl-4 pr-4">mdi-arrow-right-bold</v-icon>
+                                                    <v-dialog
+                                                        v-model="EndDateMenu"
+                                                        width="290px"
+                                                    >
+                                                        <template v-slot:activator="{ on, attrs }">
+                                                        <v-text-field
+                                                            v-model="newClass.newEndDate"
+                                                            label="EndDate"
+                                                            readonly
+                                                            v-bind="attrs"
+                                                            v-on="on"
+                                                        ></v-text-field>
+                                                        </template>
+                                                        <v-date-picker
+                                                            v-model="newClass.newEndDate"
+                                                            :min="newClass.newStartDate"
+                                                            @input="EndDateMenu = false"
+                                                        ></v-date-picker>
+                                                    </v-dialog>
+                                                </v-row>
+                                                <v-row class="ma-0 pa-0">
+                                                    <v-col class="pa-0">
+                                                        <v-checkbox
+                                                            class="new-class-check"
+                                                            v-model="newClass.setRecommendClass"
+                                                            label="추천 강의"
+                                                        >
+                                                        </v-checkbox>
+                                                    </v-col>    
+                                                    <v-col class="pa-0">
+                                                        <v-checkbox
+                                                            class="new-class-check"
+                                                            v-model="newClass.setFreeClass"
+                                                            :disabled="newClass.setEnterpriseClass"
+                                                            label="공개 강의"
+                                                        >
+                                                        </v-checkbox>
+                                                    </v-col>
+                                                    <v-col class="pa-0">
+                                                        <v-checkbox
+                                                            class="new-class-check"
+                                                            v-model="newClass.setPaidClass"
+                                                            :disabled="newClass.setEnterpriseClass"
+                                                            label="유료 강의"
+                                                        >
+                                                        </v-checkbox>
+                                                    </v-col>
+                                                </v-row>
+                                                <v-row class="ma-0 pa-0" align="center">
+                                                    <v-col class="pa-0">
+                                                        <v-checkbox
+                                                            class="new-class-check"
+                                                            v-model="newClass.setEnterpriseClass"
+                                                            :disabled="newClass.setFreeClass || newClass.setPaidClass"
+                                                            label="기업 강의"
+                                                        >
+                                                        </v-checkbox>
+                                                    </v-col>   
+                                                    <v-col v-if="newClass.setEnterpriseClass">
+                                                        <v-text-field
+                                                            style="width: fit-content;"
+                                                            label="connectionKey"
+                                                            v-model="newClass.selecteConnectionKey"
+                                                        ></v-text-field>
+                                                    </v-col>
+                                                </v-row>
+                                            </div>
                                         </form>
                                     </validation-observer>
-                                    <v-card-actions>
+                                    <v-row class="ma-0 pa-0">
+                                        <v-switch
+                                            v-model="newClass.active"
+                                            label="Active"
+                                        ></v-switch>
                                         <v-spacer></v-spacer>
-                                    </v-card-actions>
+                                        <v-btn
+                                            color="primary"
+                                            :disabled="invalid || isLoading"
+                                            type="submit"
+                                            @click="createNewClazz(newClass)"
+                                        >강의 생성
+                                        </v-btn>
+                                    </v-row>
                                 </v-card>
                             </v-row>
                         </div>
@@ -562,8 +568,8 @@
                             </v-col>
                         </v-row>
                     </div>
+                    </div>
                 </v-tab-item>
-
             </v-tabs>
         </div>
         <v-dialog
@@ -716,7 +722,7 @@
                 {tabName: '종료된 강의', key: 'ended'},
                 {tabName: '강의중인 클래스', key: 'lecture'},
                 {tabName: '강의 생성', key: 'add'},
-                {tabName: 'Archive', key: 'archive'},
+                {tabName: '보관소', key: 'archive'},
 
             ],
             tempSearch: '',
@@ -788,18 +794,6 @@
                     return true
                 }
                 return false
-            },
-            fillteredlabsTabLists() {
-                return this.labsTabLists
-                // if (this.email) {
-                // return this.labsTabLists
-                // } else {
-                // var array = Object.values(this.labsTabLists)
-                // array.pop()
-                // return Object.assign({}, array);
-
-                // }
-
             },
             testSearch() {
                 return this.search
@@ -1084,6 +1078,14 @@
             this.$EventBus.$emit("inSideCourse", false)
         },
         methods: {
+            fillteredlabsTabLists() {
+                // 로그인 상태가 아닐 경우, 공개 강의만 반환
+                if (!this.isLogin) {
+                    return this.labsTabLists.filter(tab => tab.key === 'free');
+                }
+                // 로그인 상태일 경우, 모든 강의 반환
+                return this.labsTabLists;
+            },
             movetoArchiveSelectedCards() {
                 var me = this
                 var deleteCnt = 0
@@ -1782,34 +1784,6 @@
 </script>
 
 <style>
-    .calendar-float {
-        float: left;
-        margin-top: 25px;
-    }
-
-    .new-class-check {
-        margin-top: -15px;
-        width: 100px;
-        height: 50px;
-    }
-
-    .new-class-check:nth-child(2), .new-class-check:nth-child(3) {
-        margin-left: 45px;
-    }
-
-    .new-class-check:nth-child(1), .new-class-check:nth-child(2), .new-class-check:nth-child(3) {
-        float: left;
-    }
-
-    .new-class-check, #enterprise-check {
-        margin-top: 5px;
-    }
-
-    #enterprise-check {
-        margin-top: -28px;
-    }
-
-
     @media only screen and (max-width: 1150px) and (min-width: 960px) {
         #calendar-arrow-icon {
             width: 0.3% !important;

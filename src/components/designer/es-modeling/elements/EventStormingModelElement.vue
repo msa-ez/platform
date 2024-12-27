@@ -32,6 +32,10 @@ import { group } from "d3";
         },
         data() {
             return {
+                // monitoring
+                isProgress: false,
+                progressColor: '#00C853',
+                
                 panelStyle: 'width:500px;',
                 namePanel: '',
                 descriptionPanel: '',
@@ -337,6 +341,24 @@ import { group } from "d3";
                     me.tmpValue = null;
                 }
             })
+
+            // monitoring
+            me.$EventBus.$on('showProgress', (id, eventSequence, isParticular) => {
+                if(id == me.value.id) {
+                    me.isProgress = true;
+                    me.progressColor = '#43A047';
+                    me.progressEventSequence = eventSequence.toString();
+                    if (isParticular) {
+                        me.progressColor = '#00E5FF';
+                    }
+                }
+            });
+            me.$EventBus.$on('hideProgress', (id) => {
+                if(id == me.value.id) {
+                    me.isProgress = false;
+                    me.progressEventSequence = null;
+                }
+            });
 
         },
         methods: {

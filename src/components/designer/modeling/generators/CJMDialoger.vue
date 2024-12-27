@@ -1,6 +1,6 @@
 <template>
     <div style="margin-top: 10px;">        
-        <div class="auto-modeling-message-border">
+        <div>
             <v-card class="auto-modeling-message-card">
                 <v-card-text class="auto-modeling-message">
                     <vue-typed-js 
@@ -28,11 +28,24 @@
                             <v-col v-if="value.personas" v-for="(persona) in value.personas" v-bind:key="persona.name">
                                 <v-card style="text-align: center; min-width:200px; min-height:200px;"
                                     :style="state.persona == persona.persona ? 'border: solid darkturquoise;':''"
+                                    :disabled="!done"
+                                    @click="selectPersona(persona)"
                                 >
                                     <div>
                                         <div style="padding-bottom:20px;">
                                             <div>
-                                                <v-icon small v-if="!personaEditMode && selectedEditPersona != persona.scenario || selectedEditPersona != persona.scenario " style="margin: 5px; float:right;" @click="editPersona(persona)">mdi-pencil</v-icon>
+                                                <v-tooltip bottom>
+                                                    <template v-slot:activator="{ on, attrs }">
+                                                        <v-icon small v-if="!personaEditMode && selectedEditPersona != persona.scenario || selectedEditPersona != persona.scenario" 
+                                                                style="margin: 5px; float:right;" 
+                                                                @click="editPersona(persona)"
+                                                                v-bind="attrs"
+                                                                v-on="on">
+                                                            mdi-pencil
+                                                        </v-icon>
+                                                    </template>
+                                                    <span>{{ $t('autoModeling.editPersona') }}</span>
+                                                </v-tooltip>
                                                 <v-icon small v-if="personaEditMode && selectedEditPersona === persona.scenario" style="margin: 5px; float:right;" @click="savePersona()">mdi-content-save</v-icon>
                                             </div>
                                             <v-card-title v-if="selectedEditPersona === persona.scenario">
@@ -59,6 +72,7 @@
                                                 class="ms-2"
                                                 variant="outlined"
                                                 size="small"
+                                                color="primary"
                                                 @click="selectPersona(persona)"
                                                 style="position: absolute; right:10px; bottom:10px;"
                                             >

@@ -21,12 +21,14 @@ class GlobalPromptUtil {
 
     /**
      * Markdown 형식의 JSON 문자열을 적합한 JSON 형식으로 반환
+     * 일부 불완전한 경우에도 최대한 다양한 경우를 고려해서 파싱을 시도함
      * @example
      * GlobalPromptUtil.parseToJson(aiTextResult)
      * @returns 적합한 JSON 형식으로 변환된 객체
      */
     static parseToJson(aiTextResult){
         let aiTextToParse = ""
+
 
         if(aiTextResult.includes("```")) {
             aiTextResult = aiTextResult.replace(/\`\`\`json/g, "```")
@@ -35,7 +37,26 @@ class GlobalPromptUtil {
         } else
             aiTextToParse = aiTextResult.trim()
 
-        return JSON.parse(aiTextToParse)
+
+        let parseStrategies = [
+            (text) => JSON.parse(text),
+            (text) => JSON.parse(text + "}"),
+            (text) => JSON.parse("{" + text),
+            (text) => JSON.parse("{" + text + "}"),
+            (text) => JSON.parse(text.replace(/'/g, '"')),
+            (text) => JSON.parse(text.replace(/\n/g, '')),
+            (text) => JSON.parse(text.replace(/,\s*}/g, '}')),
+        ]
+
+        for(let strategy of parseStrategies) {
+            try {
+                return strategy(aiTextToParse)
+            } catch(e) {
+                continue
+            }
+        }
+
+        throw new Error(`[!] JSON 파싱 중에 오류 발생!`, {aiTextToParse})
     }
 
     /**

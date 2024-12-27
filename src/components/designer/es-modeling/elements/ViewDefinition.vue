@@ -113,7 +113,7 @@
                 ></text-element>
 
                 <text-element
-                        v-else-if="value.dataProjection == 'cqrs' && getFieldDescriptors"
+                        v-else-if="(value.dataProjection == 'cqrs' || value.dataProjection == 'query-for-multiple-aggregate') && getFieldDescriptors"
                         :sub-width="'100%'"
                         :sub-height="subjectHeight"
                         :sub-top="subjectTop"
@@ -124,7 +124,18 @@
 
                 <text-element
                         class="discStyle"
-                        v-if="getFieldDescriptors && value.dataProjection == 'cqrs'"
+                        v-if="getFieldDescriptors && (value.dataProjection == 'cqrs' || value.dataProjection == 'query-for-multiple-aggregate')"
+                        :sub-width="'120%'"
+                        :sub-height="detailHeight"
+                        :sub-top="detailTop"
+                        :sub-left="detailLeft"
+                        :subStyle="{'font-size': '12px', 'text-anchor':'start'}"
+                        :text="getFieldDescriptors"
+                ></text-element>
+
+                <text-element
+                        class="discStyle"
+                        v-if="getFieldDescriptors && value.dataProjection == 'query-for-multiple-aggregate'"
                         :sub-width="'120%'"
                         :sub-height="detailHeight"
                         :sub-top="detailTop"
@@ -575,7 +586,6 @@
 
 <style scoped lang="scss" rel="stylesheet/scss">
     .cqrs-add-btn {
-        margin:5px 30px 50px 0;
         color: #757575;
     }
 </style>

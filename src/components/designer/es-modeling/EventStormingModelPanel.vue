@@ -60,9 +60,15 @@
                 relatedUrlDialog: false,
                 relatedUrl: null,
                 openExample: false,
+
+                
+                isDesignLevelVisible: false,
             }
         },
-        created() {},
+        created() {
+            const storedValue = localStorage.getItem('isDesignLevelVisible');
+            this.isDesignLevelVisible = storedValue ? JSON.parse(storedValue) : false;
+        },
         computed: {
             isOpenAPIPBC(){
                 if(!this.isPBCModel) return false
@@ -147,6 +153,10 @@
             // }
         },
         methods: {
+            toggleDesignLevel() {
+                this.isDesignLevelVisible = !this.isDesignLevelVisible;
+                localStorage.setItem('isDesignLevelVisible', JSON.stringify(this.isDesignLevelVisible));
+            },
             setElementCanvas(){
                 var me = this
                 me.canvas = getParent(me.$parent, "event-storming-model-canvas");
@@ -221,6 +231,9 @@
                                 if(relations[ele].sourceElement.id && relations[ele].sourceElement.id == me.value.id){
                                     sourceElements = relations[ele].sourceElement
                                     targetElements = relations[ele].sourceElement
+                                } else {
+                                    sourceElements = true
+                                    targetElements = true
                                 }
                             }
                         })
