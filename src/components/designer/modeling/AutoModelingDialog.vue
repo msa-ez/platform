@@ -528,12 +528,15 @@
 
                 let validate = await me.validateStorageCondition(me.storageCondition, 'save');
                 if(validate) {
-                    var originProjectId = me.projectId
                     var settingProjectId = me.storageCondition.projectId.replaceAll(' ', '-').trim();
+                    let originSetProjectId = JSON.parse(JSON.stringify(settingProjectId))
+                    if(me.userInfo.providerUid){
+                        settingProjectId = `${me.userInfo.providerUid}_${me.storageCondition.type}_${settingProjectId}`
+                    }
 
                     me.projectInfo.author = me.userInfo.uid
                     me.projectInfo.authorEmail = me.userInfo.email
-                    me.projectInfo.projectId =settingProjectId
+                    me.projectInfo.projectId = settingProjectId
                     me.projectInfo.projectName = me.storageCondition.projectName ? me.storageCondition.projectName : me.projectInfo.prompt;
                     me.projectInfo.prompt =  me.projectInfo.prompt ? me.projectInfo.prompt : me.projectInfo.projectName
                     me.projectInfo.type = me.storageCondition.type;
@@ -542,8 +545,12 @@
 
                     await me.putObject(`db://definitions/${settingProjectId}/information`, me.projectInfo)
                     me.isServer = true;
-                    me.$router.push({path: `/${me.projectInfo.type}/${settingProjectId}`});
-                    me.$emit('forceUpdateKey')
+                    
+                    let path = me.userInfo.providerUid ? `/${me.userInfo.providerUid}/${me.storageCondition.type}/${originSetProjectId}` : `/${me.projectInfo.type}/${settingProjectId}`
+                    me.$router.push({path: path});
+                    setTimeout(function () {
+                        me.$emit('forceUpdateKey')
+                    }, 300)
                 } else{
                     me.storageCondition.loading = false
                 }

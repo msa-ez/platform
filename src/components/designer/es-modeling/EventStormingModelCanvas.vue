@@ -216,13 +216,8 @@
                                     </div>
 
                                     <!-- PBC Element -->
-                                    <div
-                                            v-if="filteredPBCValue.elements &&typeof filteredPBCValue.elements == 'object'"
-                                    >
-                                        <div
-                                                v-for="elementId in Object.keys(filteredPBCValue.elements)"
-                                                :key="elementId"
-                                        >
+                                    <div v-if="filteredPBCValue.elements &&typeof filteredPBCValue.elements == 'object'">
+                                        <div v-for="elementId in Object.keys(filteredPBCValue.elements)" :key="elementId">
                                             <component
                                                     v-if="elementId &&filteredPBCValue.elements[elementId]"
                                                     :is="getComponentByClassName(filteredPBCValue.elements[elementId]._type)"
@@ -232,13 +227,8 @@
                                             ></component>
                                         </div>
                                     </div>
-                                    <div
-                                            v-if="filteredPBCValue.relations && typeof filteredPBCValue.relations == 'object'"
-                                    >
-                                        <div
-                                                v-for="relationId in Object.keys(filteredPBCValue.relations)"
-                                                :key="relationId"
-                                        >
+                                    <div v-if="filteredPBCValue.relations && typeof filteredPBCValue.relations == 'object'">
+                                        <div v-for="relationId in Object.keys(filteredPBCValue.relations)" :key="relationId">
                                             <component
                                                     v-if="relationId &&filteredPBCValue.relations[relationId]"
                                                     :is="getComponentByClassName(filteredPBCValue.relations[relationId]._type)"
@@ -5241,9 +5231,7 @@
                             values.relations = projectValue.relations;
                         }
 
-                        Object.values(values.relations).forEach(function (
-                            relation
-                        ) {
+                        Object.values(values.relations).forEach(function (relation) {
                             if (relation) {
                                 var copyRe = JSON.parse(JSON.stringify(relation));
                                 copyRe.isPBCModel = true;

@@ -257,140 +257,167 @@
             },
             deletePBCModeling(pbcId){
                 var me = this
-                if(
-                    me.canvas
-                    && me.canvas.pbcValue
-                ) {
-                    var pbcElements = me.canvas.pbcValue.elements
-                    var pbcRelations = me.canvas.pbcValue.relations
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if( me.canvas && me.canvas.pbcValue ) {
+                            var pbcElements = me.canvas.pbcValue.elements
+                            var pbcRelations = me.canvas.pbcValue.relations
 
-                    //remove
-                    if (Object.keys(pbcElements).length > 0) {
-                        var removeKeyArray = Object.keys(pbcElements).filter(key => pbcElements[key] && pbcElements[key].pbcId == pbcId)
-                        if (removeKeyArray.length > 0) {
-                            removeKeyArray.forEach(function (elementKey) {
-                                pbcElements[elementKey] = null;
-                                // delete me.canvas.pbcValue.elements[elementKey];
-                            })
+                            //remove
+                            if (Object.keys(pbcElements).length > 0) {
+                                var removeKeyArray = Object.keys(pbcElements).filter(key => pbcElements[key] && pbcElements[key].pbcId == pbcId)
+                                if (removeKeyArray.length > 0) {
+                                    removeKeyArray.forEach(function (elementKey) {
+                                        pbcElements[elementKey] = null;
+                                        // delete me.canvas.pbcValue.elements[elementKey];
+                                    })
+                                }
+                            }
+                            if (Object.keys(pbcRelations).length > 0) {
+                                var removeKeyArray = Object.keys(pbcRelations).filter(key => pbcRelations[key] && pbcRelations[key].pbcId == pbcId)
+                                if (removeKeyArray.length > 0) {
+                                    removeKeyArray.forEach(function (elementKey) {
+                                        pbcRelations[elementKey] = null;
+                                        // delete me.canvas.pbcValue.relations[elementKey];
+                                    })
+                                }
+                            }
                         }
                     }
-                    if (Object.keys(pbcRelations).length > 0) {
-                        var removeKeyArray = Object.keys(pbcRelations).filter(key => pbcRelations[key] && pbcRelations[key].pbcId == pbcId)
-                        if (removeKeyArray.length > 0) {
-                            removeKeyArray.forEach(function (elementKey) {
-                                pbcRelations[elementKey] = null;
-                                // delete me.canvas.pbcValue.relations[elementKey];
-                            })
-                        }
-                    }
-                }
+                })
             },
             drawPBCModeling(){
                 var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if( me.canvas && me.canvas.pbcValue ){
+                            var pbcId = me.value.elementView.id
+                            var pbcElements = me.canvas.pbcValue.elements
+                            var pbcRelations = me.canvas.pbcValue.relations
+                            let pbcX = me.value.elementView.x;
+                            let pbcY = me.value.elementView.y;
+                            let pbcWidth = me.value.elementView.width;
+                            let pbcHeight = me.value.elementView.height;
+                            let currentValue = me.propertyPanel ? me.panelValue : me.value
+                            currentValue = JSON.parse(JSON.stringify(currentValue));
 
-                try {
-                    if(
-                        me.canvas
-                        && me.canvas.pbcValue
-                    ){
-                        var pbcId = me.value.elementView.id
-                        var pbcElements = me.canvas.pbcValue.elements
-                        var pbcRelations = me.canvas.pbcValue.relations
-                        let pbcX = me.value.elementView.x;
-                        let pbcY = me.value.elementView.y;
-                        let pbcWidth = me.value.elementView.width;
-                        let pbcHeight = me.value.elementView.height;
-                        let currentValue = me.propertyPanel ? me.panelValue : me.value
-                        currentValue = JSON.parse(JSON.stringify(currentValue));
+                            me.deletePBCModeling(pbcId);
 
-                        me.deletePBCModeling(pbcId);
+                            if(currentValue){
+                                var element = currentValue;
+                                var pbcTopY = pbcY - pbcHeight/2
+                                let leftSideElement = [];
+                                let rightSideElement = [];
 
-                        if(currentValue){
-                            var element = currentValue;
-                            var pbcTopY = pbcY - pbcHeight/2
-                            let leftSideElement = [];
-                            let rightSideElement = [];
+                                // Left Side (commands, views)
+                                leftSideElement = leftSideElement.concat(element.commands, element.views)
+                                leftSideElement = leftSideElement.filter(ele => ele && (!ele.visibility || ele.visibility == 'public'))
+                                if(leftSideElement.length > 0) {
+                                    let leftElementLen = leftSideElement.length;
+                                    let leftElementH = (pbcHeight/leftElementLen) - 5 ;
+                                    leftElementH = leftElementH > 100 ? 100 : leftElementH
+                                    var yDistance = (pbcHeight - leftElementH*leftElementLen)/(leftElementLen+1);
 
+                                    leftSideElement.forEach(function(item, idx) {
+                                        item.pbcId = pbcId
+                                        item.elementView.x = pbcX - pbcWidth/4
+                                        item.elementView.y = pbcTopY + (leftElementH/2) + yDistance*(idx+1) + (leftElementH * idx)
+                                        item.elementView.height = leftElementH;
+                                        me.$set(pbcElements, item.elementView.id, item)
 
-                            leftSideElement = leftSideElement.concat(element.commands, element.views)
-                            // leftSideElement = leftSideElement.concat(element.commands)
-                            leftSideElement = leftSideElement.filter(ele => ele && (!ele.visibility || ele.visibility == 'public'))
-                            if(leftSideElement.length > 0) {
-                                let leftElementLen = leftSideElement.length;
-                                let leftElementH = (pbcHeight/leftElementLen) - 5 ;
-                                leftElementH = leftElementH > 100 ? 100 : leftElementH
-                                var yDistance = (pbcHeight - leftElementH*leftElementLen)/(leftElementLen+1);
+                                        if(item.aggregate && Object.keys(item.aggregate).length > 0){
+                                            item.aggregate = JSON.parse(JSON.stringify(me.value.aggregates.find(agg => agg.id == item.aggregate.id)))
+                                            item.aggregate.pbcId = pbcId
+                                            item.aggregate.elementView.id = item.aggregate.id ? item.aggregate.id + idx : item.aggregate.elementView.id + idx
+                                            item.aggregate.elementView.x = item.elementView.x + item.elementView.width
+                                            item.aggregate.elementView.y = item.elementView.y
+                                            item.aggregate.elementView.height = item.elementView.height
+                                            me.$set(pbcElements, item.aggregate.elementView.id, item.aggregate)
 
-                                leftSideElement.forEach(function(item, idx) {
-                                    item.pbcId = pbcId
-                                    item.elementView.x = pbcX - pbcWidth/4
-                                    item.elementView.y = pbcTopY + (leftElementH/2) + yDistance*(idx+1) + (leftElementH * idx)
-                                    item.elementView.height = leftElementH;
-                                    me.$set(pbcElements, item.elementView.id, item)
+                                            // let findAggreate = me.value.aggregates.find(agg => agg.id == item.aggregate.id)
+                                            // if(findAggreate){
+                                            //     findAggreate.pbcId = pbcId
+                                            //     findAggreate.elementView.id = findAggreate.id ? findAggreate.id + idx : findAggreate.elementView.id + idx
+                                            //     findAggreate.elementView.x = item.elementView.x + item.elementView.width
+                                            //     findAggreate.elementView.y = item.elementView.y
+                                            //     findAggreate.elementView.height = item.elementView.height
+                                            //     me.$set(pbcElements, findAggreate.elementView.id, findAggreate)
+                                            // }
+                                        }
+                                    });
+                                }
 
-                                    if(item.aggregate && Object.keys(item.aggregate).length > 0){
-                                        console.log(item.aggregate)
-                                        item.aggregate.pbcId = pbcId
-                                        item.aggregate.elementView.id = item.aggregate.elementView.id + idx
-                                        item.aggregate.elementView.x = item.elementView.x + item.elementView.width
-                                        item.aggregate.elementView.y = item.elementView.y
-                                        item.aggregate.elementView.height = item.elementView.height
+                                // Right Side
+                                rightSideElement = rightSideElement.concat(element.events);
+                                rightSideElement = rightSideElement.filter(ele => ele && (!ele.visibility || ele.visibility == 'public'));
+                                if(rightSideElement.length > 0) {
+                                    let rightElementLen = rightSideElement.length;
+                                    let rightElementH = (pbcHeight/rightElementLen) - 5 ;
+                                    rightElementH = rightElementH > 100 ? 100 : rightElementH
+                                    var yDistance = (pbcHeight - rightElementH*rightElementLen)/(rightElementLen+1);
 
-                                        me.$set(pbcElements, item.aggregate.elementView.id, item.aggregate)
-                                    }
-
-
-                                })
+                                    rightSideElement.forEach(function(item, idx) {
+                                        item.pbcId = pbcId
+                                        item.elementView.x = pbcX + pbcWidth/4
+                                        item.elementView.y = pbcTopY + (rightElementH/2) + yDistance*(idx+1) + (rightElementH * idx)
+                                        item.elementView.height = rightElementH;
+                                        me.$set(pbcElements, item.elementView.id, item)
+                                    });
+                                }
+                                // Relations
+                                if(element.relations && element.relations.length > 0) {
+                                    let filterRelations = element.relations.filter( relation => pbcElements[relation.from] && pbcElements[relation.to]);
+                                    filterRelations.forEach(function(relation) {
+                                        if(relation) {
+                                            var vertices = JSON.parse(relation.relationView.value)
+                                            var start = vertices[0]
+                                            var end = vertices[vertices.length - 1]
+                                            var newVertices = JSON.stringify([start, end])
+                                            relation.pbcId = pbcId
+                                            // modify relation
+                                            relation.relationView.value = newVertices
+                                            relation.relationView.style = null
+                                            me.$set(pbcRelations, relation.relationView.id, relation)
+                                        }
+                                    });
+                                }
+                            } else {
+                                console.log('no element')
                             }
-
-                            rightSideElement = rightSideElement.concat(element.events);
-                            rightSideElement = rightSideElement.filter(ele => ele && (!ele.visibility || ele.visibility == 'public'));
-                            if(rightSideElement.length > 0) {
-                                let rightElementLen = rightSideElement.length;
-                                let rightElementH = (pbcHeight/rightElementLen) - 5 ;
-                                rightElementH = rightElementH > 100 ? 100 : rightElementH
-                                var yDistance = (pbcHeight - rightElementH*rightElementLen)/(rightElementLen+1);
-
-                                rightSideElement.forEach(function(item, idx) {
-                                    item.pbcId = pbcId
-                                    item.elementView.x = pbcX + pbcWidth/4
-                                    item.elementView.y = pbcTopY + (rightElementH/2) + yDistance*(idx+1) + rightElementH*idx
-                                    item.elementView.height = rightElementH;
-                                    me.$set(pbcElements, item.elementView.id, item)
-                                })
-                            }
-
-
-
-                            if(element.relations && element.relations.length > 0) {
-                                let filterRelations = element.relations.filter( relation => pbcElements[relation.from] && pbcElements[relation.to]);
-                                filterRelations.forEach(function(relation) {
-                                    if(relation) {
-                                        var vertices = JSON.parse(relation.relationView.value)
-                                        var start = vertices[0]
-                                        var end = vertices[vertices.length - 1]
-                                        var newVertices = JSON.stringify([start, end])
-                                        relation.pbcId = pbcId
-                                        // modify relation
-                                        relation.relationView.value = newVertices
-                                        relation.relationView.style = null
-                                        me.$set(pbcRelations, relation.relationView.id, relation)
-                                    }
-                                });
-                            }
+                        } else {
+                            console.log('no canvas')
                         }
                     }
-                }catch (e) {
-                    console.log(`ERROR] Draw PBC Modeling: ${e}`)
-                }
-
+                })
             },
             openProject(isOpenAPI) {
                 var me = this
                 if(isOpenAPI){
                     window.open(me.value.modelValue.openAPI, '_blank')
                 } else {
-                    window.open(`#/storming/${me.value.modelValue.projectId}`, '_blank')
+                    if(me.value.modelValue.projectId.split('_').length == 3){
+                        let info = me.value.modelValue.projectId.split('_');
+                        let userId = info[0]
+                        let type = info[1]
+                        let projectId = info[2]
+
+                        var location = 'storming'
+                        if(type == 'es') {
+                            location = 'storming'
+                        }else if (type == 'k8s') {
+                            location = 'kubernetes'
+                        } else if (type == 'bm') {
+                            location = 'business-model-canvas'
+                        } else {
+                            location = type
+                        }
+                        let path = userId ? `#/${userId}/${location}/${projectId}` : `#/${location}/${projectId}`
+                        window.open(`${path}`, '_blank')
+                    } else {
+                        window.open(`#/storming/${me.value.modelValue.projectId}`, '_blank')
+                    }
                 }
             }
         }

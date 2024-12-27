@@ -257,7 +257,7 @@
                     projectValue: versionValue
                 }
                 let copyValue = JSON.parse(JSON.stringify(me.value));
-                me.value = me.canvas.generatePBC(copyValue,obj);
+                me.value = me.canvas.generatePBC(copyValue, obj);
                 me.canvas.$refs[`${me.value.elementView.id}`][0].panelValue = me.value
                 me.loading = false
             },
