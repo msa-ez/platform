@@ -14,18 +14,19 @@
                     </v-chip>
                 </v-col>
             </v-row>
-            <v-card-text style="font-weight: 500;">
-                <v-text-field
+            <v-card-text class="pt-2 pb-2" style="font-weight: 500;">
+                <v-textarea
                     class="auto-modeling-text"
-                    style="margin-bottom: -30px;"
                     v-model="projectInfo.prompt"
                     solo
                     :placeholder="$t('autoModeling.mainClick')"
                     :label="$t('autoModeling.main1')"
                     :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-auto-fix'"
                     @click:append="openProjectDialog()"
-                    @keydown.enter="openProjectDialog()"
-                ></v-text-field>
+                    @keydown="openProjectDialogHandleKeydown"
+                    auto-grow
+                    :rows="1"
+                ></v-textarea>
             </v-card-text>
         </v-card>
 
@@ -48,19 +49,24 @@
                             </v-row>
 
                             <!-- autofocus -->
-                            <v-text-field class="auto-modeling-input"
-                                v-model="projectInfo.prompt"
-                                style="margin-bottom: -30px; padding: 10px; width: 80%; float: right; margin-top: 10px;"
-                                :style="!openAiResult && openAiResult == '' ? 'margin-top: 15px;':''"
-                                solo
-                                :hint="$t('autoModeling.mainClick')"
-                                persistent-hint
-                                :label="$t('autoModeling.main2')"
-                                :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-auto-fix'"
-                                @click:append="startGen(genType)"
-                                @keydown.enter="startGen(genType)"
-                            ></v-text-field>
-                            <div v-if="openChatUI" style="margin-left: 10px; margin-top: 100px;">
+                            <v-row class="pt-2 pb-2">
+                                <v-spacer></v-spacer>
+                                <v-textarea class="auto-modeling-input"
+                                    v-model="projectInfo.prompt"
+                                    style="padding: 10px; width: 80%;"
+                                    :style="!openAiResult && openAiResult == '' ? 'margin-top: 15px;':''"
+                                    solo
+                                    :hint="$t('autoModeling.mainClick')"
+                                    persistent-hint
+                                    :label="$t('autoModeling.main2')"
+                                    :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-auto-fix'"
+                                    @click:append="startGen(genType)"
+                                    @keydown="startGenHandleKeydown(genType)"
+                                    auto-grow
+                                    :rows="1"
+                                ></v-textarea>
+                            </v-row>
+                            <div v-if="openChatUI">
                                 <v-col style="padding:0px;">
                                     <v-card style="display:inline-block; background-color: #DAF5FF;">
                                         <v-card-text class="auto-modeling-message">
@@ -444,6 +450,18 @@
             });
         },
         methods: {
+            startGenHandleKeydown(genType) {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault(); // 기본 Enter 동작 방지
+                    this.startGen(genType) // 메서드 실행
+                }
+            },
+            openProjectDialogHandleKeydown(event) {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault(); // 기본 Enter 동작 방지
+                    this.openProjectDialog(); // 메서드 실행
+                }
+            },
             setAutoModelingText(inputAutoModelingChip) {
                 var me = this
                 me.projectInfo.prompt = inputAutoModelingChip;

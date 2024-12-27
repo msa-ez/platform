@@ -710,10 +710,7 @@ code[class*=language-]:nth-child(1) {
 
 .auto-modeling-user-story-card {
     white-space: pre !important;
-    margin: 10px !important;
     margin-bottom: -10px !important;
-    float: right !important;
-    width: 90% !important;
 }
 
 .lab-list-group-box .v-list-group__items{
