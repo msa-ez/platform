@@ -4,9 +4,9 @@
             Seperating into multiple Bounded Contexts
             <v-btn v-if="!isGenerating" text color="primary" @click="reGenerate()">Re-Generate</v-btn>
             <!-- <v-btn v-if="isGenerating" text color="primary" @click="stop()">Stop</v-btn> -->
-            <v-btn :style="{'margin-left': 'auto'}" icon @click="closeDialog()">
+            <!-- <v-btn :style="{'margin-left': 'auto'}" icon @click="closeDialog()">
                 <v-icon>mdi-close</v-icon>
-            </v-btn>
+            </v-btn> -->
         </v-card-title>
         <v-card-subtitle>
             <div class="d-flex align-center">
@@ -25,7 +25,11 @@
 
         <v-card-text v-if="Object.keys(resultDevideBoundedContext).length > 0">
             <v-tabs v-model="activeTab">
-                <v-tab v-for="(model, devisionAspect) in resultDevideBoundedContext" :key="devisionAspect">
+                <v-tab 
+                    v-for="(model, devisionAspect) in resultDevideBoundedContext" 
+                    :key="devisionAspect"
+                    :disabled="isGeneratingAspect && selectedAspect !== devisionAspect"
+                >
                     {{ devisionAspect }} Aspect
                     <v-icon v-if="selectedAspect === devisionAspect" 
                         color="primary" 
@@ -37,7 +41,10 @@
             </v-tabs>
 
             <v-tabs-items v-model="activeTab">
-                <v-tab-item v-for="(model, devisionAspect) in resultDevideBoundedContext" :key="devisionAspect">
+                <v-tab-item 
+                    v-for="(model, devisionAspect) in resultDevideBoundedContext" 
+                    :key="devisionAspect"
+                >
                     <div 
                         class="mermaid-container"
                         :class="{ 'selected': selectedAspect === devisionAspect }"
@@ -45,8 +52,8 @@
                     >
                         <vue-mermaid
                             v-if="mermaidNodes[devisionAspect]"
-                            :id="`mermaid-${devisionAspect}-${reGenerateRenderKey}`"
-                            :key="`mermaid-${devisionAspect}-${reGenerateRenderKey}`"
+                            :id="`mermaid-${devisionAspect}-${getRenderKey(devisionAspect)}`"
+                            :key="`mermaid-${devisionAspect}-${getRenderKey(devisionAspect)}`"
                             :nodes="mermaidNodes[devisionAspect]"
                             type="graph TD"
                             @nodeClick="editNode"
@@ -62,11 +69,28 @@
 
                             <v-card-title class="text-subtitle-1">Decription of each Bounded Context</v-card-title>
                             <v-data-table
-                                :items="getBoundedContextRequirements(resultDevideBoundedContext[devisionAspect])"
-                                :headers="requirementsHeaders"
+                                :items="getGroupedBoundedContextRequirements(resultDevideBoundedContext[devisionAspect])"
+                                :headers="boundedContextHeaders"
                                 class="elevation-1"
                                 :hide-default-footer="true"
-                            ></v-data-table><br><v-divider class="my-4"></v-divider>
+                                show-expand
+                                :expand-icon="expandIcon"
+                                :single-expand="false"
+                                item-key="name"
+                            >
+                                <template v-slot:expanded-item="{ headers, item }">
+                                    <td :colspan="headers.length">
+                                        <v-simple-table dense class="requirement-subtable">
+                                            <tbody>
+                                                <tr v-for="req in item.requirements" :key="req.type">
+                                                    <td class="requirement-type" width="100">{{ req.type }}</td>
+                                                    <td class="requirement-text">{{ req.text }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </v-simple-table>
+                                    </td>
+                                </template>
+                            </v-data-table><br><v-divider class="my-4"></v-divider>
 
                             <v-card-title class="text-subtitle-1">Relations</v-card-title>
                             <v-data-table 
@@ -130,8 +154,14 @@
                 selectedAspect: null,
                 selectedResultDevideBoundedContext: {},
                 isGenerating: true,
+                isGeneratingAspect: false,
                 feedback: '',
-                requirementsHeaders: [
+                expandIcon: 'mdi-chevron-down',
+                boundedContextHeaders: [
+                    { text: 'Bounded Context Name', value: 'name' },
+                    { text: '', value: 'data-table-expand' }
+                ],
+                requirementHeaders: [
                     { text: 'Bounded Context Name', value: 'name' },
                     { text: 'Requirements', value: 'requirements' }
                 ],
@@ -142,7 +172,7 @@
                     { text: 'Reason', value: 'reason' },
                     { text: 'Interaction Pattern', value: 'interactionPattern' }
                 ],
-                reGenerateRenderKey: 0
+                aspectRenderKey: {}
             }
         },
         mounted() {
@@ -152,8 +182,9 @@
                 handler(newVal, oldVal) {
                     // 새로운 aspect가 추가될 때마다 해당 aspect의 노드 생성
                     Object.keys(newVal).forEach(aspect => {
-                        if (newVal[aspect] && !this.mermaidNodes[aspect]) {
+                        if (newVal[aspect] && (this.mermaidNodes[aspect] == null || this.mermaidNodes[aspect].length == 0)) {
                             this.$set(this.mermaidNodes, aspect, this.generateNodes(newVal[aspect]));
+                            this.incrementRenderKey(aspect);
                         }
                     });
 
@@ -161,15 +192,18 @@
                         this.isGenerating = false;
                         if(this.selectedAspect && Object.keys(newVal[this.selectedAspect]).length == 0){
                             this.isGenerating = true;
-                        }else{
-                            this.$set(this.mermaidNodes, this.selectedAspect, this.generateNodes(newVal[this.selectedAspect]));
-                            this.reGenerateRenderKey++;
+                        }else if (this.selectedAspect) {
+                            // 선택된 aspect의 노드만 업데이트
+                            const updatedNodes = this.generateNodes(newVal[this.selectedAspect]);
+                            if (JSON.stringify(this.mermaidNodes[this.selectedAspect]) !== JSON.stringify(updatedNodes)) {
+                                this.$set(this.mermaidNodes, this.selectedAspect, updatedNodes);
+                                this.incrementRenderKey(this.selectedAspect);
+                            }
+                            this.isGeneratingAspect = false;
                         }
                     }else if(Object.keys(newVal).length > 0 && Object.keys(newVal).length < 5){
                         this.isGenerating = true;
                     }
-                    
-                    this.reGenerateRenderKey++;
                 },
                 deep: true
             },
@@ -192,7 +226,7 @@
                 aspectData.forEach((bc, index) => {
                     nodes.push({
                         id: `BC${index}`,
-                        text: bc.name,
+                        text: bc.alias,
                         editable: true,
                         edgeType: 'circle'
                     });
@@ -200,8 +234,8 @@
                 
                 // 관계 생성
                 relations.forEach((rel) => {
-                    const sourceIndex = aspectData.findIndex(bc => bc.name === rel.upStream);
-                    const targetIndex = aspectData.findIndex(bc => bc.name === rel.downStream);
+                    const sourceIndex = aspectData.findIndex(bc => bc.name === rel.upStream.name);
+                    const targetIndex = aspectData.findIndex(bc => bc.name === rel.downStream.name);
                     
                     if (sourceIndex !== -1 && targetIndex !== -1) {
                         // 기존 노드에 next 속성 추가
@@ -252,28 +286,66 @@
             stop(){
                 this.isGenerating = false;
                 this.mermaidNodes = {};
-                this.reGenerateRenderKey++;
+                this.incrementRenderKey('all');
                 this.$emit("stop");
             },
             reGenerate(){
                 this.isGenerating = true;
                 this.feedback = '';
                 this.mermaidNodes = {};
-                this.reGenerateRenderKey++;
+                this.incrementRenderKey('all');
                 this.$emit("reGenerate");
             },
             reGenerateAspect(aspect){
                 this.isGenerating = true;
-                this.mermaidNodes[aspect] = {};
-                this.reGenerateRenderKey++;
+                this.isGeneratingAspect = true;
+                this.mermaidNodes[aspect] = [];
+                this.incrementRenderKey(aspect);
                 this.$emit("reGenerateAspect", aspect, this.feedback);
+            },
+            getGroupedBoundedContextRequirements(aspectData) {
+                if (!aspectData || !aspectData.boundedContexts) return [];
+            
+                return aspectData.boundedContexts.map(bc => ({
+                    name: bc.alias,
+                    requirements: bc.requirements.map(req => ({
+                        type: req.type,
+                        text: req.text
+                    }))
+                }));
             },
             getBoundedContextRequirements(aspectData) {
                 if (!aspectData || !aspectData.boundedContexts) return [];
-                return aspectData.boundedContexts.map(bc => ({
-                    name: bc.name,
-                    requirements: bc.requirements
-                }));
+                return aspectData.boundedContexts.flatMap(bc => {
+                    const rows = [];
+                    bc.requirements.forEach(req => {
+                        rows.push({
+                            name: bc.alias,
+                            requirements: req.text
+                        });
+                    });
+                    return rows;
+                });
+            },
+            getRenderKey(aspect) {
+                return this.aspectRenderKey[aspect] || 0;
+            },
+            incrementRenderKey(aspect) {
+                const aspects = [
+                    'Domain',
+                    'Organizational',
+                    'Persona',
+                    'Transaction/Performance',
+                    'Infrastructure'
+                ];
+
+                if(aspect == 'all'){
+                    aspects.forEach(aspect => {
+                        this.$set(this.aspectRenderKey, aspect, (this.aspectRenderKey[aspect] || 0) + 1);
+                    });
+                }else{
+                    this.$set(this.aspectRenderKey, aspect, (this.aspectRenderKey[aspect] || 0) + 1);
+                }
             }
         }
     }
@@ -303,5 +375,18 @@
 .mermaid-container.selected {
     border-color: var(--v-primary-base);
     background-color: rgba(var(--v-primary-base), 0.05);
+}
+
+.requirement-subtable {
+    margin: 8px 16px;
+    background: transparent !important;
+}
+.requirement-type {
+    vertical-align: top;
+    padding: 12px !important;
+}
+.requirement-text {
+    padding: 12px !important;
+    white-space: normal;
 }
 </style>
