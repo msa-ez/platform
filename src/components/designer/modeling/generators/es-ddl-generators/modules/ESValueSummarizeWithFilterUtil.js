@@ -28,7 +28,7 @@ The approximate structure is as follows.
 
                         // "<propertyType>" must belong to one of the following three categories:
                         // 1. Well-known Java class names. In this case, write only the class name without the full package path. (e.g., java.lang.String > String)
-                        // 2. One of the following values: Address, Portrait, Rating, Money, Email
+                        // 2. One of the following values: Address, Photo, User, Money, Email, Payment, Weather, File, Likes, Tags, Comment
                         // 3. If there's a name defined in Enumerations or ValueObjects or Entities, It can be used as the property type.
                         // If the type is String, do not specify the type.
                         ["type": "<propertyType>"],
@@ -472,6 +472,12 @@ The approximate structure is as follows.
                         { isRestRepository: element.isRestRepository ? true : false }
                     ),
                     ...getConditionalValue(
+                        ["properties", "commands.properties"],
+                        { properties: element.fieldDescriptors ? 
+                            ESValueSummarizeWithFilterUtil._getSummarizedFieldDescriptors(element.fieldDescriptors) : [] 
+                        }
+                    ),
+                    ...getConditionalValue(
                         ["outputEvents", "commands.outputEvents"],
                         { outputEvents: getOutputEvents(element) }
                     )
@@ -535,6 +541,12 @@ The approximate structure is as follows.
                     ...getConditionalValue(
                         ["name", "events.name"],
                         { name: element.name }
+                    ),
+                    ...getConditionalValue(
+                        ["properties", "events.properties"],
+                        { properties: element.fieldDescriptors ? 
+                            ESValueSummarizeWithFilterUtil._getSummarizedFieldDescriptors(element.fieldDescriptors) : [] 
+                        }
                     ),
                     ...getConditionalValue(
                         ["outputCommands", "events.outputCommands"],

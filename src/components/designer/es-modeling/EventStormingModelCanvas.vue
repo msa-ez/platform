@@ -2043,6 +2043,7 @@
     import CreatePolicyActionsByFunctions from "../modeling/generators/es-ddl-generators/CreatePolicyActionsByFunctions";
     import GeneratorProgress from "./components/GeneratorProgress.vue"
     import PreProcessingFunctionsGenerator from "../modeling/generators/es-ddl-generators/PreProcessingFunctionsGenerator";
+    import CreateAggregateClassIdByDrafts from "../modeling/generators/es-ddl-generators/CreateAggregateClassIdByDrafts";
     import ESActionsUtil from "../modeling/generators/es-ddl-generators/modules/ESActionsUtil"
     const prettier = require("prettier");
     const plugins = require("prettier-plugin-java");
@@ -2547,10 +2548,14 @@
                         generator: null,
                         inputs: [],
                         generateIfInputsExist: () => {},
-                        initInputs: (draftOptions) => {},
-                        callbacks: {
-                            addAggregateRelation: []
-                        }
+                        initInputs: (draftOptions) => {}
+                    },
+
+                    CreateAggregateClassIdByDrafts: {
+                        generator: null,
+                        inputs: [],
+                        generateIfInputsExist: () => {},
+                        initInputs: (draftOptions) => {}
                     },
 
                     CreateCommandActionsByFunctions: {
@@ -2793,12 +2798,6 @@
                     this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
                     this.generatorProgressDto.displayMessage = returnObj.directMessage
                     this.generatorProgressDto.progress = returnObj.progress
-
-                    if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
-                        this.changedByMe = true
-                        this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
-                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
-                    }
                 },
 
                 onGenerationSucceeded: (returnObj) => {
@@ -2815,24 +2814,12 @@
                         this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
                     }
 
-                    if(returnObj.modelValue.callbacks && returnObj.modelValue.callbacks.addAggregateRelation) {
-                        this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation.push((esValue) => {
-                            returnObj.modelValue.callbacks.addAggregateRelation(esValue)
-                        })
-                    }
-
 
                     if(this.generators.CreateAggregateActionsByFunctions.generateIfInputsExist())
                         return
 
-                    if(this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation.length > 0) {
-                        this.changedByMe = true
-                        this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation.forEach(callback => callback(this.value))
-                    }
-                    this.forceRefreshCanvas()
-
-                    this.generators.CreateCommandActionsByFunctions.initInputs(this.selectedDraftOptions)
-                    if(this.generators.CreateCommandActionsByFunctions.generateIfInputsExist())
+                    this.generators.CreateAggregateClassIdByDrafts.initInputs(this.selectedDraftOptions)
+                    if(this.generators.CreateAggregateClassIdByDrafts.generateIfInputsExist())
                         return
 
 
@@ -2886,8 +2873,127 @@
                             isAccumulated: index > 0
                         })))
                 }
-                this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation = []
                 this.generators.CreateAggregateActionsByFunctions.inputs = inputs
+            }
+
+            this.generators.CreateAggregateClassIdByDrafts.generator = new CreateAggregateClassIdByDrafts({
+                input: null,
+
+                onFirstResponse: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 1,
+                            directMessage: returnObj.directMessage
+                        },
+                        actions: {
+                            stop: () => {
+                            },
+                            retry: () => {
+                            }
+                        },
+                        isGeneratorButtonEnabled: false
+                    }
+
+                    this.generatorProgressDto = {
+                        generateDone: false,
+                        displayMessage: returnObj.directMessage,
+                        progress: 0,
+                        actions: {
+                            stopGeneration: () => {
+                                returnObj.actions.stopGeneration()
+                            }
+                        }
+                    }
+                },
+
+                onModelCreated: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
+                    this.generatorProgressDto.displayMessage = returnObj.directMessage
+                    this.generatorProgressDto.progress = returnObj.progress
+
+                    if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
+                        this.changedByMe = true
+                        this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
+                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
+                    }
+                },
+
+                onGenerationSucceeded: (returnObj) => {
+                    if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
+                        this.changedByMe = true
+                        this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
+                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
+                    }
+
+
+                    if(this.generators.CreateAggregateClassIdByDrafts.generateIfInputsExist())
+                        return
+
+                    this.generators.CreateCommandActionsByFunctions.initInputs(this.selectedDraftOptions)
+                    if(this.generators.CreateCommandActionsByFunctions.generateIfInputsExist())
+                        return
+
+
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onRetry: (returnObj) => {
+                    alert(`[!] An error occurred during aggregate creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: true,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onStopped: () => {
+                    this.generatorProgressDto.generateDone = true
+                }
+            })
+            this.generators.CreateAggregateClassIdByDrafts.generateIfInputsExist = () => {
+                if(this.generators.CreateAggregateClassIdByDrafts.inputs.length > 0) {
+                    this.generators.CreateAggregateClassIdByDrafts.generator.client.input = this.generators.CreateAggregateClassIdByDrafts.inputs.shift()
+                    this.generators.CreateAggregateClassIdByDrafts.generator.generate()
+                    return true
+                }
+                return false
+            }
+            this.generators.CreateAggregateClassIdByDrafts.initInputs = (draftOptions) => {
+                let draftOptionStructure = {}
+                for(const boundedContextId of Object.keys(draftOptions)) {
+                    draftOptionStructure[boundedContextId] = draftOptions[boundedContextId].structure
+                }
+
+                const hasReferencedAggregate = Object.values(draftOptionStructure).some(structures => 
+                    structures.some(structure =>
+                        structure.valueObjects.some(vo => 'referencedAggregate' in vo)
+                    )
+                )
+
+                if (hasReferencedAggregate) {
+                    this.generators.CreateAggregateClassIdByDrafts.inputs = [
+                        {
+                            draftOption: draftOptionStructure,
+                            esValue: this.value,
+                            userInfo: this.userInfo,
+                            information: this.information
+                        }
+                    ]
+                }
             }
 
             this.generators.CreateCommandActionsByFunctions.generator = new CreateCommandActionsByFunctions({

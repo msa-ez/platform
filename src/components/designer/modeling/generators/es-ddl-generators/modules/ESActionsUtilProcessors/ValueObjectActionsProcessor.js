@@ -103,8 +103,10 @@ class ValueObjectActionsProcessor {
                 "name": property.name,
                 "nameCamelCase": changeCase.camelCase(property.name),
                 "namePascalCase": changeCase.pascalCase(property.name),
-                "_type": "org.uengine.model.FieldDescriptor",
-                "referenceClass": property.referenceClass ? property.referenceClass : null
+                "displayName": property.displayName ? property.displayName : "",
+                "referenceClass": property.referenceClass ? property.referenceClass : null,
+                "isOverrideField": property.isOverrideField ? true : false,
+                "_type": "org.uengine.model.FieldDescriptor"
             }
         })
     }

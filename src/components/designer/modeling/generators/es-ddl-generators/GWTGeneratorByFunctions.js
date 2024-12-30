@@ -488,6 +488,8 @@ Please follow these rules:
 
     onCreateModelFinished(returnObj) {
         const result = returnObj.modelValue.aiOutput.result
+        if(this.client.input.targetCommandAliases.length !== result.length)
+            throw new Error("The number of target command IDs and the number of GWT scenarios do not match.")
 
         let commandsToReplace = []
         for(const scenario of Object.values(result)){
@@ -498,10 +500,12 @@ Please follow these rules:
             if(!targetCommand) continue
             targetCommand = JSON.parse(JSON.stringify(targetCommand))
 
+            if(!scenario.gwts || scenario.gwts.length === 0) continue
             targetCommand.examples = this._getExamples(scenario.gwts)
             commandsToReplace.push(targetCommand)
         }
         returnObj.modelValue.commandsToReplace = commandsToReplace
+        console.log("[*] commandsToReplace", JSON.parse(JSON.stringify(commandsToReplace)))
 
 
         returnObj.directMessage = `Generating GWTs for ${this.client.input.targetAggregateNames.join(", ")} Aggregates... (${returnObj.modelRawValue.length} characters generated)`

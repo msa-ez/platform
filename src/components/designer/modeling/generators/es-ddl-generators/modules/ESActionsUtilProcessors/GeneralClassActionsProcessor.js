@@ -110,7 +110,7 @@ class GeneralClassActionsProcessor {
                 "isVO": false,
                 "isLob": false,
                 "isCorrelationKey": false,
-                "label": "- " + property.name + ": " + (property.type ? property.type : "String")
+                "displayName": property.displayName ? property.displayName : ""
             }
         })
     }
