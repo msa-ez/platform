@@ -1054,7 +1054,8 @@ Best Practices:
                     action.ids = {
                         boundedContextId: targetBoundedContext.id,
                         ...action.ids
-                    }                            
+                    }
+                    action.args.isRestRepository = false
                     break
 
                 case "Event":
