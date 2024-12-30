@@ -13,7 +13,7 @@
         </v-tabs>
         <v-tabs-items v-model="tab">
             <v-tab-item key="mainIamge">
-                <div class="auto-modeling-message-border">
+                <div>
                     <v-row style="margin-top:0px; margin-left: 0px;">
                         <v-card class="auto-modeling-message-card"
                                     style="margin-top:10px; margin-bottom: 10px;">
@@ -91,7 +91,7 @@
                 </v-tabs>
                 <v-tabs-items v-model="paletteTab">
                     <v-tab-item key="AI color Palettes">
-                        <div class="auto-modeling-message-border">
+                        <div>
                             <v-card class="auto-modeling-message-card"
                                         style="margin-top:10px;">
                                 <v-card-text class="auto-modeling-message">
@@ -293,7 +293,7 @@
                 </v-tabs-items>
             </v-tab-item>
             <v-tab-item key="fonts">
-                <div class="auto-modeling-message-border">
+                <div>
                     <v-card class="auto-modeling-message-card"
                                 style="margin-top:10px;">
                         <v-card-text class="auto-modeling-message">
@@ -344,7 +344,7 @@
             </v-tab-item>
 
             <v-tab-item key="menuImages" v-if="cachedModels.ESGenerator">
-                <div class="auto-modeling-message-border" v-for="(aggregate, key) in aggregates" :key="aggregate.name">
+                <div v-for="(aggregate, key) in aggregates" :key="aggregate.name">
                     <v-row style="position: relative; right: -8%; margin-bottom: 0px;">
                         <v-card class="auto-modeling-user-story-card" style="bottom: 10px; top: -5px;">
                             <v-card-subtitle>Image description for {{aggregate.name}}</v-card-subtitle>
@@ -394,7 +394,7 @@
             </v-tab-item>
 
             <v-tab-item key="menuUiStyles" v-if="cachedModels.ESGenerator">
-                <div class="auto-modeling-message-border" v-for="(aggregate, key) in aggregates" :key="aggregate.name">
+                <div v-for="(aggregate, key) in aggregates" :key="aggregate.name">
                     <v-row style="position: relative; right: -8%; margin-bottom: 0px;">
                         <v-card class="auto-modeling-user-story-card" style="bottom: 10px; top: -5px;">
                             <v-card-subtitle>UI Style for {{aggregate.name}}</v-card-subtitle>

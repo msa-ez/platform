@@ -1,6 +1,6 @@
 <template>
     <div style="margin-top: 10px;">
-        <div class="auto-modeling-message-border">
+        <div>
             <v-col class="auto-modeling-message-box">
                 <v-card class="auto-modeling-message-card">
                     <v-card-text class="auto-modeling-message">
@@ -31,7 +31,7 @@
             </v-col>
         </div>
         <div style="display: flex; flex-direction: column;">
-            <v-card v-if="!state.secondMessageIsTyping" class="auto-modeling-user-story-card">
+            <v-card v-if="!state.secondMessageIsTyping">
                 <v-card-subtitle>{{$t('autoModeling.explanation')}}</v-card-subtitle>
                 <v-card-text class="auto-modling-textarea">
                     <v-textarea 
