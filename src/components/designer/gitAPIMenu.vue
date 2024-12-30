@@ -2026,17 +2026,22 @@
                 var me = this
                 let copyValue
                 if(paramKeys == "gitRepo_link"){
-                    copyValue = document.querySelector("#copy-gitRepo-link")
+                    copyValue = document.querySelector("#copy-gitRepo-link").value
                 } else if(paramKeys == "gitMerge_Command"){
-                    copyValue = document.querySelector("#copy-gitMerge-command")
+                    copyValue = document.querySelector("#copy-gitMerge-command").value
                 } else if(paramKeys == "gitpod_url"){
-                    copyValue = document.querySelector("#copy-gitpod-url")
+                    copyValue = document.querySelector("#copy-gitpod-url").value
                 } else if(paramKeys == "gitClone_Command"){
-                    copyValue = document.querySelector("#copy-gitClone-command")
+                    copyValue = document.querySelector("#copy-gitClone-command").value
                 } 
-                document.body.appendChild(copyValue);
-                copyValue.select();
+
+                const tempInput = document.createElement('textarea');
+                tempInput.value = copyValue;
+                document.body.appendChild(tempInput);
+                tempInput.select();
                 var successful = document.execCommand('copy');
+                document.body.removeChild(tempInput);
+
                 if(successful) {
                     me.isCopied = paramKeys
                     setTimeout(() => {

@@ -4,6 +4,36 @@
     "showBeta": "Show Beta",
     "hideBeta": "Hide Beta"
   },
+  "ESDialoger" : {
+    "tryAgain": "Try Again",
+    "createBoundedContext": "Create Bounded Context"
+  },
+  "DevideBoundedContextDialog" : {
+    "boundedContextDivisionResult": "Seperating into multiple Bounded Contexts",
+    "aspectsOfBoundedContexts": "Key Aspects of Bounded Context",
+    "domainAspect": "Domain",
+    "organizationalAspect": "Organizational", 
+    "personaAspect": "Persona",
+    "transactionPerformanceAspect": "Transaction/Performance",
+    "infrastructureAspect": "Infrastructure",
+    "lodingMessage": "Bounded Contexts generating...",
+    "reasonOfSeparation": "Reason of Separation",
+    "aspect": "Aspect",
+    "reGenerate": "Regenerate",
+    "stop": "Stop", 
+    "analysis": "Analysis",
+    "feedback": "Feedback",
+    "createModel": "Create Model",
+    "descriptionOfEachBoundedContext": "Description of Each Bounded Context",
+    "relations": "Relations",
+    "boundedContextName": "Bounded Context Name",
+    "requirements": "Requirements",
+    "sourceContext": "Source Context",
+    "targetContext": "Target Context",
+    "relationType": "Relation Type", 
+    "reason": "Reason",
+    "interactionPattern": "Interaction Pattern"
+  },
   "ViewDefinitionPanel" : {
     "CQRSDetailTitle" : "In the CQRS pattern, the \"CREATE\" configuration of the Read Model is responsible for storing data in a queryable format when events occur.",
     "CQRSDetailSubTitle1" : "CREATE WHEN: Creates a Read Model when specific events occur. For example, when a new order is created, its information is stored in the Read Model.",

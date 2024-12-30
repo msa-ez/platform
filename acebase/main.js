@@ -10,6 +10,7 @@ const dbname = process.env.DB_NAME ? process.env.DB_NAME : "mydb"; // DB Name
 const dbport = process.env.DB_PORT ? process.env.DB_PORT : 5757; // DB PORT
 const https = process.env.DB_HTTPS ? process.env.DB_HTTPS : false; // DB PORT
 const provider = process.env.PROVIDER ? process.env.PROVIDER : "github"; // DB PORT
+const protocol = process.env.PROTOCOL ? process.env.PROTOCOL : "http"; // DB PORT
 const gitlab = process.env.GITLAB ? process.env.GITLAB : null; // DB PORT
 const server = new AceBaseServer(dbname, {
     host: "0.0.0.0",
@@ -57,7 +58,8 @@ server.configAuthProvider("gitea", {
     client_secret: client_secret,
     scopes: gitea_scope,
     state: "devopssystem",
-    host: gitlab
+    host: gitlab,
+    protocol: protocol
 })
 
 server.on("ready", () => {

@@ -63,6 +63,7 @@ import { group } from "d3";
                 ESE_API_PATH_ERROR: 5,
                 ESE_DUPLICATE_METHOD: 6,
                 ESE_MIS_MATCH: 7,
+                ESE_NOT_CORRELATION_KEY: 8,
                 validationCodeLists: {
                     0: {
                         'level': 'error',
@@ -95,6 +96,10 @@ import { group } from "d3";
                     7: {
                         'level': 'warning',
                         'msg': 'Match with the attributes registered in the Aggregate.'
+                    },
+                    8: {
+                        'level': 'warning',
+                        'msg': 'Event correlationKey is not set.'
                     }
                 },
                 /////////////////////////////////

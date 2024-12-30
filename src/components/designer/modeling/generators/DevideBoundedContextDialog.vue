@@ -1,8 +1,7 @@
 <template>
     <v-card :key="Object.keys(resultDevideBoundedContext).length">
         <v-card-title>
-            Seperating into multiple Bounded Contexts
-            <v-btn v-if="!isGenerating" text color="primary" @click="reGenerate()">Re-Generate</v-btn>
+            {{ $t('DevideBoundedContextDialog.boundedContextDivisionResult') }}
             <!-- <v-btn v-if="isGenerating" text color="primary" @click="stop()">Stop</v-btn> -->
             <!-- <v-btn :style="{'margin-left': 'auto'}" icon @click="closeDialog()">
                 <v-icon>mdi-close</v-icon>
@@ -11,7 +10,7 @@
         <v-card-subtitle>
             <div class="d-flex align-center">
                 <div v-if="isGenerating && Object.keys(resultDevideBoundedContext).length < 5">
-                    <p class="mb-0">Bounded Contexts generating... ({{ Object.keys(resultDevideBoundedContext).length / 5 * 100 }}%)</p>
+                    <p class="mb-0">{{ $t('DevideBoundedContextDialog.lodingMessage') }} ({{ Object.keys(resultDevideBoundedContext).length / 5 * 100 }}%)</p>
                 </div>
                 <v-progress-circular
                     v-if="isGenerating"
@@ -30,7 +29,7 @@
                     :key="devisionAspect"
                     :disabled="isGeneratingAspect && selectedAspect !== devisionAspect"
                 >
-                    {{ devisionAspect }} Aspect
+                    {{ devisionAspect }} {{ $t('DevideBoundedContextDialog.aspect') }}
                     <v-icon v-if="selectedAspect === devisionAspect" 
                         color="primary" 
                         small 
@@ -60,14 +59,12 @@
                             :config="config"
                         ></vue-mermaid>
                         
-                        <v-card-title class="text-h6">Analysis</v-card-title>
-                        <v-card class="pa-4">
-                            <v-card-title class="text-subtitle-1">Reason of separation</v-card-title>
-                            <v-card-text>
-                                {{ resultDevideBoundedContext[devisionAspect].thoughts }}
-                            </v-card-text><v-divider class="my-4"></v-divider>
+                        <!-- <v-card-title class="text-h6">{{ devisionAspect }} {{ $t('DevideBoundedContextDialog.analysis') }}</v-card-title> -->
+                        <div>
+                            <v-card-title class="text-subtitle-1 pa-0 pb-4">{{ $t('DevideBoundedContextDialog.reasonOfSeparation') }}</v-card-title>
+                            <v-card-text class="pa-0 pb-4" align="left">{{ resultDevideBoundedContext[devisionAspect].thoughts }}</v-card-text>
 
-                            <v-card-title class="text-subtitle-1">Decription of each Bounded Context</v-card-title>
+                            <v-card-title class="text-subtitle-1">{{ $t('DevideBoundedContextDialog.descriptionOfEachBoundedContext') }}</v-card-title>
                             <v-data-table
                                 :items="getGroupedBoundedContextRequirements(resultDevideBoundedContext[devisionAspect])"
                                 :headers="boundedContextHeaders"
@@ -92,34 +89,45 @@
                                 </template>
                             </v-data-table><br><v-divider class="my-4"></v-divider>
 
-                            <v-card-title class="text-subtitle-1">Relations</v-card-title>
-                            <v-data-table 
-                                style="margin-top: 15px;"
-                                :items="resultDevideBoundedContext[devisionAspect].explanations" 
-                                :headers="explanationsHeaders" 
-                                class="elevation-1"
-                                :hide-default-footer="true"
-                            ></v-data-table><br>
-                        </v-card>
+                            <v-card class="pa-0 ma-0 mt-4" outlined>
+                                <v-card-title class="text-subtitle-1 pa-4">{{ $t('DevideBoundedContextDialog.relations') }}</v-card-title>
+                                <v-data-table 
+                                    :items="resultDevideBoundedContext[devisionAspect].explanations" 
+                                    :headers="explanationsHeaders" 
+                                    :hide-default-footer="true"
+                                ></v-data-table>
+                            </v-card>
+                        </div>
                     </div>
                 </v-tab-item>
             </v-tabs-items>
 
             <v-card class="mt-4 pa-4" outlined>
                 <v-textarea :disabled="isGenerating" v-model="feedback" label="Feedback" rows="3"></v-textarea>
-                <v-btn :disabled="feedback === '' || isGenerating" class="auto-modeling-btn" @click="reGenerateAspect(selectedAspect)">Re-Generate {{ selectedAspect }} Aspect</v-btn>
+                <v-row class="pa-0 ma-0">
+                    <v-spacer></v-spacer>
+                    <v-btn :disabled="feedback === '' || isGenerating" class="auto-modeling-btn" @click="reGenerateAspect(selectedAspect)">
+                        {{ selectedAspect }} {{ $t('DevideBoundedContextDialog.aspect') }} {{ $t('DevideBoundedContextDialog.reGenerate') }} 
+                    </v-btn>
+                </v-row>
             </v-card>
-            <div class="d-flex justify-end mt-4">
+            <v-row class="pa-0 ma-0 pt-4">
+                <v-spacer></v-spacer>
+                <v-btn @click="reGenerate()"
+                    :disabled="isGenerating"
+                >
+                    <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('DevideBoundedContextDialog.reGenerate') }}
+                </v-btn>
                 <v-btn 
                     :disabled="selectedAspect === null || isGenerating" 
                     class="auto-modeling-btn" 
                     color="primary" 
                     @click="createModel()"
                 >
-                    Create Model
+                    {{ $t('DevideBoundedContextDialog.createModel') }}
                     <v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon>
                 </v-btn>
-            </div>
+            </v-row>
         </v-card-text>
     </v-card>
 </template>
@@ -158,19 +166,19 @@
                 feedback: '',
                 expandIcon: 'mdi-chevron-down',
                 boundedContextHeaders: [
-                    { text: 'Bounded Context Name', value: 'name' },
+                    { text: this.$t('DevideBoundedContextDialog.boundedContextName'), value: 'name' },
                     { text: '', value: 'data-table-expand' }
                 ],
                 requirementHeaders: [
-                    { text: 'Bounded Context Name', value: 'name' },
-                    { text: 'Requirements', value: 'requirements' }
+                    { text: this.$t('DevideBoundedContextDialog.boundedContextName'), value: 'name' },
+                    { text: this.$t('DevideBoundedContextDialog.requirements'), value: 'requirements' }
                 ],
                 explanationsHeaders: [
-                    { text: 'Source Context', value: 'sourceContext' },
-                    { text: 'Target Context', value: 'targetContext' },
-                    { text: 'Relation Type', value: 'relationType' },
-                    { text: 'Reason', value: 'reason' },
-                    { text: 'Interaction Pattern', value: 'interactionPattern' }
+                    { text: this.$t('DevideBoundedContextDialog.sourceContext'), value: 'sourceContext' },
+                    { text: this.$t('DevideBoundedContextDialog.targetContext'), value: 'targetContext' },
+                    { text: this.$t('DevideBoundedContextDialog.relationType'), value: 'relationType' },
+                    { text: this.$t('DevideBoundedContextDialog.reason'), value: 'reason' },
+                    { text: this.$t('DevideBoundedContextDialog.interactionPattern'), value: 'interactionPattern' }
                 ],
                 aspectRenderKey: {}
             }
@@ -228,7 +236,7 @@
                         id: `BC${index}`,
                         text: bc.alias,
                         editable: true,
-                        edgeType: 'circle'
+                        edgeType: 'stadium'
                     });
                 });
                 

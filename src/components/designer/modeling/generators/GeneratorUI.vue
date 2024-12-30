@@ -110,9 +110,9 @@
                     <v-tabs v-model="userPanel">
                         <v-tab v-for="tab in tabs" :key="tab.component" :disabled="hasElements&&(!tab.isAlwaysActivated)" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" 
                                @click="switchGenerator('tab', tab.isShowGenerateBtn, tab.isShowContinueBtn, tab.isShowStopBtn, tab.isShowRegenerateBtn)">{{tab.name}}</v-tab>
-                        <v-tab v-show="canvasType === 'event-storming-model-canvas' || canvasType === 'context-mapping-model-canvas'" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('DDL', false, false, false, false)">DDL</v-tab>
-                        <v-tab :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('input', true, true, true, true)">Input</v-tab>
-                        <v-tab :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('output', false, true, true, true)">Output</v-tab>
+                        <v-tab v-show="(canvasType === 'event-storming-model-canvas' || canvasType === 'context-mapping-model-canvas') && !hasElements" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('DDL', false, false, false, false)">DDL</v-tab>
+                        <v-tab v-show="!hasElements" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('input', true, true, true, true)">Input</v-tab>
+                        <v-tab v-show="!hasElements" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('output', false, true, true, true)">Output</v-tab>
                         <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('chat', false, false, false, false)">Chat</v-tab>
                     </v-tabs>
 
@@ -142,7 +142,7 @@
                                         <component :is="tab.component" :ref="tab.component" @generate="generate()" :initValue="tab.initValue"></component>
                                     </v-tab-item>
 
-                                    <v-tab-item v-show="canvasType === 'event-storming-model-canvas' || canvasType === 'context-mapping-model-canvas'">
+                                    <v-tab-item v-show="(canvasType === 'event-storming-model-canvas' || canvasType === 'context-mapping-model-canvas') && !hasElements">
                                         <v-card style="padding: 10px;">
                                             <div style="max-height:55vh; margin-bottom:10px; overflow: auto;">
                                                 <v-textarea
@@ -192,7 +192,7 @@
                                         </v-card>
                                     </v-tab-item>
 
-                                    <v-tab-item :disabled="hasElements">
+                                    <v-tab-item v-show="!hasElements">
                                         <v-card flat>
                                             <v-textarea v-if="input"
                                                 v-model="input.userStory"
@@ -203,7 +203,7 @@
                                         </v-card>
                                     </v-tab-item>
 
-                                    <v-tab-item :disabled="hasElements">
+                                    <v-tab-item v-show="!hasElements">
                                         <v-card flat>
                                             <v-textarea
                                                 v-model="displayResult"
@@ -465,7 +465,9 @@
                     if (selectedObj['selected']) {
                         me.selectedElement.push(selectedObj)
                         if(me.modelValue){
-                            me.input.selectedElement = JSON.parse(JSON.stringify(selectedObj.value));
+                            me.input.selectedElement = typeof selectedObj.value === 'object' ? 
+                                JSON.parse(JSON.stringify(selectedObj.value)) : 
+                                selectedObj.value;
                         }
                     } else {
                         var fidx = me.selectedElement.findIndex(obj => obj.id == id)
@@ -654,7 +656,7 @@
                         if(this.focusedTabComponent.getValidErrorMsg) {
                             const msg = this.focusedTabComponent.getValidErrorMsg()
                             if(msg) {
-                                alert(msg)
+                                console.log(msg)
                                 return;
                             }
                         }
@@ -768,7 +770,7 @@
                 if (this.focusedTabComponent) {
                     const msg = this.focusedTabComponent.getValidErrorMsg()
                     if(msg) {
-                        alert(msg)
+                        console.log(msg)
                         return;
                     }
 

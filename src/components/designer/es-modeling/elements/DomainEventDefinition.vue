@@ -407,6 +407,7 @@
                 }
                 this.propertyPanel = true
                 this.staySelected = false
+                this.validate();
             },
             onChangedElementName(newVal, oldVal){
                 this.setMirrorElementId();
@@ -448,6 +449,7 @@
                 var duplicateField = false
                 let recursionValidate = executeRecursionValidate == false ? false :true
                 var validateValue = me.propertyPanel && panelValue ? panelValue : me.value
+                var notCorrelationKey = false;
 
                 if(me.isPBCModel){
                     return;
@@ -499,6 +501,22 @@
                             && idx != index ;
                         return validateValue.fieldDescriptors.findIndex(fRules) == -1 ? false: true
                     })
+
+                    if (me.useMonitoring) {
+                        notCorrelationKey = validateValue.fieldDescriptors.findIndex(fieldDescriptor => ( fieldDescriptor.isCorrelationKey == true) ) == -1
+                        if (notCorrelationKey) {
+                            var validationResultIndex = me.elementValidationResults.findIndex(x=> (x.code == me.ESE_NOT_CORRELATION_KEY) )
+                            if( validationResultIndex == -1 ) {
+                                me.elementValidationResults.push(me.validationFromCode(me.ESE_NOT_CORRELATION_KEY))
+                            }
+                        } else {
+                            var validationResultIndex = me.elementValidationResults.findIndex(x=> (x.code == me.ESE_NOT_CORRELATION_KEY) )
+                            if( validationResultIndex != -1 ){
+                                me.elementValidationResults.splice(validationResultIndex,1)
+                            }
+                        }
+                    }
+                    
 
                     if(filteredArray.length != 0 ){
                         duplicateField = true

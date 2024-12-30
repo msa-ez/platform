@@ -216,13 +216,8 @@
                                     </div>
 
                                     <!-- PBC Element -->
-                                    <div
-                                            v-if="filteredPBCValue.elements &&typeof filteredPBCValue.elements == 'object'"
-                                    >
-                                        <div
-                                                v-for="elementId in Object.keys(filteredPBCValue.elements)"
-                                                :key="elementId"
-                                        >
+                                    <div v-if="filteredPBCValue.elements &&typeof filteredPBCValue.elements == 'object'">
+                                        <div v-for="elementId in Object.keys(filteredPBCValue.elements)" :key="elementId">
                                             <component
                                                     v-if="elementId &&filteredPBCValue.elements[elementId]"
                                                     :is="getComponentByClassName(filteredPBCValue.elements[elementId]._type)"
@@ -232,13 +227,8 @@
                                             ></component>
                                         </div>
                                     </div>
-                                    <div
-                                            v-if="filteredPBCValue.relations && typeof filteredPBCValue.relations == 'object'"
-                                    >
-                                        <div
-                                                v-for="relationId in Object.keys(filteredPBCValue.relations)"
-                                                :key="relationId"
-                                        >
+                                    <div v-if="filteredPBCValue.relations && typeof filteredPBCValue.relations == 'object'">
+                                        <div v-for="relationId in Object.keys(filteredPBCValue.relations)" :key="relationId">
                                             <component
                                                     v-if="relationId &&filteredPBCValue.relations[relationId]"
                                                     :is="getComponentByClassName(filteredPBCValue.relations[relationId]._type)"
@@ -1750,6 +1740,9 @@
                             </v-btn>
                         </div>
                         <v-card-text>
+                            <v-alert v-if="monitoringMsg.length > 0" type="warning" outlined>
+                                {{ monitoringMsg }}
+                            </v-alert>
                             <v-tabs-items v-model="monitoringTab">
                                 <v-tab-item v-for="tab in monitoringTabs" :key="tab">
                                     <div v-if="tab === 'filtered'">
@@ -2147,6 +2140,7 @@
                 fetchEventInterval: null,
                 searchKeyList: ['correlationKey'],
                 searchKeyword: "",
+                monitoringMsg: "",
                 progressElements: [],
 
                 showContinue: false,
@@ -4799,10 +4793,9 @@
                 }
 
                 if(model && model.updateElement){
-                    me.value.elements[model.updateElement.id] = model.updateElement
+                    this.$set(this.value.elements, model.updateElement.id, model.updateElement)
                     me.changedByMe = true
                 }
-                alert("model.updateElement")
             },
             createModelFromDDL(model){
                 var me = this;
@@ -6231,9 +6224,7 @@
                             values.relations = projectValue.relations;
                         }
 
-                        Object.values(values.relations).forEach(function (
-                            relation
-                        ) {
+                        Object.values(values.relations).forEach(function (relation) {
                             if (relation) {
                                 var copyRe = JSON.parse(JSON.stringify(relation));
                                 copyRe.isPBCModel = true;
@@ -8439,6 +8430,7 @@
                 me.monitoringDialog = !me.monitoringDialog;
 
                 if (me.monitoringDialog) {
+                    me.checkEventCorrelationKey();
                     await me.setProgressElements();
                     me.monitoringTab = 0;
                     me.fetchRecentEvents();
@@ -8489,9 +8481,9 @@
                 } else {
                     me.eventLogs = [];
                 }
-                // if (!me.fetchEventInterval) {
-                //     me.fetchEventLogs();
-                // }
+                if (!me.fetchEventInterval) {
+                    me.fetchEventLogs();
+                }
                 me.isEventLogsFetched = true;
             },
             async searchEventByKeyword() {
@@ -8634,6 +8626,19 @@
                             me.searchKeyList.push(key.nameCamelCase);
                         }
                     });
+                });
+            },
+            checkEventCorrelationKey() {
+                var me = this;
+                me.monitoringMsg = "";
+                const eventElements = Object.values(me.value.elements).filter(element => 
+                    element && element._type.endsWith("Event")
+                );
+                eventElements.forEach(element => {
+                    const keys = element.fieldDescriptors.filter(field => field.isCorrelationKey);
+                    if (keys.length === 0) {
+                        me.monitoringMsg += `Event "${element.name}" correlationKey is not set.\n`;
+                    }
                 });
             },
             
