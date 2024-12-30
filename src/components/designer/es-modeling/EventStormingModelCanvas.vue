@@ -1750,6 +1750,9 @@
                             </v-btn>
                         </div>
                         <v-card-text>
+                            <v-alert v-if="monitoringMsg.length > 0" type="warning" outlined>
+                                {{ monitoringMsg }}
+                            </v-alert>
                             <v-tabs-items v-model="monitoringTab">
                                 <v-tab-item v-for="tab in monitoringTabs" :key="tab">
                                     <div v-if="tab === 'filtered'">
@@ -2147,6 +2150,7 @@
                 fetchEventInterval: null,
                 searchKeyList: ['correlationKey'],
                 searchKeyword: "",
+                monitoringMsg: "",
                 progressElements: [],
 
                 showContinue: false,
@@ -8439,6 +8443,7 @@
                 me.monitoringDialog = !me.monitoringDialog;
 
                 if (me.monitoringDialog) {
+                    me.checkEventCorrelationKey();
                     await me.setProgressElements();
                     me.monitoringTab = 0;
                     me.fetchRecentEvents();
@@ -8489,9 +8494,9 @@
                 } else {
                     me.eventLogs = [];
                 }
-                // if (!me.fetchEventInterval) {
-                //     me.fetchEventLogs();
-                // }
+                if (!me.fetchEventInterval) {
+                    me.fetchEventLogs();
+                }
                 me.isEventLogsFetched = true;
             },
             async searchEventByKeyword() {
@@ -8634,6 +8639,19 @@
                             me.searchKeyList.push(key.nameCamelCase);
                         }
                     });
+                });
+            },
+            checkEventCorrelationKey() {
+                var me = this;
+                me.monitoringMsg = "";
+                const eventElements = Object.values(me.value.elements).filter(element => 
+                    element && element._type.endsWith("Event")
+                );
+                eventElements.forEach(element => {
+                    const keys = element.fieldDescriptors.filter(field => field.isCorrelationKey);
+                    if (keys.length === 0) {
+                        me.monitoringMsg += `Event "${element.name}" correlationKey is not set.\n`;
+                    }
                 });
             },
             
