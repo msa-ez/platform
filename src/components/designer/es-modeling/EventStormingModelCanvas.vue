@@ -1740,7 +1740,7 @@
                             </v-btn>
                         </div>
                         <v-card-text>
-                            <v-alert v-if="monitoringMsg.length > 0" type="warning" outlined>
+                            <v-alert v-if="monitoringMsg.length > 0" type="warning" outlined dense>
                                 {{ monitoringMsg }}
                             </v-alert>
                             <v-tabs-items v-model="monitoringTab">
@@ -1782,13 +1782,16 @@
                                                 <td>{{ item.timestamp }}</td>
                                                 <td @click.stop="toggleEventPayload(item)">
                                                     <v-icon>
-                                                        {{ expandedLogs.includes(item) ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
+                                                        {{ expandedLogs.length > 0 ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
                                                     </v-icon>
                                                 </td>
                                             </tr>
                                         </template>
                                         <template v-slot:expanded-item="{ headers, item }">
                                             <td :colspan="headers.length">
+                                                <v-alert v-if="item.error" type="error" outlined dense>
+                                                    {{ item.error }}
+                                                </v-alert>
                                                 <div class="pa-1">
                                                     <tree-view :data="item.payload"></tree-view>
                                                 </div>
@@ -8552,17 +8555,24 @@
                         me.progressElements.forEach(el => {
                             me.$EventBus.$emit('hideProgress', el.id);
                             if (el.name === eventLog.type) {
-                                if (event && event.type === eventLog.type) {
-                                    progressEvents.push({id: el.id, isParticular: true, sequence: index + 1});
-                                } else {
-                                    progressEvents.push({id: el.id, isParticular: false, sequence: index + 1});
+                                var eventEl = {
+                                    id: el.id,
+                                    isParticular: false,
+                                    sequence: index + 1,
+                                    error: eventLog.error || null
                                 }
+                                if (event && event.type === eventLog.type) {
+                                    eventEl.isParticular = true
+                                } else {
+                                    eventEl.isParticular = false
+                                }
+                               progressEvents.push(eventEl)
                             }
                         })
                     }
                 });
                 progressEvents.forEach(el => {
-                    me.$EventBus.$emit('showProgress', el.id, el.sequence, el.isParticular);
+                    me.$EventBus.$emit('showProgress', el);
                 });
             },
             async selectedEventProgress(event, index) {
@@ -8606,8 +8616,8 @@
             },
             toggleEventPayload(eventLog) {
                 var me = this;
-                if (me.expandedLogs.includes(eventLog)) {
-                    me.expandedLogs = me.expandedLogs.filter(log => log !== eventLog);
+                if (me.expandedLogs.length > 0) {
+                    me.expandedLogs = [];
                 } else {
                     me.expandedLogs = [eventLog];
                 }
