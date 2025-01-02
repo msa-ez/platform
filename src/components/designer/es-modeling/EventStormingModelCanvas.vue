@@ -2981,22 +2981,52 @@
                     draftOptionStructure[boundedContextId] = draftOptions[boundedContextId].structure
                 }
 
-                const hasReferencedAggregate = Object.values(draftOptionStructure).some(structures => 
-                    structures.some(structure =>
-                        structure.valueObjects.some(vo => 'referencedAggregate' in vo)
-                    )
-                )
-
-                if (hasReferencedAggregate) {
-                    this.generators.CreateAggregateClassIdByDrafts.inputs = [
-                        {
-                            draftOption: draftOptionStructure,
-                            esValue: this.value,
-                            userInfo: this.userInfo,
-                            information: this.information
+                const references = []
+                for(const boundedContextId of Object.keys(draftOptionStructure)) {
+                    for(const structure of draftOptionStructure[boundedContextId]) {
+                        for(const vo of structure.valueObjects) {
+                            if('referencedAggregate' in vo) {
+                                references.push({
+                                    fromAggregate: structure.aggregate.name,
+                                    toAggregate: vo.referencedAggregate.name,
+                                    referenceName: vo.name
+                                })
+                            }
                         }
-                    ]
+                    }
                 }
+
+                if(references.length > 0) {
+                    const processedPairs = new Set()
+                    const inputs = []
+
+                    references.forEach(ref => {
+                        const pairKey = [ref.fromAggregate, ref.toAggregate].sort().join('-')
+                        
+                        if(!processedPairs.has(pairKey)) {
+                            processedPairs.add(pairKey)
+   
+                            const bidirectionalRefs = references.filter(r => 
+                                (r.fromAggregate === ref.fromAggregate && r.toAggregate === ref.toAggregate) ||
+                                (r.fromAggregate === ref.toAggregate && r.toAggregate === ref.fromAggregate)
+                            )
+
+                            const targetReferences = bidirectionalRefs.map(r => r.referenceName)
+
+                            inputs.push({
+                                draftOption: draftOptionStructure,
+                                esValue: this.value,
+                                userInfo: this.userInfo,
+                                information: this.information,
+                                targetReferences: targetReferences
+                            })
+                        }
+                    })
+
+                    this.generators.CreateAggregateClassIdByDrafts.inputs = inputs
+                }
+                else
+                    this.generators.CreateAggregateClassIdByDrafts.inputs = []
             }
 
             this.generators.CreateCommandActionsByFunctions.generator = new CreateCommandActionsByFunctions({
@@ -3259,9 +3289,9 @@
 
                 onGenerationSucceeded: (returnObj) => {
                     if(returnObj.modelValue && returnObj.modelValue.commandsToReplace) {
+                        this.changedByMe = true
                         for(const command of returnObj.modelValue.commandsToReplace)
                             this.$set(this.value.elements, command.id, command)
-                        this.changedByMe = true
                     }
 
 

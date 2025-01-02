@@ -10,7 +10,7 @@ class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
-        this.checkInputParamsKeys = ["draftOption", "esValue", "userInfo", "information"]
+        this.checkInputParamsKeys = ["draftOption", "targetReferences", "esValue", "userInfo", "information"]
         this.progressCheckStrings = ["thoughts", "inference", "reflection", "actions"]
     }
 
@@ -86,6 +86,9 @@ Please follow these rules:
    * Use consistent property naming
    * Include all required metadata
    * Specify proper data types and constraints
+
+7. Output Limit
+   * Generate the appropriate ValueObject only for the referceAggregate corresponding to the given targetReferences. However, if the creation of a ValueObject for a given targetReferences also creates bidirectional references, only one of them should be created as a ValueObject.
 `
     }
 
@@ -96,42 +99,29 @@ Please follow these rules:
     __buildJsonResponseFormat() {
         return `
 {
-    "thoughts": {
-        "summary": "Analysis of ValueObject and Aggregate relationship design",
+    "overviewThoughts": {
+        "summary": "High-level strategic analysis of the value object's role in the domain",
         "details": {
-            "coreDomainConcepts": "Identification of core domain relationships and dependencies",
-            "aggregateRoots": "Analysis of aggregate boundaries and reference patterns",
-            "invariants": "Required business rules for maintaining aggregate consistency",
-            "boundaryDecisions": "Decisions on aggregate boundaries and relationship directions"
+            "domainAlignment": "How the value object fits into the broader domain model and business rules",
+            "boundaryDecisions": "Key decisions about aggregate boundaries and relationships",
+            "technicalImpact": "Major technical implications and architectural considerations"
         },
-        "additionalConsiderations": "Impact on domain model integrity and consistency"
-    },
-
-    "inference": {
-        "summary": "Implications of ValueObject reference patterns",
-        "details": {
-            "dataConsistency": "Strategies for maintaining referenced data consistency",
-            "relationships": "Impact of unidirectional vs bidirectional relationships",
-            "performance": "Caching and lazy loading considerations",
-            "integrity": "Referential integrity maintenance approaches"
-        },
-        "additionalInferences": "Long-term maintainability and evolution considerations"
-    },
-
-    "reflection": {
-        "summary": "Evaluation of foreign key VO design decisions",
-        "details": {
-            "tradeoffs": "Balance between data consistency and performance",
-            "dataReplication": "Decisions on property replication and caching",
-            "maintenance": "Impact on aggregate lifecycle management",
-            "evolution": "Flexibility for future domain model changes"
-        },
-        "additionalReflections": "Potential optimization opportunities and risk mitigation"
+        "additionalConsiderations": "Any cross-cutting concerns or special cases to be aware of"
     },
 
     "result": {
         "actions": [
             {
+                "actionThoughts": {
+                    "summary": "Tactical design decisions for implementing the value object",
+                    "details": {
+                        "relationshipPattern": "Chosen relationship pattern and its justification",
+                        "invariantProtection": "How the design maintains domain invariants",
+                        "dataConsistency": "Strategy for maintaining data consistency"
+                    },
+                    "additionalConsiderations": "Implementation-specific concerns or limitations"
+                },
+
                 "objectType": "ValueObject",
                 "ids": {
                     "boundedContextId": "<boundedContextId>",
@@ -141,6 +131,16 @@ Please follow these rules:
                 "args": {
                     "valueObjectName": "<valueObjectName>",
                     "referenceClass": "<referenceClassName>",
+
+                    "propertyThoughts": {
+                        "summary": "Property-level design considerations",
+                        "details": {
+                            "immutability": "Analysis of property immutability and lifecycle",
+                            "referentialIntegrity": "How references maintain integrity across aggregates",
+                            "performanceImpact": "Performance implications of property choices"
+                        },
+                        "additionalConsiderations": "Special handling requirements for specific properties"
+                    },
                     "properties": [
                         {
                             "name": "<propertyName>",
@@ -250,42 +250,37 @@ Please follow these rules:
                         ]
                     }
                 ]
-            }
+            },
+
+            "Target References": ["OrderReference", "CustomerReference"]
         }
     }
 
     __buildJsonExampleOutputFormat() {
         return {
-            "thoughts": {
-                "summary": "Analyzing Order-Customer relationship for proper ValueObject design",
+            "overviewThoughts": {
+                "summary": "Strategic analysis of Order-Customer relationship in the domain model",
                 "details": {
-                    "coreDomainConcepts": "Order depends on Customer, establishing a clear unidirectional relationship",
-                    "aggregateRoots": "Customer is a stable entity while Order is transactional",
-                    "invariants": "Customer must exist for Order creation",
-                    "boundaryDecisions": "Implementing unidirectional relationship from Order to Customer"
-                }
+                    "domainAlignment": "Order aggregate requires essential Customer information for business operations",
+                    "boundaryDecisions": "Implementing unidirectional relationship from Order to Customer to maintain clear boundaries",
+                    "technicalImpact": "Optimizing for query performance while ensuring data consistency"
+                },
+                "additionalConsiderations": "Need to carefully manage cached Customer properties in Order context"
             },
-            "inference": {
-                "summary": "Determining optimal reference pattern and cacheable properties",
-                "details": {
-                    "dataConsistency": "Cache only truly immutable Customer properties in Order",
-                    "relationships": "Remove bidirectional reference, keep Order to Customer only",
-                    "performance": "Cache gender and birthDate as they never change",
-                    "integrity": "Maintain customerId as foreign key reference"
-                }
-            },
-            "reflection": {
-                "summary": "Evaluating the effectiveness of the design decisions",
-                "details": {
-                    "tradeoffs": "Balancing data access speed with consistency",
-                    "dataReplication": "Selected only immutable properties for caching",
-                    "maintenance": "Clear ownership and lifecycle management",
-                    "evolution": "Design focuses on truly static customer attributes"
-                }
-            },
+    
             "result": {
                 "actions": [
                     {
+                        "actionThoughts": {
+                            "summary": "Implementing Customer reference within Order aggregate",
+                            "details": {
+                                "relationshipPattern": "Unidirectional reference from Order to Customer with selective property replication",
+                                "invariantProtection": "Ensuring Customer existence through foreign key constraint",
+                                "dataConsistency": "Caching only immutable Customer properties"
+                            },
+                            "additionalConsiderations": "Regular validation of cached property immutability"
+                        },
+    
                         "objectType": "ValueObject",
                         "ids": {
                             "boundedContextId": "bc-order",
@@ -293,8 +288,18 @@ Please follow these rules:
                             "valueObjectId": "vo-customer-id"
                         },
                         "args": {
-                            "valueObjectName": "CustomerId",
+                            "valueObjectName": "CustomerReference",
                             "referenceClass": "Customer",
+    
+                            "propertyThoughts": {
+                                "summary": "Careful selection of Customer properties to include",
+                                "details": {
+                                    "immutability": "Selected properties (gender, birthDate) are naturally immutable",
+                                    "referentialIntegrity": "CustomerId ensures proper reference maintenance",
+                                    "performanceImpact": "Cached properties reduce cross-aggregate queries"
+                                },
+                                "additionalConsiderations": "Regular monitoring of property usage patterns"
+                            },
                             "properties": [
                                 {
                                     "name": "customerId",
@@ -327,6 +332,8 @@ Please follow these rules:
 
             "Suggested Structure": JSON.stringify(this.client.input.draftOption),
 
+            "Target References": this.client.input.targetReferences,
+
             "Final Check": `
 CRITICAL RULES FOR REFERENCE GENERATION:
 1. STRICT UNIDIRECTIONAL REFERENCE ONLY:
@@ -357,6 +364,11 @@ CRITICAL RULES FOR REFERENCE GENERATION:
 
     onCreateModelFinished(returnObj){
         let actions = returnObj.modelValue.aiOutput.result.actions
+        this._filterInvalidActions(actions)
+        this._filterBidirectionalActions(actions)
+        if(actions.length === 0)
+            throw new Error("No actions generated")
+
         let {actions: appliedActions, createdESValue: createdESValue} = this._getActionAppliedESValue(actions)
 
         returnObj.modelValue = {
@@ -365,6 +377,41 @@ CRITICAL RULES FOR REFERENCE GENERATION:
             createdESValue: createdESValue
         }
         returnObj.directMessage = `Creating Class IDs... (${returnObj.modelRawValue.length} characters generated)`
+    }
+
+    _filterInvalidActions(actions){
+         for(let i = actions.length - 1; i >= 0; i--) {
+            const action = actions[i]
+            if(!action.args || !action.args.valueObjectName) continue
+            
+            const isValidReference = this.client.input.targetReferences.some(
+                target => target.toLowerCase() === action.args.valueObjectName.toLowerCase()
+            );
+            
+            if (!isValidReference) {
+                actions.splice(i, 1);
+            }
+        }
+    }
+
+    _filterBidirectionalActions(actions){
+        for (let i = 0; i < actions.length; i++) {
+            const action1 = actions[i];
+            const agg1Name = this.client.input.esValue.elements[this.esAliasTransManager.getUUIDSafely(action1.ids.aggregateId)].name;
+            if(!agg1Name) continue
+            
+            for (let j = i + 1; j < actions.length; j++) {
+                const action2 = actions[j];
+                const agg2Name = this.client.input.esValue.elements[this.esAliasTransManager.getUUIDSafely(action2.ids.aggregateId)].name;
+                if(!agg2Name) continue
+                
+                if (action1.args.referenceClass === agg2Name && 
+                    action2.args.referenceClass === agg1Name) {
+                    actions.splice(j, 1);
+                    j--; 
+                }
+            }
+        }
     }
 
     _getActionAppliedESValue(actions) {

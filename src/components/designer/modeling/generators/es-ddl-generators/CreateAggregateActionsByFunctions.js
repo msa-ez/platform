@@ -139,42 +139,29 @@ Constraints:
     __buildJsonResponseFormat() {
         return `
 {
-    "thoughts": {
-        "summary": "Analysis of aggregate creation and modification actions",
+    "overviewThoughts": {
+        "summary": "High-level overview of the model's purpose and key design decisions",
         "details": {
-            "coreDomainConcepts": "Key domain concepts being modified or created",
-            "aggregateRoots": "Aggregate roots being affected by the actions",
-            "invariants": "Business rules and constraints to maintain",
-            "transactionBoundaries": "Transaction scope and consistency requirements"
+            "domainAlignment": "How well the model aligns with core domain concepts and business requirements",
+            "structuralIntegrity": "Assessment of model's internal consistency and relationship coherence",
+            "technicalFeasibility": "Evaluation of implementation practicality and technical constraints"
         },
-        "additionalConsiderations": "Technical aspects of implementing the aggregate changes"
-    },
-
-    "inference": {
-        "summary": "Derived patterns and implications of the aggregate actions",
-        "details": {
-            "implicitAggregates": "Related aggregates affected by these changes",
-            "relationships": "Impact on aggregate relationships",
-            "consistency": "Consistency requirements for the actions",
-            "performance": "Performance considerations for the changes"
-        },
-        "additionalInferences": "Additional implementation considerations"
-    },
-
-    "reflection": {
-        "summary": "Evaluation of the proposed aggregate actions",
-        "details": {
-            "tradeoffs": "Trade-offs in the chosen approach",
-            "scalability": "Impact on system scalability",
-            "maintainability": "Long-term maintainability considerations",
-            "evolution": "Future evolution possibilities"
-        },
-        "additionalReflections": "Further optimization opportunities"
+        "additionalConsiderations": "Future scalability concerns, integration points, and potential evolution paths"
     },
 
     "result": {
         "actions": [
             {
+                "actionThoughts": {
+                    "summary": "Reasoning behind the specific action being taken on the domain object",
+                    "details": {
+                        "boundaryDecisions": "Justification for object boundaries and responsibility allocation",
+                        "invariantProtection": "How the action maintains domain invariants and business rules",
+                        "relationshipImpact": "Effects on existing relationships and dependencies"
+                    },
+                    "additionalConsiderations": "Alternative approaches considered and specific implementation challenges"
+                },
+
                 // Write the ActionName that you utilized in the previous steps
                 "actionName": "<actionName>",
 
@@ -189,7 +176,18 @@ Constraints:
 
                 // This attribute contains the parameters required for the action.
                 "args": {
-                    "<argName>": "<argValue>"
+                    "<argName>": "<argValue>",
+
+                    "propertyThoughts": {
+                        "summary": "Analysis of property structure and composition decisions",
+                        "details": {
+                            "typeSelection": "Reasoning behind chosen data types and their implications",
+                            "encapsulationStrategy": "How properties are grouped and protected within the object",
+                            "validationRules": "Required constraints and business rules for property values"
+                        },
+                        "additionalConsiderations": "Performance implications, serialization concerns, and validation complexity"
+                    },
+                    "properties": []
                 }
             }
         ]
@@ -531,42 +529,28 @@ They represent complex domain concepts that don't qualify as Aggregates but need
 
     __buildJsonExampleOutputFormat() {
         return {
-            "thoughts": {
-                "summary": "Comprehensive analysis of hotel booking domain model implementation using DDD patterns",
+            "overviewThoughts": {
+                "summary": "Design of a hotel booking domain model implementing DDD patterns and best practices",
                 "details": {
-                    "coreDomainConcepts": "Booking as the central aggregate managing guest stays, payments, and room assignments. Key value objects encapsulate guest information and booking period details.",
-                    "aggregateRoots": "Booking aggregate serves as the primary transaction boundary for reservation management, incorporating payment tracking and guest details",
-                    "invariants": "Booking dates must be valid, payment status must be tracked, room availability must be verified",
-                    "transactionBoundaries": "Booking aggregate handles complete reservation lifecycle including payment processing and status management"
+                    "domainAlignment": "Model effectively captures core booking concepts including guest information, payment processing, and room management",
+                    "structuralIntegrity": "Clear boundaries between aggregates with well-defined value objects and entities",
+                    "technicalFeasibility": "Implementation supports both CRUD and event-sourced patterns while maintaining domain integrity"
                 },
-                "additionalConsiderations": "Implementation ensures proper encapsulation of business rules while maintaining flexibility for future extensions"
+                "additionalConsiderations": "Model allows for future extensions such as loyalty programs and dynamic pricing while maintaining clean architecture"
             },
-        
-            "inference": {
-                "summary": "Analysis of domain model implications and technical implementation patterns",
-                "details": {
-                    "implicitAggregates": "Room aggregate will need to be coordinated with Booking for availability checks and reservation management",
-                    "relationships": "Strong consistency within Booking aggregate, eventual consistency with Room availability",
-                    "consistency": "Transactional integrity maintained within Booking boundary, status transitions carefully managed",
-                    "performance": "Value objects provide efficient immutable data structures, enumerations ensure type safety"
-                },
-                "additionalInferences": "Model supports both CRUD and event-sourced implementations while maintaining domain integrity"
-            },
-        
-            "reflection": {
-                "summary": "Evaluation of design decisions and future considerations",
-                "details": {
-                    "tradeoffs": "Balance between flexibility and complexity in payment handling, granularity of value objects vs direct properties",
-                    "scalability": "Model supports horizontal scaling with clear aggregate boundaries and minimal cross-aggregate dependencies",
-                    "maintainability": "Clear separation of concerns through value objects and entities, well-defined enumeration types",
-                    "evolution": "Structure allows for future addition of loyalty programs, dynamic pricing, and extended booking features"
-                },
-                "additionalReflections": "Design promotes DDD best practices while maintaining practical implementation considerations"
-            },
-            
+    
             "result": {
                 "actions": [
                     {
+                        "actionThoughts": {
+                            "summary": "Creating the core Booking aggregate to manage hotel reservations",
+                            "details": {
+                                "boundaryDecisions": "Booking aggregate serves as the primary transaction boundary for reservation management",
+                                "invariantProtection": "Ensures booking dates validity and payment status tracking",
+                                "relationshipImpact": "Coordinates with Room aggregate for availability management"
+                            },
+                            "additionalConsiderations": "Designed for scalability and future feature additions"
+                        },
                         "actionName": "CreateBookingAggregate",
                         "objectType": "Aggregate",
                         "ids": {
@@ -575,6 +559,15 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         "args": {
                             "aggregateName": "Booking",
                             "aggregateAlias": "Room Booking",
+                            "propertyThoughts": {
+                                "summary": "Core properties needed for booking management",
+                                "details": {
+                                    "typeSelection": "Using strong types for dates and monetary values",
+                                    "encapsulationStrategy": "Grouping related data into value objects",
+                                    "validationRules": "Ensuring required fields and valid date ranges"
+                                },
+                                "additionalConsiderations": "Properties support audit and tracking requirements"
+                            },
                             "properties": [
                                 {
                                     "name": "bookingId",
@@ -608,6 +601,15 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         }
                     },
                     {
+                        "actionThoughts": {
+                            "summary": "Creating PaymentDetail entity to track payment information",
+                            "details": {
+                                "boundaryDecisions": "Separate entity for payment tracking within booking context",
+                                "invariantProtection": "Maintains payment status consistency",
+                                "relationshipImpact": "Supports multiple payments per booking"
+                            },
+                            "additionalConsiderations": "Designed for payment reconciliation and audit"
+                        },
                         "actionName": "CreatePaymentDetailEntity",
                         "objectType": "Entity",
                         "ids": {
@@ -617,6 +619,15 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         "args": {
                             "entityName": "PaymentDetail",
                             "entityAlias": "Payment Information",
+                            "propertyThoughts": {
+                                "summary": "Essential payment tracking properties",
+                                "details": {
+                                    "typeSelection": "Strong typing for monetary values and dates",
+                                    "encapsulationStrategy": "Complete payment information in one entity",
+                                    "validationRules": "Ensuring valid payment amounts and status transitions"
+                                },
+                                "additionalConsiderations": "Supports multiple payment methods and status tracking"
+                            },
                             "properties": [
                                 {
                                     "name": "paymentId",
@@ -643,6 +654,15 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         }
                     },
                     {
+                        "actionThoughts": {
+                            "summary": "Creating GuestInformation value object for guest details",
+                            "details": {
+                                "boundaryDecisions": "Encapsulates guest information as immutable value object",
+                                "invariantProtection": "Ensures complete guest information",
+                                "relationshipImpact": "Used within Booking aggregate"
+                            },
+                            "additionalConsiderations": "Supports guest profile management"
+                        },
                         "actionName": "CreateGuestInformationValueObject",
                         "objectType": "ValueObject",
                         "ids": {
@@ -652,6 +672,15 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         "args": {
                             "valueObjectName": "GuestInformation",
                             "valueObjectAlias": "Guest Details",
+                            "propertyThoughts": {
+                                "summary": "Essential guest identification properties",
+                                "details": {
+                                    "typeSelection": "Using Email type for validation",
+                                    "encapsulationStrategy": "Grouping guest details",
+                                    "validationRules": "Required contact information"
+                                },
+                                "additionalConsiderations": "Supports future guest profile extensions"
+                            },
                             "properties": [
                                 {
                                     "name": "name"
@@ -671,6 +700,15 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         }
                     },
                     {
+                        "actionThoughts": {
+                            "summary": "Creating BookingPeriod value object for stay duration",
+                            "details": {
+                                "boundaryDecisions": "Encapsulates booking dates as cohesive unit",
+                                "invariantProtection": "Ensures valid date ranges",
+                                "relationshipImpact": "Core part of Booking aggregate"
+                            },
+                            "additionalConsiderations": "Supports duration calculations"
+                        },
                         "actionName": "CreateBookingPeriodValueObject",
                         "objectType": "ValueObject",
                         "ids": {
@@ -680,6 +718,15 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         "args": {
                             "valueObjectName": "BookingPeriod",
                             "valueObjectAlias": "Stay Duration",
+                            "propertyThoughts": {
+                                "summary": "Date range and duration properties",
+                                "details": {
+                                    "typeSelection": "Date type for temporal values",
+                                    "encapsulationStrategy": "Grouping related time information",
+                                    "validationRules": "Check-out after check-in validation"
+                                },
+                                "additionalConsiderations": "Supports duration-based calculations"
+                            },
                             "properties": [
                                 {
                                     "name": "checkInDate",
@@ -697,6 +744,15 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         }
                     },
                     {
+                        "actionThoughts": {
+                            "summary": "Creating BookingStatus enumeration",
+                            "details": {
+                                "boundaryDecisions": "Define possible booking states",
+                                "invariantProtection": "Ensures valid status transitions",
+                                "relationshipImpact": "Used by Booking aggregate"
+                            },
+                            "additionalConsiderations": "Supports booking lifecycle management"
+                        },
                         "actionName": "CreateBookingStatusEnumeration",
                         "objectType": "Enumeration",
                         "ids": {
@@ -706,6 +762,15 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         "args": {
                             "enumerationName": "BookingStatus",
                             "enumerationAlias": "Booking Status",
+                            "propertyThoughts": {
+                                "summary": "Complete booking lifecycle states",
+                                "details": {
+                                    "typeSelection": "Enumeration for fixed set of values",
+                                    "encapsulationStrategy": "Clear status definitions",
+                                    "validationRules": "Valid status transitions only"
+                                },
+                                "additionalConsiderations": "Supports status-based workflows"
+                            },
                             "properties": [
                                 {"name": "PENDING"},
                                 {"name": "CONFIRMED"},
@@ -716,6 +781,15 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         }
                     },
                     {
+                        "actionThoughts": {
+                            "summary": "Creating RoomType enumeration",
+                            "details": {
+                                "boundaryDecisions": "Define available room categories",
+                                "invariantProtection": "Ensures valid room types",
+                                "relationshipImpact": "Used across booking context"
+                            },
+                            "additionalConsiderations": "Supports room categorization"
+                        },
                         "actionName": "CreateRoomTypeEnumeration",
                         "objectType": "Enumeration",
                         "ids": {
@@ -724,7 +798,16 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         },
                         "args": {
                             "enumerationName": "RoomType",
-                            "enumerationAlias": "객실 유형",
+                            "enumerationAlias": "Room Type",
+                            "propertyThoughts": {
+                                "summary": "Standard hotel room categories",
+                                "details": {
+                                    "typeSelection": "Enumeration for room categories",
+                                    "encapsulationStrategy": "Clear type definitions",
+                                    "validationRules": "Valid room types only"
+                                },
+                                "additionalConsiderations": "Extensible for new room types"
+                            },
                             "properties": [
                                 {"name": "STANDARD"},
                                 {"name": "DELUXE"},
@@ -734,6 +817,15 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         }
                     },
                     {
+                        "actionThoughts": {
+                            "summary": "Creating PaymentMethod enumeration",
+                            "details": {
+                                "boundaryDecisions": "Define supported payment methods",
+                                "invariantProtection": "Ensures valid payment types",
+                                "relationshipImpact": "Used by PaymentDetail entity"
+                            },
+                            "additionalConsiderations": "Supports payment processing"
+                        },
                         "actionName": "CreatePaymentMethodEnumeration",
                         "objectType": "Enumeration",
                         "ids": {
@@ -742,7 +834,16 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         },
                         "args": {
                             "enumerationName": "PaymentMethod",
-                            "enumerationAlias": "결제 방식",
+                            "enumerationAlias": "Payment Method",
+                            "propertyThoughts": {
+                                "summary": "Available payment options",
+                                "details": {
+                                    "typeSelection": "Enumeration for payment methods",
+                                    "encapsulationStrategy": "Clear method definitions",
+                                    "validationRules": "Valid payment methods only"
+                                },
+                                "additionalConsiderations": "Extensible for new payment methods"
+                            },
                             "properties": [
                                 {"name": "CREDIT_CARD"},
                                 {"name": "DEBIT_CARD"},
@@ -752,6 +853,15 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         }
                     },
                     {
+                        "actionThoughts": {
+                            "summary": "Creating PaymentStatus enumeration",
+                            "details": {
+                                "boundaryDecisions": "Define payment status states",
+                                "invariantProtection": "Ensures valid status transitions",
+                                "relationshipImpact": "Used by PaymentDetail entity"
+                            },
+                            "additionalConsiderations": "Supports payment lifecycle"
+                        },
                         "actionName": "CreatePaymentStatusEnumeration",
                         "objectType": "Enumeration",
                         "ids": {
@@ -760,7 +870,16 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         },
                         "args": {
                             "enumerationName": "PaymentStatus",
-                            "enumerationAlias": "결제 상태",
+                            "enumerationAlias": "Payment Status",
+                            "propertyThoughts": {
+                                "summary": "Payment lifecycle states",
+                                "details": {
+                                    "typeSelection": "Enumeration for payment states",
+                                    "encapsulationStrategy": "Clear status definitions",
+                                    "validationRules": "Valid status transitions only"
+                                },
+                                "additionalConsiderations": "Supports payment tracking"
+                            },
                             "properties": [
                                 {"name": "PENDING"},
                                 {"name": "COMPLETED"},
@@ -770,6 +889,15 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         }
                     },
                     {
+                        "actionThoughts": {
+                            "summary": "Creating MembershipLevel enumeration",
+                            "details": {
+                                "boundaryDecisions": "Define membership tiers",
+                                "invariantProtection": "Ensures valid member levels",
+                                "relationshipImpact": "Used by GuestInformation"
+                            },
+                            "additionalConsiderations": "Supports loyalty program"
+                        },
                         "actionName": "CreateMembershipLevelEnumeration",
                         "objectType": "Enumeration",
                         "ids": {
@@ -778,7 +906,16 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         },
                         "args": {
                             "enumerationName": "MembershipLevel",
-                            "enumerationAlias": "회원 등급",
+                            "enumerationAlias": "Membership Level",
+                            "propertyThoughts": {
+                                "summary": "Guest loyalty tiers",
+                                "details": {
+                                    "typeSelection": "Enumeration for membership levels",
+                                    "encapsulationStrategy": "Clear level definitions",
+                                    "validationRules": "Valid membership levels only"
+                                },
+                                "additionalConsiderations": "Supports loyalty benefits"
+                            },
                             "properties": [
                                 {"name": "STANDARD"},
                                 {"name": "VIP"},
