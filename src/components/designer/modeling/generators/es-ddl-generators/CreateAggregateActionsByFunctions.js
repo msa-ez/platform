@@ -3,7 +3,6 @@ const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
 const ESActionsUtil = require("./modules/ESActionsUtil")
 const ESFakeActionsUtil = require("./modules/ESFakeActionsUtil")
 const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil")
-const ActionsProcessorUtils = require("./modules/ESActionsUtilProcessors/ActionsProcessorUtils")
 const ESAliasTransManager = require("./modules/ESAliasTransManager")
 
 class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
@@ -17,9 +16,28 @@ class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
 
     onGenerateBefore(inputParams){
         inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
+        inputParams.draftOption = this._removeClassIdProperties(JSON.parse(JSON.stringify(inputParams.draftOption)))
+
         inputParams.targetAggregate = Object.values(inputParams.draftOption)[0].aggregate
         inputParams.aggregateDisplayName = inputParams.targetAggregate.alias ? inputParams.targetAggregate.alias : inputParams.targetAggregate.name
+
         this.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
+    }
+
+    _removeClassIdProperties(draftOption){
+        if (!Array.isArray(draftOption)) return draftOption;
+
+        return draftOption.map(option => {
+            let cleanedOption = { ...option };
+
+            if (cleanedOption.valueObjects && Array.isArray(cleanedOption.valueObjects)) {
+                cleanedOption.valueObjects = cleanedOption.valueObjects.filter(
+                    vo => !vo.referencedAggregate
+                );
+            }
+
+            return cleanedOption;
+        });
     }
 
 
@@ -75,20 +93,14 @@ Structural Rules:
    - Should be immutable
    - Cannot have single properties unless absolutely necessary
 
-8. Foreign Key Handling:
-   - When a ValueObject has referencedAggregate:
-     * Create an ID field to reference the Aggregate
-     * Cache frequently used properties from the referenced Aggregate
-     * Implement proper relationship mapping
-
 Creation Guidelines:
-9. Create only:
+8. Create only:
    - Aggregates listed in 'Aggregate to create'
    - All ValueObjects and Entities from the provided structure
    - Enumerations extracted from requirements (if not in structure)
    - All supporting Enumerations needed by properties
 
-10. Property Type Selection:
+9. Property Type Selection:
     - Use specific types over generic ones (e.g., Date for dates, Integer for numbers)
     - Example mappings:
       * startDate -> Date
@@ -97,26 +109,26 @@ Creation Guidelines:
       * status -> Enumeration
 
 Type Dependency Resolution:
-11. Before finalizing the result:
+10. Before finalizing the result:
     - Review all property types in Aggregates, ValueObjects, and Entities
     - Identify any custom types that need Enumeration definitions
     - Create missing Enumerations with appropriate values
     - Ensure all type references are properly defined
 
 Constraints:
-12. Do not:
+11. Do not:
     - Modify existing Aggregates (reference only)
     - Recreate existing ValueObjects, Entities, or Enumerations
     - Include comments in the output JSON
     - Create duplicate elements
 
-13. Required Elements:
+12. Required Elements:
     - All ValueObjects, Entities, and Enumerations must be used as properties
     - All elements from the user's structure must be implemented
     - All relationships must be properly mapped
     - All custom types must have corresponding definitions
 
-14. Do not write comments in the output JSON object.
+13. Do not write comments in the output JSON object.
 `
     }
 
@@ -258,8 +270,7 @@ They are used to group related attributes that should be treated as a single uni
                 "name": "<propertyName>",
                 ["type": "<propertyType>"], // If the type is String, do not specify the type.
                 ["isKey": true], // Write only if there is a primary key.
-                ["isForeignProperty": true], // Whether it is a foreign key. Write only if this attribute references another table's attribute.
-                ["referenceClass": "<referenceClassName>"] // Only write the Name of that Aggregate if the ValueObject refers to a specific Aggregate.
+                ["isForeignProperty": true] // Whether it is a foreign key. Write only if this attribute references another table's attribute.
             }
         ]
     }
@@ -498,14 +509,6 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                             "alias": "Guest Details"
                         },
                         {
-                            "name": "RoomReference",
-                            "alias": "Room Information",
-                            "referencedAggregate": {
-                                "name": "Room",
-                                "alias": "Hotel Room"
-                            }
-                        },
-                        {
                             "name": "BookingPeriod",
                             "alias": "Stay Duration"
                         }
@@ -529,35 +532,38 @@ They represent complex domain concepts that don't qualify as Aggregates but need
     __buildJsonExampleOutputFormat() {
         return {
             "thoughts": {
-                "summary": "Creating a comprehensive Booking aggregate with related value objects and entities",
+                "summary": "Comprehensive analysis of hotel booking domain model implementation using DDD patterns",
                 "details": {
-                    "coreDomainConcepts": "Booking management with guest information and room references",
-                    "aggregateRoots": "Booking as the main aggregate with associated value objects",
-                    "invariants": "Booking dates validation, room availability check",
-                    "transactionBoundaries": "Booking creation and modification as single transactions"
+                    "coreDomainConcepts": "Booking as the central aggregate managing guest stays, payments, and room assignments. Key value objects encapsulate guest information and booking period details.",
+                    "aggregateRoots": "Booking aggregate serves as the primary transaction boundary for reservation management, incorporating payment tracking and guest details",
+                    "invariants": "Booking dates must be valid, payment status must be tracked, room availability must be verified",
+                    "transactionBoundaries": "Booking aggregate handles complete reservation lifecycle including payment processing and status management"
                 },
-                "additionalConsiderations": "Need to handle room reference updates and payment processing"
+                "additionalConsiderations": "Implementation ensures proper encapsulation of business rules while maintaining flexibility for future extensions"
             },
+        
             "inference": {
-                "summary": "Complex booking system with multiple related components",
+                "summary": "Analysis of domain model implications and technical implementation patterns",
                 "details": {
-                    "implicitAggregates": "Room aggregate for reference",
-                    "relationships": "Booking to Room reference, Guest to Booking ownership",
-                    "consistency": "Ensure room availability during booking process",
-                    "performance": "Optimize room search and availability checks"
+                    "implicitAggregates": "Room aggregate will need to be coordinated with Booking for availability checks and reservation management",
+                    "relationships": "Strong consistency within Booking aggregate, eventual consistency with Room availability",
+                    "consistency": "Transactional integrity maintained within Booking boundary, status transitions carefully managed",
+                    "performance": "Value objects provide efficient immutable data structures, enumerations ensure type safety"
                 },
-                "additionalInferences": "Consider implementing caching for room information"
+                "additionalInferences": "Model supports both CRUD and event-sourced implementations while maintaining domain integrity"
             },
+        
             "reflection": {
-                "summary": "Well-structured booking system with proper DDD patterns",
+                "summary": "Evaluation of design decisions and future considerations",
                 "details": {
-                    "tradeoffs": "Balance between data consistency and system complexity",
-                    "scalability": "Designed for future expansion of booking features",
-                    "maintainability": "Clear separation of concerns in value objects",
-                    "evolution": "Easy to add new booking-related features"
+                    "tradeoffs": "Balance between flexibility and complexity in payment handling, granularity of value objects vs direct properties",
+                    "scalability": "Model supports horizontal scaling with clear aggregate boundaries and minimal cross-aggregate dependencies",
+                    "maintainability": "Clear separation of concerns through value objects and entities, well-defined enumeration types",
+                    "evolution": "Structure allows for future addition of loyalty programs, dynamic pricing, and extended booking features"
                 },
-                "additionalReflections": "Consider adding booking history tracking"
+                "additionalReflections": "Design promotes DDD best practices while maintaining practical implementation considerations"
             },
+            
             "result": {
                 "actions": [
                     {
@@ -578,10 +584,6 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                                 {
                                     "name": "guestInformation",
                                     "type": "GuestInformation"
-                                },
-                                {
-                                    "name": "roomReference",
-                                    "type": "RoomReference"
                                 },
                                 {
                                     "name": "bookingPeriod",
@@ -664,37 +666,6 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                                 {
                                     "name": "membershipLevel",
                                     "type": "MembershipLevel"
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "actionName": "CreateRoomReferenceValueObject",
-                        "objectType": "ValueObject",
-                        "ids": {
-                            "aggregateId": "agg-booking",
-                            "valueObjectId": "vo-room-reference"
-                        },
-                        "args": {
-                            "valueObjectName": "RoomReference",
-                            "valueObjectAlias": "Room Information",
-                            "properties": [
-                                {
-                                    "name": "roomId",
-                                    "type": "Long",
-                                    "isForeignProperty": true,
-                                    "referenceClass": "Room"
-                                },
-                                {
-                                    "name": "roomNumber"
-                                },
-                                {
-                                    "name": "roomType",
-                                    "type": "RoomType"
-                                },
-                                {
-                                    "name": "rate",
-                                    "type": "Money"
                                 }
                             ]
                         }
@@ -923,13 +894,7 @@ They represent complex domain concepts that don't qualify as Aggregates but need
             ...returnObj.modelValue,
             actions: appliedActions,
             createdESValue: createdESValue,
-            removedElements: removedElements,
-            callbacks: {
-                ...returnObj.modelValue.callbacks,
-                addAggregateRelation: (esValue) => {
-                    this._addAggregateRelation(this.client.input.draftOption, esValue)
-                }
-            }
+            removedElements: removedElements
         }
         returnObj.directMessage = `Creating ${this.client.input.aggregateDisplayName} Aggregate... (${returnObj.modelRawValue.length} characters generated)`
     }
@@ -938,7 +903,6 @@ They represent complex domain concepts that don't qualify as Aggregates but need
         actions = this.esAliasTransManager.transToUUIDInActions(actions)
         this._restoreActions(actions, this.client.input.esValue, this.client.input.targetBoundedContext.name)
         actions = this._filterActions(actions)
-        this._processReferenceClassValueObject(actions)
         
         let esValueToModify = JSON.parse(JSON.stringify(this.client.input.esValue))
 
@@ -973,9 +937,6 @@ They represent complex domain concepts that don't qualify as Aggregates but need
                         boundedContextId: targetBoundedContext.id,
                         ...action.ids
                     }
-                    action.objectType = "GeneralClass"
-                    action.args.generalClassName = action.args.entityName
-                    action.args.generalClassAlias = action.args.entityAlias
                     break
 
                 case "ValueObject":
@@ -1018,66 +979,23 @@ They represent complex domain concepts that don't qualify as Aggregates but need
     }
 
     _filterActions(actions){
-        // 이미 존재하는 Aggregate에 수정을 가하는 액션을 막아서 잠재적인 중복 생성을 방지하기 위해서
-        let avaliableAggregateIds = actions.filter(action => action.objectType === "Aggregate")
+        const targetAggregateName = this.client.input.targetAggregate.name.toLowerCase()
+        const validAggregateIds = actions
+            .filter(action => 
+                action.objectType === "Aggregate" && 
+                action.args.aggregateName.toLowerCase() === targetAggregateName
+            )
             .map(action => action.ids.aggregateId)
-        actions = actions.filter(action => avaliableAggregateIds.includes(action.ids.aggregateId))
 
+
+        actions = actions.filter(action => 
+            validAggregateIds.includes(action.ids.aggregateId)
+        )
+
+        
         return actions
     }
-
-    // 다른 Aggregate를 참조하는 ValueObject인 경우, 반드시 "참조 Class명" + "Id" 형태 이름 및 참조 Long id 필드를 가져야 인식이 됨
-    _processReferenceClassValueObject(actions){
-        const valueObjectActions = actions.filter(action => action.objectType === "ValueObject");
-        
-        for (let action of valueObjectActions) {
-            if (!action.args || !action.args.properties) continue;
-            
-            const referencedProperties = action.args.properties.filter(prop => prop.referenceClass);
-            if (referencedProperties.length <= 0) continue
-
-            const referenceProperty = referencedProperties[0]  
-            action.args.properties = [{
-                name: `${referenceProperty.referenceClass}Id`,
-                type: "Long",
-                isKey: true,
-                isForeignKey: true,
-                referenceClass: referenceProperty.referenceClass
-            }]
-        }
-    }
-
-    _addAggregateRelation(usedDraftOption, esValue){
-        let aggregateRelations = []
-        for (const structureInfo of usedDraftOption) {
-            for(const valueObject of structureInfo.valueObjects){
-                if(valueObject.referencedAggregate)
-                    aggregateRelations.push({
-                        fromAggregateName: structureInfo.aggregate.name,
-                        toAggregateName: valueObject.referencedAggregate.name
-                    })
-            }
-        }
-
-        if(aggregateRelations.length <= 0) return
-        aggregateRelations.forEach(relation => {
-            const fromAggregate = this.__getAggregateByName(esValue, relation.fromAggregateName)
-            const toAggregate = this.__getAggregateByName(esValue, relation.toAggregateName)
-            if(!fromAggregate || !toAggregate) return
-
-            for(const relation of Object.values(esValue.relations).filter(relation => relation)) {
-                if(relation.sourceElement && relation.targetElement) {
-                    if(relation.sourceElement.id === fromAggregate.id && relation.targetElement.id === toAggregate.id)
-                        return
-                }
-            }
-
-            const aggregateRelation = ActionsProcessorUtils.getEventStormingRelationObjectBase(fromAggregate, toAggregate)
-            console.log("[*] 생성된 관계 추가", {aggregateRelation})
-            esValue.relations[aggregateRelation.id] = aggregateRelation   
-        })
-    }
-
+    
     __getAggregateByName(esValue, aggregateName){
         for(let element of Object.values(esValue.elements).filter(element => element)) {
             if(element._type === "org.uengine.modeling.model.Aggregate" && element.name === aggregateName && element.id)

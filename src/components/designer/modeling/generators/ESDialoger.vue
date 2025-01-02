@@ -30,27 +30,57 @@
                 </v-card>
             </v-col>
         </div>
+        <v-tabs v-model="activeTab">
+            <v-tab 
+                v-for="input in generatorInputTabs" 
+                :key="input"
+            >
+                {{ input }}
+            </v-tab>
+        </v-tabs>
         <div style="display: flex; flex-direction: column;">
-            <v-card v-if="!state.secondMessageIsTyping">
-                <v-card-subtitle>{{$t('autoModeling.explanation')}}</v-card-subtitle>
-                <v-card-text class="auto-modling-textarea">
-                    <v-textarea 
-                            v-model="value.userStory"
-                            flat
-                            class="elevation-0"
-                            dense
-                            auto-grow
-                            rows="2"
-                            solo
-                    >
-                    </v-textarea>
-                    <!--                <div-->
-                    <!--                    v-for="modelId in value.modelList"-->
-                    <!--                    :key="modelId"-->
-                    <!--                >-->
-                    <!--                    <v-btn x-small @click="jumpToModel(modelId)">{{ modelId }}</v-btn>    -->
-                    <!--                </div>-->
-                </v-card-text>
+            <v-card v-if="!state.secondMessageIsTyping" class="auto-modeling-user-story-card">
+                <v-tabs-items v-model="activeTab">
+                    <!-- UserStory -->
+                    <v-tab-item>
+                        <v-card-subtitle>{{$t('autoModeling.explanation.userStory')}}</v-card-subtitle>
+                        <v-card-text class="auto-modling-textarea">
+                            <v-textarea 
+                                    v-model="value.userStory"
+                                    flat
+                                    class="elevation-0"
+                                    dense
+                                    auto-grow
+                                    rows="2"
+                                    solo
+                            >
+                            </v-textarea>
+                            <!--                <div-->
+                            <!--                    v-for="modelId in value.modelList"-->
+                            <!--                    :key="modelId"-->
+                            <!--                >-->
+                            <!--                    <v-btn x-small @click="jumpToModel(modelId)">{{ modelId }}</v-btn>    -->
+                            <!--                </div>-->
+                        </v-card-text>
+                    </v-tab-item>
+
+                    <!-- DDL -->
+                    <v-tab-item>
+                        <v-card-subtitle>{{$t('autoModeling.explanation.ddl')}}</v-card-subtitle>
+                        <v-card-text class="auto-modling-textarea">
+                            <v-textarea 
+                                    v-model="inputDDL"
+                                    flat
+                                    class="elevation-0"
+                                    dense
+                                    auto-grow
+                                    rows="2"
+                                    solo
+                            >
+                            </v-textarea>
+                        </v-card-text>
+                    </v-tab-item>
+                </v-tabs-items>
                 <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
                 <v-card-actions v-if="done" class="auto-modeling-btn-box">
                     <v-btn class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}</v-btn>
@@ -196,16 +226,21 @@
                 },
                 done: false,
                 generator: null,
+                generatorName: null,
                 showDevideBoundedContextDialog: false,
                 resultDevideBoundedContext: {},
                 devisionAspect: [
                     this.$t('DevideBoundedContextDialog.domainAspect'),
-                    this.$t('DevideBoundedContextDialog.organizationalAspect'), 
+                    this.$t('DevideBoundedContextDialog.organizationalAspect'),
                     this.$t('DevideBoundedContextDialog.personaAspect'),
                     this.$t('DevideBoundedContextDialog.transactionPerformanceAspect'),
                     this.$t('DevideBoundedContextDialog.infrastructureAspect')
                 ],
-                devisionAspectIndex: 0
+                devisionAspectIndex: 0,
+
+                activeTab: null,
+                generatorInputTabs: ['UserStory', 'DDL'],
+                inputDDL: ''
             }
         },
         methods: {
@@ -262,6 +297,7 @@
                         
                         this.generator = new Generator(this);
                         this.state.generator = "EventOnlyESGenerator";
+                        this.generatorName = "EventOnlyESGenerator";
                     }
                 
                     this.devisionAspectIndex++;
@@ -324,6 +360,7 @@
             generateDevideBoundedContext(aspect, feedback){
                 this.generator = new DevideBoundedContextGenerator(this);
                 this.state.generator = "DevideBoundedContextGenerator";
+                this.generatorName = "DevideBoundedContextGenerator";
                 
                 if(!aspect){
                     this.resultDevideBoundedContext = {};
@@ -337,7 +374,11 @@
                     this.input['feedback'] = feedback;
                 }
                 
-                this.input['userStory'] = this.value.userStory;
+                this.input['requirements'] = {
+                    userStory: this.value.userStory,
+                    ddl: this.inputDDL
+                };
+
                 this.generator.generate();
                 this.showDevideBoundedContextDialog = true;
             },

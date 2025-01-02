@@ -234,17 +234,45 @@ class AggregateActionsProcessor {
     static _updateAggregate(action, userInfo, esValue, callbacks) {
         if(action.args.properties) {
             const aggregateObject = esValue.elements[action.ids.aggregateId]
-            aggregateObject.aggregateRoot.fieldDescriptors = aggregateObject.aggregateRoot.fieldDescriptors.concat(AggregateActionsProcessor.__getFileDescriptors(action.args.properties))
+            
+            aggregateObject.aggregateRoot.fieldDescriptors = AggregateActionsProcessor.__mergeFieldDescriptors(
+                aggregateObject.aggregateRoot.fieldDescriptors,
+                action.args.properties
+            )
 
             const aggregateRootObject = ActionsProcessorUtils.getAggregateRootObject(aggregateObject)
             if(aggregateRootObject) {
-                aggregateRootObject.fieldDescriptors = aggregateRootObject.fieldDescriptors.concat(AggregateActionsProcessor.__getFileDescriptors(action.args.properties))
+                aggregateRootObject.fieldDescriptors = AggregateActionsProcessor.__mergeFieldDescriptors(
+                    aggregateRootObject.fieldDescriptors,
+                    action.args.properties
+                )
             }
             
             esValue.elements[action.ids.aggregateId] = {...aggregateObject}
         }
     }
 
+    
+    static __mergeFieldDescriptors(existingFields, newProperties) {
+        const merged = [...existingFields]
+        
+        newProperties.forEach(newProp => {
+            const existingIndex = merged.findIndex(existing => existing.name === newProp.name)
+            
+            if (existingIndex >= 0) {
+                merged[existingIndex] = {
+                    ...merged[existingIndex],
+                    className: newProp.type ? newProp.type : "String",
+                    referenceClass: newProp.referenceClass ? newProp.referenceClass : null,
+                    isOverrideField: newProp.isOverrideField ? true : false,
+                }
+            } else {
+                merged.push(AggregateActionsProcessor.__getFileDescriptors([newProp])[0])
+            }
+        })
+        
+        return merged
+    }
 
     static __getFileDescriptors(actionProperties) {
         return actionProperties.map((property) => {
@@ -255,7 +283,9 @@ class AggregateActionsProcessor {
                 "name": property.name,
                 "nameCamelCase": changeCase.camelCase(property.name),
                 "namePascalCase": changeCase.pascalCase(property.name),
-                "displayName": "",
+                "displayName": property.displayName ? property.displayName : "",
+                "referenceClass": property.referenceClass ? property.referenceClass : null,
+                "isOverrideField": property.isOverrideField ? true : false,
                 "_type": "org.uengine.model.FieldDescriptor"
             }
         })

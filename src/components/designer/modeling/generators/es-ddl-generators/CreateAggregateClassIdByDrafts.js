@@ -1,0 +1,459 @@
+
+const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
+const ESActionsUtil = require("./modules/ESActionsUtil")
+const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil")
+const ActionsProcessorUtils = require("./modules/ESActionsUtilProcessors/ActionsProcessorUtils")
+const ESAliasTransManager = require("./modules/ESAliasTransManager")
+const changeCase = require('change-case');
+
+class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
+    constructor(client){
+        super(client);
+
+        this.checkInputParamsKeys = ["draftOption", "esValue", "userInfo", "information"]
+        this.progressCheckStrings = ["thoughts", "inference", "reflection", "actions"]
+    }
+
+
+    onGenerateBefore(inputParams){
+        inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
+        this.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
+    }
+
+
+    __buildAgentRolePrompt(){
+        return `You are a DDD expert specializing in:
+1. Domain model design and implementation
+2. Bounded context definition
+3. Aggregate pattern optimization
+4. Clean architecture principles
+
+Key focus areas:
+- Domain model integrity
+- Aggregate boundaries
+- Context mapping
+- Strategic design patterns
+`
+    }
+
+    __buildTaskGuidelinesPrompt(){
+        return `You will need to create the appropriate ValueObject that references other Aggregates as foreign keys, based on the provided EventStorming configuration draft.
+
+Please follow these rules:
+1. Foreign Key Value Object Generation:
+   * CRITICAL: Only implement ONE DIRECTION of reference between aggregates
+   * When choosing direction, consider:
+     - Which aggregate is the owner of the relationship
+     - Which side is more stable and less likely to change
+     - Query patterns and performance requirements
+   * Example: In Order-Customer relationship, Order should reference Customer (not vice-versa)
+
+2. Relationship Direction Decision:
+   * NEVER create bidirectional references, even if suggested in the draft
+   * For each pair of aggregates, choose only ONE direction based on:
+     - Lifecycle dependency (dependent aggregate references the independent one)
+     - Business invariants (aggregate enforcing rules references required data)
+     - Access patterns (optimize for most frequent queries)
+
+3. Property Replication:
+   * Only replicate properties that are highly unlikely to change (e.g., birthDate, gender)
+   * These near-immutable properties are safe for caching as they remain constant throughout the entity's lifecycle
+   * Strictly avoid replicating volatile properties that change frequently
+   * Each replicated property must be justified based on its immutability and business value
+   * Examples of safe-to-replicate properties:
+     - Date of birth (remains constant)
+     - Gender (rarely changes)
+     - Country of birth (permanent)
+   * Examples of properties to avoid replicating:
+     - Address (frequently changes)
+     - Email (moderately volatile)
+     - Phone number (changes occasionally)
+
+4. Technical Considerations:
+   * Handle composite keys appropriately when referenced Aggregate uses multiple identifiers
+   * Include proper indexing hints for foreign key fields
+   * Consider implementing lazy loading for referenced data
+   * Maintain referential integrity through proper constraints
+
+5. Edge Cases:
+   * Handle null references and optional relationships
+   * Consider cascade operations impact
+   * Plan for reference cleanup in case of Aggregate deletion
+   * Implement proper validation for circular references
+
+6. Output Format:
+   * Provide clean JSON without comments
+   * Use consistent property naming
+   * Include all required metadata
+   * Specify proper data types and constraints
+`
+    }
+
+    __buildRequestFormatPrompt(){
+        return ESValueSummarizeWithFilterUtil.getGuidePrompt()
+    }
+
+    __buildJsonResponseFormat() {
+        return `
+{
+    "thoughts": {
+        "summary": "Analysis of ValueObject and Aggregate relationship design",
+        "details": {
+            "coreDomainConcepts": "Identification of core domain relationships and dependencies",
+            "aggregateRoots": "Analysis of aggregate boundaries and reference patterns",
+            "invariants": "Required business rules for maintaining aggregate consistency",
+            "boundaryDecisions": "Decisions on aggregate boundaries and relationship directions"
+        },
+        "additionalConsiderations": "Impact on domain model integrity and consistency"
+    },
+
+    "inference": {
+        "summary": "Implications of ValueObject reference patterns",
+        "details": {
+            "dataConsistency": "Strategies for maintaining referenced data consistency",
+            "relationships": "Impact of unidirectional vs bidirectional relationships",
+            "performance": "Caching and lazy loading considerations",
+            "integrity": "Referential integrity maintenance approaches"
+        },
+        "additionalInferences": "Long-term maintainability and evolution considerations"
+    },
+
+    "reflection": {
+        "summary": "Evaluation of foreign key VO design decisions",
+        "details": {
+            "tradeoffs": "Balance between data consistency and performance",
+            "dataReplication": "Decisions on property replication and caching",
+            "maintenance": "Impact on aggregate lifecycle management",
+            "evolution": "Flexibility for future domain model changes"
+        },
+        "additionalReflections": "Potential optimization opportunities and risk mitigation"
+    },
+
+    "result": {
+        "actions": [
+            {
+                "objectType": "ValueObject",
+                "ids": {
+                    "boundedContextId": "<boundedContextId>",
+                    "aggregateId": "<aggregateId>",
+                    "valueObjectId": "<valueObjectId>"
+                },
+                "args": {
+                    "valueObjectName": "<valueObjectName>",
+                    "referenceClass": "<referenceClassName>",
+                    "properties": [
+                        {
+                            "name": "<propertyName>",
+                            ["type": "<propertyType>"], // If the type is String, do not specify the type.
+                            ["isKey": true] // Write only if there is a primary key.
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}`
+    }
+
+
+    __buildJsonExampleInputFormat() {
+        return {
+            "Summarized Existing EventStorming Model": {
+                "deletedProperties": ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.aggregateOuterStickers,
+                "boundedContexts": [
+                    {
+                        "id": "bc-order",
+                        "name": "orderservice",
+                        "aggregates": [
+                            {
+                                "id": "agg-order",
+                                "name": "Order",
+                                "properties": [
+                                    {
+                                        "name": "orderId",
+                                        "type": "Long",
+                                        "isKey": true
+                                    },
+                                    {
+                                        "name": "orderDate",
+                                        "type": "Date"
+                                    },
+                                    {
+                                        "name": "totalAmount",
+                                        "type": "Money"
+                                    }
+                                ]
+                            },
+                            {
+                                "id": "agg-customer",
+                                "name": "Customer",
+                                "properties": [
+                                    {
+                                        "name": "customerId",
+                                        "type": "Long",
+                                        "isKey": true
+                                    },
+                                    {
+                                        "name": "name"
+                                    },
+                                    {
+                                        "name": "gender"
+                                    },
+                                    {
+                                        "name": "birthDate",
+                                        "type": "Date"
+                                    },
+                                    {
+                                        "name": "email"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+
+            "Suggested Structure": {
+                "OrderManagement": [
+                    {
+                        "aggregate": {
+                            "name": "Order",
+                            "alias": "Order"
+                        },
+                        "valueObjects": [
+                            {
+                                "name": "CustomerReference",
+                                "alias": "Customer Reference",
+                                "referencedAggregate": {
+                                    "name": "Customer",
+                                    "alias": "Customer"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "CustomerManagement": [
+                    {
+                        "aggregate": {
+                            "name": "Customer",
+                            "alias": "Customer"
+                        },
+                        "valueObjects": [
+                            {
+                                "name": "OrderReference",
+                                "alias": "Order Reference",
+                                "referencedAggregate": {
+                                    "name": "Order",
+                                    "alias": "Order"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+
+    __buildJsonExampleOutputFormat() {
+        return {
+            "thoughts": {
+                "summary": "Analyzing Order-Customer relationship for proper ValueObject design",
+                "details": {
+                    "coreDomainConcepts": "Order depends on Customer, establishing a clear unidirectional relationship",
+                    "aggregateRoots": "Customer is a stable entity while Order is transactional",
+                    "invariants": "Customer must exist for Order creation",
+                    "boundaryDecisions": "Implementing unidirectional relationship from Order to Customer"
+                }
+            },
+            "inference": {
+                "summary": "Determining optimal reference pattern and cacheable properties",
+                "details": {
+                    "dataConsistency": "Cache only truly immutable Customer properties in Order",
+                    "relationships": "Remove bidirectional reference, keep Order to Customer only",
+                    "performance": "Cache gender and birthDate as they never change",
+                    "integrity": "Maintain customerId as foreign key reference"
+                }
+            },
+            "reflection": {
+                "summary": "Evaluating the effectiveness of the design decisions",
+                "details": {
+                    "tradeoffs": "Balancing data access speed with consistency",
+                    "dataReplication": "Selected only immutable properties for caching",
+                    "maintenance": "Clear ownership and lifecycle management",
+                    "evolution": "Design focuses on truly static customer attributes"
+                }
+            },
+            "result": {
+                "actions": [
+                    {
+                        "objectType": "ValueObject",
+                        "ids": {
+                            "boundedContextId": "bc-order",
+                            "aggregateId": "agg-order",
+                            "valueObjectId": "vo-customer-id"
+                        },
+                        "args": {
+                            "valueObjectName": "CustomerId",
+                            "referenceClass": "Customer",
+                            "properties": [
+                                {
+                                    "name": "customerId",
+                                    "type": "Long",
+                                    "isKey": true
+                                },
+                                {
+                                    "name": "gender"
+                                },
+                                {
+                                    "name": "birthDate",
+                                    "type": "Date"
+                                }
+                            ]
+                        }
+                    }
+                    // Note: Deliberately NOT including reverse reference from Customer to Order
+                ]
+            }
+        }
+    }
+
+    __buildJsonUserQueryInputFormat() {
+        const summarizedESValue = ESValueSummarizeWithFilterUtil.getSummarizedESValue(
+            JSON.parse(JSON.stringify(this.client.input.esValue)), 
+            ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.aggregateOuterStickers, this.esAliasTransManager)
+
+        return {
+            "Summarized Existing EventStorming Model": JSON.stringify(summarizedESValue),
+
+            "Suggested Structure": JSON.stringify(this.client.input.draftOption),
+
+            "Final Check": `
+CRITICAL RULES FOR REFERENCE GENERATION:
+1. STRICT UNIDIRECTIONAL REFERENCE ONLY:
+   - When draft shows two-way relationship, you MUST choose only ONE direction
+   - Never generate both directions of references
+   - Example: If Order->Customer and Customer->Order are in draft, implement ONLY Order->Customer
+
+2. Direction Selection Criteria:
+   - Choose based on dependency (dependent entity references independent one)
+   - Consider lifecycle management (e.g., Order depends on Customer)
+   - Optimize for most common query patterns
+
+3. Property Guidelines:
+   - Avoid adding properties that might change
+   - Include only the minimum required reference properties
+
+4. Implementation Check:
+   - Verify you're generating only ONE direction of reference
+   - Double-check you haven't created any bidirectional references
+`,
+        }
+    }
+
+
+    onCreateModelGenerating(returnObj){
+        returnObj.directMessage = `Creating Class IDs... (${returnObj.modelRawValue.length} characters generated)`
+    }
+
+    onCreateModelFinished(returnObj){
+        let actions = returnObj.modelValue.aiOutput.result.actions
+        let {actions: appliedActions, createdESValue: createdESValue} = this._getActionAppliedESValue(actions)
+
+        returnObj.modelValue = {
+            ...returnObj.modelValue,
+            actions: appliedActions,
+            createdESValue: createdESValue
+        }
+        returnObj.directMessage = `Creating Class IDs... (${returnObj.modelRawValue.length} characters generated)`
+    }
+
+    _getActionAppliedESValue(actions) {
+        actions = this.esAliasTransManager.transToUUIDInActions(actions)
+        this._modifyActionsForReferenceClassValueObject(actions)
+
+        let esValueToModify = JSON.parse(JSON.stringify(this.client.input.esValue))
+
+        let createdESValue = ESActionsUtil.getActionAppliedESValue(actions, this.client.input.userInfo, this.client.input.information, esValueToModify)
+
+        return { actions, createdESValue }
+    }
+
+    _modifyActionsForReferenceClassValueObject(actions){
+        let actionsToAdd = []
+        for (let action of actions) {
+            if (!action.args || !action.args.properties) continue;
+
+            const fromAggregate = this.client.input.esValue.elements[action.ids.aggregateId]
+            const toAggregate = this.__getAggregateByName(this.client.input.esValue, action.args.referenceClass)
+            if(!fromAggregate || !toAggregate) {
+                console.warn("[*] 참조 Aggregate를 발견하지 못해서 Aggregate 관계를 형성하지 못함", {action})
+                continue
+            }
+            
+
+            action.args.valueObjectName = `${toAggregate.name}Id`
+
+            const toAggregateKeyProp = toAggregate.aggregateRoot.fieldDescriptors.find(prop => prop.isKey)
+            if (!toAggregateKeyProp) continue
+
+            const actionKeyProp = action.args.properties.find(prop => prop.isKey)
+            if (actionKeyProp) {
+                actionKeyProp.name = toAggregateKeyProp.name
+                actionKeyProp.type = toAggregateKeyProp.className
+                actionKeyProp.isKey = true
+                actionKeyProp.referenceClass = toAggregate.name
+                actionKeyProp.isOverrideField = true
+            }
+
+
+            this._addAggregateRelation(fromAggregate, toAggregate, this.client.input.esValue)
+
+
+            actionsToAdd.push(
+                {
+                    "objectType": "Aggregate",
+                    "type": "update",
+                    "ids": {
+                        "boundedContextId": action.ids.boundedContextId,
+                        "aggregateId": action.ids.aggregateId
+                    },
+                    "args": {
+                        "properties": [
+                            {
+                                "name": changeCase.camelCase(action.args.valueObjectName),
+                                "type": action.args.valueObjectName,
+                                "referenceClass": toAggregate.name,
+                                "isOverrideField": true
+                            }
+                        ]
+                    }
+                },
+            )
+        }
+        actions.push(...actionsToAdd)
+    }
+
+    _addAggregateRelation(fromAggregate, toAggregate, esValue){
+        for(const relation of Object.values(esValue.relations).filter(relation => relation)) {
+            if(relation.sourceElement && relation.targetElement) {
+                if(relation.sourceElement.id === fromAggregate.id && relation.targetElement.id === toAggregate.id)
+                    return
+            }
+        }
+
+        const aggregateRelation = ActionsProcessorUtils.getEventStormingRelationObjectBase(fromAggregate, toAggregate)
+        console.log("[*] 생성된 관계 추가", {aggregateRelation})
+        esValue.relations[aggregateRelation.id] = aggregateRelation   
+    }
+
+
+    __getAggregateByName(esValue, aggregateName){
+        for(let element of Object.values(esValue.elements).filter(element => element)) {
+            if(element._type === "org.uengine.modeling.model.Aggregate" && element.name === aggregateName && element.id)
+                return element
+        }
+        return null
+    }
+}
+
+module.exports = CreateAggregateClassIdByDrafts;
