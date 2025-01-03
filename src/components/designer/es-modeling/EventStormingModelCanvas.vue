@@ -694,7 +694,7 @@
                                                                         :disabled="!initLoad"
                                                                         @click="toggleMonitoringDialog()"
                                                                 >
-                                                                    <div>MONITORING</div>
+                                                                    <v-icon>mdi-monitor</v-icon>MONITORING
                                                                 </v-btn>
                                                             </div>
                                                         </template>
@@ -1730,8 +1730,9 @@
                         <div class="d-flex justify-space-between">
                             <div>
                                 <v-tabs v-model="monitoringTab">
-                                    <v-tab v-for="tab in monitoringTabs" :key="tab">
-                                        {{ tab.toUpperCase() }} Events
+                                    <!-- tab.text를 사용하여 화면에 표시 -->
+                                    <v-tab v-for="tab in monitoringTabs" :key="tab.value">
+                                        {{ tab.text.toUpperCase() }} {{ $t('EventStormingModelCanvas.events') }}
                                     </v-tab>
                                 </v-tabs>
                             </div>
@@ -1740,20 +1741,21 @@
                             </v-btn>
                         </div>
                         <v-card-text>
-                            <v-alert v-if="monitoringMsg.length > 0" type="warning" outlined>
+                            <v-alert v-if="monitoringMsg.length > 0" type="warning" outlined dense>
                                 {{ monitoringMsg }}
                             </v-alert>
                             <v-tabs-items v-model="monitoringTab">
-                                <v-tab-item v-for="tab in monitoringTabs" :key="tab">
-                                    <div v-if="tab === 'filtered'">
+                                <!-- tab.value를 사용하여 데이터 처리 -->
+                                <v-tab-item v-for="tab in monitoringTabs" :key="tab.value">
+                                    <div v-if="tab.value === 'filtered'" class="pt-2">
                                         <v-text-field
                                             v-model="searchKeyword"
-                                            label="Search"
+                                            :label="$t('EventStormingModelCanvas.search')"
                                             clearable
                                             outlined
                                             dense
                                             persistent-hint
-                                            :hint="'Search by event ' + searchKeyList.join(', ')"
+                                            :hint="$t('EventStormingModelCanvas.searchByEvent') + searchKeyList.join(', ')"
                                             @keydown.enter="searchEventByKeyword()"
                                         >
                                             <template v-slot:append>
@@ -1762,7 +1764,7 @@
                                         </v-text-field>
                                     </div>
 
-                                    <v-data-table
+                                    <v-data-table class="monitoring-dialog-table"
                                         v-if="isEventLogsFetched"
                                         :headers="eventHeaders"
                                         :items="eventLogs"
@@ -1771,6 +1773,7 @@
                                         show-expand
                                         single-expand
                                         :expanded.sync="expandedLogs"
+                                        :style="tab.value === 'filtered' ? 'height:83vh;' : 'height:92vh;'"
                                     >
                                         <template v-slot:item="{ item, index }">
                                             <tr @click="selectedEventProgress(item, index)"
@@ -1782,13 +1785,16 @@
                                                 <td>{{ item.timestamp }}</td>
                                                 <td @click.stop="toggleEventPayload(item)">
                                                     <v-icon>
-                                                        {{ expandedLogs.includes(item) ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
+                                                        {{ expandedLogs.length > 0 ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
                                                     </v-icon>
                                                 </td>
                                             </tr>
                                         </template>
                                         <template v-slot:expanded-item="{ headers, item }">
                                             <td :colspan="headers.length">
+                                                <v-alert v-if="item.error" type="error" outlined dense>
+                                                    {{ item.error }}
+                                                </v-alert>
                                                 <div class="pa-1">
                                                     <tree-view :data="item.payload"></tree-view>
                                                 </div>
@@ -2127,13 +2133,16 @@
                 //monitoring
                 monitoringDialog: false,
                 monitoringTab: 0,
-                monitoringTabs: ["recent", "filtered"],
+                monitoringTabs: [
+                    { text: this.$t('EventStormingModelCanvas.recent'), value: "recent" },
+                    { text: this.$t('EventStormingModelCanvas.filtered'), value: "filtered" }
+                ],
                 isEventLogsFetched: false,
                 eventHeaders: [
-                    { text: 'Key', value: 'correlationKey' },
-                    { text: 'Type', value: 'type' },
-                    { text: 'Timestamp', value: 'timestamp' },
-                    { text: 'Payload', value: 'data-table-expand' }
+                    { text: this.$t('EventStormingModelCanvas.key'), value: 'correlationKey' },
+                    { text: this.$t('EventStormingModelCanvas.text'), value: 'type' },
+                    { text: this.$t('EventStormingModelCanvas.timestamp'), value: 'timestamp' },
+                    { text: this.$t('EventStormingModelCanvas.payload'), value: 'data-table-expand' }
                 ],
                 eventLogs: [],
                 expandedLogs: [],
@@ -2978,22 +2987,52 @@
                     draftOptionStructure[boundedContextId] = draftOptions[boundedContextId].structure
                 }
 
-                const hasReferencedAggregate = Object.values(draftOptionStructure).some(structures => 
-                    structures.some(structure =>
-                        structure.valueObjects.some(vo => 'referencedAggregate' in vo)
-                    )
-                )
-
-                if (hasReferencedAggregate) {
-                    this.generators.CreateAggregateClassIdByDrafts.inputs = [
-                        {
-                            draftOption: draftOptionStructure,
-                            esValue: this.value,
-                            userInfo: this.userInfo,
-                            information: this.information
+                const references = []
+                for(const boundedContextId of Object.keys(draftOptionStructure)) {
+                    for(const structure of draftOptionStructure[boundedContextId]) {
+                        for(const vo of structure.valueObjects) {
+                            if('referencedAggregate' in vo) {
+                                references.push({
+                                    fromAggregate: structure.aggregate.name,
+                                    toAggregate: vo.referencedAggregate.name,
+                                    referenceName: vo.name
+                                })
+                            }
                         }
-                    ]
+                    }
                 }
+
+                if(references.length > 0) {
+                    const processedPairs = new Set()
+                    const inputs = []
+
+                    references.forEach(ref => {
+                        const pairKey = [ref.fromAggregate, ref.toAggregate].sort().join('-')
+                        
+                        if(!processedPairs.has(pairKey)) {
+                            processedPairs.add(pairKey)
+   
+                            const bidirectionalRefs = references.filter(r => 
+                                (r.fromAggregate === ref.fromAggregate && r.toAggregate === ref.toAggregate) ||
+                                (r.fromAggregate === ref.toAggregate && r.toAggregate === ref.fromAggregate)
+                            )
+
+                            const targetReferences = bidirectionalRefs.map(r => r.referenceName)
+
+                            inputs.push({
+                                draftOption: draftOptionStructure,
+                                esValue: this.value,
+                                userInfo: this.userInfo,
+                                information: this.information,
+                                targetReferences: targetReferences
+                            })
+                        }
+                    })
+
+                    this.generators.CreateAggregateClassIdByDrafts.inputs = inputs
+                }
+                else
+                    this.generators.CreateAggregateClassIdByDrafts.inputs = []
             }
 
             this.generators.CreateCommandActionsByFunctions.generator = new CreateCommandActionsByFunctions({
@@ -3256,9 +3295,9 @@
 
                 onGenerationSucceeded: (returnObj) => {
                     if(returnObj.modelValue && returnObj.modelValue.commandsToReplace) {
+                        this.changedByMe = true
                         for(const command of returnObj.modelValue.commandsToReplace)
                             this.$set(this.value.elements, command.id, command)
-                        this.changedByMe = true
                     }
 
 
@@ -8547,7 +8586,7 @@
             async fetchEventCollections() {
                 var me = this
                 var reqUrl = 'http://localhost:9999/eventCollectors'
-                var result = [];
+                var result = []
                 if (me.searchKeyword && me.searchKeyword.length > 0) {
                     reqUrl += '/search/findBySearchKey';
                     me.searchKeyList.forEach((key, index) => {
@@ -8657,17 +8696,24 @@
                         me.progressElements.forEach(el => {
                             me.$EventBus.$emit('hideProgress', el.id);
                             if (el.name === eventLog.type) {
-                                if (event && event.type === eventLog.type) {
-                                    progressEvents.push({id: el.id, isParticular: true, sequence: index + 1});
-                                } else {
-                                    progressEvents.push({id: el.id, isParticular: false, sequence: index + 1});
+                                var eventEl = {
+                                    id: el.id,
+                                    isParticular: false,
+                                    sequence: index + 1,
+                                    error: eventLog.error || null
                                 }
+                                if (event && event.type === eventLog.type) {
+                                    eventEl.isParticular = true
+                                } else {
+                                    eventEl.isParticular = false
+                                }
+                               progressEvents.push(eventEl)
                             }
                         })
                     }
                 });
                 progressEvents.forEach(el => {
-                    me.$EventBus.$emit('showProgress', el.id, el.sequence, el.isParticular);
+                    me.$EventBus.$emit('showProgress', el);
                 });
             },
             async selectedEventProgress(event, index) {
@@ -8711,8 +8757,8 @@
             },
             toggleEventPayload(eventLog) {
                 var me = this;
-                if (me.expandedLogs.includes(eventLog)) {
-                    me.expandedLogs = me.expandedLogs.filter(log => log !== eventLog);
+                if (me.expandedLogs.length > 0) {
+                    me.expandedLogs = [];
                 } else {
                     me.expandedLogs = [eventLog];
                 }
@@ -9074,13 +9120,16 @@
     }
 
     .monitoring-dialog {
-        width: 450px;
-        max-height: 600px;
+        width: 33vw;
+        height: 100vh;
         position: absolute;
         bottom: 0px;
         right: 0px;
-        overflow: auto;
         z-index: 9999;
+    }
+
+    .monitoring-dialog-table {
+        overflow-y: auto;
     }
 
     .selected-event-row {

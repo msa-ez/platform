@@ -242,7 +242,7 @@ class ESRestoreActionsUtil {
     static _removeAggregateNameProperty(actions, esValue) {
         const aggregateNames = new Set();
         Object.values(esValue.elements).forEach(element => {
-            if (element._type === "org.uengine.modeling.model.Aggregate") {
+            if (element && element._type === "org.uengine.modeling.model.Aggregate") {
                 aggregateNames.add(element.name);
             }
         })

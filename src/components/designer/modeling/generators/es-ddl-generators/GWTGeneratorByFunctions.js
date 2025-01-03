@@ -82,47 +82,40 @@ Please follow these rules:
     __buildJsonResponseFormat() {
         return `
 {
-    "thoughts": {
-        "summary": "Test scenario analysis and validation requirements",
+    "overviewThoughts": {
+        "summary": "High-level analysis of the business domain and system requirements",
         "details": {
-            "businessOperations": "Core test cases for business operations",
-            "commandFlow": "Command validation and test coverage requirements",
-            "eventFlow": "Event verification and state transition tests",
-            "readModelPurpose": "Query validation and view testing requirements",
-            "actorInteractions": "User interaction test scenarios"
+            "domainComplexity": "Assessment of domain rules, constraints, and business logic complexity",
+            "systemBoundaries": "Definition of system scope, interfaces, and integration points",
+            "stakeholderImpact": "Analysis of how changes affect different stakeholders and system users"
         },
-        "additionalConsiderations": "Test environment and data setup requirements"
-    },
-
-    "inference": {
-        "summary": "Test strategy and coverage implications",
-        "details": {
-            "cascadingCommands": "Integration test scenarios for command chains",
-            "stateTransitions": "State machine testing requirements",
-            "validationRules": "Input validation test cases",
-            "queryPatterns": "Performance and load test scenarios",
-            "eventChains": "Event propagation test coverage"
-        },
-        "additionalInferences": "Edge cases and error scenarios to test"
-    },
-
-    "reflection": {
-        "summary": "Test implementation and maintenance considerations",
-        "details": {
-            "consistency": "Data consistency test requirements",
-            "performance": "Performance test metrics and thresholds",
-            "scalability": "Load and stress test considerations",
-            "maintainability": "Test suite maintenance strategy",
-            "security": "Security testing requirements"
-        },
-        "additionalReflections": "Test automation and CI/CD integration"
+        "additionalConsiderations": "Long-term maintainability, scalability, and evolution aspects"
     },
 
    "result": [
         {
             "targetCommandId": "<targetCommandId>",
+            "commandThoughts": {
+                "summary": "Command-specific analysis focusing on behavior and validation",
+                "details": {
+                    "businessRules": "Specific business rules and validation requirements for the command",
+                    "stateTransitions": "Expected state changes and their implications",
+                    "errorScenarios": "Potential failure cases and error handling requirements"
+                },
+                "additionalConsiderations": "Performance implications and side effects"
+            },
             "gwts": [
                 {
+                    "gwtThoughts": {
+                        "summary": "Detailed analysis of specific test scenario requirements",
+                        "details": {
+                            "preconditions": "Required system state and data setup for the scenario",
+                            "expectedOutcomes": "Specific success criteria and verification points",
+                            "dataRequirements": "Test data characteristics and constraints"
+                        },
+                        "additionalConsiderations": "Edge cases and special conditions to consider"
+                    },
+
                     "given": {
                         "name": "<givenName>", // You can write the name of Aggregate
                         "values": {
@@ -351,47 +344,39 @@ Please follow these rules:
 
     __buildJsonExampleOutputFormat() {
         return {
-            "thoughts": {
-                "summary": "Comprehensive analysis of inventory management test scenarios focusing on stock management and product lifecycle",
+            "overviewThoughts": {
+                "summary": "Analysis of inventory management system focusing on stock control and product lifecycle",
                 "details": {
-                    "businessOperations": "Core inventory operations including stock updates and product discontinuation with proper validation rules",
-                    "commandFlow": "Sequential validation of commands ensuring business rule compliance and data integrity",
-                    "eventFlow": "Event chain verification for stock updates and status changes with proper state tracking",
-                    "readModelPurpose": "Real-time inventory tracking and product status monitoring for accurate stock management",
-                    "actorInteractions": "Role-based operations for inventory managers and product managers with proper authorization"
+                    "domainComplexity": "Medium complexity with stock management and product status transitions",
+                    "systemBoundaries": "Inventory management bounded context with stock and product lifecycle operations",
+                    "stakeholderImpact": "Affects inventory managers and product managers with distinct operational needs"
                 },
-                "additionalConsiderations": "Data consistency across inventory updates and proper audit trail maintenance"
+                "additionalConsiderations": "Need for real-time stock tracking and audit trail maintenance"
             },
-
-            "inference": {
-                "summary": "Strategic approach to inventory management testing with focus on data integrity and business rule validation",
-                "details": {
-                    "cascadingCommands": "Stock updates affecting product availability status and inventory levels",
-                    "stateTransitions": "Product lifecycle states from AVAILABLE through OUT_OF_STOCK to DISCONTINUED",
-                    "validationRules": "Stock quantity validation and mandatory discontinuation reason checks",
-                    "queryPatterns": "Stock level monitoring and product status verification scenarios",
-                    "eventChains": "Stock update propagation and status change notification flows"
-                },
-                "additionalInferences": "Edge cases including zero stock handling and invalid state transitions"
-            },
-
-            "reflection": {
-                "summary": "Implementation considerations focusing on maintainability and system reliability",
-                "details": {
-                    "consistency": "Atomic operations for stock updates and status changes",
-                    "performance": "Efficient stock update processing and status change propagation",
-                    "scalability": "Handling multiple concurrent stock updates and status changes",
-                    "maintainability": "Clear separation of stock management and product lifecycle concerns",
-                    "security": "Role-based access control for inventory operations"
-                },
-                "additionalReflections": "Integration with inventory monitoring and alerting systems"
-            },
-
+    
             "result": [
                 {
                     "targetCommandId": "cmd-addStock",
+                    "commandThoughts": {
+                        "summary": "Stock addition operation with quantity validation",
+                        "details": {
+                            "businessRules": "Stock quantity must be positive, product must exist in system",
+                            "stateTransitions": "Updates product quantity and may affect availability status",
+                            "errorScenarios": "Invalid quantity, non-existent product, system constraints"
+                        },
+                        "additionalConsiderations": "Concurrent stock updates handling"
+                    },
                     "gwts": [
                         {
+                            "gwtThoughts": {
+                                "summary": "Validate successful stock addition to available product",
+                                "details": {
+                                    "preconditions": "Product exists with initial stock level",
+                                    "expectedOutcomes": "Stock level increased, event generated with new total",
+                                    "dataRequirements": "Valid product ID and positive quantity value"
+                                },
+                                "additionalConsiderations": "Stock level boundaries and concurrent updates"
+                            },
                             "given": {
                                 "name": "Product",
                                 "values": {
@@ -421,8 +406,26 @@ Please follow these rules:
                 },
                 {
                     "targetCommandId": "cmd-discontinueProduct",
+                    "commandThoughts": {
+                        "summary": "Product discontinuation process with reason tracking",
+                        "details": {
+                            "businessRules": "Requires valid reason, affects product availability",
+                            "stateTransitions": "Changes product status to DISCONTINUED",
+                            "errorScenarios": "Already discontinued products, missing reason"
+                        },
+                        "additionalConsiderations": "Impact on related inventory operations"
+                    },
                     "gwts": [
                         {
+                            "gwtThoughts": {
+                                "summary": "Validate product discontinuation process",
+                                "details": {
+                                    "preconditions": "Active product in available state",
+                                    "expectedOutcomes": "Product marked as discontinued with reason",
+                                    "dataRequirements": "Valid product ID and discontinuation reason"
+                                },
+                                "additionalConsiderations": "Status transition validation"
+                            },
                             "given": {
                                 "name": "Product",
                                 "values": {

@@ -44,51 +44,52 @@
                     v-for="(model, devisionAspect) in resultDevideBoundedContext" 
                     :key="devisionAspect"
                 >
-                    <div 
-                        class="mermaid-container"
+                    <div
                         :class="{ 'selected': selectedAspect === devisionAspect }"
                         @click="selectAspect(devisionAspect)"
                     >
-                        <vue-mermaid
-                            v-if="mermaidNodes[devisionAspect]"
-                            :id="`mermaid-${devisionAspect}-${getRenderKey(devisionAspect)}`"
-                            :key="`mermaid-${devisionAspect}-${getRenderKey(devisionAspect)}`"
-                            :nodes="mermaidNodes[devisionAspect]"
-                            type="graph TD"
-                            @nodeClick="editNode"
-                            :config="config"
-                        ></vue-mermaid>
+                        <div style="text-align: center;">
+                            <vue-mermaid
+                                v-if="mermaidNodes[devisionAspect]"
+                                :id="`mermaid-${devisionAspect}-${getRenderKey(devisionAspect)}`"
+                                :key="`mermaid-${devisionAspect}-${getRenderKey(devisionAspect)}`"
+                                :nodes="mermaidNodes[devisionAspect]"
+                                type="graph TD"
+                                @nodeClick="editNode"
+                                :config="config"
+                            ></vue-mermaid>
+                        </div>
                         
                         <!-- <v-card-title class="text-h6">{{ devisionAspect }} {{ $t('DevideBoundedContextDialog.analysis') }}</v-card-title> -->
                         <div>
                             <v-card-title class="text-subtitle-1 pa-0 pb-4">{{ $t('DevideBoundedContextDialog.reasonOfSeparation') }}</v-card-title>
                             <v-card-text class="pa-0 pb-4" align="left">{{ resultDevideBoundedContext[devisionAspect].thoughts }}</v-card-text>
 
-                            <v-card-title class="text-subtitle-1">{{ $t('DevideBoundedContextDialog.descriptionOfEachBoundedContext') }}</v-card-title>
-                            <v-data-table
-                                :items="getGroupedBoundedContextRequirements(resultDevideBoundedContext[devisionAspect])"
-                                :headers="boundedContextHeaders"
-                                class="elevation-1"
-                                :hide-default-footer="true"
-                                show-expand
-                                :expand-icon="expandIcon"
-                                :single-expand="false"
-                                item-key="name"
-                            >
-                                <template v-slot:expanded-item="{ headers, item }">
-                                    <td :colspan="headers.length">
-                                        <v-simple-table dense class="requirement-subtable">
-                                            <tbody>
-                                                <tr v-for="req in item.requirements" :key="req.type">
-                                                    <td class="requirement-type" width="100">{{ req.type }}</td>
-                                                    <td class="requirement-text">{{ req.text }}</td>
-                                                </tr>
-                                            </tbody>
-                                        </v-simple-table>
-                                    </td>
-                                </template>
-                            </v-data-table><br><v-divider class="my-4"></v-divider>
-
+                            <v-card-title class="pa-0 pb-4 text-subtitle-1">{{ $t('DevideBoundedContextDialog.descriptionOfEachBoundedContext') }}</v-card-title>
+                            <v-card class="pa-0 ma-0 mt-4" outlined>
+                                <v-data-table
+                                    :items="getGroupedBoundedContextRequirements(resultDevideBoundedContext[devisionAspect])"
+                                    :headers="boundedContextHeaders"
+                                    :hide-default-footer="true"
+                                    show-expand
+                                    :expand-icon="expandIcon"
+                                    :single-expand="false"
+                                    item-key="name"
+                                >
+                                    <template v-slot:expanded-item="{ headers, item }">
+                                        <td class="pl-0" :colspan="headers.length">
+                                            <v-simple-table dense class="requirement-subtable">
+                                                <tbody>
+                                                    <tr v-for="req in item.requirements" :key="req.type">
+                                                        <td class="requirement-type" width="100">{{ req.type }}</td>
+                                                        <td class="requirement-text">{{ req.text }}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </v-simple-table>
+                                        </td>
+                                    </template>
+                                </v-data-table>
+                            </v-card>
                             <v-card class="pa-0 ma-0 mt-4" outlined>
                                 <v-card-title class="text-subtitle-1 pa-4">{{ $t('DevideBoundedContextDialog.relations') }}</v-card-title>
                                 <v-data-table 
@@ -366,35 +367,10 @@
     justify-content: center;
     flex-direction: column;
 }
-.mermaid-container {
-    padding: 16px;
-    border: 2px solid transparent;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    margin-top: 15px;
-    text-align: center;
-}
-
-.mermaid-container:hover {
-    background-color: rgba(0, 0, 0, 0.03);
-}
-
-.mermaid-container.selected {
-    border-color: var(--v-primary-base);
-    background-color: rgba(var(--v-primary-base), 0.05);
-}
-
 .requirement-subtable {
-    margin: 8px 16px;
     background: transparent !important;
 }
-.requirement-type {
-    vertical-align: top;
-    padding: 12px !important;
-}
 .requirement-text {
-    padding: 12px !important;
     white-space: normal;
 }
 </style>
