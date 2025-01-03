@@ -1755,7 +1755,7 @@
                                             outlined
                                             dense
                                             persistent-hint
-                                            :hint="$t('EventStormingModelCanvas.searchByEvent') + searchKeyList.join(', ')"
+                                            :hint="$t('EventStormingModelCanvas.searchByEvent', {label: searchKeyList.join(', ')})"
                                             @keydown.enter="searchEventByKeyword()"
                                         >
                                             <template v-slot:append>
@@ -2139,7 +2139,7 @@
                 ],
                 isEventLogsFetched: false,
                 eventHeaders: [
-                    { text: this.$t('EventStormingModelCanvas.key'), value: 'correlationKey' },
+                    { text: this.$t('EventStormingModelCanvas.correlationKey'), value: 'correlationKey' },
                     { text: this.$t('EventStormingModelCanvas.text'), value: 'type' },
                     { text: this.$t('EventStormingModelCanvas.timestamp'), value: 'timestamp' },
                     { text: this.$t('EventStormingModelCanvas.payload'), value: 'data-table-expand' }
@@ -8588,7 +8588,11 @@
                 var reqUrl = 'http://localhost:9999/eventCollectors'
                 var result = []
                 if (me.searchKeyword && me.searchKeyword.length > 0) {
-                    reqUrl += '/search/findBySearchKey';
+                    if (me.searchKeyList.length === 1) {
+                        reqUrl += '/search/findByCorrelationKey';
+                    } else {
+                        reqUrl += '/search/findBySearchKey';                        
+                    }
                     me.searchKeyList.forEach((key, index) => {
                         if (index == 0) {
                             reqUrl += `?${key}=${me.searchKeyword}`;
@@ -8651,6 +8655,9 @@
                         });
                         if (!me.fetchEventInterval) {
                             me.fetchEventLogs();
+                        }
+                        if (me.searchKeyList.length === 1 && me.selectedEventIdx === -1) {
+                            me.showEventProgress();
                         }
                     }
                 } else {
