@@ -2142,7 +2142,7 @@
                     { text: this.$t('EventStormingModelCanvas.correlationKey'), value: 'correlationKey' },
                     { text: this.$t('EventStormingModelCanvas.text'), value: 'type' },
                     { text: this.$t('EventStormingModelCanvas.timestamp'), value: 'timestamp' },
-                    { text: this.$t('EventStormingModelCanvas.payload'), value: 'data-table-expand' }
+                    { text: this.$t('EventStormingModelCanvas.payload'), value: 'data-table-expand', width: 'auto' }
                 ],
                 eventLogs: [],
                 expandedLogs: [],

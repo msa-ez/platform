@@ -65,7 +65,7 @@
                             <v-card-title class="text-subtitle-1 pa-0 pb-4">{{ $t('DevideBoundedContextDialog.reasonOfSeparation') }}</v-card-title>
                             <v-card-text class="pa-0 pb-4" align="left">{{ resultDevideBoundedContext[devisionAspect].thoughts }}</v-card-text>
 
-                            <v-card-title class="pa-0 pb-4 text-subtitle-1">{{ $t('DevideBoundedContextDialog.descriptionOfEachBoundedContext') }}</v-card-title>
+                            <v-card-title class="pa-0 pb-0 text-subtitle-1">{{ $t('DevideBoundedContextDialog.descriptionOfEachBoundedContext') }}</v-card-title>
                             <v-card class="pa-0 ma-0 mt-4" outlined>
                                 <v-data-table
                                     :items="getGroupedBoundedContextRequirements(resultDevideBoundedContext[devisionAspect])"
