@@ -7,7 +7,7 @@ class GWTGeneratorByFunctions extends FormattedJSONAIGenerator{
         super(client);
 
         this.checkInputParamsKeys = ["targetBoundedContext", "targetCommandIds", "description", "esValue"]
-        this.progressCheckStrings = ["thoughts", "inference", "reflection", "targetCommandId"]
+        this.progressCheckStrings = ["overviewThoughts", "targetCommandId"]
     }
 
 

@@ -9,7 +9,7 @@ class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
         super(client);
 
         this.checkInputParamsKeys = ["targetBoundedContext", "description", "esValue", "userInfo", "information"]
-        this.progressCheckStrings = ["thoughts", "inference", "reflection", "extractedPolicies"]
+        this.progressCheckStrings = ["overviewThoughts", "extractedPolicies"]
     }
 
 

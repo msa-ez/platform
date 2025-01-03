@@ -10,7 +10,7 @@ class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
         super(client);
 
         this.checkInputParamsKeys = ["targetBoundedContext", "description", "draftOption", "esValue", "userInfo", "information", "isAccumulated"]
-        this.progressCheckStrings = ["thoughts", "inference", "reflection", "actions"]
+        this.progressCheckStrings = ["overviewThoughts", "actions"]
     }
 
 
