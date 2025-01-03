@@ -8656,9 +8656,6 @@
                         if (!me.fetchEventInterval) {
                             me.fetchEventLogs();
                         }
-                        if (me.searchKeyList.length === 1 && me.selectedEventIdx === -1) {
-                            await me.showEventProgress();
-                        }
                     }
                 } else {
                     me.clearEventProgress();
