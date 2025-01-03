@@ -1,3 +1,43 @@
+/**
+ * @description OpenAI API 사용을 위한 텍스트의 토큰 수를 계산하고 관리하는 유틸리티 클래스입니다.
+ * 다양한 문자 유형(URL, 이모지, 한글, 영숫자, 특수문자 등)에 대한 토큰 수를 추정하고,
+ * 텍스트 분할 및 최적화 기능을 제공합니다.
+ * 
+ * @class
+ * 
+ * @property {Object} urlPatterns - URL 패턴별 토큰 가중치 정보
+ *   - key: URL 패턴 문자열 (예: 'http://', '.com')
+ *   - value: 해당 패턴의 토큰 가중치
+ * 
+ * @throws {TypeError} 잘못된 타입의 입력값 제공 시
+ * @throws {Error} 토큰 제한값이 1 미만인 경우
+ * 
+ * @see https://platform.openai.com/tokenizer - OpenAI 토큰 계산기
+ * 
+ * @example 기본 토큰 계산
+ * const text = "안녕하세요! Hello World 👋";
+ * const tokenCount = TokenCounter.getEstimatedTokenCount(text);
+ * console.log(tokenCount); // 예상 토큰 수 출력
+ * 
+ * @example 토큰 제한에 따른 텍스트 분할
+ * const longText = "이것은 매우 긴 텍스트입니다. 여러 문장으로 구성되어 있습니다.";
+ * const chunks = TokenCounter.splitByTokenLimit(longText, 10);
+ * for (const chunk of chunks) {
+ *   console.log(chunk); // 분할된 텍스트 청크 출력
+ * }
+ * 
+ * @example 토큰 최적화
+ * const text = "자세한 내용은 https://example.com/very/long/path 참고하세요.";
+ * const optimized = TokenCounter.optimizeToTokenLimit(text, 8);
+ * console.log(optimized); // 최적화된 텍스트 출력
+ * 
+ * @note
+ * - 토큰 수 계산은 추정치이며, 실제 OpenAI API 사용시와 약 3% 내외의 오차가 발생할 수 있습니다
+ * - URL은 도메인과 경로를 분리하여 계산되며, 긴 URL은 자동으로 축약됩니다
+ * - 한글은 음절 단위로 계산되며, 길이에 따라 가중치가 적용됩니다
+ * - 연속된 특수문자는 축소된 토큰 수로 계산됩니다
+ * - 텍스트 분할 시 문장의 의미를 최대한 보존하려 시도합니다
+ */
 class TokenCounter {
     /**
      * @description OpenAI API 사용을 위한 텍스트의 토큰 수를 추정하는 메서드입니다.
