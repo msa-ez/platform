@@ -5,7 +5,7 @@ class PreProcessingFunctionsGenerator extends FormattedJSONAIGenerator{
         super(client);
 
         this.checkInputParamsKeys = ["description", "boundedContext"]
-        this.progressCheckStrings = ["thoughts", "inference", "reflection", "userStories", "entities", "businessRules", "interfaces"]
+        this.progressCheckStrings = ["overviewThoughts", "userStories", "entities", "businessRules", "interfaces"]
     }
 
 

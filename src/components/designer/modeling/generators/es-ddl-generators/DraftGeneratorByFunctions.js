@@ -6,7 +6,7 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
         super(client);
 
         this.checkInputParamsKeys = ["description", "boundedContext", "accumulatedDrafts"]
-        this.progressCheckStrings = ["thoughts", "inference", "reflection", "options", "structure", "pros",  "defaultOptionIndex", "conclusions"]
+        this.progressCheckStrings = ["overviewThoughts", "options", "analysis", "defaultOptionIndex"]
     }
 
     static outputToAccumulatedDrafts(output, targetBoundedContext){

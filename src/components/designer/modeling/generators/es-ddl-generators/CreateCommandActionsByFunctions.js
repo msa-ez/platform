@@ -10,7 +10,7 @@ class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
         super(client);
 
         this.checkInputParamsKeys = ["targetBoundedContext", "targetAggregate", "description", "esValue", "userInfo", "information"]
-        this.progressCheckStrings = ["thoughts", "inference", "reflection", "result"]
+        this.progressCheckStrings = ["overviewThoughts", "actions"]
     }
 
 
