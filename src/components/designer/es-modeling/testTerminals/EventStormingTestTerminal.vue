@@ -7,6 +7,7 @@ import ESValueSummarizeWithFilterUtil from "../../modeling/generators/es-ddl-gen
 import ESAliasTransManager from "../../modeling/generators/es-ddl-generators/modules/ESAliasTransManager"
 import DraftGeneratorByFunctions from "../../modeling/generators/es-ddl-generators/DraftGeneratorByFunctions";
 import ESActionsUtil from "../../modeling/generators/es-ddl-generators/modules/ESActionsUtil";
+import TokenCounter from "../../modeling/generators/TokenCounter";
 
 export default {
     name: "es-test-terminal",
@@ -49,6 +50,10 @@ export default {
                 CommandGWTGeneratorTestByLibrary: {
                     command: () => this._CommandGWTGeneratorTestByLibrary(),
                     description: "도서관 시나리오와 연계되어서 Command GWT 생성기만을 테스트 수행"
+                },
+                TokenCounterTest: {
+                    command: () => this._TokenCounterTest(),
+                    description: "토큰 카운터 테스트"
                 },
                 TempTest: {
                     command: () => this._TempTest(),
@@ -1025,6 +1030,42 @@ export default {
 
             this.generators.GWTGeneratorByFunctions.initInputs(testDraft)
             this.generators.GWTGeneratorByFunctions.generateIfInputsExist()
+        },
+
+        _TokenCounterTest() {
+            // 1. getEstimatedTokenCount 테스트
+            console.log("=== getEstimatedTokenCount 테스트 ===");
+            console.log("기본 텍스트:", TokenCounter.getEstimatedTokenCount("Hello, World!"));
+            console.log("한글 텍스트:", TokenCounter.getEstimatedTokenCount("안녕하세요!"));
+            console.log("URL 포함:", TokenCounter.getEstimatedTokenCount("https://example.com"));
+            console.log("이모지 포함:", TokenCounter.getEstimatedTokenCount("Hello 👋 World 😊"));
+            console.log("복합 텍스트:", TokenCounter.getEstimatedTokenCount("안녕하세요! Hello World 👋 https://example.com"));
+
+            // 2. getTotalEstimatedTokenCount 테스트
+            console.log("\n=== getTotalEstimatedTokenCount 테스트 ===");
+            const texts = [
+                "Hello",
+                "안녕하세요",
+                "https://example.com",
+                "👋 😊"
+            ];
+            console.log("여러 텍스트의 총 토큰:", TokenCounter.getTotalEstimatedTokenCount(texts));
+
+            // 3. exceedsTokenLimit 테스트
+            console.log("\n=== exceedsTokenLimit 테스트 ===");
+            const testText = "This is a test sentence for token limit checking.";
+            console.log("5토큰 제한 초과?", TokenCounter.exceedsTokenLimit(testText, 5));
+            console.log("20토큰 제한 초과?", TokenCounter.exceedsTokenLimit(testText, 20));
+
+            // 4. splitByTokenLimit 테스트
+            console.log("\n=== splitByTokenLimit 테스트 ===");
+            const longText = "첫 번째 문장입니다. 두 번째 문장이에요! 세 번째 문장이네요? 마지막 문장입니다.";
+            console.log("5토큰 단위로 분할:", TokenCounter.splitByTokenLimit(longText, 5));
+
+            // 5. optimizeToTokenLimit 테스트
+            console.log("\n=== optimizeToTokenLimit 테스트 ===");
+            const textToOptimize = "이것은 매우 긴 URL을 포함한 텍스트입니다: https://very-long-domain-name.com/path/to/something/else";
+            console.log("10토큰으로 최적화:", TokenCounter.optimizeToTokenLimit(textToOptimize, 10));
         },
 
         _TempTest() {
