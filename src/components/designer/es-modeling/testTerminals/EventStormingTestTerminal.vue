@@ -38,6 +38,18 @@ export default {
                     command: () => this._ESSummaryTest(),
                     description: "생성기 전달시 사용하는 이벤트 스토밍 요약기에 대한 테스트 수행"
                 },
+                CommandGeneratorTestByLibrary: {
+                    command: () => this._CommandGeneratorTestByLibrary(),
+                    description: "도서관 시나리오와 연계되어서 Command 생성기만을 테스트 수행"
+                },
+                PolicyGeneratorTestByLibrary: {
+                    command: () => this._PolicyGeneratorTestByLibrary(),
+                    description: "도서관 시나리오와 연계되어서 Policy 생성기만을 테스트 수행"
+                },
+                CommandGWTGeneratorTestByLibrary: {
+                    command: () => this._CommandGWTGeneratorTestByLibrary(),
+                    description: "도서관 시나리오와 연계되어서 Command GWT 생성기만을 테스트 수행"
+                },
                 TempTest: {
                     command: () => this._TempTest(),
                     description: "임시 테스트"
@@ -599,6 +611,420 @@ export default {
             )
 
             console.log(summary)
+        },
+
+        _CommandGeneratorTestByLibrary() {
+            const testDraft = {
+    "BookManagement": {
+        "structure": [
+            {
+                "aggregate": {
+                    "name": "Book",
+                    "alias": "도서"
+                },
+                "entities": [],
+                "valueObjects": [
+                    {
+                        "name": "ISBN",
+                        "alias": "ISBN 번호"
+                    },
+                    {
+                        "name": "Category",
+                        "alias": "도서 카테고리"
+                    },
+                    {
+                        "name": "Status",
+                        "alias": "도서 상태"
+                    },
+                    {
+                        "name": "LoanReference",
+                        "alias": "대출 참조",
+                        "referencedAggregate": {
+                            "name": "Loan",
+                            "alias": "대출"
+                        }
+                    }
+                ]
+            }
+        ],
+        "analysis": {
+            "transactionalConsistency": "모든 도서 관련 데이터가 단일 집계 내에 있으므로 강한 트랜잭션 일관성 보장",
+            "performanceScalability": "단일 집계 구조로 성능은 기본적으로 양호하나, 대규모 이력 데이터가 포함되면 성능 저하 가능",
+            "domainAlignment": "도서 도메인 요구사항과 밀접하게 정렬됨",
+            "maintainability": "단순한 구조로 유지보수가 용이하지만 기능 추가 시 복잡성이 증가할 수 있음",
+            "futureFlexibility": "기능 확장이 제한적이며 구조 변경이 필요할 가능성 있음"
+        },
+        "pros": {
+            "cohesion": "모든 도서 데이터를 단일 집계로 처리하여 높은 응집력",
+            "coupling": "ValueObject를 통한 외부 참조로 낮은 결합도",
+            "consistency": "도서 등록 및 상태 변경 로직에서 강한 일관성 유지",
+            "encapsulation": "도서 관련 로직이 잘 캡슐화됨",
+            "complexity": "단순하고 명확한 구조",
+            "independence": "다른 집계와 독립적으로 작동 가능",
+            "performance": "도서 작업의 효율적 처리"
+        },
+        "cons": {
+            "cohesion": "이력 데이터가 추가되면 응집력이 저하될 수 있음",
+            "coupling": "외부 참조 관리가 필요함",
+            "consistency": "대규모 데이터 처리 시 트랜잭션 관리가 복잡해질 수 있음",
+            "encapsulation": "모든 상태 변경 로직을 단일 집계 내에 처리해야 함",
+            "complexity": "모든 데이터를 단일 구조로 처리하므로 일부 기능에서 복잡성 증가",
+            "independence": "Loan과의 참조로 인해 약간의 의존성 존재",
+            "performance": "대규모 데이터 작업 시 성능 저하 가능"
+        },
+        "isAIRecommended": false,
+        "boundedContext": Object.values(this.value.elements).find(e => e && e.name === "BookManagement"),
+        "description": "{\"userStories\":[{\"title\":\"새로운 도서 등록\",\"description\":\"관리자로서 새로운 도서를 등록하여 도서 대출 및 관리를 가능하게 하고 싶다.\",\"acceptance\":[\"도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력해야 함\",\"ISBN은 13자리 숫자이며 중복 확인을 통과해야 함\",\"카테고리는 소설/비소설/학술/잡지 중 하나를 선택해야 함\",\"등록 완료 시 도서 상태는 '대출가능'이어야 함\"]},{\"title\":\"도서 상태 변경 관리\",\"description\":\"관리자로서 도서의 상태를 변경하여 대출/반납/폐기 상황을 정확히 반영하고 싶다.\",\"acceptance\":[\"도서 대출 시 상태가 '대출가능'에서 '대출중'으로 변경되어야 함\",\"도서 반납 시 상태가 '대출중'에서 '대출가능'으로 변경되어야 함\",\"도서 예약 시 상태가 '대출가능'에서 '예약중'으로 변경되어야 함\",\"도서 폐기 시 상태가 '폐기'로 변경되고 대출이 불가능해야 함\"]},{\"title\":\"도서 대출 및 상태 변경 이력 조회\",\"description\":\"관리자로서 특정 도서의 대출 및 상태 변경 이력을 확인하여 도서의 사용 현황과 변화를 추적하고 싶다.\",\"acceptance\":[\"각 도서별 대출 이력과 상태 변경 이력이 조회 가능해야 함\",\"이력에는 날짜, 변경된 상태, 관련 사용자 정보가 포함되어야 함\",\"이력을 정렬 및 필터링할 수 있어야 함\"]}],\"entities\":{\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"string\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"string\",\"required\":true,\"validation\":\"13자리 숫자\",\"unique\":true},{\"name\":\"author\",\"type\":\"string\",\"required\":true},{\"name\":\"publisher\",\"type\":\"string\",\"required\":true},{\"name\":\"category\",\"type\":\"enum\",\"required\":true,\"values\":[\"소설\",\"비소설\",\"학술\",\"잡지\"]},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]}]},\"History\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"changeDate\",\"type\":\"date\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"userId\",\"type\":\"string\",\"required\":false}]}},\"businessRules\":[{\"name\":\"ISBNValidation\",\"description\":\"ISBN은 13자리 숫자이며 중복이 없어야 한다.\"},{\"name\":\"InitialBookStatus\",\"description\":\"도서 등록 시 기본 상태는 '대출가능'이어야 한다.\"},{\"name\":\"StatusChangeLogic\",\"description\":\"대출, 반납, 예약, 폐기 시 상태 변경 로직을 따른다.\"}],\"interfaces\":{\"도서관리\":{\"sections\":[{\"name\":\"도서등록\",\"type\":\"form\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"text\",\"required\":true},{\"name\":\"author\",\"type\":\"text\",\"required\":true},{\"name\":\"publisher\",\"type\":\"text\",\"required\":true},{\"name\":\"category\",\"type\":\"select\",\"required\":true}],\"actions\":[\"등록\",\"취소\"]},{\"name\":\"도서목록\",\"type\":\"table\",\"fields\":[{\"name\":\"title\",\"type\":\"text\"},{\"name\":\"ISBN\",\"type\":\"text\"},{\"name\":\"author\",\"type\":\"text\"},{\"name\":\"category\",\"type\":\"select\"},{\"name\":\"status\",\"type\":\"text\"}],\"actions\":[\"조회\",\"수정\",\"삭제\"],\"filters\":[\"카테고리\",\"상태\"],\"resultTable\":{\"columns\":[\"도서명\",\"ISBN\",\"저자\",\"카테고리\",\"상태\"],\"actions\":[\"상세보기\",\"대출\",\"반납\",\"폐기\"]}}]}}}"
+    },
+    "LoanManagement": {
+        "structure": [
+            {
+                "aggregate": {
+                    "name": "Loan",
+                    "alias": "대출"
+                },
+                "entities": [],
+                "valueObjects": [
+                    {
+                        "name": "BookReference",
+                        "alias": "도서 참조",
+                        "referencedAggregate": {
+                            "name": "Book",
+                            "alias": "도서"
+                        }
+                    },
+                    {
+                        "name": "Member",
+                        "alias": "회원"
+                    },
+                    {
+                        "name": "LoanPeriod",
+                        "alias": "대출 기간"
+                    },
+                    {
+                        "name": "LoanStatus",
+                        "alias": "대출 상태"
+                    }
+                ]
+            }
+        ],
+        "analysis": {
+            "transactionalConsistency": "대출 관련 모든 작업이 단일 어그리게이트 내에서 처리되어 강한 일관성 유지",
+            "performanceScalability": "단일 어그리게이트 구조로 간단한 작업에 적합하지만 확장성은 제한적",
+            "domainAlignment": "대출 도메인의 핵심 요구사항과 잘 맞음",
+            "maintainability": "구조가 단순하여 유지보수가 용이함",
+            "futureFlexibility": "구조 변경 없이 새로운 기능 추가는 제한적"
+        },
+        "pros": {
+            "cohesion": "대출 로직이 단일 어그리게이트 내에서 잘 통합됨",
+            "coupling": "외부 어그리게이트(Book, Member)와 최소한의 결합",
+            "consistency": "대출 작업의 강한 일관성 보장",
+            "encapsulation": "대출 관련 비즈니스 로직이 잘 캡슐화됨",
+            "complexity": "구조가 단순하여 이해하기 쉬움",
+            "independence": "다른 어그리게이트에 독립적으로 동작 가능",
+            "performance": "단일 어그리게이트 조회로 작업 처리"
+        },
+        "cons": {
+            "cohesion": "예약과 대출 상태 관리가 분리되지 않음",
+            "coupling": "Book 및 Member에 대한 참조가 필요",
+            "consistency": "참조 데이터 동기화 필요",
+            "encapsulation": "예약 로직이 포함될 경우 복잡성 증가",
+            "complexity": "특정 기능 확장 시 구조가 복잡해질 수 있음",
+            "independence": "예약과 대출의 독립적 관리가 어려움",
+            "performance": "대규모 데이터 조회 시 성능 이슈"
+        },
+        "isAIRecommended": false,
+        "boundedContext": Object.values(this.value.elements).find(e => e && e.name === "LoanManagement"),
+        "description": "{\"userStories\":[{\"title\":\"도서 대출 신청\",\"description\":\"회원으로서 원하는 도서를 대출 신청할 수 있어야 한다.\",\"acceptance\":[\"회원번호와 이름으로 회원 정보 확인\",\"대출할 도서는 도서명 또는 ISBN으로 검색 가능\",\"대출 기간은 7일, 14일, 30일 중 선택\",\"대출하려는 도서가 이미 대출 중인 경우 예약 가능\",\"대출 완료 시 도서 상태가 '대출중'으로 변경\"]},{\"title\":\"대출 현황 조회 및 처리\",\"description\":\"회원으로서 대출 중인 도서 현황을 보고, 연장 또는 반납을 처리할 수 있어야 한다.\",\"acceptance\":[\"현재 대출 중인 도서 목록 표시\",\"각 대출 건의 대출일, 반납예정일, 현재 상태 표시\",\"대출 중인 도서는 연장 및 반납 가능\",\"반납 완료 시 도서 상태가 '대출가능'으로 변경\",\"예약자가 있는 도서 반납 시 상태가 '예약중'으로 변경\"]}],\"entities\":{\"회원\":{\"properties\":[{\"name\":\"회원번호\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"이름\",\"type\":\"string\",\"required\":true}]},\"도서\":{\"properties\":[{\"name\":\"도서번호\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"도서명\",\"type\":\"string\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"string\",\"required\":true},{\"name\":\"상태\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\"]}]},\"대출\":{\"properties\":[{\"name\":\"대출번호\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"회원번호\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"회원\"},{\"name\":\"도서번호\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"도서\"},{\"name\":\"대출일\",\"type\":\"date\",\"required\":true},{\"name\":\"반납예정일\",\"type\":\"date\",\"required\":true},{\"name\":\"상태\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출중\",\"연체\",\"반납완료\"]}]},\"예약\":{\"properties\":[{\"name\":\"예약번호\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"회원번호\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"회원\"},{\"name\":\"도서번호\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"도서\"},{\"name\":\"예약일\",\"type\":\"date\",\"required\":true}]}},\"businessRules\":[{\"name\":\"대출기간제한\",\"description\":\"대출 기간은 7일, 14일, 30일 중 하나여야 한다.\"},{\"name\":\"대출가능여부\",\"description\":\"대출은 '대출가능' 상태의 도서만 가능하다.\"},{\"name\":\"반납처리\",\"description\":\"도서 반납 시 상태는 '대출가능'으로 변경된다. 단, 예약자가 있는 경우 '예약중'으로 변경된다.\"}],\"interfaces\":{\"대출반납\":{\"sections\":[{\"name\":\"대출신청\",\"type\":\"form\",\"fields\":[{\"name\":\"회원번호\",\"type\":\"text\",\"required\":true},{\"name\":\"이름\",\"type\":\"text\",\"required\":true},{\"name\":\"도서검색\",\"type\":\"search\",\"required\":true},{\"name\":\"대출기간\",\"type\":\"select\",\"required\":true}],\"actions\":[\"대출\"]},{\"name\":\"반납처리\",\"type\":\"table\",\"filters\":[\"회원번호\",\"도서번호\"],\"resultTable\":{\"columns\":[\"대출번호\",\"도서명\",\"대출일\",\"반납예정일\",\"상태\"],\"actions\":[\"연장\",\"반납\"]}}]},\"대출현황\":{\"sections\":[{\"name\":\"대출목록\",\"type\":\"table\",\"filters\":[\"회원번호\",\"상태\"],\"resultTable\":{\"columns\":[\"대출번호\",\"도서명\",\"대출일\",\"반납예정일\",\"상태\"],\"actions\":[\"연장\",\"반납\"]}}]}}}"
+    }
+            }
+
+            const afterElements = JSON.parse(JSON.stringify(this.value.elements))
+            Object.values(this.value.elements).forEach(element => {
+                if(element && element._type !== "org.uengine.modeling.model.BoundedContext" && element._type !== "org.uengine.modeling.model.Aggregate") {
+
+                    afterElements[element.id] = null
+                }
+            })
+
+            const afterRelations = JSON.parse(JSON.stringify(this.value.relations))
+            Object.values(this.value.relations).forEach(relation => {
+                if(relation && relation._type === "org.uengine.modeling.model.Relation" && relation.sourceElement._type !== "org.uengine.modeling.model.Aggregate" && relation.targetElement._type !== "org.uengine.modeling.model.Aggregate") {
+
+                    afterRelations[relation.id] = null
+                }
+            })
+
+            this.changedByMe = true
+            this.$set(this.value, "elements", afterElements)
+            this.$set(this.value, "relations", afterRelations) 
+
+            this.generators.CreateCommandActionsByFunctions.initInputs(testDraft)
+            this.generators.CreateCommandActionsByFunctions.generateIfInputsExist()
+
+            this.generators.CreatePolicyActionsByFunctions.generateIfInputsExist = () => {return false}
+        },
+
+        _PolicyGeneratorTestByLibrary() {
+            const testDraft = {
+    "BookManagement": {
+        "structure": [
+            {
+                "aggregate": {
+                    "name": "Book",
+                    "alias": "도서"
+                },
+                "entities": [],
+                "valueObjects": [
+                    {
+                        "name": "ISBN",
+                        "alias": "ISBN 번호"
+                    },
+                    {
+                        "name": "Category",
+                        "alias": "도서 카테고리"
+                    },
+                    {
+                        "name": "Status",
+                        "alias": "도서 상태"
+                    },
+                    {
+                        "name": "LoanReference",
+                        "alias": "대출 참조",
+                        "referencedAggregate": {
+                            "name": "Loan",
+                            "alias": "대출"
+                        }
+                    }
+                ]
+            }
+        ],
+        "analysis": {
+            "transactionalConsistency": "모든 도서 관련 데이터가 단일 집계 내에 있으므로 강한 트랜잭션 일관성 보장",
+            "performanceScalability": "단일 집계 구조로 성능은 기본적으로 양호하나, 대규모 이력 데이터가 포함되면 성능 저하 가능",
+            "domainAlignment": "도서 도메인 요구사항과 밀접하게 정렬됨",
+            "maintainability": "단순한 구조로 유지보수가 용이하지만 기능 추가 시 복잡성이 증가할 수 있음",
+            "futureFlexibility": "기능 확장이 제한적이며 구조 변경이 필요할 가능성 있음"
+        },
+        "pros": {
+            "cohesion": "모든 도서 데이터를 단일 집계로 처리하여 높은 응집력",
+            "coupling": "ValueObject를 통한 외부 참조로 낮은 결합도",
+            "consistency": "도서 등록 및 상태 변경 로직에서 강한 일관성 유지",
+            "encapsulation": "도서 관련 로직이 잘 캡슐화됨",
+            "complexity": "단순하고 명확한 구조",
+            "independence": "다른 집계와 독립적으로 작동 가능",
+            "performance": "도서 작업의 효율적 처리"
+        },
+        "cons": {
+            "cohesion": "이력 데이터가 추가되면 응집력이 저하될 수 있음",
+            "coupling": "외부 참조 관리가 필요함",
+            "consistency": "대규모 데이터 처리 시 트랜잭션 관리가 복잡해질 수 있음",
+            "encapsulation": "모든 상태 변경 로직을 단일 집계 내에 처리해야 함",
+            "complexity": "모든 데이터를 단일 구조로 처리하므로 일부 기능에서 복잡성 증가",
+            "independence": "Loan과의 참조로 인해 약간의 의존성 존재",
+            "performance": "대규모 데이터 작업 시 성능 저하 가능"
+        },
+        "isAIRecommended": false,
+        "boundedContext": Object.values(this.value.elements).find(e => e && e.name === "BookManagement"),
+        "description": "{\"userStories\":[{\"title\":\"새로운 도서 등록\",\"description\":\"관리자로서 새로운 도서를 등록하여 도서 대출 및 관리를 가능하게 하고 싶다.\",\"acceptance\":[\"도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력해야 함\",\"ISBN은 13자리 숫자이며 중복 확인을 통과해야 함\",\"카테고리는 소설/비소설/학술/잡지 중 하나를 선택해야 함\",\"등록 완료 시 도서 상태는 '대출가능'이어야 함\"]},{\"title\":\"도서 상태 변경 관리\",\"description\":\"관리자로서 도서의 상태를 변경하여 대출/반납/폐기 상황을 정확히 반영하고 싶다.\",\"acceptance\":[\"도서 대출 시 상태가 '대출가능'에서 '대출중'으로 변경되어야 함\",\"도서 반납 시 상태가 '대출중'에서 '대출가능'으로 변경되어야 함\",\"도서 예약 시 상태가 '대출가능'에서 '예약중'으로 변경되어야 함\",\"도서 폐기 시 상태가 '폐기'로 변경되고 대출이 불가능해야 함\"]},{\"title\":\"도서 대출 및 상태 변경 이력 조회\",\"description\":\"관리자로서 특정 도서의 대출 및 상태 변경 이력을 확인하여 도서의 사용 현황과 변화를 추적하고 싶다.\",\"acceptance\":[\"각 도서별 대출 이력과 상태 변경 이력이 조회 가능해야 함\",\"이력에는 날짜, 변경된 상태, 관련 사용자 정보가 포함되어야 함\",\"이력을 정렬 및 필터링할 수 있어야 함\"]}],\"entities\":{\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"string\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"string\",\"required\":true,\"validation\":\"13자리 숫자\",\"unique\":true},{\"name\":\"author\",\"type\":\"string\",\"required\":true},{\"name\":\"publisher\",\"type\":\"string\",\"required\":true},{\"name\":\"category\",\"type\":\"enum\",\"required\":true,\"values\":[\"소설\",\"비소설\",\"학술\",\"잡지\"]},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]}]},\"History\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"changeDate\",\"type\":\"date\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"userId\",\"type\":\"string\",\"required\":false}]}},\"businessRules\":[{\"name\":\"ISBNValidation\",\"description\":\"ISBN은 13자리 숫자이며 중복이 없어야 한다.\"},{\"name\":\"InitialBookStatus\",\"description\":\"도서 등록 시 기본 상태는 '대출가능'이어야 한다.\"},{\"name\":\"StatusChangeLogic\",\"description\":\"대출, 반납, 예약, 폐기 시 상태 변경 로직을 따른다.\"}],\"interfaces\":{\"도서관리\":{\"sections\":[{\"name\":\"도서등록\",\"type\":\"form\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"text\",\"required\":true},{\"name\":\"author\",\"type\":\"text\",\"required\":true},{\"name\":\"publisher\",\"type\":\"text\",\"required\":true},{\"name\":\"category\",\"type\":\"select\",\"required\":true}],\"actions\":[\"등록\",\"취소\"]},{\"name\":\"도서목록\",\"type\":\"table\",\"fields\":[{\"name\":\"title\",\"type\":\"text\"},{\"name\":\"ISBN\",\"type\":\"text\"},{\"name\":\"author\",\"type\":\"text\"},{\"name\":\"category\",\"type\":\"select\"},{\"name\":\"status\",\"type\":\"text\"}],\"actions\":[\"조회\",\"수정\",\"삭제\"],\"filters\":[\"카테고리\",\"상태\"],\"resultTable\":{\"columns\":[\"도서명\",\"ISBN\",\"저자\",\"카테고리\",\"상태\"],\"actions\":[\"상세보기\",\"대출\",\"반납\",\"폐기\"]}}]}}}"
+    },
+    "LoanManagement": {
+        "structure": [
+            {
+                "aggregate": {
+                    "name": "Loan",
+                    "alias": "대출"
+                },
+                "entities": [],
+                "valueObjects": [
+                    {
+                        "name": "BookReference",
+                        "alias": "도서 참조",
+                        "referencedAggregate": {
+                            "name": "Book",
+                            "alias": "도서"
+                        }
+                    },
+                    {
+                        "name": "Member",
+                        "alias": "회원"
+                    },
+                    {
+                        "name": "LoanPeriod",
+                        "alias": "대출 기간"
+                    },
+                    {
+                        "name": "LoanStatus",
+                        "alias": "대출 상태"
+                    }
+                ]
+            }
+        ],
+        "analysis": {
+            "transactionalConsistency": "대출 관련 모든 작업이 단일 어그리게이트 내에서 처리되어 강한 일관성 유지",
+            "performanceScalability": "단일 어그리게이트 구조로 간단한 작업에 적합하지만 확장성은 제한적",
+            "domainAlignment": "대출 도메인의 핵심 요구사항과 잘 맞음",
+            "maintainability": "구조가 단순하여 유지보수가 용이함",
+            "futureFlexibility": "구조 변경 없이 새로운 기능 추가는 제한적"
+        },
+        "pros": {
+            "cohesion": "대출 로직이 단일 어그리게이트 내에서 잘 통합됨",
+            "coupling": "외부 어그리게이트(Book, Member)와 최소한의 결합",
+            "consistency": "대출 작업의 강한 일관성 보장",
+            "encapsulation": "대출 관련 비즈니스 로직이 잘 캡슐화됨",
+            "complexity": "구조가 단순하여 이해하기 쉬움",
+            "independence": "다른 어그리게이트에 독립적으로 동작 가능",
+            "performance": "단일 어그리게이트 조회로 작업 처리"
+        },
+        "cons": {
+            "cohesion": "예약과 대출 상태 관리가 분리되지 않음",
+            "coupling": "Book 및 Member에 대한 참조가 필요",
+            "consistency": "참조 데이터 동기화 필요",
+            "encapsulation": "예약 로직이 포함될 경우 복잡성 증가",
+            "complexity": "특정 기능 확장 시 구조가 복잡해질 수 있음",
+            "independence": "예약과 대출의 독립적 관리가 어려움",
+            "performance": "대규모 데이터 조회 시 성능 이슈"
+        },
+        "isAIRecommended": false,
+        "boundedContext": Object.values(this.value.elements).find(e => e && e.name === "LoanManagement"),
+        "description": "{\"userStories\":[{\"title\":\"도서 대출 신청\",\"description\":\"회원으로서 원하는 도서를 대출 신청할 수 있어야 한다.\",\"acceptance\":[\"회원번호와 이름으로 회원 정보 확인\",\"대출할 도서는 도서명 또는 ISBN으로 검색 가능\",\"대출 기간은 7일, 14일, 30일 중 선택\",\"대출하려는 도서가 이미 대출 중인 경우 예약 가능\",\"대출 완료 시 도서 상태가 '대출중'으로 변경\"]},{\"title\":\"대출 현황 조회 및 처리\",\"description\":\"회원으로서 대출 중인 도서 현황을 보고, 연장 또는 반납을 처리할 수 있어야 한다.\",\"acceptance\":[\"현재 대출 중인 도서 목록 표시\",\"각 대출 건의 대출일, 반납예정일, 현재 상태 표시\",\"대출 중인 도서는 연장 및 반납 가능\",\"반납 완료 시 도서 상태가 '대출가능'으로 변경\",\"예약자가 있는 도서 반납 시 상태가 '예약중'으로 변경\"]}],\"entities\":{\"회원\":{\"properties\":[{\"name\":\"회원번호\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"이름\",\"type\":\"string\",\"required\":true}]},\"도서\":{\"properties\":[{\"name\":\"도서번호\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"도서명\",\"type\":\"string\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"string\",\"required\":true},{\"name\":\"상태\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\"]}]},\"대출\":{\"properties\":[{\"name\":\"대출번호\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"회원번호\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"회원\"},{\"name\":\"도서번호\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"도서\"},{\"name\":\"대출일\",\"type\":\"date\",\"required\":true},{\"name\":\"반납예정일\",\"type\":\"date\",\"required\":true},{\"name\":\"상태\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출중\",\"연체\",\"반납완료\"]}]},\"예약\":{\"properties\":[{\"name\":\"예약번호\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"회원번호\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"회원\"},{\"name\":\"도서번호\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"도서\"},{\"name\":\"예약일\",\"type\":\"date\",\"required\":true}]}},\"businessRules\":[{\"name\":\"대출기간제한\",\"description\":\"대출 기간은 7일, 14일, 30일 중 하나여야 한다.\"},{\"name\":\"대출가능여부\",\"description\":\"대출은 '대출가능' 상태의 도서만 가능하다.\"},{\"name\":\"반납처리\",\"description\":\"도서 반납 시 상태는 '대출가능'으로 변경된다. 단, 예약자가 있는 경우 '예약중'으로 변경된다.\"}],\"interfaces\":{\"대출반납\":{\"sections\":[{\"name\":\"대출신청\",\"type\":\"form\",\"fields\":[{\"name\":\"회원번호\",\"type\":\"text\",\"required\":true},{\"name\":\"이름\",\"type\":\"text\",\"required\":true},{\"name\":\"도서검색\",\"type\":\"search\",\"required\":true},{\"name\":\"대출기간\",\"type\":\"select\",\"required\":true}],\"actions\":[\"대출\"]},{\"name\":\"반납처리\",\"type\":\"table\",\"filters\":[\"회원번호\",\"도서번호\"],\"resultTable\":{\"columns\":[\"대출번호\",\"도서명\",\"대출일\",\"반납예정일\",\"상태\"],\"actions\":[\"연장\",\"반납\"]}}]},\"대출현황\":{\"sections\":[{\"name\":\"대출목록\",\"type\":\"table\",\"filters\":[\"회원번호\",\"상태\"],\"resultTable\":{\"columns\":[\"대출번호\",\"도서명\",\"대출일\",\"반납예정일\",\"상태\"],\"actions\":[\"연장\",\"반납\"]}}]}}}"
+    }
+            }
+
+            this.generators.CreatePolicyActionsByFunctions.initInputs(testDraft)
+            this.generators.CreatePolicyActionsByFunctions.generateIfInputsExist()
+
+            this.generators.GWTGeneratorByFunctions.generateIfInputsExist = () => {return false}
+        },
+
+        _CommandGWTGeneratorTestByLibrary() {
+            const testDraft = {
+    "BookManagement": {
+        "structure": [
+            {
+                "aggregate": {
+                    "name": "Book",
+                    "alias": "도서"
+                },
+                "entities": [],
+                "valueObjects": [
+                    {
+                        "name": "ISBN",
+                        "alias": "ISBN 번호"
+                    },
+                    {
+                        "name": "Category",
+                        "alias": "도서 카테고리"
+                    },
+                    {
+                        "name": "Status",
+                        "alias": "도서 상태"
+                    },
+                    {
+                        "name": "LoanReference",
+                        "alias": "대출 참조",
+                        "referencedAggregate": {
+                            "name": "Loan",
+                            "alias": "대출"
+                        }
+                    }
+                ]
+            }
+        ],
+        "analysis": {
+            "transactionalConsistency": "모든 도서 관련 데이터가 단일 집계 내에 있으므로 강한 트랜잭션 일관성 보장",
+            "performanceScalability": "단일 집계 구조로 성능은 기본적으로 양호하나, 대규모 이력 데이터가 포함되면 성능 저하 가능",
+            "domainAlignment": "도서 도메인 요구사항과 밀접하게 정렬됨",
+            "maintainability": "단순한 구조로 유지보수가 용이하지만 기능 추가 시 복잡성이 증가할 수 있음",
+            "futureFlexibility": "기능 확장이 제한적이며 구조 변경이 필요할 가능성 있음"
+        },
+        "pros": {
+            "cohesion": "모든 도서 데이터를 단일 집계로 처리하여 높은 응집력",
+            "coupling": "ValueObject를 통한 외부 참조로 낮은 결합도",
+            "consistency": "도서 등록 및 상태 변경 로직에서 강한 일관성 유지",
+            "encapsulation": "도서 관련 로직이 잘 캡슐화됨",
+            "complexity": "단순하고 명확한 구조",
+            "independence": "다른 집계와 독립적으로 작동 가능",
+            "performance": "도서 작업의 효율적 처리"
+        },
+        "cons": {
+            "cohesion": "이력 데이터가 추가되면 응집력이 저하될 수 있음",
+            "coupling": "외부 참조 관리가 필요함",
+            "consistency": "대규모 데이터 처리 시 트랜잭션 관리가 복잡해질 수 있음",
+            "encapsulation": "모든 상태 변경 로직을 단일 집계 내에 처리해야 함",
+            "complexity": "모든 데이터를 단일 구조로 처리하므로 일부 기능에서 복잡성 증가",
+            "independence": "Loan과의 참조로 인해 약간의 의존성 존재",
+            "performance": "대규모 데이터 작업 시 성능 저하 가능"
+        },
+        "isAIRecommended": false,
+        "boundedContext": Object.values(this.value.elements).find(e => e && e.name === "BookManagement"),
+        "description": "{\"userStories\":[{\"title\":\"새로운 도서 등록\",\"description\":\"관리자로서 새로운 도서를 등록하여 도서 대출 및 관리를 가능하게 하고 싶다.\",\"acceptance\":[\"도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력해야 함\",\"ISBN은 13자리 숫자이며 중복 확인을 통과해야 함\",\"카테고리는 소설/비소설/학술/잡지 중 하나를 선택해야 함\",\"등록 완료 시 도서 상태는 '대출가능'이어야 함\"]},{\"title\":\"도서 상태 변경 관리\",\"description\":\"관리자로서 도서의 상태를 변경하여 대출/반납/폐기 상황을 정확히 반영하고 싶다.\",\"acceptance\":[\"도서 대출 시 상태가 '대출가능'에서 '대출중'으로 변경되어야 함\",\"도서 반납 시 상태가 '대출중'에서 '대출가능'으로 변경되어야 함\",\"도서 예약 시 상태가 '대출가능'에서 '예약중'으로 변경되어야 함\",\"도서 폐기 시 상태가 '폐기'로 변경되고 대출이 불가능해야 함\"]},{\"title\":\"도서 대출 및 상태 변경 이력 조회\",\"description\":\"관리자로서 특정 도서의 대출 및 상태 변경 이력을 확인하여 도서의 사용 현황과 변화를 추적하고 싶다.\",\"acceptance\":[\"각 도서별 대출 이력과 상태 변경 이력이 조회 가능해야 함\",\"이력에는 날짜, 변경된 상태, 관련 사용자 정보가 포함되어야 함\",\"이력을 정렬 및 필터링할 수 있어야 함\"]}],\"entities\":{\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"string\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"string\",\"required\":true,\"validation\":\"13자리 숫자\",\"unique\":true},{\"name\":\"author\",\"type\":\"string\",\"required\":true},{\"name\":\"publisher\",\"type\":\"string\",\"required\":true},{\"name\":\"category\",\"type\":\"enum\",\"required\":true,\"values\":[\"소설\",\"비소설\",\"학술\",\"잡지\"]},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]}]},\"History\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"changeDate\",\"type\":\"date\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"userId\",\"type\":\"string\",\"required\":false}]}},\"businessRules\":[{\"name\":\"ISBNValidation\",\"description\":\"ISBN은 13자리 숫자이며 중복이 없어야 한다.\"},{\"name\":\"InitialBookStatus\",\"description\":\"도서 등록 시 기본 상태는 '대출가능'이어야 한다.\"},{\"name\":\"StatusChangeLogic\",\"description\":\"대출, 반납, 예약, 폐기 시 상태 변경 로직을 따른다.\"}],\"interfaces\":{\"도서관리\":{\"sections\":[{\"name\":\"도서등록\",\"type\":\"form\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"text\",\"required\":true},{\"name\":\"author\",\"type\":\"text\",\"required\":true},{\"name\":\"publisher\",\"type\":\"text\",\"required\":true},{\"name\":\"category\",\"type\":\"select\",\"required\":true}],\"actions\":[\"등록\",\"취소\"]},{\"name\":\"도서목록\",\"type\":\"table\",\"fields\":[{\"name\":\"title\",\"type\":\"text\"},{\"name\":\"ISBN\",\"type\":\"text\"},{\"name\":\"author\",\"type\":\"text\"},{\"name\":\"category\",\"type\":\"select\"},{\"name\":\"status\",\"type\":\"text\"}],\"actions\":[\"조회\",\"수정\",\"삭제\"],\"filters\":[\"카테고리\",\"상태\"],\"resultTable\":{\"columns\":[\"도서명\",\"ISBN\",\"저자\",\"카테고리\",\"상태\"],\"actions\":[\"상세보기\",\"대출\",\"반납\",\"폐기\"]}}]}}}"
+    },
+    "LoanManagement": {
+        "structure": [
+            {
+                "aggregate": {
+                    "name": "Loan",
+                    "alias": "대출"
+                },
+                "entities": [],
+                "valueObjects": [
+                    {
+                        "name": "BookReference",
+                        "alias": "도서 참조",
+                        "referencedAggregate": {
+                            "name": "Book",
+                            "alias": "도서"
+                        }
+                    },
+                    {
+                        "name": "Member",
+                        "alias": "회원"
+                    },
+                    {
+                        "name": "LoanPeriod",
+                        "alias": "대출 기간"
+                    },
+                    {
+                        "name": "LoanStatus",
+                        "alias": "대출 상태"
+                    }
+                ]
+            }
+        ],
+        "analysis": {
+            "transactionalConsistency": "대출 관련 모든 작업이 단일 어그리게이트 내에서 처리되어 강한 일관성 유지",
+            "performanceScalability": "단일 어그리게이트 구조로 간단한 작업에 적합하지만 확장성은 제한적",
+            "domainAlignment": "대출 도메인의 핵심 요구사항과 잘 맞음",
+            "maintainability": "구조가 단순하여 유지보수가 용이함",
+            "futureFlexibility": "구조 변경 없이 새로운 기능 추가는 제한적"
+        },
+        "pros": {
+            "cohesion": "대출 로직이 단일 어그리게이트 내에서 잘 통합됨",
+            "coupling": "외부 어그리게이트(Book, Member)와 최소한의 결합",
+            "consistency": "대출 작업의 강한 일관성 보장",
+            "encapsulation": "대출 관련 비즈니스 로직이 잘 캡슐화됨",
+            "complexity": "구조가 단순하여 이해하기 쉬움",
+            "independence": "다른 어그리게이트에 독립적으로 동작 가능",
+            "performance": "단일 어그리게이트 조회로 작업 처리"
+        },
+        "cons": {
+            "cohesion": "예약과 대출 상태 관리가 분리되지 않음",
+            "coupling": "Book 및 Member에 대한 참조가 필요",
+            "consistency": "참조 데이터 동기화 필요",
+            "encapsulation": "예약 로직이 포함될 경우 복잡성 증가",
+            "complexity": "특정 기능 확장 시 구조가 복잡해질 수 있음",
+            "independence": "예약과 대출의 독립적 관리가 어려움",
+            "performance": "대규모 데이터 조회 시 성능 이슈"
+        },
+        "isAIRecommended": false,
+        "boundedContext": Object.values(this.value.elements).find(e => e && e.name === "LoanManagement"),
+        "description": "{\"userStories\":[{\"title\":\"도서 대출 신청\",\"description\":\"회원으로서 원하는 도서를 대출 신청할 수 있어야 한다.\",\"acceptance\":[\"회원번호와 이름으로 회원 정보 확인\",\"대출할 도서는 도서명 또는 ISBN으로 검색 가능\",\"대출 기간은 7일, 14일, 30일 중 선택\",\"대출하려는 도서가 이미 대출 중인 경우 예약 가능\",\"대출 완료 시 도서 상태가 '대출중'으로 변경\"]},{\"title\":\"대출 현황 조회 및 처리\",\"description\":\"회원으로서 대출 중인 도서 현황을 보고, 연장 또는 반납을 처리할 수 있어야 한다.\",\"acceptance\":[\"현재 대출 중인 도서 목록 표시\",\"각 대출 건의 대출일, 반납예정일, 현재 상태 표시\",\"대출 중인 도서는 연장 및 반납 가능\",\"반납 완료 시 도서 상태가 '대출가능'으로 변경\",\"예약자가 있는 도서 반납 시 상태가 '예약중'으로 변경\"]}],\"entities\":{\"회원\":{\"properties\":[{\"name\":\"회원번호\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"이름\",\"type\":\"string\",\"required\":true}]},\"도서\":{\"properties\":[{\"name\":\"도서번호\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"도서명\",\"type\":\"string\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"string\",\"required\":true},{\"name\":\"상태\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\"]}]},\"대출\":{\"properties\":[{\"name\":\"대출번호\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"회원번호\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"회원\"},{\"name\":\"도서번호\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"도서\"},{\"name\":\"대출일\",\"type\":\"date\",\"required\":true},{\"name\":\"반납예정일\",\"type\":\"date\",\"required\":true},{\"name\":\"상태\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출중\",\"연체\",\"반납완료\"]}]},\"예약\":{\"properties\":[{\"name\":\"예약번호\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"회원번호\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"회원\"},{\"name\":\"도서번호\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"도서\"},{\"name\":\"예약일\",\"type\":\"date\",\"required\":true}]}},\"businessRules\":[{\"name\":\"대출기간제한\",\"description\":\"대출 기간은 7일, 14일, 30일 중 하나여야 한다.\"},{\"name\":\"대출가능여부\",\"description\":\"대출은 '대출가능' 상태의 도서만 가능하다.\"},{\"name\":\"반납처리\",\"description\":\"도서 반납 시 상태는 '대출가능'으로 변경된다. 단, 예약자가 있는 경우 '예약중'으로 변경된다.\"}],\"interfaces\":{\"대출반납\":{\"sections\":[{\"name\":\"대출신청\",\"type\":\"form\",\"fields\":[{\"name\":\"회원번호\",\"type\":\"text\",\"required\":true},{\"name\":\"이름\",\"type\":\"text\",\"required\":true},{\"name\":\"도서검색\",\"type\":\"search\",\"required\":true},{\"name\":\"대출기간\",\"type\":\"select\",\"required\":true}],\"actions\":[\"대출\"]},{\"name\":\"반납처리\",\"type\":\"table\",\"filters\":[\"회원번호\",\"도서번호\"],\"resultTable\":{\"columns\":[\"대출번호\",\"도서명\",\"대출일\",\"반납예정일\",\"상태\"],\"actions\":[\"연장\",\"반납\"]}}]},\"대출현황\":{\"sections\":[{\"name\":\"대출목록\",\"type\":\"table\",\"filters\":[\"회원번호\",\"상태\"],\"resultTable\":{\"columns\":[\"대출번호\",\"도서명\",\"대출일\",\"반납예정일\",\"상태\"],\"actions\":[\"연장\",\"반납\"]}}]}}}"
+    }
+            }
+
+            this.generators.GWTGeneratorByFunctions.initInputs(testDraft)
+            this.generators.GWTGeneratorByFunctions.generateIfInputsExist()
         },
 
         _TempTest() {

@@ -35,6 +35,7 @@ import { group } from "d3";
                 // monitoring
                 isProgress: false,
                 progressColor: '#00C853',
+                isFailedEvent: false,
                 
                 panelStyle: 'width:500px;',
                 namePanel: '',
@@ -54,6 +55,7 @@ import { group } from "d3";
                 warning_white_image: 'static/image/symbol/warning-icon-white.png',
                 link_image: 'static/image/symbol/icons-link.png',
                 link_off_image: 'static/image/symbol/icons-link-off.png',
+                alert_image: 'static/image/symbol/alert-icon.png',
                 ////////////////////// Validation ERROR CODE /////////////////////////////
                 ESE_NOT_NAME: 0,
                 ESE_NOT_BC: 1,
@@ -348,13 +350,17 @@ import { group } from "d3";
             })
 
             // monitoring
-            me.$EventBus.$on('showProgress', (id, eventSequence, isParticular) => {
-                if(id == me.value.id) {
+            me.$EventBus.$on('showProgress', (element) => {
+                if(element.id == me.value.id) {
                     me.isProgress = true;
+                    me.isFailedEvent = false;
                     me.progressColor = '#43A047';
-                    me.progressEventSequence = eventSequence.toString();
-                    if (isParticular) {
+                    me.progressEventSequence = element.sequence.toString();
+                    if (element.isParticular) {
                         me.progressColor = '#00E5FF';
+                    }
+                    if (element.error) {
+                        me.isFailedEvent = true;
                     }
                 }
             });

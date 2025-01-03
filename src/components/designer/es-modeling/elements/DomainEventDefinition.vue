@@ -108,6 +108,15 @@
                     :label.sync="progressEventSequence"
                 ></rectangle-element>
 
+                <image-element
+                        v-if="isProgress && isFailedEvent"
+                        v-bind:image="alert_image"
+                        :sub-width="25"
+                        :sub-height="25"
+                        :sub-bottom="0"
+                        :sub-right="0"
+                ></image-element>
+
                 <geometry-point
                         :coordinate="[95,5]"
                         :_style="statusCompleteStyle">
