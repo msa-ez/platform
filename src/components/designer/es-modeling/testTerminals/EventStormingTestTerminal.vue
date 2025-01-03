@@ -55,6 +55,10 @@ export default {
                     command: () => this._TokenCounterTest(),
                     description: "토큰 카운터 테스트"
                 },
+                ESSummaryGeneratorTest: {
+                    command: () => this._ESSummaryGeneratorTest(),
+                    description: "이벤트 스토밍 요약기 테스트"
+                },
                 TempTest: {
                     command: () => this._TempTest(),
                     description: "임시 테스트"
@@ -1060,12 +1064,20 @@ export default {
             // 4. splitByTokenLimit 테스트
             console.log("\n=== splitByTokenLimit 테스트 ===");
             const longText = "첫 번째 문장입니다. 두 번째 문장이에요! 세 번째 문장이네요? 마지막 문장입니다.";
-            console.log("5토큰 단위로 분할:", TokenCounter.splitByTokenLimit(longText, 5));
+            console.log("10토큰 단위로 분할:", TokenCounter.splitByTokenLimit(longText, 10));
 
             // 5. optimizeToTokenLimit 테스트
             console.log("\n=== optimizeToTokenLimit 테스트 ===");
             const textToOptimize = "이것은 매우 긴 URL을 포함한 텍스트입니다: https://very-long-domain-name.com/path/to/something/else";
             console.log("10토큰으로 최적화:", TokenCounter.optimizeToTokenLimit(textToOptimize, 10));
+        },
+
+        _ESSummaryGeneratorTest() {
+            const summariezedESValue = ESValueSummarizeWithFilterUtil.getSummarizedESValue(
+                this.value, [], new ESAliasTransManager(this.value)
+            )
+            console.log(summariezedESValue)
+            console.log("[*] 전체 ESValue 토큰 수 :", TokenCounter.getEstimatedTokenCount(JSON.stringify(summariezedESValue)))
         },
 
         _TempTest() {
