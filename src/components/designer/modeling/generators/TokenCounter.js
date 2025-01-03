@@ -72,44 +72,42 @@ class TokenCounter {
      */
     static getEstimatedTokenCount(text) {
         if (!text) return 0;
-
+    
         text = text.replace(/\s+/g, ' ').trim();
         
         let tokenCount = 0;
 
-        const sentences = text.split(/([.!?]+)/g);
-        for (const sentence of sentences) {
-            if (!sentence.trim()) continue;
-            
-            const urlMatches = sentence.match(/https?:\/\/[^\s]+/g) || [];
-            for (const url of urlMatches) {
-                tokenCount += this._processUrl(url);
-                text = text.replace(url, ' ');
+        const urlMatches = text.match(/https?:\/\/[^\s]+/g) || [];
+        for (const url of urlMatches) {
+            tokenCount += this._processUrl(url);
+            text = text.replace(url, ' ');
+        }
+    
+        const words = text.split(/\s+/);
+        for (const word of words) {
+            if (!word) continue;
+    
+            const emojiMatches = word.match(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu) || [];
+            if (emojiMatches.length > 0) {
+                tokenCount += this._processEmojis(emojiMatches);
             }
-
-            const words = sentence.trim().split(/\s+/);
-            
-            for (const word of words) {
-                const emojiMatches = word.match(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu) || [];
-                if (emojiMatches.length > 0) {
-                    tokenCount += this._processEmojis(emojiMatches);
-                    continue;
-                }
-
-                if (/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(word)) {
-                    tokenCount += this._processKorean(word);
-                    continue;
-                }
-
-                if (/[a-zA-Z0-9]/.test(word)) {
-                    tokenCount += this._processAlphanumeric(word);
-                    continue;
-                }
-
+    
+            const koreanChars = word.match(/[가-힣ㄱ-ㅎㅏ-ㅣ]+/g) || [];
+            for (const chars of koreanChars) {
+                tokenCount += this._processKorean(chars);
+            }
+    
+            const alphanumericParts = word.match(/[a-zA-Z0-9]+/g) || [];
+            for (const part of alphanumericParts) {
+                tokenCount += this._processAlphanumeric(part);
+            }
+    
+            const specialChars = word.match(/[^\w\s가-힣ㄱ-ㅎㅏ-ㅣ\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu) || [];
+            if (specialChars.length > 0) {
                 tokenCount += this._processSpecialChars(word);
             }
         }
-
+    
         return Math.max(1, Math.round(tokenCount * 1.05));
     }
 
@@ -396,18 +394,22 @@ class TokenCounter {
     static _processSpecialChars(word) {
         const specialChars = word.match(/[^\w\s가-힣ㄱ-ㅎㅏ-ㅣ\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu) || [];
         let count = 0;
-        let consecutive = 0;
-
-        for (let i = 0; i < specialChars.length; i++) {
-            if (i > 0 && specialChars[i] === specialChars[i-1]) {
-                consecutive++;
+        
+        const jsonStructureChars = new Set(['{', '}', '[', ']', ':', ',', '"']);
+        let structureCount = 0;
+        let otherCount = 0;
+        
+        for (const char of specialChars) {
+            if (jsonStructureChars.has(char)) {
+                structureCount++;
             } else {
-                consecutive = 0;
+                otherCount++;
             }
-            count += 1 / (consecutive + 1);
         }
-
-        return Math.ceil(count);
+        
+        count += Math.ceil(structureCount / 3);
+        count += Math.ceil(otherCount / 2);
+        return count;
     }
 }
 
