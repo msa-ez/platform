@@ -8657,7 +8657,7 @@
                             me.fetchEventLogs();
                         }
                         if (me.searchKeyList.length === 1 && me.selectedEventIdx === -1) {
-                            me.showEventProgress();
+                            await me.showEventProgress();
                         }
                     }
                 } else {
