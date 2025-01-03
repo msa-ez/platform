@@ -6,6 +6,7 @@ class ModelModificationGenerator extends JsonAIGenerator{
     constructor(client){
         super(client); 
         this.model = "gpt-4o"
+        this.temperature = 0.5
     }
     // to have multiple order items and order states 
     createPrompt(){

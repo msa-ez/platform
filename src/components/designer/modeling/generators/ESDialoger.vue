@@ -83,6 +83,7 @@
                 </v-tabs-items>
                 <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
                 <v-card-actions v-if="done" class="auto-modeling-btn-box">
+                    <v-btn class="auto-modeling-btn" @click="summarizeRequirements()">TEST Summarize</v-btn>
                     <v-btn class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}</v-btn>
                     <v-btn class="auto-modeling-btn" color="primary" @click="generateDevideBoundedContext()">{{ $t('ESDialoger.createBoundedContext') }}</v-btn>
                 </v-card-actions>
@@ -141,6 +142,10 @@
     import Usage from '../../../../utils/Usage'
     import ESDialogerTestTerminal from './testTerminals/ESDialogerTestTerminal.vue';
 
+    // Requirements Summarizer
+    import RequirementsSummarizer from './RequirementsSummarizer.js';
+    import TextChunker from './TextChunker.js';
+
     export default {
         name: 'es-dialoger',
         mixins:[
@@ -175,6 +180,11 @@
         async created(){
             await this.setUserInfo()
             this.autoModel = getParent(this.$parent, 'auto-modeling-dialog');
+
+            this.textChunker = new TextChunker({
+                chunkSize: 2000,  // GPT-4 컨텍스트 크기를 고려한 설정
+                overlapSize: 100  // 문맥 유지를 위한 오버랩
+            });
         },
         watch: {
             "prompt": {
@@ -240,7 +250,13 @@
 
                 activeTab: null,
                 generatorInputTabs: ['UserStory', 'DDL'],
-                inputDDL: ''
+                inputDDL: '',
+
+                textChunker: null,
+                chunks: [],
+                currentChunkIndex: 0,
+                summarizedChunks: [],
+                summarizedResult: ""
             }
         },
         methods: {
@@ -269,16 +285,14 @@
             },
 
             onReceived(content){
-                if(this.state.generator === "DevideBoundedContextGenerator"){
-                    return;
-                }
-
-                if(!this.value){
-                    this.value = {
-                        userStory: ''
+                if(this.state.generator === "EventOnlyESGenerator"){
+                    if(!this.value){
+                        this.value = {
+                            userStory: ''
+                        }
                     }
+                    this.value.userStory = content;
                 }
-                this.value.userStory = content;
             },
 
             onModelCreated(model){
@@ -286,6 +300,26 @@
 
             async onGenerationFinished(model){
                 this.done = true;
+
+                if (this.state.generator === "RequirementsSummarizer") {
+                    if (!model.summarizedRequirements.isFinalSummary) {
+                        this.summarizedChunks.push(model.summarizedRequirements);
+                        this.currentChunkIndex++;
+                        
+                        if (this.currentChunkIndex < this.chunks.length) {
+                            this.processNextChunk();
+                            return;
+                        } else if (this.summarizedChunks.length > 1) {
+                            this.processNextChunk();
+                            return;
+                        }
+                    }
+                    // 최종 요약 완료 또는 단일 청크 처리 완료
+                    console.log("Final summarization complete");
+                    this.state.generator = "EventOnlyESGenerator";
+                    this.generatorName = "EventOnlyESGenerator";
+                    return;
+                }
 
                 if(this.state.generator === "DevideBoundedContextGenerator"){
                     if(this.devisionAspectIndex < this.devisionAspect.length - 1) {
@@ -355,6 +389,44 @@
 
             reGenerateAspect(aspect, feedback){
                 this.generateDevideBoundedContext(aspect, feedback);
+            },
+
+            summarizeRequirements() {
+                // 텍스트를 청크로 분할
+                this.chunks = this.textChunker.splitIntoChunks(this.value.userStory);
+                this.currentChunkIndex = 0;
+                this.summarizedChunks = [];
+
+                // 디버깅을 위한 청크 통계 출력
+                console.log('Chunk statistics:', this.textChunker.getChunkStats(this.chunks));
+                
+                // 첫 번째 청크 처리 시작
+                this.processNextChunk();
+
+            },    
+
+            processNextChunk() {
+                this.generator = new RequirementsSummarizer(this);
+                this.state.generator = "RequirementsSummarizer";
+                this.generatorName = "RequirementsSummarizer";
+
+                if (this.currentChunkIndex >= this.chunks.length) {
+                    // 모든 청크 처리 완료, 최종 요약 생성
+                    this.summarizedResult = this.summarizedChunks.join('\n\n');
+
+                    console.log("Before summarize: ", this.value.userStory.length)
+                    console.log("After summarize: ", this.summarizedResult.length)
+                } else {
+                    // 개별 청크 처리
+                    this.input['requirements'] = {
+                        userStory: this.chunks[this.currentChunkIndex],
+                        currentChunk: this.currentChunkIndex + 1,
+                        totalChunks: this.chunks.length,
+                        isFinalSummary: false
+                    };
+                    this.generator.generate();
+                }
+
             },
 
             generateDevideBoundedContext(aspect, feedback){
