@@ -694,7 +694,7 @@
                                                                         :disabled="!initLoad"
                                                                         @click="toggleMonitoringDialog()"
                                                                 >
-                                                                    <div>MONITORING</div>
+                                                                    <v-icon>mdi-monitor</v-icon>MONITORING
                                                                 </v-btn>
                                                             </div>
                                                         </template>
@@ -1730,8 +1730,9 @@
                         <div class="d-flex justify-space-between">
                             <div>
                                 <v-tabs v-model="monitoringTab">
-                                    <v-tab v-for="tab in monitoringTabs" :key="tab">
-                                        {{ tab.toUpperCase() }} Events
+                                    <!-- tab.text를 사용하여 화면에 표시 -->
+                                    <v-tab v-for="tab in monitoringTabs" :key="tab.value">
+                                        {{ tab.text.toUpperCase() }} {{ $t('EventStormingModelCanvas.events') }}
                                     </v-tab>
                                 </v-tabs>
                             </div>
@@ -1739,21 +1740,22 @@
                                 <v-icon>mdi-close</v-icon>
                             </v-btn>
                         </div>
-                        <v-card-text>
+                        <v-card-text class="pt-0">
                             <v-alert v-if="monitoringMsg.length > 0" type="warning" outlined>
                                 {{ monitoringMsg }}
                             </v-alert>
                             <v-tabs-items v-model="monitoringTab">
-                                <v-tab-item v-for="tab in monitoringTabs" :key="tab">
-                                    <div v-if="tab === 'filtered'">
+                                <!-- tab.value를 사용하여 데이터 처리 -->
+                                <v-tab-item v-for="tab in monitoringTabs" :key="tab.value">
+                                    <div v-if="tab.value === 'filtered'" class="pt-2">
                                         <v-text-field
                                             v-model="searchKeyword"
-                                            label="Search"
+                                            :label="$t('EventStormingModelCanvas.search')"
                                             clearable
                                             outlined
                                             dense
                                             persistent-hint
-                                            :hint="'Search by event ' + searchKeyList.join(', ')"
+                                            :hint="$t('EventStormingModelCanvas.searchByEvent') + searchKeyList.join(', ')"
                                             @keydown.enter="searchEventByKeyword()"
                                         >
                                             <template v-slot:append>
@@ -1762,7 +1764,7 @@
                                         </v-text-field>
                                     </div>
 
-                                    <v-data-table
+                                    <v-data-table class="monitoring-dialog-table"
                                         v-if="isEventLogsFetched"
                                         :headers="eventHeaders"
                                         :items="eventLogs"
@@ -1771,6 +1773,7 @@
                                         show-expand
                                         single-expand
                                         :expanded.sync="expandedLogs"
+                                        :style="tab.value === 'filtered' ? 'height:83vh;' : 'height:92vh;'"
                                     >
                                         <template v-slot:item="{ item, index }">
                                             <tr @click="selectedEventProgress(item, index)"
@@ -2127,13 +2130,16 @@
                 //monitoring
                 monitoringDialog: false,
                 monitoringTab: 0,
-                monitoringTabs: ["recent", "filtered"],
+                monitoringTabs: [
+                    { text: this.$t('EventStormingModelCanvas.recent'), value: "recent" },
+                    { text: this.$t('EventStormingModelCanvas.filtered'), value: "filtered" }
+                ],
                 isEventLogsFetched: false,
                 eventHeaders: [
-                    { text: 'Key', value: 'correlationKey' },
-                    { text: 'Type', value: 'type' },
-                    { text: 'Timestamp', value: 'timestamp' },
-                    { text: 'Payload', value: 'data-table-expand' }
+                    { text: this.$t('EventStormingModelCanvas.key'), value: 'correlationKey' },
+                    { text: this.$t('EventStormingModelCanvas.text'), value: 'type' },
+                    { text: this.$t('EventStormingModelCanvas.timestamp'), value: 'timestamp' },
+                    { text: this.$t('EventStormingModelCanvas.payload'), value: 'data-table-expand' }
                 ],
                 eventLogs: [],
                 expandedLogs: [],
@@ -8547,7 +8553,367 @@
             async fetchEventCollections() {
                 var me = this
                 var reqUrl = 'http://localhost:9999/eventCollectors'
-                var result = [];
+                var result = [ {
+  "type" : "OrderPlaced",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"OrderPlaced\",\"timestamp\":1735786287701,\"id\":1,\"userId\":\"hgd\",\"storeId\":\"cafe\",\"totalAmount\":10000,\"address\":{\"street\":null,\"city\":null,\"state\":null,\"country\":null,\"zipcode\":null},\"orderItems\":[{\"menuId\":\"coffee\",\"qty\":2}],\"status\":\"ORDERPLACED\"}",
+  "timestamp" : 1735786287701,
+  "error" : null,
+  "userId" : "hgd",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/1"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/1"
+    }
+  }
+}, {
+  "type" : "OrderAccepted",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"OrderAccepted\",\"timestamp\":1735786296456,\"id\":1,\"orderId\":1,\"userId\":\"hgd\",\"storeId\":\"cafe\",\"totalAmount\":null,\"comment\":null,\"orderItems\":[{\"menuId\":\"coffee\",\"qty\":2}],\"address\":null,\"status\":\"APPROVED\"}",
+  "timestamp" : 1735786296456,
+  "error" : null,
+  "userId" : "hgd",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/2"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/2"
+    }
+  }
+}, {
+  "type" : "CookStarted",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"CookStarted\",\"timestamp\":1735786300800,\"id\":1,\"orderId\":1,\"userId\":\"hgd\",\"storeId\":\"cafe\",\"totalAmount\":10000,\"comment\":\"\",\"orderItems\":[{\"menuId\":\"coffee\",\"qty\":2}],\"address\":null,\"status\":\"COOKSTATED\"}",
+  "timestamp" : 1735786300800,
+  "error" : null,
+  "userId" : "hgd",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/3"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/3"
+    }
+  }
+}, {
+  "type" : "OrderPlaced",
+  "correlationKey" : "2",
+  "payload" : "{\"eventType\":\"OrderPlaced\",\"timestamp\":1735786328367,\"id\":2,\"userId\":\"hgd\",\"storeId\":\"cafe\",\"totalAmount\":8000,\"address\":{\"street\":null,\"city\":null,\"state\":null,\"country\":null,\"zipcode\":null},\"orderItems\":[{\"menuId\":\"cake\",\"qty\":1}],\"status\":\"ORDERPLACED\"}",
+  "timestamp" : 1735786328367,
+  "error" : null,
+  "userId" : "hgd",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/4"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/4"
+    }
+  }
+}, {
+  "type" : "CookFinished",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"CookFinished\",\"timestamp\":1735786372268,\"id\":1,\"orderId\":1,\"userId\":\"hgd\",\"storeId\":\"cafe\",\"totalAmount\":10000,\"comment\":\"\",\"orderItems\":[{\"menuId\":\"coffee\",\"qty\":2}],\"address\":null,\"status\":\"COOKFINISHED\"}",
+  "timestamp" : 1735786372268,
+  "error" : null,
+  "userId" : "hgd",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/5"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/5"
+    }
+  }
+}, {
+  "type" : "OrderAccepted",
+  "correlationKey" : "2",
+  "payload" : "{\"eventType\":\"OrderAccepted\",\"timestamp\":1735786379572,\"id\":2,\"orderId\":2,\"userId\":\"hgd\",\"storeId\":\"cafe\",\"totalAmount\":null,\"comment\":null,\"orderItems\":[{\"menuId\":\"cake\",\"qty\":1}],\"address\":null,\"status\":\"APPROVED\"}",
+  "timestamp" : 1735786379572,
+  "error" : null,
+  "userId" : "hgd",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/6"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/6"
+    }
+  }
+}, {
+  "type" : "DeliveryStarted",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"DeliveryStarted\",\"timestamp\":1735786437996,\"id\":1,\"orderId\":1,\"userId\":\"hdg\",\"receiverAddr\":\"\",\"riderId\":\"test\",\"message\":\"pick up\"}",
+  "timestamp" : 1735786437996,
+  "error" : null,
+  "userId" : "hdg",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/7"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/7"
+    }
+  }
+}, {
+  "type" : "CookStarted",
+  "correlationKey" : "2",
+  "payload" : "{\"eventType\":\"CookStarted\",\"timestamp\":1735786451946,\"id\":2,\"orderId\":2,\"userId\":\"hgd\",\"storeId\":\"cafe\",\"totalAmount\":8000,\"comment\":\"\",\"orderItems\":[{\"menuId\":\"cake\",\"qty\":1}],\"address\":null,\"status\":\"COOKSTATED\"}",
+  "timestamp" : 1735786451946,
+  "error" : null,
+  "userId" : "hgd",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/8"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/8"
+    }
+  }
+}, {
+  "type" : "CookFinished",
+  "correlationKey" : "2",
+  "payload" : "{\"eventType\":\"CookFinished\",\"timestamp\":1735786457595,\"id\":2,\"orderId\":2,\"userId\":\"hgd\",\"storeId\":\"cafe\",\"totalAmount\":8000,\"comment\":\"\",\"orderItems\":[{\"menuId\":\"cake\",\"qty\":1}],\"address\":null,\"status\":\"COOKFINISHED\"}",
+  "timestamp" : 1735786457595,
+  "error" : null,
+  "userId" : "hgd",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/9"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/9"
+    }
+  }
+}, {
+  "type" : "DeliveryStarted",
+  "correlationKey" : "2",
+  "payload" : "{\"eventType\":\"DeliveryStarted\",\"timestamp\":1735786496319,\"id\":2,\"orderId\":2,\"userId\":\"hgd\",\"receiverAddr\":\"\",\"riderId\":\"test\",\"message\":\"\"}",
+  "timestamp" : 1735786496319,
+  "error" : null,
+  "userId" : "hgd",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/10"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/10"
+    }
+  }
+}, {
+  "type" : "DeliveryCompleted",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"DeliveryCompleted\",\"timestamp\":1735786501298,\"id\":1,\"orderId\":1,\"userId\":\"hdg\",\"receiverAddr\":\"\",\"riderId\":\"test\",\"message\":\"\"}",
+  "timestamp" : 1735786501298,
+  "error" : null,
+  "userId" : "hdg",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    }
+  }
+}, {
+  "type" : "DeliveryCompleted",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"DeliveryCompleted\",\"timestamp\":1735786501298,\"id\":1,\"orderId\":1,\"userId\":\"hdg\",\"receiverAddr\":\"\",\"riderId\":\"test\",\"message\":\"\"}",
+  "timestamp" : 1735786501298,
+  "error" : null,
+  "userId" : "hdg",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    }
+  }
+}, {
+  "type" : "DeliveryCompleted",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"DeliveryCompleted\",\"timestamp\":1735786501298,\"id\":1,\"orderId\":1,\"userId\":\"hdg\",\"receiverAddr\":\"\",\"riderId\":\"test\",\"message\":\"\"}",
+  "timestamp" : 1735786501298,
+  "error" : null,
+  "userId" : "hdg",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    }
+  }
+}, {
+  "type" : "DeliveryCompleted",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"DeliveryCompleted\",\"timestamp\":1735786501298,\"id\":1,\"orderId\":1,\"userId\":\"hdg\",\"receiverAddr\":\"\",\"riderId\":\"test\",\"message\":\"\"}",
+  "timestamp" : 1735786501298,
+  "error" : null,
+  "userId" : "hdg",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    }
+  }
+}, {
+  "type" : "DeliveryCompleted",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"DeliveryCompleted\",\"timestamp\":1735786501298,\"id\":1,\"orderId\":1,\"userId\":\"hdg\",\"receiverAddr\":\"\",\"riderId\":\"test\",\"message\":\"\"}",
+  "timestamp" : 1735786501298,
+  "error" : null,
+  "userId" : "hdg",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    }
+  }
+}, {
+  "type" : "DeliveryCompleted",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"DeliveryCompleted\",\"timestamp\":1735786501298,\"id\":1,\"orderId\":1,\"userId\":\"hdg\",\"receiverAddr\":\"\",\"riderId\":\"test\",\"message\":\"\"}",
+  "timestamp" : 1735786501298,
+  "error" : null,
+  "userId" : "hdg",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    }
+  }
+}, {
+  "type" : "DeliveryCompleted",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"DeliveryCompleted\",\"timestamp\":1735786501298,\"id\":1,\"orderId\":1,\"userId\":\"hdg\",\"receiverAddr\":\"\",\"riderId\":\"test\",\"message\":\"\"}",
+  "timestamp" : 1735786501298,
+  "error" : null,
+  "userId" : "hdg",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    }
+  }
+}, {
+  "type" : "DeliveryCompleted",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"DeliveryCompleted\",\"timestamp\":1735786501298,\"id\":1,\"orderId\":1,\"userId\":\"hdg\",\"receiverAddr\":\"\",\"riderId\":\"test\",\"message\":\"\"}",
+  "timestamp" : 1735786501298,
+  "error" : null,
+  "userId" : "hdg",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    }
+  }
+}, {
+  "type" : "DeliveryCompleted",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"DeliveryCompleted\",\"timestamp\":1735786501298,\"id\":1,\"orderId\":1,\"userId\":\"hdg\",\"receiverAddr\":\"\",\"riderId\":\"test\",\"message\":\"\"}",
+  "timestamp" : 1735786501298,
+  "error" : null,
+  "userId" : "hdg",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    }
+  }
+}, {
+  "type" : "DeliveryCompleted",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"DeliveryCompleted\",\"timestamp\":1735786501298,\"id\":1,\"orderId\":1,\"userId\":\"hdg\",\"receiverAddr\":\"\",\"riderId\":\"test\",\"message\":\"\"}",
+  "timestamp" : 1735786501298,
+  "error" : null,
+  "userId" : "hdg",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    }
+  }
+}, {
+  "type" : "DeliveryCompleted",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"DeliveryCompleted\",\"timestamp\":1735786501298,\"id\":1,\"orderId\":1,\"userId\":\"hdg\",\"receiverAddr\":\"\",\"riderId\":\"test\",\"message\":\"\"}",
+  "timestamp" : 1735786501298,
+  "error" : null,
+  "userId" : "hdg",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    }
+  }
+}, {
+  "type" : "DeliveryCompleted",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"DeliveryCompleted\",\"timestamp\":1735786501298,\"id\":1,\"orderId\":1,\"userId\":\"hdg\",\"receiverAddr\":\"\",\"riderId\":\"test\",\"message\":\"\"}",
+  "timestamp" : 1735786501298,
+  "error" : null,
+  "userId" : "hdg",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    }
+  }
+}, {
+  "type" : "DeliveryCompleted",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"DeliveryCompleted\",\"timestamp\":1735786501298,\"id\":1,\"orderId\":1,\"userId\":\"hdg\",\"receiverAddr\":\"\",\"riderId\":\"test\",\"message\":\"\"}",
+  "timestamp" : 1735786501298,
+  "error" : null,
+  "userId" : "hdg",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    }
+  }
+}, {
+  "type" : "DeliveryCompleted",
+  "correlationKey" : "1",
+  "payload" : "{\"eventType\":\"DeliveryCompleted\",\"timestamp\":1735786501298,\"id\":1,\"orderId\":1,\"userId\":\"hdg\",\"receiverAddr\":\"\",\"riderId\":\"test\",\"message\":\"\"}",
+  "timestamp" : 1735786501298,
+  "error" : null,
+  "userId" : "hdg",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    },
+    "eventCollector" : {
+      "href" : "http://localhost:9999/eventCollectors/11"
+    }
+  }
+} ];
                 if (me.searchKeyword && me.searchKeyword.length > 0) {
                     reqUrl += '/search/findBySearchKey';
                     me.searchKeyList.forEach((key, index) => {
@@ -8561,17 +8927,17 @@
                     const timestamp = new Date().getTime() - 5 * 60 * 1000;
                     reqUrl += '/search/findRecentEvents?timestamp=' + timestamp;
                 }
-                await me.$http.get(reqUrl).then(response => {
-                    result = response.data._embedded.eventCollectors;
-                    result.sort((a, b) => a.timestamp - b.timestamp);
-                }).catch(error => {
-                    console.log(error)
-                    me.isEventLogsFetched = true;
-                    if (me.fetchEventInterval) {
-                        clearInterval(me.fetchEventInterval);
-                        me.fetchEventInterval = null;
-                    }
-                });
+                // await me.$http.get(reqUrl).then(response => {
+                //     result = response.data._embedded.eventCollectors;
+                //     result.sort((a, b) => a.timestamp - b.timestamp);
+                // }).catch(error => {
+                //     console.log(error)
+                //     me.isEventLogsFetched = true;
+                //     if (me.fetchEventInterval) {
+                //         clearInterval(me.fetchEventInterval);
+                //         me.fetchEventInterval = null;
+                //     }
+                // });
                 return result;
             },
             async fetchRecentEvents() {
@@ -9074,13 +9440,16 @@
     }
 
     .monitoring-dialog {
-        width: 450px;
-        max-height: 600px;
+        width: 33vw;
+        height: 100vh;
         position: absolute;
         bottom: 0px;
         right: 0px;
-        overflow: auto;
         z-index: 9999;
+    }
+
+    .monitoring-dialog-table {
+        overflow-y: auto;
     }
 
     .selected-event-row {
