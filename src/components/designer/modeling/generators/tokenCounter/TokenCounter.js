@@ -1,9 +1,3 @@
-const o200k_base = require('./encoders/o200k_base.legacy')
-const cl100k_base = require('./encoders/cl100k_base.legacy')
-const p50k_base = require('./encoders/p50k_base.legacy')
-const p50k_edit = require('./encoders/p50k_edit.legacy')
-const r50k_base = require('./encoders/r50k_base.legacy')
-
 /**
  * @description AI 모델별 텍스트 토큰화 및 토큰 수 관리를 위한 유틸리티 클래스입니다.
  * 다양한 AI 모델(GPT-4, GPT-3.5 등)에 대한 토큰 수 계산, 텍스트 분할, 
@@ -369,19 +363,19 @@ class TokenCounter {
 
     static _getEncoderForModel(model) {
         const encoderMap = {
-            '^(gpt-4o|o1)': o200k_base,
-            '^(gpt-4|gpt-3.5)': cl100k_base,
-            '^(text-davinci-00[23]|gpt-3)': p50k_base,
-            '(edit-001|davinci-edit)': p50k_edit,
-            '(gpt-2|codegpt)': r50k_base
+            '^(gpt-4o|o1)': 'o200k_base',
+            '^(gpt-4|gpt-3.5)': 'cl100k_base',
+            '^(text-davinci-00[23]|gpt-3)': 'p50k_base',
+            '(edit-001|davinci-edit)': 'p50k_edit',
+            '(gpt-2|codegpt)': 'r50k_base'
         };
 
-        let encoder = o200k_base;
+        let encoderName = 'o200k_base';
         let matched = false;
 
-        for (const [pattern, enc] of Object.entries(encoderMap)) {
+        for (const [pattern, name] of Object.entries(encoderMap)) {
             if (new RegExp(pattern, 'i').test(model)) {
-                encoder = enc;
+                encoderName = name;
                 matched = true;
                 break;
             }
@@ -391,8 +385,22 @@ class TokenCounter {
             console.warn(`Warning: Unknown model "${model}". Using default o200k_base encoder.`);
         }
 
-        return encoder;
+
+        if (this._encoderCache.has(encoderName)) {
+            return this._encoderCache.get(encoderName);
+        }
+
+        try {
+            const encoder = require(`./encoders/${encoderName}.legacy`);
+            this._encoderCache.set(encoderName, encoder);
+            return encoder;
+        } catch (error) {
+            console.error(`Failed to load encoder ${encoderName}:`, error);
+            throw error;
+        }
     }
 }
+
+TokenCounter._encoderCache = new Map();
 
 module.exports = TokenCounter;
