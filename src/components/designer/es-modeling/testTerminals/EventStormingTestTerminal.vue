@@ -4,9 +4,9 @@
   
 <script>
 import ESActionsUtil from "../../modeling/generators/es-ddl-generators/modules/ESActionsUtil";
-import TokenCounterTest from "../../modeling/generators/utils/TokenCounter/tests";
-import ESValueSummaryGeneratorTest from "../../modeling/generators/es-generators/ESValueSummaryGenerator/tests";
-import ESValueSummarizeWithFilterTest from "../../modeling/generators/es-generators/helpers/ESValueSummarizeWithFilter/tests";
+import TokenCounterTest from "../../modeling/generators/utils/TokenCounter/TokenCounterTest";
+import ESValueSummaryGeneratorTest from "../../modeling/generators/es-generators/ESValueSummaryGenerator/ESValueSummaryGeneratorTest";
+import ESValueSummarizeWithFilterTest from "../../modeling/generators/es-generators/helpers/ESValueSummarizeWithFilter/ESValueSummarizeWithFilterTest";
 
 export default {
     name: "es-test-terminal",
