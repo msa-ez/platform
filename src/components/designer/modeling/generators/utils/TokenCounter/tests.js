@@ -1,4 +1,4 @@
-const { TokenCounter } = require("..");
+const TokenCounter = require("./index");
 const { sentences, sentence, longText } = require("./mocks");
 
 class TokenCounterTest {
