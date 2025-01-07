@@ -1,6 +1,6 @@
 const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
 const ESAliasTransManager = require("./modules/ESAliasTransManager")
-const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil")
+const { ESValueSummarizeWithFilter } = require("../es-generators/helpers")
 
 class GWTGeneratorByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
@@ -76,7 +76,7 @@ Please follow these rules:
     }
 
     __buildRequestFormatPrompt(){
-        return ESValueSummarizeWithFilterUtil.getGuidePrompt()
+        return ESValueSummarizeWithFilter.getGuidePrompt()
     }
 
     __buildJsonResponseFormat() {
@@ -460,7 +460,7 @@ Please follow these rules:
         const summarizedBoundedContext = {
             "deletedProperties": [],
             "boundedContexts": [
-                ESValueSummarizeWithFilterUtil.getSummarizedBoundedContextValue(
+                ESValueSummarizeWithFilter.getSummarizedBoundedContextValue(
                     this.client.input.esValue,
                     this.client.input.targetBoundedContext,
                     [],

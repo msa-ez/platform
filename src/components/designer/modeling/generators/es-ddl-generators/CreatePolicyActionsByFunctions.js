@@ -1,7 +1,7 @@
 
 const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
 const ESActionsUtil = require("./modules/ESActionsUtil")
-const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil")
+const { ESValueSummarizeWithFilter } = require("../es-generators/helpers")
 const ESAliasTransManager = require("./modules/ESAliasTransManager")
 
 class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
@@ -61,7 +61,7 @@ Please follow these rules:
     }
 
     __buildRequestFormatPrompt(){
-        return ESValueSummarizeWithFilterUtil.getGuidePrompt()
+        return ESValueSummarizeWithFilter.getGuidePrompt()
     }
 
     __buildJsonResponseFormat() {
@@ -105,8 +105,8 @@ Please follow these rules:
     __buildJsonExampleInputFormat() {
         return {
             "Summarized Existing EventStorming Model": {
-                "deletedProperties": ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.aggregateInnerStickers
-                    .concat(ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.detailedProperties),
+                "deletedProperties": ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateInnerStickers
+                    .concat(ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.detailedProperties),
                 "boundedContexts": [
                     {
                         "id": "bc-reservation",
@@ -333,10 +333,10 @@ Please follow these rules:
     }
 
     __buildJsonUserQueryInputFormat() {
-        const summarizedESValue = ESValueSummarizeWithFilterUtil.getSummarizedESValue(
+        const summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(
             JSON.parse(JSON.stringify(this.client.input.esValue)), 
-            ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.aggregateInnerStickers
-                .concat(ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.detailedProperties),
+            ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateInnerStickers
+                .concat(ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.detailedProperties),
             this.esAliasTransManager
         )
 
