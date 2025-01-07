@@ -17,8 +17,8 @@ class CommandActionsProcessor {
         const commandObject = CommandActionsProcessor.__getCommandBase(
             userInfo, action.args.commandName, 
             action.args.commandAlias ? action.args.commandAlias : "", 
-            action.args.api_verb, [], action.ids.boundedContextId,
-            action.ids.aggregateId, 0, 0, action.ids.commandId
+            action.args.api_verb, [], action.args.isRestRepository,
+            action.ids.boundedContextId, action.ids.aggregateId, 0, 0, action.ids.commandId
         )
         
         if(action.args.outputEventIds) {
@@ -42,7 +42,7 @@ class CommandActionsProcessor {
         ActionsProcessorUtils.reseizeAggregateVertically(esValue, commandObject)
     }
 
-    static __getCommandBase(userInfo, name, displayName, api_verb, outputEvents, boundedContextId, aggregateId, x, y, elementUUID) {
+    static __getCommandBase(userInfo, name, displayName, api_verb, outputEvents, isRestRepository, boundedContextId, aggregateId, x, y, elementUUID) {
         const elementUUIDtoUse = elementUUID ? elementUUID : GlobalPromptUtil.getUUID()
         return {
             _type: "org.uengine.modeling.model.Command",
@@ -79,7 +79,7 @@ class CommandActionsProcessor {
                 x: 0,
                 y: 0
             },
-            isRestRepository: (api_verb == 'PUT' ? false : true),
+            isRestRepository: isRestRepository ? true : false,
             name: name,
             displayName: displayName,
             nameCamelCase: changeCase.camelCase(name),
@@ -150,7 +150,7 @@ class CommandActionsProcessor {
                     "name": property.name,
                     "nameCamelCase": changeCase.camelCase(property.name),
                     "namePascalCase": changeCase.pascalCase(property.name),
-                    "displayName": "",
+                    "displayName": property.displayName ? property.displayName : "",
                     "_type": "org.uengine.model.FieldDescriptor"
                 }
             })

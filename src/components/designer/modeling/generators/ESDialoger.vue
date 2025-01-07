@@ -30,29 +30,60 @@
                 </v-card>
             </v-col>
         </div>
+        <v-tabs v-model="activeTab">
+            <v-tab 
+                v-for="input in generatorInputTabs" 
+                :key="input"
+            >
+                {{ input }}
+            </v-tab>
+        </v-tabs>
         <div style="display: flex; flex-direction: column;">
-            <v-card v-if="!state.secondMessageIsTyping">
-                <v-card-subtitle>{{$t('autoModeling.explanation')}}</v-card-subtitle>
-                <v-card-text class="auto-modling-textarea">
-                    <v-textarea 
-                            v-model="value.userStory"
-                            flat
-                            class="elevation-0"
-                            dense
-                            auto-grow
-                            rows="2"
-                            solo
-                    >
-                    </v-textarea>
-                    <!--                <div-->
-                    <!--                    v-for="modelId in value.modelList"-->
-                    <!--                    :key="modelId"-->
-                    <!--                >-->
-                    <!--                    <v-btn x-small @click="jumpToModel(modelId)">{{ modelId }}</v-btn>    -->
-                    <!--                </div>-->
-                </v-card-text>
+            <v-card v-if="!state.secondMessageIsTyping" class="auto-modeling-user-story-card">
+                <v-tabs-items v-model="activeTab">
+                    <!-- UserStory -->
+                    <v-tab-item>
+                        <v-card-subtitle>{{$t('autoModeling.explanation.userStory')}}</v-card-subtitle>
+                        <v-card-text class="auto-modling-textarea">
+                            <v-textarea 
+                                    v-model="value.userStory"
+                                    flat
+                                    class="elevation-0"
+                                    dense
+                                    auto-grow
+                                    rows="2"
+                                    solo
+                            >
+                            </v-textarea>
+                            <!--                <div-->
+                            <!--                    v-for="modelId in value.modelList"-->
+                            <!--                    :key="modelId"-->
+                            <!--                >-->
+                            <!--                    <v-btn x-small @click="jumpToModel(modelId)">{{ modelId }}</v-btn>    -->
+                            <!--                </div>-->
+                        </v-card-text>
+                    </v-tab-item>
+
+                    <!-- DDL -->
+                    <v-tab-item>
+                        <v-card-subtitle>{{$t('autoModeling.explanation.ddl')}}</v-card-subtitle>
+                        <v-card-text class="auto-modling-textarea">
+                            <v-textarea 
+                                    v-model="inputDDL"
+                                    flat
+                                    class="elevation-0"
+                                    dense
+                                    auto-grow
+                                    rows="2"
+                                    solo
+                            >
+                            </v-textarea>
+                        </v-card-text>
+                    </v-tab-item>
+                </v-tabs-items>
                 <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
                 <v-card-actions v-if="done" class="auto-modeling-btn-box">
+                    <v-btn class="auto-modeling-btn" @click="summarizeRequirements()">TEST Summarize</v-btn>
                     <v-btn class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}</v-btn>
                     <v-btn class="auto-modeling-btn" color="primary" @click="generateDevideBoundedContext()">{{ $t('ESDialoger.createBoundedContext') }}</v-btn>
                 </v-card-actions>
@@ -111,6 +142,10 @@
     import Usage from '../../../../utils/Usage'
     import ESDialogerTestTerminal from './testTerminals/ESDialogerTestTerminal.vue';
 
+    // Requirements Summarizer
+    import RequirementsSummarizer from './RequirementsSummarizer.js';
+    import TextChunker from './TextChunker.js';
+
     export default {
         name: 'es-dialoger',
         mixins:[
@@ -145,6 +180,11 @@
         async created(){
             await this.setUserInfo()
             this.autoModel = getParent(this.$parent, 'auto-modeling-dialog');
+
+            this.textChunker = new TextChunker({
+                chunkSize: 2000,  // GPT-4 컨텍스트 크기를 고려한 설정
+                overlapSize: 100  // 문맥 유지를 위한 오버랩
+            });
         },
         watch: {
             "prompt": {
@@ -196,16 +236,27 @@
                 },
                 done: false,
                 generator: null,
+                generatorName: null,
                 showDevideBoundedContextDialog: false,
                 resultDevideBoundedContext: {},
                 devisionAspect: [
                     this.$t('DevideBoundedContextDialog.domainAspect'),
-                    this.$t('DevideBoundedContextDialog.organizationalAspect'), 
+                    this.$t('DevideBoundedContextDialog.organizationalAspect'),
                     this.$t('DevideBoundedContextDialog.personaAspect'),
                     this.$t('DevideBoundedContextDialog.transactionPerformanceAspect'),
                     this.$t('DevideBoundedContextDialog.infrastructureAspect')
                 ],
-                devisionAspectIndex: 0
+                devisionAspectIndex: 0,
+
+                activeTab: null,
+                generatorInputTabs: ['UserStory', 'DDL'],
+                inputDDL: '',
+
+                textChunker: null,
+                chunks: [],
+                currentChunkIndex: 0,
+                summarizedChunks: [],
+                summarizedResult: ""
             }
         },
         methods: {
@@ -234,16 +285,14 @@
             },
 
             onReceived(content){
-                if(this.state.generator === "DevideBoundedContextGenerator"){
-                    return;
-                }
-
-                if(!this.value){
-                    this.value = {
-                        userStory: ''
+                if(this.state.generator === "EventOnlyESGenerator"){
+                    if(!this.value){
+                        this.value = {
+                            userStory: ''
+                        }
                     }
+                    this.value.userStory = content;
                 }
-                this.value.userStory = content;
             },
 
             onModelCreated(model){
@@ -251,6 +300,26 @@
 
             async onGenerationFinished(model){
                 this.done = true;
+
+                if (this.state.generator === "RequirementsSummarizer") {
+                    if (!model.summarizedRequirements.isFinalSummary) {
+                        this.summarizedChunks.push(model.summarizedRequirements);
+                        this.currentChunkIndex++;
+                        
+                        if (this.currentChunkIndex < this.chunks.length) {
+                            this.processNextChunk();
+                            return;
+                        } else if (this.summarizedChunks.length > 1) {
+                            this.processNextChunk();
+                            return;
+                        }
+                    }
+                    // 최종 요약 완료 또는 단일 청크 처리 완료
+                    console.log("Final summarization complete");
+                    this.state.generator = "EventOnlyESGenerator";
+                    this.generatorName = "EventOnlyESGenerator";
+                    return;
+                }
 
                 if(this.state.generator === "DevideBoundedContextGenerator"){
                     if(this.devisionAspectIndex < this.devisionAspect.length - 1) {
@@ -262,6 +331,7 @@
                         
                         this.generator = new Generator(this);
                         this.state.generator = "EventOnlyESGenerator";
+                        this.generatorName = "EventOnlyESGenerator";
                     }
                 
                     this.devisionAspectIndex++;
@@ -321,9 +391,48 @@
                 this.generateDevideBoundedContext(aspect, feedback);
             },
 
+            summarizeRequirements() {
+                // 텍스트를 청크로 분할
+                this.chunks = this.textChunker.splitIntoChunks(this.value.userStory);
+                this.currentChunkIndex = 0;
+                this.summarizedChunks = [];
+
+                // 디버깅을 위한 청크 통계 출력
+                console.log('Chunk statistics:', this.textChunker.getChunkStats(this.chunks));
+                
+                // 첫 번째 청크 처리 시작
+                this.processNextChunk();
+
+            },    
+
+            processNextChunk() {
+                this.generator = new RequirementsSummarizer(this);
+                this.state.generator = "RequirementsSummarizer";
+                this.generatorName = "RequirementsSummarizer";
+
+                if (this.currentChunkIndex >= this.chunks.length) {
+                    // 모든 청크 처리 완료, 최종 요약 생성
+                    this.summarizedResult = this.summarizedChunks.join('\n\n');
+
+                    console.log("Before summarize: ", this.value.userStory.length)
+                    console.log("After summarize: ", this.summarizedResult.length)
+                } else {
+                    // 개별 청크 처리
+                    this.input['requirements'] = {
+                        userStory: this.chunks[this.currentChunkIndex],
+                        currentChunk: this.currentChunkIndex + 1,
+                        totalChunks: this.chunks.length,
+                        isFinalSummary: false
+                    };
+                    this.generator.generate();
+                }
+
+            },
+
             generateDevideBoundedContext(aspect, feedback){
                 this.generator = new DevideBoundedContextGenerator(this);
                 this.state.generator = "DevideBoundedContextGenerator";
+                this.generatorName = "DevideBoundedContextGenerator";
                 
                 if(!aspect){
                     this.resultDevideBoundedContext = {};
@@ -337,7 +446,11 @@
                     this.input['feedback'] = feedback;
                 }
                 
-                this.input['userStory'] = this.value.userStory;
+                this.input['requirements'] = {
+                    userStory: this.value.userStory,
+                    ddl: this.inputDDL
+                };
+
                 this.generator.generate();
                 this.showDevideBoundedContextDialog = true;
             },

@@ -6,7 +6,7 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
         super(client);
 
         this.checkInputParamsKeys = ["description", "boundedContext", "accumulatedDrafts"]
-        this.progressCheckStrings = ["thoughts", "inference", "reflection", "options", "structure", "pros",  "defaultOptionIndex", "conclusions"]
+        this.progressCheckStrings = ["overviewThoughts", "options", "analysis", "defaultOptionIndex"]
     }
 
     static outputToAccumulatedDrafts(output, targetBoundedContext){
@@ -148,50 +148,39 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
     __buildJsonResponseFormat() {
         return `
 {
-    "thoughts": {
-        "summary": "Analysis of aggregate design considerations for the bounded context",
+    "overviewThoughts": {
+        "summary": "High-level analysis of the bounded context and its requirements",
         "details": {
-            "coreDomainConcepts": "Key domain concepts that could form aggregates",
-            "aggregateRoots": "Potential aggregate roots and their responsibilities",
-            "invariants": "Business rules that must be maintained within aggregates",
-            "transactionBoundaries": "Transaction boundaries and consistency requirements",
-            "existingAggregates": "Analysis of existing aggregates that need to be referenced rather than recreated",
-            "referenceStrategy": "Strategy for referencing existing aggregates through value objects"
+            "domainComplexity": "Assessment of domain complexity and core business challenges",
+            "boundaryDefinition": "Analysis of bounded context boundaries and relationships",
+            "strategicFit": "Evaluation of how the design aligns with overall domain strategy"
         },
-        "additionalConsiderations": "Technical constraints and architectural considerations for aggregate design"
-    },
-
-    "inference": {
-        "summary": "Derived aggregate design patterns and relationships",
-        "details": {
-            "implicitAggregates": "Additional aggregates implied by the requirements",
-            "relationships": "Inter-aggregate relationships and references",
-            "consistency": "Consistency requirements between aggregates",
-            "performance": "Performance implications of aggregate boundaries",
-            "referencePatterns": "Patterns for referencing existing aggregates",
-            "valueObjectDesign": "Design considerations for value objects that reference existing aggregates"
-        },
-        "additionalInferences": "Additional patterns and design considerations for aggregate structure"
-    },
-
-    "reflection": {
-        "summary": "Evaluation of aggregate design choices",
-        "details": {
-            "tradeoffs": "Trade-offs between different aggregate designs",
-            "scalability": "Scalability considerations for chosen aggregate boundaries",
-            "maintainability": "Long-term maintainability of aggregate structure",
-            "evolution": "Potential evolution paths for the aggregate design",
-            "referenceImpact": "Impact of using references to existing aggregates",
-            "boundaryAlignment": "Alignment with existing aggregate boundaries"
-        },
-        "additionalReflections": "Further considerations for aggregate design optimization including reference patterns"
+        "additionalConsiderations": "Other strategic factors affecting the bounded context design"
     },
 
     "result": {
         "options": [
             {
+                "optionThoughts": {
+                    "summary": "Analysis of specific design option and its implications",
+                    "details": {
+                        "consistencyModel": "Analysis of consistency requirements and transaction boundaries",
+                        "scalabilityFactors": "Evaluation of growth factors and performance requirements",
+                        "maintainabilityImpact": "Assessment of long-term maintenance and evolution considerations"
+                    },
+                    "additionalConsiderations": "Specific technical or business factors affecting this option"
+                },
                 "structure": [
                     {
+                        "structureThoughts": {
+                            "summary": "Detailed analysis of specific aggregate structure",
+                            "details": {
+                                "aggregateBoundaries": "Reasoning for chosen aggregate boundaries and composition",
+                                "invariantProtection": "How the structure maintains business rules and invariants",
+                                "relationshipPatterns": "Analysis of relationships with other aggregates and entities"
+                            },
+                            "additionalConsiderations": "Implementation-specific considerations for this structure"
+                        },
                         "aggregate": {
                             "name": "aggregate-name",
                             "alias": "aggregate-alias"
@@ -394,47 +383,39 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
 
     __buildJsonExampleOutputFormat() {
         return {
-            "thoughts": {
-                "summary": "Analysis of aggregate design considerations for the bounded context",
+            "overviewThoughts": {
+                "summary": "Comprehensive analysis of the hotel booking domain and its aggregate design requirements",
                 "details": {
-                    "coreDomainConcepts": "Booking and BookingDetail as core domain concepts managing reservation lifecycle",
-                    "aggregateRoots": "Booking as primary aggregate root with potential split into BookingDetail",
-                    "invariants": "Booking dates validity, room availability, and booking status transitions",
-                    "transactionBoundaries": "Booking creation and modification as atomic operations",
-                    "existingAggregates": "Guest and Room aggregates must be referenced rather than recreated",
-                    "referenceStrategy": "Using value objects with foreign keys to reference Guest and Room aggregates"
+                    "domainComplexity": "Hotel booking system requires careful balance between transactional consistency and scalability",
+                    "boundaryDefinition": "Clear separation needed between core booking operations and supplementary features",
+                    "strategicFit": "Design must support both immediate booking needs and future expansion of hotel services"
                 },
-                "additionalConsiderations": "Concurrent booking handling and eventual consistency for booking history"
+                "additionalConsiderations": "Integration with external systems and handling of peak booking periods"
             },
-            "inference": {
-                "summary": "Derived aggregate design patterns and relationships",
-                "details": {
-                    "implicitAggregates": "BookingDetail could be separated for better maintainability",
-                    "relationships": "Booking must maintain references to Guest and Room through value objects",
-                    "consistency": "Strong consistency needed for booking operations, eventual for queries",
-                    "performance": "Query optimization needed for booking history and availability checks",
-                    "referencePatterns": "Value objects with foreign keys for Guest and Room references",
-                    "valueObjectDesign": "Specialized value objects for period, status, and aggregate references"
-                },
-                "additionalInferences": "Consider caching strategies and eventual consistency patterns"
-            },
-            "reflection": {
-                "summary": "Evaluation of aggregate design choices",
-                "details": {
-                    "tradeoffs": "Balance between atomic operations and separate concerns",
-                    "scalability": "Potential for independent scaling of booking and detail components",
-                    "maintainability": "Separation of concerns vs operational complexity",
-                    "evolution": "Flexibility for future booking types and features",
-                    "referenceImpact": "Dependency management through value object references",
-                    "boundaryAlignment": "Alignment with existing Guest and Room aggregate boundaries"
-                },
-                "additionalReflections": "Consider impact of reference patterns on system evolution"
-            },
+    
             "result": {
                 "options": [
                     {
+                        "optionThoughts": {
+                            "summary": "Single aggregate approach focusing on strong consistency",
+                            "details": {
+                                "consistencyModel": "Maintains atomic operations within single aggregate boundary",
+                                "scalabilityFactors": "Simplified scaling with potential bottlenecks during peak periods",
+                                "maintainabilityImpact": "Straightforward maintenance with risk of growing complexity"
+                            },
+                            "additionalConsiderations": "Consider caching strategies for read-heavy operations"
+                        },
                         "structure": [
                             {
+                                "structureThoughts": {
+                                    "summary": "Unified booking aggregate with embedded details",
+                                    "details": {
+                                        "aggregateBoundaries": "Single aggregate maintaining complete booking lifecycle",
+                                        "invariantProtection": "Direct enforcement of booking rules and constraints",
+                                        "relationshipPatterns": "Value object references to Guest and Room aggregates"
+                                    },
+                                    "additionalConsiderations": "Consider impact on concurrent booking operations"
+                                },
                                 "aggregate": {
                                     "name": "Booking",
                                     "alias": "Room Reservation"
@@ -494,8 +475,26 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
                         }
                     },
                     {
+                        "optionThoughts": {
+                            "summary": "Split aggregate approach prioritizing scalability",
+                            "details": {
+                                "consistencyModel": "Eventually consistent model between core booking and details",
+                                "scalabilityFactors": "Independent scaling of booking core and supplementary features",
+                                "maintainabilityImpact": "Separated concerns enable focused maintenance"
+                            },
+                            "additionalConsiderations": "Need for coordination between split aggregates"
+                        },
                         "structure": [
                             {
+                                "structureThoughts": {
+                                    "summary": "Core booking aggregate focused on essential reservation data",
+                                    "details": {
+                                        "aggregateBoundaries": "Minimal core booking data with separate details",
+                                        "invariantProtection": "Core booking rules maintained in primary aggregate",
+                                        "relationshipPatterns": "References to Guest and Room plus BookingDetail"
+                                    },
+                                    "additionalConsiderations": "Transaction coordination with details aggregate"
+                                },
                                 "aggregate": {
                                     "name": "Booking",
                                     "alias": "Room Reservation"
@@ -519,6 +518,15 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
                                 ]
                             },
                             {
+                                "structureThoughts": {
+                                    "summary": "Separate aggregate for booking details and preferences",
+                                    "details": {
+                                        "aggregateBoundaries": "Contains supplementary booking information",
+                                        "invariantProtection": "Maintains detail-specific rules independently",
+                                        "relationshipPatterns": "References primary booking aggregate"
+                                    },
+                                    "additionalConsiderations": "Eventually consistent with main booking"
+                                },
                                 "aggregate": {
                                     "name": "BookingDetail",
                                     "alias": "Reservation Details"
@@ -623,7 +631,8 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
     onCreateModelFinished(returnObj) {
         returnObj.modelValue.output = returnObj.modelValue.aiOutput.result
         returnObj.modelValue.output.defaultOptionIndex = returnObj.modelValue.output.defaultOptionIndex - 1
-        
+
+        this._removeThoughts(returnObj.modelValue.output)
         this._removeOptionsWithExistingAggregates(returnObj.modelValue.output)
         if(returnObj.modelValue.output.options.length === 0) 
             throw new Error("No valid options found")
@@ -633,6 +642,24 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
         this._markRecommendedOption(returnObj.modelValue.output)
 
         returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+    }
+
+    _removeThoughts(output) {
+        if(!output || !output.options) return;
+    
+        for(const option of output.options) {
+            if(option.optionThoughts) {
+                delete option.optionThoughts;
+            }
+            
+            if(option.structure) {
+                for(const structure of option.structure) {
+                    if(structure.structureThoughts) {
+                        delete structure.structureThoughts;
+                    }
+                }
+            }
+        }
     }
 
     _removeOptionsWithExistingAggregates(output) {

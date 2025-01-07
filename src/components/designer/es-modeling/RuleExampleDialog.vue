@@ -748,9 +748,16 @@
                                 if (sourceItem) {
                                     Object.keys(frameworkItem.value).forEach(key => {
                                         if (sourceItem.value[key] !== undefined) {
-                                            if(typeof sourceItem.value[key] == typeof frameworkItem.value[key]){
-                                                frameworkItem.value[key] = sourceItem.value[key];
-                                            }
+
+                                            // 임시용
+                                            frameworkItem.value[key] = sourceItem.value[key];
+
+                                            // frameworkArray가 현재 적절한 타입으로 정의되어 있지 않아서 이 조건 검사는 버그를 일으키고 있음
+                                            // TODO: setExampleFrameWork에서 전달되는 given, when, then 객체의 타입에 따라서 정확하게 frameworkArray를 정확하게 구축하도록 만들고, 주석 해제하기
+                                            // if(typeof sourceItem.value[key] == typeof frameworkItem.value[key]){
+                                            //     frameworkItem.value[key] = sourceItem.value[key];
+                                            // }
+                                            
                                         } else {
                                             frameworkItem.value[key] = "N/A";
                                         }

@@ -16,7 +16,7 @@
             </v-row>
             <v-card-text class="pt-2 pb-2" style="font-weight: 500;">
                 <v-textarea
-                    class="auto-modeling-text"
+                    class="auto-modeling-text delete-input-detail"
                     v-model="projectInfo.prompt"
                     solo
                     :placeholder="$t('autoModeling.mainClick')"
@@ -811,7 +811,7 @@
     border-width: 1.5px;
 }
 .main-auto-modeling-chip-row { 
-    padding:10px 0px 0px 10px;
+    padding:10px 0px 5px 10px;
     margin:0px 0px -5px 0px;
 }
 

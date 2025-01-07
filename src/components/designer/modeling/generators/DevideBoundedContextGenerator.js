@@ -7,6 +7,7 @@ class DevideBoundedContextGenerator extends JsonAIGenerator {
 
         this.model = "gpt-4o"
         this.temperature = 0.5
+        this.generatorName = 'DevideBoundedContextGenerator'
     }
 
     createPrompt(){
@@ -17,7 +18,8 @@ Focus on this division aspect:
 ${this.client.input['devisionAspect']}
 
 Requirements:
-${this.client.input['userStory']}
+- userStory: ${this.client.input['requirements']['userStory']}
+- ddl: ${this.client.input['requirements']['ddl']}
 
 ${this.client.input['feedback'] ? this.feedbackPrompt() : ''}
 
@@ -27,11 +29,16 @@ Key principles:
 - Minimize inter-context dependencies
 
 Define relationships between contexts using these types:
-1. Confirmist: 하위 시스템이 상위 시스템의 모델을 그대로 따르는 관계
-2. Share Kernel: 두 시스템이 공통의 모델을 공유하는 관계
-3. Anti-corruption: 하위 시스템이 상위 시스템의 모델을 변환하여 사용하는 관계
-4. Separate Ways: 두 시스템이 완전히 독립적인 관계
-5. Customer-Supplier: 상위 시스템이 하위 시스템에 서비스를 제공하는 관계
+1. Conformist: A relationship where the downstream system follows the upstream system's model exactly
+2. Share Kernel: A relationship where two systems share a common model
+3. Anti-corruption: A relationship where the downstream system transforms the upstream system's model for its use
+4. Separate Ways: A relationship where two systems are completely independent
+5. Customer-Supplier: A relationship where the upstream system provides services to the downstream system
+
+Language Instruction of Output:
+- Use the same national language as the Requirements at thoughts, context of explanations, alias, requirements.
+- When referring to bounded context in explanations, use alias.
+- name must be written in English PascalCase.
 
 The format must be as follows:
 {
@@ -39,31 +46,46 @@ The format must be as follows:
     [
         {
             "name":"name of Bounded Context in PascalCase",
-            "alias":"alias of Bounded Context in korean",
+            "alias":"alias of Bounded Context in language of Requirements",
             "aggregates":[ // Aggregates that can be extracted from this Bounded Context.
                 {
                     "name":"name of Aggregate in PascalCase",
-                    "alias":"alias of Aggregate in korean"
+                    "alias":"alias of Aggregate in language of Requirements"
                 }
             ],
-            "requirements":"기존의 요구사항 원문 중, 이 Bounded Context에 해당하는 문제영역만 기존 텍스트 그대로"
+            "requirements":[ // Use all of the requirements(userStory, DDL) context that are relevant to this Bounded Context.
+                {
+                    "type":"userStory",
+                    "text":"Original requirements text, containing only the problem domain relevant to this Bounded Context, copied verbatim"
+                },
+                {
+                    "type":"ddl",
+                    "text":"Original requirements text, containing only the problem domain relevant to this Bounded Context, copied verbatim"
+                }
+            ]
         }
       ],
       "relations":
       [
         {
-            "name":"Bounded Context간의 의존관계 명칭",
+            "name":"name of relation between Bounded Contexts",
             "type": "Confirmist" || "Share Kernel" || "Anti-corruption" || "Seperate Ways" || "Customer-Supplier",
-            "upStream": "name of upstream Bounded Context",
-            "downStream": "name of downstream Bounded Context"
+            "upStream": {
+                "name":"name of upstream Bounded Context",
+                "alias":"alias of upstream Bounded Context in language of Requirements"
+            },
+            "downStream": {
+                "name":"name of downstream Bounded Context",
+                "alias":"alias of downstream Bounded Context in language of Requirements"
+            }
         }
     ],
-    "thoughts": "Bounded Contexte들의 도출 경위에 대한 설명 (응집도&결합도 측면, 업무 전문성, 기술 응집도, 페르소나 기준 등)",
+    "thoughts": "explanations of how Bounded Contexts were derived (cohesion & coupling, domain expertise, technical cohesion, persona-based, etc.)",
     "explanations": 
     [
         {
-            "sourceContext": "Source Bounded Context name",
-            "targetContext": "Target Bounded Context name",
+            "sourceContext": "Source Bounded Context alias",
+            "targetContext": "Target Bounded Context alias",
             "relationType": "Relationship type",
             "reason": "Explanation of why this type was chosen",
             "interactionPattern": "Description of how these contexts interact (e.g., Pub/Sub, Req/Res, REST, gRPC, etc.)"

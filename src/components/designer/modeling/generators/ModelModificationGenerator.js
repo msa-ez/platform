@@ -6,6 +6,7 @@ class ModelModificationGenerator extends JsonAIGenerator{
     constructor(client){
         super(client); 
         this.model = "gpt-4o"
+        this.temperature = 0.5
     }
     // to have multiple order items and order states 
     createPrompt(){
@@ -37,12 +38,17 @@ Be sure to check the request and make sure which action among add, replace, or d
 - The id in jsonPath must match what exists in the current model.
 - Never create comments.
 
+jsonPath Description:
+- All jsonPath must start with "$.elements"
+- When searching by id: "$.elements[?(@.id=='element-id')]"
+- When accessing a field: "$.elements[?(@.id=='element-id')].aggregateRoot.fieldDescriptors"
+
 in this json format:
 
 {
     "modifications": [
         {
-            "jsonPath": "$.elements[?(@.id=='element id to be replaced or deleted')]", // If action is add, unnecessary
+            "jsonPath": "$.elements[?(@.id=='element id to be replaced or deleted')]", // jsonPath format must be like this("$.elements[?...]").
             "action": "replace" | "add" | "delete", // Choose only one considering request.
             "value": { // If action is delete, unnecessary. Also, never create a value whose type is not filedDescriptor 
                 "className":"class type in PascalCase",
@@ -100,6 +106,9 @@ in this json format:
     }
 
     createModel(text) {
+        let updateElement = {}
+        let selectedElement = {}
+
         try {
             var me = this
 
@@ -195,8 +204,8 @@ in this json format:
                 return modelValue
             }else{
 
-                let selectedElement = me.client.input.selectedElement
-                let updateElement = JSON.parse(JSON.stringify(selectedElement))
+                selectedElement = me.client.input.selectedElement
+                updateElement = JSON.parse(JSON.stringify(selectedElement))
                 
                 const modelValue = {
                     add: [],
@@ -208,14 +217,61 @@ in this json format:
                 if(modelData['modifications']){
                     let modifications = modelData['modifications']
                     for(var idx=0; idx< modifications.length; idx++){
-                        let parentPath = ""
                         let jsonPath = ""
-    
+                        let parentPath = ""
                         if(modifications[idx].jsonPath){
                             jsonPath = modifications[idx].jsonPath;
-                            parentPath = jsonPath.replace(/\[\?.*?\]|\[\d+\]/g, '')
-    
+                            parentPath = jsonPath.split('.fieldDescriptors')[0];
+                            
+                            // ID 추출
+                            const idMatch = jsonPath.match(/\'([^']+)\'|\"([^"]+)\"/);
+                            const elementId = idMatch ? (idMatch[1] || idMatch[2]) : null;
+
+                            if (elementId && selectedElement.id === elementId) {
+                                if(modifications[idx].action === 'replace' && modifications[idx].value){
+                                    // 특정 필드 수정의 경우
+                                    const fieldPath = jsonPath.split('].')[1];
+                                    if (fieldPath) {
+                                        // 중첩된 경로 처리
+                                        const pathParts = fieldPath.split('.');
+                                        let current = updateElement;
+                                        
+                                        // 마지막 부분 전까지 경로 탐색
+                                        for(let i = 0; i < pathParts.length - 1; i++) {
+                                            if (!current[pathParts[i]]) {
+                                                current[pathParts[i]] = {};
+                                            }
+                                            current = current[pathParts[i]];
+                                        }
+                                        
+                                        // 최종 값 설정
+                                        const lastPart = pathParts[pathParts.length - 1];
+                                        current[lastPart] = modifications[idx].value;
+                                    } else {
+                                        // 전체 객체 수정의 경우
+                                        Object.keys(modifications[idx].value).forEach(key => {
+                                            updateElement[key] = modifications[idx].value[key];
+                                        });
+                                    }
+                                    modelValue.replace.push(modifications[idx].value);
+                                } else if(modifications[idx].action === 'add' && modifications[idx].value){
+                                    // fieldDescriptors에 추가
+                                    if (jsonPath.includes('fieldDescriptors')) {
+                                        if (!updateElement.aggregateRoot) {
+                                            updateElement.aggregateRoot = { fieldDescriptors: [] };
+                                        }
+                                        if (!updateElement.aggregateRoot.fieldDescriptors) {
+                                            updateElement.aggregateRoot.fieldDescriptors = [];
+                                        }
+                                        updateElement.aggregateRoot.fieldDescriptors.push(modifications[idx].value);
+                                    }
+                                    modelValue.add.push(modifications[idx].value);
+                                } else if(modifications[idx].action === 'delete'){
+                                    modelValue.delete.push({id: elementId});
+                                }
+                            }
                         }
+
                         let match = jsonpath.JSONPath({ path: modifications[idx].jsonPath, json: selectedElement });
                         let parentMatch = jsonpath.JSONPath({ path: parentPath, json: selectedElement });
     

@@ -1,21 +1,19 @@
 
 const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
-const ESActionsUtil = require("./modules/ESActionsUtil")
 const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil")
 const ESAliasTransManager = require("./modules/ESAliasTransManager")
 
-class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
+class ESValueSummaryGenerator extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
-        this.checkInputParamsKeys = ["targetBoundedContext", "description", "esValue", "userInfo", "information"]
-        this.progressCheckStrings = ["overviewThoughts", "extractedPolicies"]
+        this.checkInputParamsKeys = ["context", "esValue", "maxTokens"]
+        this.progressCheckStrings = ["overviewThoughts", "result"]
     }
 
 
     onGenerateBefore(inputParams){
         inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
-        inputParams.boundedContextDisplayName = inputParams.targetBoundedContext.displayName ? inputParams.targetBoundedContext.displayName : inputParams.targetBoundedContext.name
         this.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
     }
 
@@ -449,4 +447,4 @@ Please follow these rules:
     }
 }
 
-module.exports = CreatePolicyActionsByFunctions;
+module.exports = ESValueSummaryGenerator;

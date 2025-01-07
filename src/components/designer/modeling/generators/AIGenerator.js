@@ -271,6 +271,8 @@ class AIGenerator {
         this.originalLanguage = this.preferredLanguage.toLowerCase();
         if(this.client.generatorName == 'ESGenerator' || this.client.generatorName == 'EventOnlyESGenerator'){
             content = me.createPrompt() + "\n please generate in English"
+        } else if(this.client.generatorName == 'DevideBoundedContextGenerator'){
+            content = me.createPrompt()
         } else {
             content = me.createPrompt() + (me.preferredLanguage ? "\n please generate in " + me.preferredLanguage : '')
         }
