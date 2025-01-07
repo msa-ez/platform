@@ -134,12 +134,10 @@ class CodeGeneratorCore {
                     let getBcId = element.boundedContext ? element.boundedContext.id :null
                     if (getBcId && element.mirrorElement && attachedBcId === bc.elementView.id) {
                         element.preferredPlatform = bc.preferredPlatform && bc.preferredPlatform.includes("http") ? bc.preferredPlatform : me.defaultTemplate
-                    } else if (isAttached(bc, element)) {
+                    } else if (isAttached(bc, element) && !element.isPBCModel) {
                         element.boundedContext = bc;
                         element.preferredPlatform = bc.preferredPlatform && bc.preferredPlatform.includes("http") ? bc.preferredPlatform : me.defaultTemplate
                     }
-
-
                 }
             })
 

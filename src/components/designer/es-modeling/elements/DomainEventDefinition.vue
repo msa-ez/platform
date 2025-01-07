@@ -424,7 +424,7 @@
                     var newId = attachedAggregate.elementView.id
 
                     // 움직일때 AGG 변화 파악.
-                    if(!me.value.aggregate || (me.value.aggregate.id != newId)){
+                    if(!me.value.aggregate || !me.value.aggregate.id || (me.value.aggregate.id != newId)){
                         // 서로 들다른 agg
                         me.value.aggregate = { id: newId };
 
