@@ -11,7 +11,8 @@
                     v-if="isAdmin || myId==userId"
                     large
                 >
-                    <Icon color="white" icon="mingcute:right-fill" width="24" height="24" />
+                    <Icons :icon="'right'" :color="'#FFFFFF'"/>
+                    <!-- <Icon color="white" icon="mingcute:right-fill" width="24" height="24" /> -->
                 </v-card>
             </template>
             <span>인스트럭션 크기 조절</span>

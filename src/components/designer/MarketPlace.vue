@@ -60,8 +60,11 @@
                                             @click="clickFilteredTemplate(i)"
                                     >
                                         <v-list-item-icon class="marketplace-list-icon-box">
-                                            <Icon class="gs-icon-style marketplace-list-icon"
+                                            <!-- <Icon class="gs-icon-style marketplace-list-icon"
                                                   :icon="item.icon"
+                                            /> -->
+                                            <Icons :icon="item.icon" 
+                                                class="gs-icon-style marketplace-list-icon"  
                                             />
                                         </v-list-item-icon>
                                         <v-list-item-content>
@@ -124,7 +127,7 @@
                                             @click="clickFilteredTopping(i)"
                                     >
                                         <v-list-item-icon class="marketplace-list-icon-box">
-                                            <Icon class="gs-icon-style marketplace-list-icon"
+                                            <Icons class="gs-icon-style marketplace-list-icon"
                                                   :icon="item.icon"
                                             />
                                         </v-list-item-icon>
@@ -296,22 +299,22 @@
                 allRepoList: null,
                 detailMarketMode: false,
                 templateTags: [
-                    { name: 'All', icon: 'icon-park-solid:id-card' },
-                    { name: 'Java', icon: 'la:java' },
-                    { name: 'Python', icon: 'teenyicons:python-outline' },
-                    { name: 'Go', icon: 'simple-icons:go' },
-                    { name: 'JavaScript', icon: 'teenyicons:javascript-outline' },
-                    { name: 'Spring boot', icon: 'simple-icons:springboot' },
+                    { name: 'All', icon: 'id-card' },
+                    { name: 'Java', icon: 'java' },
+                    { name: 'Python', icon: 'python' },
+                    { name: 'Go', icon: 'go' },
+                    { name: 'JavaScript', icon: 'javascript' },
+                    { name: 'Spring boot', icon: 'springboot' },
                 ],
                 toppingTags: [
-                    { name: 'All', icon: 'icon-park-solid:id-card' },
-                    { name: 'Multitenancy', icon: 'carbon:chart-multitype' },
-                    { name: 'Kubernetes', icon: 'pajamas:kubernetes' },
-                    { name: 'Security', icon: 'ic:sharp-security' },
-                    { name: 'Service Mesh', icon: 'simple-icons:istio' },
-                    { name: 'DevOps', icon: 'mdi:microsoft-azure-devops' },
-                    { name: 'Data Projection', icon: 'logos:apollostack' },
-                    { name: 'Frontend', icon: 'icon-park-twotone:web-page' },
+                    { name: 'All', icon: 'id-card' },
+                    { name: 'Multitenancy', icon: 'chart-multitype' },
+                    { name: 'Kubernetes', icon: 'kubernetes' },
+                    { name: 'Security', icon: 'security' },
+                    { name: 'Service Mesh', icon: 'istio' },
+                    { name: 'DevOps', icon: 'devops' },
+                    { name: 'Data Projection', icon: 'apollostack' },
+                    { name: 'Frontend', icon: 'web-page' },
                 ],
                 selectedTemplateIndex: null,
                 selectedToppingIndex: null,
