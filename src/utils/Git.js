@@ -13,7 +13,7 @@ class Git {
     getHeader() {
         throw new Error('getHeader() must be implement')
     }
-getUserInfo() {
+    getUserInfo() {
         throw new Error('getUserInfo must be implement')
     }
     getBranch(org, repo, forkedTag) {

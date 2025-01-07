@@ -69,66 +69,89 @@ Data Type Rules:
 2. For collections, use 'List<ClassName>' syntax (e.g., List<Address>)
 
 Type Reference and Enumeration Rules:
-3. When using custom types:
-   - Create corresponding Enumeration if the type represents a fixed set of values
-   - Create all required Enumerations before they are referenced
-   - Scan all ValueObjects and Entities for undefined custom types
-   - Example cases requiring Enumeration creation:
-     * Status fields (e.g., BookingStatus, PaymentStatus)
-     * Type classifications (e.g., RoomType, MembershipLevel)
-     * Method or category fields (e.g., PaymentMethod)
+3. When to use Enumerations:
+   - For any property representing a fixed set of values or categories
+   - When the property value must be one of a predefined list
+   - When the property name ends with: Type, Status, Category, Level, Phase, Stage
+   
+   ALWAYS create as Enumeration (not ValueObject) when the property:
+   - Represents a classification (e.g., BookCategory, AccountType)
+   - Represents a status (e.g., OrderStatus, PaymentStatus)
+   - Represents a type (e.g., UserType, ProductType)
+   - Has a fixed set of possible values (e.g., DayOfWeek, Currency)
+   - Is used for categorization or classification
+   
+   Example Enumeration cases:
+   - category -> BookCategory (Enumeration)
+   - status -> OrderStatus (Enumeration)
+   - type -> ProductType (Enumeration)
+   - level -> MembershipLevel (Enumeration)
+   - paymentMethod -> PaymentMethod (Enumeration)
+
+4. When to use ValueObjects:
+   - When the type contains multiple related properties
+   - When the properties together form a meaningful concept
+   - When immutability is required
+   
+   Example ValueObject cases:
+   - address -> Address (street, city, zipCode)
+   - period -> DateRange (startDate, endDate)
+   - money -> Money (amount, currency)
+   - contact -> ContactInfo (phone, email, address)
 
 Naming and Language Conventions:
-4. Object names (classes, properties, methods) must be in English
-5. Supporting content (aliases, descriptions) must be in ${this.preferredLanguage}
+5. Object names (classes, properties, methods) must be in English
+6. Supporting content (aliases, descriptions) must be in ${this.preferredLanguage}
 
 Structural Rules:
-6. Aggregates:
+7. Aggregates:
    - Must have exactly one primary key attribute
    - For composite keys, create a ValueObject and use it as the primary key
-   - Reference other Aggregates using their class names, not IDs (e.g., use OrderStatus instead of Integer)
+   - Reference other Aggregates using their class names, not IDs
 
-7. ValueObjects:
+8. ValueObjects:
    - Must contain multiple related properties
    - Should be immutable
    - Cannot have single properties unless absolutely necessary
 
 Creation Guidelines:
-8. Create only:
+9. Create only:
    - Aggregates listed in 'Aggregate to create'
    - All ValueObjects and Entities from the provided structure
-   - Enumerations extracted from requirements (if not in structure)
-   - All supporting Enumerations needed by properties
+   - Enumerations for any property requiring fixed values
+   - All supporting types needed by properties
 
-9. Property Type Selection:
-    - Use specific types over generic ones (e.g., Date for dates, Integer for numbers)
+10. Property Type Selection:
+    - Use specific types over generic ones
     - Example mappings:
       * startDate -> Date
       * currentCapacity -> Integer
       * price -> Money
+      * category -> Enumeration
       * status -> Enumeration
 
 Type Dependency Resolution:
-10. Before finalizing the result:
-    - Review all property types in Aggregates, ValueObjects, and Entities
-    - Identify any custom types that need Enumeration definitions
-    - Create missing Enumerations with appropriate values
-    - Ensure all type references are properly defined
+11. Before finalizing the result:
+    - Review all property types
+    - Create Enumerations for any classification, status, or type properties
+    - Ensure all custom types are properly defined
+    - Verify correct usage of ValueObjects vs Enumerations
 
 Constraints:
-11. Do not:
+12. Do not:
     - Modify existing Aggregates (reference only)
-    - Recreate existing ValueObjects, Entities, or Enumerations
+    - Recreate existing types
     - Include comments in the output JSON
     - Create duplicate elements
+    - Create ValueObjects for properties that should be Enumerations
 
-12. Required Elements:
+13. Required Elements:
     - All ValueObjects, Entities, and Enumerations must be used as properties
     - All elements from the user's structure must be implemented
     - All relationships must be properly mapped
     - All custom types must have corresponding definitions
 
-13. Do not write comments in the output JSON object.
+14. Do not write comments in the output JSON object.
 `
     }
 

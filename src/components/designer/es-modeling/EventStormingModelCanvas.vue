@@ -6298,20 +6298,17 @@
             },
             generatePBC(pbcElement, modelObj) {
                 var me = this;
-
                 if (modelObj) {
-                    var values = { elements: {}, relations: {} };
-                    var projectId = modelObj.projectId;
-                    var projectName = modelObj.projectName;
-                    var projectValue = modelObj.projectValue;
-                    var projectVersion = modelObj.projectVersion;
-                    var modelValueObj = {
-                        projectId: projectId,
-                        projectName: projectName,
-                        projectVersion: projectVersion,
+                    let values = { elements: {}, relations: {} };
+                    let projectValue = modelObj.projectValue;
+
+                    pbcElement.name = modelObj.projectName;
+                    pbcElement.modelValue = {
+                        projectId: modelObj.projectId,
+                        projectName: modelObj.projectName,
+                        projectVersion: modelObj.projectVersion,
+                        scm: modelObj.projectValue.scm
                     };
-                    pbcElement.name = projectName;
-                    pbcElement.modelValue = modelValueObj;
                     // init
                     pbcElement.boundedContextes = [];
                     pbcElement.aggregates = [];
