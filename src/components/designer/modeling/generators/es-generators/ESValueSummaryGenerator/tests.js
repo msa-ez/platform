@@ -1,5 +1,4 @@
-
-const ESValueSummaryGenerator = require("./index");
+const ESValueSummaryGenerator = require("./ESValueSummaryGenerator")
 const { libraryEsValue } = require("./mocks");
 const { ESValueSummarizeWithFilter } = require("../helpers")
 const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTransManager")

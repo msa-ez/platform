@@ -1,6 +1,6 @@
 const libraryEsValue = require("./mocks")
 const ESAliasTransManager = require("../../../es-ddl-generators/modules/ESAliasTransManager")
-const ESValueSummarizeWithFilter = require("./index")
+const ESValueSummarizeWithFilter = require("./ESValueSummarizeWithFilter")
 
 class ESValueSummarizeWithFilterTest {
     static async test(esValue=null) {

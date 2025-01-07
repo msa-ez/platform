@@ -1,1 +1,1 @@
-export const ESValueSummaryGenerator = require("./ESValueSummaryGenerator");
+export const { ESValueSummaryGenerator } = require("./ESValueSummaryGenerator");

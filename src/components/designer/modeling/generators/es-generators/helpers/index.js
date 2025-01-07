@@ -1,1 +1,1 @@
-export const ESValueSummarizeWithFilter = require("./ESValueSummarizeWithFilter");
+export const { ESValueSummarizeWithFilter } = require("./ESValueSummarizeWithFilter");
