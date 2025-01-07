@@ -7,7 +7,7 @@ import ESValueSummarizeWithFilterUtil from "../../modeling/generators/es-ddl-gen
 import ESAliasTransManager from "../../modeling/generators/es-ddl-generators/modules/ESAliasTransManager"
 import DraftGeneratorByFunctions from "../../modeling/generators/es-ddl-generators/DraftGeneratorByFunctions";
 import ESActionsUtil from "../../modeling/generators/es-ddl-generators/modules/ESActionsUtil";
-import TokenCounter from "../../modeling/generators/TokenCounter";
+import { TokenCounter } from "../../modeling/generators/utils";
 
 export default {
     name: "es-test-terminal",
