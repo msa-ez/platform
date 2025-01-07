@@ -1,3 +1,5 @@
+const { encoderMap, defaultEncoder } = require("./constants");
+
 /**
  * @description AI 모델별 텍스트 토큰화 및 토큰 수 관리를 위한 유틸리티 클래스입니다.
  * 다양한 AI 모델(GPT-4, GPT-3.5 등)에 대한 토큰 수 계산, 텍스트 분할, 
@@ -362,15 +364,7 @@ class TokenCounter {
 
 
     static _getEncoderForModel(model) {
-        const encoderMap = {
-            '^(gpt-4o|o1)': 'o200k_base',
-            '^(gpt-4|gpt-3.5)': 'cl100k_base',
-            '^(text-davinci-00[23]|gpt-3)': 'p50k_base',
-            '(edit-001|davinci-edit)': 'p50k_edit',
-            '(gpt-2|codegpt)': 'r50k_base'
-        };
-
-        let encoderName = 'o200k_base';
+        let encoderName = defaultEncoder;
         let matched = false;
 
         for (const [pattern, name] of Object.entries(encoderMap)) {

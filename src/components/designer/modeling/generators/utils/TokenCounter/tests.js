@@ -1,5 +1,5 @@
 const { TokenCounter } = require("..");
-const { sentences, sentence, longText } = require("./mock");
+const { sentences, sentence, longText } = require("./mocks");
 
 class TokenCounterTest {
     static test() {
