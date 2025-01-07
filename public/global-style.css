@@ -801,6 +801,10 @@ code[class*=language-]:nth-child(1) {
     z-index: 9999;
 }
 
+.gs-center {
+    margin:0 auto !important;
+}
+
 .delete-input-detail .v-text-field__details {
     display: none !important;
 }

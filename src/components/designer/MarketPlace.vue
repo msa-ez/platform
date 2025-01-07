@@ -60,9 +60,6 @@
                                             @click="clickFilteredTemplate(i)"
                                     >
                                         <v-list-item-icon class="marketplace-list-icon-box">
-                                            <!-- <Icon class="gs-icon-style marketplace-list-icon"
-                                                  :icon="item.icon"
-                                            /> -->
                                             <Icons :icon="item.icon" 
                                                 class="gs-icon-style marketplace-list-icon"  
                                             />
