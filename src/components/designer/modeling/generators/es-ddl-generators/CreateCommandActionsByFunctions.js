@@ -2,7 +2,7 @@
 const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
 const ESActionsUtil = require("./modules/ESActionsUtil")
 const ESFakeActionsUtil = require("./modules/ESFakeActionsUtil")
-const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil")
+const { ESValueSummarizeWithFilter } = require("../es-generators/helpers")
 const ESAliasTransManager = require("./modules/ESAliasTransManager")
 
 class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
@@ -108,7 +108,7 @@ Best Practices:
     }
 
     __buildRequestFormatPrompt(){
-        return ESValueSummarizeWithFilterUtil.getGuidePrompt()
+        return ESValueSummarizeWithFilter.getGuidePrompt()
     }
 
     __buildJsonResponseFormat() {
@@ -1055,7 +1055,7 @@ Generate read models in the aggregate to satisfy the given functional requiremen
     }
 
     __buildJsonUserQueryInputFormat() {
-        const summarizedESValue = ESValueSummarizeWithFilterUtil.getSummarizedESValue(
+        const summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(
             JSON.parse(JSON.stringify(this.client.input.esValue)), [], this.esAliasTransManager
         )
 

@@ -2,7 +2,7 @@
 const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
 const ESActionsUtil = require("./modules/ESActionsUtil")
 const ESFakeActionsUtil = require("./modules/ESFakeActionsUtil")
-const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil")
+const { ESValueSummarizeWithFilter } = require("../es-generators/helpers")
 const ESAliasTransManager = require("./modules/ESAliasTransManager")
 
 class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
@@ -156,7 +156,7 @@ Constraints:
     }
 
     __buildRequestFormatPrompt(){
-        return ESValueSummarizeWithFilterUtil.getGuidePrompt()
+        return ESValueSummarizeWithFilter.getGuidePrompt()
     }
 
     __buildJsonResponseFormat() {
@@ -329,7 +329,7 @@ They represent complex domain concepts that don't qualify as Aggregates but need
     __buildJsonExampleInputFormat() {
         return {
             "Summarized Existing EventStorming Model": {
-                "deletedProperties": ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.aggregateOuterStickers,
+                "deletedProperties": ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateOuterStickers,
                 "boundedContexts": [
                     {
                         "id": "bc-hotel",
@@ -957,8 +957,8 @@ They represent complex domain concepts that don't qualify as Aggregates but need
         if(!this.client.input.isAccumulated)
             this._removePrevBoundedContextRelatedElements(this.client.input.targetBoundedContext.name, targetBCRemovedESValue)
 
-        const summarizedESValue = ESValueSummarizeWithFilterUtil.getSummarizedESValue(targetBCRemovedESValue, 
-            ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.aggregateOuterStickers, this.esAliasTransManager)
+        const summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(targetBCRemovedESValue, 
+            ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateOuterStickers, this.esAliasTransManager)
 
         return {
             "Summarized Existing EventStorming Model": JSON.stringify(summarizedESValue),

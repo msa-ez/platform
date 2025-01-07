@@ -1,1 +1,1 @@
-export const TokenCounter = require("./TokenCounter");
+export const { TokenCounter } = require("./TokenCounter");

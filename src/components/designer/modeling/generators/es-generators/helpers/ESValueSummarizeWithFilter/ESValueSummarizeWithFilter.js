@@ -1,4 +1,6 @@
-class ESValueSummarizeWithFilterUtil {
+const { TokenCounter } = require("../../../utils")
+
+class ESValueSummarizeWithFilter {
     /**
      * getSummarizedESValue()에서 반환될 값에 대한 상세한 입력 프롬프트 가이드 반환
      */
@@ -154,6 +156,18 @@ The approximate structure is as follows.
 }`
     }
 
+    static async getSummarizedESValueWithMaxTokenSummarize(esValue, keysToFilter=[], esAliasTransManager=null, maxTokens=800, tokenCalcModel="gpt-4o"){
+        const summarizedESValue = this.getSummarizedESValue(
+            esValue, keysToFilter, esAliasTransManager
+        )
+
+        const tokenCount = TokenCounter.getTokenCount(JSON.stringify(summarizedESValue), tokenCalcModel)
+        if(tokenCount < maxTokens)
+            return summarizedESValue
+
+        throw new Error("토큰 수가 초과되었습니다.")
+    }
+
     /**
      * 주어진 이벤트스토밍에서 위치 데이터등을 제외한 핵심 정보들만 추출해서 LLM에게 입력 데이터로 제공
      * keysToFilter: 일부 경우에는 properties와 같은 구체적인 속성들이 불필요할 수 있음. 이런 경우에 제외시킬 키값을 배열로 전달
@@ -165,7 +179,7 @@ The approximate structure is as follows.
         .filter(element => element && element._type === 'org.uengine.modeling.model.BoundedContext')
 
         let summarizedBoundedContexts = boundedContexts.map(boundedContext => 
-            ESValueSummarizeWithFilterUtil.getSummarizedBoundedContextValue(
+            this.getSummarizedBoundedContextValue(
                 esValue, boundedContext, keysToFilter, esAliasTransManager
             )
         )
@@ -176,19 +190,19 @@ The approximate structure is as follows.
         }
     }
 
-
+    
     static getSummarizedBoundedContextValue(esValue, boundedContext, keysToFilter=[], esAliasTransManager=null) {   
         const getConditionalValue = (keys, value) => {
-            return !ESValueSummarizeWithFilterUtil._checkKeyFilters(keysToFilter, keys) ? value : {}
+            return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
         }
 
 
-        ESValueSummarizeWithFilterUtil._restoreBoundedContextAggregatesProperties(esValue, boundedContext)
+        this._restoreBoundedContextAggregatesProperties(esValue, boundedContext)
         
         return {
             ...getConditionalValue(
                 ["id", "boundedContext.id"], 
-                { id: ESValueSummarizeWithFilterUtil._getElementIdSafely(boundedContext, esAliasTransManager) }
+                { id: this._getElementIdSafely(boundedContext, esAliasTransManager) }
             ),
             ...getConditionalValue(
                 ["name", "boundedContext.name"], 
@@ -196,7 +210,7 @@ The approximate structure is as follows.
             ),
             ...getConditionalValue(
                 ["actors", "boundedContext.actors"], 
-                { actors: ESValueSummarizeWithFilterUtil.getSummarizedActorValue(
+                { actors: this.getSummarizedActorValue(
                     esValue, boundedContext, keysToFilter, esAliasTransManager
                 )}
             ),
@@ -204,7 +218,7 @@ The approximate structure is as follows.
                 ["aggregates", "boundedContext.aggregates"], 
                 { aggregates: boundedContext.aggregates
                     .map(aggregate => esValue.elements[aggregate.id])
-                    .map(aggregate => ESValueSummarizeWithFilterUtil.getSummarizedAggregateValue(
+                    .map(aggregate => this.getSummarizedAggregateValue(
                         esValue, boundedContext, aggregate, keysToFilter, esAliasTransManager
                     ))
                 }
@@ -212,23 +226,9 @@ The approximate structure is as follows.
         }
     }
 
-    /**
-     * 주어진 BoundedContext에서 agggregates 속성이 없을 경우를 대비해서, 주어진 이벤트스토밍 값을 통해서 복원
-     */
-    static _restoreBoundedContextAggregatesProperties(esValue, boundedContext) {
-        boundedContext.aggregates = []
-        for(let element of Object.values(esValue.elements))
-        {
-            if(element && element._type === "org.uengine.modeling.model.Aggregate" 
-               && element.boundedContext && element.boundedContext.id === boundedContext.id)
-               boundedContext.aggregates.push({id: element.id})
-        }
-    }
-
-
     static getSummarizedActorValue(esValue, boundedContext, keysToFilter=[], esAliasTransManager=null) {
         const getConditionalValue = (keys, value) => {
-            return !ESValueSummarizeWithFilterUtil._checkKeyFilters(keysToFilter, keys) ? value : {}
+            return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
         }
 
         const getUniqueActors = (actors, property) => {
@@ -248,7 +248,7 @@ The approximate structure is as follows.
                 actors.push({
                     ...getConditionalValue(
                         ["id", "actors.id"], 
-                        { id: ESValueSummarizeWithFilterUtil._getElementIdSafely(element, esAliasTransManager) }
+                        { id: this._getElementIdSafely(element, esAliasTransManager) }
                     ),
                     ...getConditionalValue(
                         ["name", "actors.name"], 
@@ -259,10 +259,10 @@ The approximate structure is as follows.
         }
 
 
-        if(!ESValueSummarizeWithFilterUtil._checkKeyFilters(keysToFilter, ["name", "actors.name"]))
+        if(!this._checkKeyFilters(keysToFilter, ["name", "actors.name"]))
             return getUniqueActors(actors, "name")
 
-        if(!ESValueSummarizeWithFilterUtil._checkKeyFilters(keysToFilter, ["id", "actors.id"]))
+        if(!this._checkKeyFilters(keysToFilter, ["id", "actors.id"]))
             return getUniqueActors(actors, "id")
 
         return actors
@@ -270,13 +270,13 @@ The approximate structure is as follows.
 
     static getSummarizedAggregateValue(esValue, boundedContext, aggregate, keysToFilter=[], esAliasTransManager=null) {
         const getConditionalValue = (keys, value) => {
-            return !ESValueSummarizeWithFilterUtil._checkKeyFilters(keysToFilter, keys) ? value : {}
+            return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
         }
 
         return {
             ...getConditionalValue(
                 ["id", "aggregate.id"],
-                { id: ESValueSummarizeWithFilterUtil._getElementIdSafely(aggregate, esAliasTransManager) }
+                { id: this._getElementIdSafely(aggregate, esAliasTransManager) }
             ),
             ...getConditionalValue(
                 ["name", "aggregate.name"],
@@ -284,42 +284,42 @@ The approximate structure is as follows.
             ),
             ...getConditionalValue(
                 ["properties", "aggregate.properties"],
-                { properties: ESValueSummarizeWithFilterUtil._getSummarizedFieldDescriptors(aggregate.aggregateRoot.fieldDescriptors) }
+                { properties: this._getSummarizedFieldDescriptors(aggregate.aggregateRoot.fieldDescriptors) }
             ),
             ...getConditionalValue(
                 ["entities", "aggregate.entities"],
-                { entities: ESValueSummarizeWithFilterUtil.getSummarizedEntityValue(aggregate, keysToFilter, esAliasTransManager) }
+                { entities: this.getSummarizedEntityValue(aggregate, keysToFilter, esAliasTransManager) }
             ),
             ...getConditionalValue(
                 ["enumerations", "aggregate.enumerations"],
-                { enumerations: ESValueSummarizeWithFilterUtil.getSummarizedEnumerationValue(aggregate, keysToFilter, esAliasTransManager) }
+                { enumerations: this.getSummarizedEnumerationValue(aggregate, keysToFilter, esAliasTransManager) }
             ),
             ...getConditionalValue(
                 ["valueObjects", "aggregate.valueObjects"],
-                { valueObjects: ESValueSummarizeWithFilterUtil.getSummarizedValueObjectValue(aggregate, keysToFilter, esAliasTransManager) }
+                { valueObjects: this.getSummarizedValueObjectValue(aggregate, keysToFilter, esAliasTransManager) }
             ),
             ...getConditionalValue(
                 ["commands", "aggregate.commands"],
-                { commands: ESValueSummarizeWithFilterUtil.getSummarizedCommandValue(esValue, boundedContext, aggregate, keysToFilter, esAliasTransManager) }
+                { commands: this.getSummarizedCommandValue(esValue, boundedContext, aggregate, keysToFilter, esAliasTransManager) }
             ),
             ...getConditionalValue(
                 ["events", "aggregate.events"],
-                { events: ESValueSummarizeWithFilterUtil.getSummarizedEventValue(esValue, boundedContext, aggregate, keysToFilter, esAliasTransManager) }
+                { events: this.getSummarizedEventValue(esValue, boundedContext, aggregate, keysToFilter, esAliasTransManager) }
             ),
             ...getConditionalValue(
                 ["readModels", "aggregate.readModels"],
-                { readModels: ESValueSummarizeWithFilterUtil.getSummarizedReadModelValue(esValue, boundedContext, aggregate, keysToFilter, esAliasTransManager) }
+                { readModels: this.getSummarizedReadModelValue(esValue, boundedContext, aggregate, keysToFilter, esAliasTransManager) }
             )
         }
     }
 
     static getSummarizedEntityValue(aggregate, keysToFilter=[], esAliasTransManager=null) {
         const getConditionalValue = (keys, value) => {
-            return !ESValueSummarizeWithFilterUtil._checkKeyFilters(keysToFilter, keys) ? value : {}
+            return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
         }
 
 
-        if(!ESValueSummarizeWithFilterUtil._isAggregateHaveElements(aggregate)) return []
+        if(!this._isAggregateHaveElements(aggregate)) return []
         
         let summarizedEntityValue = []
         for(let element of Object.values(aggregate.aggregateRoot.entities.elements)) {
@@ -328,7 +328,7 @@ The approximate structure is as follows.
                 summarizedEntityValue.push({
                     ...getConditionalValue(
                         ["id", "entities.id"],
-                        { id: ESValueSummarizeWithFilterUtil._getElementIdSafely(element, esAliasTransManager) }
+                        { id: this._getElementIdSafely(element, esAliasTransManager) }
                     ),
                     ...getConditionalValue(
                         ["name", "entities.name"],
@@ -336,7 +336,7 @@ The approximate structure is as follows.
                     ),
                     ...getConditionalValue(
                         ["properties", "entities.properties"],
-                        { properties: ESValueSummarizeWithFilterUtil._getSummarizedFieldDescriptors(
+                        { properties: this._getSummarizedFieldDescriptors(
                             element.fieldDescriptors,
                             (property, fieldDescriptor) => {
                                 if(fieldDescriptor.className.toLowerCase() === aggregate.name.toLowerCase()) 
@@ -352,11 +352,11 @@ The approximate structure is as follows.
 
     static getSummarizedEnumerationValue(aggregate, keysToFilter=[], esAliasTransManager=null) {
         const getConditionalValue = (keys, value) => {
-            return !ESValueSummarizeWithFilterUtil._checkKeyFilters(keysToFilter, keys) ? value : {}
+            return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
         }
 
 
-        if(!ESValueSummarizeWithFilterUtil._isAggregateHaveElements(aggregate)) return []
+        if(!this._isAggregateHaveElements(aggregate)) return []
 
         let summarizedEnumerationValue = []
         for(let element of Object.values(aggregate.aggregateRoot.entities.elements)) {
@@ -364,7 +364,7 @@ The approximate structure is as follows.
                 summarizedEnumerationValue.push({
                     ...getConditionalValue(
                         ["id", "enumerations.id"],
-                        { id: ESValueSummarizeWithFilterUtil._getElementIdSafely(element, esAliasTransManager) }
+                        { id: this._getElementIdSafely(element, esAliasTransManager) }
                     ),
                     ...getConditionalValue(
                         ["name", "enumerations.name"],
@@ -382,10 +382,10 @@ The approximate structure is as follows.
 
     static getSummarizedValueObjectValue(aggregate, keysToFilter=[], esAliasTransManager=null) {
        const getConditionalValue = (keys, value) => {
-           return !ESValueSummarizeWithFilterUtil._checkKeyFilters(keysToFilter, keys) ? value : {}
+           return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
        }
 
-       if(!ESValueSummarizeWithFilterUtil._isAggregateHaveElements(aggregate)) return []
+       if(!this._isAggregateHaveElements(aggregate)) return []
        
        let summarizedValueObjectValue = []
        for(let element of Object.values(aggregate.aggregateRoot.entities.elements)) {
@@ -393,7 +393,7 @@ The approximate structure is as follows.
                summarizedValueObjectValue.push({
                    ...getConditionalValue(
                        ["id", "valueObjects.id"],
-                       { id: ESValueSummarizeWithFilterUtil._getElementIdSafely(element, esAliasTransManager) }
+                       { id: this._getElementIdSafely(element, esAliasTransManager) }
                    ),
                    ...getConditionalValue(
                        ["name", "valueObjects.name"],
@@ -401,7 +401,7 @@ The approximate structure is as follows.
                    ),
                    ...getConditionalValue(
                        ["properties", "valueObjects.properties"],
-                        { properties: ESValueSummarizeWithFilterUtil._getSummarizedFieldDescriptors(
+                        { properties: this._getSummarizedFieldDescriptors(
                             element.fieldDescriptors,
                             (property, fieldDescriptor) => {
                                 if(fieldDescriptor.className.toLowerCase() === aggregate.name.toLowerCase()) 
@@ -422,7 +422,7 @@ The approximate structure is as follows.
 
     static getSummarizedCommandValue(esValue, boundedContext, aggregate, keysToFilter=[], esAliasTransManager=null) {
         const getConditionalValue = (keys, value) => {
-            return !ESValueSummarizeWithFilterUtil._checkKeyFilters(keysToFilter, keys) ? value : {}
+            return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
         }
 
         const getOutputEvents = (element) => {
@@ -433,7 +433,7 @@ The approximate structure is as follows.
                     events.push({
                         ...getConditionalValue(
                             ["id", "commands.outputEvents.id"],
-                            { id: ESValueSummarizeWithFilterUtil._getElementIdSafely(relation.targetElement, esAliasTransManager) }
+                            { id: this._getElementIdSafely(relation.targetElement, esAliasTransManager) }
                         ),
                         ...getConditionalValue(
                             ["name", "commands.outputEvents.name"],
@@ -454,7 +454,7 @@ The approximate structure is as follows.
                 summarizedCommandValue.push({
                     ...getConditionalValue(
                         ["id", "commands.id"],
-                        { id: ESValueSummarizeWithFilterUtil._getElementIdSafely(element, esAliasTransManager) }
+                        { id: this._getElementIdSafely(element, esAliasTransManager) }
                     ),
                     ...getConditionalValue(
                         ["name", "commands.name"],
@@ -474,7 +474,7 @@ The approximate structure is as follows.
                     ...getConditionalValue(
                         ["properties", "commands.properties"],
                         { properties: element.fieldDescriptors ? 
-                            ESValueSummarizeWithFilterUtil._getSummarizedFieldDescriptors(element.fieldDescriptors) : [] 
+                            this._getSummarizedFieldDescriptors(element.fieldDescriptors) : [] 
                         }
                     ),
                     ...getConditionalValue(
@@ -489,7 +489,7 @@ The approximate structure is as follows.
 
     static getSummarizedEventValue(esValue, boundedContext, aggregate, keysToFilter=[], esAliasTransManager=null) {
         const getConditionalValue = (keys, value) => {
-            return !ESValueSummarizeWithFilterUtil._checkKeyFilters(keysToFilter, keys) ? value : {}
+            return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
         }
 
         const getRelationsForType = (esValue, sourceElement, targetType) => {
@@ -507,7 +507,7 @@ The approximate structure is as follows.
                     commands.push({
                         ...getConditionalValue(
                             ["id", "events.outputCommands.id"],
-                            { id: ESValueSummarizeWithFilterUtil._getElementIdSafely(commandRelation.targetElement, esAliasTransManager) }
+                            { id: this._getElementIdSafely(commandRelation.targetElement, esAliasTransManager) }
                         ),
                         ...getConditionalValue(
                             ["name", "events.outputCommands.name"],
@@ -515,7 +515,7 @@ The approximate structure is as follows.
                         ),
                         ...getConditionalValue(
                             ["id", "events.outputCommands.policyId"],
-                            { policyId: ESValueSummarizeWithFilterUtil._getElementIdSafely(targetPolicy, esAliasTransManager) }
+                            { policyId: this._getElementIdSafely(targetPolicy, esAliasTransManager) }
                         ),
                         ...getConditionalValue(
                             ["name", "events.outputCommands.policyName"],
@@ -536,7 +536,7 @@ The approximate structure is as follows.
                 summarizedEventValue.push({
                     ...getConditionalValue(
                         ["id", "events.id"],
-                        { id: ESValueSummarizeWithFilterUtil._getElementIdSafely(element, esAliasTransManager) }
+                        { id: this._getElementIdSafely(element, esAliasTransManager) }
                     ),
                     ...getConditionalValue(
                         ["name", "events.name"],
@@ -545,7 +545,7 @@ The approximate structure is as follows.
                     ...getConditionalValue(
                         ["properties", "events.properties"],
                         { properties: element.fieldDescriptors ? 
-                            ESValueSummarizeWithFilterUtil._getSummarizedFieldDescriptors(element.fieldDescriptors) : [] 
+                            this._getSummarizedFieldDescriptors(element.fieldDescriptors) : [] 
                         }
                     ),
                     ...getConditionalValue(
@@ -560,7 +560,7 @@ The approximate structure is as follows.
 
     static getSummarizedReadModelValue(esValue, boundedContext, aggregate, keysToFilter=[], esAliasTransManager=null) {
         const getConditionalValue = (keys, value) => {
-            return !ESValueSummarizeWithFilterUtil._checkKeyFilters(keysToFilter, keys) ? value : {}
+            return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
         }
 
         let summarizedReadModelValue = []
@@ -572,7 +572,7 @@ The approximate structure is as follows.
                 summarizedReadModelValue.push({
                     ...getConditionalValue(
                         ["id", "readModels.id"],
-                        { id: ESValueSummarizeWithFilterUtil._getElementIdSafely(element, esAliasTransManager) }
+                        { id: this._getElementIdSafely(element, esAliasTransManager) }
                     ),
                     ...getConditionalValue(
                         ["name", "readModels.name"],
@@ -581,7 +581,7 @@ The approximate structure is as follows.
                     ...getConditionalValue(
                         ["properties", "readModels.properties"],
                         { properties: element.queryParameters ? 
-                            ESValueSummarizeWithFilterUtil._getSummarizedFieldDescriptors(element.queryParameters) : [] 
+                            this._getSummarizedFieldDescriptors(element.queryParameters) : [] 
                         } // ReadModel인 경우에만 기존과 다르게 queryParameters로 참조
                     ),
                     ...getConditionalValue(
@@ -594,6 +594,19 @@ The approximate structure is as follows.
         return summarizedReadModelValue
     }
  
+
+    /**
+     * 주어진 BoundedContext에서 agggregates 속성이 없을 경우를 대비해서, 주어진 이벤트스토밍 값을 통해서 복원
+     */
+    static _restoreBoundedContextAggregatesProperties(esValue, boundedContext) {
+        boundedContext.aggregates = []
+        for(let element of Object.values(esValue.elements))
+        {
+            if(element && element._type === "org.uengine.modeling.model.Aggregate" 
+                && element.boundedContext && element.boundedContext.id === boundedContext.id)
+                boundedContext.aggregates.push({id: element.id})
+        }
+    }
 
     static _getSummarizedFieldDescriptors(fieldDescriptors, onAfterCreateProperty=null) {
         return fieldDescriptors.map(fieldDescriptor => {
@@ -632,10 +645,10 @@ The approximate structure is as follows.
     }
 }
 
-ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES = {
+ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES = {
     "aggregateOuterStickers": ["aggregate.commands", "aggregate.events", "aggregate.readModels"],
     "aggregateInnerStickers": ["aggregate.entities", "aggregate.enumerations", "aggregate.valueObjects"],
     "detailedProperties": ["properties", "items"]
 }
 
-module.exports = ESValueSummarizeWithFilterUtil
+module.exports = ESValueSummarizeWithFilter

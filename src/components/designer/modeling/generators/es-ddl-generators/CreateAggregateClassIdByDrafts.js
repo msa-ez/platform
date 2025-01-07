@@ -1,7 +1,7 @@
 
 const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
 const ESActionsUtil = require("./modules/ESActionsUtil")
-const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil")
+const { ESValueSummarizeWithFilter } = require("../es-generators/helpers")
 const ActionsProcessorUtils = require("./modules/ESActionsUtilProcessors/ActionsProcessorUtils")
 const ESAliasTransManager = require("./modules/ESAliasTransManager")
 const changeCase = require('change-case');
@@ -93,7 +93,7 @@ Please follow these rules:
     }
 
     __buildRequestFormatPrompt(){
-        return ESValueSummarizeWithFilterUtil.getGuidePrompt()
+        return ESValueSummarizeWithFilter.getGuidePrompt()
     }
 
     __buildJsonResponseFormat() {
@@ -159,7 +159,7 @@ Please follow these rules:
     __buildJsonExampleInputFormat() {
         return {
             "Summarized Existing EventStorming Model": {
-                "deletedProperties": ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.aggregateOuterStickers,
+                "deletedProperties": ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateOuterStickers,
                 "boundedContexts": [
                     {
                         "id": "bc-order",
@@ -323,9 +323,9 @@ Please follow these rules:
     }
 
     __buildJsonUserQueryInputFormat() {
-        const summarizedESValue = ESValueSummarizeWithFilterUtil.getSummarizedESValue(
+        const summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(
             JSON.parse(JSON.stringify(this.client.input.esValue)), 
-            ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.aggregateOuterStickers, this.esAliasTransManager)
+            ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateOuterStickers, this.esAliasTransManager)
 
         return {
             "Summarized Existing EventStorming Model": JSON.stringify(summarizedESValue),
@@ -385,7 +385,7 @@ CRITICAL RULES FOR REFERENCE GENERATION:
             if(!action.args || !action.args.valueObjectName) continue
             
             const isValidReference = this.client.input.targetReferences.some(
-                target => target.toLowerCase() === action.args.valueObjectName.toLowerCase()
+                target => action.args.valueObjectName.toLowerCase().includes(target.toLowerCase())
             );
             
             if (!isValidReference) {
