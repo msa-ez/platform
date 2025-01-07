@@ -5,36 +5,29 @@ const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTran
 const { TokenCounter } = require("../../utils")
 
 class ESValueSummaryGeneratorTest {
-    static test(esValue=null) {
+    static async test(esValue=null) {
         if(!esValue) esValue = JSON.parse(JSON.stringify(libraryEsValue));
+
+        const esAliasTransManager = new ESAliasTransManager(esValue)
         
         
         const summariezedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(
-            esValue, [], new ESAliasTransManager(esValue)
+            esValue, [], esAliasTransManager
         )
         console.log(summariezedESValue)
         console.log("[*] 전체 ESValue 토큰 수 :", TokenCounter.getTokenCount(JSON.stringify(summariezedESValue), "gpt-4o"))
 
 
-        const esValueSummaryGenerator = new ESValueSummaryGenerator({
-            input: {
-                "context": "도서 관련 커맨드 생성 작업을 수행해야 함",
-                "esValue": esValue,
-                "keysToFilter": [],
-                "maxTokens": 800,
-                "tokenCalcModel": "gpt-4o"
-            },
-
-            onModelCreated: (returnObj) => {
-                
-            },
-
-            onGenerationSucceeded: (returnObj) => {
-                console.log("[*] 요약 토큰 수 :", TokenCounter.getTokenCount(JSON.stringify(returnObj.modelValue.summary), "gpt-4o"))
-            }
-        })
-
-        esValueSummaryGenerator.generate()
+        const summary = await ESValueSummaryGenerator.getSummarizedESValueWithMaxTokenSummarize(
+            "도서 관련 커맨드 생성 작업을 수행해야 함",
+            esValue,
+            [],
+            800,
+            "gpt-4o",
+            esAliasTransManager
+        )
+        console.log("[*] 요약된 ESValue :", summary)
+        console.log("[*] 요약된 ESValue 토큰 수 :", TokenCounter.getTokenCount(JSON.stringify(summary), "gpt-4o"))
     }
 }
 

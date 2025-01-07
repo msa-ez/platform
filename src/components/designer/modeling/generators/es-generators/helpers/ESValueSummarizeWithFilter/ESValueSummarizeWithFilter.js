@@ -1,5 +1,3 @@
-const { TokenCounter } = require("../../../utils")
-
 class ESValueSummarizeWithFilter {
     /**
      * getSummarizedESValue()에서 반환될 값에 대한 상세한 입력 프롬프트 가이드 반환
@@ -154,18 +152,6 @@ The approximate structure is as follows.
         ]
     ]
 }`
-    }
-
-    static async getSummarizedESValueWithMaxTokenSummarize(esValue, keysToFilter=[], esAliasTransManager=null, maxTokens=800, tokenCalcModel="gpt-4o"){
-        const summarizedESValue = this.getSummarizedESValue(
-            esValue, keysToFilter, esAliasTransManager
-        )
-
-        const tokenCount = TokenCounter.getTokenCount(JSON.stringify(summarizedESValue), tokenCalcModel)
-        if(tokenCount < maxTokens)
-            return summarizedESValue
-
-        throw new Error("토큰 수가 초과되었습니다.")
     }
 
     /**

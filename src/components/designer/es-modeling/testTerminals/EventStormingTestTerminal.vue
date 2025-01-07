@@ -1031,8 +1031,8 @@ export default {
             TokenCounterTest.test()
         },
 
-        _ESSummaryGeneratorTest() {
-            ESValueSummaryGeneratorTest.test(this.value)
+        async _ESSummaryGeneratorTest() {
+            await ESValueSummaryGeneratorTest.test(this.value)
         },
 
         async _TempTest() {

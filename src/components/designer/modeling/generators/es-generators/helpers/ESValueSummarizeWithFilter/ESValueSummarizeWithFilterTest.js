@@ -27,17 +27,6 @@ class ESValueSummarizeWithFilterTest {
             esAliasTransManager
         )
         console.log(summaryWithFilter)
-    
-
-        console.log("[*] 3. 토큰 수 초과시 자동 요약 기능을 포함한 요약 요청")
-        const summaryWithAutoSummarize = await ESValueSummarizeWithFilter.getSummarizedESValueWithMaxTokenSummarize(
-            esValue,
-            [],
-            esAliasTransManager,
-            800,
-            "gpt-4o"
-        )
-        console.log(summaryWithAutoSummarize)
     }
 }
 

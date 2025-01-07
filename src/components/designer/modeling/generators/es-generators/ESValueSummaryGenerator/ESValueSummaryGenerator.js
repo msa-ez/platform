@@ -62,20 +62,61 @@ class ESValueSummaryGenerator extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
-        this.checkInputParamsKeys = ["context", "esValue", "keysToFilter", "maxTokens", "tokenCalcModel"]
+        this.checkInputParamsKeys = ["context", "esValue", "keysToFilter", "maxTokens", "tokenCalcModel", "esAliasTransManager"]
         this.progressCheckStrings = ["overviewThoughts", "result"]
     }
 
 
+    static async getSummarizedESValueWithMaxTokenSummarize(context, esValue, keysToFilter, maxTokens, tokenCalcModel, esAliasTransManager){
+        const summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(
+            esValue, keysToFilter, esAliasTransManager
+        )
+
+        const tokenCount = TokenCounter.getTokenCount(JSON.stringify(summarizedESValue), tokenCalcModel)
+        if(tokenCount <= maxTokens)
+            return summarizedESValue
+
+
+        return new Promise((resolve, reject) => {
+            const esValueSummaryGenerator = new ESValueSummaryGenerator({
+                input: {
+                    "context": context,
+                    "esValue": esValue,
+                    "keysToFilter": keysToFilter,
+                    "maxTokens": maxTokens,
+                    "tokenCalcModel": tokenCalcModel,
+                    "esAliasTransManager": esAliasTransManager
+                },
+    
+                onModelCreated: (returnObj) => {
+                    
+                },
+    
+                onGenerationSucceeded: (returnObj) => {
+                    resolve(returnObj.modelValue.summary)
+                },
+
+                onRetry: (returnObj) => {
+                    reject(returnObj.errorMessage)
+                }
+            })
+    
+            esValueSummaryGenerator.generate()
+        })
+    }
+
+    onInputParamsCheckBefore(inputParams) {
+        inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
+        if(!inputParams.esAliasTransManager)
+            inputParams.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
+    }
+
     onGenerateBefore(inputParams){
         if(inputParams.keysToFilter.includes("id"))
             throw new Error("id 속성은 정렬에 사용되기 때문에 필터링에서 제외되어야 합니다.")
-
-        inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
-        this.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
-
+ 
         inputParams.summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(
-            inputParams.esValue, inputParams.keysToFilter, this.esAliasTransManager
+            inputParams.esValue, inputParams.keysToFilter, inputParams.esAliasTransManager
         )
     }
 
