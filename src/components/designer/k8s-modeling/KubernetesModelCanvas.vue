@@ -202,11 +202,9 @@
                                                         @click="openCodeViewer()"
                                                         v-on="on"
                                                 >
-                                                    <Icon class="gs-icon-style"
-                                                        icon="icomoon-free:git"
-                                                        style="margin-right: 2px;
-                                                        height: 22px;
-                                                        width: 22px"
+                                                    <Icons class="gs-icon-style"
+                                                        :icon="'git'"
+                                                        style="margin-right: 2px;"
                                                     />
                                                     <div class="k8s-hide-gitops">GITOPS</div>
                                                 </v-btn>

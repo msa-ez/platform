@@ -85,7 +85,7 @@
                                     color="primary"
                                     @click="generate('AggregateGenerator')"
                                 >
-                                    <Icon icon="ic:sharp-auto-fix-off" width="24" height="24" />{{ $t('AggregateDefinitionPanel.reGenerate') }}
+                                    <Icons :icon="'sharp-auto-fix-off'" />{{ $t('AggregateDefinitionPanel.reGenerate') }}
                                 </v-btn>
                             </template>
                             <span>{{ $t('AggregateDefinitionPanel.aggregateGenerateTooltipText2') }}</span>
