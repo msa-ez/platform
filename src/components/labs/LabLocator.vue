@@ -12,7 +12,6 @@
                     large
                 >
                     <Icons :icon="'right'" :color="'#FFFFFF'"/>
-                    <!-- <Icon color="white" icon="mingcute:right-fill" width="24" height="24" /> -->
                 </v-card>
             </template>
             <span>인스트럭션 크기 조절</span>
@@ -264,9 +263,7 @@
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn style="margin-left:5px;" v-bind="attrs" v-on="on" @click="editLabVideo()"
                                         color="primary" icon large>
-                                    <Icon icon="material-symbols:video-settings-rounded"
-                                            style="margin-top:-4px; width:30px; height:30px;"
-                                    />
+                                    <Icons :icon="'video-settings-rounded'" :width="30" :height="30" style="margin-top:-4px;" />
                                 </v-btn>
                             </template>
                             <span>유튜브 Url 수정</span>
@@ -307,12 +304,11 @@
                         <v-tooltip bottom>
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn
-                                        style="margin-left:5px;" v-bind="attrs" v-on="on"
-                                        @click="uploadImage()"
-                                        color="primary" icon large>
-                                    <v-icon>
-                                        mdi-folder-upload
-                                    </v-icon>
+                                    style="margin-left:5px;" v-bind="attrs" v-on="on"
+                                    @click="uploadImage()"
+                                    color="primary" icon large
+                                >
+                                    <Icons :icon="'add-picture'" :size="26" />
                                 </v-btn>
                             </template>
                             <span>이미지 업로드</span>
@@ -321,8 +317,10 @@
                         <v-tooltip bottom>
                             <template v-slot:activator="{ on, attrs }">
                                 <v-btn style="margin-left:5px;" v-bind="attrs" v-on="on" @click="screenCapture()"
-                                        color="primary" v-if="isAdmin || myId==userId" icon large>
-                                    <v-icon>{{setIcon}}</v-icon>
+                                    color="primary" v-if="isAdmin || myId==userId" icon large
+                                >
+                                    <Icons v-if="!isCapturing" :icon="'upload-picture'" :size="26" />
+                                    <v-icon v-else>{{setIcon}}</v-icon>
                                 </v-btn>
                             </template>
                             <span>제출</span>
@@ -899,38 +897,36 @@
                 v-model="imageWindow"
                 width="800"
         >
-            <v-card width="800">
-                <v-card-title>결과 제출</v-card-title>
-                <div style="text-align: -webkit-center;">
+            <v-card class="pa-4 ma-0">
+                <v-row class="pa-0 ma-0">
+                    <v-card-title class="pa-0 ma-0">결과 제출</v-card-title>
+                    <v-spacer></v-spacer>
+                    <v-icon @click="deleteImage()">mdi-close</v-icon>
+                </v-row>
+                <div>
                     <div v-if="!imgFile"
                          class="gs-info-bg"
-                         style="position:relative;
-                        left:8%;"
+                         style="text-align: center;"
                     >
                         <div>이미지 업로드 방법 선택</div>
-                        <div class="gs-info-sub-bg">
-                            <div style="text-align: left; margin-left:10px;" class="gs-info-sub-title">
-                                1.클립보드 이미지 붙여넣기 ctrl + V<br>
+                        <div class="gs-info-sub-bg" style="margin: 0 auto;">
+                            <div class="gs-info-sub-title" style="text-align: left;">
+                                1. 클립보드 이미지 붙여넣기 ctrl + V<br>
                                 2. 내 PC 이미지 클릭 후 업로드
                             </div>
                         </div>
                     </div>
-                    <v-img class="img-file-style" :src="imgFile ? imgFile:null"
-                           style="width: 90%; max-height: 600px;"></v-img>
+                    <v-img class="img-file-style" :src="imgFile ? imgFile:null"></v-img>
                 </div>
-                <v-card-actions style="justify-content: right;">
-                    <v-btn style="margin-right: 10px;"
-                           text
-                           @click="deleteImage()"
-                    >취소
-                    </v-btn>
+                <v-row class="ma-0 pa-0 pt-4">
+                    <v-spacer></v-spacer>
                     <v-btn style="margin-right: 10px;" text @click="selectFile()">내 PC 이미지</v-btn>
                     <v-btn
-                            color="primary" text
-                            @click="submitResultByUser(imgFile)"
+                        color="primary" text
+                        @click="submitResultByUser(imgFile)"
                     >제출
                     </v-btn>
-                </v-card-actions>
+                </v-row>
             </v-card>
         </v-dialog>
         <div class="modal">
@@ -1327,8 +1323,6 @@
             setIcon() {
                 if (this.isCapturing) {
                     return 'mdi-spin mdi-loading'
-                } else {
-                    return 'mdi-camera'
                 }
             },
             setClass() {

@@ -76,11 +76,6 @@
 }
 
 .gs-info-bg {
-    position: absolute;
-    top: 40%;
-    left: 50%;
-    margin-left: -101px;
-    transfrom: translate(-50%, -50%);
     color: #1E88E5;
 }
 
@@ -115,7 +110,7 @@
 .gs-info-sub-bg {
     background-color: #BDBDBD;
     color: white;
-    border-radius: 20px;
+    border-radius: 10px;
     width: 255px;
     margin-top: 20px;
     padding: 5px;
