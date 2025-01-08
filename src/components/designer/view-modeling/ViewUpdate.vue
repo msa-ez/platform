@@ -100,9 +100,11 @@
                 </v-simple-table>
 
 
-                <v-row align="center" justify="end">
-                    <v-btn style="margin:12px 0 12px 0;" text block @click.native="addRow('set')">
-                        <v-icon small> mdi-plus-circle-outline</v-icon>
+                <v-row align="center" justify="end" class="ma-0 pa-0 mt-2">
+                    <v-btn text block @click.native="addRow('set')"
+                        style="height: 20px;"
+                    >
+                        <v-icon small>mdi-plus-circle-outline</v-icon>
                     </v-btn>
                 </v-row>
 
