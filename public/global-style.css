@@ -392,7 +392,6 @@ code[class*=language-]:nth-child(1) {
 }
 
 .code-preview-btn {
-    font-size:22px !important;
     height:30px !important;
     width:30px !important;
     margin-right:5px;

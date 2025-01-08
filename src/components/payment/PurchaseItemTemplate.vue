@@ -26,7 +26,9 @@
                     <v-row>
                         <v-card width="50%" height="200px;" @click="selectPaymentType(1)" :disabled="onlyPG">
                             <v-card-title style="justify-content: center;">코인</v-card-title>
-                            <v-card-text style="text-align: center;"><Icon icon="ph:coins-thin" width="70" height="70" /></v-card-text>
+                            <v-card-text style="text-align: center;">
+                                <Icon icon="ph:coins-thin" width="70" height="70" />
+                            </v-card-text>
                         </v-card>
                         <v-card width="50%" height="200px;" @click="selectPaymentType(2)">
                             <v-card-title style="justify-content: center;">카드</v-card-title>

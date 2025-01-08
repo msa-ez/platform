@@ -299,7 +299,6 @@
     import DDLDraftGenerator from './DDLDraftGenerator.js'
     import DDLBoundedContextDistributeGenerator from './es-ddl-generators/DDLBoundedContextDistributeGenerator.js'
     import PreProcessingFunctionsGenerator from './es-ddl-generators/PreProcessingFunctionsGenerator.js'
-import Icons from '../../../ui/Icons.vue'
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
 
@@ -348,8 +347,7 @@ import Icons from '../../../ui/Icons.vue'
             }
         },
         components: {
-            DebeziumLogsTab,
-                Icons
+            DebeziumLogsTab
         },
 
         created(){

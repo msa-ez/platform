@@ -220,7 +220,6 @@
     import LabBase from "../labs/LabBase";
     import TenantAware from '../labs/TenantAware';
     import CommonStorageBase from "../CommonStorageBase";
-import Icons from '../ui/Icons.vue';
 
     require('firebase/auth');
 

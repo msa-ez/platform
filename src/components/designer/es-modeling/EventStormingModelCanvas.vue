@@ -1257,22 +1257,6 @@
                             :modelValue="value"
                             :tabs="tabs"
                     >
-                        <!-- <v-tooltip slot="buttons" bottom>
-                            <template v-slot:activator="{ on, attrs }">
-                                <v-btn
-                                        @click="generateAggregate()"
-                                        icon
-                                        small
-                                        v-bind="attrs"
-                                        v-on="on"
-                                        style="margin-right: 10px; z-index: 2"
-                                        disabled
-                                >
-                                    <Icon icon="ph:tag-simple-light" width="30" height="30" />
-                                </v-btn>
-                            </template>
-                            <span>Generate Code</span>
-                        </v-tooltip> -->
                     </GeneratorUI>
 
                     <div v-if="showUiWizard">

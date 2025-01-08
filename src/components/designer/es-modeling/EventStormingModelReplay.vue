@@ -88,18 +88,6 @@
                         </template>
 
                         <template v-slot:append>
-                            <!-- <div style="background-color:red;" class="replay-version-icon">
-                                <Icon
-                                    icon="mdi:flag"
-                                    width="20px" height="20px"
-                                    style="background-color:transparent;
-                                    position:absolute;
-                                    left:5px;
-                                    color:#ffa726;
-                                    margin-top:-5px;
-                                    z-index:3;"
-                                />
-                            </div> -->
                             <div class="replay-version-icon-tool-tip"
                                 style="background-color: black;
                                 opacity: 0.5;
