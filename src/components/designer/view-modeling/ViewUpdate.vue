@@ -12,7 +12,7 @@
 
         <v-list-item-subtitle>
             <v-col align="start" justify="start" style="padding-top: 10px;">
-                <v-row align="start" justify="start" style=" margin-left: 5px; margin-right: 5px;">
+                <v-row align="start" justify="start" style="margin:0; padding:0;">
                     <v-autocomplete
                         v-model="updateItem.when"
                         :items="eventLists"
