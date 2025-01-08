@@ -1,6 +1,7 @@
 <template xmlns:v-on="http://www.w3.org/1999/xhtml">
     <div class="page" :class="{ 'embedded' : embedded }">
         <separate-panel-components
+            class="ma-0 pa-0"
             :min="mainSeparatePanel.min"
             :max="mainSeparatePanel.max"
             :triggerLength="5"

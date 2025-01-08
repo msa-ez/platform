@@ -1532,25 +1532,16 @@
                             transition="dialog-bottom-transition"
                     >
                         <v-card>
-                            <Icon
-                                    v-if="
-                                    embeddedCanvasType ==
-                                    'Domain Class Modeling'
-                                "
-                                    class="gs-icon-style"
-                                    icon="fluent-mdl2:modeling-view"
-                                    style="
-                                    margin-right: 2px;
-                                    height: 40px;
-                                    width: 40px;
-                                    color: #1e88e5;
+                            <Icons v-if="embeddedCanvasType == 'Domain Class Modeling'"
+                                class="gs-icon-style"
+                                :icon="'modeling-view'"
+                                :size="50"
+                                :color="'#1e88e5'"
+                                style="margin-right: 2px;
                                     position: fixed;
                                     z-index: 1;
                                     top: 15px;
-                                    left: 20px;
-                                    width: 50px;
-                                    height: 50px;
-                                "
+                                    left: 20px;"
                             />
                             <v-icon
                                     v-else-if="embeddedCanvasType == 'Kubernetes'"

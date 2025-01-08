@@ -133,10 +133,9 @@
                                      @mouseover="onOverSliderMarkLists($event, versionItem, 'version')"
                                      @mouseleave="onOverSliderMarkLists($event, versionItem, 'version')"
                                 >
-                                <Icon
-                                    icon="mdi:flag"
-                                    width="20px" height="20px"
-                                    style="background-color:transparent; color:orange; position: absolute; bottom: 8px;"/>
+                                <Icons
+                                    :icon="'flag'" :size="20" :color="'orange'"
+                                    style="background-color:transparent; position: absolute; bottom: 8px;"/>
                                 </div>
                             </div>
 
