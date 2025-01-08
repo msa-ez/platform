@@ -8,33 +8,11 @@ const { TokenCounter } = require("../../utils")
  * @description EventStorming 모델의 요약 정보를 생성하고 관리하는 클래스입니다.
  * 주어진 컨텍스트에 따라 EventStorming 요소들을 분석하고 토큰 제한에 맞춰 요약된 정보를 생성합니다.
  * 
- * @class
- * @extends {FormattedJSONAIGenerator}
- * 
- * @property {string[]} checkInputParamsKeys - 필수 입력 파라미터 키 목록
- * @property {string[]} progressCheckStrings - 진행 상태 확인을 위한 문자열 목록
- * @property {ESAliasTransManager} esAliasTransManager - ES 별칭 변환 관리자
- * 
- * @constructor
- * @param {Object} client - 클라이언트 설정 객체
- * @param {Object} client.input - 입력 파라미터
- * @param {string} client.input.context - 분석 컨텍스트
- * @param {Object} client.input.esValue - EventStorming 모델 데이터
- * @param {string[]} client.input.keysToFilter - 필터링할 키 목록
- * @param {number} client.input.maxTokens - 최대 토큰 수 제한
- * @param {string} client.input.tokenCalcModel - 토큰 계산 모델
- * 
- * @throws {Error} id 속성이 keysToFilter에 포함된 경우
- * 
- * @see FormattedJSONAIGenerator
- * @see ESAliasTransManager
- * @see ESValueSummarizeWithFilter
- * 
- * @example
+ * @example 전달된 이벤트 스토밍 모델에 대해서 최대 토큰 이내의 요약정보 얻기
  * const generator = new ESValueSummaryGenerator({
  *   input: {
  *     context: "도서 관련 커맨드 생성 작업을 수행해야 함",
- *     esValue: libraryEsValue,
+ *     esValue: getEsValue("librarySevice"),
  *     keysToFilter: [],
  *     maxTokens: 800,
  *     tokenCalcModel: "gpt-4o"
@@ -52,11 +30,6 @@ const { TokenCounter } = require("../../utils")
  * });
  * 
  * generator.generate();
- * 
- * @note
- * - id 속성은 정렬에 사용되므로 필터링할 수 없습니다
- * - 토큰 제한에 맞춰 자동으로 요약 정보가 조정됩니다
- * - 요약된 정보는 JSON 형식으로 제공됩니다
  */
 class ESValueSummaryGenerator extends FormattedJSONAIGenerator{
     constructor(client){
