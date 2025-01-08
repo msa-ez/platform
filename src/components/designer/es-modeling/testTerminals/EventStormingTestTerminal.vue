@@ -7,6 +7,7 @@ import ESActionsUtil from "../../modeling/generators/es-ddl-generators/modules/E
 import TokenCounterTest from "../../modeling/generators/utils/TokenCounter/TokenCounterTest";
 import ESValueSummaryGeneratorTest from "../../modeling/generators/es-generators/ESValueSummaryGenerator/ESValueSummaryGeneratorTest";
 import ESValueSummarizeWithFilterTest from "../../modeling/generators/es-generators/helpers/ESValueSummarizeWithFilter/ESValueSummarizeWithFilterTest";
+import { getEsValue } from "../../modeling/generators/es-generators/mocks";
 
 export default {
     name: "es-test-terminal",
@@ -1036,6 +1037,9 @@ export default {
         },
 
         async _TempTest() {
+            console.log(getEsValue("librarySevice"))
+            console.log(getEsValue("librarySevice", ['remainOnlyBoundedContext']))
+            console.log(getEsValue("librarySevice", ['remainOnlyAggregate']))
         }
     }
 }

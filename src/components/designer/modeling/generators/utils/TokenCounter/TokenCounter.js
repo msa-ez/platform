@@ -1,83 +1,74 @@
 const { encoderMap, defaultEncoder } = require("./constants");
 
 /**
- * @description AI 모델별 텍스트 토큰화 및 토큰 수 관리를 위한 유틸리티 클래스입니다.
- * 다양한 AI 모델(GPT-4, GPT-3.5 등)에 대한 토큰 수 계산, 텍스트 분할, 
- * 토큰 제한 관리 등의 기능을 제공합니다.
+ * @description AI 모델에 전송되는 텍스트의 토큰 수를 계산하고 관리하는 유틸리티 클래스입니다.
+ * 주요 기능으로는 토큰 수 계산, 텍스트 분할, 토큰 제한 확인 등이 있으며,
+ * AI 모델의 컨텍스트 크기 제한을 준수하면서 효율적인 텍스트 처리를 지원합니다.
  * 
- * @class
+ * @example 기본적인 토큰 수 계산 및 제한 확인
+ * // 텍스트의 토큰 수를 계산하고 모델 제한을 확인
+ * const text = "분석할 텍스트 내용...";
+ * const tokenCount = TokenCounter.getTokenCount(text, "gpt-4");
+ * const isValid = TokenCounter.isWithinTokenLimit(text, "gpt-4", 4000);
+ * // 주의: 모델명이 잘못되면 기본 인코더(o200k_base)가 사용됨
  * 
- * @property {Object} encoderMap - AI 모델별 토큰화 인코더 매핑
- *   - key: 모델 패턴 (정규식 문자열)
- *   - value: 해당 모델의 토큰화 인코더
- * 
- * @throws {Error} 텍스트 인코딩 과정에서 오류 발생 시
- * @throws {Error} 잘못된 입력값이 제공된 경우
- * @throws {Error} 토큰 분할 시 중복 크기가 청크 크기보다 큰 경우
- * 
- * @see o200k_base - 기본 토큰화 인코더
- * @see cl100k_base - GPT-4/3.5 토큰화 인코더
- * @see p50k_base - GPT-3 토큰화 인코더
- * 
- * @example 기본 토큰 수 계산
- * // 단일 텍스트의 토큰 수 계산
- * const text = "안녕하세요, AI의 세계에 오신 것을 환영합니다!";
- * const tokenCount = TokenCounter.getTokenCount(text, "gpt-4o");
- * console.log(tokenCount); // 예상 출력: 13
- * 
- * @example 텍스트 분할 및 토큰 제한 관리
- * // 긴 텍스트를 토큰 제한에 맞게 분할
- * const longText = "긴 문서의 내용...";
- * const chunks = TokenCounter.splitByTokenLimit(longText, "gpt-3.5-turbo", 1000, 100);
- * 
- * // 토큰 제한 확인
- * const isWithin = TokenCounter.isWithinTokenLimit(text, "gpt-4o", 2000);
- * 
- * // 토큰 제한에 맞게 텍스트 자르기
- * const truncated = TokenCounter.truncateToTokenLimit(text, "gpt-4o", 50, {
- *   addEllipsis: true,
- *   preserveSentences: true
+ * @example 대용량 텍스트 처리를 위한 청크 분할
+ * // 긴 텍스트를 처리 가능한 크기로 분할
+ * const longText = "매우 긴 문서 내용...";
+ * const chunks = TokenCounter.splitByTokenLimit(longText, "gpt-4", 3000, 200);
+ * chunks.forEach(chunk => {
+ *   // 각 청크 처리 로직
  * });
+ * // 주의: overlap 값이 너무 크면 처리 효율성이 떨어질 수 있음
  * 
- * @note
- * - 모든 메서드는 정적(static) 메서드로 제공됩니다
- * - 같은 텍스트도 AI 모델에 따라 토큰 수가 다를 수 있습니다
- * - 토큰 수 계산 시 항상 정확한 모델명을 지정해야 합니다
- * - 대용량 텍스트 처리 시 메모리 사용량에 주의가 필요합니다
- * - 텍스트 분할 시 문맥 유지를 위해 오버랩 기능을 활용할 수 있습니다
+ * @example 토큰 제한에 맞춘 텍스트 축소
+ * // 텍스트를 지정된 토큰 수로 제한
+ * const options = {
+ *   addEllipsis: true,       // 말줄임표 추가
+ *   preserveSentences: true, // 문장 단위 보존
+ *   debug: true             // 디버그 정보 출력
+ * };
+ * const truncated = TokenCounter.truncateToTokenLimit(text, "gpt-4", 1000, options);
+ * // 주의: preserveSentences 옵션으로 인해 실제 토큰 수가 요청값보다 적을 수 있음
  */
 class TokenCounter {
     /**
-     * @description 주어진 텍스트의 토큰 수를 계산하는 메서드입니다.
-     * AI 모델별로 서로 다른 토큰화 방식을 사용하여 정확한 토큰 수를 계산합니다.
-     * 토큰 수 제한이 있는 API 호출 전에 텍스트의 토큰 수를 미리 확인하는 데 활용할 수 있습니다.
+     * @description 주어진 텍스트의 토큰 수를 계산합니다. 이 메소드는 AI 모델에 텍스트를 전송하기 전에
+     * 텍스트가 모델의 토큰 제한을 준수하는지 확인하거나, 텍스트를 적절한 크기로 분할하기 위한
+     * 기초 작업으로 사용됩니다.
      * 
-     * @param {string} text - 토큰 수를 계산할 텍스트
-     *   - 빈 문자열도 유효한 입력으로 처리됩니다
-     * @param {string} model - 사용할 AI 모델명
-     *   - 지원 모델: gpt-4o, o1, gpt-4, gpt-3.5, gpt-3, text-davinci-002/003 등
-     *   - 알 수 없는 모델의 경우 기본 o200k_base 인코더가 사용됨
+     * @example 기본적인 토큰 수 계산
+     * // 텍스트의 토큰 수를 확인하여 모델 제한을 준수하는지 확인
+     * const text = "안녕하세요, 이것은 예시 텍스트입니다.";
+     * const tokenCount = TokenCounter.getTokenCount(text, "gpt-4o");
+     * console.log(`토큰 수: ${tokenCount}`); // 예상 출력: 토큰 수: 13
      * 
-     * @returns {number} 계산된 토큰 수
+     * @example 토큰 제한 확인을 위한 활용
+     * // isWithinTokenLimit 메소드에서 실제 사용되는 예시
+     * const maxTokens = 100;
+     * const text = "긴 문서 내용...";
+     * try {
+     *   const tokenCount = TokenCounter.getTokenCount(text, "gpt-4o");
+     *   const isWithinLimit = tokenCount <= maxTokens;
+     *   // 토큰 수가 제한을 초과하면 텍스트를 분할하거나 축소하는 로직 구현
+     * } catch (error) {
+     *   console.error("토큰 계산 중 오류 발생:", error);
+     *   // 적절한 폴백(fallback) 처리
+     * }
      * 
-     * @throws {Error} 텍스트 인코딩 과정에서 오류가 발생한 경우
-     * 
-     * @see TokenCounter.getTotalTokenCount - 여러 텍스트의 총 토큰 수 계산
-     * @see TokenCounter.isWithinTokenLimit - 토큰 제한 확인
-     * @see TokenCounter._getEncoderForModel - 모델별 인코더 선택
-     * 
-     * @example 기본 토큰 수 계산
-     * const tokenCount = TokenCounter.getTokenCount("Hello, World!", "gpt-4o");
-     * console.log(tokenCount); // 예: 4
-     * 
-     * @example 다양한 모델에 대한 토큰 수 계산
-     * const text = "AI is transforming the world";
-     * console.log(TokenCounter.getTokenCount(text, "gpt-4o")); // GPT-4 모델 기준
-     * console.log(TokenCounter.getTokenCount(text, "gpt-3.5-turbo")); // GPT-3 모델 기준
-     * 
-     * @note
-     * - 같은 텍스트라도 모델에 따라 토큰 수가 다를 수 있습니다
-     * - 정확한 토큰 수 계산을 위해 올바른 모델명을 지정하는 것이 중요합니다
+     * @example 텍스트 청크 분할 전 검사
+     * // splitByTokenLimit 메소드에서 활용되는 예시
+     * const longText = "매우 긴 문서 내용...";
+     * const model = "gpt-4";
+     * try {
+     *   const totalTokens = TokenCounter.getTokenCount(longText, model);
+     *   if (totalTokens > 1000) {
+     *     // 텍스트가 너무 길 경우 청크로 분할
+     *     const chunks = TokenCounter.splitByTokenLimit(longText, model, 1000);
+     *   }
+     * } catch (error) {
+     *   // 인코더 로드 실패 또는 기타 오류 처리
+     * }
      */
     static getTokenCount(text, model) {
         try {
@@ -90,132 +81,111 @@ class TokenCounter {
     }
 
     /**
-     * @description 여러 텍스트의 총 토큰 수를 계산하는 메서드입니다.
-     * 채팅 메시지나 문서 청크와 같이 여러 텍스트의 결합된 토큰 수를 확인할 때 유용합니다.
+     * @description 텍스트 배열의 총 토큰 수를 계산합니다. 이 메소드는 여러 텍스트(예: 대화 이력, 문서 묶음)의
+     * 전체 토큰 수를 확인하여 모델의 컨텍스트 크기 제한을 준수하는지 검증하거나, 청크 분할 여부를
+     * 결정하는 데 사용됩니다.
      * 
-     * @param {Array<string>} texts - 토큰 수를 계산할 텍스트 배열
-     *   - 각 요소는 비어있지 않은 문자열이어야 합니다
-     *   - 빈 배열도 유효한 입력으로 처리됩니다
-     * @param {string} model - 사용할 AI 모델명
-     *   - 지원 모델: gpt-4o, o1, gpt-4, gpt-3.5, gpt-3, text-davinci-002/003 등
-     *   - 알 수 없는 모델의 경우 기본 o200k_base 인코더가 사용됨
-     * 
-     * @returns {number} 모든 텍스트의 총 토큰 수
-     * 
-     * @throws {Error} 텍스트 인코딩 과정에서 오류가 발생한 경우
-     * @throws {TypeError} texts가 배열이 아니거나, 배열 요소가 문자열이 아닌 경우
-     * 
-     * @see TokenCounter.getTokenCount - 단일 텍스트의 토큰 수 계산
-     * @see TokenCounter.isWithinTokenLimit - 토큰 제한 확인
-     * 
-     * @example 채팅 메시지의 총 토큰 수 계산
-     * const messages = [
-     *   "안녕하세요!",
-     *   "오늘 날씨가 좋네요.",
-     *   "산책하기 좋은 날입니다."
+     * @example 대화 이력의 토큰 수 계산
+     * // 대화 이력의 전체 토큰 수를 확인하여 모델 제한을 준수하는지 검증
+     * const conversations = [
+     *   "사용자: 안녕하세요!",
+     *   "시스템: 안녕하세요, 무엇을 도와드릴까요?",
+     *   "사용자: 날씨가 좋네요."
      * ];
-     * const totalTokens = TokenCounter.getTotalTokenCount(messages, "gpt-4o");
-     * console.log(totalTokens); // 예: 25
+     * const totalTokens = TokenCounter.getTotalTokenCount(conversations, "gpt-4o");
+     * console.log(`총 토큰 수: ${totalTokens}`);
+     * // 주의: 대화가 길어질수록 메모리 사용량이 증가할 수 있음
      * 
-     * @example 문서 청크의 토큰 수 계산
-     * const documentChunks = [
-     *   "첫 번째 문단입니다.",
-     *   "두 번째 문단의 내용입니다.",
-     *   "마지막 문단이 됩니다."
-     * ];
-     * console.log(TokenCounter.getTotalTokenCount(documentChunks, "gpt-3.5-turbo")); // 예: 30
-     * 
-     * @note
-     * - 총 토큰 수는 각 텍스트의 토큰 수의 합으로 계산됩니다
-     * - 모델에 따라 같은 텍스트도 다른 토큰 수를 가질 수 있습니다
-     * - 대량의 텍스트를 처리할 때는 메모리 사용량에 주의해야 합니다
+     * @example 문서 묶음 처리 시 에러 처리
+     * // 여러 문서의 토큰 수를 계산하면서 잠재적 오류 처리
+     * const documents = ["문서1 내용...", "문서2 내용...", "문서3 내용..."];
+     * try {
+     *   const totalTokens = TokenCounter.getTotalTokenCount(documents, "gpt-4o");
+     *   if (totalTokens > 4096) {
+     *     // 토큰 수가 제한을 초과하면 문서를 분할하거나 요약하는 로직 구현
+     *     const chunks = TokenCounter.splitByTokenLimit(documents.join("\n"), "gpt-4o", 4096);
+     *   }
+     * } catch (error) {
+     *   console.error("토큰 계산 중 오류 발생:", error);
+     *   // 개별 문서 단위로 재시도하거나 대체 처리 방안 적용
+     * }
      */
     static getTotalTokenCount(texts, model) {
         return texts.reduce((total, text) => total + this.getTokenCount(text, model), 0);
     }
 
     /**
-     * @description 주어진 텍스트가 지정된 토큰 제한을 초과하지 않는지 확인하는 메서드입니다.
-     * API 호출이나 텍스트 처리 전에 토큰 제한을 미리 확인하는 데 활용할 수 있습니다.
+     * @description 주어진 텍스트가 지정된 토큰 제한을 초과하는지 검사합니다. 이 메소드는 AI 모델에
+     * 텍스트를 전송하기 전에 토큰 제한을 준수하는지 확인하거나, 텍스트 분할 여부를 결정하는 데
+     * 사용됩니다.
      * 
-     * @param {string} text - 토큰 수를 확인할 텍스트
-     *   - 빈 문자열도 유효한 입력으로 처리됩니다
-     * @param {string} model - 사용할 AI 모델명
-     *   - 지원 모델: gpt-4o, o1, gpt-4, gpt-3.5, gpt-3, text-davinci-002/003 등
-     *   - 알 수 없는 모델의 경우 기본 o200k_base 인코더가 사용됨
-     * @param {number} maxTokens - 최대 허용 토큰 수
-     *   - 양의 정수여야 합니다
-     * 
-     * @returns {boolean} 토큰 수가 제한 이내이면 true, 초과하면 false
-     * 
-     * @throws {Error} 텍스트 인코딩 과정에서 오류가 발생한 경우
-     * 
-     * @see TokenCounter.getTokenCount - 토큰 수 계산
-     * @see TokenCounter.truncateToTokenLimit - 토큰 제한에 맞게 텍스트 자르기
-     * @see TokenCounter.splitByTokenLimit - 토큰 제한에 맞게 텍스트 분할
-     * 
-     * @example 기본 토큰 제한 확인
-     * const text = "안녕하세요, AI의 세계에 오신 것을 환영합니다!";
-     * const isWithin = TokenCounter.isWithinTokenLimit(text, "gpt-4o", 10);
-     * console.log(isWithin); // false
-     * 
-     * @example API 호출 전 토큰 제한 확인
-     * const prompt = "긴 프롬프트 텍스트...";
-     * if (TokenCounter.isWithinTokenLimit(prompt, "gpt-3.5-turbo", 4096)) {
-     *   // API 호출 진행
-     * } else {
-     *   // 텍스트 축소 또는 분할 처리
+     * @example 기본적인 토큰 제한 검사
+     * // 텍스트가 토큰 제한을 준수하는지 확인
+     * const text = "검사할 텍스트 내용";
+     * const isValid = TokenCounter.isWithinTokenLimit(text, "gpt-4", 100);
+     * if (!isValid) {
+     *   console.log("텍스트가 토큰 제한을 초과했습니다.");
+     *   // 텍스트 처리 로직 구현 (예: 분할 또는 축소)
      * }
      * 
-     * @note
-     * - 같은 텍스트라도 모델에 따라 토큰 수가 다를 수 있으므로 정확한 모델 지정이 중요합니다
-     * - 토큰 제한 초과 시 truncateToTokenLimit 또는 splitByTokenLimit 메서드 사용을 고려하세요
+     * @example API 요청 전 토큰 검증
+     * // API 호출 전에 텍스트가 모델의 최대 토큰 제한을 준수하는지 확인
+     * const prompt = "매우 긴 프롬프트 내용...";
+     * const maxTokens = 4096;  // GPT-3.5의 경우
+     * try {
+     *   if (!TokenCounter.isWithinTokenLimit(prompt, "gpt-3.5-turbo", maxTokens)) {
+     *     // 토큰 제한 초과 시 처리 방안:
+     *     // 1. 텍스트 축소
+     *     const truncated = TokenCounter.truncateToTokenLimit(prompt, "gpt-3.5-turbo", maxTokens);
+     *     // 2. 또는 청크로 분할
+     *     const chunks = TokenCounter.splitByTokenLimit(prompt, "gpt-3.5-turbo", maxTokens);
+     *   }
+     *   // API 요청 진행
+     * } catch (error) {
+     *   console.error("토큰 검증 중 오류 발생:", error);
+     *   // 적절한 오류 처리
+     * }
      */
     static isWithinTokenLimit(text, model, maxTokens) {
         return this.getTokenCount(text, model) <= maxTokens;
     }
 
     /**
-     * @description 긴 텍스트를 지정된 토큰 수로 나누어 청크(chunks)로 분할하는 메서드입니다.
-     * 대량의 텍스트를 AI 모델의 토큰 제한에 맞게 처리할 때 유용하며,
-     * 오버랩 기능을 통해 청크 간의 문맥을 유지할 수 있습니다.
+     * @description 긴 텍스트를 지정된 토큰 제한에 맞춰 여러 개의 청크로 분할합니다. 이 메소드는 
+     * 대용량 텍스트를 AI 모델의 컨텍스트 크기 제한에 맞게 처리하거나, 문서를 분석 가능한 
+     * 크기로 나누는 데 사용됩니다. overlap 매개변수를 통해 청크 간의 연속성을 보장할 수 있습니다.
      * 
-     * @param {string} text - 분할할 텍스트
-     *   - 빈 문자열도 유효한 입력으로 처리됩니다
-     * @param {string} model - 사용할 AI 모델명
-     *   - 지원 모델: gpt-4o, o1, gpt-4, gpt-3.5, gpt-3, text-davinci-002/003 등
-     *   - 알 수 없는 모델의 경우 기본 o200k_base 인코더가 사용됨
-     * @param {number} maxTokensPerChunk - 각 청크의 최대 토큰 수
-     *   - 양의 정수여야 합니다
-     * @param {number} [overlap=0] - 연속된 청크 간에 중복될 토큰 수
-     *   - 문맥 유지를 위해 청크 간에 중복되는 토큰 수를 지정
-     *   - maxTokensPerChunk보다 작아야 합니다
-     * 
-     * @returns {Array<string>} 분할된 텍스트 청크들의 배열
-     * 
-     * @throws {Error} overlap이 maxTokensPerChunk보다 크거나 같은 경우
-     * 
-     * @see TokenCounter.getTokenCount - 토큰 수 계산
-     * @see TokenCounter.isWithinTokenLimit - 토큰 제한 확인
-     * @see TokenCounter.truncateToTokenLimit - 토큰 제한에 맞게 텍스트 자르기
-     * 
-     * @example 기본 텍스트 분할
-     * const longText = "긴 문서 내용...";
-     * const chunks = TokenCounter.splitByTokenLimit(longText, "gpt-4o", 1000);
-     * chunks.forEach(chunk => {
-     *   // 각 청크 처리
-     *   console.log(chunk);
+     * @example 기본적인 텍스트 분할
+     * // 긴 문서를 4000 토큰 크기의 청크로 분할
+     * const longDocument = "매우 긴 문서 내용...";
+     * const chunks = TokenCounter.splitByTokenLimit(longDocument, "gpt-4", 4000);
+     * chunks.forEach((chunk, index) => {
+     *   console.log(`청크 ${index + 1} 처리 중...`);
+     *   // 각 청크에 대한 AI 처리 로직
      * });
+     * // 주의: 청크 크기는 모델의 최대 토큰 제한보다 작아야 함
      * 
-     * @example 오버랩을 사용한 문맥 유지 분할
-     * const text = "복잡한 기술 문서...";
+     * @example 오버랩을 활용한 문맥 유지
+     * // 청크 간 200 토큰 오버랩을 사용하여 문맥 연속성 보장
+     * const text = "긴 기술 문서 내용...";
      * const chunks = TokenCounter.splitByTokenLimit(text, "gpt-3.5-turbo", 2000, 200);
-     * // 각 청크는 이전 청크와 200토큰이 중복되어 문맥 유지
+     * // 각 청크는 이전 청크의 끝부분 200 토큰을 포함
+     * // 주의: 오버랩이 너무 크면 처리 효율성이 떨어질 수 있음
      * 
-     * @note
-     * - 오버랩을 사용하면 청크 간의 문맥은 유지되지만 총 토큰 사용량이 증가합니다
-     * - 마지막 청크는 maxTokensPerChunk보다 작을 수 있습니다
-     * - 모델별로 토큰화 방식이 다르므로, 동일한 텍스트도 모델에 따라 다르게 분할될 수 있습니다
+     * @example 대용량 문서 처리 시 에러 처리
+     * // 안전한 청크 분할 처리
+     * const largeText = "대용량 문서 내용...";
+     * try {
+     *   const chunks = TokenCounter.splitByTokenLimit(largeText, "gpt-4", 3000, 100);
+     *   if (chunks.length > 10) {
+     *     console.warn("문서가 너무 많은 청크로 분할됨. 처리 시간이 길어질 수 있습니다.");
+     *   }
+     *   // 청크 순차 처리 또는 병렬 처리 로직
+     * } catch (error) {
+     *   console.error("청크 분할 중 오류 발생:", error);
+     *   // 대체 처리 방안 적용
+     * }
+     * // 주의: 메모리 사용량과 처리 시간을 고려하여 적절한 청크 크기 선택
      */
     static splitByTokenLimit(text, model, maxTokensPerChunk, overlap = 0) {
         if (overlap >= maxTokensPerChunk) {
@@ -237,74 +207,46 @@ class TokenCounter {
     }
 
     /**
-     * @description 긴 텍스트를 지정된 토큰 제한에 맞게 잘라내는 메서드입니다.
-     * 텍스트의 끝에 생략 부호를 추가하고, 문장 단위로 자르는 등의 옵션을 제공합니다.
-     * AI 모델의 토큰 제한을 준수하면서 자연스러운 텍스트 처리가 필요할 때 사용합니다.
+     * @description 주어진 텍스트를 지정된 토큰 제한에 맞게 잘라내는 메소드입니다. 이 메소드는 긴 텍스트를
+     * AI 모델의 컨텍스트 크기 제한에 맞추거나, 텍스트를 적절한 길이로 축소하는 데 사용됩니다.
+     * 문장 단위 보존 및 말줄임표 추가 등의 옵션을 제공합니다.
      * 
-     * @param {string} text - 잘라낼 텍스트
-     *   - 비어있지 않은 문자열이어야 합니다
-     * @param {string} model - 사용할 AI 모델명
-     *   - 지원 모델: gpt-4o, o1, gpt-4, gpt-3.5, gpt-3, text-davinci-002/003 등
-     * @param {number} maxTokens - 최대 허용 토큰 수
-     *   - 1 이상의 정수여야 합니다
-     * @param {Object} [options] - 텍스트 자르기 옵션
-     * @param {boolean} [options.addEllipsis=true] - 잘린 텍스트 끝에 '...' 추가 여부
-     * @param {boolean} [options.preserveSentences=true] - 문장 단위로 자르기 여부
-     * @param {boolean} [options.debug=false] - 디버그 정보 출력 여부
+     * @example 기본적인 텍스트 자르기
+     * // 텍스트를 지정된 토큰 수로 제한하고 말줄임표 추가
+     * const longText = "매우 긴 문서 내용...";
+     * const truncated = TokenCounter.truncateToTokenLimit(longText, "gpt-4", 100);
+     * console.log(truncated);
+     * // 주의: 기본적으로 문장 단위 보존과 말줄임표가 활성화됨
      * 
-     * @returns {string} 토큰 제한에 맞게 잘린 텍스트
+     * @example 고급 옵션을 활용한 텍스트 자르기
+     * // 문장 보존 없이 정확한 토큰 수로 자르기
+     * const text = "분석할 긴 텍스트 내용...";
+     * const options = {
+     *   addEllipsis: false,    // 말줄임표 비활성화
+     *   preserveSentences: false,  // 문장 단위 보존 비활성화
+     *   debug: true            // 디버그 정보 출력
+     * };
+     * const result = TokenCounter.truncateToTokenLimit(text, "gpt-3.5-turbo", 50, options);
+     * // 주의: preserveSentences를 false로 설정하면 문장 중간에서 잘릴 수 있음
      * 
-     * @throws {Error} text가 유효하지 않은 경우
-     * @throws {Error} maxTokens가 1 미만인 경우
-     * 
-     * @see TokenCounter.getTokenCount - 토큰 수 계산
-     * @see TokenCounter.isWithinTokenLimit - 토큰 제한 확인
-     * @see TokenCounter.splitByTokenLimit - 텍스트를 여러 청크로 분할
-     * 
-     * @example 기본 텍스트 자르기
-     * const longText = "이것은 매우 긴 텍스트입니다. 문장이 계속 이어집니다. 끝이 어디일까요?";
-     * const truncated = TokenCounter.truncateToTokenLimit(longText, "gpt-4o", 10);
-     * console.log(truncated); 
-     * // 출력: "이것은 매우 긴..."
-     * // 토큰 수: 10 (원본: 25)
-     * 
-     * @example 고급 옵션 활용
-     * const text = "첫 번째 문장입니다. 두 번째 문장입니다. 세 번째 문장입니다.";
-     * 
-     * // 1. 기본 옵션 (문장 보존 + 생략 부호)
-     * console.log(TokenCounter.truncateToTokenLimit(text, "gpt-3.5-turbo", 15));
-     * // 출력: "첫 번째 문장입니다. 두 번째 문장입니다..."
-     * 
-     * // 2. 문장 보존 없이 자르기
-     * console.log(TokenCounter.truncateToTokenLimit(text, "gpt-3.5-turbo", 15, {
-     *   preserveSentences: false
-     * }));
-     * // 출력: "첫 번째 문장입니다. 두 번..."
-     * 
-     * // 3. 생략 부호 없이 문장 단위로 자르기
-     * console.log(TokenCounter.truncateToTokenLimit(text, "gpt-3.5-turbo", 15, {
-     *   addEllipsis: false,
-     *   preserveSentences: true
-     * }));
-     * // 출력: "첫 번째 문장입니다. 두 번째 문장입니다."
-     * 
-     * // 4. 디버그 모드 활용
-     * TokenCounter.truncateToTokenLimit(text, "gpt-3.5-turbo", 15, {
-     *   debug: true
-     * });
-     * // 콘솔 출력:
-     * // {
-     * //   originalLength: 28,
-     * //   truncatedLength: 15,
-     * //   maxTokens: 15,
-     * //   preservedSentences: true,
-     * //   hasEllipsis: true
-     * // }
-     * 
-     * @note
-     * - preserveSentences가 true일 때는 문장이 중간에 잘리지 않습니다
-     * - addEllipsis 옵션 사용 시 '...'의 토큰 수도 maxTokens에 포함됩니다
-     * - debug 모드에서는 원본 길이, 잘린 길이 등의 상세 정보를 확인할 수 있습니다
+     * @example API 요청 전 텍스트 길이 조정
+     * // API 요청 전에 프롬프트를 모델의 컨텍스트 제한에 맞게 조정
+     * const prompt = "매우 긴 프롬프트 내용...";
+     * try {
+     *   if (!TokenCounter.isWithinTokenLimit(prompt, "gpt-4", 4000)) {
+     *     const truncated = TokenCounter.truncateToTokenLimit(prompt, "gpt-4", 4000, {
+     *       preserveSentences: true,  // 문장 단위 보존으로 문맥 유지
+     *       debug: true               // 잘린 내용 확인을 위한 디버그 정보
+     *     });
+     *     // API 요청 진행
+     *   }
+     * } catch (error) {
+     *   console.error("텍스트 처리 중 오류 발생:", error);
+     * }
+     * // 주의: 
+     * // 1. preserveSentences 옵션으로 인해 실제 토큰 수가 요청한 것보다 적을 수 있음
+     * // 2. addEllipsis 옵션 사용 시 실제 사용 가능한 토큰 수가 3개 정도 감소할 수 있음
+     * // 3. debug 옵션을 활용하여 실제 잘린 토큰 수 확인 권장
      */
     static truncateToTokenLimit(text, model, maxTokens, options = {}) {
         const {

@@ -156,30 +156,30 @@ The approximate structure is as follows.
 
     /**
      * 주어진 이벤트스토밍에서 위치 데이터등을 제외한 핵심 정보들만 추출해서 LLM에게 입력 데이터로 제공
-     * keysToFilter: 일부 경우에는 properties와 같은 구체적인 속성들이 불필요할 수 있음. 이런 경우에 제외시킬 키값을 배열로 전달
+     * keysToExcludeFilter: 일부 경우에는 properties와 같은 구체적인 속성들이 불필요할 수 있음. 이런 경우에 제외시킬 키값을 배열로 전달
      *    ex) id: 모든 id 속성을 미포함, boundedContext.id: boundedContext의 id 속성을 미포함
      * esAliasTransManager: Id값을 별칭으로 바꿔서 UUID를 제거해서, 패턴 기반의 LLM의 성능을 향상
      */
-    static getSummarizedESValue(esValue, keysToFilter=[], esAliasTransManager=null){
+    static getSummarizedESValue(esValue, keysToExcludeFilter=[], esAliasTransManager=null){
         const boundedContexts = Object.values(esValue.elements)
         .filter(element => element && element._type === 'org.uengine.modeling.model.BoundedContext')
 
         let summarizedBoundedContexts = boundedContexts.map(boundedContext => 
             this.getSummarizedBoundedContextValue(
-                esValue, boundedContext, keysToFilter, esAliasTransManager
+                esValue, boundedContext, keysToExcludeFilter, esAliasTransManager
             )
         )
 
         return {
-            deletedProperties: keysToFilter,
+            deletedProperties: keysToExcludeFilter,
             boundedContexts: summarizedBoundedContexts
         }
     }
 
     
-    static getSummarizedBoundedContextValue(esValue, boundedContext, keysToFilter=[], esAliasTransManager=null) {   
+    static getSummarizedBoundedContextValue(esValue, boundedContext, keysToExcludeFilter=[], esAliasTransManager=null) {   
         const getConditionalValue = (keys, value) => {
-            return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
+            return !this._checkKeyFilters(keysToExcludeFilter, keys) ? value : {}
         }
 
 
@@ -197,7 +197,7 @@ The approximate structure is as follows.
             ...getConditionalValue(
                 ["actors", "boundedContext.actors"], 
                 { actors: this.getSummarizedActorValue(
-                    esValue, boundedContext, keysToFilter, esAliasTransManager
+                    esValue, boundedContext, keysToExcludeFilter, esAliasTransManager
                 )}
             ),
             ...getConditionalValue(
@@ -205,16 +205,16 @@ The approximate structure is as follows.
                 { aggregates: boundedContext.aggregates
                     .map(aggregate => esValue.elements[aggregate.id])
                     .map(aggregate => this.getSummarizedAggregateValue(
-                        esValue, boundedContext, aggregate, keysToFilter, esAliasTransManager
+                        esValue, boundedContext, aggregate, keysToExcludeFilter, esAliasTransManager
                     ))
                 }
             )
         }
     }
 
-    static getSummarizedActorValue(esValue, boundedContext, keysToFilter=[], esAliasTransManager=null) {
+    static getSummarizedActorValue(esValue, boundedContext, keysToExcludeFilter=[], esAliasTransManager=null) {
         const getConditionalValue = (keys, value) => {
-            return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
+            return !this._checkKeyFilters(keysToExcludeFilter, keys) ? value : {}
         }
 
         const getUniqueActors = (actors, property) => {
@@ -245,18 +245,18 @@ The approximate structure is as follows.
         }
 
 
-        if(!this._checkKeyFilters(keysToFilter, ["name", "actors.name"]))
+        if(!this._checkKeyFilters(keysToExcludeFilter, ["name", "actors.name"]))
             return getUniqueActors(actors, "name")
 
-        if(!this._checkKeyFilters(keysToFilter, ["id", "actors.id"]))
+        if(!this._checkKeyFilters(keysToExcludeFilter, ["id", "actors.id"]))
             return getUniqueActors(actors, "id")
 
         return actors
     }
 
-    static getSummarizedAggregateValue(esValue, boundedContext, aggregate, keysToFilter=[], esAliasTransManager=null) {
+    static getSummarizedAggregateValue(esValue, boundedContext, aggregate, keysToExcludeFilter=[], esAliasTransManager=null) {
         const getConditionalValue = (keys, value) => {
-            return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
+            return !this._checkKeyFilters(keysToExcludeFilter, keys) ? value : {}
         }
 
         return {
@@ -274,34 +274,34 @@ The approximate structure is as follows.
             ),
             ...getConditionalValue(
                 ["entities", "aggregate.entities"],
-                { entities: this.getSummarizedEntityValue(aggregate, keysToFilter, esAliasTransManager) }
+                { entities: this.getSummarizedEntityValue(aggregate, keysToExcludeFilter, esAliasTransManager) }
             ),
             ...getConditionalValue(
                 ["enumerations", "aggregate.enumerations"],
-                { enumerations: this.getSummarizedEnumerationValue(aggregate, keysToFilter, esAliasTransManager) }
+                { enumerations: this.getSummarizedEnumerationValue(aggregate, keysToExcludeFilter, esAliasTransManager) }
             ),
             ...getConditionalValue(
                 ["valueObjects", "aggregate.valueObjects"],
-                { valueObjects: this.getSummarizedValueObjectValue(aggregate, keysToFilter, esAliasTransManager) }
+                { valueObjects: this.getSummarizedValueObjectValue(aggregate, keysToExcludeFilter, esAliasTransManager) }
             ),
             ...getConditionalValue(
                 ["commands", "aggregate.commands"],
-                { commands: this.getSummarizedCommandValue(esValue, boundedContext, aggregate, keysToFilter, esAliasTransManager) }
+                { commands: this.getSummarizedCommandValue(esValue, boundedContext, aggregate, keysToExcludeFilter, esAliasTransManager) }
             ),
             ...getConditionalValue(
                 ["events", "aggregate.events"],
-                { events: this.getSummarizedEventValue(esValue, boundedContext, aggregate, keysToFilter, esAliasTransManager) }
+                { events: this.getSummarizedEventValue(esValue, boundedContext, aggregate, keysToExcludeFilter, esAliasTransManager) }
             ),
             ...getConditionalValue(
                 ["readModels", "aggregate.readModels"],
-                { readModels: this.getSummarizedReadModelValue(esValue, boundedContext, aggregate, keysToFilter, esAliasTransManager) }
+                { readModels: this.getSummarizedReadModelValue(esValue, boundedContext, aggregate, keysToExcludeFilter, esAliasTransManager) }
             )
         }
     }
 
-    static getSummarizedEntityValue(aggregate, keysToFilter=[], esAliasTransManager=null) {
+    static getSummarizedEntityValue(aggregate, keysToExcludeFilter=[], esAliasTransManager=null) {
         const getConditionalValue = (keys, value) => {
-            return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
+            return !this._checkKeyFilters(keysToExcludeFilter, keys) ? value : {}
         }
 
 
@@ -336,9 +336,9 @@ The approximate structure is as follows.
         return summarizedEntityValue
     }
 
-    static getSummarizedEnumerationValue(aggregate, keysToFilter=[], esAliasTransManager=null) {
+    static getSummarizedEnumerationValue(aggregate, keysToExcludeFilter=[], esAliasTransManager=null) {
         const getConditionalValue = (keys, value) => {
-            return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
+            return !this._checkKeyFilters(keysToExcludeFilter, keys) ? value : {}
         }
 
 
@@ -366,9 +366,9 @@ The approximate structure is as follows.
         return summarizedEnumerationValue
     }
 
-    static getSummarizedValueObjectValue(aggregate, keysToFilter=[], esAliasTransManager=null) {
+    static getSummarizedValueObjectValue(aggregate, keysToExcludeFilter=[], esAliasTransManager=null) {
        const getConditionalValue = (keys, value) => {
-           return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
+           return !this._checkKeyFilters(keysToExcludeFilter, keys) ? value : {}
        }
 
        if(!this._isAggregateHaveElements(aggregate)) return []
@@ -406,9 +406,9 @@ The approximate structure is as follows.
        return summarizedValueObjectValue
     }
 
-    static getSummarizedCommandValue(esValue, boundedContext, aggregate, keysToFilter=[], esAliasTransManager=null) {
+    static getSummarizedCommandValue(esValue, boundedContext, aggregate, keysToExcludeFilter=[], esAliasTransManager=null) {
         const getConditionalValue = (keys, value) => {
-            return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
+            return !this._checkKeyFilters(keysToExcludeFilter, keys) ? value : {}
         }
 
         const getOutputEvents = (element) => {
@@ -473,9 +473,9 @@ The approximate structure is as follows.
         return summarizedCommandValue
     }
 
-    static getSummarizedEventValue(esValue, boundedContext, aggregate, keysToFilter=[], esAliasTransManager=null) {
+    static getSummarizedEventValue(esValue, boundedContext, aggregate, keysToExcludeFilter=[], esAliasTransManager=null) {
         const getConditionalValue = (keys, value) => {
-            return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
+            return !this._checkKeyFilters(keysToExcludeFilter, keys) ? value : {}
         }
 
         const getRelationsForType = (esValue, sourceElement, targetType) => {
@@ -544,9 +544,9 @@ The approximate structure is as follows.
         return summarizedEventValue
     }
 
-    static getSummarizedReadModelValue(esValue, boundedContext, aggregate, keysToFilter=[], esAliasTransManager=null) {
+    static getSummarizedReadModelValue(esValue, boundedContext, aggregate, keysToExcludeFilter=[], esAliasTransManager=null) {
         const getConditionalValue = (keys, value) => {
-            return !this._checkKeyFilters(keysToFilter, keys) ? value : {}
+            return !this._checkKeyFilters(keysToExcludeFilter, keys) ? value : {}
         }
 
         let summarizedReadModelValue = []
@@ -611,8 +611,8 @@ The approximate structure is as follows.
         })
     }
 
-    static _checkKeyFilters(keysToFilter, valuesToCheck, onNotMatch=null) {
-        for(let key of keysToFilter)
+    static _checkKeyFilters(keysToExcludeFilter, valuesToCheck, onNotMatch=null) {
+        for(let key of keysToExcludeFilter)
             if(valuesToCheck.includes(key)) return true
 
         if(onNotMatch) onNotMatch()
