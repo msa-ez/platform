@@ -1,9 +1,10 @@
 
-const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
-const ESActionsUtil = require("./modules/ESActionsUtil")
-const ESFakeActionsUtil = require("./modules/ESFakeActionsUtil")
-const { ESValueSummarizeWithFilter } = require("../es-generators/helpers")
-const ESAliasTransManager = require("./modules/ESAliasTransManager")
+const FormattedJSONAIGenerator = require("../../FormattedJSONAIGenerator")
+const { ESValueSummaryGenerator } = require("..")
+const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTransManager")
+const { ESValueSummarizeWithFilter } = require("../helpers")
+const ESActionsUtil = require("../../es-ddl-generators/modules/ESActionsUtil")
+const ESFakeActionsUtil = require("../../es-ddl-generators/modules/ESFakeActionsUtil")
 
 class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
@@ -13,15 +14,182 @@ class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
         this.progressCheckStrings = ["overviewThoughts", "actions"]
     }
 
+    /**
+     * @description 이벤트 스토밍 모델의 Aggregate를 생성하기 위한 제너레이터를 생성하는 팩토리 메서드입니다.
+     * 여러 개의 Aggregate 구조를 순차적으로 생성하고 각 생성 단계별로 콜백을 통해 진행 상황을 추적할 수 있습니다.
+     *
+     * @example 기본적인 Aggregate 생성 제너레이터 사용
+     * const generator = CreateAggregateActionsByFunctions.createGeneratorByDraftOptions({
+     *   onGenerationSucceeded: (returnObj) => {
+     *     // 생성된 Aggregate 정보로 이벤트 스토밍 모델 업데이트
+     *     if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
+     *       esValue.elements = returnObj.modelValue.createdESValue.elements
+     *       esValue.relations = returnObj.modelValue.createdESValue.relations
+     *     }
+     *   }
+     * })
+     * 
+     * // 제너레이터 초기화 및 생성 시작
+     * generator.initInputs(
+     *   mocks.getEsDraft("libraryService"),
+     *   mocks.getEsValue("libraryService", ["remainOnlyBoundedContext"]),
+     *   mocks.esConfigs.userInfo,
+     *   mocks.esConfigs.information
+     * )
+     * generator.generateIfInputsExist()
+     *
+     * @example 진행 상태 모니터링을 포함한 상세 사용
+     * const generator = CreateAggregateActionsByFunctions.createGeneratorByDraftOptions({
+     *   onFirstResponse: (returnObj) => {
+     *     // 첫 번째 응답 처리
+     *     console.log("Generation started")
+     *   },
+     *   onModelCreated: (returnObj) => {
+     *     // 모델 생성 완료시 처리
+     *     console.log("Model created") 
+     *   },
+     *   onGenerationSucceeded: (returnObj) => {
+     *     // 생성 성공시 처리
+     *     updateEventStormingModel(returnObj)
+     *   },
+     *   onGenerationDone: () => {
+     *     // 모든 Aggregate 생성 완료시 처리
+     *     console.log("All aggregates generated")
+     *   },
+     *   onRetry: (returnObj) => {
+     *     // 오류 발생시 재시도 처리
+     *     console.error(returnObj.errorMessage)
+     *   },
+     *   onStopped: () => {
+     *     // 생성 중단시 처리
+     *     console.log("Generation stopped")
+     *   }
+     * })
+     *
+     * @note
+     * - callbacks 파라미터는 다음 콜백 함수들을 포함할 수 있습니다:
+     *   - onFirstResponse: 첫 응답 수신시 호출
+     *   - onModelCreated: 모델 생성 완료시 호출
+     *   - onGenerationSucceeded: 각 Aggregate 생성 성공시 호출
+     *   - onGenerationDone: 모든 Aggregate 생성 완료시 호출
+     *   - onRetry: 오류 발생으로 재시도시 호출
+     *   - onStopped: 생성 중단시 호출
+     * - initInputs 메서드는 다음 파라미터들이 필요합니다:
+     *   - draftOptions: Aggregate 구조 정의
+     *   - esValue: 현재 이벤트 스토밍 모델 상태
+     *   - userInfo: 사용자 정보
+     *   - information: 추가 설정 정보
+     * - generateIfInputsExist 메서드는 남은 입력이 있는 경우 true를 반환하고 다음 생성을 시작합니다
+     */
+    static createGeneratorByDraftOptions(callbacks){
+        const generator = new CreateAggregateActionsByFunctions({
+            input: null,
 
-    onGenerateBefore(inputParams){
+            onFirstResponse: (returnObj) => {
+                if(callbacks.onFirstResponse)
+                    callbacks.onFirstResponse(returnObj)
+            },
+
+            onModelCreated: (returnObj) => {
+                if(callbacks.onModelCreated)
+                    callbacks.onModelCreated(returnObj)
+            },
+
+            onGenerationSucceeded: (returnObj) => {
+                if(callbacks.onGenerationSucceeded)
+                    callbacks.onGenerationSucceeded(returnObj)
+
+                if(generator.generateIfInputsExist())
+                    return
+
+
+                if(callbacks.onGenerationDone)
+                    callbacks.onGenerationDone()
+            },
+
+            onRetry: (returnObj) => {
+                alert(`[!] An error occurred during aggregate creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
+
+                if(callbacks.onRetry)
+                    callbacks.onRetry(returnObj)
+            },
+
+            onStopped: () => {
+                if(callbacks.onStopped)
+                    callbacks.onStopped()
+            }
+        })
+
+        generator.initInputs = (draftOptions, esValue, userInfo, information) => {
+            let inputs = []
+            for(const eachDraftOption of Object.values(draftOptions)) {
+                inputs = inputs.concat(
+                    eachDraftOption.structure.map((aggregateStructure, index) => ({
+                        targetBoundedContext: eachDraftOption.boundedContext,
+                        description: eachDraftOption.description,
+                        draftOption: [aggregateStructure],
+                        esValue: esValue,
+                        userInfo: userInfo,
+                        information: information,
+                        isAccumulated: index > 0
+                    })))
+            }
+            generator.inputs = inputs
+        }
+
+        generator.generateIfInputsExist = () => {
+            if(generator.inputs.length > 0) {
+                generator.client.input = generator.inputs.shift()
+                generator.generate()
+                return true
+            }
+            return false
+        }
+
+        return generator
+    }
+
+
+    async onGenerateBefore(inputParams){
         inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
         inputParams.draftOption = this._removeClassIdProperties(JSON.parse(JSON.stringify(inputParams.draftOption)))
 
+
         inputParams.targetAggregate = Object.values(inputParams.draftOption)[0].aggregate
         inputParams.aggregateDisplayName = inputParams.targetAggregate.alias ? inputParams.targetAggregate.alias : inputParams.targetAggregate.name
+        inputParams.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
 
-        this.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
+
+        let targetBCRemovedESValue = JSON.parse(JSON.stringify(inputParams.esValue))
+        if(!inputParams.isAccumulated)
+            this._removePrevBoundedContextRelatedElements(inputParams.targetBoundedContext.name, targetBCRemovedESValue)
+        
+        inputParams.summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(targetBCRemovedESValue, 
+            ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateOuterStickers, inputParams.esAliasTransManager)
+
+        if(!this.isCreatedPromptWithinTokenLimit()) {
+            const tokenWithoutSummarizedESValue = this.getCreatedPromptTokenCount({summarizedESValue: {}})
+            const maxEsValueTokenLimit = this.modelInputTokenLimit - tokenWithoutSummarizedESValue
+            if(maxEsValueTokenLimit <= 100)
+                throw new Error("[!] The size of the draft being passed is too large to process.")
+
+            console.log(`[*] 토큰 제한이 초과되어서 이벤트 스토밍 정보를 제한 수치까지 요약해서 전달함`, {
+                modelInputTokenLimit: this.modelInputTokenLimit,
+                tokenWithoutSummarizedESValue,
+                maxEsValueTokenLimit
+            })
+            console.log(`[*] 요약 이전 Summary`, inputParams.summarizedESValue)
+            const requestContext = this._buildRequestContext(inputParams)
+            inputParams.summarizedESValue = await ESValueSummaryGenerator.getSummarizedESValueWithMaxTokenSummarize(
+                requestContext,
+                inputParams.esValue,
+                ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateOuterStickers,
+                maxEsValueTokenLimit,
+                this.model,
+                inputParams.esAliasTransManager
+            )
+            console.log(`[*] 요약 이후 Summary`, inputParams.summarizedESValue)
+        }
     }
 
     _removeClassIdProperties(draftOption){
@@ -38,6 +206,31 @@ class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
 
             return cleanedOption;
         });
+    }
+
+    _buildRequestContext(inputParams) {
+        const aggregateName = inputParams.targetAggregate.name
+        const boundedContextName = inputParams.targetBoundedContext.name
+        const description = inputParams.description || ''
+        
+        const aggregateStructure = inputParams.draftOption[0]
+        const hasValueObjects = (aggregateStructure.valueObjects) ? aggregateStructure.valueObjects.length > 0 : false
+        const hasEntities = (aggregateStructure.entities) ? aggregateStructure.entities.length > 0 : false
+        
+        return `Task: Creating ${aggregateName} Aggregate in ${boundedContextName} Bounded Context
+        
+Business Context:
+${description}
+
+Aggregate Structure:
+- Creating new aggregate '${aggregateName}'${inputParams.targetAggregate.alias ? ` (${inputParams.targetAggregate.alias})` : ''}
+- Will contain ${hasValueObjects ? 'value objects' : ''}${hasValueObjects && hasEntities ? ' and ' : ''}${hasEntities ? 'entities' : ''}
+- Part of ${boundedContextName} domain
+
+Focus:
+- Elements directly related to ${aggregateName} aggregate
+- Supporting elements within ${boundedContextName} bounded context
+- Essential domain relationships and dependencies`
     }
 
 
@@ -138,20 +331,19 @@ Type Dependency Resolution:
     - Verify correct usage of ValueObjects vs Enumerations
 
 Constraints:
-12. Do not:
-    - Modify existing Aggregates (reference only)
-    - Recreate existing types
-    - Include comments in the output JSON
-    - Create duplicate elements
-    - Create ValueObjects for properties that should be Enumerations
+12. Rules:
+    - Only reference existing Aggregates without modifying them
+    - Do not recreate types that already exist in the system
+    - Do not write comments in the output JSON object
+    - Do not create duplicate elements in the model
+    - Do not create ValueObjects for properties that should be defined as Enumerations
+    - Do not append type names (like 'Enumeration', 'ValueObject', 'Entity') to object names - use base names only (e.g., 'BookStatus' instead of 'BookStatusEnumeration')
 
 13. Required Elements:
     - All ValueObjects, Entities, and Enumerations must be used as properties
     - All elements from the user's structure must be implemented
     - All relationships must be properly mapped
     - All custom types must have corresponding definitions
-
-14. Do not write comments in the output JSON object.
 `
     }
 
@@ -263,7 +455,7 @@ If the type of property you want to add to the aggregate does not have an approp
         
         "properties": [
             {
-                "name": "<propertyName>"
+                "name": "<propertyName>" // Must be in English
             }
         ]
     }
@@ -953,15 +1145,8 @@ They represent complex domain concepts that don't qualify as Aggregates but need
     }
 
     __buildJsonUserQueryInputFormat() {
-        let targetBCRemovedESValue = JSON.parse(JSON.stringify(this.client.input.esValue))
-        if(!this.client.input.isAccumulated)
-            this._removePrevBoundedContextRelatedElements(this.client.input.targetBoundedContext.name, targetBCRemovedESValue)
-
-        const summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(targetBCRemovedESValue, 
-            ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateOuterStickers, this.esAliasTransManager)
-
         return {
-            "Summarized Existing EventStorming Model": JSON.stringify(summarizedESValue),
+            "Summarized Existing EventStorming Model": JSON.stringify(this.client.input.summarizedESValue),
 
             "Bounded Context to Generate Actions": this.client.input.targetBoundedContext.name,
 
@@ -1060,7 +1245,7 @@ They represent complex domain concepts that don't qualify as Aggregates but need
     }
 
     _getActionAppliedESValue(actions, isAddFakeActions) {
-        actions = this.esAliasTransManager.transToUUIDInActions(actions)
+        actions = this.client.input.esAliasTransManager.transToUUIDInActions(actions)
         this._restoreActions(actions, this.client.input.esValue, this.client.input.targetBoundedContext.name)
         actions = this._filterActions(actions)
         

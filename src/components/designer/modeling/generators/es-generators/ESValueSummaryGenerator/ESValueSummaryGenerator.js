@@ -4,33 +4,6 @@ const { ESValueSummarizeWithFilter } = require("../helpers")
 const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTransManager")
 const { TokenCounter } = require("../../utils")
 
-/**
- * @description EventStorming 모델의 요약 정보를 생성하고 관리하는 클래스입니다.
- * 주어진 컨텍스트에 따라 EventStorming 요소들을 분석하고 토큰 제한에 맞춰 요약된 정보를 생성합니다.
- * 
- * @example 전달된 이벤트 스토밍 모델에 대해서 최대 토큰 이내의 요약정보 얻기
- * const generator = new ESValueSummaryGenerator({
- *   input: {
- *     context: "도서 관련 커맨드 생성 작업을 수행해야 함",
- *     esValue: getEsValue("librarySevice"),
- *     keysToFilter: [],
- *     maxTokens: 800,
- *     tokenCalcModel: "gpt-4o"
- *   },
- *   onModelCreated: (returnObj) => {
- *     // 모델 생성 완료 시 처리
- *   },
- *   onGenerationSucceeded: (returnObj) => {
- *     // 생성 성공 시 처리
- *     console.log("요약 토큰 수:", TokenCounter.getTokenCount(
- *       JSON.stringify(returnObj.modelValue.summary),
- *       "gpt-4o"
- *     ));
- *   }
- * });
- * 
- * generator.generate();
- */
 class ESValueSummaryGenerator extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
@@ -39,7 +12,32 @@ class ESValueSummaryGenerator extends FormattedJSONAIGenerator{
         this.progressCheckStrings = ["overviewThoughts", "result"]
     }
 
-
+    /**
+     * @description 이벤트 스토밍 모델의 데이터를 주어진 토큰 제한에 맞게 요약하여 반환하는 함수입니다.
+     * 주어진 컨텍스트를 기반으로 중요도에 따라 요소들을 정렬하고, 토큰 제한을 초과하는 경우
+     * 우선순위가 낮은 요소들을 제거하여 요약된 결과를 생성합니다.
+     * 
+     * @example 기본적인 토큰 제한 요약
+     * // 토큰 제한이 800인 경우의 기본 사용 예시
+     * const esValue = mocks.getEsValue("libraryService")
+     * const summary = await ESValueSummaryGenerator.getSummarizedESValueWithMaxTokenSummarize(
+     *     "도서 관련 커맨드 생성 작업을 수행해야 함",    // 현재 작업 컨텍스트
+     *     esValue,                                    // 전체 이벤트 스토밍 모델 데이터
+     *     [],                                         // 필터링할 키 목록 (빈 배열은 필터링 없음)
+     *     800,                                        // 최대 토큰 수
+     *     "gpt-4o",                                   // 토큰 계산 모델
+     *     new ESAliasTransManager(esValue)            // 별칭 관리자
+     * );
+     * console.log("[*] 요약된 ESValue 토큰 수 :", TokenCounter.getTokenCount(
+     *     JSON.stringify(summary), "gpt-4o"
+     * ));
+     * 
+     * @note
+     * - 토큰 제한을 초과하지 않는 경우 원본 데이터를 그대로 반환합니다.
+     * - 컨텍스트를 기반으로 요소들의 우선순위를 결정하므로, 명확한 컨텍스트 제공이 중요합니다.
+     * - 토큰 계산 모델은 정확한 토큰 수 계산을 위해 실제 사용할 모델과 일치해야 합니다.
+     * - 필터링할 키 목록에는 ["properties", "events", "name"] 와 같은 속성 키가 들어 갈 수 있습니다.
+     */
     static async getSummarizedESValueWithMaxTokenSummarize(context, esValue, keysToFilter, maxTokens, tokenCalcModel, esAliasTransManager){
         const summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(
             esValue, keysToFilter, esAliasTransManager
@@ -248,9 +246,15 @@ For example, "bc-bookManagement" represents a Bounded Context named "bookManagem
     }
 
     onCreateModelFinished(returnObj){
+        const sortedElementIds = returnObj.modelValue.aiOutput.result.sortedElementIds
+        console.log("[*] 생성된 엘리먼트 Id 정렬 순서: ", JSON.parse(JSON.stringify(sortedElementIds)))
+
+        const reSortedElementIds = this._resortWithPriority(this.client.input.summarizedESValue, sortedElementIds)
+        console.log("[*] 재정렬된 엘리먼트 Id 정렬 순서: ", JSON.parse(JSON.stringify(reSortedElementIds)))
+
         const summary = this._getSummaryWithinTokenLimit(
             this.client.input.summarizedESValue,
-            returnObj.modelValue.aiOutput.result.sortedElementIds,
+            reSortedElementIds,
             this.client.input.maxTokens,
             this.client.input.tokenCalcModel
         )
@@ -260,6 +264,75 @@ For example, "bc-bookManagement" represents a Bounded Context named "bookManagem
             summary: summary,
         }
         returnObj.directMessage = `Summarizing EventStorming Model... (${returnObj.modelRawValue.length} characters generated)`
+    }
+
+    _resortWithPriority(summarizedESValue, sortedElementIds) {
+        const bcGroups = new Map();
+        const nonBcElements = new Set(sortedElementIds);
+    
+
+        summarizedESValue.boundedContexts.forEach(bc => {
+            bcGroups.set(bc.id, {
+                bc: bc.id,
+                aggs: new Map(),
+                originalOrder: sortedElementIds.indexOf(bc.id)
+            });
+            nonBcElements.delete(bc.id);
+
+            if(bc.aggregates)
+                bc.aggregates.forEach(agg => {
+                    const group = bcGroups.get(bc.id)
+
+                    group.aggs.set(agg.id, {
+                        agg: agg.id,
+                        elements: [],
+                        originalOrder: sortedElementIds.indexOf(agg.id)
+                    })
+                    nonBcElements.delete(agg.id);
+
+                    const aggGroup = group.aggs.get(agg.id)
+
+                    
+                    const aggregateElements = new Set();
+                    ['valueObjects', 'enumerations', 'entities', 'commands', 'events', 'readModels'].forEach(type => {
+                        if(agg[type])
+                            agg[type].forEach(element => {
+                                aggregateElements.add(element.id);
+                            });
+                    });
+
+
+                    sortedElementIds.forEach(id => {
+                        if (aggregateElements.has(id)) {
+                            aggGroup.elements.push(id);
+                            nonBcElements.delete(id);
+                        }
+                    });
+                });
+        });
+    
+ 
+        const result = [];
+        Array.from(bcGroups.values())
+            .sort((a, b) => a.originalOrder - b.originalOrder)
+            .forEach(group => {
+                result.push(group.bc);
+
+                Array.from(group.aggs.values())
+                    .sort((a, b) => a.originalOrder - b.originalOrder)
+                    .forEach(agg => {
+                        result.push(agg.agg);
+                        result.push(...agg.elements);
+                    });
+            });
+    
+            
+        sortedElementIds.forEach(id => {
+            if (nonBcElements.has(id)) {
+                result.push(id);
+            }
+        });
+        return result;
     }
 
     _getSummaryWithinTokenLimit(summarizedESValue, sortedElementIds, maxTokens, tokenCalcModel) {
