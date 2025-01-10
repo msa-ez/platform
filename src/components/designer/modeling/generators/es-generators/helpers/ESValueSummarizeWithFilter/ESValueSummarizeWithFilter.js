@@ -1,7 +1,4 @@
 class ESValueSummarizeWithFilter {
-    /**
-     * getSummarizedESValue()에서 반환될 값에 대한 상세한 입력 프롬프트 가이드 반환
-     */
     static getGuidePrompt() {
         return `You will receive a JSON object containing summarized information about the event storming model on which you will perform your task. Not all guided properties may be passed, and properties that are unnecessary for the task may be excluded.
 The approximate structure is as follows.
@@ -155,10 +152,45 @@ The approximate structure is as follows.
     }
 
     /**
-     * 주어진 이벤트스토밍에서 위치 데이터등을 제외한 핵심 정보들만 추출해서 LLM에게 입력 데이터로 제공
-     * keysToExcludeFilter: 일부 경우에는 properties와 같은 구체적인 속성들이 불필요할 수 있음. 이런 경우에 제외시킬 키값을 배열로 전달
-     *    ex) id: 모든 id 속성을 미포함, boundedContext.id: boundedContext의 id 속성을 미포함
-     * esAliasTransManager: Id값을 별칭으로 바꿔서 UUID를 제거해서, 패턴 기반의 LLM의 성능을 향상
+     * @description 이벤트 스토밍 모델(esValue)을 요약된 형태로 변환하는 메소드입니다.
+     * 특정 속성들을 제외하고 싶을 때 keysToExcludeFilter를 사용하여 필터링할 수 있으며,
+     * ID 변환이 필요한 경우 esAliasTransManager를 통해 처리할 수 있습니다.
+     * 
+     * @example 기본적인 모델 요약
+     * // 모든 속성을 포함한 요약된 형태로 변환
+     * const esValue = mocks.getEsValue("libraryService")
+     * const summary = ESValueSummarizeWithFilter.getSummarizedESValue(
+     *     esValue,
+     *     [],
+     *     new ESAliasTransManager(esValue)
+     * )
+     * 
+     * @example 특정 속성을 제외한 필터링
+     * // properties 속성을 제외한 요약 정보 생성
+     * // 이는 모델의 구조만 필요하고 상세 속성은 필요없는 경우 유용
+     * const esValue = mocks.getEsValue("libraryService")
+     * const summaryWithFilter = ESValueSummarizeWithFilter.getSummarizedESValue(
+     *     esValue,
+     *     ["properties"],
+     *     new ESAliasTransManager(esValue)
+     * )
+     * 
+     * @example 템플릿 필터 사용
+     * // KEY_FILTER_TEMPLATES를 활용한 필터링
+     * // aggregateOuterStickers: 외부 스티커(commands, events, readModels) 제외
+     * // aggregateInnerStickers: 내부 스티커(entities, enumerations, valueObjects) 제외
+     * // detailedProperties: 상세 속성(properties, items) 제외
+     * const esValue = mocks.getEsValue("libraryService")
+     * const summaryWithTemplateFilter = ESValueSummarizeWithFilter.getSummarizedESValue(
+     *     esValue,
+     *     ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.detailedProperties,
+     *     new ESAliasTransManager(esValue)
+     * )
+     * 
+     * @param {Object} esValue 이벤트 스토밍 모델 객체
+     * @param {Array} keysToExcludeFilter 제외할 속성 키 배열
+     * @param {ESAliasTransManager} esAliasTransManager ID 변환을 위한 매니저 객체
+     * @returns {Object} 요약된 이벤트 스토밍 모델 정보
      */
     static getSummarizedESValue(esValue, keysToExcludeFilter=[], esAliasTransManager=null){
         const boundedContexts = Object.values(esValue.elements)

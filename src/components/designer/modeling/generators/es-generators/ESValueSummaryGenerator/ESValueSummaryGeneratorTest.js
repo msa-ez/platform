@@ -1,4 +1,4 @@
-const ESValueSummaryGenerator = require("./ESValueSummaryGenerator")
+const { ESValueSummaryGenerator } = require("..")
 const { ESValueSummarizeWithFilter } = require("../helpers")
 const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTransManager")
 const { TokenCounter } = require("../../utils")
@@ -6,7 +6,7 @@ const { getEsValue } = require("../mocks")
 
 class ESValueSummaryGeneratorTest {
     static async test(esValue=null) {
-        if(!esValue) esValue = getEsValue("librarySevice");
+        if(!esValue) esValue = getEsValue("libraryService");
 
         const esAliasTransManager = new ESAliasTransManager(esValue)
         

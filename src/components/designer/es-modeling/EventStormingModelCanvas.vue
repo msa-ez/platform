@@ -2019,7 +2019,7 @@
     import ModelDraftDialogWithXAI from "../context-mapping-modeling/dialogs/ModelDraftDialogWithXAI.vue"
     import GWTGeneratorByFunctions from "../modeling/generators/es-ddl-generators/GWTGeneratorByFunctions";
     import DraftGeneratorByFunctions from "../modeling/generators/es-ddl-generators/DraftGeneratorByFunctions";
-    import CreateAggregateActionsByFunctions from "../modeling/generators/es-ddl-generators/CreateAggregateActionsByFunctions";
+    import { CreateAggregateActionsByFunctions } from "../modeling/generators/es-generators";
     import CreateCommandActionsByFunctions from "../modeling/generators/es-ddl-generators/CreateCommandActionsByFunctions";
     import CreatePolicyActionsByFunctions from "../modeling/generators/es-ddl-generators/CreatePolicyActionsByFunctions";
     import GeneratorProgress from "./components/GeneratorProgress.vue"
@@ -2529,10 +2529,7 @@
 
                 generators: {
                     CreateAggregateActionsByFunctions: {
-                        generator: null,
-                        inputs: [],
-                        generateIfInputsExist: () => {},
-                        initInputs: (draftOptions) => {}
+                        generator: null
                     },
 
                     CreateAggregateClassIdByDrafts: {
@@ -2746,26 +2743,9 @@
                 }
             })
 
-            this.generators.CreateAggregateActionsByFunctions.generator = new CreateAggregateActionsByFunctions({
-                input: null,
 
+            const byFunctionCallbacks = {
                 onFirstResponse: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: false,
-                        draftUIInfos: {
-                            leftBoundedContextCount: 1,
-                            directMessage: returnObj.directMessage
-                        },
-                        actions: {
-                            stop: () => {
-                            },
-                            retry: () => {
-                            }
-                        },
-                        isGeneratorButtonEnabled: false
-                    }
-
                     this.generatorProgressDto = {
                         generateDone: false,
                         displayMessage: returnObj.directMessage,
@@ -2779,7 +2759,6 @@
                 },
 
                 onModelCreated: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
                     this.generatorProgressDto.displayMessage = returnObj.directMessage
                     this.generatorProgressDto.progress = returnObj.progress
                 },
@@ -2797,29 +2776,10 @@
                         this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
                         this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
                     }
-
-
-                    if(this.generators.CreateAggregateActionsByFunctions.generateIfInputsExist())
-                        return
-
-                    this.generators.CreateAggregateClassIdByDrafts.initInputs(this.selectedDraftOptions)
-                    if(this.generators.CreateAggregateClassIdByDrafts.generateIfInputsExist())
-                        return
-
-
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: false,
-                        draftUIInfos: {
-                            leftBoundedContextCount: 0
-                        },
-                        isGeneratorButtonEnabled: true
-                    }
-                    this.generatorProgressDto.generateDone = true
                 },
 
                 onRetry: (returnObj) => {
-                    alert(`[!] An error occurred during aggregate creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
+                    alert(`[!] An error occurred during creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
                     this.modelDraftDialogWithXAIDto = {
                         ...this.modelDraftDialogWithXAIDto,
                         isShow: true,
@@ -2828,37 +2788,34 @@
                         },
                         isGeneratorButtonEnabled: true
                     }
-                    this.generatorProgressDto.generateDone = true
+                    this.generatorProgressDto.generateDone = tru
                 },
 
                 onStopped: () => {
                     this.generatorProgressDto.generateDone = true
+                },
+
+                onGenerationDone: () => {
+                    this.generatorProgressDto.generateDone = true
                 }
-            })
-            this.generators.CreateAggregateActionsByFunctions.generateIfInputsExist = () => {
-                if(this.generators.CreateAggregateActionsByFunctions.inputs.length > 0) {
-                    this.generators.CreateAggregateActionsByFunctions.generator.client.input = this.generators.CreateAggregateActionsByFunctions.inputs.shift()
-                    this.generators.CreateAggregateActionsByFunctions.generator.generate()
-                    return true
-                }
-                return false
             }
-            this.generators.CreateAggregateActionsByFunctions.initInputs = (draftOptions) => {
-                let inputs = []
-                for(const eachDraftOption of Object.values(draftOptions)) {
-                    inputs = inputs.concat(
-                        eachDraftOption.structure.map((aggregateStructure, index) => ({
-                            targetBoundedContext: eachDraftOption.boundedContext,
-                            description: eachDraftOption.description,
-                            draftOption: [aggregateStructure],
-                            esValue: this.value,
-                            userInfo: this.userInfo,
-                            information: this.information,
-                            isAccumulated: index > 0
-                        })))
+
+            this.generators.CreateAggregateActionsByFunctions.generator = CreateAggregateActionsByFunctions.createGeneratorByDraftOptions(
+                {
+                    onFirstResponse: byFunctionCallbacks.onFirstResponse,
+                    onModelCreated: byFunctionCallbacks.onModelCreated,
+                    onGenerationSucceeded: byFunctionCallbacks.onGenerationSucceeded,
+                    onRetry: byFunctionCallbacks.onRetry,
+                    onStopped: byFunctionCallbacks.onStopped,
+                    onGenerationDone: () => {
+                        this.generators.CreateAggregateClassIdByDrafts.initInputs(this.selectedDraftOptions)
+                        if(this.generators.CreateAggregateClassIdByDrafts.generateIfInputsExist())
+                            return
+                        byFunctionCallbacks.onGenerationDone()
+                    }
                 }
-                this.generators.CreateAggregateActionsByFunctions.inputs = inputs
-            }
+            )
+
 
             this.generators.CreateAggregateClassIdByDrafts.generator = new CreateAggregateClassIdByDrafts({
                 input: null,
@@ -4677,8 +4634,13 @@
 
                 console.log("[*] 초안 전처리 완료", {afterDraftOptions: JSON.parse(JSON.stringify(draftOptions))})
 
-                this.generators.CreateAggregateActionsByFunctions.initInputs(this.selectedDraftOptions)
-                this.generators.CreateAggregateActionsByFunctions.generateIfInputsExist()
+                this.generators.CreateAggregateActionsByFunctions.generator.initInputs(
+                    this.selectedDraftOptions,
+                    this.value,
+                    this.userInfo,
+                    this.information
+                )
+                this.generators.CreateAggregateActionsByFunctions.generator.generateIfInputsExist()
             },
 
             _removeInvalidReferencedAggregateProperties(draftOptions) {
