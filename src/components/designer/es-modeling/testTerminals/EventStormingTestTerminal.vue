@@ -3,11 +3,18 @@
 </template>
   
 <script>
-import TokenCounterTest from "../../modeling/generators/utils/TokenCounter/TokenCounterTest";
-import ESValueSummaryGeneratorTest from "../../modeling/generators/es-generators/ESValueSummaryGenerator/ESValueSummaryGeneratorTest";
-import ESValueSummarizeWithFilterTest from "../../modeling/generators/es-generators/helpers/ESValueSummarizeWithFilter/ESValueSummarizeWithFilterTest";
-import CreateAggregateActionsByFunctionsTest from "../../modeling/generators/es-generators/CreateAggregateActionsByFunctions/CreateAggregateActionsByFunctionsTest";
-import { getEsDraft } from "../../modeling/generators/es-generators/mocks";
+import { TokenCounterTest } from "../../modeling/generators/utils";
+import {
+    getEsDraft,
+    getEsValue,
+    ESValueSummaryGeneratorTest,
+    ESValueSummarizeWithFilterTest,
+    CreateAggregateActionsByFunctionsTest,
+    CreateAggregateClassIdByDraftsTest,
+    CreateCommandActionsByFunctionsTest,
+    CreatePolicyActionsByFunctionsTest,
+    CommandGWTGeneratorByFunctionsTest
+} from "../../modeling/generators/es-generators";
 
 export default {
     name: "es-test-terminal",
@@ -39,7 +46,11 @@ export default {
                 TokenCounterTest: { command: () => {TokenCounterTest.test()} },
                 ESValueSummaryGeneratorTest: {command: async () => { await ESValueSummaryGeneratorTest.test(this.value) }},
                 ESValueSummarizeWithFilterTest: {command: async () => { await ESValueSummarizeWithFilterTest.test(this.value) }},
-                CreateAggregateActionsByFunctionsTest: {command: async () => { await CreateAggregateActionsByFunctionsTest.test() }}
+                CreateAggregateActionsByFunctionsTest: {command: async () => { await CreateAggregateActionsByFunctionsTest.test() }},
+                CreateAggregateClassIdByDraftsTest: {command: async () => { await CreateAggregateClassIdByDraftsTest.test() }},
+                CreateCommandActionsByFunctionsTest: {command: async () => { await CreateCommandActionsByFunctionsTest.test() }},
+                CreatePolicyActionsByFunctionsTest: {command: async () => { await CreatePolicyActionsByFunctionsTest.test() }},
+                CommandGWTGeneratorByFunctionsTest: {command: async () => { await CommandGWTGeneratorByFunctionsTest.test() }}
             }
             
 
@@ -81,6 +92,9 @@ export default {
         },
 
         async _TempTest() {
+            console.log(getEsValue("libraryService"))
+            console.log(getEsValue("libraryService", ["command", "event"]))
+            console.log(getEsValue("libraryService", ["valueobject"]))
         }
     }
 }

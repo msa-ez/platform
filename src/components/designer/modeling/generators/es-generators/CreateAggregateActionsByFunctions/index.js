@@ -1,1 +1,2 @@
 export const CreateAggregateActionsByFunctions = require("./CreateAggregateActionsByFunctions");
+export const CreateAggregateActionsByFunctionsTest = require("./CreateAggregateActionsByFunctionsTest");

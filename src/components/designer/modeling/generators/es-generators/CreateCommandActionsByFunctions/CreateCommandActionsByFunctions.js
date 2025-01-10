@@ -1,9 +1,10 @@
 
-const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
-const ESActionsUtil = require("./modules/ESActionsUtil")
-const ESFakeActionsUtil = require("./modules/ESFakeActionsUtil")
-const { ESValueSummarizeWithFilter } = require("../es-generators/helpers")
-const ESAliasTransManager = require("./modules/ESAliasTransManager")
+const FormattedJSONAIGenerator = require("../../FormattedJSONAIGenerator")
+const { ESValueSummaryGenerator } = require("..")
+const ESActionsUtil = require("../../es-ddl-generators/modules/ESActionsUtil")
+const ESFakeActionsUtil = require("../../es-ddl-generators/modules/ESFakeActionsUtil")
+const { ESValueSummarizeWithFilter } = require("../helpers")
+const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTransManager")
 
 class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
@@ -13,11 +14,124 @@ class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
         this.progressCheckStrings = ["overviewThoughts", "actions"]
     }
 
+    static createGeneratorByDraftOptions(callbacks){
+        const generator = new CreateCommandActionsByFunctions({
+            input: null,
 
-    onGenerateBefore(inputParams){
+            onFirstResponse: (returnObj) => {
+                if(callbacks.onFirstResponse)
+                    callbacks.onFirstResponse(returnObj)
+            },
+
+            onModelCreated: (returnObj) => {
+                if(callbacks.onModelCreated)
+                    callbacks.onModelCreated(returnObj)
+            },
+
+            onGenerationSucceeded: (returnObj) => {
+                if(callbacks.onGenerationSucceeded)
+                    callbacks.onGenerationSucceeded(returnObj)
+
+                if(generator.generateIfInputsExist())
+                    return
+
+
+                if(callbacks.onGenerationDone)
+                    callbacks.onGenerationDone()
+            },
+
+            onRetry: (returnObj) => {
+                alert(`[!] An error occurred during command creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
+
+                if(callbacks.onRetry)
+                    callbacks.onRetry(returnObj)
+            },
+
+            onStopped: () => {
+                if(callbacks.onStopped)
+                    callbacks.onStopped()
+            }
+        })
+
+        generator.initInputs = (draftOptions, esValue, userInfo, information) => {
+            let inputs = []
+            for(const eachDraftOption of Object.values(draftOptions)) {
+                const targetAggregates = Object.values(esValue.elements).filter(element => element && element._type === "org.uengine.modeling.model.Aggregate" && element.boundedContext.id === eachDraftOption.boundedContext.id)
+
+                // Aggregate각각마다 커맨드/이벤트/ReadModel 생성 요청을 함으로써 다루는 문제영역을 최소화함
+                for(const targetAggregate of targetAggregates) {
+                    inputs.push({
+                        targetBoundedContext: eachDraftOption.boundedContext,
+                        targetAggregate: targetAggregate,
+                        description: eachDraftOption.description,
+                        esValue: esValue,
+                        userInfo: userInfo,
+                        information: information
+                    })
+                }
+            }
+            generator.inputs = inputs
+        }
+
+        generator.generateIfInputsExist = () => {
+            if(generator.inputs.length > 0) {
+                generator.client.input = generator.inputs.shift()
+                generator.generate()
+                return true
+            }
+            return false
+        }
+
+        return generator
+    }
+
+
+    async onGenerateBefore(inputParams){
         inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
         inputParams.aggregateDisplayName = inputParams.targetAggregate.displayName ? inputParams.targetAggregate.displayName : inputParams.targetAggregate.name
-        this.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
+        inputParams.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
+
+        inputParams.summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(
+            inputParams.esValue, [], inputParams.esAliasTransManager
+        )
+        if(!this.isCreatedPromptWithinTokenLimit()) {
+            const leftTokenCount = this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
+            if(leftTokenCount <= 100)
+                throw new Error("[!] The size of the draft being passed is too large to process.")
+
+            console.log(`[*] 토큰 제한이 초과되어서 이벤트 스토밍 정보를 제한 수치까지 요약해서 전달함`)
+            console.log(`[*] 요약 이전 Summary`, inputParams.summarizedESValue)
+            const requestContext = this._buildRequestContext(inputParams)
+            inputParams.summarizedESValue = await ESValueSummaryGenerator.getSummarizedESValueWithMaxTokenSummarize(
+                requestContext,
+                inputParams.esValue,
+                [],
+                leftTokenCount,
+                this.model,
+                inputParams.esAliasTransManager
+            )
+            console.log(`[*] 요약 이후 Summary`, inputParams.summarizedESValue)
+        }
+    }
+
+    _buildRequestContext(inputParams) {
+        return `Creating commands, events, and read models for the following context:
+- Target Bounded Context: ${inputParams.targetBoundedContext.name}
+- Target Aggregate: ${inputParams.targetAggregate.name}
+- Business Requirements
+${inputParams.description}
+
+Focus on elements that are:
+1. Directly related to the ${inputParams.targetAggregate.name} aggregate
+2. Referenced by or dependent on the target aggregate
+3. Essential for implementing the specified business requirements
+
+This context is specifically for generating:
+- Commands to handle business operations
+- Events to record state changes
+- Read models for query operations
+
+All within the scope of ${inputParams.targetBoundedContext.name} bounded context and ${inputParams.targetAggregate.name} aggregate.`
     }
 
 
@@ -1055,12 +1169,8 @@ Generate read models in the aggregate to satisfy the given functional requiremen
     }
 
     __buildJsonUserQueryInputFormat() {
-        const summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(
-            JSON.parse(JSON.stringify(this.client.input.esValue)), [], this.esAliasTransManager
-        )
-
         return {
-            "Summarized Existing EventStorming Model": JSON.stringify(summarizedESValue),
+            "Summarized Existing EventStorming Model": JSON.stringify(this.client.input.summarizedESValue),
 
             "Functional Requirements": this.client.input.description,
 
@@ -1144,7 +1254,7 @@ Best Practices:
     }
 
     _getActionAppliedESValue(actions, isAddFakeActions) {
-        actions = this.esAliasTransManager.transToUUIDInActions(actions)
+        actions = this.client.input.esAliasTransManager.transToUUIDInActions(actions)
         this._restoreActions(actions, this.client.input.esValue, this.client.input.targetBoundedContext.name)
         actions = this._filterActions(actions)
         this._removeEventOutputCommandIdsProperty(actions)

@@ -168,23 +168,18 @@ class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
             ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateOuterStickers, inputParams.esAliasTransManager)
 
         if(!this.isCreatedPromptWithinTokenLimit()) {
-            const tokenWithoutSummarizedESValue = this.getCreatedPromptTokenCount({summarizedESValue: {}})
-            const maxEsValueTokenLimit = this.modelInputTokenLimit - tokenWithoutSummarizedESValue
-            if(maxEsValueTokenLimit <= 100)
+            const leftTokenCount = this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
+            if(leftTokenCount <= 100)
                 throw new Error("[!] The size of the draft being passed is too large to process.")
 
-            console.log(`[*] 토큰 제한이 초과되어서 이벤트 스토밍 정보를 제한 수치까지 요약해서 전달함`, {
-                modelInputTokenLimit: this.modelInputTokenLimit,
-                tokenWithoutSummarizedESValue,
-                maxEsValueTokenLimit
-            })
+            console.log(`[*] 토큰 제한이 초과되어서 이벤트 스토밍 정보를 제한 수치까지 요약해서 전달함`)
             console.log(`[*] 요약 이전 Summary`, inputParams.summarizedESValue)
             const requestContext = this._buildRequestContext(inputParams)
             inputParams.summarizedESValue = await ESValueSummaryGenerator.getSummarizedESValueWithMaxTokenSummarize(
                 requestContext,
                 inputParams.esValue,
                 ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateOuterStickers,
-                maxEsValueTokenLimit,
+                leftTokenCount,
                 this.model,
                 inputParams.esAliasTransManager
             )
@@ -338,6 +333,10 @@ Constraints:
     - Do not create duplicate elements in the model
     - Do not create ValueObjects for properties that should be defined as Enumerations
     - Do not append type names (like 'Enumeration', 'ValueObject', 'Entity') to object names - use base names only (e.g., 'BookStatus' instead of 'BookStatusEnumeration')
+    - Names must be unique across all actions and existing elements:
+      * No duplicate names between new and existing elements
+      * No duplicate names within new elements, regardless of their type
+      * Example: If creating a ValueObject named "Address" and an Enumeration, the Enumeration cannot be named "Address" even though they are different types
 
 13. Required Elements:
     - All ValueObjects, Entities, and Enumerations must be used as properties

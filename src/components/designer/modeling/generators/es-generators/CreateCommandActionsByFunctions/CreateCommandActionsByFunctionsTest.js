@@ -1,18 +1,18 @@
-const CreateAggregateActionsByFunctions = require("./CreateAggregateActionsByFunctions")
+const CreateCommandActionsByFunctions = require("./CreateCommandActionsByFunctions")
 const { ESValueSummarizeWithFilter } = require("../helpers")
 const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTransManager")
 const { getEsValue, getEsDraft, esConfigs } = require("../mocks")
 
-class CreateAggregateActionsByFunctionsTest {
+class CreateCommandActionsByFunctionsTest {
     static async test() {
-        const esValue = getEsValue("libraryService", ["remainOnlyBoundedContext"]);
+        const esValue = getEsValue("libraryService", ["remainOnlyAggregate"]);
 
 
         console.log("[*] 기존 이벤트 스토밍 정보: ", ESValueSummarizeWithFilter.getSummarizedESValue(
             esValue, [], new ESAliasTransManager(esValue)
         ))
 
-        const generator = CreateAggregateActionsByFunctions.createGeneratorByDraftOptions({
+        const generator = CreateCommandActionsByFunctions.createGeneratorByDraftOptions({
             onGenerationSucceeded: (returnObj) => {
                 if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
                     esValue.elements = returnObj.modelValue.createdESValue.elements
@@ -42,4 +42,4 @@ class CreateAggregateActionsByFunctionsTest {
     }
 }
 
-module.exports = CreateAggregateActionsByFunctionsTest;
+module.exports = CreateCommandActionsByFunctionsTest;

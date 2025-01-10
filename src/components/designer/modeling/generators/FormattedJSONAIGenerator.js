@@ -259,6 +259,39 @@ class FormattedJSONAIGenerator extends AIGenerator {
         }
     }
 
+    /**
+     * @description 현재 또는 가상의 입력 파라미터로 생성될 프롬프트에 대해 남은 토큰 수를 계산합니다.
+     * 이 함수는 주로 입력 데이터의 크기를 조절하거나, 추가 데이터 입력 가능 여부를 확인하는데 사용됩니다.
+     * 
+     * @example 현재 입력값으로 남은 토큰 수 확인
+     * // 현재 설정된 입력값으로 추가로 사용 가능한 토큰 수를 계산
+     * const remainingTokens = generator.getCreatePromptLeftTokenCount();
+     * console.log(`Can still add content using ${remainingTokens} more tokens`);
+     * 
+     * @example 새로운 입력 추가 가능 여부 확인
+     * // 새로운 데이터 추가 전에 토큰 여유 공간 확인
+     * const newInput = { additionalContext: "새로운 컨텍스트 정보..." };
+     * const remainingAfterAdd = generator.getCreatePromptLeftTokenCount(newInput);
+     * 
+     * if (remainingAfterAdd < 0) {
+     *   console.log("Warning: Adding this input would exceed token limit");
+     *   // 입력 데이터 축소 또는 분할 처리 로직
+     * } else {
+     *   console.log(`Can safely add input, ${remainingAfterAdd} tokens will remain`);
+     *   // 새 입력 데이터 추가 진행
+     * }
+     *
+     * @note
+     * - 반환값이 음수인 경우 토큰 제한을 초과했음을 의미합니다
+     * - 임시 입력값으로 계산시 원본 입력값은 변경되지 않습니다
+     * - TokenCounter의 추정치와 실제 토큰 수 간에 약간의 차이가 있을 수 있습니다
+     * - 대규모 입력 데이터 처리 전에 미리 확인하여 토큰 초과를 방지하는 것이 좋습니다
+     * - getCreatedPromptTokenCount()와 함께 사용하여 더 정확한 토큰 관리가 가능합니다
+     */
+    getCreatePromptLeftTokenCount(tempInputParams={}){
+        return this.modelInputTokenLimit - this.getCreatedPromptTokenCount(tempInputParams)
+    }
+
     _assembleSystemContext(){
         return [
             this.__buildAgentRolePrompt(),

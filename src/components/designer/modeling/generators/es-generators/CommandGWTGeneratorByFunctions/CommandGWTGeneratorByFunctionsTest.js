@@ -1,22 +1,22 @@
-const CreateAggregateActionsByFunctions = require("./CreateAggregateActionsByFunctions")
+const CommandGWTGeneratorByFunctions = require("./CommandGWTGeneratorByFunctions")
 const { ESValueSummarizeWithFilter } = require("../helpers")
 const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTransManager")
-const { getEsValue, getEsDraft, esConfigs } = require("../mocks")
+const { getEsValue, getEsDraft } = require("../mocks")
 
-class CreateAggregateActionsByFunctionsTest {
+class CommandGWTGeneratorByFunctionsTest {
     static async test() {
-        const esValue = getEsValue("libraryService", ["remainOnlyBoundedContext"]);
+        const esValue = getEsValue("libraryService", []);
 
 
         console.log("[*] 기존 이벤트 스토밍 정보: ", ESValueSummarizeWithFilter.getSummarizedESValue(
             esValue, [], new ESAliasTransManager(esValue)
         ))
 
-        const generator = CreateAggregateActionsByFunctions.createGeneratorByDraftOptions({
+        const generator = CommandGWTGeneratorByFunctions.createGeneratorByDraftOptions({
             onGenerationSucceeded: (returnObj) => {
-                if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
-                    esValue.elements = returnObj.modelValue.createdESValue.elements
-                    esValue.relations = returnObj.modelValue.createdESValue.relations
+                if(returnObj.modelValue && returnObj.modelValue.commandsToReplace) {
+                    for(const command of returnObj.modelValue.commandsToReplace)
+                        esValue.elements[command.id] = command
                 }
 
                 console.log("[*] 업데이트된 이벤트 스토밍 정보: ", ESValueSummarizeWithFilter.getSummarizedESValue(
@@ -34,12 +34,10 @@ class CreateAggregateActionsByFunctionsTest {
 
         generator.initInputs(
             getEsDraft("libraryService"),
-            esValue,
-            esConfigs.userInfo,
-            esConfigs.information
+            esValue
         )
         generator.generateIfInputsExist()
     }
 }
 
-module.exports = CreateAggregateActionsByFunctionsTest;
+module.exports = CommandGWTGeneratorByFunctionsTest;

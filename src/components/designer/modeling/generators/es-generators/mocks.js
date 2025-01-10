@@ -13,6 +13,15 @@
  * @example 템플릿 필터 키를 활용해서 BoundedContext 엘리먼트만 얻기
  * // 가능한 템플릿: remainOnlyBoundedContext, remainOnlyAggregate
  * console.log(getEsValue("libraryService", ['remainOnlyBoundedContext']))
+ * 
+ * @example ClassId 역할을 수행하는 ValueObject와 관련 속성을 Aggregate에서 제거해서 얻기
+ * console.log(getEsValue("libraryService", ['classId']))
+ * 
+ * @note
+ * - 가능한 typesToExcludeFilter 키 값 종류
+ *    - 일반 속성: boundedcontext, aggregate, command, event, policy, view(readmodel), valueobject, enumeration(enum), entity
+ *    - 템플릿: remainOnlyBoundedContext, remainOnlyAggregate
+ *    - 특수 속성: classId
  */
 export const getEsValue = (targetService="libraryService", typesToExcludeFilter=[]) => {
     let excludeFilterTemplate = []
@@ -25,11 +34,63 @@ export const getEsValue = (targetService="libraryService", typesToExcludeFilter=
         }
     })
 
-    const targetEsValue = JSON.parse(JSON.stringify(esValues[targetService].esValue))
-    for(const element of Object.values(targetEsValue.elements)) {
-        if(typesToExcludeFilter.some(type => element._type.toLowerCase().includes(type.toLowerCase())))
-            delete targetEsValue.elements[element.id]
+
+    const inferedTypesToExcludeFilter = []
+    for(const excludeFilter of typesToExcludeFilter) {
+        if(excludeFilter.toLowerCase().includes("valueobject")) 
+            inferedTypesToExcludeFilter.push("org.uengine.uml.model.vo.Class")
+        if(excludeFilter.toLowerCase().includes("entity")) 
+            inferedTypesToExcludeFilter.push("org.uengine.uml.model.Class")
+        if(excludeFilter.toLowerCase().includes("readmodel")) 
+            inferedTypesToExcludeFilter.push("org.uengine.modeling.model.View")
+        if(excludeFilter.toLowerCase().includes("enum")) 
+            inferedTypesToExcludeFilter.push("org.uengine.uml.model.enum")
     }
+    typesToExcludeFilter = [...typesToExcludeFilter, ...inferedTypesToExcludeFilter]
+
+
+    const targetEsValue = JSON.parse(JSON.stringify(esValues[targetService].esValue))
+    let deletedElements = []
+    for(const element of Object.values(targetEsValue.elements).filter(e => e)) {
+        if(typesToExcludeFilter.some(type => element._type.toLowerCase().includes(type.toLowerCase()))) {
+            deletedElements.push(element)
+            delete targetEsValue.elements[element.id]
+        }
+    }
+
+    for(const element of Object.values(targetEsValue.elements).filter(e => e)) {
+        if(element._type !== "org.uengine.modeling.model.Aggregate") continue
+        if(!element.aggregateRoot || !element.aggregateRoot.entities || !element.aggregateRoot.entities.elements) continue
+        const aggregateElements = element.aggregateRoot.entities.elements
+
+        let deletedAggElements = []
+        for(const aggElement of Object.values(aggregateElements).filter(e => e)) {
+            if(typesToExcludeFilter.some(type => aggElement._type.toLowerCase().includes(type.toLowerCase()))) {
+                deletedAggElements.push(aggElement)
+                delete aggregateElements[aggElement.id]
+            }
+
+            if(typesToExcludeFilter.includes("classId") && aggElement._type === "org.uengine.uml.model.vo.Class" && aggElement.name.includes("Id")) {
+                element.aggregateRoot.fieldDescriptors = element.aggregateRoot.fieldDescriptors.filter(fieldDescriptor => fieldDescriptor.className !== aggElement.name)
+                deletedAggElements.push(aggElement)
+                delete aggregateElements[aggElement.id]
+            }
+        }
+
+        if(!element.aggregateRoot.entities.relations) continue
+        const aggregateRelations = element.aggregateRoot.entities.relations
+
+        for(const relation of Object.values(aggregateRelations).filter(r => r)) {
+            if(deletedAggElements.some(element => element.id === relation.sourceElement.id || element.id === relation.targetElement.id))
+                delete aggregateRelations[relation.id]
+        }
+    }
+
+    for(const relation of Object.values(targetEsValue.relations).filter(r => r)) {
+        if(deletedElements.some(element => element.id === relation.sourceElement.id || element.id === relation.targetElement.id))
+            delete targetEsValue.relations[relation.id]
+    }
+
     return targetEsValue
 }
 

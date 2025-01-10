@@ -1,9 +1,9 @@
-
-const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
-const ESActionsUtil = require("./modules/ESActionsUtil")
-const { ESValueSummarizeWithFilter } = require("../es-generators/helpers")
-const ActionsProcessorUtils = require("./modules/ESActionsUtilProcessors/ActionsProcessorUtils")
-const ESAliasTransManager = require("./modules/ESAliasTransManager")
+const FormattedJSONAIGenerator = require("../../FormattedJSONAIGenerator")
+const { ESValueSummaryGenerator } = require("..")
+const ESActionsUtil = require("../../es-ddl-generators/modules/ESActionsUtil")
+const { ESValueSummarizeWithFilter } = require("../helpers")
+const ActionsProcessorUtils = require("../../es-ddl-generators/modules/ESActionsUtilProcessors/ActionsProcessorUtils")
+const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTransManager")
 const changeCase = require('change-case');
 
 class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
@@ -14,10 +14,232 @@ class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
         this.progressCheckStrings = ["overviewThoughts", "actions"]
     }
 
+    /**
+     * @description 
+     * Aggregate 간의 참조 관계를 기반으로 클래스 ID를 생성하는 제너레이터를 생성합니다.
+     * 이벤트 스토밍 모델에서 Aggregate 간의 양방향 참조를 단방향으로 최적화하고,
+     * 적절한 ID 클래스를 자동으로 생성하는 기능을 제공합니다.
+     * 
+     * @example 기본적인 Aggregate 클래스 ID 생성
+     * const generator = CreateAggregateClassIdByDrafts.createGeneratorByDraftOptions({
+     *   onGenerationSucceeded: (returnObj) => {
+     *     // 생성된 클래스 ID 정보로 이벤트 스토밍 모델 업데이트
+     *     esValue.elements = returnObj.modelValue.createdESValue.elements
+     *     esValue.relations = returnObj.modelValue.createdESValue.relations
+     *   },
+     *   onGenerationDone: () => {
+     *     console.log("클래스 ID 생성 완료")
+     *   }
+     * })
+     * 
+     * // 제너레이터 초기화 및 실행
+     * generator.initInputs(
+     *   mocks.getEsDraft("libraryService"),
+     *   mocks.getEsValue("libraryService", ["remainOnlyAggregate", "classId"]),
+     *   mocks.esConfigs.userInfo,
+     *   mocks.esConfigs.information
+     * )
+     * generator.generateIfInputsExist()
+     * 
+     * @example 진행 상태 모니터링을 포함한 고급 사용
+     * const generator = CreateAggregateClassIdByDrafts.createGeneratorByDraftOptions({
+     *   onFirstResponse: (returnObj) => {
+     *     console.log("초기 응답 수신")
+     *   },
+     *   onModelCreated: (returnObj) => {
+     *     console.log("모델 생성됨")
+     *   },
+     *   onGenerationSucceeded: (returnObj) => {
+     *     // 생성 성공 처리
+     *   },
+     *   onGenerationDone: () => {
+     *     // 모든 Class ID 생성 완료시 처리
+     *     console.log("모든 Class ID 생성 완료")
+     *   },
+     *   onRetry: (returnObj) => {
+     *     console.log(`오류 발생: ${returnObj.errorMessage}`)
+     *   },
+     *   onStopped: () => {
+     *     console.log("생성 중단됨")
+     *   }
+     * })
+     *
+     * @note
+     * - callbacks.onFirstResponse: 첫 번째 응답 수신 시 호출
+     * - callbacks.onModelCreated: 모델 생성 완료 시 호출
+     * - callbacks.onGenerationSucceeded: 각 생성 단계 성공 시 호출
+     * - callbacks.onRetry: 오류 발생으로 재시도 필요 시 호출
+     * - callbacks.onStopped: 생성 프로세스 중단 시 호출
+     * - callbacks.onGenerationDone: 모든 생성 작업 완료 시 호출
+     * - initInputs 메서드를 통해 필요한 입력값을 설정한 후 generateIfInputsExist를 호출하여 생성 시작
+     * - 양방향 참조가 있는 경우 자동으로 단방향으로 최적화됨
+     */
+    static createGeneratorByDraftOptions(callbacks){
+        const generator = new CreateAggregateClassIdByDrafts({
+            input: null,
 
-    onGenerateBefore(inputParams){
+            onFirstResponse: (returnObj) => {
+                if(callbacks.onFirstResponse)
+                    callbacks.onFirstResponse(returnObj)
+            },
+
+            onModelCreated: (returnObj) => {
+                if(callbacks.onModelCreated)
+                    callbacks.onModelCreated(returnObj)
+            },
+
+            onGenerationSucceeded: (returnObj) => {
+                if(callbacks.onGenerationSucceeded)
+                    callbacks.onGenerationSucceeded(returnObj)
+
+                if(generator.generateIfInputsExist())
+                    return
+
+
+                if(callbacks.onGenerationDone)
+                    callbacks.onGenerationDone()
+            },
+
+            onRetry: (returnObj) => {
+                alert(`[!] An error occurred during aggregate class id creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
+
+                if(callbacks.onRetry)
+                    callbacks.onRetry(returnObj)
+            },
+
+            onStopped: () => {
+                if(callbacks.onStopped)
+                    callbacks.onStopped()
+            }
+        })
+
+        generator.initInputs = (draftOptions, esValue, userInfo, information) => {
+            let draftOptionStructure = {}
+            for(const boundedContextId of Object.keys(draftOptions)) {
+                draftOptionStructure[boundedContextId] = draftOptions[boundedContextId].structure
+            }
+
+            const references = []
+            for(const boundedContextId of Object.keys(draftOptionStructure)) {
+                for(const structure of draftOptionStructure[boundedContextId]) {
+                    for(const vo of structure.valueObjects) {
+                        if('referencedAggregate' in vo) {
+                            references.push({
+                                fromAggregate: structure.aggregate.name,
+                                toAggregate: vo.referencedAggregate.name,
+                                referenceName: vo.name
+                            })
+                        }
+                    }
+                }
+            }
+
+            if(references.length > 0) {
+                const processedPairs = new Set()
+                const inputs = []
+
+                references.forEach(ref => {
+                    const pairKey = [ref.fromAggregate, ref.toAggregate].sort().join('-')
+                    
+                    if(!processedPairs.has(pairKey)) {
+                        processedPairs.add(pairKey)
+
+                        const bidirectionalRefs = references.filter(r => 
+                            (r.fromAggregate === ref.fromAggregate && r.toAggregate === ref.toAggregate) ||
+                            (r.fromAggregate === ref.toAggregate && r.toAggregate === ref.fromAggregate)
+                        )
+
+                        const targetReferences = bidirectionalRefs.map(r => r.referenceName)
+
+                        inputs.push({
+                            draftOption: draftOptionStructure,
+                            esValue: esValue,
+                            userInfo: userInfo,
+                            information: information,
+                            targetReferences: targetReferences
+                        })
+                    }
+                })
+
+                generator.inputs = inputs
+            }
+            else
+                generator.inputs = []
+        }
+
+        generator.generateIfInputsExist = () => {
+            if(generator.inputs.length > 0) {
+                generator.client.input = generator.inputs.shift()
+                generator.generate()
+                return true
+            }
+            return false
+        }
+
+        return generator
+    }
+
+
+    async onGenerateBefore(inputParams){
         inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
-        this.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
+        inputParams.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
+        inputParams.summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(
+            inputParams.esValue, ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateOuterStickers, 
+            inputParams.esAliasTransManager
+        )
+
+        if(!this.isCreatedPromptWithinTokenLimit()) {
+            const leftTokenCount = this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
+            if(leftTokenCount <= 100)
+                throw new Error("[!] The size of the draft being passed is too large to process.")
+
+            console.log(`[*] 토큰 제한이 초과되어서 이벤트 스토밍 정보를 제한 수치까지 요약해서 전달함`)
+            console.log(`[*] 요약 이전 Summary`, inputParams.summarizedESValue)
+            const requestContext = this._buildRequestContext(inputParams)
+            inputParams.summarizedESValue = await ESValueSummaryGenerator.getSummarizedESValueWithMaxTokenSummarize(
+                requestContext,
+                inputParams.esValue,
+                ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateOuterStickers,
+                leftTokenCount,
+                this.model,
+                inputParams.esAliasTransManager
+            )
+            console.log(`[*] 요약 이후 Summary`, inputParams.summarizedESValue)
+        }
+    }
+
+    _buildRequestContext(inputParams) {
+    const relationships = [];
+    for (const boundedContextId of Object.keys(inputParams.draftOption)) {
+        for (const structure of inputParams.draftOption[boundedContextId]) {
+            if (structure.valueObjects) {
+                for (const vo of structure.valueObjects) {
+                    if (vo.referencedAggregate) {
+                        relationships.push({
+                            from: structure.aggregate.name,
+                            to: vo.referencedAggregate.name,
+                            reference: vo.name
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    const relationshipDescriptions = relationships
+        .filter(rel => inputParams.targetReferences.includes(rel.reference))
+        .map(rel => `${rel.from} -> ${rel.to} (via ${rel.reference})`);
+
+    return `Analyzing aggregate relationships for creating class IDs:
+${relationshipDescriptions.join('\n')}
+
+Focus on elements related to these aggregates and their relationships, particularly for implementing the following references: ${inputParams.targetReferences.join(', ')}.
+
+Key considerations:
+1. Aggregate relationships and their boundaries
+2. Value objects that implement these relationships
+3. Properties and identifiers needed for references
+4. Related commands and events that might use these references`;
     }
 
 
@@ -323,12 +545,8 @@ Please follow these rules:
     }
 
     __buildJsonUserQueryInputFormat() {
-        const summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(
-            JSON.parse(JSON.stringify(this.client.input.esValue)), 
-            ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateOuterStickers, this.esAliasTransManager)
-
         return {
-            "Summarized Existing EventStorming Model": JSON.stringify(summarizedESValue),
+            "Summarized Existing EventStorming Model": JSON.stringify(this.client.input.summarizedESValue),
 
             "Suggested Structure": JSON.stringify(this.client.input.draftOption),
 
@@ -382,7 +600,11 @@ CRITICAL RULES FOR REFERENCE GENERATION:
     _filterInvalidActions(actions){
          for(let i = actions.length - 1; i >= 0; i--) {
             const action = actions[i]
-            if(!action.args || !action.args.valueObjectName) continue
+            if(!action.args || !action.args.valueObjectName || 
+               !action.ids || !action.ids.valueObjectId) {
+                actions.splice(i, 1);
+                continue
+            }
             
             const isValidReference = this.client.input.targetReferences.some(
                 target => action.args.valueObjectName.toLowerCase().includes(target.toLowerCase())
@@ -397,12 +619,12 @@ CRITICAL RULES FOR REFERENCE GENERATION:
     _filterBidirectionalActions(actions){
         for (let i = 0; i < actions.length; i++) {
             const action1 = actions[i];
-            const agg1Name = this.client.input.esValue.elements[this.esAliasTransManager.getUUIDSafely(action1.ids.aggregateId)].name;
+            const agg1Name = this.client.input.esValue.elements[this.client.input.esAliasTransManager.getUUIDSafely(action1.ids.aggregateId)].name;
             if(!agg1Name) continue
             
             for (let j = i + 1; j < actions.length; j++) {
                 const action2 = actions[j];
-                const agg2Name = this.client.input.esValue.elements[this.esAliasTransManager.getUUIDSafely(action2.ids.aggregateId)].name;
+                const agg2Name = this.client.input.esValue.elements[this.client.input.esAliasTransManager.getUUIDSafely(action2.ids.aggregateId)].name;
                 if(!agg2Name) continue
                 
                 if (action1.args.referenceClass === agg2Name && 
@@ -415,7 +637,7 @@ CRITICAL RULES FOR REFERENCE GENERATION:
     }
 
     _getActionAppliedESValue(actions) {
-        actions = this.esAliasTransManager.transToUUIDInActions(actions)
+        actions = this.client.input.esAliasTransManager.transToUUIDInActions(actions)
         this._modifyActionsForReferenceClassValueObject(actions)
 
         let esValueToModify = JSON.parse(JSON.stringify(this.client.input.esValue))

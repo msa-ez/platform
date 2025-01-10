@@ -1,8 +1,7 @@
-
-const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
-const ESActionsUtil = require("./modules/ESActionsUtil")
-const { ESValueSummarizeWithFilter } = require("../es-generators/helpers")
-const ESAliasTransManager = require("./modules/ESAliasTransManager")
+const FormattedJSONAIGenerator = require("../../FormattedJSONAIGenerator")
+const ESActionsUtil = require("../../es-ddl-generators/modules/ESActionsUtil")
+const { ESValueSummarizeWithFilter } = require("../helpers")
+const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTransManager")
 
 class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
@@ -10,6 +9,71 @@ class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
 
         this.checkInputParamsKeys = ["targetBoundedContext", "description", "esValue", "userInfo", "information"]
         this.progressCheckStrings = ["overviewThoughts", "extractedPolicies"]
+    }
+
+    static createGeneratorByDraftOptions(callbacks){
+        const generator = new CreatePolicyActionsByFunctions({
+            input: null,
+
+            onFirstResponse: (returnObj) => {
+                if(callbacks.onFirstResponse)
+                    callbacks.onFirstResponse(returnObj)
+            },
+
+            onModelCreated: (returnObj) => {
+                if(callbacks.onModelCreated)
+                    callbacks.onModelCreated(returnObj)
+            },
+
+            onGenerationSucceeded: (returnObj) => {
+                if(callbacks.onGenerationSucceeded)
+                    callbacks.onGenerationSucceeded(returnObj)
+
+                if(generator.generateIfInputsExist())
+                    return
+
+
+                if(callbacks.onGenerationDone)
+                    callbacks.onGenerationDone()
+            },
+
+            onRetry: (returnObj) => {
+                alert(`[!] An error occurred during policy creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
+
+                if(callbacks.onRetry)
+                    callbacks.onRetry(returnObj)
+            },
+
+            onStopped: () => {
+                if(callbacks.onStopped)
+                    callbacks.onStopped()
+            }
+        })
+
+        generator.initInputs = (draftOptions, esValue, userInfo, information) => {
+            let inputs = []
+            for(const eachDraftOption of Object.values(draftOptions)) {
+                inputs.push({
+                        targetBoundedContext: eachDraftOption.boundedContext,
+                        description: eachDraftOption.description,
+                        esValue: esValue,
+                        userInfo: userInfo,
+                        information: information
+                    })
+            }
+            generator.inputs = inputs
+        }
+
+        generator.generateIfInputsExist = () => {
+            if(generator.inputs.length > 0) {
+                generator.client.input = generator.inputs.shift()
+                generator.generate()
+                return true
+            }
+            return false
+        }
+
+        return generator
     }
 
 
