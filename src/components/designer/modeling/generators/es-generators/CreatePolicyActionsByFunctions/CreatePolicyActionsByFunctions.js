@@ -11,6 +11,63 @@ class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
         this.progressCheckStrings = ["overviewThoughts", "extractedPolicies"]
     }
 
+    /**
+     * @description 이벤트 스토밍 모델에서 정책을 생성하고 관리하기 위한 제너레이터를 생성합니다.
+     * 정책 생성 프로세스의 각 단계(첫 응답, 모델 생성, 생성 성공, 재시도, 중지)에서 
+     * 콜백을 통해 처리할 수 있습니다.
+     * 
+     * @example 기본적인 정책 생성기 설정
+     * const esValue = getEsValue("libraryService", ["policy"])
+     * const generator = CreatePolicyActionsByFunctions.createGeneratorByDraftOptions({
+     *     onGenerationSucceeded: (returnObj) => {
+     *         // 생성된 정책을 기존 이벤트 스토밍 모델에 적용
+     *         if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
+     *             esValue.elements = returnObj.modelValue.createdESValue.elements
+     *             esValue.relations = returnObj.modelValue.createdESValue.relations
+     *         }
+     *     },
+     *     onGenerationDone: () => {
+     *         console.log("정책 생성 완료")
+     *     }
+     * })
+     * generator.initInputs(
+     *      getEsDraft("libraryService"),
+     *      esValue,
+     *      esConfigs.userInfo,
+     *      esConfigs.information
+     * )
+     * generator.generateIfInputsExist()
+
+     * @example 전체 생성 프로세스 모니터링
+     * const generator = CreatePolicyActionsByFunctions.createGeneratorByDraftOptions({
+     *     onFirstResponse: (returnObj) => {
+     *         console.log("정책 생성 시작")
+     *     },
+     *     onModelCreated: (returnObj) => {
+     *         console.log("모델 생성됨")
+     *     },
+     *     onGenerationSucceeded: (returnObj) => {
+     *         // 생성된 모델 처리
+     *     },
+     *     onGenerationDone: () => {
+     *         // 모든 정책 생성 완료시 처리
+     *         console.log("모든 정책 생성 완료")
+     *     },
+     *     onRetry: (returnObj) => {
+     *         console.error("정책 생성 중 오류 발생:", returnObj.errorMessage)
+     *     },
+     *     onStopped: () => {
+     *         console.log("정책 생성 중단")
+     *     }
+     * })
+     * 
+     * @note
+     * - 콜백 함수들은 선택적으로 구현할 수 있으며, 필요한 콜백만 정의하면 됩니다.
+     * - initInputs 메소드를 통해 여러 정책을 순차적으로 생성할 수 있습니다.
+     * - generateIfInputsExist는 큐에 남은 입력이 있는 경우 자동으로 다음 정책 생성을 시작합니다.
+     * - 에러 발생 시 onRetry 콜백에서 적절한 에러 처리가 필요합니다.
+     * - 모든 정책 생성이 완료되면 onGenerationDone이 호출됩니다.
+     */
     static createGeneratorByDraftOptions(callbacks){
         const generator = new CreatePolicyActionsByFunctions({
             input: null,

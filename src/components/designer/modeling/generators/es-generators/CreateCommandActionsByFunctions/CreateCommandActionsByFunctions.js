@@ -14,6 +14,65 @@ class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
         this.progressCheckStrings = ["overviewThoughts", "actions"]
     }
 
+    /**
+     * @description 이벤트 스토밍 모델의 커맨드, 이벤트, ReadModel을 생성하기 위한 제너레이터를 생성합니다.
+     * 각 Aggregate별로 순차적으로 생성을 수행하며, 생성 과정의 각 단계에서 콜백을 통해 진행 상황을 모니터링하고 
+     * 제어할 수 있습니다.
+     * 
+     * @example 기본적인 이벤트 스토밍 생성기 설정
+     * // 생성된 모델을 처리하고 완료 시점을 확인하는 기본 설정
+     * const esValue = mocks.getEsValue("libraryService", ["remainOnlyAggregate"])
+     * const generator = CreateCommandActionsByFunctions.createGeneratorByDraftOptions({
+     *     onGenerationSucceeded: (returnObj) => {
+     *         // 생성된 모델 처리
+     *         if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
+     *             esValue.elements = returnObj.modelValue.createdESValue.elements
+     *             esValue.relations = returnObj.modelValue.createdESValue.relations
+     *         }
+     *     },
+     *     onGenerationDone: () => {
+     *         console.log("[*] 이벤트 스토밍 생성 완료")
+     *     }
+     * })
+     * generator.initInputs(
+     *      mocks.getEsDraft("libraryService"),
+     *      esValue,
+     *      esConfigs.userInfo,
+     *      esConfigs.information
+     * )
+     * generator.generateIfInputsExist()
+     * 
+     * @example 전체 생성 프로세스 모니터링
+     * // 생성 과정의 각 단계를 모니터링하고 오류 처리하는 고급 설정
+     * const generator = CreateCommandActionsByFunctions.createGeneratorByDraftOptions({
+     *     onFirstResponse: (returnObj) => {
+     *         console.log("초기 응답 수신")
+     *     },
+     *     onModelCreated: (returnObj) => {
+     *         console.log("모델 생성됨")
+     *     },
+     *     onGenerationSucceeded: (returnObj) => {
+     *         // 생성된 모델 처리
+     *     },
+     *     onGenerationDone: () => {
+     *         // 모든 커맨드 생성 완료시 처리
+     *         console.log("모든 커맨드 생성 완료")
+     *     },
+     *     onRetry: (returnObj) => {
+     *         console.log(`오류 발생: ${returnObj.errorMessage}`)
+     *     },
+     *     onStopped: () => {
+     *         console.log("생성 중단됨")
+     *     }
+     * })
+     *
+     * @note
+     * - generator.initInputs()를 호출하여 생성에 필요한 입력값을 초기화해야 합니다.
+     * - generator.generateIfInputsExist()를 호출하여 실제 생성 프로세스를 시작합니다.
+     * - 모든 콜백 함수는 선택적이며, 필요한 콜백만 구현할 수 있습니다.
+     * - onGenerationSucceeded 콜백에서는 반드시 생성된 모델을 저장하거나 처리해야 합니다.
+     * - 여러 Aggregate가 있는 경우 순차적으로 처리되며, 각각에 대해 콜백이 호출됩니다.
+     */
     static createGeneratorByDraftOptions(callbacks){
         const generator = new CreateCommandActionsByFunctions({
             input: null,

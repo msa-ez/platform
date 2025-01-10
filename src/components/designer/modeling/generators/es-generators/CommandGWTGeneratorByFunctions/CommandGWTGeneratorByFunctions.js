@@ -11,7 +11,43 @@ class CommandGWTGeneratorByFunctions extends FormattedJSONAIGenerator{
         this.progressCheckStrings = ["overviewThoughts", "targetCommandId"]
     }
 
-
+    /**
+     * @description 이벤트 스토밍 모델에서 Command들의 GWT(Given-When-Then) 시나리오를 생성하기 위한 generator를 생성합니다.
+     * 생성된 generator는 각각의 Aggregate에 대해 순차적으로 GWT를 생성하며, 생성 과정의 각 단계에서 콜백을 통해 진행 상황을 전달합니다.
+     * 
+     * @example 실제 이벤트 스토밍 모델 업데이트 예시
+     * const esValue = mocks.getEsValue("libraryService")
+     * const generator = CommandGWTGeneratorByFunctions.createGeneratorByDraftOptions({
+     *     onGenerationSucceeded: (returnObj) => {
+     *         if(returnObj.modelValue && returnObj.modelValue.commandsToReplace) {
+     *             // 생성된 GWT를 이벤트 스토밍 모델에 적용
+     *             for(const command of returnObj.modelValue.commandsToReplace)
+     *                 esValue.elements[command.id] = command
+     *         }
+     *     },
+     *     onGenerationDone: () => {
+     *         console.log("이벤트 스토밍 모델 업데이트 완료")
+     *     }
+     * })
+     * 
+     * // generator 초기화 및 실행
+     * generator.initInputs(
+     *      mocks.getEsDraft("libraryService"),
+     *      esValue
+     * )
+     * generator.generateIfInputsExist()
+     *
+     * @note
+     * - callbacks.onFirstResponse: 첫 번째 응답이 도착했을 때 호출됩니다.
+     * - callbacks.onModelCreated: 모델이 생성되었을 때 호출됩니다.
+     * - callbacks.onGenerationSucceeded: GWT 생성이 성공했을 때 호출됩니다.
+     *   returnObj.modelValue.commandsToReplace를 통해 업데이트된 Command 정보를 얻을 수 있습니다.
+     * - callbacks.onRetry: 오류가 발생하여 재시도가 필요할 때 호출됩니다.
+     * - callbacks.onStopped: 생성이 중지되었을 때 호출됩니다.
+     * - callbacks.onGenerationDone: 모든 GWT 생성이 완료되었을 때 호출됩니다.
+     * - generator.initInputs()를 통해 초기 입력값을 설정한 후 generateIfInputsExist()를 호출하여 생성을 시작합니다.
+     * - 각 Aggregate마다 순차적으로 GWT가 생성되므로, 대량의 데이터 처리 시 성능을 고려해야 합니다.
+     */
     static createGeneratorByDraftOptions(callbacks){
         const generator = new CommandGWTGeneratorByFunctions({
             input: null,
