@@ -57,7 +57,7 @@
             >
                 <span style="color: white;">
                     <v-row>
-                        <Icon style="width:30px; height:30px; margin-right:5px; margin-top:2px;" icon="cib:windows" />
+                        <Icons :icon="'windows'" :size="30" style="margin-right:5px; margin-top:2px;" />
                         <div style="text-align:left; margin-top:2px;">For<br>Windows</div>
                     </v-row>
                 </span>

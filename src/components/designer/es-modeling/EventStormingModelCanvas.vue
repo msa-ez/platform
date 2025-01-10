@@ -216,13 +216,8 @@
                                     </div>
 
                                     <!-- PBC Element -->
-                                    <div
-                                            v-if="filteredPBCValue.elements &&typeof filteredPBCValue.elements == 'object'"
-                                    >
-                                        <div
-                                                v-for="elementId in Object.keys(filteredPBCValue.elements)"
-                                                :key="elementId"
-                                        >
+                                    <div v-if="filteredPBCValue.elements &&typeof filteredPBCValue.elements == 'object'">
+                                        <div v-for="elementId in Object.keys(filteredPBCValue.elements)" :key="elementId">
                                             <component
                                                     v-if="elementId &&filteredPBCValue.elements[elementId]"
                                                     :is="getComponentByClassName(filteredPBCValue.elements[elementId]._type)"
@@ -232,13 +227,8 @@
                                             ></component>
                                         </div>
                                     </div>
-                                    <div
-                                            v-if="filteredPBCValue.relations && typeof filteredPBCValue.relations == 'object'"
-                                    >
-                                        <div
-                                                v-for="relationId in Object.keys(filteredPBCValue.relations)"
-                                                :key="relationId"
-                                        >
+                                    <div v-if="filteredPBCValue.relations && typeof filteredPBCValue.relations == 'object'">
+                                        <div v-for="relationId in Object.keys(filteredPBCValue.relations)" :key="relationId">
                                             <component
                                                     v-if="relationId &&filteredPBCValue.relations[relationId]"
                                                     :is="getComponentByClassName(filteredPBCValue.relations[relationId]._type)"
@@ -704,7 +694,7 @@
                                                                         :disabled="!initLoad"
                                                                         @click="toggleMonitoringDialog()"
                                                                 >
-                                                                    <div>MONITORING</div>
+                                                                    <v-icon>mdi-monitor</v-icon>MONITORING
                                                                 </v-btn>
                                                             </div>
                                                         </template>
@@ -1267,22 +1257,6 @@
                             :modelValue="value"
                             :tabs="tabs"
                     >
-                        <!-- <v-tooltip slot="buttons" bottom>
-                            <template v-slot:activator="{ on, attrs }">
-                                <v-btn
-                                        @click="generateAggregate()"
-                                        icon
-                                        small
-                                        v-bind="attrs"
-                                        v-on="on"
-                                        style="margin-right: 10px; z-index: 2"
-                                        disabled
-                                >
-                                    <Icon icon="ph:tag-simple-light" width="30" height="30" />
-                                </v-btn>
-                            </template>
-                            <span>Generate Code</span>
-                        </v-tooltip> -->
                     </GeneratorUI>
 
                     <div v-if="showUiWizard">
@@ -1542,25 +1516,16 @@
                             transition="dialog-bottom-transition"
                     >
                         <v-card>
-                            <Icon
-                                    v-if="
-                                    embeddedCanvasType ==
-                                    'Domain Class Modeling'
-                                "
-                                    class="gs-icon-style"
-                                    icon="fluent-mdl2:modeling-view"
-                                    style="
-                                    margin-right: 2px;
-                                    height: 40px;
-                                    width: 40px;
-                                    color: #1e88e5;
+                            <Icons v-if="embeddedCanvasType == 'Domain Class Modeling'"
+                                class="gs-icon-style"
+                                :icon="'modeling-view'"
+                                :size="50"
+                                :color="'#1e88e5'"
+                                style="margin-right: 2px;
                                     position: fixed;
                                     z-index: 1;
                                     top: 15px;
-                                    left: 20px;
-                                    width: 50px;
-                                    height: 50px;
-                                "
+                                    left: 20px;"
                             />
                             <v-icon
                                     v-else-if="embeddedCanvasType == 'Kubernetes'"
@@ -1740,8 +1705,9 @@
                         <div class="d-flex justify-space-between">
                             <div>
                                 <v-tabs v-model="monitoringTab">
-                                    <v-tab v-for="tab in monitoringTabs" :key="tab">
-                                        {{ tab.toUpperCase() }} Events
+                                    <!-- tab.text를 사용하여 화면에 표시 -->
+                                    <v-tab v-for="tab in monitoringTabs" :key="tab.value">
+                                        {{ tab.text.toUpperCase() }} {{ $t('EventStormingModelCanvas.events') }}
                                     </v-tab>
                                 </v-tabs>
                             </div>
@@ -1750,17 +1716,21 @@
                             </v-btn>
                         </div>
                         <v-card-text>
+                            <v-alert v-if="monitoringMsg.length > 0" type="warning" outlined dense>
+                                {{ monitoringMsg }}
+                            </v-alert>
                             <v-tabs-items v-model="monitoringTab">
-                                <v-tab-item v-for="tab in monitoringTabs" :key="tab">
-                                    <div v-if="tab === 'filtered'">
+                                <!-- tab.value를 사용하여 데이터 처리 -->
+                                <v-tab-item v-for="tab in monitoringTabs" :key="tab.value">
+                                    <div v-if="tab.value === 'filtered'" class="pt-2">
                                         <v-text-field
                                             v-model="searchKeyword"
-                                            label="Search"
+                                            :label="$t('EventStormingModelCanvas.search')"
                                             clearable
                                             outlined
                                             dense
                                             persistent-hint
-                                            :hint="'Search by event ' + searchKeyList.join(', ')"
+                                            :hint="$t('EventStormingModelCanvas.searchByEvent', {label: searchKeyList.join(', ')})"
                                             @keydown.enter="searchEventByKeyword()"
                                         >
                                             <template v-slot:append>
@@ -1769,7 +1739,7 @@
                                         </v-text-field>
                                     </div>
 
-                                    <v-data-table
+                                    <v-data-table class="monitoring-dialog-table"
                                         v-if="isEventLogsFetched"
                                         :headers="eventHeaders"
                                         :items="eventLogs"
@@ -1778,6 +1748,7 @@
                                         show-expand
                                         single-expand
                                         :expanded.sync="expandedLogs"
+                                        :style="tab.value === 'filtered' ? 'height:83vh;' : 'height:92vh;'"
                                     >
                                         <template v-slot:item="{ item, index }">
                                             <tr @click="selectedEventProgress(item, index)"
@@ -1789,13 +1760,16 @@
                                                 <td>{{ item.timestamp }}</td>
                                                 <td @click.stop="toggleEventPayload(item)">
                                                     <v-icon>
-                                                        {{ expandedLogs.includes(item) ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
+                                                        {{ expandedLogs.length > 0 ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
                                                     </v-icon>
                                                 </td>
                                             </tr>
                                         </template>
                                         <template v-slot:expanded-item="{ headers, item }">
                                             <td :colspan="headers.length">
+                                                <v-alert v-if="item.error" type="error" outlined dense>
+                                                    {{ item.error }}
+                                                </v-alert>
                                                 <div class="pa-1">
                                                     <tree-view :data="item.payload"></tree-view>
                                                 </div>
@@ -2045,11 +2019,12 @@
     import ModelDraftDialogWithXAI from "../context-mapping-modeling/dialogs/ModelDraftDialogWithXAI.vue"
     import GWTGeneratorByFunctions from "../modeling/generators/es-ddl-generators/GWTGeneratorByFunctions";
     import DraftGeneratorByFunctions from "../modeling/generators/es-ddl-generators/DraftGeneratorByFunctions";
-    import CreateAggregateActionsByFunctions from "../modeling/generators/es-ddl-generators/CreateAggregateActionsByFunctions";
+    import { CreateAggregateActionsByFunctions } from "../modeling/generators/es-generators";
     import CreateCommandActionsByFunctions from "../modeling/generators/es-ddl-generators/CreateCommandActionsByFunctions";
     import CreatePolicyActionsByFunctions from "../modeling/generators/es-ddl-generators/CreatePolicyActionsByFunctions";
     import GeneratorProgress from "./components/GeneratorProgress.vue"
     import PreProcessingFunctionsGenerator from "../modeling/generators/es-ddl-generators/PreProcessingFunctionsGenerator";
+    import CreateAggregateClassIdByDrafts from "../modeling/generators/es-ddl-generators/CreateAggregateClassIdByDrafts";
     import ESActionsUtil from "../modeling/generators/es-ddl-generators/modules/ESActionsUtil"
     const prettier = require("prettier");
     const plugins = require("prettier-plugin-java");
@@ -2133,13 +2108,16 @@
                 //monitoring
                 monitoringDialog: false,
                 monitoringTab: 0,
-                monitoringTabs: ["recent", "filtered"],
+                monitoringTabs: [
+                    { text: this.$t('EventStormingModelCanvas.recent'), value: "recent" },
+                    { text: this.$t('EventStormingModelCanvas.filtered'), value: "filtered" }
+                ],
                 isEventLogsFetched: false,
                 eventHeaders: [
-                    { text: 'Key', value: 'correlationKey' },
-                    { text: 'Type', value: 'type' },
-                    { text: 'Timestamp', value: 'timestamp' },
-                    { text: 'Payload', value: 'data-table-expand' }
+                    { text: this.$t('EventStormingModelCanvas.correlationKey'), value: 'correlationKey' },
+                    { text: this.$t('EventStormingModelCanvas.text'), value: 'type' },
+                    { text: this.$t('EventStormingModelCanvas.timestamp'), value: 'timestamp' },
+                    { text: this.$t('EventStormingModelCanvas.payload'), value: 'data-table-expand', width: 'auto' }
                 ],
                 eventLogs: [],
                 expandedLogs: [],
@@ -2147,6 +2125,7 @@
                 fetchEventInterval: null,
                 searchKeyList: ['correlationKey'],
                 searchKeyword: "",
+                monitoringMsg: "",
                 progressElements: [],
 
                 showContinue: false,
@@ -2550,13 +2529,14 @@
 
                 generators: {
                     CreateAggregateActionsByFunctions: {
+                        generator: null
+                    },
+
+                    CreateAggregateClassIdByDrafts: {
                         generator: null,
                         inputs: [],
                         generateIfInputsExist: () => {},
-                        initInputs: (draftOptions) => {},
-                        callbacks: {
-                            addAggregateRelation: []
-                        }
+                        initInputs: (draftOptions) => {}
                     },
 
                     CreateCommandActionsByFunctions: {
@@ -2763,7 +2743,81 @@
                 }
             })
 
-            this.generators.CreateAggregateActionsByFunctions.generator = new CreateAggregateActionsByFunctions({
+
+            const byFunctionCallbacks = {
+                onFirstResponse: (returnObj) => {
+                    this.generatorProgressDto = {
+                        generateDone: false,
+                        displayMessage: returnObj.directMessage,
+                        progress: 0,
+                        actions: {
+                            stopGeneration: () => {
+                                returnObj.actions.stopGeneration()
+                            }
+                        }
+                    }
+                },
+
+                onModelCreated: (returnObj) => {
+                    this.generatorProgressDto.displayMessage = returnObj.directMessage
+                    this.generatorProgressDto.progress = returnObj.progress
+                },
+
+                onGenerationSucceeded: (returnObj) => {
+                    if(returnObj.modelValue.removedElements && returnObj.modelValue.removedElements.length > 0) {
+                        returnObj.modelValue.removedElements.forEach(element => {
+                            if(this.value.elements[element.id])
+                                this.removeElementAction(this.value.elements[element.id])
+                        })
+                    }
+
+                    if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
+                        this.changedByMe = true
+                        this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
+                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
+                    }
+                },
+
+                onRetry: (returnObj) => {
+                    alert(`[!] An error occurred during creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: true,
+                        draftUIInfos: {
+                            leftBoundedContextCount: 0
+                        },
+                        isGeneratorButtonEnabled: true
+                    }
+                    this.generatorProgressDto.generateDone = tru
+                },
+
+                onStopped: () => {
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onGenerationDone: () => {
+                    this.generatorProgressDto.generateDone = true
+                }
+            }
+
+            this.generators.CreateAggregateActionsByFunctions.generator = CreateAggregateActionsByFunctions.createGeneratorByDraftOptions(
+                {
+                    onFirstResponse: byFunctionCallbacks.onFirstResponse,
+                    onModelCreated: byFunctionCallbacks.onModelCreated,
+                    onGenerationSucceeded: byFunctionCallbacks.onGenerationSucceeded,
+                    onRetry: byFunctionCallbacks.onRetry,
+                    onStopped: byFunctionCallbacks.onStopped,
+                    onGenerationDone: () => {
+                        this.generators.CreateAggregateClassIdByDrafts.initInputs(this.selectedDraftOptions)
+                        if(this.generators.CreateAggregateClassIdByDrafts.generateIfInputsExist())
+                            return
+                        byFunctionCallbacks.onGenerationDone()
+                    }
+                }
+            )
+
+
+            this.generators.CreateAggregateClassIdByDrafts.generator = new CreateAggregateClassIdByDrafts({
                 input: null,
 
                 onFirstResponse: (returnObj) => {
@@ -2808,34 +2862,15 @@
                 },
 
                 onGenerationSucceeded: (returnObj) => {
-                    if(returnObj.modelValue.removedElements && returnObj.modelValue.removedElements.length > 0) {
-                        returnObj.modelValue.removedElements.forEach(element => {
-                            if(this.value.elements[element.id])
-                                this.removeElementAction(this.value.elements[element.id])
-                        })
-                    }
-
                     if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
                         this.changedByMe = true
                         this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
                         this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
                     }
 
-                    if(returnObj.modelValue.callbacks && returnObj.modelValue.callbacks.addAggregateRelation) {
-                        this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation.push((esValue) => {
-                            returnObj.modelValue.callbacks.addAggregateRelation(esValue)
-                        })
-                    }
 
-
-                    if(this.generators.CreateAggregateActionsByFunctions.generateIfInputsExist())
+                    if(this.generators.CreateAggregateClassIdByDrafts.generateIfInputsExist())
                         return
-
-                    if(this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation.length > 0) {
-                        this.changedByMe = true
-                        this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation.forEach(callback => callback(this.value))
-                    }
-                    this.forceRefreshCanvas()
 
                     this.generators.CreateCommandActionsByFunctions.initInputs(this.selectedDraftOptions)
                     if(this.generators.CreateCommandActionsByFunctions.generateIfInputsExist())
@@ -2870,30 +2905,66 @@
                     this.generatorProgressDto.generateDone = true
                 }
             })
-            this.generators.CreateAggregateActionsByFunctions.generateIfInputsExist = () => {
-                if(this.generators.CreateAggregateActionsByFunctions.inputs.length > 0) {
-                    this.generators.CreateAggregateActionsByFunctions.generator.client.input = this.generators.CreateAggregateActionsByFunctions.inputs.shift()
-                    this.generators.CreateAggregateActionsByFunctions.generator.generate()
+            this.generators.CreateAggregateClassIdByDrafts.generateIfInputsExist = () => {
+                if(this.generators.CreateAggregateClassIdByDrafts.inputs.length > 0) {
+                    this.generators.CreateAggregateClassIdByDrafts.generator.client.input = this.generators.CreateAggregateClassIdByDrafts.inputs.shift()
+                    this.generators.CreateAggregateClassIdByDrafts.generator.generate()
                     return true
                 }
                 return false
             }
-            this.generators.CreateAggregateActionsByFunctions.initInputs = (draftOptions) => {
-                let inputs = []
-                for(const eachDraftOption of Object.values(draftOptions)) {
-                    inputs = inputs.concat(
-                        eachDraftOption.structure.map((aggregateStructure, index) => ({
-                            targetBoundedContext: eachDraftOption.boundedContext,
-                            description: eachDraftOption.description,
-                            draftOption: [aggregateStructure],
-                            esValue: this.value,
-                            userInfo: this.userInfo,
-                            information: this.information,
-                            isAccumulated: index > 0
-                        })))
+            this.generators.CreateAggregateClassIdByDrafts.initInputs = (draftOptions) => {
+                let draftOptionStructure = {}
+                for(const boundedContextId of Object.keys(draftOptions)) {
+                    draftOptionStructure[boundedContextId] = draftOptions[boundedContextId].structure
                 }
-                this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation = []
-                this.generators.CreateAggregateActionsByFunctions.inputs = inputs
+
+                const references = []
+                for(const boundedContextId of Object.keys(draftOptionStructure)) {
+                    for(const structure of draftOptionStructure[boundedContextId]) {
+                        for(const vo of structure.valueObjects) {
+                            if('referencedAggregate' in vo) {
+                                references.push({
+                                    fromAggregate: structure.aggregate.name,
+                                    toAggregate: vo.referencedAggregate.name,
+                                    referenceName: vo.name
+                                })
+                            }
+                        }
+                    }
+                }
+
+                if(references.length > 0) {
+                    const processedPairs = new Set()
+                    const inputs = []
+
+                    references.forEach(ref => {
+                        const pairKey = [ref.fromAggregate, ref.toAggregate].sort().join('-')
+                        
+                        if(!processedPairs.has(pairKey)) {
+                            processedPairs.add(pairKey)
+   
+                            const bidirectionalRefs = references.filter(r => 
+                                (r.fromAggregate === ref.fromAggregate && r.toAggregate === ref.toAggregate) ||
+                                (r.fromAggregate === ref.toAggregate && r.toAggregate === ref.fromAggregate)
+                            )
+
+                            const targetReferences = bidirectionalRefs.map(r => r.referenceName)
+
+                            inputs.push({
+                                draftOption: draftOptionStructure,
+                                esValue: this.value,
+                                userInfo: this.userInfo,
+                                information: this.information,
+                                targetReferences: targetReferences
+                            })
+                        }
+                    })
+
+                    this.generators.CreateAggregateClassIdByDrafts.inputs = inputs
+                }
+                else
+                    this.generators.CreateAggregateClassIdByDrafts.inputs = []
             }
 
             this.generators.CreateCommandActionsByFunctions.generator = new CreateCommandActionsByFunctions({
@@ -3156,9 +3227,9 @@
 
                 onGenerationSucceeded: (returnObj) => {
                     if(returnObj.modelValue && returnObj.modelValue.commandsToReplace) {
+                        this.changedByMe = true
                         for(const command of returnObj.modelValue.commandsToReplace)
                             this.$set(this.value.elements, command.id, command)
-                        this.changedByMe = true
                     }
 
 
@@ -4563,8 +4634,13 @@
 
                 console.log("[*] 초안 전처리 완료", {afterDraftOptions: JSON.parse(JSON.stringify(draftOptions))})
 
-                this.generators.CreateAggregateActionsByFunctions.initInputs(this.selectedDraftOptions)
-                this.generators.CreateAggregateActionsByFunctions.generateIfInputsExist()
+                this.generators.CreateAggregateActionsByFunctions.generator.initInputs(
+                    this.selectedDraftOptions,
+                    this.value,
+                    this.userInfo,
+                    this.information
+                )
+                this.generators.CreateAggregateActionsByFunctions.generator.generateIfInputsExist()
             },
 
             _removeInvalidReferencedAggregateProperties(draftOptions) {
@@ -4799,10 +4875,9 @@
                 }
 
                 if(model && model.updateElement){
-                    me.value.elements[model.updateElement.id] = model.updateElement
+                    this.$set(this.value.elements, model.updateElement.id, model.updateElement)
                     me.changedByMe = true
                 }
-                alert("model.updateElement")
             },
             createModelFromDDL(model){
                 var me = this;
@@ -6160,20 +6235,17 @@
             },
             generatePBC(pbcElement, modelObj) {
                 var me = this;
-
                 if (modelObj) {
-                    var values = { elements: {}, relations: {} };
-                    var projectId = modelObj.projectId;
-                    var projectName = modelObj.projectName;
-                    var projectValue = modelObj.projectValue;
-                    var projectVersion = modelObj.projectVersion;
-                    var modelValueObj = {
-                        projectId: projectId,
-                        projectName: projectName,
-                        projectVersion: projectVersion,
+                    let values = { elements: {}, relations: {} };
+                    let projectValue = modelObj.projectValue;
+
+                    pbcElement.name = modelObj.projectName;
+                    pbcElement.modelValue = {
+                        projectId: modelObj.projectId,
+                        projectName: modelObj.projectName,
+                        projectVersion: modelObj.projectVersion,
+                        scm: modelObj.projectValue.scm
                     };
-                    pbcElement.name = projectName;
-                    pbcElement.modelValue = modelValueObj;
                     // init
                     pbcElement.boundedContextes = [];
                     pbcElement.aggregates = [];
@@ -6231,9 +6303,7 @@
                             values.relations = projectValue.relations;
                         }
 
-                        Object.values(values.relations).forEach(function (
-                            relation
-                        ) {
+                        Object.values(values.relations).forEach(function (relation) {
                             if (relation) {
                                 var copyRe = JSON.parse(JSON.stringify(relation));
                                 copyRe.isPBCModel = true;
@@ -8439,6 +8509,7 @@
                 me.monitoringDialog = !me.monitoringDialog;
 
                 if (me.monitoringDialog) {
+                    me.checkEventCorrelationKey();
                     await me.setProgressElements();
                     me.monitoringTab = 0;
                     me.fetchRecentEvents();
@@ -8449,9 +8520,13 @@
             async fetchEventCollections() {
                 var me = this
                 var reqUrl = 'http://localhost:9999/eventCollectors'
-                var result = [];
+                var result = []
                 if (me.searchKeyword && me.searchKeyword.length > 0) {
-                    reqUrl += '/search/findBySearchKey';
+                    if (me.searchKeyList.length === 1) {
+                        reqUrl += '/search/findByCorrelationKey';
+                    } else {
+                        reqUrl += '/search/findBySearchKey';                        
+                    }
                     me.searchKeyList.forEach((key, index) => {
                         if (index == 0) {
                             reqUrl += `?${key}=${me.searchKeyword}`;
@@ -8489,9 +8564,9 @@
                 } else {
                     me.eventLogs = [];
                 }
-                // if (!me.fetchEventInterval) {
-                //     me.fetchEventLogs();
-                // }
+                if (!me.fetchEventInterval) {
+                    me.fetchEventLogs();
+                }
                 me.isEventLogsFetched = true;
             },
             async searchEventByKeyword() {
@@ -8559,17 +8634,24 @@
                         me.progressElements.forEach(el => {
                             me.$EventBus.$emit('hideProgress', el.id);
                             if (el.name === eventLog.type) {
-                                if (event && event.type === eventLog.type) {
-                                    progressEvents.push({id: el.id, isParticular: true, sequence: index + 1});
-                                } else {
-                                    progressEvents.push({id: el.id, isParticular: false, sequence: index + 1});
+                                var eventEl = {
+                                    id: el.id,
+                                    isParticular: false,
+                                    sequence: index + 1,
+                                    error: eventLog.error || null
                                 }
+                                if (event && event.type === eventLog.type) {
+                                    eventEl.isParticular = true
+                                } else {
+                                    eventEl.isParticular = false
+                                }
+                               progressEvents.push(eventEl)
                             }
                         })
                     }
                 });
                 progressEvents.forEach(el => {
-                    me.$EventBus.$emit('showProgress', el.id, el.sequence, el.isParticular);
+                    me.$EventBus.$emit('showProgress', el);
                 });
             },
             async selectedEventProgress(event, index) {
@@ -8613,8 +8695,8 @@
             },
             toggleEventPayload(eventLog) {
                 var me = this;
-                if (me.expandedLogs.includes(eventLog)) {
-                    me.expandedLogs = me.expandedLogs.filter(log => log !== eventLog);
+                if (me.expandedLogs.length > 0) {
+                    me.expandedLogs = [];
                 } else {
                     me.expandedLogs = [eventLog];
                 }
@@ -8634,6 +8716,19 @@
                             me.searchKeyList.push(key.nameCamelCase);
                         }
                     });
+                });
+            },
+            checkEventCorrelationKey() {
+                var me = this;
+                me.monitoringMsg = "";
+                const eventElements = Object.values(me.value.elements).filter(element => 
+                    element && element._type.endsWith("Event")
+                );
+                eventElements.forEach(element => {
+                    const keys = element.fieldDescriptors.filter(field => field.isCorrelationKey);
+                    if (keys.length === 0) {
+                        me.monitoringMsg += `Event "${element.name}" correlationKey is not set.\n`;
+                    }
                 });
             },
             
@@ -8963,13 +9058,16 @@
     }
 
     .monitoring-dialog {
-        width: 450px;
-        max-height: 600px;
+        width: 33vw;
+        height: 100vh;
         position: absolute;
         bottom: 0px;
         right: 0px;
-        overflow: auto;
         z-index: 9999;
+    }
+
+    .monitoring-dialog-table {
+        overflow-y: auto;
     }
 
     .selected-event-row {

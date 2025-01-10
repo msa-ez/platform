@@ -108,6 +108,15 @@
                     :label.sync="progressEventSequence"
                 ></rectangle-element>
 
+                <image-element
+                        v-if="isProgress && isFailedEvent"
+                        v-bind:image="alert_image"
+                        :sub-width="25"
+                        :sub-height="25"
+                        :sub-bottom="0"
+                        :sub-right="0"
+                ></image-element>
+
                 <geometry-point
                         :coordinate="[95,5]"
                         :_style="statusCompleteStyle">
@@ -407,6 +416,7 @@
                 }
                 this.propertyPanel = true
                 this.staySelected = false
+                this.validate();
             },
             onChangedElementName(newVal, oldVal){
                 this.setMirrorElementId();
@@ -424,7 +434,7 @@
                     var newId = attachedAggregate.elementView.id
 
                     // 움직일때 AGG 변화 파악.
-                    if(!me.value.aggregate || (me.value.aggregate.id != newId)){
+                    if(!me.value.aggregate || !me.value.aggregate.id || (me.value.aggregate.id != newId)){
                         // 서로 들다른 agg
                         me.value.aggregate = { id: newId };
 
@@ -448,6 +458,7 @@
                 var duplicateField = false
                 let recursionValidate = executeRecursionValidate == false ? false :true
                 var validateValue = me.propertyPanel && panelValue ? panelValue : me.value
+                var notCorrelationKey = false;
 
                 if(me.isPBCModel){
                     return;
@@ -499,6 +510,22 @@
                             && idx != index ;
                         return validateValue.fieldDescriptors.findIndex(fRules) == -1 ? false: true
                     })
+
+                    if (me.useMonitoring) {
+                        notCorrelationKey = validateValue.fieldDescriptors.findIndex(fieldDescriptor => ( fieldDescriptor.isCorrelationKey == true) ) == -1
+                        if (notCorrelationKey) {
+                            var validationResultIndex = me.elementValidationResults.findIndex(x=> (x.code == me.ESE_NOT_CORRELATION_KEY) )
+                            if( validationResultIndex == -1 ) {
+                                me.elementValidationResults.push(me.validationFromCode(me.ESE_NOT_CORRELATION_KEY))
+                            }
+                        } else {
+                            var validationResultIndex = me.elementValidationResults.findIndex(x=> (x.code == me.ESE_NOT_CORRELATION_KEY) )
+                            if( validationResultIndex != -1 ){
+                                me.elementValidationResults.splice(validationResultIndex,1)
+                            }
+                        }
+                    }
+                    
 
                     if(filteredArray.length != 0 ){
                         duplicateField = true

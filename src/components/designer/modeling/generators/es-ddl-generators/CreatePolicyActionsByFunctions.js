@@ -1,7 +1,7 @@
 
 const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
 const ESActionsUtil = require("./modules/ESActionsUtil")
-const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil")
+const { ESValueSummarizeWithFilter } = require("../es-generators/helpers")
 const ESAliasTransManager = require("./modules/ESAliasTransManager")
 
 class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
@@ -9,7 +9,7 @@ class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
         super(client);
 
         this.checkInputParamsKeys = ["targetBoundedContext", "description", "esValue", "userInfo", "information"]
-        this.progressCheckStrings = ["thoughts", "inference", "reflection", "extractedPolicies"]
+        this.progressCheckStrings = ["overviewThoughts", "extractedPolicies"]
     }
 
 
@@ -61,51 +61,35 @@ Please follow these rules:
     }
 
     __buildRequestFormatPrompt(){
-        return ESValueSummarizeWithFilterUtil.getGuidePrompt()
+        return ESValueSummarizeWithFilter.getGuidePrompt()
     }
 
     __buildJsonResponseFormat() {
         return `
 {
-    "thoughts": {
-        "summary": "Analysis of event-driven policy requirements",
+    "overviewThoughts": {
+        "summary": "High-level analysis of the overall policy landscape and system requirements",
         "details": {
-            "eventTriggers": "Events that initiate policy actions",
-            "commandResponses": "Commands triggered by policy rules",
-            "businessRules": "Business rules governing policy execution",
-            "crossBoundaryEffects": "Cross-aggregate and bounded context impacts",
-            "automationPatterns": "Automated process flows and system responses"
+            "businessValue": "Assessment of how policies align with business goals and requirements",
+            "systemImpact": "Analysis of cross-cutting concerns and system-wide effects",
+            "riskFactors": "Identification of potential challenges and mitigation strategies"
         },
-        "additionalConsiderations": "Technical and architectural implications"
-    },
-
-    "inference": {
-        "summary": "Derived patterns and implications for policy implementation",
-        "details": {
-            "eventChains": "Cascading event sequences and their effects",
-            "policyRules": "Business rules and conditions for policy execution",
-            "systemBehaviors": "Expected system responses and state changes",
-            "integrationPoints": "Integration requirements with other contexts",
-            "automationLogic": "Logic for automated policy execution"
-        },
-        "additionalInferences": "Edge cases and special considerations"
-    },
-
-    "reflection": {
-        "summary": "Evaluation of policy design and implementation approach",
-        "details": {
-            "effectiveness": "Policy effectiveness and coverage analysis",
-            "reliability": "Reliability of policy execution and error handling",
-            "maintainability": "Long-term maintenance and evolution considerations",
-            "flexibility": "Adaptability to changing business rules",
-            "monitoring": "Monitoring and tracking policy execution"
-        },
-        "additionalReflections": "Potential improvements and optimizations"
+        "additionalConsiderations": "Any supplementary insights or future considerations for the overall system"
     },
 
     "result": {
         "extractedPolicies": [
             {
+                "policyThoughts": {
+                    "summary": "Specific reasoning behind individual policy design and implementation",
+                    "details": {
+                        "triggerLogic": "Analysis of event conditions and timing considerations",
+                        "domainAlignment": "How policy fits within domain boundaries and business rules",
+                        "implementationComplexity": "Technical considerations and resource requirements"
+                    },
+                    "additionalConsiderations": "Policy-specific edge cases or future enhancement possibilities"
+                },
+
                 "name": "<name>",
                 "alias": "<alias>",
                 "reason": "<reason>",
@@ -121,8 +105,8 @@ Please follow these rules:
     __buildJsonExampleInputFormat() {
         return {
             "Summarized Existing EventStorming Model": {
-                "deletedProperties": ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.aggregateInnerStickers
-                    .concat(ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.detailedProperties),
+                "deletedProperties": ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateInnerStickers
+                    .concat(ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.detailedProperties),
                 "boundedContexts": [
                     {
                         "id": "bc-reservation",
@@ -283,49 +267,28 @@ Please follow these rules:
 
     __buildJsonExampleOutputFormat() {
         return {
-            "thoughts": {
-                "summary": "Analysis of restaurant reservation policy requirements reveals multiple interconnected processes requiring careful orchestration",
+            "overviewThoughts": {
+                "summary": "Restaurant reservation system requires coordinated policy management across multiple bounded contexts",
                 "details": {
-                    "eventTriggers": "Primary triggers are ReservationCreated and ReservationConfirmed events, initiating cascading processes across contexts",
-                    "commandResponses": "System needs to coordinate table assignment and kitchen preparation commands based on reservation status",
-                    "businessRules": "Table assignment must consider capacity and timing, kitchen preparation follows specific schedule requirements",
-                    "crossBoundaryEffects": "Actions span across reservation, table, and kitchen contexts requiring careful state management",
-                    "automationPatterns": "Sequential and parallel processing patterns identified for reservation fulfillment"
+                    "businessValue": "Automated reservation flow improves customer experience and staff efficiency",
+                    "systemImpact": "Policies ensure proper coordination between reservation, table, and kitchen services",
+                    "riskFactors": "Resource conflicts, timing issues, and cross-context consistency challenges"
                 },
-                "additionalConsiderations": "Need to handle edge cases such as table unavailability and kitchen capacity constraints"
-            },
-    
-            "inference": {
-                "summary": "Multiple policy patterns emerge from the event flow analysis",
-                "details": {
-                    "eventChains": "ReservationCreated -> TableAssigned -> KitchenPrepared forms the main success path",
-                    "policyRules": [
-                        "Table assignment must occur immediately after reservation creation",
-                        "Kitchen preparation should be triggered 2 hours before reservation time",
-                        "All status changes must be tracked for coordination"
-                    ],
-                    "systemBehaviors": "System must maintain consistency across bounded contexts while handling asynchronous operations",
-                    "integrationPoints": "Critical touchpoints between reservation management and resource allocation systems",
-                    "automationLogic": "Automated workflows with timing considerations and resource checks"
-                },
-                "additionalInferences": "Potential need for compensation logic in case of resource allocation failures"
-            },
-    
-            "reflection": {
-                "summary": "The proposed policy design balances automation with business constraints",
-                "details": {
-                    "effectiveness": "Policies cover all critical paths while maintaining bounded context independence",
-                    "reliability": "Built-in checks for resource availability and timing constraints",
-                    "maintainability": "Clear separation of concerns allows for independent policy updates",
-                    "flexibility": "Design accommodates future additions to business rules",
-                    "monitoring": "Key points identified for policy execution tracking"
-                },
-                "additionalReflections": "Consider implementing circuit breakers for cross-context communication"
+                "additionalConsiderations": "Future scaling considerations for multiple restaurant locations and peak time management"
             },
     
             "result": {
                 "extractedPolicies": [
                     {
+                        "policyThoughts": {
+                            "summary": "Table assignment must be automated immediately after reservation creation",
+                            "details": {
+                                "triggerLogic": "ReservationCreated event triggers immediate table allocation",
+                                "domainAlignment": "Ensures proper resource management within restaurant domain",
+                                "implementationComplexity": "Requires table availability checking and optimization logic"
+                            },
+                            "additionalConsiderations": "Consider table preference and special seating requirements"
+                        },
                         "name": "TableAssignmentPolicy",
                         "alias": "Table Assignment Automation",
                         "reason": "Automatically assign appropriate table upon reservation creation",
@@ -333,6 +296,15 @@ Please follow these rules:
                         "toCommandId": "cmd-assign-table"
                     },
                     {
+                        "policyThoughts": {
+                            "summary": "Kitchen preparation must be initiated at the right time for confirmed reservations",
+                            "details": {
+                                "triggerLogic": "ReservationConfirmed event initiates timed kitchen preparation",
+                                "domainAlignment": "Coordinates kitchen operations with reservation timeline",
+                                "implementationComplexity": "Requires scheduling and kitchen capacity management"
+                            },
+                            "additionalConsiderations": "Handle special dietary requirements and preparation timing"
+                        },
                         "name": "KitchenPreparationPolicy",
                         "alias": "Kitchen Preparation Trigger",
                         "reason": "Initiate kitchen preparation process when reservation is confirmed",
@@ -340,6 +312,15 @@ Please follow these rules:
                         "toCommandId": "cmd-prepare-kitchen"
                     },
                     {
+                        "policyThoughts": {
+                            "summary": "Reservation status must be updated after successful table assignment",
+                            "details": {
+                                "triggerLogic": "TableAssigned event triggers reservation confirmation",
+                                "domainAlignment": "Maintains consistency between table and reservation states",
+                                "implementationComplexity": "Requires transaction management across contexts"
+                            },
+                            "additionalConsiderations": "Handle edge cases like table reassignment needs"
+                        },
                         "name": "ReservationConfirmationPolicy",
                         "alias": "Reservation Status Update",
                         "reason": "Update reservation status after successful table assignment",
@@ -352,10 +333,10 @@ Please follow these rules:
     }
 
     __buildJsonUserQueryInputFormat() {
-        const summarizedESValue = ESValueSummarizeWithFilterUtil.getSummarizedESValue(
+        const summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(
             JSON.parse(JSON.stringify(this.client.input.esValue)), 
-            ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.aggregateInnerStickers
-                .concat(ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.detailedProperties),
+            ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateInnerStickers
+                .concat(ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.detailedProperties),
             this.esAliasTransManager
         )
 

@@ -79,7 +79,7 @@
                     <div class="text-center">
                         <v-btn @click="snsLogin('github')" class="login-btn git-login-btn" color="black" style="margin-right:20px; margin-top:0px;">
                             <v-col>
-                                <Icon class="cp-github-login" icon="fa6-brands:github" width="40" height="40" style="color: white" />
+                                <Icons :icon="'github'" class="gs-center cp-github-login"  :width="40" :height="40" :color="'white'" />
                                 <div style="color:white; white-space: normal; word-wrap: break-word; text-align: center; margin-top:5px;">
                                     Continue<br>
                                     With<br>
@@ -90,7 +90,7 @@
 
                         <v-btn v-if="!onlyGitLogin" @click="snsLogin('google')" class="login-btn" color="white" style="margin-top:0px;">
                             <v-col>
-                                <Icon icon="flat-color-icons:google" width="40" height="40" />
+                                <Icons :icon="'google'" :width="40" :height="40" class="gs-center" />
                                 <div style="white-space: normal; word-wrap: break-word; text-align: center; margin-top:5px;">
                                     Continue<br>
                                     With<br>
@@ -120,7 +120,7 @@
                     <div class="text-center">
                         <v-btn @click="snsLogin('github')" class="login-btn git-login-btn" color="black" style="margin-right:20px; margin-top:0px;">
                             <v-col>
-                                <Icon icon="fa6-brands:github" width="40" height="40" style="color: white" />
+                                <Icons :icon="'github'" :width="40" :height="40" :color="'white'" class="gs-center" />
                                 <div style="color:white; white-space: normal; word-wrap: break-word; text-align: center; margin-top:5px;">
                                     Continue<br>
                                     With<br>
@@ -131,7 +131,7 @@
 
                         <v-btn v-if="!onlyGitLogin" @click="snsLogin('google')" class="login-btn" color="white" style="margin-top:0px;">
                             <v-col>
-                                <Icon icon="flat-color-icons:google" width="40" height="40" />
+                                <Icons :icon="'google'" :width="40" :height="40" class="gs-center" />
                                 <div style="white-space: normal; word-wrap: break-word; text-align: center; margin-top:5px;">
                                     Continue<br>
                                     With<br>

@@ -239,27 +239,29 @@
             moveToModel(){
                 window.open(`${window.location.origin}/#/storming/${this.selectedProjectId}`, "_blank")
             },
-            async generatePBC(version){
+            generatePBC(version){
                 var me = this
-                var versionInfo = await me.list(`db://definitions/${me.selectedProjectId}/versionLists/${version}`);
-                let versionValue = {'elements': {}, 'relations': {}};
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let versionInfo = await me.list(`db://definitions/${me.selectedProjectId}/versionLists/${version}`);
+                        let versionValue = {'elements': {}, 'relations': {}};
+                        if(versionInfo){
+                            versionValue = await me.getObject(`storage://${versionInfo.valueUrl}`);
+                        }
 
-                if(versionInfo){
-                    versionValue = await me.getObject(`storage://${versionInfo.valueUrl}`);
-                }
-
-                let projectName = versionInfo ? versionInfo.projectName : ''
-
-                var obj = {
-                    projectId: me.selectedProjectId,
-                    projectVersion: version,
-                    projectName: projectName,
-                    projectValue: versionValue
-                }
-                let copyValue = JSON.parse(JSON.stringify(me.value));
-                me.value = me.canvas.generatePBC(copyValue,obj);
-                me.canvas.$refs[`${me.value.elementView.id}`][0].panelValue = me.value
-                me.loading = false
+                        let projectName = versionInfo ? versionInfo.projectName : ''
+                        let copyValue = JSON.parse(JSON.stringify(me.value));
+                        me.value = me.canvas.generatePBC(copyValue, {
+                            projectId: me.selectedProjectId,
+                            projectVersion: version,
+                            projectName: projectName,
+                            projectValue: versionValue
+                        });
+                        me.canvas.$refs[`${me.value.elementView.id}`][0].panelValue = me.value
+                        me.loading = false
+                    }
+                });
             },
         }
     }

@@ -45,6 +45,8 @@ require('dotenv').config();
 import JumpToModelLists from "./components/designer/modeling/generators/JumpToModelLists";
 import JumpToModelListCard from "./components/designer/modeling/generators/JumpToModelListCard";
 import DetailComponent from './components/ui/DetailComponent.vue';
+import Icons from './components/ui/Icons.vue';
+
 
 var JsonDiff = require('jsondiffpatch').create({
     objectHash: function (obj, index) {
@@ -89,6 +91,9 @@ Vue.component('detail-component', DetailComponent)
 Vue.$cookies.config("7d");
 import {Icon} from '@iconify/vue2';
 Vue.component('Icon', Icon);
+
+// 직접 만든 Icons 컴포넌트 등록
+Vue.component('Icons', Icons);
 
 
 // setting locale
