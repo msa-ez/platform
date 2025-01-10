@@ -415,9 +415,12 @@
                                         case "Boolean":
                                             fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}=true ` )
                                             break;
+                                        default:
+                                            fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}="value" `);
+                                            break;
                                     }
                                 }
-                                else if(!fieldItem.isKey && (fieldItem.className != 'String' || fieldItem.className != 'Long' || fieldItem.className != 'Integer' || fieldItem.className != 'Double' || fieldItem.className != 'BigDecimal')){
+                                else if(!fieldItem.isKey && (fieldItem.className != 'String' || fieldItem.className != 'Long' || fieldItem.className != 'Integer' || fieldItem.className != 'Double' || fieldItem.className != 'BigDecimal' || fieldItem.className != 'Date')){
                                     Object.values((me.relatedAggregate.aggregateRoot.entities.relations) || {})
                                     .filter(relation =>  relation.targetElement.namePascalCase === fieldItem.className)
                                     .forEach((field) => {
@@ -439,6 +442,9 @@
                                                         break;
                                                     case "Boolean":
                                                         tempField = tempField.concat(`"${item.nameCamelCase}":"true"`, ", ");
+                                                        break;
+                                                    default:
+                                                        tempField = tempField.concat(`"${item.nameCamelCase}":"value"`, ", ");
                                                         break;
                                                 }
                                             });
@@ -500,6 +506,9 @@
                                         case "Boolean":
                                             fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}=true ` )
                                             break;
+                                        default:
+                                            fieldDescriptorsName = fieldDescriptorsName.concat(`${fieldItem.name}="value" ` )
+                                            break;
                                     }
                                 }else if(!fieldItem.isKey && (fieldItem.className != 'String' || fieldItem.className != 'Long' || fieldItem.className != 'Integer' || fieldItem.className != 'Double' || fieldItem.className != 'BigDecimal')){
                                     Object.values((me.relatedAggregate.aggregateRoot.entities.relations) || {})
@@ -523,6 +532,9 @@
                                                         break;
                                                     case "Boolean":
                                                         tempField = tempField.concat(`"${item.nameCamelCase}":"true"`, ", ");
+                                                        break;
+                                                    default:
+                                                        tempField = tempField.concat(`"${item.nameCamelCase}":"value"`, ", ");
                                                         break;
                                                 }
                                             });
