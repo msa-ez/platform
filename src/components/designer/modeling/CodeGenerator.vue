@@ -3307,7 +3307,7 @@ jobs:
                 }
             },
             alertReLogin(){
-                alert("You need to re-login because session is expired")
+                alert(this.$t('alertMessage.sessionExpired'));
                 this.showLoginCard = true
             },
             showTemplateListChip(obj){

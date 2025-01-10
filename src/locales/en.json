@@ -4,6 +4,9 @@
     "showBeta": "Show Beta",
     "hideBeta": "Hide Beta"
   },
+  "alertMessage": {
+    "sessionExpired": "Your session has expired. Please log in again."
+  },
   "ESDialoger" : {
     "tryAgain": "Try Again",
     "createBoundedContext": "Create Bounded Context"
