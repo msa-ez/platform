@@ -17,7 +17,7 @@ class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
      * 콜백을 통해 처리할 수 있습니다.
      * 
      * @example 기본적인 정책 생성기 설정
-     * const esValue = getEsValue("libraryService", ["policy"])
+     * const esValue = mocks.getEsValue("libraryService", ["policy"])
      * const generator = CreatePolicyActionsByFunctions.createGeneratorByDraftOptions({
      *     onGenerationSucceeded: (returnObj) => {
      *         // 생성된 정책을 기존 이벤트 스토밍 모델에 적용
@@ -31,7 +31,7 @@ class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
      *     }
      * })
      * generator.initInputs(
-     *      getEsDraft("libraryService"),
+     *      mocks.getEsDraft("libraryService"),
      *      esValue,
      *      esConfigs.userInfo,
      *      esConfigs.information
