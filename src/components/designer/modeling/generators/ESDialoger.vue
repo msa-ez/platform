@@ -83,9 +83,13 @@
                 </v-tabs-items>
                 <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
                 <v-card-actions v-if="done" class="auto-modeling-btn-box">
-                    <v-btn :disabled="isSummarizeStarted" class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}</v-btn>
-                    <v-btn :disabled="isSummarizeStarted" class="auto-modeling-btn" color="primary" @click="generateDevideBoundedContext()">{{ $t('ESDialoger.createBoundedContext') }}</v-btn>
+                    <v-btn :disabled="isSummarizeStarted || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}</v-btn>
+                    <v-btn :disabled="isSummarizeStarted || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" color="primary" @click="generateDevideBoundedContext()">{{ $t('ESDialoger.createBoundedContext') }}</v-btn>
                 </v-card-actions>
+                <div v-if="isSummarizeStarted" style="margin-left: 2%; margin-bottom: 1%;">
+                    <span>{{ $t('ESDialoger.summarizing') }}</span>
+                    <v-progress-circular color="primary" indeterminate></v-progress-circular>
+                </div>
             </v-card>
 
             <v-card v-if="showDevideBoundedContextDialog" class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
@@ -257,7 +261,8 @@
                 bcInAspectIndex: 0,
                 isStartMapping: false,
                 processingRate: 0,
-                currentProcessingBoundedContext: ""
+                currentProcessingBoundedContext: "",
+                isGeneratingBoundedContext: false
             }
         },
         methods: {
@@ -315,6 +320,7 @@
                         me.devisionAspectIndex++;
                     }else{
                         me.devisionAspectIndex = 0;
+                        me.isGeneratingBoundedContext = false;
                         me.generator = new Generator(me);
                         me.state.generator = "EventOnlyESGenerator";
                         me.generatorName = "EventOnlyESGenerator";
@@ -410,6 +416,11 @@
             },
 
             reGenerateAspect(aspect, feedback){
+                Object.keys(this.resultDevideBoundedContext).forEach(key => {
+                    this.resultDevideBoundedContext[key].boundedContexts.forEach(bc => {
+                        bc.requirements = [];
+                    });
+                });
                 this.generateDevideBoundedContext(aspect, feedback);
             },
 
@@ -453,7 +464,7 @@
 
             generateDevideBoundedContext(aspect, feedback){
                 // 현재 요약본이 너무 길면 먼저 요약 진행
-                if (this.summarizedResult.length == 0 || this.summarizedResult.length > 6000) {
+                if (this.value.userStory.length > 6000 || this.summarizedResult.length > 6000) {
                     this.pendingBCGeneration = true;
                     this.summarizeRequirements();
                     return;
@@ -482,6 +493,7 @@
                 };
 
                 this.generator.generate();
+                this.isGeneratingBoundedContext = true;
                 this.showDevideBoundedContextDialog = true;
             },
 
