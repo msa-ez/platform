@@ -1,92 +1,118 @@
 const RequirementsSummarizer = require("./RequirementsSummarizer");
 const TextChunker = require("./TextChunker");
 
-class RecursiveRequirementsSummarizer {
-    constructor(options = {}) {
-        this.maxTokenSize = options.maxTokenSize || 6000;
+class RecursiveRequirementsSummarizer extends RequirementsSummarizer {
+    constructor(client) {
+        super(client);
         this.textChunker = new TextChunker({
-            chunkSize: this.maxTokenSize,
-            overlapSize: 200
+            chunkSize: 5000,
+            spareSize: 1000
         });
-        this.maxIterations = options.maxIterations || 3;
+        this.maxIterations = 3;
+        
+        // 상태 관리 추가
+        this.currentChunks = [];
+        this.summarizedChunks = [];
+        this.currentChunkIndex = 0;
+        this.resolveCurrentProcess = null;
+        this.iterations = 0;
     }
 
-    /**
-     * 요구사항을 토큰 제한 이내로 요약
-     * @param {Object} client - Generator 클라이언트
-     * @param {string} text - 요약할 텍스트
-     * @returns {Promise<string>} 요약된 텍스트
-     */
-    async summarize(client, text) {
+    async summarizeRecursively(text) {
         let currentText = text;
-        let iterations = 0;
-        let generator = new RequirementsSummarizer(client);
+        this.iterations = 0;
+        
+        console.log(`Before summarize: ${currentText.length}`);
 
-        console.log(`Initial text length: ${currentText.length}`);
+        while (currentText.length > this.textChunker.chunkSize && this.iterations < this.maxIterations) {
+            this.iterations++;
+            
+            // 청크 준비
+            this.currentChunks = this.textChunker.splitIntoChunks(currentText);
+            this.summarizedChunks = [];
+            this.currentChunkIndex = 0;
 
-        while (currentText.length > this.textChunker.chunkSize && iterations < this.maxIterations) {
-            iterations++;
-            console.log(`Iteration ${iterations} - Current length: ${currentText.length}`);
-
-            // 텍스트가 너무 길면 청크로 분할
-            if (currentText.length > this.textChunker.chunkSize) {
-                const chunks = this.textChunker.splitIntoChunks(currentText);
-                const summarizedChunks = [];
-
-                // 각 청크 요약
-                for (const chunk of chunks) {
-                    client.input = {
-                        requirements: {
-                            userStory: chunk,
-                            currentChunk: chunks.indexOf(chunk) + 1,
-                            totalChunks: chunks.length,
-                            isFinalSummary: false
-                        }
-                    };
-
-                    const result = await this.summarizeChunk(generator);
-                    summarizedChunks.push(result);
-                }
-
-                // 모든 청크의 요약본을 합치기
-                currentText = summarizedChunks.join('\n\n');
-            }
-
-            // 최종 요약이 필요한 경우
-            if (currentText.length > this.textChunker.chunkSize) {
-                client.input = {
-                    requirements: {
-                        userStory: currentText,
-                        isFinalSummary: true
-                    }
-                };
-                currentText = await this.summarizeChunk(generator);
-            }
+            // 첫 번째 청크 처리 시작
+            currentText = await this.processChunks();
         }
 
-        console.log(`Final text length: ${currentText.length}`);
+        // 최종 텍스트가 청크 크기보다 작으면 한 번의 요약만 수행
+        if (currentText.length <= this.textChunker.chunkSize) {
+            this.client.input = {
+                requirements: {
+                    userStory: currentText,
+                    isFinalSummary: true
+                }
+            };
+            currentText = await new Promise(resolve => {
+                this.resolveCurrentProcess = resolve;
+                this.generate();
+            });
+        }
+
         return currentText;
     }
 
-    /**
-     * 개별 청크 요약
-     * @param {RequirementsSummarizer} generator
-     * @returns {Promise<string>}
-     */
-    async summarizeChunk(generator) {
-        await generator.generate();
-        const result = await new Promise(resolve => {
-            generator.client.onReceived = (content) => {
-                try {
-                    const parsed = JSON.parse(content);
-                    resolve(parsed.summarizedRequirements);
-                } catch (e) {
-                    console.error('Error parsing summary result:', e);
-                    resolve(content);
+    async processChunks() {
+        return new Promise(resolve => {
+            this.resolveCurrentProcess = resolve;
+            this.processNextChunk();
+        });
+    }
+
+    processNextChunk() {
+        if (this.currentChunkIndex < this.currentChunks.length) {
+            // 다음 청크 처리
+            this.client.input = {
+                requirements: {
+                    userStory: this.currentChunks[this.currentChunkIndex],
+                    currentChunk: this.currentChunkIndex + 1,
+                    totalChunks: this.currentChunks.length,
+                    isFinalSummary: false
                 }
             };
-        });
-        return result;
+            this.generate();
+        } else {
+            // 모든 청크 처리 완료, 합치기
+            const combinedText = this.summarizedChunks.join('\n\n');
+            
+            // 합친 텍스트가 여전히 크다면 최종 요약
+            if (combinedText.length > this.textChunker.chunkSize) {
+                this.client.input = {
+                    requirements: {
+                        userStory: combinedText,
+                        isFinalSummary: true
+                    }
+                };
+                this.generate();
+            } else {
+                this.resolveCurrentProcess(combinedText);
+            }
+        }
+    }
+
+    handleGenerationFinished(model) {
+        try {
+            const summarizedText = model.summarizedRequirements;
+            
+            if (!this.client.input.requirements.isFinalSummary) {
+                // 청크 요약 결과 저장 및 다음 청크 처리
+                this.summarizedChunks.push(summarizedText);
+                this.currentChunkIndex++;
+                this.processNextChunk();
+            } else {
+                // 최종 요약 완료
+                if (this.resolveCurrentProcess) {
+                    this.resolveCurrentProcess(summarizedText);
+                    console.log("After summarize: ", this.summarizedChunks.join().length);
+                }
+            }
+        } catch (e) {
+            console.error('Error parsing summary result:', e);
+            if (this.resolveCurrentProcess) {
+                this.resolveCurrentProcess(model);
+            }
+        }
     }
 }
 

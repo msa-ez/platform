@@ -13,9 +13,9 @@ class RequirementsSummarizer extends JsonAIGenerator {
         return `
 An AI agent that summarizes the following requirements.
 Extract the core content and summarize it to about half of the original text.
-Keep the important keywords of the original text as much as possible.
+Keep the functional requirements and important keywords of the original text as much as possible.
 
-Excessive summarization is not allowed.
+Summary is allowed up to half of the original text.
 
 Requirements:
 - userStory: ${this.client.input['requirements']['userStory']}
@@ -35,11 +35,6 @@ Output in the following JSON format:
             text = text.slice(0, -3);
         }
 
-        if(this.state === "end"){
-            console.log("After summarize: ", text.length);
-        }else{
-            console.log("Before summarize: ", this.client.input['requirements']['userStory'].length);
-        }
         return super.createModel(text);
     }
 }

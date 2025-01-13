@@ -6,7 +6,8 @@
   },
   "ESDialoger" : {
     "tryAgain": "Try Again",
-    "createBoundedContext": "Create Bounded Context"
+    "createBoundedContext": "Create Bounded Context",
+    "summarizing": "Analyzing and summarizing requirements..."
   },
   "DevideBoundedContextDialog" : {
     "boundedContextDivisionResult": "Seperating into multiple Bounded Contexts",
@@ -17,6 +18,7 @@
     "transactionPerformanceAspect": "Transaction/Performance",
     "infrastructureAspect": "Infrastructure",
     "lodingMessage": "Bounded Contexts generating...",
+    "mappingMessage": "Requirements mapping...",
     "reasonOfSeparation": "Reason of Separation",
     "aspect": "Aspect",
     "reGenerate": "Regenerate",

@@ -1,5 +1,5 @@
 <template>
-    <v-card :key="Object.keys(resultDevideBoundedContext).length">
+    <v-card :key="Object.keys(resultDevideBoundedContext).length" style="max-height: 2000px; overflow-y: auto;">
         <v-card-title>
             {{ $t('DevideBoundedContextDialog.boundedContextDivisionResult') }}
             <!-- <v-btn v-if="isGenerating" text color="primary" @click="stop()">Stop</v-btn> -->
@@ -12,8 +12,11 @@
                 <div v-if="isGenerating && Object.keys(resultDevideBoundedContext).length < 5">
                     <p class="mb-0">{{ $t('DevideBoundedContextDialog.lodingMessage') }} ({{ Object.keys(resultDevideBoundedContext).length / 5 * 100 }}%)</p>
                 </div>
+                <div v-if="isStartMapping">
+                    <p class="mb-0">{{ currentProcessingBoundedContext }} - {{ $t('DevideBoundedContextDialog.mappingMessage') }} ({{ processingRate }}%)</p>
+                </div>
                 <v-progress-circular
-                    v-if="isGenerating"
+                    v-if="isGenerating || isStartMapping"
                     color="primary"
                     indeterminate
                     size="24"
@@ -27,7 +30,7 @@
                 <v-tab 
                     v-for="(model, devisionAspect) in resultDevideBoundedContext" 
                     :key="devisionAspect"
-                    :disabled="isGeneratingAspect && selectedAspect !== devisionAspect"
+                    :disabled="(isGeneratingAspect && selectedAspect !== devisionAspect) || isStartMapping"
                 >
                     {{ devisionAspect }} {{ $t('DevideBoundedContextDialog.aspect') }}
                     <v-icon v-if="selectedAspect === devisionAspect" 
@@ -107,7 +110,7 @@
                 <v-textarea :disabled="isGenerating" v-model="feedback" label="Feedback" rows="3"></v-textarea>
                 <v-row class="pa-0 ma-0">
                     <v-spacer></v-spacer>
-                    <v-btn :disabled="feedback === '' || isGenerating" class="auto-modeling-btn" @click="reGenerateAspect(selectedAspect)">
+                    <v-btn :disabled="feedback === '' || isGenerating || isStartMapping" class="auto-modeling-btn" @click="reGenerateAspect(selectedAspect)">
                         {{ selectedAspect }} {{ $t('DevideBoundedContextDialog.aspect') }} {{ $t('DevideBoundedContextDialog.reGenerate') }} 
                     </v-btn>
                 </v-row>
@@ -115,12 +118,12 @@
             <v-row class="pa-0 ma-0 pt-4">
                 <v-spacer></v-spacer>
                 <v-btn @click="reGenerate()"
-                    :disabled="isGenerating"
+                    :disabled="isGenerating || isStartMapping"
                 >
                     <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('DevideBoundedContextDialog.reGenerate') }}
                 </v-btn>
                 <v-btn 
-                    :disabled="selectedAspect === null || isGenerating" 
+                    :disabled="selectedAspect === null || isGenerating || isStartMapping" 
                     class="auto-modeling-btn" 
                     color="primary" 
                     @click="createModel()"
@@ -142,6 +145,21 @@
             resultDevideBoundedContext: {
                 type: Object,
                 default: () => ({}),
+                required: false
+            },
+            isStartMapping: {
+                type: Boolean,
+                default: () => false,
+                required: false
+            },
+            processingRate: {
+                type: Number,
+                default: () => 0,
+                required: false
+            },
+            currentProcessingBoundedContext: {
+                type: String,
+                default: () => "",
                 required: false
             }
         },
@@ -189,6 +207,10 @@
         watch: {
             resultDevideBoundedContext: {
                 handler(newVal, oldVal) {
+                    if(this.isStartMapping){
+                        return;
+                    }
+
                     // 새로운 aspect가 추가될 때마다 해당 aspect의 노드 생성
                     Object.keys(newVal).forEach(aspect => {
                         if (newVal[aspect] && (this.mermaidNodes[aspect] == null || this.mermaidNodes[aspect].length == 0)) {
@@ -221,6 +243,18 @@
                     if (newVal !== null) {
                         const aspect = Object.keys(this.resultDevideBoundedContext)[newVal];
                         this.selectAspect(aspect);
+
+                        let isEmptyRequirements = true;
+                        this.resultDevideBoundedContext[aspect].boundedContexts.forEach(bc => {
+                            if(bc.requirements.length > 0){
+                                isEmptyRequirements = false;
+                            }
+                        });
+
+                        // 아직 원문 매핑이 안된 경우 원문 매핑 진행
+                        if(isEmptyRequirements && Object.keys(this.resultDevideBoundedContext).length == 5){
+                            this.$emit("mappingRequirements", aspect);
+                        }
                     }
                 }
             }
@@ -314,12 +348,11 @@
             },
             getGroupedBoundedContextRequirements(aspectData) {
                 if (!aspectData || !aspectData.boundedContexts) return [];
-            
                 return aspectData.boundedContexts.map(bc => ({
                     name: bc.alias,
                     requirements: bc.requirements.map(req => ({
-                        type: req.type,
-                        text: req.text
+                        type: req.type || '',
+                        text: req.text || ''
                     }))
                 }));
             },

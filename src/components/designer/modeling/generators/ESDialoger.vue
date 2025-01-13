@@ -83,20 +83,23 @@
                 </v-tabs-items>
                 <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
                 <v-card-actions v-if="done" class="auto-modeling-btn-box">
-                    <v-btn class="auto-modeling-btn" @click="summarizeRequirements()">TEST Summarize</v-btn>
-                    <v-btn class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}</v-btn>
-                    <v-btn class="auto-modeling-btn" color="primary" @click="generateDevideBoundedContext()">{{ $t('ESDialoger.createBoundedContext') }}</v-btn>
+                    <v-btn :disabled="isSummarizeStarted" class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}</v-btn>
+                    <v-btn :disabled="isSummarizeStarted" class="auto-modeling-btn" color="primary" @click="generateDevideBoundedContext()">{{ $t('ESDialoger.createBoundedContext') }}</v-btn>
                 </v-card-actions>
             </v-card>
 
             <v-card v-if="showDevideBoundedContextDialog" class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
                 <DevideBoundedContextDialog
                     :resultDevideBoundedContext="resultDevideBoundedContext"
+                    :isStartMapping="isStartMapping"
+                    :processingRate="processingRate"
+                    :currentProcessingBoundedContext="currentProcessingBoundedContext"
                     @createModel="jump"
                     @closeDialog="showDevideBoundedContextDialog = false"
                     @stop="stop"
                     @reGenerate="reGenerate"
                     @reGenerateAspect="reGenerateAspect"
+                    @mappingRequirements="mappingRequirements"
                 ></DevideBoundedContextDialog>
             </v-card>
         </div>
@@ -143,9 +146,8 @@
     import ESDialogerTestTerminal from './testTerminals/ESDialogerTestTerminal.vue';
 
     // Requirements Summarizer
-    import RequirementsSummarizer from './RequirementsSummarizer.js';
-    import TextChunker from './TextChunker.js';
-
+    import RecursiveRequirementsSummarizer from './RecursiveRequirementsSummarizer.js';
+    import RequirementsMappingGenerator from './RequirementsMappingGenerator.js';
     export default {
         name: 'es-dialoger',
         mixins:[
@@ -180,11 +182,6 @@
         async created(){
             await this.setUserInfo()
             this.autoModel = getParent(this.$parent, 'auto-modeling-dialog');
-
-            this.textChunker = new TextChunker({
-                chunkSize: 2000,  // GPT-4 컨텍스트 크기를 고려한 설정
-                overlapSize: 100  // 문맥 유지를 위한 오버랩
-            });
         },
         watch: {
             "prompt": {
@@ -251,12 +248,16 @@
                 activeTab: null,
                 generatorInputTabs: ['UserStory', 'DDL'],
                 inputDDL: '',
+                pendingBCGeneration: false,
 
-                textChunker: null,
-                chunks: [],
-                currentChunkIndex: 0,
-                summarizedChunks: [],
-                summarizedResult: ""
+                summarizedResult: "",
+                isSummarizeStarted: false,
+                userStoryChunks: [],
+                userStoryChunksIndex: 0,
+                bcInAspectIndex: 0,
+                isStartMapping: false,
+                processingRate: 0,
+                currentProcessingBoundedContext: ""
             }
         },
         methods: {
@@ -299,51 +300,72 @@
             },
 
             async onGenerationFinished(model){
-                this.done = true;
+                var me = this;
+                me.done = true;
 
-                if (this.state.generator === "RequirementsSummarizer") {
-                    if (!model.summarizedRequirements.isFinalSummary) {
-                        this.summarizedChunks.push(model.summarizedRequirements);
-                        this.currentChunkIndex++;
-                        
-                        if (this.currentChunkIndex < this.chunks.length) {
-                            this.processNextChunk();
-                            return;
-                        } else if (this.summarizedChunks.length > 1) {
-                            this.processNextChunk();
-                            return;
-                        }
-                    }
-                    // 최종 요약 완료 또는 단일 청크 처리 완료
-                    console.log("Final summarization complete");
-                    this.state.generator = "EventOnlyESGenerator";
-                    this.generatorName = "EventOnlyESGenerator";
+                if (me.state.generator === "RecursiveRequirementsSummarizer") {
+                    me.generator.handleGenerationFinished(model);
                     return;
                 }
 
                 if(this.state.generator === "DevideBoundedContextGenerator"){
-                    if(this.devisionAspectIndex < this.devisionAspect.length - 1) {
-                        if(!this.generator)
-                        this.generator = new DevideBoundedContextGenerator(this);
-                        this.generator.generate();
+                    if(me.devisionAspectIndex < me.devisionAspect.length - 1) {
+                        if(!me.generator) me.generator = new DevideBoundedContextGenerator(me);
+                        me.generator.generate();
+                        me.devisionAspectIndex++;
                     }else{
-                        this.devisionAspectIndex = 0;
-                        
-                        this.generator = new Generator(this);
-                        this.state.generator = "EventOnlyESGenerator";
-                        this.generatorName = "EventOnlyESGenerator";
+                        me.devisionAspectIndex = 0;
+                        me.generator = new Generator(me);
+                        me.state.generator = "EventOnlyESGenerator";
+                        me.generatorName = "EventOnlyESGenerator";
                     }
-                
-                    this.devisionAspectIndex++;
-                    this.input['devisionAspect'] = this.devisionAspect[this.devisionAspectIndex];
-                    this.$set(this.resultDevideBoundedContext, model.devisionAspect, model)
-                    this.showDevideBoundedContextDialog = true
+
+                    me.input['devisionAspect'] = me.devisionAspect[me.devisionAspectIndex];
+                    me.$set(me.resultDevideBoundedContext, model.devisionAspect, model)
+                    me.showDevideBoundedContextDialog = true
                     console.log("output: ", model)
-                    return;
+
+                    // 요약 결과가 있으면 요약 결과를 기반으로 매핑 진행
+                    if(me.summarizedResult.length > 0 && me.userStoryChunks.length > 0 && me.devisionAspectIndex == 0){
+                        me.mappingRequirements();
+                        return;
+                    }
                 }
 
-                this.$emit("input", this.value);
-                this.$emit("change", 'eventStorming');
+                if(me.state.generator === "RequirementsMappingGenerator"){
+                    console.log("currentChunk: ", me.userStoryChunksIndex+1, "/", me.userStoryChunks.length);
+                    console.log("Aspect: ", me.devisionAspect[me.devisionAspectIndex]);
+                    console.log("BoundedContext: ", me.resultDevideBoundedContext[me.devisionAspect[me.devisionAspectIndex]].boundedContexts[me.bcInAspectIndex]);
+                    console.log("Requirements: ", model.requirements);
+
+                    me.processingRate = Math.round((me.userStoryChunksIndex+1) / me.userStoryChunks.length * 100);
+                    me.currentProcessingBoundedContext = me.resultDevideBoundedContext[me.devisionAspect[me.devisionAspectIndex]].boundedContexts[me.bcInAspectIndex].alias;
+
+                    me.resultDevideBoundedContext[me.devisionAspect[me.devisionAspectIndex]]
+                    .boundedContexts[me.bcInAspectIndex].requirements = [
+                        ...(me.resultDevideBoundedContext[me.devisionAspect[me.devisionAspectIndex]]
+                            .boundedContexts[me.bcInAspectIndex].requirements || []),
+                        ...model.requirements.filter(req => req.type != undefined)
+                    ];
+                    if(me.userStoryChunksIndex < me.userStoryChunks.length - 1){
+                        me.userStoryChunksIndex++;
+                    }else{
+                        if(me.bcInAspectIndex == me.resultDevideBoundedContext[me.devisionAspect[me.devisionAspectIndex]].boundedContexts.length-1){
+                            me.bcInAspectIndex = 0;
+                            me.userStoryChunksIndex = 0;
+                            me.processingRate = 0;
+                            me.currentProcessingBoundedContext = "";
+                            this.isStartMapping = false;
+                            return;
+                        }
+                        me.userStoryChunksIndex = 0;
+                        me.bcInAspectIndex++;
+                    }
+                    me.mappingRequirements();
+                }
+
+                me.$emit("input", me.value);
+                me.$emit("change", 'eventStorming');
                 
             },  
 
@@ -391,45 +413,52 @@
                 this.generateDevideBoundedContext(aspect, feedback);
             },
 
-            summarizeRequirements() {
-                // 텍스트를 청크로 분할
-                this.chunks = this.textChunker.splitIntoChunks(this.value.userStory);
-                this.currentChunkIndex = 0;
-                this.summarizedChunks = [];
-
-                // 디버깅을 위한 청크 통계 출력
-                console.log('Chunk statistics:', this.textChunker.getChunkStats(this.chunks));
-                
-                // 첫 번째 청크 처리 시작
-                this.processNextChunk();
-
-            },    
-
-            processNextChunk() {
-                this.generator = new RequirementsSummarizer(this);
-                this.state.generator = "RequirementsSummarizer";
-                this.generatorName = "RequirementsSummarizer";
-
-                if (this.currentChunkIndex >= this.chunks.length) {
-                    // 모든 청크 처리 완료, 최종 요약 생성
-                    this.summarizedResult = this.summarizedChunks.join('\n\n');
-
-                    console.log("Before summarize: ", this.value.userStory.length)
-                    console.log("After summarize: ", this.summarizedResult.length)
-                } else {
-                    // 개별 청크 처리
-                    this.input['requirements'] = {
-                        userStory: this.chunks[this.currentChunkIndex],
-                        currentChunk: this.currentChunkIndex + 1,
-                        totalChunks: this.chunks.length,
-                        isFinalSummary: false
-                    };
-                    this.generator.generate();
+            async summarizeRequirements() {
+                this.generator = new RecursiveRequirementsSummarizer(this);
+                this.state.generator = "RecursiveRequirementsSummarizer";
+                this.generatorName = "RecursiveRequirementsSummarizer";
+                this.isSummarizeStarted = true;
+                try {
+                    const summarizedText = await this.generator.summarizeRecursively(this.value.userStory);
+                    // 요약 결과 저장
+                    this.userStoryChunks = this.generator.currentChunks;
+                    this.userStoryChunksIndex = 0;
+                    this.summarizedResult = summarizedText;
+                    console.log("최종 요약 결과: ", this.summarizedResult);
+                    this.isSummarizeStarted = false;
+                    // BC 생성이 대기 중이었다면 진행
+                    if (this.pendingBCGeneration) {
+                        this.generateDevideBoundedContext();
+                    }
+                } catch (error) {
+                    console.error('Summarization failed:', error);
                 }
+            },
 
+            mappingRequirements(aspect){
+                // 요약 > 생성된 bc의 requirements 매핑
+                this.isStartMapping = true;
+                this.generator = new RequirementsMappingGenerator(this);
+                this.state.generator = "RequirementsMappingGenerator";
+                this.generatorName = "RequirementsMappingGenerator";
+
+                if(aspect){
+                    this.devisionAspectIndex = this.devisionAspect.findIndex(x => x == aspect);
+                    this.currentProcessingBoundedContext = this.resultDevideBoundedContext[this.devisionAspect[this.devisionAspectIndex]].boundedContexts[this.bcInAspectIndex].alias;
+                }
+                this.input['boundedContext'] = this.resultDevideBoundedContext[this.devisionAspect[this.devisionAspectIndex]].boundedContexts[this.bcInAspectIndex];
+                this.input['requirementChunk'] = this.userStoryChunks[this.userStoryChunksIndex];
+                this.generator.generate();
             },
 
             generateDevideBoundedContext(aspect, feedback){
+                // 현재 요약본이 너무 길면 먼저 요약 진행
+                if (this.summarizedResult.length == 0 || this.summarizedResult.length > 6000) {
+                    this.pendingBCGeneration = true;
+                    this.summarizeRequirements();
+                    return;
+                }
+                
                 this.generator = new DevideBoundedContextGenerator(this);
                 this.state.generator = "DevideBoundedContextGenerator";
                 this.generatorName = "DevideBoundedContextGenerator";
@@ -448,6 +477,7 @@
                 
                 this.input['requirements'] = {
                     userStory: this.value.userStory,
+                    summarizedResult: this.summarizedResult,
                     ddl: this.inputDDL
                 };
 
