@@ -584,8 +584,20 @@ CRITICAL RULES FOR REFERENCE GENERATION:
         let actions = returnObj.modelValue.aiOutput.result.actions
         this._filterInvalidActions(actions)
         this._filterBidirectionalActions(actions)
-        if(actions.length === 0)
-            throw new Error("No actions generated")
+        if(actions.length === 0) {
+            if(this.leftRetryCount > 0)
+                throw new Error("No actions generated")
+
+            console.warn("[*] ClassId 생성에 여러번의 시도에도 불구하고 실패했습니다. 이것 때문에 전체 과정을 중단하는 것보다는 다음 단계로 넘어가는게 좋아보이기 때문에 넘어가겠습니다.")
+            returnObj.modelValue = {
+                ...returnObj.modelValue,
+                actions: [],
+                createdESValue: null
+            }
+            returnObj.directMessage = `Failed to generate ClassId. Skipping this step.`
+            return returnObj
+        }
+
 
         let {actions: appliedActions, createdESValue: createdESValue} = this._getActionAppliedESValue(actions)
 
