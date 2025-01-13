@@ -2722,6 +2722,11 @@
 
             const byFunctionCallbacks = {
                 onFirstResponse: (returnObj) => {
+                    this.modelDraftDialogWithXAIDto = {
+                        ...this.modelDraftDialogWithXAIDto,
+                        isShow: false
+                    }
+
                     this.generatorProgressDto = {
                         generateDone: false,
                         displayMessage: returnObj.directMessage,
