@@ -296,6 +296,11 @@ Structural Rules:
    - Must have exactly one primary key attribute
    - For composite keys, create a ValueObject and use it as the primary key
    - Reference other Aggregates using their class names, not IDs
+   - Avoid creating separate transaction objects when the main aggregate can manage the lifecycle:
+     * Do not create Transaction entities if their properties duplicate the main aggregate
+     * Use the aggregate root to manage state transitions and history
+     * Consider Event Sourcing for tracking historical changes instead of transaction objects
+     * Transaction records should only be created when they have unique business value beyond the aggregate's lifecycle
 
 8. ValueObjects:
    - Must contain multiple related properties
