@@ -299,6 +299,7 @@
     import DDLDraftGenerator from './DDLDraftGenerator.js'
     import DDLBoundedContextDistributeGenerator from './es-ddl-generators/DDLBoundedContextDistributeGenerator.js'
     import PreProcessingFunctionsGenerator from './es-ddl-generators/PreProcessingFunctionsGenerator.js'
+    import { CreateAggregateActionsByFunctions } from './es-generators'
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
 
@@ -533,6 +534,7 @@
                         case "DDLDraftGenerator": this.generatorComponent = new DDLDraftGenerator(this); break;
                         case "DDLBoundedContextDistributeGenerator": this.generatorComponent = new DDLBoundedContextDistributeGenerator(this); break;
                         case "PreProcessingFunctionsGenerator": this.generatorComponent = new PreProcessingFunctionsGenerator(this); break;
+                        case "CreateAggregateActionsByFunctions": this.generatorComponent = new CreateAggregateActionsByFunctions(this); break;
                     }
 
                     return this.generatorComponent;
@@ -714,7 +716,7 @@
                     this.showGenerateBtn = false
                 }
 
-                if(this.generatorName === "PreProcessingFunctionsGenerator") {
+                if(this.generatorName === "CreateAggregateActionsByFunctions") {
                     this.openGeneratorUI = false
                 }
             },
