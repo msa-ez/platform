@@ -133,8 +133,7 @@
                                     SHARE
                                 </v-btn>
                                 <v-btn class="action-btn" text color=primary @click="generateImplementationModel()">
-                                    <Icon icon="mdi:head-cog-outline"
-                                        height="24"
+                                    <Icons :icon="'head-cog-outline'"
                                         style="margin-right:5px;"
                                     />
                                     <div>implementation model</div>
@@ -174,8 +173,7 @@
                                     <v-row v-if="isOwnModel">
                                         <v-col align="right">
                                             <v-btn class="action-btn" text color=primary @click="generateImplementationModel()">
-                                                <Icon icon="mdi:head-cog-outline"
-                                                    height="24"
+                                                <Icons :icon="'head-cog-outline'"
                                                     style="margin-right:5px;"
                                                 />
                                                 <div>implementation model</div>

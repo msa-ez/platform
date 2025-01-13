@@ -88,18 +88,6 @@
                         </template>
 
                         <template v-slot:append>
-                            <!-- <div style="background-color:red;" class="replay-version-icon">
-                                <Icon
-                                    icon="mdi:flag"
-                                    width="20px" height="20px"
-                                    style="background-color:transparent;
-                                    position:absolute;
-                                    left:5px;
-                                    color:#ffa726;
-                                    margin-top:-5px;
-                                    z-index:3;"
-                                />
-                            </div> -->
                             <div class="replay-version-icon-tool-tip"
                                 style="background-color: black;
                                 opacity: 0.5;
@@ -133,10 +121,9 @@
                                      @mouseover="onOverSliderMarkLists($event, versionItem, 'version')"
                                      @mouseleave="onOverSliderMarkLists($event, versionItem, 'version')"
                                 >
-                                <Icon
-                                    icon="mdi:flag"
-                                    width="20px" height="20px"
-                                    style="background-color:transparent; color:orange; position: absolute; bottom: 8px;"/>
+                                <Icons
+                                    :icon="'flag'" :size="20" :color="'orange'"
+                                    style="background-color:transparent; position: absolute; bottom: 8px;"/>
                                 </div>
                             </div>
 

@@ -62,8 +62,8 @@
                                             @click="onSelected(testIdx, codeIdx)"
                                         >
                                             <v-row>
-                                                <Icon
-                                                    icon="mdi:file-document-alert-outline" width="20" height="20"
+                                                <Icons
+                                                    :icon="'file-document-alert'" :width="20" :height="20"
                                                     style="color: white; position: relative; left: -30px; top: 20px;"
                                                 />
                                                 <v-col style="margin-left:-35px; margin-right: 25px;">

@@ -1,12 +1,12 @@
 const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
-const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil");
+const { ESValueSummarizeWithFilter } = require("../es-generators/helpers")
 
 class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
         this.checkInputParamsKeys = ["description", "boundedContext", "accumulatedDrafts"]
-        this.progressCheckStrings = ["thoughts", "inference", "reflection", "options", "structure", "pros",  "defaultOptionIndex", "conclusions"]
+        this.progressCheckStrings = ["overviewThoughts", "options", "analysis", "defaultOptionIndex"]
     }
 
     static outputToAccumulatedDrafts(output, targetBoundedContext){
@@ -18,7 +18,7 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     static esValueToAccumulatedDrafts(esValue, targetBoundedContext){
         let accumulatedDrafts = {}
 
-        const summarizedESValue = ESValueSummarizeWithFilterUtil.getSummarizedESValue(esValue)
+        const summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(esValue)
         for(const boundedContextInfo of summarizedESValue.boundedContexts){
             let structure = []
 

@@ -1,20 +1,133 @@
-const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
-const ESAliasTransManager = require("./modules/ESAliasTransManager")
-const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil")
+const FormattedJSONAIGenerator = require("../../FormattedJSONAIGenerator")
+const { ESValueSummaryGenerator } = require("..")
+const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTransManager")
+const { ESValueSummarizeWithFilter } = require("../helpers")
 
-class GWTGeneratorByFunctions extends FormattedJSONAIGenerator{
+class CommandGWTGeneratorByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
         this.checkInputParamsKeys = ["targetBoundedContext", "targetCommandIds", "description", "esValue"]
-        this.progressCheckStrings = ["thoughts", "inference", "reflection", "targetCommandId"]
+        this.progressCheckStrings = ["overviewThoughts", "targetCommandId"]
+    }
+
+    /**
+     * @description 이벤트 스토밍 모델에서 Command들의 GWT(Given-When-Then) 시나리오를 생성하기 위한 generator를 생성합니다.
+     * 생성된 generator는 각각의 Aggregate에 대해 순차적으로 GWT를 생성하며, 생성 과정의 각 단계에서 콜백을 통해 진행 상황을 전달합니다.
+     * 
+     * @example 실제 이벤트 스토밍 모델 업데이트 예시
+     * const esValue = mocks.getEsValue("libraryService")
+     * const generator = CommandGWTGeneratorByFunctions.createGeneratorByDraftOptions({
+     *     onGenerationSucceeded: (returnObj) => {
+     *         if(returnObj.modelValue && returnObj.modelValue.commandsToReplace) {
+     *             // 생성된 GWT를 이벤트 스토밍 모델에 적용
+     *             for(const command of returnObj.modelValue.commandsToReplace)
+     *                 esValue.elements[command.id] = command
+     *         }
+     *     },
+     *     onGenerationDone: () => {
+     *         console.log("이벤트 스토밍 모델 업데이트 완료")
+     *     }
+     * })
+     * 
+     * // generator 초기화 및 실행
+     * generator.initInputs(
+     *      mocks.getEsDraft("libraryService"),
+     *      esValue
+     * )
+     * generator.generateIfInputsExist()
+     *
+     * @note
+     * - callbacks.onFirstResponse: 첫 번째 응답이 도착했을 때 호출됩니다.
+     * - callbacks.onModelCreated: 모델이 생성되었을 때 호출됩니다.
+     * - callbacks.onGenerationSucceeded: GWT 생성이 성공했을 때 호출됩니다.
+     *   returnObj.modelValue.commandsToReplace를 통해 업데이트된 Command 정보를 얻을 수 있습니다.
+     * - callbacks.onRetry: 오류가 발생하여 재시도가 필요할 때 호출됩니다.
+     * - callbacks.onStopped: 생성이 중지되었을 때 호출됩니다.
+     * - callbacks.onGenerationDone: 모든 GWT 생성이 완료되었을 때 호출됩니다.
+     * - generator.initInputs()를 통해 초기 입력값을 설정한 후 generateIfInputsExist()를 호출하여 생성을 시작합니다.
+     * - 각 Aggregate마다 순차적으로 GWT가 생성되므로, 대량의 데이터 처리 시 성능을 고려해야 합니다.
+     */
+    static createGeneratorByDraftOptions(callbacks){
+        const generator = new CommandGWTGeneratorByFunctions({
+            input: null,
+
+            onFirstResponse: (returnObj) => {
+                if(callbacks.onFirstResponse)
+                    callbacks.onFirstResponse(returnObj)
+            },
+
+            onModelCreated: (returnObj) => {
+                if(callbacks.onModelCreated)
+                    callbacks.onModelCreated(returnObj)
+            },
+
+            onGenerationSucceeded: (returnObj) => {
+                if(callbacks.onGenerationSucceeded)
+                    callbacks.onGenerationSucceeded(returnObj)
+
+                if(generator.generateIfInputsExist())
+                    return
+
+
+                if(callbacks.onGenerationDone)
+                    callbacks.onGenerationDone()
+            },
+
+            onRetry: (returnObj) => {
+                alert(`[!] An error occurred during creating GWT for commands, please try again.\n* Error log \n${returnObj.errorMessage}`)
+
+                if(callbacks.onRetry)
+                    callbacks.onRetry(returnObj)
+            },
+
+            onStopped: () => {
+                if(callbacks.onStopped)
+                    callbacks.onStopped()
+            }
+        })
+
+        generator.initInputs = (draftOptions, esValue) => {
+            let inputs = []
+            for(const eachDraftOption of Object.values(draftOptions)) {
+                const targetAggregates = Object.values(esValue.elements).filter(element => element && element._type === "org.uengine.modeling.model.Aggregate" && element.boundedContext.id === eachDraftOption.boundedContext.id)
+
+                // Aggregate각각마다 존재하는 커맨드에 GWT를 생성하는 요청을 함으로써 다루는 문제영역을 최소화함
+                for(const targetAggregate of targetAggregates) {
+                    const targetCommandIds = Object.values(esValue.elements)
+                    .filter(element => element && element._type === "org.uengine.modeling.model.Command" && element.aggregate.id === targetAggregate.id)
+                    .map(command => command.id)
+                    if(!targetCommandIds || targetCommandIds.length === 0) continue
+
+                    inputs.push({
+                        targetBoundedContext: eachDraftOption.boundedContext,
+                        targetCommandIds: targetCommandIds,
+                        description: eachDraftOption.description,
+                        esValue: esValue
+                    })
+                }
+            }
+            generator.inputs = inputs
+        }
+
+        generator.generateIfInputsExist = () => {
+            if(generator.inputs.length > 0) {
+                generator.client.input = generator.inputs.shift()
+                generator.generate()
+                return true
+            }
+            return false
+        }
+
+        return generator
     }
 
 
-    onGenerateBefore(inputParams){
+    async onGenerateBefore(inputParams){
         inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
-        this.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
-        inputParams.targetCommandAliases = inputParams.targetCommandIds.map(commandId => this.esAliasTransManager.UUIDToAliasDic[commandId])
+        inputParams.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
+        inputParams.targetCommandAliases = inputParams.targetCommandIds.map(
+            commandId => inputParams.esAliasTransManager.UUIDToAliasDic[commandId])
         
         inputParams.targetAggregateNames = inputParams.targetCommandIds.map(commandId => {
             const commandAggregateId = inputParams.esValue.elements[commandId].aggregate.id
@@ -22,6 +135,55 @@ class GWTGeneratorByFunctions extends FormattedJSONAIGenerator{
             return targetAggregate.displayName ? targetAggregate.displayName : targetAggregate.name
         })
         inputParams.targetAggregateNames = Array.from(new Set(inputParams.targetAggregateNames))
+
+        inputParams.summarizedESValue = {
+            "deletedProperties": [],
+            "boundedContexts": [
+                ESValueSummarizeWithFilter.getSummarizedBoundedContextValue(
+                    inputParams.esValue,
+                    inputParams.targetBoundedContext,
+                    [],
+                    inputParams.esAliasTransManager
+                )
+            ]
+        }
+        if(!this.isCreatedPromptWithinTokenLimit()) {
+            const leftTokenCount = this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
+            if(leftTokenCount <= 100)
+                throw new Error("[!] The size of the draft being passed is too large to process.")
+
+            console.log(`[*] 토큰 제한이 초과되어서 이벤트 스토밍 정보를 제한 수치까지 요약해서 전달함`)
+            console.log(`[*] 요약 이전 Summary`, inputParams.summarizedESValue)
+            const requestContext = this._buildRequestContext(inputParams)
+            inputParams.summarizedESValue = await ESValueSummaryGenerator.getSummarizedESValueWithMaxTokenSummarize(
+                requestContext,
+                inputParams.esValue,
+                [],
+                leftTokenCount,
+                this.model,
+                inputParams.esAliasTransManager
+            )
+            console.log(`[*] 요약 이후 Summary`, inputParams.summarizedESValue)
+        }
+    }
+
+    _buildRequestContext(inputParams) {
+        return `Focus on generating Given-When-Then (GWT) test scenarios for commands in the following context:
+
+        Bounded Context: ${inputParams.targetBoundedContext.name}
+        Target Commands: ${inputParams.targetCommandAliases.join(", ")}
+        
+        Business Requirements:
+        ${inputParams.description}
+        
+        Please prioritize elements that are:
+        1. Directly related to the target commands and their associated events
+        2. Part of the same aggregate as the target commands
+        3. Referenced by the target commands or their events
+        4. Related to the business requirements provided
+        5. Part of the specified bounded context
+        
+        This context is specifically for generating comprehensive GWT scenarios that validate the behavior and business rules of the target commands.`
     }
 
 
@@ -76,7 +238,7 @@ Please follow these rules:
     }
 
     __buildRequestFormatPrompt(){
-        return ESValueSummarizeWithFilterUtil.getGuidePrompt()
+        return ESValueSummarizeWithFilter.getGuidePrompt()
     }
 
     __buildJsonResponseFormat() {
@@ -457,20 +619,8 @@ Please follow these rules:
     }
 
     __buildJsonUserQueryInputFormat() {
-        const summarizedBoundedContext = {
-            "deletedProperties": [],
-            "boundedContexts": [
-                ESValueSummarizeWithFilterUtil.getSummarizedBoundedContextValue(
-                    this.client.input.esValue,
-                    this.client.input.targetBoundedContext,
-                    [],
-                    this.esAliasTransManager
-                )
-            ]
-        }
-
         return {
-            "Current Bounded Context": JSON.stringify(summarizedBoundedContext),
+            "Current Bounded Context": JSON.stringify(this.client.input.summarizedESValue),
 
             "Functional Requirements": this.client.input.description,
 
@@ -496,7 +646,7 @@ Please follow these rules:
 
         let commandsToReplace = []
         for(const scenario of Object.values(result)){
-            const targetCommandUUID = this.esAliasTransManager.aliasToUUIDDic[scenario.targetCommandId]
+            const targetCommandUUID = this.client.input.esAliasTransManager.aliasToUUIDDic[scenario.targetCommandId]
             if(!targetCommandUUID) continue
             
             let targetCommand = this.client.input.esValue.elements[targetCommandUUID]
@@ -560,4 +710,4 @@ Please follow these rules:
     }
 }
 
-module.exports = GWTGeneratorByFunctions;
+module.exports = CommandGWTGeneratorByFunctions;

@@ -30,7 +30,8 @@ export default {
             
 
             const commandList = Object.keys(COMMANDS)
-                .map((cmd, index) => `${index}. ${cmd}: ${COMMANDS[cmd].description}`)
+                .map((cmd, index) => ((COMMANDS[cmd].description) ? 
+                    `${index}. ${cmd}: ${COMMANDS[cmd].description}` : `${index}. ${cmd}`))
                 .join('\n')
 
             let inputedCommand = prompt(this._getPromptMessage(commandList))

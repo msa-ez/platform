@@ -80,10 +80,12 @@ class ESAliasTransManager {
         if(this.UUIDToAliasDic[element.id]) 
             return this.UUIDToAliasDic[element.id]
 
-        let aliasToUse = `${getFrontId(element)}-${changeCase.camelCase(element.name)}`
-        let i = 1
+        const baseAlias = `${getFrontId(element)}-${changeCase.camelCase(element.name)}`
+        let aliasToUse = baseAlias
+        let i = 2
+        
         while(this.aliasToUUIDDic[aliasToUse]) {
-            aliasToUse = `${aliasToUse}-${i}`
+            aliasToUse = `${baseAlias}-${i}`
             i++
         }
         return aliasToUse
