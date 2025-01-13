@@ -70,358 +70,84 @@ export default {
             this.generator.stop();
             this.state.startTemplateGenerate = false
             this.done = true;
-            
-            this.showDevideBoundedContextDialog = true
-            this.resultDevideBoundedContext = {
-    "도메인": {
-        "boundedContexts": [
-            {
-                "name": "BookManagement",
-                "alias": "도서 관리",
-                "aggregates": [
-                    {
-                        "name": "Book",
-                        "alias": "도서"
-                    }
-                ],
-                "requirements": [
-                    {
-                        "type": "userStory",
-                        "text": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
-                    }
-                ]
-            },
-            {
-                "name": "LoanManagement",
-                "alias": "대출/반납",
-                "aggregates": [
-                    {
-                        "name": "Loan",
-                        "alias": "대출"
-                    },
-                    {
-                        "name": "Reservation",
-                        "alias": "예약"
-                    }
-                ],
-                "requirements": [
-                    {
-                        "type": "userStory",
-                        "text": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해. 대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해. 각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
-                    }
-                ]
-            }
-        ],
-        "relations": [
-            {
-                "name": "BookLoanManagement",
-                "type": "Customer-Supplier",
-                "upStream": {
-                    "name": "BookManagement",
-                    "alias": "도서 관리"
-                },
-                "downStream": {
-                    "name": "LoanManagement",
-                    "alias": "대출/반납"
+
+            const selectedStructureOption = {
+    "boundedContexts": [
+        {
+            "name": "BookManagement",
+            "alias": "도서 관리",
+            "aggregates": [
+                {
+                    "name": "Book",
+                    "alias": "도서"
                 }
-            }
-        ],
-        "thoughts": "도서 관리와 대출/반납 관리는 서로 다른 기능적 요구사항을 가지고 있으며, 각 컨텍스트는 높은 응집력과 낮은 결합력을 유지합니다. 도서 관리에서는 도서의 등록과 상태 관리에 초점을 맞추고 있으며, 대출/반납 관리에서는 대출 프로세스와 관련된 기능을 처리합니다. 두 컨텍스트 간의 의존성을 최소화하기 위해 Customer-Supplier 관계를 설정하였습니다.",
-        "explanations": [
-            {
-                "sourceContext": "도서 관리",
-                "targetContext": "대출/반납",
-                "relationType": "Customer-Supplier",
-                "reason": "대출/반납 기능은 도서 관리 기능의 데이터를 사용하여 대출 상태를 업데이트해야 하므로, 도서 관리가 대출/반납의 데이터 공급자 역할을 합니다.",
-                "interactionPattern": "REST API를 통해 도서 상태 정보를 조회하고 업데이트하는 방식으로 상호작용합니다."
-            }
-        ],
-        "devisionAspect": "도메인"
-    },
-    "조직적": {
-        "boundedContexts": [
-            {
-                "name": "BookManagement",
-                "alias": "도서 관리",
-                "aggregates": [
-                    {
-                        "name": "Book",
-                        "alias": "도서"
-                    },
-                    {
-                        "name": "Category",
-                        "alias": "카테고리"
-                    }
-                ],
-                "requirements": [
-                    {
-                        "type": "userStory",
-                        "text": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
-                    }
-                ]
-            },
-            {
-                "name": "LoanManagement",
-                "alias": "대출/반납 관리",
-                "aggregates": [
-                    {
-                        "name": "Loan",
-                        "alias": "대출"
-                    },
-                    {
-                        "name": "Member",
-                        "alias": "회원"
-                    }
-                ],
-                "requirements": [
-                    {
-                        "type": "userStory",
-                        "text": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
-                    },
-                    {
-                        "type": "userStory",
-                        "text": "대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해."
-                    },
-                    {
-                        "type": "userStory",
-                        "text": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
-                    }
-                ]
-            }
-        ],
-        "relations": [
-            {
-                "name": "BookLoanIntegration",
-                "type": "Customer-Supplier",
-                "upStream": {
-                    "name": "BookManagement",
-                    "alias": "도서 관리"
+            ],
+            "requirements": [
+                {
+                    "type": "userStory",
+                    "text": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
                 },
-                "downStream": {
-                    "name": "LoanManagement",
-                    "alias": "대출/반납 관리"
+                {
+                    "type": "ddl",
+                    "text": "도서명, ISBN, 저자, 출판사, 카테고리"
                 }
-            }
-        ],
-        "thoughts": "The division into 'BookManagement' and 'LoanManagement' contexts was driven by the need for high cohesion and low coupling. 'BookManagement' focuses on the registration and status management of books, while 'LoanManagement' handles the loan and return processes involving members. These contexts are related through a customer-supplier relationship, where 'LoanManagement' depends on 'BookManagement' for book status updates.",
-        "explanations": [
-            {
-                "sourceContext": "도서 관리",
-                "targetContext": "대출/반납 관리",
-                "relationType": "Customer-Supplier",
-                "reason": "The 'LoanManagement' context relies on the 'BookManagement' context for accurate book status information, such as availability and reservation status. Therefore, a customer-supplier relationship is appropriate.",
-                "interactionPattern": "REST API calls are used for 'LoanManagement' to query and update book statuses from 'BookManagement'."
-            }
-        ],
-        "devisionAspect": "조직적"
-    },
-    "페르소나": {
-        "boundedContexts": [
-            {
-                "name": "BookManagement",
-                "alias": "도서 관리",
-                "aggregates": [
-                    {
-                        "name": "Book",
-                        "alias": "도서"
-                    }
-                ],
-                "requirements": [
-                    {
-                        "type": "userStory",
-                        "text": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
-                    }
-                ]
-            },
-            {
-                "name": "LoanManagement",
-                "alias": "대출/반납 관리",
-                "aggregates": [
-                    {
-                        "name": "Loan",
-                        "alias": "대출"
-                    },
-                    {
-                        "name": "Reservation",
-                        "alias": "예약"
-                    }
-                ],
-                "requirements": [
-                    {
-                        "type": "userStory",
-                        "text": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해. 대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해. 각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
-                    }
-                ]
-            }
-        ],
-        "relations": [
-            {
-                "name": "BookLoanManagement",
-                "type": "Customer-Supplier",
-                "upStream": {
-                    "name": "BookManagement",
-                    "alias": "도서 관리"
+            ]
+        },
+        {
+            "name": "LoanManagement",
+            "alias": "대출/반납",
+            "aggregates": [
+                {
+                    "name": "Loan",
+                    "alias": "대출"
                 },
-                "downStream": {
-                    "name": "LoanManagement",
-                    "alias": "대출/반납 관리"
+                {
+                    "name": "Member",
+                    "alias": "회원"
                 }
-            }
-        ],
-        "thoughts": "도서 관리와 대출/반납 관리는 서로 다른 기능과 데이터를 다루기 때문에 높은 응집도를 유지하면서 서로의 의존성을 최소화할 수 있습니다. 도서 관리에서는 도서의 등록, 상태 관리에 집중하고, 대출/반납 관리에서는 회원과의 상호작용을 통해 대출 및 반납 프로세스를 관리합니다. 이 두 컨텍스트는 도서의 상태 변화에 대해 서로 상호작용해야 하므로 Customer-Supplier 관계를 통해 도서 관리가 대출/반납 관리에게 필요한 정보를 제공하는 구조로 설계되었습니다.",
-        "explanations": [
-            {
-                "sourceContext": "도서 관리",
-                "targetContext": "대출/반납 관리",
-                "relationType": "Customer-Supplier",
-                "reason": "대출/반납 관리에서 도서의 상태를 변경할 때 도서 관리의 정보를 참고해야 하기 때문에 도서 관리가 대출/반납 관리에 서비스를 제공하는 형태로 관계가 설정되었습니다.",
-                "interactionPattern": "REST API를 통해 도서 상태 변경 정보를 주고받는 방식으로 상호작용합니다."
-            }
-        ],
-        "devisionAspect": "페르소나"
-    },
-    "거래/성능": {
-        "boundedContexts": [
-            {
-                "name": "BookManagement",
-                "alias": "도서 관리",
-                "aggregates": [
-                    {
-                        "name": "Book",
-                        "alias": "도서"
-                    }
-                ],
-                "requirements": [
-                    {
-                        "type": "userStory",
-                        "text": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
-                    }
-                ]
-            },
-            {
-                "name": "LoanManagement",
-                "alias": "대출/반납",
-                "aggregates": [
-                    {
-                        "name": "Loan",
-                        "alias": "대출"
-                    },
-                    {
-                        "name": "Reservation",
-                        "alias": "예약"
-                    }
-                ],
-                "requirements": [
-                    {
-                        "type": "userStory",
-                        "text": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해. 대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해. 각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
-                    }
-                ]
-            }
-        ],
-        "relations": [
-            {
-                "name": "LoanManagementToBookManagement",
-                "type": "Customer-Supplier",
-                "upStream": {
-                    "name": "BookManagement",
-                    "alias": "도서 관리"
+            ],
+            "requirements": [
+                {
+                    "type": "userStory",
+                    "text": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
                 },
-                "downStream": {
-                    "name": "LoanManagement",
-                    "alias": "대출/반납"
-                }
-            }
-        ],
-        "thoughts": "도서 관리와 대출/반납은 서로 다른 기능과 데이터를 다루므로 두 개의 Bounded Context로 나누었습니다. 도서 관리는 도서의 등록, 상태 관리, 폐기 처리를 담당하고, 대출/반납은 도서의 대출, 반납, 예약을 관리합니다. 도서 상태 변경은 대출/반납에 의해 영향을 받기 때문에 Customer-Supplier 관계로 설정하였습니다.",
-        "explanations": [
-            {
-                "sourceContext": "대출/반납",
-                "targetContext": "도서 관리",
-                "relationType": "Customer-Supplier",
-                "reason": "대출/반납 시스템이 도서 관리 시스템의 도서 상태 정보를 필요로 하며, 대출 및 반납 시 도서 상태가 변경되기 때문입니다.",
-                "interactionPattern": "Req/Res"
-            }
-        ],
-        "devisionAspect": "거래/성능"
-    },
-    "인프라": {
-        "boundedContexts": [
-            {
-                "name": "BookManagement",
-                "alias": "도서 관리",
-                "aggregates": [
-                    {
-                        "name": "Book",
-                        "alias": "도서"
-                    }
-                ],
-                "requirements": [
-                    {
-                        "type": "userStory",
-                        "text": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
-                    }
-                ]
-            },
-            {
-                "name": "LoanManagement",
-                "alias": "대출/반납",
-                "aggregates": [
-                    {
-                        "name": "Loan",
-                        "alias": "대출"
-                    },
-                    {
-                        "name": "LoanHistory",
-                        "alias": "대출 이력"
-                    }
-                ],
-                "requirements": [
-                    {
-                        "type": "userStory",
-                        "text": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
-                    },
-                    {
-                        "type": "userStory",
-                        "text": "대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해."
-                    },
-                    {
-                        "type": "userStory",
-                        "text": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
-                    }
-                ]
-            }
-        ],
-        "relations": [
-            {
-                "name": "BookLoanManagement",
-                "type": "Customer-Supplier",
-                "upStream": {
-                    "name": "BookManagement",
-                    "alias": "도서 관리"
+                {
+                    "type": "userStory",
+                    "text": "대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해."
                 },
-                "downStream": {
-                    "name": "LoanManagement",
-                    "alias": "대출/반납"
+                {
+                    "type": "userStory",
+                    "text": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
                 }
+            ]
+        }
+    ],
+    "relations": [
+        {
+            "name": "BookLoanIntegration",
+            "type": "Customer-Supplier",
+            "upStream": {
+                "name": "BookManagement",
+                "alias": "도서 관리"
+            },
+            "downStream": {
+                "name": "LoanManagement",
+                "alias": "대출/반납"
             }
-        ],
-        "thoughts": "도서 관리와 대출/반납 관리는 서로 다른 책임을 가지고 있으며, 높은 응집력과 낮은 결합도를 유지하기 위해 두 개의 Bounded Context로 분리되었습니다. 도서 관리에서는 도서의 등록 및 상태 관리를 담당하고, 대출/반납 관리에서는 대출 및 반납 프로세스를 처리합니다. 두 컨텍스트 간의 관계는 도서 관리가 대출/반납 관리에 필요한 도서 정보를 제공하는 Customer-Supplier 관계로 정의되었습니다.",
-        "explanations": [
-            {
-                "sourceContext": "도서 관리",
-                "targetContext": "대출/반납",
-                "relationType": "Customer-Supplier",
-                "reason": "도서 관리 컨텍스트는 대출/반납 관리 컨텍스트에 도서의 상태 정보를 제공하며, 이는 대출/반납 프로세스에 필수적이기 때문에 Customer-Supplier 관계로 정의되었습니다.",
-                "interactionPattern": "REST API를 통해 도서 상태 정보를 제공하고, 대출/반납 관리에서 이를 활용하여 대출 상태를 업데이트합니다."
-            }
-        ],
-        "devisionAspect": "인프라"
-    }
+        }
+    ],
+    "thoughts": "도서 관리와 대출/반납 기능은 각각의 독립적인 도메인으로, 도서의 상태 관리와 대출 프로세스를 담당합니다. 도서 관리에서는 도서의 등록 및 상태 관리에 집중하고, 대출/반납에서는 대출 프로세스와 회원 관리에 중점을 둡니다. 두 도메인은 도서의 상태 정보를 공유하지만, 각각의 비즈니스 로직을 독립적으로 유지합니다.",
+    "explanations": [
+        {
+            "sourceContext": "도서 관리",
+            "targetContext": "대출/반납",
+            "relationType": "Customer-Supplier",
+            "reason": "대출/반납 시스템은 도서 관리 시스템의 도서 상태 정보를 활용하여 대출 프로세스를 수행합니다. 도서 관리가 상위 시스템으로, 도서의 상태 정보를 제공합니다.",
+            "interactionPattern": "REST API를 통해 도서 상태 정보를 조회하고 갱신합니다."
+        }
+    ],
+    "devisionAspect": "도메인"
 }
-
-            const selectedStructureOption = this.resultDevideBoundedContext["도메인"]
-
             this.generateAggregateDrafts(selectedStructureOption)
         },
 

@@ -271,7 +271,7 @@
                         description: bc.requirements,
                         aggregates: bc.aggregates
                     },
-                    description: bc.requirements
+                    description: JSON.stringify(bc.requirements)
                 }))
 
                 this.generators.PreProcessingFunctionsGenerator.initialInputs = structuredClone(passedGeneratorInputs)
