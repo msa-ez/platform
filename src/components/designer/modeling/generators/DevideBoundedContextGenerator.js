@@ -18,8 +18,8 @@ Focus on this division aspect:
 ${this.client.input['devisionAspect']}
 
 Requirements:
-- userStory: ${this.client.input['requirements']['userStory']}
-- ddl: ${this.client.input['requirements']['ddl']}
+${this.summaryRequirements()}
+${this.ddlPrompt()}
 
 ${this.client.input['feedback'] ? this.feedbackPrompt() : ''}
 
@@ -107,6 +107,29 @@ ${this.client.input['feedback']}
 `
     }
 
+    ddlPrompt(){
+        if(this.client.input['requirements']['ddl']!=""){
+            return `
+- ddl: ${this.client.input['requirements']['ddl']}`;
+        }else{
+            return '';
+        }
+    }
+
+    summaryRequirements(){
+        if(this.client.input['requirements']['summarizedResult']!=""){
+            return `
+Below is the Bounded Context list that summarize the requirements.
+Should be used all of the Bounded Contexts.
+- Bounded Context list: ${this.client.input['requirements']['summarizedResult']}
+            `;
+        }else{
+            return `
+- userStory: ${this.client.input['requirements']['userStory']}
+            `;
+        }
+    }
+
     createModel(text){
         if (text.startsWith('```json')) {
             text = text.slice(7);
@@ -123,6 +146,14 @@ ${this.client.input['feedback']}
             console.log(`[*] ${this.client.input['devisionAspect']}의 모델 생성이 완료됨`, {model, text, input: this.client.input})
         else
             console.log(`[*] ${this.client.input['devisionAspect']}의 모델 생성이 진행중임`, {textLength: text.length})
+
+        // 요약 결과가 있으면 요약 결과를 기반으로 매핑 진행하므로 제거
+        if(this.client.input['requirements']['summarizedResult']!=""){
+            model['boundedContexts'].forEach(boundedContext => {
+                boundedContext['requirements'] = []
+            })
+        }
+
         return model;
     }
 

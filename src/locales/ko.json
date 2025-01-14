@@ -9,7 +9,8 @@
   },
   "ESDialoger" : {
     "tryAgain": "재생성",
-    "createBoundedContext": "Bounded Context 생성"
+    "createBoundedContext": "Bounded Context 생성",
+    "summarizing": "요구사항을 분석 및 요약하고 있습니다..."
   },
   "DevideBoundedContextDialog" : {
     "boundedContextDivisionResult": "문제영역(Bounded context) 생성(분할) 결과",
@@ -17,9 +18,10 @@
     "domainAspect": "도메인",
     "organizationalAspect": "조직적",
     "personaAspect": "페르소나",
-    "transactionPerformanceAspect": "거래/성능",
+    "transactionPerformanceAspect": "트랜잭션/성능",
     "infrastructureAspect": "인프라",
     "lodingMessage": "관점별 Bounded Context 생성 중...",
+    "mappingMessage": "요구사항 매핑 중...",
     "reasonOfSeparation": "분할 이유",
     "aspect" : "관점",
     "reGenerate": "재생성",

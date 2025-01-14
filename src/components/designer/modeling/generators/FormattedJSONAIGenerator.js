@@ -125,7 +125,10 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
     async generate() {
         await this.onInputParamsCheckBefore(this.client.input, this.generatorName)
-        if(this.client.onInputParamsCheckBefore) await this.client.onInputParamsCheckBefore(this.client.input, this.generatorName)
+        if(this.client.onInputParamsCheckBefore) {
+            const signals = await this.client.onInputParamsCheckBefore(this.client.input, this.generatorName)
+            if(signals && signals.stop) return
+        }
 
 
         for(let key of this.checkInputParamsKeys)
