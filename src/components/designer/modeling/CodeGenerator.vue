@@ -68,14 +68,14 @@
                                 <v-icon size="22">mdi-menu</v-icon>
                             </v-btn>
                         </template>
-                        <span>left menu fold & unfold</span>
+                        <span>{{ $t('CodeGenerator.fileExplorer') }}</span>
                     </v-tooltip>
                     <div>
                         <v-menu
-                                v-model="gitMenu"
-                                :close-on-click="false"
-                                :close-on-content-click="false"
-                                offset-y
+                            v-model="gitMenu"
+                            :close-on-click="false"
+                            :close-on-content-click="false"
+                            offset-y
                         >
                             <template v-slot:activator="{ on: menu, attrs }">
                                 <v-tooltip bottom>
@@ -95,7 +95,7 @@
                                             <v-icon size="22" style="float:right;" :style="gitMenu ? 'color:gray':''">mdi-git</v-icon>
                                         </v-btn>
                                     </template>
-                                    <span>Push to Git</span>
+                                    <span>{{ $t('CodeGenerator.pushToGit') }}</span>
                                 </v-tooltip>
                             </template>
 
@@ -179,7 +179,7 @@
                                 </v-btn>
                             </div>
                         </template>
-                        <span>Download Archive</span>
+                        <span>{{ $t('CodeGenerator.downloadArchive') }}</span>
                     </v-tooltip>
 
                     <v-tooltip bottom>
@@ -193,7 +193,7 @@
                                 </div>
                             </v-btn>
                         </template>
-                        <span>Search</span>
+                        <span>{{ $t('CodeGenerator.search') }}</span>
                     </v-tooltip>
 
                     <v-tooltip bottom v-if="editableTemplate">
@@ -205,7 +205,7 @@
                                 <v-icon size="22">mdi-code-braces</v-icon>
                             </v-btn>
                         </template>
-                        <span>Edit Template</span>
+                        <span>{{ $t('CodeGenerator.editTemplate') }}</span>
                     </v-tooltip>
 
                     <v-tooltip bottom v-if="editableTemplate">
@@ -248,7 +248,7 @@
                                 />
                             </v-btn>
                         </template>
-                        <span>Design Patterns</span>
+                        <span>{{ $t('CodeGenerator.designPatterns') }}</span>
                     </v-tooltip>
 
                     <v-tooltip bottom>
@@ -259,7 +259,7 @@
                                 <Icons :icon="'diff'" :size="26" :color="diffMode ? 'rgb(25,118,210)' : '' "/>
                             </v-btn>
                         </template>
-                        <span>Diff Mode</span>
+                        <span>{{ $t('CodeGenerator.diffMode') }}</span>
                     </v-tooltip>
                     <v-spacer />
                     <v-menu left :close-on-content-click="false" :close-on-click="false" @input="onClickToppingBox(true)"
