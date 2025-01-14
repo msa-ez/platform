@@ -120,6 +120,13 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
         this.checkInputParamsKeys = []
         this.progressCheckStrings = [] // AI 응답에서 특정 문자열들을 순차적으로 확인해서 진행률을 추적하기 위해서 사용
+    
+        // onModelCreated가 없을 경우에는 onGenerationSucceeded가 구현되어도 제대로 동작하지 않기 때문에 디폴트 콜백을 작성함
+        if(!this.client.onModelCreated)
+            this.client.onModelCreated = (returnObj) => {
+                if(returnObj.modelValue)
+                console.log(`[*] ${this.generatorName}에 대한 생성된 모델 정보 : `, returnObj.modelValue)
+            }
     }
 
 

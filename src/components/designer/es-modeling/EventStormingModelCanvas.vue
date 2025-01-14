@@ -2025,7 +2025,6 @@
         CommandGWTGeneratorByFunctions
     } from "../modeling/generators/es-generators";
     import GeneratorProgress from "./components/GeneratorProgress.vue"
-    import PreProcessingFunctionsGenerator from "../modeling/generators/es-ddl-generators/PreProcessingFunctionsGenerator";
     import ESActionsUtil from "../modeling/generators/es-ddl-generators/modules/ESActionsUtil"
     const prettier = require("prettier");
     const plugins = require("prettier-plugin-java");

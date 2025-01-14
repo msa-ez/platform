@@ -1,5 +1,5 @@
-const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
-const { ESValueSummarizeWithFilter } = require("../es-generators/helpers")
+const FormattedJSONAIGenerator = require("../../FormattedJSONAIGenerator")
+const { ESValueSummarizeWithFilter } = require("../helpers")
 
 class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
