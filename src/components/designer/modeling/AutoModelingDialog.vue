@@ -30,104 +30,118 @@
             </v-card-text>
         </v-card>
 
-        <v-col class="shrink" :style="openChatUI ? 'height:10000px;':''">
-            <v-expand-x-transition>
-                <v-card
-                    v-show="openChatUI"
-                    style="height: 100%; position: absolute; width: 100%; background-color: aliceblue; left: 0px; top: 0px; z-index:201;"
-                    class="mx-auto bg-secondary"
-                >   
-                   
-                        <v-card-text>
-                            <v-row style="justify-content: space-between;">
-                                <v-icon style="margin-bottom: 10px;" @click="cancelCreateModel()">mdi-arrow-left</v-icon>
-                                <div>
-                                    <v-icon v-if="!isServer" @click="openStorageDialog()">mdi-content-save</v-icon>
-                                    <!-- PowerPoint Generate -->
-                                    <v-icon v-if="isServer" @click="generatePowerPoint()">mdi-file-powerpoint-box-outline</v-icon>
-                                </div>
-                            </v-row>
-
-                            <!-- autofocus -->
-                            <v-row class="pt-2 pb-2">
-                                <v-spacer></v-spacer>
-                                <v-textarea class="auto-modeling-input"
-                                    v-model="projectInfo.prompt"
-                                    style="padding: 10px; width: 80%;"
-                                    :style="!openAiResult && openAiResult == '' ? 'margin-top: 15px;':''"
-                                    solo
-                                    :hint="$t('autoModeling.mainClick')"
-                                    persistent-hint
-                                    :label="$t('autoModeling.main2')"
-                                    :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-auto-fix'"
-                                    @click:append="startGen(genType)"
-                                    @keydown="startGenHandleKeydown(genType)"
-                                    auto-grow
-                                    :rows="1"
-                                ></v-textarea>
-                            </v-row>
-                            <div v-if="openChatUI">
-                                <v-col style="padding:0px;">
-                                    <v-card style="display:inline-block; background-color: #DAF5FF;">
-                                        <v-card-text class="auto-modeling-message">
-                                            <vue-typed-js 
-                                                :strings="[$t('autoModeling.selectOptions')]"
-                                                :typeSpeed="5"
-                                                :showCursor="false"
-                                            >
-                                                <span class="typing"></span>
-                                            </vue-typed-js>
-                                        </v-card-text>
+        <!-- :style="openChatUI ? 'height:10000px;':''" -->
+        <v-col class="shrink pa-0">
+        <v-expand-x-transition>
+            <v-card ref="chatCardAutoScrolling"
+                v-show="openChatUI"
+                style="background-color: aliceblue;
+                width: 100%;
+                position: fixed;
+                top: 0;
+                left: 0px;
+                height:100vh;
+                z-index: 201;
+                overflow: auto;
+                padding-bottom:50px !important;"
+            >
+                <v-row class="ma-0 pa-0 align-center pt-1 pb-1"
+                    style="position: fixed;
+                    width: 98.5vw;
+                    top: 10px;
+                    z-index: 999;
+                    margin-top: -10px !important;
+                    background-color: white;
+                    border-bottom: solid 1px #e0e0e0"
+                >
+                    <v-spacer></v-spacer>
+                    <div class="mr-1">
+                        <v-icon v-if="!isServer" @click="openStorageDialog()">mdi-content-save</v-icon>
+                        <!-- PowerPoint Generate -->
+                        <v-icon v-if="isServer" @click="generatePowerPoint()">mdi-file-powerpoint-box-outline</v-icon>
+                    </div>
+                    <v-icon @click="cancelCreateModel()"
+                    >mdi-close
+                    </v-icon>
+                </v-row>
+                <v-card-text>
+                    <v-row class="pt-2 pb-2">
+                        <v-spacer></v-spacer>
+                        <v-textarea
+                            v-model="projectInfo.prompt"
+                            ref="textarea"
+                            style="padding: 10px; width: 80%;"
+                            :style="!openAiResult && openAiResult == '' ? 'margin-top: 15px;':''"
+                            solo
+                            :hint="$t('autoModeling.mainClick')"
+                            persistent-hint
+                            :label="$t('autoModeling.main2')"
+                            :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-auto-fix'"
+                            @click:append="startGen(genType)"
+                            @keydown="startGenHandleKeydown(genType)"
+                            auto-grow
+                        ></v-textarea>
+                    </v-row>
+                    <div v-if="openChatUI">
+                        <v-col style="padding:0px;">
+                            <v-card style="display:inline-block; background-color: #DAF5FF;">
+                                <v-card-text class="auto-modeling-message">
+                                    <vue-typed-js 
+                                        :strings="[$t('autoModeling.selectOptions')]"
+                                        :typeSpeed="5"
+                                        :showCursor="false"
+                                    >
+                                        <span class="typing"></span>
+                                    </vue-typed-js>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                        
+                        <v-card style="margin-top: 10px; display: inline-block; background-color: #DAF5FF;">
+                            <v-row lg="3" md="3" sm="6" cols="12" style="padding:10px;">
+                                <v-col v-for="(item, index) in cardItems"
+                                    :key="index"
+                                    style="text-align: center;"
+                                >
+                                    <v-card :style="genType == item.type ? 'border: solid darkturquoise;' : 'background-color: white;'" :class="item.class">
+                                        <!-- <v-chip :style="item.chipText == 'Stable' ? 'color: white;' : ''"
+                                            x-small
+                                            :outlined="item.chipOutlined"
+                                            :color="item.chipColor"
+                                            style="position: absolute; right: 5px; top: 5px; z-index: 1;"
+                                        >{{ item.chipText }}</v-chip> -->
+                                        <div @click="checkLogin(item.type)" style="cursor: pointer;">
+                                            <v-avatar class="ma-3" size="125" rounded="0">
+                                                <v-img :src="item.imgSrc"></v-img>
+                                            </v-avatar>
+                                            <v-card-text style="justify-content: center; margin-top: -10px;">
+                                                <div :style="genType == item.type ? 'background-color: #DAF5FF;' : ''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
+                                                    <v-icon v-if="genType == item.type" small color="success">mdi-check</v-icon>
+                                                    {{ $t(item.textKey) }}
+                                                </div>
+                                            </v-card-text>
+                                        </div>
                                     </v-card>
                                 </v-col>
-                                
-                                <v-card style="margin-top: 10px; display: inline-block; background-color: #DAF5FF;">
-                                    <v-row lg="3" md="3" sm="6" cols="12" style="padding:10px;">
-                                        <v-col v-for="(item, index) in cardItems"
-                                            :key="index"
-                                            style="text-align: center;"
-                                        >
-                                            <v-card :style="genType == item.type ? 'border: solid darkturquoise;' : 'background-color: white;'" :class="item.class">
-                                                <!-- <v-chip :style="item.chipText == 'Stable' ? 'color: white;' : ''"
-                                                    x-small
-                                                    :outlined="item.chipOutlined"
-                                                    :color="item.chipColor"
-                                                    style="position: absolute; right: 5px; top: 5px; z-index: 1;"
-                                                >{{ item.chipText }}</v-chip> -->
-                                                <div @click="checkLogin(item.type)" style="cursor: pointer;">
-                                                    <v-avatar class="ma-3" size="125" rounded="0">
-                                                        <v-img :src="item.imgSrc"></v-img>
-                                                    </v-avatar>
-                                                    <v-card-text style="justify-content: center; margin-top: -10px;">
-                                                        <div :style="genType == item.type ? 'background-color: #DAF5FF;' : ''" style="font-weight: 500; font-size: 12px; margin-left: -5px; border-radius: 10px; margin-right: -10px;">
-                                                            <v-icon v-if="genType == item.type" small color="success">mdi-check</v-icon>
-                                                            {{ $t(item.textKey) }}
-                                                        </div>
-                                                    </v-card-text>
-                                                </div>
-                                            </v-card>
-                                        </v-col>
-                                    </v-row>
-                                </v-card>
-                                <div v-if="startCrateModel && genType == 'BM'" style="margin-top: 10px; margin-left: 5px;">
-                                    <v-progress-circular
-                                        indeterminate
-                                        color="primary"
-                                    ></v-progress-circular>
-                                </div>
-                            </div>
-                            <div :key="reGenKey">
-                                <ESDialoger v-if="genType == 'ES2'"     ref="esDialoger"    v-model="projectInfo.eventStorming"      :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" :uiStyle="uiStyle"   ></ESDialoger>
-                                <CJMDialoger v-if="genType == 'CJM'"    ref="cjMDialoger"   v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @setPersonas="setPersonas" ></CJMDialoger>
-                                <BMDialoger v-if="genType == 'BM2'"     ref="bmDialoger"    v-model="projectInfo.businessModel"      :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject"></BMDialoger>
-                                <USMDialoger v-if="genType == 'USM'"    ref="usmDialoger"   v-model="projectInfo.userStoryMap"       :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject"></USMDialoger>
-                                <UIWizardDialoger v-if="genType == 'UI'" ref="uiDialoger"   v-model="projectInfo.ui"                 :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @selected="onUIStyleSelected"  ></UIWizardDialoger>
-                            </div>
-                        </v-card-text>
-                    <!-- </div> -->
+                            </v-row>
+                        </v-card>
+                        <div v-if="startCrateModel && genType == 'BM'" style="margin-top: 10px; margin-left: 5px;">
+                            <v-progress-circular
+                                indeterminate
+                                color="primary"
+                            ></v-progress-circular>
+                        </div>
+                    </div>
+                    <div :key="reGenKey">
+                        <ESDialoger v-if="genType == 'ES2'"     ref="esDialoger"    v-model="projectInfo.eventStorming"      :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" :uiStyle="uiStyle"   ></ESDialoger>
+                        <CJMDialoger v-if="genType == 'CJM'"    ref="cjMDialoger"   v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @setPersonas="setPersonas" ></CJMDialoger>
+                        <BMDialoger v-if="genType == 'BM2'"     ref="bmDialoger"    v-model="projectInfo.businessModel"      :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject"></BMDialoger>
+                        <USMDialoger v-if="genType == 'USM'"    ref="usmDialoger"   v-model="projectInfo.userStoryMap"       :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject"></USMDialoger>
+                        <UIWizardDialoger v-if="genType == 'UI'" ref="uiDialoger"   v-model="projectInfo.ui"                 :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @selected="onUIStyleSelected"  ></UIWizardDialoger>
+                    </div>
+                </v-card-text>
                 </v-card>
             </v-expand-x-transition>
-
             <ModelStorageDialog
                     :showDialog="showStorageDialog"
                     :condition="storageCondition"
@@ -376,8 +390,26 @@
             }
         },
         watch: {
-            "projectInfo.prompt":_.debounce(function(){
-                localStorage.setItem('noLoginPrompt',this.projectInfo.prompt)
+            "projectInfo.prompt": _.debounce(function() {
+                localStorage.setItem('noLoginPrompt', this.projectInfo.prompt);
+                
+                // textarea 높이 조정
+                this.$nextTick(() => {
+                    const textarea = this.$refs.textarea.$el.querySelector('textarea');
+                    if (textarea) {
+                        textarea.style.height = 'auto';
+                        textarea.style.height = textarea.scrollHeight + 'px';
+                    }
+                    
+                    // v-card 스크롤을 최하단으로 이동
+                    const chatCard = this.$refs.chatCardAutoScrolling;
+                    if (chatCard) {
+                        const isAtBottom = chatCard.scrollTop + chatCard.clientHeight >= chatCard.scrollHeight - 10;
+                        if (isAtBottom) {
+                            chatCard.scrollTop = chatCard.scrollHeight;
+                        }
+                    }
+                });
             }, 1000)
         },
         beforeDestroy() {
