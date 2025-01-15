@@ -32,12 +32,15 @@
     "descriptionOfEachBoundedContext": "Description of Each Bounded Context",
     "relations": "Relations",
     "boundedContextName": "Bounded Context Name",
+    "importance": "Importance",
+    "implementationStrategy": "Implementation Strategy",
     "requirements": "Requirements",
     "sourceContext": "Source Context",
     "targetContext": "Target Context",
     "relationType": "Relation Type", 
     "reason": "Reason",
-    "interactionPattern": "Interaction Pattern"
+    "interactionPattern": "Interaction Pattern",
+    "summarizedResult": "Summarized Result"
   },
   "ViewDefinitionPanel" : {
     "CQRSDetailTitle" : "In the CQRS pattern, the \"CREATE\" configuration of the Read Model is responsible for storing data in a queryable format when events occur.",

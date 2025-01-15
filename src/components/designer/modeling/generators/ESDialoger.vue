@@ -84,12 +84,18 @@
                 <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
                 <v-card-actions v-if="done" class="auto-modeling-btn-box">
                     <v-btn :disabled="isSummarizeStarted || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}</v-btn>
-                    <v-btn :disabled="isSummarizeStarted || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" color="primary" @click="generateDevideBoundedContext()">{{ $t('ESDialoger.createBoundedContext') }}</v-btn>
+                    <v-btn :disabled="isSummarizeStarted || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" color="primary" @click="showBCGenerationOption = !showBCGenerationOption">{{ $t('ESDialoger.createBoundedContext') }}</v-btn>
                 </v-card-actions>
                 <div v-if="isSummarizeStarted" style="margin-left: 2%; margin-bottom: 1%;">
                     <span>{{ $t('ESDialoger.summarizing') }}</span>
                     <v-progress-circular color="primary" indeterminate></v-progress-circular>
                 </div>
+            </v-card>
+
+            <v-card v-if="showBCGenerationOption" class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
+                <BCGenerationOption
+                    @setGenerateOption="setGenerateOption"
+                ></BCGenerationOption>
             </v-card>
 
             <v-card v-if="showDevideBoundedContextDialog" class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
@@ -98,6 +104,8 @@
                     :isStartMapping="isStartMapping"
                     :processingRate="processingRate"
                     :currentProcessingBoundedContext="currentProcessingBoundedContext"
+                    :devisionAspect="devisionAspect"
+                    :summarizedResult="summarizedResult"
                     @createModel="generateAggregateDrafts"
                     @closeDialog="showDevideBoundedContextDialog = false"
                     @stop="stop"
@@ -153,6 +161,7 @@
     import Generator from './UserStoryGenerator.js'
     import DevideBoundedContextGenerator from './DevideBoundedContextGenerator.js'
     import DevideBoundedContextDialog from './DevideBoundedContextDialog.vue'
+    import BCGenerationOption from './BCGenerationOption.vue'
     //import UserStoryGenerator from './UserStoryGenerator.js'
     // import StorageBase from "../StorageBase";
     import StorageBase from '../../../CommonStorageBase.vue';
@@ -188,6 +197,7 @@
         components: {
             VueTypedJs,
             DevideBoundedContextDialog,
+            BCGenerationOption,
             ModelDraftDialogWithXAI
         },
         computed: {
@@ -460,14 +470,9 @@
                 generator: null,
                 generatorName: null,
                 showDevideBoundedContextDialog: false,
+                showBCGenerationOption: false,
                 resultDevideBoundedContext: {},
-                devisionAspect: [
-                    this.$t('DevideBoundedContextDialog.domainAspect'),
-                    this.$t('DevideBoundedContextDialog.organizationalAspect'),
-                    this.$t('DevideBoundedContextDialog.personaAspect'),
-                    this.$t('DevideBoundedContextDialog.transactionPerformanceAspect'),
-                    this.$t('DevideBoundedContextDialog.infrastructureAspect')
-                ],
+                devisionAspect: [],
                 devisionAspectIndex: 0,
 
                 activeTab: null,
@@ -479,7 +484,6 @@
                 chunks: [],
                 currentChunkIndex: 0,
                 summarizedChunks: [],
-                summarizedResult: "",
                 summarizedResult: "",
                 isSummarizeStarted: false,
                 userStoryChunks: [],
@@ -682,6 +686,12 @@
                 this.generateDevideBoundedContext(aspect, feedback);
             },
 
+            setGenerateOption(option){
+                this.devisionAspect = option.selectedAspects;
+                this.input['generateOption'] = option;
+                this.generateDevideBoundedContext();
+            },
+
             async summarizeRequirements() {
                 this.generator = new RecursiveRequirementsSummarizer(this);
                 this.state.generator = "RecursiveRequirementsSummarizer";
@@ -722,7 +732,7 @@
 
             generateDevideBoundedContext(aspect, feedback){
                 // 현재 요약본이 너무 길면 먼저 요약 진행
-                if (this.value.userStory.length > 6000 || this.summarizedResult.length > 6000) {
+                if (this.value.userStory.length > 6000 && this.summarizedResult.length == 0) {
                     this.pendingBCGeneration = true;
                     this.summarizeRequirements();
                     return;

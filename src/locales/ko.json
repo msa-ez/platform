@@ -32,12 +32,15 @@
     "descriptionOfEachBoundedContext": "각 Bounded Context의 설명",
     "relations": "관계",
     "boundedContextName": "Bounded Context 이름",
+    "importance": "중요도",
+    "implementationStrategy": "구현 전략",
     "requirements": "요구사항",
     "sourceContext": "소스 컨텍스트",
     "targetContext": "타겟 컨텍스트", 
     "relationType": "관계 유형",
     "reason": "이유",
-    "interactionPattern": "상호작용 패턴"
+    "interactionPattern": "상호작용 패턴",
+    "summarizedResult": "요약 결과"
   },
   "ViewDefinitionPanel" : {
     "CQRSDetailTitle" : "CQRS 패턴에서 Read Model의 \"CREATE\" 설정은 이벤트 발생 시 데이터를 조회 가능한 형태로 저장하는 역할을 합니다.",
