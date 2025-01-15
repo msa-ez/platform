@@ -298,8 +298,10 @@
     import DDLGenerator from './DDLGenerator.js'
     import DDLDraftGenerator from './DDLDraftGenerator.js'
     import DDLBoundedContextDistributeGenerator from './es-ddl-generators/DDLBoundedContextDistributeGenerator.js'
-    import PreProcessingFunctionsGenerator from './es-ddl-generators/PreProcessingFunctionsGenerator.js'
-    import { CreateAggregateActionsByFunctions } from './es-generators'
+    import { 
+        CreateAggregateActionsByFunctions,
+        PreProcessingFunctionsGenerator
+    } from './es-generators'
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
 

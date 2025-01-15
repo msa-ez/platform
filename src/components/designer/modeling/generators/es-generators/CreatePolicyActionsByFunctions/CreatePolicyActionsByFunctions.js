@@ -1,4 +1,5 @@
 const FormattedJSONAIGenerator = require("../../FormattedJSONAIGenerator")
+const { ESValueSummaryGenerator } = require("..")
 const ESActionsUtil = require("../../es-ddl-generators/modules/ESActionsUtil")
 const { ESValueSummarizeWithFilter } = require("../helpers")
 const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTransManager")
@@ -134,10 +135,43 @@ class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
     }
 
 
-    onGenerateBefore(inputParams){
-        inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
+    async onGenerateBefore(inputParams){
         inputParams.boundedContextDisplayName = inputParams.targetBoundedContext.displayName ? inputParams.targetBoundedContext.displayName : inputParams.targetBoundedContext.name
-        this.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
+
+        inputParams.esValue = structuredClone(inputParams.esValue)
+        inputParams.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
+        inputParams.summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(
+            inputParams.esValue, 
+            ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateInnerStickers
+                .concat(ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.detailedProperties),
+            inputParams.esAliasTransManager
+        )
+
+        if(!this.isCreatedPromptWithinTokenLimit()) {
+            const leftTokenCount = this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
+            if(leftTokenCount <= 100)
+                throw new Error("[!] The size of the draft being passed is too large to process.")
+
+            console.log(`[*] 토큰 제한이 초과되어서 이벤트 스토밍 정보를 제한 수치까지 요약해서 전달함`)
+            console.log(`[*] 요약 이전 Summary`, inputParams.summarizedESValue)
+            const requestContext = this._buildRequestContext(inputParams)
+            inputParams.summarizedESValue = await ESValueSummaryGenerator.getSummarizedESValueWithMaxTokenSummarize(
+                requestContext,
+                inputParams.esValue,
+                ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateInnerStickers
+                .concat(ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.detailedProperties),
+                leftTokenCount,
+                this.model,
+                inputParams.esAliasTransManager
+            )
+            console.log(`[*] 요약 이후 Summary`, inputParams.summarizedESValue)
+        }
+    }
+
+    _buildRequestContext(inputParams) {
+        return `Analyzing requirements to create policies for the ${inputParams.targetBoundedContext.name} bounded context.
+- Requirements
+${inputParams.description}`;
     }
 
 
@@ -454,15 +488,8 @@ Please follow these rules:
     }
 
     __buildJsonUserQueryInputFormat() {
-        const summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(
-            JSON.parse(JSON.stringify(this.client.input.esValue)), 
-            ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateInnerStickers
-                .concat(ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.detailedProperties),
-            this.esAliasTransManager
-        )
-
         return {
-            "Summarized Existing EventStorming Model": JSON.stringify(summarizedESValue),
+            "Summarized Existing EventStorming Model": JSON.stringify(this.client.input.summarizedESValue),
 
             "Functional Requirements": this.client.input.description,
 
@@ -507,14 +534,14 @@ Please follow these rules:
         let actions = []
 
         for(let policy of policies) {
-            const eventId = this.esAliasTransManager.aliasToUUIDDic[policy.fromEventId]
+            const eventId = this.client.input.esAliasTransManager.aliasToUUIDDic[policy.fromEventId]
             const eventObject = this.client.input.esValue.elements[eventId]
             if(!eventObject) {
                 console.error("[!] Event to update not found", policy)
                 continue
             }
 
-            const commandId = this.esAliasTransManager.aliasToUUIDDic[policy.toCommandId]
+            const commandId = this.client.input.esAliasTransManager.aliasToUUIDDic[policy.toCommandId]
             const commandObject = this.client.input.esValue.elements[commandId]
             if(!commandObject) {
                 console.error("[!] Command to update not found", policy)

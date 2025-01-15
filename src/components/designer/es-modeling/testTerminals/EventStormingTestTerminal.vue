@@ -13,7 +13,9 @@ import {
     CreateAggregateClassIdByDraftsTest,
     CreateCommandActionsByFunctionsTest,
     CreatePolicyActionsByFunctionsTest,
-    CommandGWTGeneratorByFunctionsTest
+    CommandGWTGeneratorByFunctionsTest,
+    PreProcessingFunctionsGeneratorTest,
+    DraftGeneratorByFunctionsTest
 } from "../../modeling/generators/es-generators";
 
 export default {
@@ -46,6 +48,8 @@ export default {
                 TokenCounterTest: { command: () => {TokenCounterTest.test()} },
                 ESValueSummaryGeneratorTest: {command: async () => { await ESValueSummaryGeneratorTest.test(this.value) }},
                 ESValueSummarizeWithFilterTest: {command: async () => { await ESValueSummarizeWithFilterTest.test(this.value) }},
+                PreProcessingFunctionsGeneratorTest: {command: async () => { await PreProcessingFunctionsGeneratorTest.test() }},
+                DraftGeneratorByFunctionsTest: {command: async () => { await DraftGeneratorByFunctionsTest.test() }},
                 CreateAggregateActionsByFunctionsTest: {command: async () => { await CreateAggregateActionsByFunctionsTest.test() }},
                 CreateAggregateClassIdByDraftsTest: {command: async () => { await CreateAggregateClassIdByDraftsTest.test() }},
                 CreateCommandActionsByFunctionsTest: {command: async () => { await CreateCommandActionsByFunctionsTest.test() }},

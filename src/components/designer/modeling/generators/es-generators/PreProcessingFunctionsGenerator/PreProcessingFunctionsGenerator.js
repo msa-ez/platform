@@ -1,4 +1,4 @@
-const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
+const FormattedJSONAIGenerator = require("../../FormattedJSONAIGenerator");
 
 class PreProcessingFunctionsGenerator extends FormattedJSONAIGenerator{
     constructor(client){

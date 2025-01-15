@@ -174,8 +174,10 @@
     import TextChunker from './TextChunker.js';
 
     import ModelDraftDialogWithXAI from '../../context-mapping-modeling/dialogs/ModelDraftDialogWithXAI.vue'
-    import PreProcessingFunctionsGenerator from './es-ddl-generators/PreProcessingFunctionsGenerator.js'
-    import DraftGeneratorByFunctions from './es-ddl-generators/DraftGeneratorByFunctions.js'
+    import { 
+        PreProcessingFunctionsGenerator,
+        DraftGeneratorByFunctions 
+    } from '../../modeling/generators/es-generators';
 
     import RecursiveRequirementsSummarizer from './RecursiveRequirementsSummarizer.js';
     import RequirementsMappingGenerator from './RequirementsMappingGenerator.js';
@@ -281,7 +283,7 @@
                         description: bc.requirements,
                         aggregates: bc.aggregates
                     },
-                    description: bc.requirements
+                    description: JSON.stringify(bc.requirements)
                 }))
 
                 this.generators.PreProcessingFunctionsGenerator.initialInputs = structuredClone(passedGeneratorInputs)

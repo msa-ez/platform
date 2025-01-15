@@ -1,4 +1,3 @@
-
 const FormattedJSONAIGenerator = require("../../FormattedJSONAIGenerator")
 const { ESValueSummaryGenerator } = require("..")
 const ESActionsUtil = require("../../es-ddl-generators/modules/ESActionsUtil")
