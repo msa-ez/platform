@@ -634,6 +634,7 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
 
         this._removeThoughts(returnObj.modelValue.output)
         this._removeOptionsWithExistingAggregates(returnObj.modelValue.output)
+        returnObj.modelValue.output.defaultOptionIndex = Math.min(returnObj.modelValue.output.defaultOptionIndex, returnObj.modelValue.output.options.length - 1)
         if(returnObj.modelValue.output.options.length === 0) 
             throw new Error("No valid options found")
 

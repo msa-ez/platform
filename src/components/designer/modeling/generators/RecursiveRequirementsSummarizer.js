@@ -22,22 +22,24 @@ class RecursiveRequirementsSummarizer extends RequirementsSummarizer {
         let currentText = text;
         this.iterations = 0;
         
-        console.log(`Before summarize: ${currentText.length}`);
-
+        console.log(`Initial text length: ${currentText.length}`);
+    
         while (currentText.length > this.textChunker.chunkSize && this.iterations < this.maxIterations) {
             this.iterations++;
+            console.log(`Iteration ${this.iterations} - Before summarize: ${currentText.length}`);
             
             // 청크 준비
             this.currentChunks = this.textChunker.splitIntoChunks(currentText);
             this.summarizedChunks = [];
             this.currentChunkIndex = 0;
-
-            // 첫 번째 청크 처리 시작
+    
+            // 청크 처리 및 currentText 업데이트
             currentText = await this.processChunks();
+            console.log(`Iteration ${this.iterations} - After summarize: ${currentText.length}`);
         }
-
-        // 최종 텍스트가 청크 크기보다 작으면 한 번의 요약만 수행
-        if (currentText.length <= this.textChunker.chunkSize) {
+    
+        // 최종 요약이 필요한 경우에만 수행
+        if (this.iterations === 0 || currentText.length > this.textChunker.chunkSize) {
             this.client.input = {
                 requirements: {
                     userStory: currentText,
@@ -49,7 +51,9 @@ class RecursiveRequirementsSummarizer extends RequirementsSummarizer {
                 this.generate();
             });
         }
-
+    
+        // 프로세스 완료 표시
+        this.resolveCurrentProcess = null;
         return currentText;
     }
 
@@ -104,7 +108,6 @@ class RecursiveRequirementsSummarizer extends RequirementsSummarizer {
                 // 최종 요약 완료
                 if (this.resolveCurrentProcess) {
                     this.resolveCurrentProcess(summarizedText);
-                    console.log("After summarize: ", this.summarizedChunks.join().length);
                 }
             }
         } catch (e) {

@@ -9,8 +9,8 @@
         </v-card-title>
         <v-card-subtitle>
             <div class="d-flex align-center">
-                <div v-if="isGenerating && Object.keys(resultDevideBoundedContext).length < 5">
-                    <p class="mb-0">{{ $t('DevideBoundedContextDialog.lodingMessage') }} ({{ Object.keys(resultDevideBoundedContext).length / 5 * 100 }}%)</p>
+                <div v-if="isGenerating && Object.keys(resultDevideBoundedContext).length < devisionAspect.length">
+                    <p class="mb-0">{{ $t('DevideBoundedContextDialog.lodingMessage') }} ({{ Math.round(Object.keys(resultDevideBoundedContext).length / devisionAspect.length * 100) }}%)</p>
                 </div>
                 <div v-if="isStartMapping">
                     <p class="mb-0">{{ currentProcessingBoundedContext }} - {{ $t('DevideBoundedContextDialog.mappingMessage') }} ({{ processingRate }}%)</p>
@@ -67,6 +67,9 @@
                         <div>
                             <v-card-title class="text-subtitle-1 pa-0 pb-4">{{ $t('DevideBoundedContextDialog.reasonOfSeparation') }}</v-card-title>
                             <v-card-text class="pa-0 pb-4" align="left">{{ resultDevideBoundedContext[devisionAspect].thoughts }}</v-card-text>
+
+                            <v-card-title class="pa-0 pb-0 text-subtitle-1">{{ $t('DevideBoundedContextDialog.summarizedResult') }}</v-card-title>
+                            <v-card-text class="pa-0 pb-4" align="left">{{ summarizedResult }}</v-card-text>
 
                             <v-card-title class="pa-0 pb-0 text-subtitle-1">{{ $t('DevideBoundedContextDialog.descriptionOfEachBoundedContext') }}</v-card-title>
                             <v-card class="pa-0 ma-0 mt-4" outlined>
@@ -128,8 +131,7 @@
                     color="primary" 
                     @click="createModel()"
                 >
-                    {{ $t('DevideBoundedContextDialog.createModel') }}
-                    <v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon>
+                    {{ $t('DevideBoundedContextDialog.createAggregateDraft') }}
                 </v-btn>
             </v-row>
         </v-card-text>
@@ -161,6 +163,16 @@
                 type: String,
                 default: () => "",
                 required: false
+            },
+            devisionAspect: {
+                type: Array,
+                default: () => [],
+                required: false
+            },
+            summarizedResult: {
+                type: String,
+                default: () => "",
+                required: false
             }
         },
         components: {
@@ -186,6 +198,8 @@
                 expandIcon: 'mdi-chevron-down',
                 boundedContextHeaders: [
                     { text: this.$t('DevideBoundedContextDialog.boundedContextName'), value: 'name' },
+                    { text: this.$t('DevideBoundedContextDialog.importance'), value: 'importance' },
+                    { text: this.$t('DevideBoundedContextDialog.implementationStrategy'), value: 'implementationStrategy' },
                     { text: '', value: 'data-table-expand' }
                 ],
                 requirementHeaders: [
@@ -219,11 +233,11 @@
                         }
                     });
 
-                    if(Object.keys(newVal).length == 5){
+                    if(Object.keys(newVal).length == this.devisionAspect.length){
                         this.isGenerating = false;
-                        if(this.selectedAspect && Object.keys(newVal[this.selectedAspect]).length == 0){
+                        if(Object.keys(newVal[this.selectedAspect]).length == 0){
                             this.isGenerating = true;
-                        }else if (this.selectedAspect) {
+                        }else if (Object.keys(newVal[this.selectedAspect]).length > 0) {
                             // 선택된 aspect의 노드만 업데이트
                             const updatedNodes = this.generateNodes(newVal[this.selectedAspect]);
                             if (JSON.stringify(this.mermaidNodes[this.selectedAspect]) !== JSON.stringify(updatedNodes)) {
@@ -232,7 +246,7 @@
                             }
                             this.isGeneratingAspect = false;
                         }
-                    }else if(Object.keys(newVal).length > 0 && Object.keys(newVal).length < 5){
+                    }else if(Object.keys(newVal).length > 0 && Object.keys(newVal).length < this.devisionAspect.length){
                         this.isGenerating = true;
                     }
                 },
@@ -252,7 +266,7 @@
                         });
 
                         // 아직 원문 매핑이 안된 경우 원문 매핑 진행
-                        if(isEmptyRequirements && Object.keys(this.resultDevideBoundedContext).length == 5){
+                        if(isEmptyRequirements && Object.keys(this.resultDevideBoundedContext).length == this.devisionAspect.length){
                             this.$emit("mappingRequirements", aspect);
                         }
                     }
@@ -350,6 +364,8 @@
                 if (!aspectData || !aspectData.boundedContexts) return [];
                 return aspectData.boundedContexts.map(bc => ({
                     name: bc.alias,
+                    importance: bc.importance,
+                    implementationStrategy: bc.implementationStrategy,
                     requirements: bc.requirements.map(req => ({
                         type: req.type || '',
                         text: req.text || ''

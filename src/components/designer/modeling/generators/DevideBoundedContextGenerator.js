@@ -17,6 +17,12 @@ Analyze the following requirements and divide them into multiple Bounded Context
 Focus on this division aspect:
 ${this.client.input['devisionAspect']}
 
+Generate Number of Bounded Contexts:
+${this.client.input['generateOption']['numberOfBCs']}
+
+Additional requirements:
+${this.client.input['generateOption']['additionalOptions']}
+
 Requirements:
 ${this.summaryRequirements()}
 ${this.ddlPrompt()}
@@ -27,13 +33,6 @@ Key principles:
 - High cohesion, low coupling
 - Group related behaviors and data together
 - Minimize inter-context dependencies
-
-Define relationships between contexts using these types:
-1. Conformist: A relationship where the downstream system follows the upstream system's model exactly
-2. Share Kernel: A relationship where two systems share a common model
-3. Anti-corruption: A relationship where the downstream system transforms the upstream system's model for its use
-4. Separate Ways: A relationship where two systems are completely independent
-5. Customer-Supplier: A relationship where the upstream system provides services to the downstream system
 
 Language Instruction of Output:
 - Use the same national language as the Requirements at thoughts, context of explanations, alias, requirements.
@@ -47,6 +46,8 @@ The format must be as follows:
         {
             "name":"name of Bounded Context in PascalCase",
             "alias":"alias of Bounded Context in language of Requirements",
+            "importance": "Core Domain" || "Supporting Domain" || "Generic Domain",
+            "implementationStrategy": "Implementation Strategy",
             "aggregates":[ // Aggregates that can be extracted from this Bounded Context.
                 {
                     "name":"name of Aggregate in PascalCase",

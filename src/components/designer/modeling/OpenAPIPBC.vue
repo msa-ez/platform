@@ -1,6 +1,6 @@
 <template>
     <div>
-        <v-row class="marketplace-card-row" style="align-items: self-end;">
+        <!-- <v-row class="marketplace-card-row" style="align-items: self-end;">
             <v-col cols="12" lg="2" md="3" sm="6" v-for="(openAPI,index) in lists" :key="index">
                 <v-card flat>
                     <div style="text-align: right;" v-if="!openAPI.basic">
@@ -57,8 +57,7 @@
                     </div>
                 </v-card>
             </v-col>
-        </v-row>
-
+        </v-row> -->
     </div>
 </template>
 
@@ -92,7 +91,7 @@
         },
         created: function () {
             this.canvas = getParent(this.$parent, "event-storming-model-canvas");
-            this.setBasicOpenAPILists()
+            // this.setBasicOpenAPILists()
         },
         methods:{
             setBasicOpenAPILists(){
@@ -140,6 +139,10 @@
                     this.$emit('result', false)
                     return false;
                 }
+            },
+            setPBCInfo(pbc, Info){
+                this.pbc = pbc
+                this.openAPICard = Info
             },
             editOpenAPI(item){
                 if(item) this.openAPICard = item

@@ -1680,23 +1680,27 @@
                             scrollable
                     >
                         <v-card style="height: 100%">
-                            <v-card-title style="position: absolute; top: -10px"
-                            >Select Model for PBC</v-card-title
-                            >
-                            <v-card-actions style="justify-content: flex-end">
+                            <v-card-title style="position: absolute; top: -10px">Select Model for PBC</v-card-title>
+                            <!-- <v-card-actions style="justify-content: flex-end">
                                 <v-btn
-                                        @click="closeModelingListsDialog()"
-                                        small
-                                        text
-                                ><v-icon small>mdi-close</v-icon></v-btn
-                                >
-                            </v-card-actions>
+                                    @click="closeModelingListsDialog()"
+                                    small
+                                    text>
+                                    <v-icon small>mdi-close</v-icon>
+                                </v-btn>
+                            </v-card-actions> -->
                             <v-card-text>
-                                <PBCModelList
+                                <MarketPlace
+                                    :isPBCMarket="true"
+                                    :pbc="modelingPBCElement"
+                                    @selected-model="applyModelingListsDialog"
+                                    @closeMarketplaceDialog="closeModelingListsDialog"
+                                />
+                                <!-- <PBCModelList
                                         :pbc="modelingPBCElement"
                                         @selected-model="applyModelingListsDialog"
                                         @close="closeModelingListsDialog"
-                                ></PBCModelList>
+                                ></PBCModelList> -->
                             </v-card-text>
                         </v-card>
                     </v-dialog>
@@ -1960,9 +1964,12 @@
                 :draftOptions="modelDraftDialogWithXAIDto.draftOptions"
                 :draftUIInfos="modelDraftDialogWithXAIDto.draftUIInfos"
                 :isGeneratorButtonEnabled="modelDraftDialogWithXAIDto.isGeneratorButtonEnabled"
-                @generateFromDraft="generateFromDraftWithXAI"
+                :uiType="'EventStormingModelCanvas'"
+
                 @onClose="modelDraftDialogWithXAIDto.isShow = false; modelDraftDialogWithXAIDto.actions.stop()"
                 @onRetry="modelDraftDialogWithXAIDto.actions.retry()"
+
+                @generateFromDraft="generateFromDraftWithXAI"
             ></ModelDraftDialogWithXAI>
           </v-dialog>
 
@@ -2006,6 +2013,7 @@
     import UMLClassDiagram from "../class-modeling/UMLClassModelCanvas";
     import CodeGenerator from "../modeling/CodeGenerator";
     import PBCModelList from "./PBCModelList";
+    import MarketPlace from "../MarketPlace";
     import UIWizardDialoger from "../modeling/generators/UIWizardDialoger";
     import Login from "../../oauth/Login";
     import isAttached from "../../../utils/isAttached";
@@ -2092,6 +2100,7 @@
             "uml-class-model-canvas": UMLClassDiagram,
             CodeGenerator,
             PBCModelList,
+            MarketPlace,
             MouseCursorComponent,
             ModelDraftDialog,
             ModelDraftDialogForDistribution,
