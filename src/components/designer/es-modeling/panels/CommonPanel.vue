@@ -60,7 +60,7 @@
                             <v-list class="pt-0" dense flat>
                                 <v-divider></v-divider>
                                 <div>
-                                    <v-card-text>
+                                    <v-card-text class="pb-0">
                                         <slot name="md-title">
                                             <div v-if="isValidationLists" style="margin-left: -17px;">
                                                 <v-list-group
@@ -83,7 +83,7 @@
                                                 </v-list-group>
                                             </div>
                                             <v-row class="pa-0 ma-0" align="center">
-                                                <div class="panel-title">Basic Info</div>
+                                                <!-- <div class="panel-title">Basic Info</div> -->
                                                 <slot name="md-level-btn"></slot>
                                                 <slot name="md-title-side"></slot>
                                             </v-row>
@@ -96,7 +96,7 @@
                                                     id="elementName"
                                                     class="delete-input-detail"
                                                     :disabled="isReadOnly"
-                                                    label="Name"
+                                                    :label="$t('CommonPanel.name')"
                                                     autofocus
                                                 >
                                                 </v-text-field>
@@ -106,7 +106,7 @@
                                                 <v-text-field
                                                     v-model="value.displayName"
                                                     :disabled="isReadOnly"
-                                                    label="Display Name"
+                                                    :label="$t('CommonPanel.displayName')"
                                                     class="delete-input-detail"
                                                 >
                                                 </v-text-field>
@@ -129,10 +129,12 @@
                                             </slot>
 
                                             <slot name="md-description">
-                                                <v-textarea
-                                                        v-model="value.description"
-                                                        label="Description"
-                                                        :disabled="isReadOnly"
+                                                <v-textarea class="delete-input-detail"
+                                                    v-model="value.description"
+                                                    :label="$t('CommonPanel.description')"
+                                                    :disabled="isReadOnly"
+                                                    outlined
+                                                    auto-grow
                                                 ></v-textarea>
                                                 <!-- <RuleExampleDialog v-if="openExample" v-model="value" @closeExampleDialog="closeExampleDialog()" />
                                                 <v-btn 

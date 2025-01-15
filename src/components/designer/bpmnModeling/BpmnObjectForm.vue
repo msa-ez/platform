@@ -2,7 +2,7 @@
     <div>
         <v-text-field
                 v-model="value.name"
-                label="Name"
+                :label="$t('labelText.name')"
         ></v-text-field>
 
         <v-text-field

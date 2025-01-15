@@ -121,7 +121,7 @@
 <!--            </v-layout>-->
 <!--          </v-layout>-->
 
-<!--          <v-btn @click="addAttribute">ADD ATTRIBUTE</v-btn>-->
+<!--          <v-btn @click="addAttribute">{{ $t('buttonText.addAttribute') }}</v-btn>-->
 <!--        </div>-->
 <!--        <div v-else>-->
 <!--          <class-selector :modeling-classes-only="true" v-model="referenceClassName"></class-selector>-->

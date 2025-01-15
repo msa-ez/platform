@@ -4,6 +4,19 @@
     "showBeta": "Show Beta",
     "hideBeta": "Hide Beta"
   },
+  "buttonText" : {
+    "addAttribute" : "Add Attribute",
+    "syncAttributes" : "Sync Attributes", 
+    "editAggregateMembers" : "Edit Aggregate Members in Class Diagram"
+  },
+  "labelText" : {
+    "attributes" : "Attributes",
+    "type" : "Type",
+    "name": "Name"
+  },
+  "TitleText" : {
+    "associatedAggregate": "Associated Aggregate"
+  },
   "gitAPIMenu": {
     "organizationName": "Organization Name",
     "forkFrom": "Fork From",
@@ -142,7 +155,10 @@
   },
   "CommonPanel": {
     "nameInfoTitle": "Name should be written in English.",
-    "nameInfoDetail1": "Name is reflected in the code.\nDisplay Name appears on screen stickers and frontend UI of the code."
+    "nameInfoDetail1": "Name is reflected in the code.\nDisplay Name appears on screen stickers and frontend UI of the code.",
+    "displayName": "Display Name",
+    "name": "Code Name", 
+    "description": "Description"
   },
   "DetailComponent": {
     "allDetails": "View Guide"
@@ -164,7 +180,8 @@
   "RuleExampleDialog": {
     "generateExamples": "Generate Examples",
     "stopGenerating": "Stop Generating",
-    "resetExamples": "Reset Examples"
+    "resetExamples": "Reset Examples",
+    "generateExamples": "Configure Given-When-Then"
   },
   "company": {
     "name": "uEngine Solutions. Co.",

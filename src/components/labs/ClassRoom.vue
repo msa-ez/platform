@@ -452,7 +452,7 @@
                             ></v-text-field>
 
                             <v-text-field
-                                    label="Name"
+                                    :label="$t('labelText.name')"
                                     v-model="Object.values(changedUser)[0].userName"
                             ></v-text-field>
                             <v-select

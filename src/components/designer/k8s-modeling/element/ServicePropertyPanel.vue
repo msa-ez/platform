@@ -48,7 +48,7 @@
                     <v-card flat>
                         <v-card-text>
                             <v-text-field                                
-                                    label="Name"
+                                    :label="$t('labelText.name')"
                                     v-model="value.object.metadata.name"
                                     autofocus
                                     :disabled="isReadOnly"
@@ -69,7 +69,7 @@
                                     v-model="value.object.spec.ports[0].targetPort"
                             ></kube-number-field>
                             <v-select
-                                    label="Type"
+                                    :label="$t('labelText.type')"
                                     v-model="value.object.spec.type"
                                     :disabled="isReadOnly"
                                     :items="typeList">

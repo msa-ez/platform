@@ -189,7 +189,7 @@
                                         <v-text-field 
                                                 style="margin-right: 10px;"
                                                 v-model="operationName" 
-                                                label="Name"
+                                                :label="$t('labelText.name')"
                                                 required
                                                 v-on:keyup.enter="UMLOperationADD"
                                                 :disabled="isReadOnly"
@@ -282,7 +282,7 @@
                             <v-flex xs6>
                                 <v-text-field
                                         v-model="operationName" 
-                                        label="Name"
+                                        :label="$t('labelText.name')"
                                         style="margin-right: 15px;"
                                 ></v-text-field>
                             </v-flex>

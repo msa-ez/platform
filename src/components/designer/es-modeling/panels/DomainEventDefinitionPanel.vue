@@ -114,7 +114,7 @@
                 </div>
 
                 <div class="pa-4">
-                    <v-card-text class="panel-title pa-0 ma-0">Associated Aggregate</v-card-text>
+                    <v-card-text class="panel-title pa-0 ma-0">{{ $t('TitleText.associatedAggregate') }}</v-card-text>
                     <detail-component
                         :title="$t('DomainEventDefinitionPanel.associatedAggregateTitle')"
                         :details="associatedAggregateTitle"

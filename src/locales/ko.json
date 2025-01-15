@@ -4,6 +4,19 @@
     "showBeta": "베타 보기",
     "hideBeta": "베타 숨기기"
   },
+  "buttonText" : {
+    "addAttribute" : "속성 추가",
+    "syncAttributes" : "속성 동기화",
+    "editAggregateMembers" : "클래스 다이어그램으로 애그리거트 멤버 편집"
+  },
+  "labelText" : {
+    "attributes" : "속성",
+    "type" : "타입",
+    "name": "이름"
+  },
+  "TitleText" : {
+    "associatedAggregate": "연관된애그리거트"
+  },
   "gitAPIMenu": {
     "organizationName" : "조직 이름",
     "forkFrom" : "Fork 대상",
@@ -141,7 +154,10 @@
   },
   "CommonPanel": {
     "nameInfoTitle": "Name 영문으로 작성합니다.",
-    "nameInfoDetail1": "Name : 코드에 반영되는 이름입니다.\nDisplay Name : 화면의 스티커와 코드의 프론트엔드 UI에 표시되는 이름입니다."
+    "nameInfoDetail1": "Name : 코드에 반영되는 이름입니다.\nDisplay Name : 화면의 스티커와 코드의 프론트엔드 UI에 표시되는 이름입니다.",
+    "displayName": "화면에 표시되는 이름",
+    "name": "코드에서 사용되는 이름",
+    "description": "설명"
   },
   "DetailComponent": {
     "allDetails": "가이드 보기"
@@ -163,7 +179,8 @@
   "RuleExampleDialog": {
     "generateExamples": "예제 생성",
     "stopGenerating": "생성 중단",
-    "resetExamples": "예제 초기화"
+    "resetExamples": "예제 초기화",
+    "generateExamples": "Given When Then 설정"
   },
   "company": {
     "name": "주식회사 유엔진솔루션즈",

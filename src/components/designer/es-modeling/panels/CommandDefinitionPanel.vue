@@ -12,7 +12,7 @@
             @changeTranslate="changeTranslate"
     >
         <template slot="md-level-btn">
-            <v-chip @click="toggleDesignLevel" style="margin-left: 16px; cursor: pointer;" color="primary" outlined>
+            <v-chip @click="toggleDesignLevel" style="margin-right: 16px; cursor: pointer;" color="primary" outlined>
                 <v-icon left>{{ isDesignLevelVisible ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
                 {{ $t('CommandDefinitionPanel.implementationSettings') }}
             </v-chip>
@@ -51,7 +51,6 @@
 
         <template slot="md-title-side">
             <v-btn
-                text
                 color="primary"
                 :disabled="isReadOnly || !exampleAvailable"
                 @click="openExampleDialog()"
@@ -78,7 +77,7 @@
                 <v-card flat>
                     <v-card-text>
                         <v-col class="pa-0">
-                            <span class="panel-title">Associated Aggregate</span>
+                            <span class="panel-title">{{ $t('TitleText.associatedAggregate') }}</span>
                             <v-text-field
                                     v-model="relatedAggregateName"
                                     label="Attach Aggregate && check Name"

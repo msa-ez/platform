@@ -14,9 +14,9 @@
         <template slot="element">
             <div>
                 <RuleExampleDialog v-if="openExample" v-model="value" @closeExampleDialog="closeExampleDialog()" />
-                <v-card flat>
-                    <v-card-text>
-                        <v-checkbox v-model="value.isSaga" label="Saga"></v-checkbox> 
+                <v-card flat class="ma-0 pa-4">
+                    <v-card-text class="ma-0 pa-0">
+                        <v-checkbox class="ma-0 pa-0" v-model="value.isSaga" label="Saga"></v-checkbox> 
                         <event-storming-attribute  v-if="value.isSaga"
                                 v-model="value.fieldDescriptors"
                                 :isReadOnly="isReadOnly"
@@ -60,14 +60,20 @@
         </template>
 
         <template slot="md-title-side">
-            <v-btn
-                text
-                color="primary"
-                style="margin-left: 10px; margin-top: -12px;"
-                :disabled="isReadOnly || !exampleAvailable"
-                @click="openExampleDialog()"
-            >Examples</v-btn>
-            <v-tooltip bottom v-if="!exampleAvailable">
+            <v-tooltip left>
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn class="mb-2"
+                        color="primary"
+                        :disabled="isReadOnly || !exampleAvailable"
+                        @click="openExampleDialog()"
+                        v-bind="attrs"
+                        v-on="on"
+                        style="text-transform: none"
+                    >Examples</v-btn>
+                </template>
+                <span>{{ $t('RuleExampleDialog.generateExamples') }}</span>
+            </v-tooltip>
+            <v-tooltip left v-if="!exampleAvailable">
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn icon v-bind="attrs" v-on="on"
                         style="margin-left: -8px; margin-top: -15px; width: 10px; height: 10px;">
