@@ -76,11 +76,6 @@
 }
 
 .gs-info-bg {
-    position: absolute;
-    top: 40%;
-    left: 50%;
-    margin-left: -101px;
-    transfrom: translate(-50%, -50%);
     color: #1E88E5;
 }
 
@@ -115,7 +110,7 @@
 .gs-info-sub-bg {
     background-color: #BDBDBD;
     color: white;
-    border-radius: 20px;
+    border-radius: 10px;
     width: 255px;
     margin-top: 20px;
     padding: 5px;
@@ -397,7 +392,6 @@ code[class*=language-]:nth-child(1) {
 }
 
 .code-preview-btn {
-    font-size:22px !important;
     height:30px !important;
     width:30px !important;
     margin-right:5px;
@@ -659,7 +653,7 @@ code[class*=language-]:nth-child(1) {
 }
 
 .auto-modling-textarea {
-    max-height:100% !important;
+    max-height: 2500px !important;
     overflow-y: auto !important;
 }
 
@@ -799,6 +793,10 @@ code[class*=language-]:nth-child(1) {
     text-align: center;
     color: #9bf50b;
     z-index: 9999;
+}
+
+.gs-center {
+    margin:0 auto !important;
 }
 
 .delete-input-detail .v-text-field__details {

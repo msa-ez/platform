@@ -1,8 +1,8 @@
-
-const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
-const ESActionsUtil = require("./modules/ESActionsUtil")
-const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil")
-const ESAliasTransManager = require("./modules/ESAliasTransManager")
+const FormattedJSONAIGenerator = require("../../FormattedJSONAIGenerator")
+const { ESValueSummaryGenerator } = require("..")
+const ESActionsUtil = require("../../es-ddl-generators/modules/ESActionsUtil")
+const { ESValueSummarizeWithFilter } = require("../helpers")
+const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTransManager")
 
 class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
@@ -12,11 +12,166 @@ class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
         this.progressCheckStrings = ["overviewThoughts", "extractedPolicies"]
     }
 
+    /**
+     * @description 이벤트 스토밍 모델에서 정책을 생성하고 관리하기 위한 제너레이터를 생성합니다.
+     * 정책 생성 프로세스의 각 단계(첫 응답, 모델 생성, 생성 성공, 재시도, 중지)에서 
+     * 콜백을 통해 처리할 수 있습니다.
+     * 
+     * @example 기본적인 정책 생성기 설정
+     * const esValue = mocks.getEsValue("libraryService", ["policy"])
+     * const generator = CreatePolicyActionsByFunctions.createGeneratorByDraftOptions({
+     *     onGenerationSucceeded: (returnObj) => {
+     *         // 생성된 정책을 기존 이벤트 스토밍 모델에 적용
+     *         if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
+     *             esValue.elements = returnObj.modelValue.createdESValue.elements
+     *             esValue.relations = returnObj.modelValue.createdESValue.relations
+     *         }
+     *     },
+     *     onGenerationDone: () => {
+     *         console.log("정책 생성 완료")
+     *     }
+     * })
+     * generator.initInputs(
+     *      mocks.getEsDraft("libraryService"),
+     *      esValue,
+     *      esConfigs.userInfo,
+     *      esConfigs.information
+     * )
+     * generator.generateIfInputsExist()
 
-    onGenerateBefore(inputParams){
-        inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
+     * @example 전체 생성 프로세스 모니터링
+     * const generator = CreatePolicyActionsByFunctions.createGeneratorByDraftOptions({
+     *     onFirstResponse: (returnObj) => {
+     *         console.log("정책 생성 시작")
+     *     },
+     *     onModelCreated: (returnObj) => {
+     *         console.log("모델 생성됨")
+     *     },
+     *     onGenerationSucceeded: (returnObj) => {
+     *         // 생성된 모델 처리
+     *     },
+     *     onGenerationDone: () => {
+     *         // 모든 정책 생성 완료시 처리
+     *         console.log("모든 정책 생성 완료")
+     *     },
+     *     onRetry: (returnObj) => {
+     *         console.error("정책 생성 중 오류 발생:", returnObj.errorMessage)
+     *     },
+     *     onStopped: () => {
+     *         console.log("정책 생성 중단")
+     *     }
+     * })
+     * 
+     * @note
+     * - 콜백 함수들은 선택적으로 구현할 수 있으며, 필요한 콜백만 정의하면 됩니다.
+     * - initInputs 메소드를 통해 여러 정책을 순차적으로 생성할 수 있습니다.
+     * - generateIfInputsExist는 큐에 남은 입력이 있는 경우 자동으로 다음 정책 생성을 시작합니다.
+     * - 에러 발생 시 onRetry 콜백에서 적절한 에러 처리가 필요합니다.
+     * - 모든 정책 생성이 완료되면 onGenerationDone이 호출됩니다.
+     */
+    static createGeneratorByDraftOptions(callbacks){
+        const generator = new CreatePolicyActionsByFunctions({
+            input: null,
+
+            onFirstResponse: (returnObj) => {
+                if(callbacks.onFirstResponse)
+                    callbacks.onFirstResponse(returnObj)
+            },
+
+            onModelCreated: (returnObj) => {
+                if(callbacks.onModelCreated)
+                    callbacks.onModelCreated(returnObj)
+            },
+
+            onGenerationSucceeded: (returnObj) => {
+                if(callbacks.onGenerationSucceeded)
+                    callbacks.onGenerationSucceeded(returnObj)
+
+                if(generator.generateIfInputsExist())
+                    return
+
+
+                if(callbacks.onGenerationDone)
+                    callbacks.onGenerationDone()
+            },
+
+            onRetry: (returnObj) => {
+                alert(`[!] An error occurred during policy creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
+
+                if(callbacks.onRetry)
+                    callbacks.onRetry(returnObj)
+            },
+
+            onStopped: () => {
+                if(callbacks.onStopped)
+                    callbacks.onStopped()
+            }
+        })
+
+        generator.initInputs = (draftOptions, esValue, userInfo, information) => {
+            let inputs = []
+            for(const eachDraftOption of Object.values(draftOptions)) {
+                inputs.push({
+                        targetBoundedContext: eachDraftOption.boundedContext,
+                        description: eachDraftOption.description,
+                        esValue: esValue,
+                        userInfo: userInfo,
+                        information: information
+                    })
+            }
+            generator.inputs = inputs
+        }
+
+        generator.generateIfInputsExist = () => {
+            if(generator.inputs.length > 0) {
+                generator.client.input = generator.inputs.shift()
+                generator.generate()
+                return true
+            }
+            return false
+        }
+
+        return generator
+    }
+
+
+    async onGenerateBefore(inputParams){
         inputParams.boundedContextDisplayName = inputParams.targetBoundedContext.displayName ? inputParams.targetBoundedContext.displayName : inputParams.targetBoundedContext.name
-        this.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
+
+        inputParams.esValue = structuredClone(inputParams.esValue)
+        inputParams.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
+        inputParams.summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(
+            inputParams.esValue, 
+            ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateInnerStickers
+                .concat(ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.detailedProperties),
+            inputParams.esAliasTransManager
+        )
+
+        if(!this.isCreatedPromptWithinTokenLimit()) {
+            const leftTokenCount = this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
+            if(leftTokenCount <= 100)
+                throw new Error("[!] The size of the draft being passed is too large to process.")
+
+            console.log(`[*] 토큰 제한이 초과되어서 이벤트 스토밍 정보를 제한 수치까지 요약해서 전달함`)
+            console.log(`[*] 요약 이전 Summary`, inputParams.summarizedESValue)
+            const requestContext = this._buildRequestContext(inputParams)
+            inputParams.summarizedESValue = await ESValueSummaryGenerator.getSummarizedESValueWithMaxTokenSummarize(
+                requestContext,
+                inputParams.esValue,
+                ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateInnerStickers
+                .concat(ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.detailedProperties),
+                leftTokenCount,
+                this.model,
+                inputParams.esAliasTransManager
+            )
+            console.log(`[*] 요약 이후 Summary`, inputParams.summarizedESValue)
+        }
+    }
+
+    _buildRequestContext(inputParams) {
+        return `Analyzing requirements to create policies for the ${inputParams.targetBoundedContext.name} bounded context.
+- Requirements
+${inputParams.description}`;
     }
 
 
@@ -61,7 +216,7 @@ Please follow these rules:
     }
 
     __buildRequestFormatPrompt(){
-        return ESValueSummarizeWithFilterUtil.getGuidePrompt()
+        return ESValueSummarizeWithFilter.getGuidePrompt()
     }
 
     __buildJsonResponseFormat() {
@@ -105,8 +260,8 @@ Please follow these rules:
     __buildJsonExampleInputFormat() {
         return {
             "Summarized Existing EventStorming Model": {
-                "deletedProperties": ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.aggregateInnerStickers
-                    .concat(ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.detailedProperties),
+                "deletedProperties": ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateInnerStickers
+                    .concat(ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.detailedProperties),
                 "boundedContexts": [
                     {
                         "id": "bc-reservation",
@@ -333,15 +488,8 @@ Please follow these rules:
     }
 
     __buildJsonUserQueryInputFormat() {
-        const summarizedESValue = ESValueSummarizeWithFilterUtil.getSummarizedESValue(
-            JSON.parse(JSON.stringify(this.client.input.esValue)), 
-            ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.aggregateInnerStickers
-                .concat(ESValueSummarizeWithFilterUtil.KEY_FILTER_TEMPLATES.detailedProperties),
-            this.esAliasTransManager
-        )
-
         return {
-            "Summarized Existing EventStorming Model": JSON.stringify(summarizedESValue),
+            "Summarized Existing EventStorming Model": JSON.stringify(this.client.input.summarizedESValue),
 
             "Functional Requirements": this.client.input.description,
 
@@ -386,14 +534,14 @@ Please follow these rules:
         let actions = []
 
         for(let policy of policies) {
-            const eventId = this.esAliasTransManager.aliasToUUIDDic[policy.fromEventId]
+            const eventId = this.client.input.esAliasTransManager.aliasToUUIDDic[policy.fromEventId]
             const eventObject = this.client.input.esValue.elements[eventId]
             if(!eventObject) {
                 console.error("[!] Event to update not found", policy)
                 continue
             }
 
-            const commandId = this.esAliasTransManager.aliasToUUIDDic[policy.toCommandId]
+            const commandId = this.client.input.esAliasTransManager.aliasToUUIDDic[policy.toCommandId]
             const commandObject = this.client.input.esValue.elements[commandId]
             if(!commandObject) {
                 console.error("[!] Command to update not found", policy)

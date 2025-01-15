@@ -4,9 +4,45 @@
     "showBeta": "베타 보기",
     "hideBeta": "베타 숨기기"
   },
+  "gitAPIMenu": {
+    "organizationName" : "조직 이름",
+    "forkFrom" : "Fork 대상",
+    "createNewRepository" : "새 저장소 생성",
+    "repositoryName" : "저장소 이름",
+    "repoExists" : "이미 존재하는 저장소입니다",
+    "next" : "다음",
+    "openGitRepository" : "Git 저장소 열기",
+    "targetRepo" : "Git 저장소 위치",
+    "updateFromModelCode" : "모델 코드에서 업데이트",
+    "cloudIDE" : "클라우드 IDE",
+    "localIDE" : "로컬 IDE",
+    "openGitpod" : "Gitpod 열기",
+    "openCodespaces" : "Codespaces 열기",
+    "cloneRepo" : "Git 로컬 다운로드 명령어",
+    "update" : "Git 업데이트 명령어",
+    "selectPushType" : "Push 유형 변경",
+    "organizationDetailTitle1" : "Repository 탭은 Github에 저장할 조직의 이름과 저장소 이름을 설정하는 탭입니다.",
+    "selectPushTypeDetailTitle1" : "Push 탭은 Github에 https://github.com/[조직의 이름]/[레포지토리 이름] 경로에 있는 Github 저장소에 변경된 내용을 Push 합니다.",
+    "selectPushTypeDetailSubTitle1": "Push는 로컬 브랜치의 변경 사항을 원격 브랜치에 업로드하는 기본 동작입니다. 원격 브랜치의 최신 커밋과 로컬 브랜치의 최신 커밋이 동일한 경우에만 성공하며, 일반적으로 사용됩니다.\n\n",
+    "selectPushTypeDetailSubTitle2": "Force Push는 로컬 브랜치의 변경 사항을 원격 브랜치에 강제로 업로드하는 동작입니다. Force Push는 원격 브랜치의 기존 커밋을 덮어쓸 수 있어 다른 사람의 작업을 잃을 위험이 있습니다",
+    "selectPushTypeDetailSubTitle3": "Force Push는 주로 리베이스 후 커밋 기록을 덮어써야 할 때 사용합니다. 특히 협업 프로젝트에서는 다른 사람의 작업을 덮어쓰지 않도록 주의해야 합니다."
+  },
+  "CodeGenerator": {
+    "pushToGit": "Git에 코드 올리기",
+    "downloadArchive": "아카이브 다운로드",
+    "search": "검색",
+    "editTemplate": "템플릿코드 수정",
+    "designPatterns": "디자인 패턴",
+    "diffMode": "비교 모드",
+    "fileExplorer": "파일탐색기 닫기 / 열기"
+  },
+  "alertMessage": {
+    "sessionExpired": "세션이 만료되었습니다. 다시 로그인해주세요."
+  },
   "ESDialoger" : {
     "tryAgain": "재생성",
-    "createBoundedContext": "Bounded Context 생성"
+    "createBoundedContext": "Bounded Context 생성",
+    "summarizing": "요구사항을 분석 및 요약하고 있습니다..."
   },
   "DevideBoundedContextDialog" : {
     "boundedContextDivisionResult": "문제영역(Bounded context) 생성(분할) 결과",
@@ -14,9 +50,10 @@
     "domainAspect": "도메인",
     "organizationalAspect": "조직적",
     "personaAspect": "페르소나",
-    "transactionPerformanceAspect": "거래/성능",
+    "transactionPerformanceAspect": "트랜잭션/성능",
     "infrastructureAspect": "인프라",
     "lodingMessage": "관점별 Bounded Context 생성 중...",
+    "mappingMessage": "요구사항 매핑 중...",
     "reasonOfSeparation": "분할 이유",
     "aspect" : "관점",
     "reGenerate": "재생성",

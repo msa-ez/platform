@@ -4,9 +4,45 @@
     "showBeta": "Show Beta",
     "hideBeta": "Hide Beta"
   },
+  "gitAPIMenu": {
+    "organizationName": "Organization Name",
+    "forkFrom": "Fork From",
+    "createNewRepository": "Create New Repository", 
+    "repositoryName": "Repository Name",
+    "repoExists": "Repository already exists",
+    "next": "Next",
+    "openGitRepository": "Open Git Repository",
+    "targetRepo": "Target Repository Location",
+    "updateFromModelCode": "Update from Model Code",
+    "cloudIDE": "Cloud IDE",
+    "localIDE": "Local IDE",
+    "openGitpod": "Open Gitpod",
+    "openCodespaces": "Open Codespaces",
+    "cloneRepo": "Git Clone Command",
+    "update": "Git Update Command",
+    "selectPushType": "Change Push Type",
+    "organizationDetailTitle1": "The Repository tab is where you set the organization name and repository name to store on Github.",
+    "selectPushTypeDetailTitle1": "The Push tab pushes changes to your Github repository at https://github.com/[organization-name]/[repository-name].",
+    "selectPushTypeDetailSubTitle1": "Push is the default operation that uploads changes from your local branch to the remote branch. It only succeeds when the latest commits on both the remote and local branches are identical, and is commonly used in normal workflows.\n\n",
+    "selectPushTypeDetailSubTitle2": "Force Push is an operation that forcefully uploads changes from your local branch to the remote branch. Force Push can overwrite existing commits on the remote branch, risking the loss of other people's work",
+    "selectPushTypeDetailSubTitle3": "Force Push is mainly used when you need to overwrite commit history after a rebase. Special care should be taken in collaborative projects to avoid overwriting others' work."
+  },
+  "CodeGenerator": {
+    "pushToGit": "Push code to Git",
+    "downloadArchive": "Download Archive",
+    "search": "Search",
+    "editTemplate": "Edit Template Code",
+    "designPatterns": "Design Patterns", 
+    "diffMode": "Diff Mode",
+    "fileExplorer": "Close/Open File Explorer"
+  },
+  "alertMessage": {
+    "sessionExpired": "Your session has expired. Please log in again."
+  },
   "ESDialoger" : {
     "tryAgain": "Try Again",
-    "createBoundedContext": "Create Bounded Context"
+    "createBoundedContext": "Create Bounded Context",
+    "summarizing": "Analyzing and summarizing requirements..."
   },
   "DevideBoundedContextDialog" : {
     "boundedContextDivisionResult": "Seperating into multiple Bounded Contexts",
@@ -17,6 +53,7 @@
     "transactionPerformanceAspect": "Transaction/Performance",
     "infrastructureAspect": "Infrastructure",
     "lodingMessage": "Bounded Contexts generating...",
+    "mappingMessage": "Requirements mapping...",
     "reasonOfSeparation": "Reason of Separation",
     "aspect": "Aspect",
     "reGenerate": "Regenerate",

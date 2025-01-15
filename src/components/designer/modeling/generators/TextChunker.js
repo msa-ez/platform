@@ -1,7 +1,7 @@
 class TextChunker {
     constructor(options = {}) {
-        this.chunkSize = options.chunkSize || 2000;
-        this.overlapSize = options.overlapSize || 1000; // system prompt 크기로 인한 여유 size
+        this.chunkSize = options.chunkSize || 6000;
+        this.spareSize = options.spareSize || 1000; // system prompt 크기로 인한 여유 size
     }
 
     /**
@@ -14,14 +14,24 @@ class TextChunker {
         const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
         const chunks = [];
         let currentChunk = '';
+        let overlapText = '';  // 오버랩될 텍스트 저장
         
         for (const sentence of sentences) {
             // 현재 청크에 새 문장을 추가했을 때의 길이 확인
             if ((currentChunk + sentence).length > this.chunkSize) {
                 if (currentChunk) {
+                    // 현재 청크를 저장하고, 마지막 부분을 오버랩 텍스트로 저장
                     chunks.push(currentChunk.trim());
+                    
+                    // 마지막 문장들을 오버랩 텍스트로 설정
+                    const lastSentences = this.getLastSentences(currentChunk, this.spareSize);
+                    overlapText = lastSentences;
+                    
+                    // 새로운 청크는 오버랩 텍스트로 시작
+                    currentChunk = overlapText + ' ' + sentence;
+                } else {
+                    currentChunk = sentence;
                 }
-                currentChunk = sentence;
             } else {
                 currentChunk += (currentChunk ? ' ' : '') + sentence;
             }
@@ -32,7 +42,23 @@ class TextChunker {
             chunks.push(currentChunk.trim());
         }
 
-        return this.postProcessChunks(chunks);
+        return chunks;
+    }
+
+    // 지정된 크기만큼의 마지막 문장들을 가져오는 헬퍼 메서드
+    getLastSentences(text, targetSize) {
+        const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+        let result = '';
+        
+        for (let i = sentences.length - 1; i >= 0; i--) {
+            const sentence = sentences[i];
+            if ((result + sentence).length > targetSize) {
+                break;
+            }
+            result = sentence + ' ' + result;
+        }
+        
+        return result.trim();
     }
 
     /**

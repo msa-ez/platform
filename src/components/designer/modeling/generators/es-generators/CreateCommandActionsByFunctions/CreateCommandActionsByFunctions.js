@@ -1,9 +1,9 @@
-
-const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
-const ESActionsUtil = require("./modules/ESActionsUtil")
-const ESFakeActionsUtil = require("./modules/ESFakeActionsUtil")
-const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil")
-const ESAliasTransManager = require("./modules/ESAliasTransManager")
+const FormattedJSONAIGenerator = require("../../FormattedJSONAIGenerator")
+const { ESValueSummaryGenerator } = require("..")
+const ESActionsUtil = require("../../es-ddl-generators/modules/ESActionsUtil")
+const ESFakeActionsUtil = require("../../es-ddl-generators/modules/ESFakeActionsUtil")
+const { ESValueSummarizeWithFilter } = require("../helpers")
+const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTransManager")
 
 class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
@@ -13,11 +13,183 @@ class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
         this.progressCheckStrings = ["overviewThoughts", "actions"]
     }
 
+    /**
+     * @description 이벤트 스토밍 모델의 커맨드, 이벤트, ReadModel을 생성하기 위한 제너레이터를 생성합니다.
+     * 각 Aggregate별로 순차적으로 생성을 수행하며, 생성 과정의 각 단계에서 콜백을 통해 진행 상황을 모니터링하고 
+     * 제어할 수 있습니다.
+     * 
+     * @example 기본적인 이벤트 스토밍 생성기 설정
+     * // 생성된 모델을 처리하고 완료 시점을 확인하는 기본 설정
+     * const esValue = mocks.getEsValue("libraryService", ["remainOnlyAggregate"])
+     * const generator = CreateCommandActionsByFunctions.createGeneratorByDraftOptions({
+     *     onGenerationSucceeded: (returnObj) => {
+     *         // 생성된 모델 처리
+     *         if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
+     *             esValue.elements = returnObj.modelValue.createdESValue.elements
+     *             esValue.relations = returnObj.modelValue.createdESValue.relations
+     *         }
+     *     },
+     *     onGenerationDone: () => {
+     *         console.log("[*] 이벤트 스토밍 생성 완료")
+     *     }
+     * })
+     * generator.initInputs(
+     *      mocks.getEsDraft("libraryService"),
+     *      esValue,
+     *      esConfigs.userInfo,
+     *      esConfigs.information
+     * )
+     * generator.generateIfInputsExist()
+     * 
+     * @example 전체 생성 프로세스 모니터링
+     * // 생성 과정의 각 단계를 모니터링하고 오류 처리하는 고급 설정
+     * const generator = CreateCommandActionsByFunctions.createGeneratorByDraftOptions({
+     *     onFirstResponse: (returnObj) => {
+     *         console.log("초기 응답 수신")
+     *     },
+     *     onModelCreated: (returnObj) => {
+     *         console.log("모델 생성됨")
+     *     },
+     *     onGenerationSucceeded: (returnObj) => {
+     *         // 생성된 모델 처리
+     *     },
+     *     onGenerationDone: () => {
+     *         // 모든 커맨드 생성 완료시 처리
+     *         console.log("모든 커맨드 생성 완료")
+     *     },
+     *     onRetry: (returnObj) => {
+     *         console.log(`오류 발생: ${returnObj.errorMessage}`)
+     *     },
+     *     onStopped: () => {
+     *         console.log("생성 중단됨")
+     *     }
+     * })
+     *
+     * @note
+     * - generator.initInputs()를 호출하여 생성에 필요한 입력값을 초기화해야 합니다.
+     * - generator.generateIfInputsExist()를 호출하여 실제 생성 프로세스를 시작합니다.
+     * - 모든 콜백 함수는 선택적이며, 필요한 콜백만 구현할 수 있습니다.
+     * - onGenerationSucceeded 콜백에서는 반드시 생성된 모델을 저장하거나 처리해야 합니다.
+     * - 여러 Aggregate가 있는 경우 순차적으로 처리되며, 각각에 대해 콜백이 호출됩니다.
+     */
+    static createGeneratorByDraftOptions(callbacks){
+        const generator = new CreateCommandActionsByFunctions({
+            input: null,
 
-    onGenerateBefore(inputParams){
+            onFirstResponse: (returnObj) => {
+                if(callbacks.onFirstResponse)
+                    callbacks.onFirstResponse(returnObj)
+            },
+
+            onModelCreated: (returnObj) => {
+                if(callbacks.onModelCreated)
+                    callbacks.onModelCreated(returnObj)
+            },
+
+            onGenerationSucceeded: (returnObj) => {
+                if(callbacks.onGenerationSucceeded)
+                    callbacks.onGenerationSucceeded(returnObj)
+
+                if(generator.generateIfInputsExist())
+                    return
+
+
+                if(callbacks.onGenerationDone)
+                    callbacks.onGenerationDone()
+            },
+
+            onRetry: (returnObj) => {
+                alert(`[!] An error occurred during command creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
+
+                if(callbacks.onRetry)
+                    callbacks.onRetry(returnObj)
+            },
+
+            onStopped: () => {
+                if(callbacks.onStopped)
+                    callbacks.onStopped()
+            }
+        })
+
+        generator.initInputs = (draftOptions, esValue, userInfo, information) => {
+            let inputs = []
+            for(const eachDraftOption of Object.values(draftOptions)) {
+                const targetAggregates = Object.values(esValue.elements).filter(element => element && element._type === "org.uengine.modeling.model.Aggregate" && element.boundedContext.id === eachDraftOption.boundedContext.id)
+
+                // Aggregate각각마다 커맨드/이벤트/ReadModel 생성 요청을 함으로써 다루는 문제영역을 최소화함
+                for(const targetAggregate of targetAggregates) {
+                    inputs.push({
+                        targetBoundedContext: eachDraftOption.boundedContext,
+                        targetAggregate: targetAggregate,
+                        description: eachDraftOption.description,
+                        esValue: esValue,
+                        userInfo: userInfo,
+                        information: information
+                    })
+                }
+            }
+            generator.inputs = inputs
+        }
+
+        generator.generateIfInputsExist = () => {
+            if(generator.inputs.length > 0) {
+                generator.client.input = generator.inputs.shift()
+                generator.generate()
+                return true
+            }
+            return false
+        }
+
+        return generator
+    }
+
+
+    async onGenerateBefore(inputParams){
         inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
         inputParams.aggregateDisplayName = inputParams.targetAggregate.displayName ? inputParams.targetAggregate.displayName : inputParams.targetAggregate.name
-        this.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
+        inputParams.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
+
+        inputParams.summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(
+            inputParams.esValue, [], inputParams.esAliasTransManager
+        )
+        if(!this.isCreatedPromptWithinTokenLimit()) {
+            const leftTokenCount = this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
+            if(leftTokenCount <= 100)
+                throw new Error("[!] The size of the draft being passed is too large to process.")
+
+            console.log(`[*] 토큰 제한이 초과되어서 이벤트 스토밍 정보를 제한 수치까지 요약해서 전달함`)
+            console.log(`[*] 요약 이전 Summary`, inputParams.summarizedESValue)
+            const requestContext = this._buildRequestContext(inputParams)
+            inputParams.summarizedESValue = await ESValueSummaryGenerator.getSummarizedESValueWithMaxTokenSummarize(
+                requestContext,
+                inputParams.esValue,
+                [],
+                leftTokenCount,
+                this.model,
+                inputParams.esAliasTransManager
+            )
+            console.log(`[*] 요약 이후 Summary`, inputParams.summarizedESValue)
+        }
+    }
+
+    _buildRequestContext(inputParams) {
+        return `Creating commands, events, and read models for the following context:
+- Target Bounded Context: ${inputParams.targetBoundedContext.name}
+- Target Aggregate: ${inputParams.targetAggregate.name}
+- Business Requirements
+${inputParams.description}
+
+Focus on elements that are:
+1. Directly related to the ${inputParams.targetAggregate.name} aggregate
+2. Referenced by or dependent on the target aggregate
+3. Essential for implementing the specified business requirements
+
+This context is specifically for generating:
+- Commands to handle business operations
+- Events to record state changes
+- Read models for query operations
+
+All within the scope of ${inputParams.targetBoundedContext.name} bounded context and ${inputParams.targetAggregate.name} aggregate.`
     }
 
 
@@ -108,7 +280,7 @@ Best Practices:
     }
 
     __buildRequestFormatPrompt(){
-        return ESValueSummarizeWithFilterUtil.getGuidePrompt()
+        return ESValueSummarizeWithFilter.getGuidePrompt()
     }
 
     __buildJsonResponseFormat() {
@@ -1055,12 +1227,8 @@ Generate read models in the aggregate to satisfy the given functional requiremen
     }
 
     __buildJsonUserQueryInputFormat() {
-        const summarizedESValue = ESValueSummarizeWithFilterUtil.getSummarizedESValue(
-            JSON.parse(JSON.stringify(this.client.input.esValue)), [], this.esAliasTransManager
-        )
-
         return {
-            "Summarized Existing EventStorming Model": JSON.stringify(summarizedESValue),
+            "Summarized Existing EventStorming Model": JSON.stringify(this.client.input.summarizedESValue),
 
             "Functional Requirements": this.client.input.description,
 
@@ -1144,7 +1312,7 @@ Best Practices:
     }
 
     _getActionAppliedESValue(actions, isAddFakeActions) {
-        actions = this.esAliasTransManager.transToUUIDInActions(actions)
+        actions = this.client.input.esAliasTransManager.transToUUIDInActions(actions)
         this._restoreActions(actions, this.client.input.esValue, this.client.input.targetBoundedContext.name)
         actions = this._filterActions(actions)
         this._removeEventOutputCommandIdsProperty(actions)

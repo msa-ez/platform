@@ -172,8 +172,10 @@
     import StormingSubController from "../../modeling/StormingSubController";
     import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
     import isAttached from '../../../../utils/isAttached';
-    import DraftGeneratorByFunctions from "../../modeling/generators/es-ddl-generators/DraftGeneratorByFunctions";
-    import PreProcessingFunctionsGenerator from '../../modeling/generators/es-ddl-generators/PreProcessingFunctionsGenerator';
+    import {
+        PreProcessingFunctionsGenerator,
+        DraftGeneratorByFunctions
+    } from '../../modeling/generators/es-generators';
 
     var _ = require('lodash')
     export default {

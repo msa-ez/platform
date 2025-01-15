@@ -68,14 +68,14 @@
                                 <v-icon size="22">mdi-menu</v-icon>
                             </v-btn>
                         </template>
-                        <span>left menu fold & unfold</span>
+                        <span>{{ $t('CodeGenerator.fileExplorer') }}</span>
                     </v-tooltip>
                     <div>
                         <v-menu
-                                v-model="gitMenu"
-                                :close-on-click="false"
-                                :close-on-content-click="false"
-                                offset-y
+                            v-model="gitMenu"
+                            :close-on-click="false"
+                            :close-on-content-click="false"
+                            offset-y
                         >
                             <template v-slot:activator="{ on: menu, attrs }">
                                 <v-tooltip bottom>
@@ -95,7 +95,7 @@
                                             <v-icon size="22" style="float:right;" :style="gitMenu ? 'color:gray':''">mdi-git</v-icon>
                                         </v-btn>
                                     </template>
-                                    <span>Push to Git</span>
+                                    <span>{{ $t('CodeGenerator.pushToGit') }}</span>
                                 </v-tooltip>
                             </template>
 
@@ -179,7 +179,7 @@
                                 </v-btn>
                             </div>
                         </template>
-                        <span>Download Archive</span>
+                        <span>{{ $t('CodeGenerator.downloadArchive') }}</span>
                     </v-tooltip>
 
                     <v-tooltip bottom>
@@ -193,7 +193,7 @@
                                 </div>
                             </v-btn>
                         </template>
-                        <span>Search</span>
+                        <span>{{ $t('CodeGenerator.search') }}</span>
                     </v-tooltip>
 
                     <v-tooltip bottom v-if="editableTemplate">
@@ -205,7 +205,7 @@
                                 <v-icon size="22">mdi-code-braces</v-icon>
                             </v-btn>
                         </template>
-                        <span>Edit Template</span>
+                        <span>{{ $t('CodeGenerator.editTemplate') }}</span>
                     </v-tooltip>
 
                     <v-tooltip bottom v-if="editableTemplate">
@@ -243,13 +243,12 @@
                                     icon fab
                                     @click="onOffDesignPatterns()"
                             >
-                                <Icon :color="showDesignPatterns ? 'rgb(25,118,210)' : '' "
-                                        icon="mdi:file-document-check-outline"
-                                        size="22"
+                                <Icons :icon="'document-check'" :size="22"
+                                    :color="showDesignPatterns ? 'rgb(25,118,210)' : '' "
                                 />
                             </v-btn>
                         </template>
-                        <span>Design Patterns</span>
+                        <span>{{ $t('CodeGenerator.designPatterns') }}</span>
                     </v-tooltip>
 
                     <v-tooltip bottom>
@@ -257,10 +256,10 @@
                             <v-btn v-on="on" class="code-preview-btn"
                                     icon fab @click="onDiffMode()"
                             >
-                                <Icon size="22" icon="codicon:diff" :color="diffMode ? 'rgb(25,118,210)' : '' "/>
+                                <Icons :icon="'diff'" :size="26" :color="diffMode ? 'rgb(25,118,210)' : '' "/>
                             </v-btn>
                         </template>
-                        <span>Diff Mode</span>
+                        <span>{{ $t('CodeGenerator.diffMode') }}</span>
                     </v-tooltip>
                     <v-spacer />
                     <v-menu left :close-on-content-click="false" :close-on-click="false" @input="onClickToppingBox(true)"
@@ -1009,28 +1008,28 @@
                                                                                      @mouseleave="setHover()"
                                                                                 >
                                                                                     <div style="display:flex; align-items: center;" :style="editTemplateFrameWorkList[platform][template].isPushed ? 'color: darkgray;':''">
-                                                                                        <Icon v-if="editTemplateFrameWorkList[platform][template].isPushed"
-                                                                                              icon="mdi:file-document-arrow-right-outline" width="20" height="20"
+                                                                                        <Icons v-if="editTemplateFrameWorkList[platform][template].isPushed"
+                                                                                              :icon="'document-arrow-right'" :size="20"
                                                                                               style="color: darkgray;"
                                                                                         />
-                                                                                        <Icon v-else-if="editTemplateFrameWorkList[platform][template].isFixed"
-                                                                                              icon="mdi:file-document-check-outline" width="20" height="20"
+                                                                                        <Icons v-else-if="editTemplateFrameWorkList[platform][template].isFixed"
+                                                                                              :icon="'document-check'" :size="20"
                                                                                               style="color: green;"
                                                                                         />
-                                                                                        <Icon v-else-if="editTemplateFrameWorkList[platform][template].failedGenerate"
-                                                                                              icon="mdi:file-document-alert-outline" width="20" height="20"
+                                                                                        <Icons v-else-if="editTemplateFrameWorkList[platform][template].failedGenerate"
+                                                                                              :icon="'document-alert'" :size="20"
                                                                                               style="color: red;"
                                                                                         />
-                                                                                        <Icon v-else-if="editTemplateFrameWorkList[platform][template].isAdded"
-                                                                                              icon="mdi:file-document-plus-outline" width="20" height="20"
+                                                                                        <Icons v-else-if="editTemplateFrameWorkList[platform][template].isAdded"
+                                                                                              :icon="'document-plus'" :size="20"
                                                                                               style="color: #2278cf;"
                                                                                         />
-                                                                                        <Icon v-else-if="editTemplateFrameWorkList[platform][template].isDeleted"
-                                                                                              icon="mdi:file-document-minus-outline" width="20" height="20"
+                                                                                        <Icons v-else-if="editTemplateFrameWorkList[platform][template].isDeleted"
+                                                                                              :icon="'document-minus'" :size="20"
                                                                                               style="color: red;"
                                                                                         />
-                                                                                        <Icon v-else
-                                                                                              icon="mdi:file-document-edit-outline" width="20" height="20"
+                                                                                        <Icons v-else
+                                                                                              :icon="'document-edit'" :size="20"
                                                                                               style="color: #2278cf;"
                                                                                         />
                                                                                         <div>
@@ -3308,7 +3307,7 @@ jobs:
                 }
             },
             alertReLogin(){
-                alert("You need to re-login because session is expired")
+                alert(this.$t('alertMessage.sessionExpired'));
                 this.showLoginCard = true
             },
             showTemplateListChip(obj){

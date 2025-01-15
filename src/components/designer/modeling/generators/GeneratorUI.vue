@@ -9,7 +9,6 @@
             @click="openGeneratorUI=!openGeneratorUI"
         >
             <v-icon>mdi-auto-fix</v-icon>
-            <!-- <Icon icon="arcticons:openai-chatgpt" width="35" height="35" /> -->
         </v-btn>
         <v-row v-if="openGeneratorUI" style="position:absolute; right:30px; top:75px;">
             <v-card style="text-align: center; z-index: 2;" width="auto">
@@ -75,7 +74,7 @@
                                     color="primary"
                                 >
                                     <div v-if="generatorName === 'CJMGenerator' || generatorName === 'BMGenerator' || generatorName === 'UserStoryMapGenerator'">
-                                        <span><Icon style="float:left; margin-right:3px;" icon="ri:check-fill" width="16" height="16"/>complete</span>
+                                        <span><Icons :icon="'check-fill'" style="float:left; margin-right:3px;" :width="16" :height="16"/>complete</span>
                                     </div>
                                     <div v-else>
                                         <span>CONTINUE<v-icon>mdi-arrow-right</v-icon></span>
@@ -299,7 +298,10 @@
     import DDLGenerator from './DDLGenerator.js'
     import DDLDraftGenerator from './DDLDraftGenerator.js'
     import DDLBoundedContextDistributeGenerator from './es-ddl-generators/DDLBoundedContextDistributeGenerator.js'
-    import PreProcessingFunctionsGenerator from './es-ddl-generators/PreProcessingFunctionsGenerator.js'
+    import { 
+        CreateAggregateActionsByFunctions,
+        PreProcessingFunctionsGenerator
+    } from './es-generators'
     
     //import UserStoryGenerator from './UserStoryGenerator.js'
 
@@ -534,6 +536,7 @@
                         case "DDLDraftGenerator": this.generatorComponent = new DDLDraftGenerator(this); break;
                         case "DDLBoundedContextDistributeGenerator": this.generatorComponent = new DDLBoundedContextDistributeGenerator(this); break;
                         case "PreProcessingFunctionsGenerator": this.generatorComponent = new PreProcessingFunctionsGenerator(this); break;
+                        case "CreateAggregateActionsByFunctions": this.generatorComponent = new CreateAggregateActionsByFunctions(this); break;
                     }
 
                     return this.generatorComponent;
@@ -715,7 +718,7 @@
                     this.showGenerateBtn = false
                 }
 
-                if(this.generatorName === "PreProcessingFunctionsGenerator") {
+                if(this.generatorName === "CreateAggregateActionsByFunctions") {
                     this.openGeneratorUI = false
                 }
             },

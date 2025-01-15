@@ -30,10 +30,10 @@
                         >
                             <template v-slot:activator>
                                 <v-list-item-title style="margin:5px 0px 0px 10px; font-weight: 700;">
-                                    <div style="display: flex;">
-                                        <Icon icon="material-symbols:home-storage" width="26" height="26" style="margin-right:5px;" />
+                                    <v-row class="ma-0 pa-0">
+                                        <Icons :icon="'home-storage'" :size="26" style="margin-right:5px;" />
                                         <div class="cp-storage" :class="isForeign ? 'isForeign-storage-main-list-text' : 'isNotForeign-storage-main-list-text'">{{$t('mainNav.Storage')}}</div>
-                                    </div>
+                                    </v-row>
                                 </v-list-item-title>
                             </template>
                             <v-card

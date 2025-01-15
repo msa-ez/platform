@@ -1,5 +1,5 @@
-const FormattedJSONAIGenerator = require("../FormattedJSONAIGenerator");
-const ESValueSummarizeWithFilterUtil = require("./modules/ESValueSummarizeWithFilterUtil");
+const FormattedJSONAIGenerator = require("../../FormattedJSONAIGenerator")
+const { ESValueSummarizeWithFilter } = require("../helpers")
 
 class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
@@ -18,7 +18,7 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     static esValueToAccumulatedDrafts(esValue, targetBoundedContext){
         let accumulatedDrafts = {}
 
-        const summarizedESValue = ESValueSummarizeWithFilterUtil.getSummarizedESValue(esValue)
+        const summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(esValue)
         for(const boundedContextInfo of summarizedESValue.boundedContexts){
             let structure = []
 

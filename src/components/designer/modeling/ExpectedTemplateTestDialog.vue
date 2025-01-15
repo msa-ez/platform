@@ -29,9 +29,9 @@
                                         @click="onSelected('diff', filePath)"
                                     >
                                         <v-row>
-                                            <Icon
-                                                icon="mdi:file-document-edit-outline" width="20" height="20"
-                                                style="color: #2278cf; position: relative; left: -30px;"
+                                            <Icons
+                                                :icon="'document-edit'" :size="20" :color="'#2278cf'"
+                                                style="position: relative; left: -30px;"
                                                 :style="diffPathList[filePath].subPath && diffPathList[filePath].subPath != '' ? 'top: 20px;':'top: 9px;'"
                                             />
                                             <v-col style="margin-left:-35px; margin-right: 25px;">
@@ -65,9 +65,9 @@
                                         @click="onSelected('actual', filePath)"
                                     >
                                         <v-row>
-                                            <Icon
-                                                icon="mdi:file-document-plus-outline" width="20" height="20"
-                                                style="color: green; position: relative; left: -30px;"
+                                            <Icons
+                                                :icon="'document-plus'" :size="20" :color="'green'"
+                                                style="position: relative; left: -30px;"
                                                 :style="diffPathList[filePath].subPath && diffPathList[filePath].subPath != '' ? 'top: 20px;':'top: 9px;'"
                                             />
                                             <v-col style="margin-left:-35px; margin-right: 25px;">
@@ -101,9 +101,9 @@
                                         @click="onSelected('expected', filePath)"
                                     >
                                         <v-row>
-                                            <Icon
-                                                icon="mdi:file-document-minus-outline" width="20" height="20"
-                                                style="color: red; position: relative; left: -30px;"
+                                            <Icons
+                                                :icon="'document-minus'" :size="20" :color="'red'"
+                                                style="position: relative; left: -30px;"
                                                 :style="diffPathList[filePath].subPath && diffPathList[filePath].subPath != '' ? 'top: 20px;':'top: 9px;'"
                                             />
                                             <v-col style="margin-left:-35px; margin-right: 25px;">

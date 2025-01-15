@@ -13,7 +13,7 @@
       <v-btn @click=""
         icon small
       >
-        <Icon icon="iconamoon:arrow-down-2" width="20" height="20"></Icon>
+        <Icons :icon="'arrow-down'" :width="20" :height="20"></Icons>
       </v-btn>
     </v-row>
     <table class="table">
