@@ -131,8 +131,7 @@
                     color="primary" 
                     @click="createModel()"
                 >
-                    {{ $t('DevideBoundedContextDialog.createModel') }}
-                    <v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon>
+                    {{ $t('DevideBoundedContextDialog.createAggregateDraft') }}
                 </v-btn>
             </v-row>
         </v-card-text>

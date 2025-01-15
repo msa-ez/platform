@@ -82,10 +82,11 @@
                     </v-tab-item>
                 </v-tabs-items>
                 <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
-                <v-card-actions v-if="done" class="auto-modeling-btn-box">
+                <v-row v-if="done" class="ma-0 pa-4">
+                    <v-spacer></v-spacer>
                     <v-btn :disabled="isSummarizeStarted || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}</v-btn>
                     <v-btn :disabled="isSummarizeStarted || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" color="primary" @click="showBCGenerationOption = !showBCGenerationOption">{{ $t('ESDialoger.createBoundedContext') }}</v-btn>
-                </v-card-actions>
+                </v-row>
                 <div v-if="isSummarizeStarted" style="margin-left: 2%; margin-bottom: 1%;">
                     <span>{{ $t('ESDialoger.summarizing') }}</span>
                     <v-progress-circular color="primary" indeterminate></v-progress-circular>
@@ -120,9 +121,12 @@
                     :draftOptions="modelDraftDialogWithXAIDto.draftOptions"
                     :draftUIInfos="modelDraftDialogWithXAIDto.draftUIInfos"
                     :isGeneratorButtonEnabled="modelDraftDialogWithXAIDto.isGeneratorButtonEnabled"
-                    @generateFromDraft="generateFromDraftWithXAI"
+                    :uiType="'ESDialoger'"
+
                     @onClose="modelDraftDialogWithXAIDto.isShow = false; modelDraftDialogWithXAIDto.actions.stop()"
                     @onRetry="modelDraftDialogWithXAIDto.actions.retry()"
+
+                    @generateFromDraft="generateFromDraftWithXAI"
                 ></ModelDraftDialogWithXAI>
             </v-card>
         </div>

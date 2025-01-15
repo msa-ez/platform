@@ -61,6 +61,7 @@
     "analysis": "Analysis",
     "feedback": "Feedback",
     "createModel": "Create Model",
+    "createAggregateDraft": "Create Aggregate Draft",
     "descriptionOfEachBoundedContext": "Description of Each Bounded Context",
     "relations": "Relations",
     "boundedContextName": "Bounded Context Name",
@@ -161,6 +162,7 @@
     "cons": "Cons:",
     "conclusions": "Conclusions:",
     "create": "Create",
+    "createEventStormingModelCanvas": "Create EventStorming Model",
     "reconstructionDraft": "BoundedContext Reconstruction Draft",
     "reconstructionAggregateDraft": "Aggregate Design Draft"
   },

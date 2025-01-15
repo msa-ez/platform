@@ -2,16 +2,11 @@
     <v-card>
         <v-card-title class="d-flex justify-space-between align-center">
             <span>{{ $t('ModelDraftDialogForDistribution.reconstructionAggregateDraft') }}</span>
-            <div class="d-flex align-center">
-                <v-btn @click="retry()" 
-                    text 
-                    icon 
-                    class="pa-0 mr-2"
-                    :disabled="draftUIInfos.leftBoundedContextCount > 0"
-                >
+            <div v-if="uiType === 'EventStormingModelCanvas'" class="d-flex align-center">
+                <v-btn @click="retry" :disabled="isGenerateButtonDisabled" text icon class="pa-0 mr-2">
                     <v-icon>mdi-refresh</v-icon>
                 </v-btn>
-                <v-btn @click="close()" text icon class="pa-0">
+                <v-btn @click="close" text icon class="pa-0">
                     <v-icon>mdi-close</v-icon>
                 </v-btn>
             </div>
@@ -165,12 +160,22 @@
                 </v-tab-item>
             </v-tabs-items>
 
-            <v-row class="ma-0 pa-4">
-                <v-btn @click="generateFromDraft"
-                    :disabled="!isGeneratorButtonEnabled || draftUIInfos.leftBoundedContextCount > 0 || (!selectedOptionItem || Object.keys(selectedOptionItem).length !== draftOptions.length)"
-                    block
-                    color="primary"
-                >{{ $t('ModelDraftDialogForDistribution.create') }}
+            <v-row v-if="uiType === 'EventStormingModelCanvas'" class="ma-0 pa-4">
+                <v-btn @click="generateFromDraft" :disabled="isGenerateButtonDisabled"
+                    block color="primary" 
+                >{{ $t('ModelDraftDialogForDistribution.createEventStormingModelCanvas') }}
+                </v-btn>
+            </v-row>
+
+            <v-row v-if="uiType === 'ESDialoger'" class="ma-0 pa-4">
+                <v-spacer></v-spacer>
+                <v-btn :disabled="isGenerateButtonDisabled" class="auto-modeling-btn" @click="retry">
+                    <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>
+                    {{ $t('ESDialoger.tryAgain') }}
+                </v-btn>
+                <v-btn :disabled="isGenerateButtonDisabled" class="auto-modeling-btn" color="primary" @click="generateFromDraft">
+                    {{ $t('ModelDraftDialogForDistribution.createEventStormingModelCanvas') }}
+                    <v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon>
                 </v-btn>
             </v-row>
         </v-card-text>
@@ -189,13 +194,23 @@
 
             draftUIInfos: {
                 type: Object,
-                default: () => ({}),
+                default: () => ({
+                    leftBoundedContextCount: 0,
+                    directMessage: '',
+                    progress: null
+                }),
                 required: false
             },
 
             isGeneratorButtonEnabled: {
                 type: Boolean,
                 default: true,
+                required: false
+            },
+
+            uiType: {
+                type: String,
+                default: 'EventStormingModelCanvas', // ESDialoger | EventStormingModelCanvas
                 required: false
             }
         },
@@ -240,6 +255,10 @@
                     return this.selectedCardIndex.hasOwnProperty(boundedContextInfo.boundedContext) && 
                            this.selectedCardIndex[boundedContextInfo.boundedContext] === index
                 }
+            },
+
+            isGenerateButtonDisabled() {
+                return !this.isGeneratorButtonEnabled || this.draftUIInfos.leftBoundedContextCount > 0 || (!this.selectedOptionItem || Object.keys(this.selectedOptionItem).length !== this.draftOptions.length)
             }
         },
         methods: {
