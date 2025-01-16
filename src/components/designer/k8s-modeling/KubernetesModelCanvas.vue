@@ -1028,7 +1028,7 @@
                                                             value="url"
                                                     ></v-radio>
                                                     <v-radio
-                                                            label="select"
+                                                            :label="$t('labelText.select')"
                                                             value="select"
                                                     ></v-radio>
                                                 </v-radio-group>
@@ -1153,7 +1153,7 @@
                                                             value="url"
                                                     ></v-radio>
                                                     <v-radio
-                                                            label="select"
+                                                            :label="$t('labelText.select')"
                                                             value="select"
                                                     ></v-radio>
                                                 </v-radio-group>

@@ -106,7 +106,7 @@
                 <div v-for="(header, index) in value.headers" :key="index">
                     <v-text-field
                             v-model="value.headers[index].name"
-                            label="Name"
+                            :label="$t('labelText.name')"
                     ></v-text-field>
                     <v-text-field
                             v-model="value.headers[index].value"

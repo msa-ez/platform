@@ -19,7 +19,7 @@
 
         <template slot="edit-property">
             <v-text-field
-                    label="Type"
+                    :label="$t('labelText.type')"
                     v-model="value.object.type"
                     :disabled="isReadOnly"
             ></v-text-field>

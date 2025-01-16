@@ -2,12 +2,14 @@
     <div>
         <v-tooltip top>
             <template v-slot:activator="{ on }">
-                <span v-on="on" class="headline">{{label}}</span>
+                <span v-on="on" class="headline">{{label == 'labelText.attributes' ? $t(label) : label}}</span>
             </template>
             <!-- <span v-if="type == 'org.uengine.modeling.model.Aggregate'">{{ $t('EventStormingAttributeEditor.AttributesHover1') }}</span>
             <span v-else>{{ $t('EventStormingAttributeEditor.AttributesHover2') }}</span> -->
         </v-tooltip>
-        <v-layout flat @contextmenu.prevent="handleClick($event, element)">
+        <v-layout flat @contextmenu.prevent="handleClick($event, element)"
+            class="mt-4"
+        >
             <v-col class="pa-0">
                 <draggable
                         v-model="dataValue"
@@ -124,7 +126,7 @@
                                     ></v-checkbox>
                                     <v-checkbox
                                             v-model="element.isName"
-                                            label="Name"
+                                            :label="$t('labelText.name')"
                                             style="font-size: small; margin-right: 15px;"
                                     ></v-checkbox>
                                     <v-checkbox
@@ -151,19 +153,19 @@
                             v-model="entityType" 
                             :items="entityTypeList"
                             :disabled="isReadOnly"
-                            label="Type"
+                            :label="$t('labelText.type')"
                             class="attribute-type"
                     ></v-select>
                     <v-text-field
                             v-model="entityName" 
-                            label="Name"
+                            :label="$t('labelText.name')"
                             :disabled="isReadOnly"
                             v-on:keyup.enter="addAttribute(entityType, entityName)"
                             required
                             class="attribute-name"
                     ></v-text-field>
                 </v-row>
-                <v-row justify="end">
+                <v-row class="ma-0 pa-0" justify="end">
                     <v-btn v-if="type == 'org.uengine.modeling.model.Event' || type == 'org.uengine.modeling.model.Command' || (type == 'org.uengine.modeling.model.View' && (dataProjection == 'query-for-aggregate' || dataProjection == 'query-for-multiple-aggregate'))"
                             depressed text
                             :disabled="isReadOnly"
@@ -171,7 +173,7 @@
                             style="margin-right:10px; color:#1E88E5;"
                     >
                         <v-icon color="black" small>mdi-refresh</v-icon>
-                        Sync attributes
+                        {{ $t('buttonText.syncAttributes') }}
                     </v-btn>
                     <v-btn 
                             depressed text
@@ -179,11 +181,9 @@
                             :disabled="isReadOnly"
                             @click="addAttribute(entityType, entityName)" 
                             dark
-                    >ADD ATTRIBUTE</v-btn>
+                    >{{ $t('buttonText.addAttribute') }}</v-btn>
                 </v-row>
-                <v-row class="ma-0 pa-0" justify="end" v-if="type == 'org.uengine.modeling.model.Aggregate'"
-                    style="margin-right: -12px !important;"
-                >
+                <v-row class="ma-0 pa-0" justify="end" v-if="type == 'org.uengine.modeling.model.Aggregate'">
                     <v-tooltip top>
                         <template v-slot:activator="{ on }">
                             <v-btn :disabled="isReadOnly" 
@@ -192,7 +192,7 @@
                                     @click="openUmlClass"
                                     v-on="on"
                             >
-                                Edit Aggregate Members by Class Diagram
+                                {{ $t('buttonText.editAggregateMembers') }}
                             </v-btn>
                         </template>
                         <span>{{ $t('EventStormingAttributeEditor.editAggregateMembersByClassDiagramBtn') }}</span>
@@ -215,7 +215,7 @@
                 <v-card-text>
                     <v-text-field
                             v-model="enumValue.name"
-                            label="name"
+                            :label="$t('labelText.name')"
                     ></v-text-field>
                     <div v-if="enumValue.items.length > 0" class="mb-3">
                         <v-row v-for="(item, idx) in enumValue.items" :key="idx">
@@ -273,7 +273,7 @@
             },
             label: {
                 type: String,
-                default: "Attributes"
+                default: 'labelText.attributes'
             },
             duplicatedFieldList:{
                 type: Array,

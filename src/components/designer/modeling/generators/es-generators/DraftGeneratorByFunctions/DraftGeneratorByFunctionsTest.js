@@ -1,9 +1,13 @@
 const DraftGeneratorByFunctions = require("./DraftGeneratorByFunctions")
-const { draftGeneratorByFunctionsInputs } = require("./mocks");
+const { draftGeneratorByFunctionsInputs, draftGeneratorByFunctionsInputsWithFeedback } = require("./mocks");
 
 class DraftGeneratorByFunctionsTest {
-    static async test() {
-        const inputs = structuredClone(draftGeneratorByFunctionsInputs)
+    static async test(inputType="draftGeneratorByFunctionsInputs") {
+        let inputsDic = {
+            "draftGeneratorByFunctionsInputs": draftGeneratorByFunctionsInputs,
+            "draftGeneratorByFunctionsInputsWithFeedback": draftGeneratorByFunctionsInputsWithFeedback
+        }
+        const inputs = structuredClone(inputsDic[inputType])
 
         const generator = new DraftGeneratorByFunctions({
             onGenerationSucceeded: (returnObj) => {

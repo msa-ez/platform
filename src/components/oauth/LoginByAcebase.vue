@@ -79,7 +79,7 @@
                 Sign Up </div>
 
             <v-col>
-                <v-text-field label="NAME" v-model="userInfo.username"></v-text-field>
+                <v-text-field :label="$t('labelText.name')" v-model="userInfo.username"></v-text-field>
                 <v-text-field
                         v-model="userInfo.email"
                         :rules="[rules.emailRequired, rules.emailMatch]"

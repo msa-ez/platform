@@ -88,7 +88,7 @@
                         <v-card-text>
                             <v-text-field
                                     v-model="clusterName"
-                                    label="Name"
+                                    :label="$t('labelText.name')"
                                     required
                             ></v-text-field>
                             <v-text-field

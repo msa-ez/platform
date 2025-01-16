@@ -29,7 +29,7 @@
                         <v-text-field
                                 v-model="value.name"
                                 :disabled="isReadOnly"
-                                label="Name"
+                                :label="$t('labelText.name')"
                                 autofocus
                         ></v-text-field>
                         <v-textarea
@@ -44,7 +44,7 @@
                         <v-text-field
                                 v-model="value.name"
                                 :disabled="isReadOnly"
-                                label="Name"
+                                :label="$t('labelText.name')"
                                 autofocus
                         ></v-text-field>
                     </v-card-text>

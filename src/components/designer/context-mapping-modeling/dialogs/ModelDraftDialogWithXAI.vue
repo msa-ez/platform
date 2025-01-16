@@ -2,16 +2,11 @@
     <v-card>
         <v-card-title class="d-flex justify-space-between align-center">
             <span>{{ $t('ModelDraftDialogForDistribution.reconstructionAggregateDraft') }}</span>
-            <div class="d-flex align-center">
-                <v-btn @click="retry()" 
-                    text 
-                    icon 
-                    class="pa-0 mr-2"
-                    :disabled="draftUIInfos.leftBoundedContextCount > 0"
-                >
+            <div v-if="uiType === 'EventStormingModelCanvas'" class="d-flex align-center">
+                <v-btn @click="retry" :disabled="isGenerateButtonDisabled" text icon class="pa-0 mr-2">
                     <v-icon>mdi-refresh</v-icon>
                 </v-btn>
-                <v-btn @click="close()" text icon class="pa-0">
+                <v-btn @click="close" text icon class="pa-0">
                     <v-icon>mdi-close</v-icon>
                 </v-btn>
             </div>
@@ -49,7 +44,7 @@
         >
             <v-tabs v-model="activeTab" class="model-draft-dialog-tab">
                 <v-tab v-for="(boundedContextInfo, index) in draftOptions" :key="index" style="text-transform: none;">
-                    {{ (boundedContextInfo.boundedContextAlias) ? boundedContextInfo.boundedContextAlias : (boundedContextInfo.boundedContext.charAt(0).toUpperCase() + boundedContextInfo.boundedContext.slice(1)) }}<br>
+                    {{ getBoundedContextDisplayName(boundedContextInfo) }}<br>
                 </v-tab>
             </v-tabs>
 
@@ -165,12 +160,36 @@
                 </v-tab-item>
             </v-tabs-items>
 
-            <v-row class="ma-0 pa-4">
-                <v-btn @click="generateFromDraft"
-                    :disabled="!isGeneratorButtonEnabled || draftUIInfos.leftBoundedContextCount > 0 || (!selectedOptionItem || Object.keys(selectedOptionItem).length !== draftOptions.length)"
-                    block
-                    color="primary"
-                >{{ $t('ModelDraftDialogForDistribution.create') }}
+            <v-row v-if="uiType === 'EventStormingModelCanvas'" class="ma-0 pa-4">
+                <v-btn @click="generateFromDraft" :disabled="isGenerateButtonDisabled"
+                    block color="primary" 
+                >{{ $t('ModelDraftDialogForDistribution.createEventStormingModelCanvas') }}
+                </v-btn>
+            </v-row>
+
+            <v-card v-if="uiType === 'ESDialoger' && activeTab !== null" class="ma-4 pa-4" outlined>
+                <v-textarea v-model="feedback" label="Feedback" rows="3"></v-textarea>
+                <v-row class="pa-0 ma-0">
+                    <v-spacer></v-spacer>
+                    <v-btn :disabled="isGenerateButtonDisabled || feedback === ''" class="auto-modeling-btn" @click="feedbackFromDraft(
+                        draftOptions[activeTab], 
+                        feedback,
+                        draftOptions
+                    )">
+                        {{ getBoundedContextDisplayName(draftOptions[activeTab]) }} {{ $t('ModelDraftDialogForDistribution.reGenerate') }} 
+                    </v-btn>
+                </v-row>
+            </v-card>
+
+            <v-row v-if="uiType === 'ESDialoger'" class="ma-0 pa-4">
+                <v-spacer></v-spacer>
+                <v-btn :disabled="isGenerateButtonDisabled" class="auto-modeling-btn" @click="retry">
+                    <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>
+                    {{ $t('ESDialoger.tryAgain') }}
+                </v-btn>
+                <v-btn :disabled="isGenerateButtonDisabled" class="auto-modeling-btn" color="primary" @click="generateFromDraft">
+                    {{ $t('ModelDraftDialogForDistribution.createEventStormingModelCanvas') }}
+                    <v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon>
                 </v-btn>
             </v-row>
         </v-card-text>
@@ -189,13 +208,29 @@
 
             draftUIInfos: {
                 type: Object,
-                default: () => ({}),
+                default: () => ({
+                    leftBoundedContextCount: 0,
+                    directMessage: '',
+                    progress: null
+                }),
                 required: false
             },
 
             isGeneratorButtonEnabled: {
                 type: Boolean,
                 default: true,
+                required: false
+            },
+
+            uiType: {
+                type: String,
+                default: 'EventStormingModelCanvas', // ESDialoger | EventStormingModelCanvas
+                required: false
+            },
+
+            messageUniqueId: {
+                type: String,
+                default: '',
                 required: false
             }
         },
@@ -204,35 +239,21 @@
                 activeTab: null,
                 selectedOptionItem: {},
                 selectedCardIndex: {},
-                selectedCardKey: 0
+                selectedCardKey: 0,
+                feedback: ''
             }
         },
         watch: {
             draftOptions: {
                 handler(newVal) {
-                    if(newVal.length === 0) return
-                    if(newVal.length === Object.keys(this.selectedCardIndex).length) return
-
-                    Object.keys(this.selectedCardIndex).forEach(key => {
-                        if(!newVal.some(option => option.boundedContext === key)) {
-                            delete this.selectedCardIndex[key];
-                        }
-                    });
-                    Object.keys(this.selectedOptionItem).forEach(key => {
-                        if(!newVal.some(option => option.boundedContext === key)) {
-                            delete this.selectedOptionItem[key];
-                        }
-                    });
-
-                    
-                    const lastDraftOption = newVal[newVal.length - 1]
-                    this.activeTab = newVal.length - 1
-
-                    this.selectedCardIndex[lastDraftOption.boundedContext] = lastDraftOption.defaultOptionIndex
-                    this.selectedOptionItem[lastDraftOption.boundedContext] = lastDraftOption.options[lastDraftOption.defaultOptionIndex]
+                    this.updateSelectionByDraftOptions(newVal)
                 },
                 deep: true
             }
+        },
+        created() {
+            if(this.draftOptions)
+                this.updateSelectionByDraftOptions(this.draftOptions)
         },
         computed: {
             isSelectedCard() {
@@ -240,26 +261,71 @@
                     return this.selectedCardIndex.hasOwnProperty(boundedContextInfo.boundedContext) && 
                            this.selectedCardIndex[boundedContextInfo.boundedContext] === index
                 }
+            },
+
+            isGenerateButtonDisabled() {
+                return !this.isGeneratorButtonEnabled || this.draftUIInfos.leftBoundedContextCount > 0 || (!this.selectedOptionItem || Object.keys(this.selectedOptionItem).length !== this.draftOptions.length)
             }
         },
         methods: {
+            feedbackFromDraft(boundedContextInfo, feedback, draftOptions){
+                this.$emit('feedbackFromDraft', boundedContextInfo, feedback, draftOptions, this.messageUniqueId);
+            },
+
             generateFromDraft(){
                 this.$emit('generateFromDraft', this.selectedOptionItem);                
             },
+
+
             close(){
                 if(confirm('Are you sure you want to close this dialog? All progress will be lost.')) {
                     this.$emit('onClose');
                 }
             },
+
             retry(){
                 if(confirm('Are you sure you want to retry? All progress will be lost.')) {
                     this.$emit('onRetry');
                 }
             },
+
+
             selectedCard(index, option, key) {
                 this.selectedCardIndex[key] = index
                 this.selectedOptionItem[key] = option
                 this.selectedCardKey ++
+            },
+
+            getBoundedContextDisplayName(boundedContextInfo) {
+                return (boundedContextInfo.boundedContextAlias) ? boundedContextInfo.boundedContextAlias : (boundedContextInfo.boundedContext.charAt(0).toUpperCase() + boundedContextInfo.boundedContext.slice(1))
+            },
+
+            updateSelectionByDraftOptions(draftOptions) {
+                if(draftOptions.length === 0) return
+                if(draftOptions.length === Object.keys(this.selectedCardIndex).length) return
+
+                Object.keys(this.selectedCardIndex).forEach(key => {
+                    if(!draftOptions.some(option => option.boundedContext === key)) {
+                        delete this.selectedCardIndex[key];
+                    }
+                });
+                Object.keys(this.selectedOptionItem).forEach(key => {
+                    if(!draftOptions.some(option => option.boundedContext === key)) {
+                        delete this.selectedOptionItem[key];
+                    }
+                });
+                
+
+                draftOptions.map(option => {  
+                    if(!this.selectedCardIndex[option.boundedContext])
+                        this.selectedCardIndex[option.boundedContext] = option.defaultOptionIndex
+
+                    if(!this.selectedOptionItem[option.boundedContext])
+                        this.selectedOptionItem[option.boundedContext] = option.options[option.defaultOptionIndex]
+                })
+
+
+                this.activeTab = draftOptions.length - 1
             }
         }
     }

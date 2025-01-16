@@ -1964,9 +1964,12 @@
                 :draftOptions="modelDraftDialogWithXAIDto.draftOptions"
                 :draftUIInfos="modelDraftDialogWithXAIDto.draftUIInfos"
                 :isGeneratorButtonEnabled="modelDraftDialogWithXAIDto.isGeneratorButtonEnabled"
-                @generateFromDraft="generateFromDraftWithXAI"
+                :uiType="'EventStormingModelCanvas'"
+
                 @onClose="modelDraftDialogWithXAIDto.isShow = false; modelDraftDialogWithXAIDto.actions.stop()"
                 @onRetry="modelDraftDialogWithXAIDto.actions.retry()"
+
+                @generateFromDraft="generateFromDraftWithXAI"
             ></ModelDraftDialogWithXAI>
           </v-dialog>
 
