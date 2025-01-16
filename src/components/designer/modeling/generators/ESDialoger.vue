@@ -560,7 +560,8 @@
                         accumulatedDrafts: {},
                         preservedDraftOptionsForFeedback: [],
                         generate: (structuredDescription, boundedContext) => {},
-                        updateAccumulatedDrafts: (output, targetBoundedContext) => {}
+                        updateAccumulatedDrafts: (output, targetBoundedContext) => {},
+                        generateWithFeedback: (boundedContextInfo, feedback, draftOptions) => {}
                     }
                 },
             }
