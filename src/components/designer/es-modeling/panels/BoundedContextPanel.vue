@@ -64,7 +64,7 @@
             
         <template slot="element">
             <div class="pa-4 pb-0">
-                <span class="panel-title">Read/Write Authority</span>
+                <span class="panel-title">{{ $t('TitleText.readWriteAuthority') }}</span>
                 <!-- <v-alert
                     color="grey darken-1"
                     text
@@ -92,7 +92,7 @@
                                 filled
                                 chips
                                 color="blue-grey lighten-2"
-                                label="Select"
+                                :label="$t('labelText.select')"
                                 item-text="userName"
                                 return-object
                                 :disabled="isReadOnly"
@@ -175,21 +175,21 @@
             return {
                 userTableHeaders: [
                     {
-                        text: 'Name',
+                        text: this.$t('BoundedContextPanel.name'),
                         align: 'start',
                         sortable: false,
                         value: 'userName',
                     },
                     {
-                        text: 'Readable',
+                        text: this.$t('BoundedContextPanel.readable'),
                         value: 'readable',
                     },
                     {
-                        text: 'Writable',
+                        text: this.$t('BoundedContextPanel.writable'),
                         value: 'writable',
                     },
                     {
-                        text: 'Admin',
+                        text: this.$t('BoundedContextPanel.admin'),
                         value: 'admin',
                     }
                 ]

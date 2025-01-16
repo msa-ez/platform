@@ -87,7 +87,7 @@
 
 
                             <div v-show="isDesignLevelVisible">
-                                <span class="panel-title">Method</span>
+                                <span class="panel-title">{{ $t('CommandDefinitionPanel.method') }}</span>
                                 <!-- <v-alert
                                     color="grey darken-1"
                                     text
@@ -99,8 +99,8 @@
                                 Default: 기본 RESTful API // Extend: 확장된 URI
                                 </v-alert> -->
                                 <v-radio-group v-model="value.isRestRepository" :disabled="isReadOnly" row>
-                                    <v-radio label="Default Verbs" :value="true"></v-radio>
-                                    <v-radio label="Extend Verb URI" :value="false"></v-radio>
+                                    <v-radio :label="$t('CommandDefinitionPanel.defaultVerbs')" :value="true"></v-radio>
+                                    <v-radio :label="$t('CommandDefinitionPanel.extendVerbUri')" :value="false"></v-radio>
                                 </v-radio-group>
                                 <detail-component
                                     :title="$t('CommandDefinitionPanel.commandMethodDetailTitle')"
@@ -112,7 +112,7 @@
                                             :disabled="isReadOnly"
                                             v-model="value.restRepositoryInfo.method"
                                             :items="getRestfulList"
-                                            label="Method"
+                                            :label="$t('CommandDefinitionPanel.method')"
                                             persistent-hint>
                                     </v-autocomplete>
                                 </v-col>
@@ -130,7 +130,7 @@
                                     <v-autocomplete
                                             v-model="value.controllerInfo.method"
                                             :disabled="isReadOnly"
-                                            label="Method"
+                                            :label="$t('CommandDefinitionPanel.method')"
                                             persistent-hint
                                             :items="getControllerList"
                                     ></v-autocomplete>
@@ -149,7 +149,7 @@
                                     POST: 등록 // PUT, PATCH: 수정 // DELETE: 삭제
                                     </v-alert> -->
                                     <event-storming-attribute class="cm-attribute"
-                                            label="Request Body"
+                                            :label="$t('CommandDefinitionPanel.requestBody')"
                                             v-model="value.fieldDescriptors"
                                             :entities="entities"
                                             :isReadOnly="isReadOnly"
@@ -159,20 +159,23 @@
                                     ></event-storming-attribute>
                                 </v-col>
 
-                                <span class="panel-title">Httpie command usages</span>
-                                <v-row class="pa-0 ma-0" style="align-items: center;">
-                                    <v-btn icon small @click="copyRestRepositoryMethod()"
-                                        style="align-self: start; margin-top: 15px;"
-                                    >
-                                        <v-icon small> mdi-content-copy</v-icon>
-                                    </v-btn>
+                                <span class="panel-title">{{$t('CommandDefinitionPanel.httpieCommandUsages')}}</span>
+                                <v-row class="pa-0 ma-0" style="align-items: center; position: relative;">
                                     <v-textarea
-                                            v-model="commandExample"
-                                            solo
-                                            class="mx-2"
-                                            style="margin-top: 20px;"
-                                            auto-grow
+                                        v-model="commandExample"
+                                        solo
+                                        class="mx-2"
+                                        style="margin-top: 20px; position: relative;"
+                                        auto-grow
                                     ></v-textarea>
+                                    <v-btn 
+                                        icon 
+                                        small 
+                                        @click="copyRestRepositoryMethod()"
+                                        style="position: absolute; top: 24px; right: 10px;"
+                                    >
+                                        <v-icon small>mdi-content-copy</v-icon>
+                                    </v-btn>
                                 </v-row>
                             </div>
                         </v-col>

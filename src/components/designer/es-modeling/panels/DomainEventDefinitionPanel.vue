@@ -60,7 +60,7 @@
                 </v-card>
 
                 <div class="pa-4">
-                    <v-card-text class="pa-0 ma-0 panel-title">Trigger By LifeCycle</v-card-text>
+                    <v-card-text class="pa-0 ma-0 panel-title">{{ $t('DomainEventDefinitionPanel.triggerByLifeCycle') }}</v-card-text>
                     <detail-component
                         :title="$t('DomainEventDefinitionPanel.triggerByLifeCycleDetailTitle')"
                         :details="triggerByLifeCycleDetailSubTitle"
@@ -84,7 +84,7 @@
                 </div>
 
                 <div class="pa-4">
-                    <v-card-text class="panel-title pa-0 ma-0">Trigger By Command</v-card-text>
+                    <v-card-text class="panel-title pa-0 ma-0">{{ $t('DomainEventDefinitionPanel.triggerByCommand') }}</v-card-text>
                     <detail-component
                         :title="$t('DomainEventDefinitionPanel.triggerByCommandDetailTitle')"
                         :details="triggerByCommandDetailSubTitle"
@@ -99,7 +99,7 @@
                 </div>
 
                 <div class="pa-4">
-                    <v-card-text class="panel-title pa-0 ma-0">Trigger By Policy</v-card-text>
+                    <v-card-text class="panel-title pa-0 ma-0">{{ $t('DomainEventDefinitionPanel.triggerByPolicy') }}</v-card-text>
                     <detail-component
                         :title="$t('DomainEventDefinitionPanel.triggerByPolicyDetailTitle')"
                         :details="triggerByPolicyDetailSubTitle"

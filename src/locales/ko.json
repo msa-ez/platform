@@ -12,10 +12,18 @@
   "labelText" : {
     "attributes" : "속성",
     "type" : "타입",
-    "name": "이름"
+    "name": "이름",
+    "select" : "선택"
   },
   "TitleText" : {
-    "associatedAggregate": "연관된애그리거트"
+    "associatedAggregate": "연관된애그리거트",
+    "readWriteAuthority": "읽기/쓰기 권한"
+  },
+  "BoundedContextPanel" : {
+    "name": "이름",
+    "readable": "읽기 가능",
+    "writable": "쓰기 가능",
+    "admin": "관리자"
   },
   "gitAPIMenu": {
     "organizationName" : "조직 이름",
@@ -89,6 +97,7 @@
     "summarizedResult": "요약 결과"
   },
   "ViewDefinitionPanel" : {
+    "readModelAttributes": "Read Model 속성",
     "CQRSDetailTitle" : "CQRS 패턴에서 Read Model의 \"CREATE\" 설정은 이벤트 발생 시 데이터를 조회 가능한 형태로 저장하는 역할을 합니다.",
     "CQRSDetailSubTitle1" : "CREATE WHEN: 특정 이벤트가 발생할 때 Read Model을 생성합니다. 예를 들어, 새로운 주문이 생성되면 해당 주문 정보를 Read Model에 저장합니다.",
     "CQRSDetailSubTitle2" : "SET: Read Model의 필드를 이벤트의 필드 값으로 설정합니다. 이는 데이터가 어떻게 저장될지를 정의합니다. 예를 들어, readModelField에 eventField의 값을 할당합니다.",
@@ -109,6 +118,11 @@
     "enter" : "입장"
   },
   "CommandDefinitionPanel" : {
+    "requestBody": "요청 데이터",
+    "defaultVerbs": "기본 작업",
+    "extendVerbUri": "확장 작업 경로",
+    "method" : "메서드",
+    "httpieCommandUsages" : "Httpie 명령어",
     "implementationSettings": "디자인 레벨",
     "commandMethodDetailTitle" : "Method 설정: API 경로와 동작 방식을 선택하여 데이터 작업을 수행합니다.",
     "commandMethodDetailSubTitle1" : "Default Verbs: 기본적인 데이터 작업(생성, 업데이트, 삭제)을 수행하는 표준 경로를 사용합니다. 이는 일반적인 데이터 조작에 적합합니다.",
@@ -121,6 +135,9 @@
     "commandUsageDetailSubTitle1" : "/부착된 Aggregate의 namePlural / Aggregate의ID클래스 / command 이름"
   },
   "DomainEventDefinitionPanel" : {
+    "triggerByLifeCycle": "생명주기에 의한 트리거",
+    "triggerByCommand": "명령에 의한 트리거", 
+    "triggerByPolicy": "정책에 의한 트리거",
     "triggerByLifeCycleDetailTitle" : "데이터가 저장, 수정, 삭제 등의 생명주기를 거칠 때 특정 시점(전/후)에 실행될 작업을 정의.",
     "triggerByLifeCycleDetailSubTitle1": "Pre Persist: 데이터가 저장되기 직전에 실행됩니다.",
     "triggerByLifeCycleDetailSubTitle2": "Post Persist: 데이터가 저장된 직후에 실행됩니다.",

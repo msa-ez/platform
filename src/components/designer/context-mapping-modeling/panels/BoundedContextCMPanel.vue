@@ -42,7 +42,7 @@
             
         <template slot="element">
             <div>
-                <span class="panel-title" style="margin-left:15px;">Read/Write Authority</span>
+                <span class="panel-title" style="margin-left:15px;">{{ $t('TitleText.readWriteAuthority') }}</span>
                 <v-card flat>
                     <v-card-text v-if="isReadOnly">
                         <v-autocomplete
@@ -61,7 +61,7 @@
                                 filled
                                 chips
                                 color="blue-grey lighten-2"
-                                label="Select"
+                                :label="$t('labelText.select')"
                                 item-text="userName"
                                 return-object
                                 :disabled="isReadOnly"

@@ -12,10 +12,18 @@
   "labelText" : {
     "attributes" : "Attributes",
     "type" : "Type",
-    "name": "Name"
+    "name": "Name",
+    "select" : "Select"
   },
   "TitleText" : {
-    "associatedAggregate": "Associated Aggregate"
+    "associatedAggregate": "Associated Aggregate",
+    "readWriteAuthority": "Read/Write Authority"
+  },
+  "BoundedContextPanel" : {
+    "name": "Name",
+    "readable": "Readable",
+    "writable": "Writable", 
+    "admin": "Admin"
   },
   "gitAPIMenu": {
     "organizationName": "Organization Name",
@@ -89,6 +97,7 @@
     "summarizedResult": "Summarized Result"
   },
   "ViewDefinitionPanel" : {
+    "readModelAttributes": "Read Model Attributes",
     "CQRSDetailTitle" : "In the CQRS pattern, the \"CREATE\" configuration of the Read Model is responsible for storing data in a queryable format when events occur.",
     "CQRSDetailSubTitle1" : "CREATE WHEN: Creates a Read Model when specific events occur. For example, when a new order is created, its information is stored in the Read Model.",
     "CQRSDetailSubTitle2" : "SET: Configures Read Model fields with event field values. This defines how data will be stored. For example, assigning an eventField value to a readModelField.",
@@ -109,6 +118,11 @@
     "enter" : "Enter"
   },
   "CommandDefinitionPanel" : {
+    "requestBody": "Request Body",
+    "defaultVerbs": "Default Operations",
+    "extendVerbUri": "Extended Operation Path",
+    "method": "Method",
+    "httpieCommandUsages": "Httpie Commands",
     "implementationSettings": "Design Level",
     "commandMethodDetailTitle" : "Method Configuration: Select API paths and operation modes to perform data operations.",
     "commandMethodDetailSubTitle1" : "Default Verbs: Uses standard paths for basic data operations (create, update, delete). This is suitable for common data manipulation.",
@@ -121,6 +135,9 @@
     "commandUsageDetailSubTitle1" : "/attached Aggregate's namePlural / Aggregate's ID class / command name"
   },
   "DomainEventDefinitionPanel" : {
+    "triggerByLifeCycle": "Triggered by Lifecycle",
+    "triggerByCommand": "Triggered by Command",
+    "triggerByPolicy": "Triggered by Policy",
     "triggerByLifeCycleDetailTitle" : "Define tasks to be executed at specific points (before/after) during data lifecycle events such as saving, updating, and deleting.",
     "triggerByLifeCycleDetailSubTitle1": "Pre Persist: Executes right before data is saved.",
     "triggerByLifeCycleDetailSubTitle2": "Post Persist: Executes immediately after data is saved.", 
