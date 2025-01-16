@@ -5,7 +5,7 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
-        this.checkInputParamsKeys = ["description", "boundedContext", "accumulatedDrafts"]
+        this.checkInputParamsKeys = ["description", "boundedContext", "accumulatedDrafts"] // Optional ["feedback"]
         this.progressCheckStrings = ["overviewThoughts", "options", "analysis", "defaultOptionIndex"]
     }
 
@@ -101,7 +101,12 @@ Please adhere to the following guidelines:
 10. Do not include comments in the output JSON object.
 11. **Avoid creating bidirectional references between Aggregates. Aggregate references should be unidirectional. For example, if 'Order' references 'Customer', 'Customer' should not directly reference 'Order'.**
     * **When deciding which Aggregate should reference another, consider the ownership and immutability. Typically, the Aggregate that owns the other or has a lifecycle dependency on the other should hold the reference. For example, 'Order' should reference 'Customer' because an order is always associated with a customer, and the customer's lifecycle is independent of the order. Conversely, 'Customer' should not reference 'Order' because a customer can exist without any orders.**
-
+12. **Do not create Aggregates that already exist in other Bounded Contexts within accumulatedDrafts:**
+    * Check accumulatedDrafts for existing Aggregates before creating new ones
+    * If an Aggregate with the same core concept already exists (e.g., 'Customer', 'Order'), do not recreate it
+    * Instead, reference existing Aggregates through ValueObjects with foreign keys
+    * Example: If 'Customer' Aggregate exists in CustomerManagement Bounded Context, other Bounded Contexts should use CustomerReference ValueObject instead of creating a new Customer Aggregate
+    * This prevents duplicate Aggregates across different Bounded Contexts and maintains a single source of truth
 
 Proposal Writing Recommendations:
 1. Aggregates should represent complete business capabilities and maintain their invariants:
@@ -583,7 +588,7 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
     }
 
     __buildJsonUserQueryInputFormat() {
-        return {
+        let userInputQuery = {
             "Accumulated Drafts": this.client.input.accumulatedDrafts,
 
             "Target Bounded Context Name": this.client.input.boundedContext.name,
@@ -621,11 +626,27 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
 * The following Aggregate should not be created because it already exists, but should be made to reference a ValueObject.: ${(this.client.input.existingAggregates && this.client.input.existingAggregates.length > 0) ? this.client.input.existingAggregates.join(", ") : "None"}
 `
         }
+
+        if(this.client.input.feedback)
+            userInputQuery["Feedback"] = `
+You should recreate the content of the draft you created earlier, incorporating the user's feedback.
+* Previous Draft Output
+${JSON.stringify(this.client.input.feedback.previousDraftOutput)}
+
+* User Feedbacks
+${this.client.input.feedback.feedbacks.join("\n")}`
+
+        return userInputQuery
     }
 
 
     onCreateModelGenerating(returnObj) {
-        returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        if(this.client.input.feedback) {
+            returnObj.directMessage = `Re-generating options for ${this.client.input.boundedContextDisplayName} Bounded Context based on user feedback... (${returnObj.modelRawValue.length} characters generated)`
+            returnObj.isFeedbackBased = true
+        } else {
+            returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        }
     }
 
     onCreateModelFinished(returnObj) {
@@ -642,7 +663,12 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
         this._enrichValueObjectsWithAggregateDetails(returnObj.modelValue.output)
         this._markRecommendedOption(returnObj.modelValue.output)
 
-        returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        if(this.client.input.feedback) {
+            returnObj.directMessage = `Re-generating options for ${this.client.input.boundedContextDisplayName} Bounded Context based on user feedback... (${returnObj.modelRawValue.length} characters generated)`
+            returnObj.isFeedbackBased = true
+        } else {
+            returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        }
     }
 
     _removeThoughts(output) {

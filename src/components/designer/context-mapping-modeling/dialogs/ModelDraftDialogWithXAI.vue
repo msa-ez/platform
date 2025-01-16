@@ -44,7 +44,7 @@
         >
             <v-tabs v-model="activeTab" class="model-draft-dialog-tab">
                 <v-tab v-for="(boundedContextInfo, index) in draftOptions" :key="index" style="text-transform: none;">
-                    {{ (boundedContextInfo.boundedContextAlias) ? boundedContextInfo.boundedContextAlias : (boundedContextInfo.boundedContext.charAt(0).toUpperCase() + boundedContextInfo.boundedContext.slice(1)) }}<br>
+                    {{ getBoundedContextDisplayName(boundedContextInfo) }}<br>
                 </v-tab>
             </v-tabs>
 
@@ -167,6 +167,20 @@
                 </v-btn>
             </v-row>
 
+            <v-card v-if="uiType === 'ESDialoger' && activeTab !== null" class="ma-4 pa-4" outlined>
+                <v-textarea v-model="feedback" label="Feedback" rows="3"></v-textarea>
+                <v-row class="pa-0 ma-0">
+                    <v-spacer></v-spacer>
+                    <v-btn :disabled="isGenerateButtonDisabled || feedback === ''" class="auto-modeling-btn" @click="feedbackFromDraft(
+                        draftOptions[activeTab], 
+                        feedback,
+                        draftOptions
+                    )">
+                        {{ getBoundedContextDisplayName(draftOptions[activeTab]) }} {{ $t('ModelDraftDialogForDistribution.reGenerate') }} 
+                    </v-btn>
+                </v-row>
+            </v-card>
+
             <v-row v-if="uiType === 'ESDialoger'" class="ma-0 pa-4">
                 <v-spacer></v-spacer>
                 <v-btn :disabled="isGenerateButtonDisabled" class="auto-modeling-btn" @click="retry">
@@ -212,6 +226,12 @@
                 type: String,
                 default: 'EventStormingModelCanvas', // ESDialoger | EventStormingModelCanvas
                 required: false
+            },
+
+            messageUniqueId: {
+                type: String,
+                default: '',
+                required: false
             }
         },
         data() {
@@ -219,35 +239,21 @@
                 activeTab: null,
                 selectedOptionItem: {},
                 selectedCardIndex: {},
-                selectedCardKey: 0
+                selectedCardKey: 0,
+                feedback: ''
             }
         },
         watch: {
             draftOptions: {
                 handler(newVal) {
-                    if(newVal.length === 0) return
-                    if(newVal.length === Object.keys(this.selectedCardIndex).length) return
-
-                    Object.keys(this.selectedCardIndex).forEach(key => {
-                        if(!newVal.some(option => option.boundedContext === key)) {
-                            delete this.selectedCardIndex[key];
-                        }
-                    });
-                    Object.keys(this.selectedOptionItem).forEach(key => {
-                        if(!newVal.some(option => option.boundedContext === key)) {
-                            delete this.selectedOptionItem[key];
-                        }
-                    });
-
-                    
-                    const lastDraftOption = newVal[newVal.length - 1]
-                    this.activeTab = newVal.length - 1
-
-                    this.selectedCardIndex[lastDraftOption.boundedContext] = lastDraftOption.defaultOptionIndex
-                    this.selectedOptionItem[lastDraftOption.boundedContext] = lastDraftOption.options[lastDraftOption.defaultOptionIndex]
+                    this.updateSelectionByDraftOptions(newVal)
                 },
                 deep: true
             }
+        },
+        created() {
+            if(this.draftOptions)
+                this.updateSelectionByDraftOptions(this.draftOptions)
         },
         computed: {
             isSelectedCard() {
@@ -262,23 +268,64 @@
             }
         },
         methods: {
+            feedbackFromDraft(boundedContextInfo, feedback, draftOptions){
+                this.$emit('feedbackFromDraft', boundedContextInfo, feedback, draftOptions, this.messageUniqueId);
+            },
+
             generateFromDraft(){
                 this.$emit('generateFromDraft', this.selectedOptionItem);                
             },
+
+
             close(){
                 if(confirm('Are you sure you want to close this dialog? All progress will be lost.')) {
                     this.$emit('onClose');
                 }
             },
+
             retry(){
                 if(confirm('Are you sure you want to retry? All progress will be lost.')) {
                     this.$emit('onRetry');
                 }
             },
+
+
             selectedCard(index, option, key) {
                 this.selectedCardIndex[key] = index
                 this.selectedOptionItem[key] = option
                 this.selectedCardKey ++
+            },
+
+            getBoundedContextDisplayName(boundedContextInfo) {
+                return (boundedContextInfo.boundedContextAlias) ? boundedContextInfo.boundedContextAlias : (boundedContextInfo.boundedContext.charAt(0).toUpperCase() + boundedContextInfo.boundedContext.slice(1))
+            },
+
+            updateSelectionByDraftOptions(draftOptions) {
+                if(draftOptions.length === 0) return
+                if(draftOptions.length === Object.keys(this.selectedCardIndex).length) return
+
+                Object.keys(this.selectedCardIndex).forEach(key => {
+                    if(!draftOptions.some(option => option.boundedContext === key)) {
+                        delete this.selectedCardIndex[key];
+                    }
+                });
+                Object.keys(this.selectedOptionItem).forEach(key => {
+                    if(!draftOptions.some(option => option.boundedContext === key)) {
+                        delete this.selectedOptionItem[key];
+                    }
+                });
+                
+
+                draftOptions.map(option => {  
+                    if(!this.selectedCardIndex[option.boundedContext])
+                        this.selectedCardIndex[option.boundedContext] = option.defaultOptionIndex
+
+                    if(!this.selectedOptionItem[option.boundedContext])
+                        this.selectedOptionItem[option.boundedContext] = option.options[option.defaultOptionIndex]
+                })
+
+
+                this.activeTab = draftOptions.length - 1
             }
         }
     }

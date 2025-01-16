@@ -116,19 +116,11 @@
                 ></DevideBoundedContextDialog>
             </v-card>
 
-            <v-card v-if="modelDraftDialogWithXAIDto.isShow" class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
-                <ModelDraftDialogWithXAI
-                    :draftOptions="modelDraftDialogWithXAIDto.draftOptions"
-                    :draftUIInfos="modelDraftDialogWithXAIDto.draftUIInfos"
-                    :isGeneratorButtonEnabled="modelDraftDialogWithXAIDto.isGeneratorButtonEnabled"
-                    :uiType="'ESDialoger'"
-
-                    @onClose="modelDraftDialogWithXAIDto.isShow = false; modelDraftDialogWithXAIDto.actions.stop()"
-                    @onRetry="modelDraftDialogWithXAIDto.actions.retry()"
-
-                    @generateFromDraft="generateFromDraftWithXAI"
-                ></ModelDraftDialogWithXAI>
-            </v-card>
+            <ESDialogerMessages 
+                :messages="messages"
+                @generateFromAggregateDrafts="generateFromAggregateDrafts"
+                @feedbackFromAggregateDrafts="feedbackFromAggregateDrafts"
+            ></ESDialogerMessages>
         </div>
         <div
              class="auto-modeling-message-card"
@@ -171,13 +163,11 @@
     import StorageBase from '../../../CommonStorageBase.vue';
     import getParent from '../../../../utils/getParent'
     import Usage from '../../../../utils/Usage'
-    import ESDialogerTestTerminal from './testTerminals/ESDialogerTestTerminal.vue';
 
     // Requirements Summarizer
     import RequirementsSummarizer from './RequirementsSummarizer.js';
     import TextChunker from './TextChunker.js';
 
-    import ModelDraftDialogWithXAI from '../../context-mapping-modeling/dialogs/ModelDraftDialogWithXAI.vue'
     import { 
         PreProcessingFunctionsGenerator,
         DraftGeneratorByFunctions 
@@ -185,6 +175,13 @@
 
     import RecursiveRequirementsSummarizer from './RecursiveRequirementsSummarizer.js';
     import RequirementsMappingGenerator from './RequirementsMappingGenerator.js';
+
+    import { 
+        ESDialogerMessages,
+        ESDialogerTestTerminal,
+        MessageFactory,
+    } from './features/ESDialoger';
+
     export default {
         name: 'es-dialoger',
         mixins:[
@@ -204,7 +201,7 @@
             VueTypedJs,
             DevideBoundedContextDialog,
             BCGenerationOption,
-            ModelDraftDialogWithXAI
+            ESDialogerMessages
         },
         computed: {
             isForeign() {
@@ -230,40 +227,50 @@
 
             this.generators.PreProcessingFunctionsGenerator.generator = new PreProcessingFunctionsGenerator({
                 onFirstResponse: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: true,
-                        draftUIInfos: {
-                            leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length + 1,
-                            directMessage: "",
-                            progress: 0
+                    const messageUniqueId = this.workingMessages.modelDraftDialogWithXAIDto.uniqueId
+
+                    this.workingMessages.modelDraftDialogWithXAIDto.isShow = true
+                    this.workingMessages.modelDraftDialogWithXAIDto.draftUIInfos = {
+                        leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length + 1,
+                        directMessage: "Preprocessing for generating aggregate actions...",
+                        progress: 0
+                    }
+                    this.workingMessages.modelDraftDialogWithXAIDto.isGeneratorButtonEnabled = true
+                    this.workingMessages.modelDraftDialogWithXAIDto.actions = {
+                        stop: () => {
+                            returnObj.actions.stopGeneration()
                         },
-                        isGeneratorButtonEnabled: true,
-                        actions: {
-                            stop: () => {
-                                returnObj.actions.stopGeneration()
-                            },
-                            retry: () => {
-                                this.generators.PreProcessingFunctionsGenerator.initInputs()
-                                this.generators.PreProcessingFunctionsGenerator.generateIfInputsExist()
+                        retry: () => {
+                            this.workingMessages.modelDraftDialogWithXAIDto = this.messages.find(message => message.uniqueId === messageUniqueId)
+                            this.workingMessages.modelDraftDialogWithXAIDto.draftOptions = []
+                            this.workingMessages.modelDraftDialogWithXAIDto.draftUIInfos = {
+                                leftBoundedContextCount: this.workingMessages.modelDraftDialogWithXAIDto.retryInputs.initialInputs.length + 1,
+                                directMessage: "Preprocessing for generating aggregate actions...",
+                                progress: 0
                             }
+
+                            this.generators.PreProcessingFunctionsGenerator.inputs = structuredClone(
+                                this.workingMessages.modelDraftDialogWithXAIDto.retryInputs.initialInputs
+                            )
+                            this.generators.DraftGeneratorByFunctions.accumulatedDrafts = structuredClone(
+                                this.workingMessages.modelDraftDialogWithXAIDto.retryInputs.initialAccumulatedDrafts
+                            )
+
+                            this.generators.PreProcessingFunctionsGenerator.generateIfInputsExist()
                         }
                     }
                 },
 
                 onModelCreated: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
-                    this.modelDraftDialogWithXAIDto.draftUIInfos.progress = returnObj.progress
+                    this.workingMessages.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
+                    this.workingMessages.modelDraftDialogWithXAIDto.draftUIInfos.progress = returnObj.progress
                 },
 
                 onGenerationSucceeded: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        draftUIInfos: {
-                            leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length + 1,
-                            directMessage: returnObj.directMessage,
-                            progress: 100
-                        }
+                    this.workingMessages.modelDraftDialogWithXAIDto.draftUIInfos = {
+                        leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length + 1,
+                        directMessage: returnObj.directMessage,
+                        progress: 100
                     }
 
                     this.generators.DraftGeneratorByFunctions.generate(JSON.stringify(returnObj.modelValue.output), returnObj.inputParams.boundedContext)
@@ -271,11 +278,6 @@
 
                 onRetry: (returnObj) => {
                     alert(`[!] An error occurred while analysing your requirements, please try again..\n* Error log \n${returnObj.errorMessage}`)
-                    this.modelDraftDialogWithXAIDto.isShow = false
-                },
-
-                onStopped: () => {
-                    this.modelDraftDialogWithXAIDto.isShow = false
                 }
             })
             this.generators.PreProcessingFunctionsGenerator.buildInitialInputs = (selectedStructureOption) => {
@@ -291,6 +293,7 @@
                 }))
 
                 this.generators.PreProcessingFunctionsGenerator.initialInputs = structuredClone(passedGeneratorInputs)
+                this.workingMessages.modelDraftDialogWithXAIDto.retryInputs.initialInputs = structuredClone(passedGeneratorInputs)
 
                 // 제공된 정보를 기반으로 아직 생성되지는 않았으나, 참조할 수 있는 초안 정보를 미리 생성함
                 // 이 정보는 추후에 AI가 초안을 실제 생성한 경우, AI의 디폴트 선택 옵션의 내용으로 순차적으로 업데이트됨
@@ -309,10 +312,11 @@
                         accumulatedDrafts[boundedContext.name] = aggregates;
                     }
                 });
-                this.generators.DraftGeneratorByFunctions.initialAccumulatedDrafts = accumulatedDrafts;
+                this.generators.DraftGeneratorByFunctions.initialAccumulatedDrafts = structuredClone(accumulatedDrafts);
+                this.workingMessages.modelDraftDialogWithXAIDto.retryInputs.initialAccumulatedDrafts = structuredClone(accumulatedDrafts);
             }
             this.generators.PreProcessingFunctionsGenerator.initInputs = () => {
-                this.modelDraftDialogWithXAIDto.draftOptions = []
+                this.workingMessages.modelDraftDialogWithXAIDto.draftOptions = []
 
                 this.generators.PreProcessingFunctionsGenerator.inputs = structuredClone(
                     this.generators.PreProcessingFunctionsGenerator.initialInputs
@@ -336,27 +340,21 @@
                 input: null,
 
                 onFirstResponse: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: true,
-                        draftUIInfos: {
-                            leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length + 1,
-                            directMessage: "",
-                            progress: 0
-                        },
-                        isGeneratorButtonEnabled: true,
-                        actions: {
-                            ...this.modelDraftDialogWithXAIDto.actions,
-                            stop: () => {
-                                returnObj.actions.stopGeneration()
-                            }
-                        }
+                    this.workingMessages.modelDraftDialogWithXAIDto.isShow = true
+                    this.workingMessages.modelDraftDialogWithXAIDto.draftUIInfos = {
+                        leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length + 1,
+                        directMessage: "",
+                        progress: 0
+                    }
+                    this.workingMessages.modelDraftDialogWithXAIDto.isGeneratorButtonEnabled = true
+                    this.workingMessages.modelDraftDialogWithXAIDto.actions.stop = () => {
+                        returnObj.actions.stopGeneration()
                     }
                 },
 
                 onModelCreated: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
-                    this.modelDraftDialogWithXAIDto.draftUIInfos.progress = returnObj.progress
+                    this.workingMessages.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
+                    this.workingMessages.modelDraftDialogWithXAIDto.draftUIInfos.progress = returnObj.progress
                 },
 
                 onGenerationSucceeded: (returnObj) => {
@@ -375,21 +373,37 @@
                         }
                     }
 
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        draftOptions: [
-                            ...this.modelDraftDialogWithXAIDto.draftOptions,
-                            getXAIDtoDraftOptions(
-                                returnObj.modelValue.output,
-                                returnObj.inputParams.boundedContext,
-                                returnObj.inputParams.description
-                            )
-                        ],
-                        draftUIInfos: {
-                            leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length,
+                    if(returnObj.isFeedbackBased) {
+                        const draftOptions = structuredClone(this.generators.DraftGeneratorByFunctions.preservedDraftOptionsForFeedback)
+
+                        const replaceIndex = draftOptions.findIndex(draftOption => draftOption.boundedContext === returnObj.inputParams.boundedContext.name)
+                        draftOptions.splice(replaceIndex, 1, getXAIDtoDraftOptions(
+                            returnObj.modelValue.output,
+                            returnObj.inputParams.boundedContext,
+                            returnObj.inputParams.description
+                        ))
+
+                        this.workingMessages.modelDraftDialogWithXAIDto.draftOptions = draftOptions
+                        this.workingMessages.modelDraftDialogWithXAIDto.draftUIInfos = {
+                            leftBoundedContextCount: 0,
                             directMessage: returnObj.directMessage,
                             progress: 100
                         }
+                        return
+                    }
+
+
+                    this.workingMessages.modelDraftDialogWithXAIDto.draftOptions.push(
+                        getXAIDtoDraftOptions(
+                            returnObj.modelValue.output,
+                            returnObj.inputParams.boundedContext,
+                            returnObj.inputParams.description
+                        )
+                    )
+                    this.workingMessages.modelDraftDialogWithXAIDto.draftUIInfos = {
+                        leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length,
+                        directMessage: returnObj.directMessage,
+                        progress: 100
                     }
 
                     this.generators.DraftGeneratorByFunctions.updateAccumulatedDrafts(returnObj.modelValue.output, returnObj.inputParams.boundedContext)
@@ -399,11 +413,6 @@
 
                 onRetry: (returnObj) => {
                     alert(`[!] There was an error creating your draft, please try again.\n* Error log \n${returnObj.errorMessage}`)
-                    this.modelDraftDialogWithXAIDto.isShow = false
-                },
-
-                onStopped: () => {
-                    this.modelDraftDialogWithXAIDto.isShow = false
                 }
             })
             this.generators.DraftGeneratorByFunctions.generate = (structuredDescription, boundedContext) => {
@@ -422,6 +431,34 @@
                     ...this.generators.DraftGeneratorByFunctions.accumulatedDrafts,
                     ...DraftGeneratorByFunctions.outputToAccumulatedDrafts(output, targetBoundedContext)
                 }
+            }
+            this.generators.DraftGeneratorByFunctions.generateWithFeedback = (boundedContextInfo, feedback, draftOptions) => {
+                this.generators.DraftGeneratorByFunctions.preservedDraftOptionsForFeedback = draftOptions
+
+                const accumulatedDrafts = {}
+                draftOptions.forEach(draftOption => {
+                    accumulatedDrafts[draftOption.boundedContext] = draftOption.options[draftOption.defaultOptionIndex].structure
+                })
+                accumulatedDrafts[boundedContextInfo.boundedContext] = []
+
+                this.generators.DraftGeneratorByFunctions.generator.client.input = {
+                    description: boundedContextInfo.description,
+                    boundedContext: {
+                        name: boundedContextInfo.boundedContext,
+                        alias: boundedContextInfo.boundedContextAlias,
+                        displayName: boundedContextInfo.boundedContextAlias,
+                        description: boundedContextInfo.description,
+                        aggregates: []
+                    },
+                    accumulatedDrafts: accumulatedDrafts,
+                    feedback: {
+                        previousDraftOutput: {options: boundedContextInfo.options},
+                        feedbacks: [
+                            feedback
+                        ]
+                    }
+                }
+                this.generators.DraftGeneratorByFunctions.generator.generate()
             }
         },
         watch: {
@@ -500,17 +537,11 @@
                 currentProcessingBoundedContext: "",
                 isGeneratingBoundedContext: false,
                 
-                modelDraftDialogWithXAIDto: {
-                    isShow: false,
-                    draftOptions: [],
-                    draftUIInfos: {
-                        leftBoundedContextCount: 0
-                    },
-                    isGeneratorButtonEnabled: true,
-                    actions: {
-                        stop: () => {},
-                        retry: () => {}
-                    }
+                messages: [
+                ],
+
+                workingMessages: {
+                    modelDraftDialogWithXAIDto: null
                 },
 
                 generators: {
@@ -527,6 +558,7 @@
                         generator: null,
                         initialAccumulatedDrafts: {},
                         accumulatedDrafts: {},
+                        preservedDraftOptionsForFeedback: [],
                         generate: (structuredDescription, boundedContext) => {},
                         updateAccumulatedDrafts: (output, targetBoundedContext) => {}
                     }
@@ -786,12 +818,15 @@
                 if(!selectedStructureOption) return
                 console.log("[*] 선택된 BC 구성 옵션을 기반으로 생성이 시도됨", {selectedStructureOption})
 
+                this.workingMessages.modelDraftDialogWithXAIDto = MessageFactory.createModelDraftDialogWithXAIDtoMessage()
+                this.messages.push(this.workingMessages.modelDraftDialogWithXAIDto)
+
                 this.generators.PreProcessingFunctionsGenerator.buildInitialInputs(selectedStructureOption)
                 this.generators.PreProcessingFunctionsGenerator.initInputs()
                 this.generators.PreProcessingFunctionsGenerator.generateIfInputsExist()
             },
 
-            generateFromDraftWithXAI(draftOptions){
+            generateFromAggregateDrafts(draftOptions){
                 if(this.isServerProject) this.state.associatedProject = this.modelIds.projectId
 
                 this.state = {
@@ -840,11 +875,61 @@
                     }
 
                 }
+            },
+
+            feedbackFromAggregateDrafts(boundedContextInfo, feedback, draftOptions, messageUniqueId){
+                console.log("[*] 주어진 피드백을 기반으로 새로운 Aggregate 초안 생성", {boundedContextInfo, feedback, draftOptions, messageUniqueId})
+
+
+                this.workingMessages.modelDraftDialogWithXAIDto = MessageFactory.createModelDraftDialogWithXAIDtoMessage()
+
+                const relatedMessage = (messageUniqueId) ? this.messages.find(message => message.uniqueId === messageUniqueId) : null
+                if(relatedMessage){
+                    this.workingMessages.modelDraftDialogWithXAIDto.retryInputs = structuredClone(relatedMessage.retryInputs)
+
+                    const messageUniqueId = this.workingMessages.modelDraftDialogWithXAIDto.uniqueId
+                    this.workingMessages.modelDraftDialogWithXAIDto.actions.retry = () => {
+                            this.workingMessages.modelDraftDialogWithXAIDto = this.messages.find(message => message.uniqueId === messageUniqueId)
+                            this.workingMessages.modelDraftDialogWithXAIDto.draftOptions = []
+                            this.workingMessages.modelDraftDialogWithXAIDto.draftUIInfos = {
+                                leftBoundedContextCount: this.workingMessages.modelDraftDialogWithXAIDto.retryInputs.initialInputs.length + 1,
+                                directMessage: "Preprocessing for generating aggregate actions...",
+                                progress: 0
+                            }
+
+                            this.generators.PreProcessingFunctionsGenerator.inputs = structuredClone(
+                                this.workingMessages.modelDraftDialogWithXAIDto.retryInputs.initialInputs
+                            )
+                            this.generators.DraftGeneratorByFunctions.accumulatedDrafts = structuredClone(
+                                this.workingMessages.modelDraftDialogWithXAIDto.retryInputs.initialAccumulatedDrafts
+                            )
+
+                            this.generators.PreProcessingFunctionsGenerator.generateIfInputsExist()
+                        }
+                }
+                else {
+                    this.workingMessages.modelDraftDialogWithXAIDto.actions.retry = () => {
+                        alert("[!] Currently retry is not supported")
+                    }
+                }
+
+
+                this.messages.push(
+                    MessageFactory.createUserMessage(
+                        feedback,
+                        "modelDraftDialogWithXAIDtoUserFeedback",
+                        {targetBoundedContextName: boundedContextInfo.name}
+                    )
+                )
+                this.messages.push(this.workingMessages.modelDraftDialogWithXAIDto)
+
+
+                const previousFeedbacks = this.messages.filter(message => message.type === "userMessage" && message.subType === "modelDraftDialogWithXAIDtoUserFeedback" && message.metadatas.targetBoundedContextName === boundedContextInfo.name).map(message => message.message)
+                this.generators.DraftGeneratorByFunctions.generateWithFeedback(boundedContextInfo, previousFeedbacks, draftOptions)
             }
         }
     }
 </script>
-<style>
+
+<style scoped>
 </style>
-
-
