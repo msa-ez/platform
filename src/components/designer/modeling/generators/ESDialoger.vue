@@ -94,6 +94,9 @@
 
             <v-card v-if="showBCGenerationOption" class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
                 <BCGenerationOption
+                    :isSummarizedStarted="isSummarizedStarted"
+                    :isGeneratingBoundedContext="isGeneratingBoundedContext"
+                    :isStartMapping="isStartMapping"
                     @setGenerateOption="setGenerateOption"
                 ></BCGenerationOption>
             </v-card>
@@ -495,6 +498,8 @@
                 processingRate: 0,
                 currentProcessingBoundedContext: "",
                 isGeneratingBoundedContext: false,
+
+                bcGenerationOption: {},
                 
                 modelDraftDialogWithXAIDto: {
                     isShow: false,
@@ -597,7 +602,7 @@
 
                     // 요약 결과가 있으면 요약 결과를 기반으로 매핑 진행
                     if(me.summarizedResult.length > 0 && me.userStoryChunks.length > 0 && me.devisionAspectIndex == 0){
-                        me.mappingRequirements();
+                        // me.mappingRequirements();
                         return;
                     }
                 }
@@ -625,7 +630,9 @@
                             me.userStoryChunksIndex = 0;
                             me.processingRate = 0;
                             me.currentProcessingBoundedContext = "";
-                            this.isStartMapping = false;
+                            me.isStartMapping = false;
+
+                            me.generateAggregateDrafts(me.resultDevideBoundedContext[me.devisionAspect[me.devisionAspectIndex]]);
                             return;
                         }
                         me.userStoryChunksIndex = 0;
@@ -690,7 +697,7 @@
 
             setGenerateOption(option){
                 this.devisionAspect = option.selectedAspects;
-                this.input['generateOption'] = option;
+                this.bcGenerationOption = option;
                 this.generateDevideBoundedContext();
             },
 
@@ -755,6 +762,8 @@
                     this.input['devisionAspect'] = aspect;
                     this.input['feedback'] = feedback;
                 }
+
+                this.input['generateOption'] = this.bcGenerationOption;
                 
                 this.input['requirements'] = {
                     userStory: this.value.userStory,
@@ -780,6 +789,23 @@
 
             generateAggregateDrafts(selectedStructureOption){
                 if(!selectedStructureOption) return
+
+                // 요약 결과가 있으면, BC별 원본 매핑 우선 진행
+                if(this.summarizedResult.length > 0){
+                    let aspect = selectedStructureOption.devisionAspect
+                    let boundedContexts = this.resultDevideBoundedContext[aspect].boundedContexts
+
+                    // 모든 BC의 requirements가 비어있으면 원본 매핑 진행
+                    let allRequirementsEmpty = boundedContexts.every(bc => 
+                        !bc.requirements || bc.requirements.length === 0
+                    )
+
+                    if(allRequirementsEmpty) {
+                        this.mappingRequirements(aspect);
+                        return;
+                    }
+                }
+
                 console.log("[*] 선택된 BC 구성 옵션을 기반으로 생성이 시도됨", {selectedStructureOption})
 
                 this.generators.PreProcessingFunctionsGenerator.buildInitialInputs(selectedStructureOption)

@@ -5,7 +5,7 @@ class RequirementsSummarizer extends JsonAIGenerator {
         super(client);
         
         this.model = "gpt-4o";
-        this.temperature = 0.5;
+        this.temperature = 0.3;
         this.generatorName = 'RequirementsSummarizer';
     }
 

@@ -6,7 +6,7 @@ class DevideBoundedContextGenerator extends JsonAIGenerator {
         super(client);
 
         this.model = "gpt-4o"
-        this.temperature = 0.5
+        this.temperature = 0.3
         this.generatorName = 'DevideBoundedContextGenerator'
     }
 
@@ -47,23 +47,14 @@ The format must be as follows:
             "name":"name of Bounded Context in PascalCase",
             "alias":"alias of Bounded Context in language of Requirements",
             "importance": "Core Domain" || "Supporting Domain" || "Generic Domain",
-            "implementationStrategy": "Implementation Strategy",
+            "implementationStrategy": "Rich Domain Model" || "Domain Service" || "Transaction Script" || "CQRS",
             "aggregates":[ // Aggregates that can be extracted from this Bounded Context.
                 {
                     "name":"name of Aggregate in PascalCase",
                     "alias":"alias of Aggregate in language of Requirements"
                 }
             ],
-            "requirements":[ // Use all of the requirements(userStory, DDL) context that are relevant to this Bounded Context.
-                {
-                    "type":"userStory",
-                    "text":"Original requirements text, containing only the problem domain relevant to this Bounded Context, copied verbatim"
-                },
-                {
-                    "type":"ddl",
-                    "text":"Original requirements text, containing only the problem domain relevant to this Bounded Context, copied verbatim"
-                }
-            ]
+            ${this.requirementsPrompt()}
         }
       ],
       "relations":
@@ -128,6 +119,23 @@ Should be used all of the Bounded Contexts.
             return `
 - userStory: ${this.client.input['requirements']['userStory']}
             `;
+        }
+    }
+
+    requirementsPrompt(){
+        if(this.client.input['requirements']['summarizedResult']==""){
+            return `"requirements":[ // Use all of the requirements(userStory, DDL) context that are relevant to this Bounded Context.
+                    {
+                        "type":"userStory",
+                    "text":"Original requirements text, containing only the problem domain relevant to this Bounded Context, copied verbatim"
+                },
+                {
+                    "type":"ddl",
+                    "text":"Original requirements text, containing only the problem domain relevant to this Bounded Context, copied verbatim"
+                }
+            ]`;
+        }else{
+            return `"requirements":[ ] // must be empty`;
         }
     }
 
