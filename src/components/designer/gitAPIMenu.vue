@@ -125,12 +125,15 @@
                         <v-card flat>
                             <div>
                                 <!-- <v-divider v-if="!isGitLogin && (!gitOrgName || !gitToken)" /> -->
-                                <v-radio-group
+                                <v-radio-group class="mt-0"
                                     v-if="item.tabKey == 'setFirstRepo'"
                                     v-model="gitRadios"
                                     mandatory
                                 >
-                                    <v-row no-gutters v-if="gitRefRepoUrl">
+                                    <v-row no-gutters v-if="gitRefRepoUrl"
+                                        class="ma-0 pa-0"
+                                        style="align-items: center;"
+                                    >
                                         <v-col cols="3">
                                             <v-radio
                                                 :disabled="isPrivilegedUser && !information.gitOrgName"
@@ -158,8 +161,8 @@
                                         </v-col>
                                     </v-row>
                                     <v-radio v-if="!isExistRepo"
-                                        :style="gitRadios == 'fork' ? 'position:absolute; top:115px;':''"
-                                        :label="$t('gitAPIMenu.createNewRepo')"
+                                        :style="gitRadios == 'fork' ? 'position:absolute; top:120px;':''"
+                                        :label="$t('gitAPIMenu.createNewRepository')"
                                         value="createNewRepo"
                                     ></v-radio>
                                 </v-radio-group>
@@ -170,8 +173,10 @@
                                     style="width: 100%; font-weight: 500; font-size: 15px; color: darkgray;"
                                     :style="editTemplateMode ? 'margin-top: -10px; margin-bottom: 20px':'margin-top: -45px;'"
                                     >Existing Repo</span> -->
-                                    <v-col cols="5">  
-                                        <v-autocomplete
+                                    <v-col cols="5"
+                                        :style="gitRadios == 'fork' ? 'margin-bottom:36px;':''"
+                                    >  
+                                        <v-autocomplete class="delete-input-detail"
                                             @click="getGitOrganizations()"
                                             @change="OrgNameChanged()"
                                             v-model="gitOrgName"
