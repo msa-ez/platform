@@ -77,6 +77,7 @@
                                     :items="getGroupedBoundedContextRequirements(resultDevideBoundedContext[devisionAspect])"
                                     :headers="boundedContextHeaders"
                                     :hide-default-footer="true"
+                                    :items-per-page="-1"
                                     show-expand
                                     :expand-icon="expandIcon"
                                     :single-expand="false"
@@ -267,7 +268,7 @@
 
                         // 아직 원문 매핑이 안된 경우 원문 매핑 진행
                         if(isEmptyRequirements && Object.keys(this.resultDevideBoundedContext).length == this.devisionAspect.length){
-                            this.$emit("mappingRequirements", aspect);
+                            // this.$emit("mappingRequirements", aspect);
                         }
                     }
                 }

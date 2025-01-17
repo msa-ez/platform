@@ -19,8 +19,7 @@
                             <v-slider
                                 v-model="localOptions.numberOfBCs"
                                 :min="1"
-                                :max="50"
-                                :tick-labels="tickLabels"
+                                :max="15"
                                 :tick-size="4"
                                 ticks="always"
                                 tick-label
@@ -55,7 +54,7 @@
                 <v-btn
                     color="primary"
                     @click="onConfirm"
-                    :disabled="!isValid"
+                    :disabled="!isValid || isSummarizedStarted || isGeneratingBoundedContext || isStartMapping"
                 >
                     Generate
                 </v-btn>
@@ -69,6 +68,18 @@ export default {
     name: 'bc-generation-options-dialog',
     
     props: {
+        isSummarizedStarted: {
+            type: Boolean,
+            default: false
+        },
+        isGeneratingBoundedContext: {
+            type: Boolean,
+            default: false
+        },
+        isStartMapping: {
+            type: Boolean,
+            default: false
+        }
     },
 
     data() {

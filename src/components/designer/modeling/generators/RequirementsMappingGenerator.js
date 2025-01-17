@@ -66,10 +66,18 @@ Example responses:
         }
 
         const model = super.createModel(text);
-        return {
-            boundedContext: this.client.input['boundedContext'].name,
-            requirements: model.relevantRequirements.length > 0 ? model.relevantRequirements : []
-        };
+
+        if(model.relevantRequirements){
+            return {
+                boundedContext: this.client.input['boundedContext'].name,
+                requirements: model.relevantRequirements.length > 0 ? model.relevantRequirements : []
+            };
+        }else{
+            return {
+                boundedContext: this.client.input['boundedContext'].name,
+                requirements: []
+            };
+        }
     }
 }
 

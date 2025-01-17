@@ -197,7 +197,8 @@
     "create": "Create",
     "createEventStormingModelCanvas": "Create EventStorming Model",
     "reconstructionDraft": "BoundedContext Reconstruction Draft",
-    "reconstructionAggregateDraft": "Aggregate Design Draft"
+    "reconstructionAggregateDraft": "Aggregate Design Draft",
+    "reGenerate": "Regenerate"
   },
   "RuleExampleDialog": {
     "generateExamples": "Generate Examples",
