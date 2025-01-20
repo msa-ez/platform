@@ -1,4 +1,5 @@
 const { encoderMap, defaultEncoder } = require("./constants");
+const { getEncoder } = require("./externals");
 
 /**
  * @description AI 모델에 전송되는 텍스트의 토큰 수를 계산하고 관리하는 유틸리티 클래스입니다.
@@ -327,7 +328,7 @@ class TokenCounter {
         }
 
         try {
-            const encoder = require(`./encoders/${encoderName}.legacy`);
+            const encoder = getEncoder(encoderName);
             this._encoderCache.set(encoderName, encoder);
             return encoder;
         } catch (error) {
