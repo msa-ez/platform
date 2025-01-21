@@ -3,6 +3,7 @@
 </template>
   
 <script>
+import { JsonParsingUtilTest } from "../../../utils"
 
 export default {
     name: "es-dialoger-test-terminal",
@@ -37,7 +38,12 @@ export default {
                 directAggregateDraftFeedback: {
                     command: () => this._directAggregateDraftFeedback(),
                     description: "도서 관리 관련 애그리거트 초안 피드백을 즉시 생성"
-                }
+                },
+                TempTest: {
+                    command: () => this._TempTest(),
+                    description: "임시 테스트"
+                },
+                JsonParsingUtilTest: {command: () => {JsonParsingUtilTest.test()}}
             }
             
 
@@ -1321,7 +1327,9 @@ export default {
 }
 
             this.feedbackFromAggregateDrafts(inputs.boundedContextInfo, inputs.feedback, inputs.draftOptions)
-        }
+        },
+
+        _TempTest() {}
     }
 }
 </script>
