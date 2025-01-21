@@ -1954,23 +1954,23 @@
           </v-dialog>
 
           <v-dialog
-                  v-model="modelDraftDialogWithXAIDto.isShow"
+                  v-model="AggregateDraftDialogDto.isShow"
                   persistent
                   max-width="1200"
                   max-height="800"
                   overflow="scroll"
           >
-            <ModelDraftDialogWithXAI
-                :draftOptions="modelDraftDialogWithXAIDto.draftOptions"
-                :draftUIInfos="modelDraftDialogWithXAIDto.draftUIInfos"
-                :isGeneratorButtonEnabled="modelDraftDialogWithXAIDto.isGeneratorButtonEnabled"
+            <AggregateDraftDialog
+                :draftOptions="AggregateDraftDialogDto.draftOptions"
+                :draftUIInfos="AggregateDraftDialogDto.draftUIInfos"
+                :isGeneratorButtonEnabled="AggregateDraftDialogDto.isGeneratorButtonEnabled"
                 :uiType="'EventStormingModelCanvas'"
 
-                @onClose="modelDraftDialogWithXAIDto.isShow = false; modelDraftDialogWithXAIDto.actions.stop()"
-                @onRetry="modelDraftDialogWithXAIDto.actions.retry()"
+                @onClose="AggregateDraftDialogDto.isShow = false; AggregateDraftDialogDto.actions.stop()"
+                @onRetry="AggregateDraftDialogDto.actions.retry()"
 
-                @generateFromDraft="generateFromDraftWithXAI"
-            ></ModelDraftDialogWithXAI>
+                @generateFromDraft="generateAggregatesFromDraft"
+            ></AggregateDraftDialog>
           </v-dialog>
 
           
@@ -2024,13 +2024,13 @@
     import BoundedContextRelocateActionsGenerator from "../modeling/generators/es-ddl-generators/BoundedContextRelocateActionsGenerator"
     import ModelDraftDialog from "../modeling/ModelDraftDialog"
     import EventStormingTestTerminal from "./testTerminals/EventStormingTestTerminal.vue";
-    import ModelDraftDialogWithXAI from "../context-mapping-modeling/dialogs/ModelDraftDialogWithXAI.vue"
     import {
         CreateAggregateActionsByFunctions, 
         CreateAggregateClassIdByDrafts,
         CreateCommandActionsByFunctions,
         CreatePolicyActionsByFunctions,
-        CommandGWTGeneratorByFunctions
+        CommandGWTGeneratorByFunctions,
+        AggregateDraftDialog
     } from "../modeling/generators/es-generators";
     import GeneratorProgress from "./components/GeneratorProgress.vue"
     import ESActionsUtil from "../modeling/generators/es-ddl-generators/modules/ESActionsUtil"
@@ -2104,7 +2104,7 @@
             MouseCursorComponent,
             ModelDraftDialog,
             ModelDraftDialogForDistribution,
-            ModelDraftDialogWithXAI,
+            AggregateDraftDialog,
             GeneratorProgress
             // ModelCodeGenerator
         },
@@ -2514,7 +2514,7 @@
                 },
                 isDraftGeneratorButtonEnabledForRelocate: true,
 
-                modelDraftDialogWithXAIDto: {
+                AggregateDraftDialogDto: {
                     isShow: false,
                     draftOptions: [],
                     draftUIInfos: {
@@ -2713,8 +2713,8 @@
 
             const byFunctionCallbacks = {
                 onFirstResponse: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
+                    this.AggregateDraftDialogDto = {
+                        ...this.AggregateDraftDialogDto,
                         isShow: false
                     }
 
@@ -2758,8 +2758,8 @@
 
                 onRetry: (returnObj) => {
                     alert(`[!] An error occurred during creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
+                    this.AggregateDraftDialogDto = {
+                        ...this.AggregateDraftDialogDto,
                         isShow: true,
                         draftUIInfos: {
                             leftBoundedContextCount: 0
@@ -2860,7 +2860,7 @@
                 // 공통 처리 루트로 들어가기 위한 작업
                 onInputParamsCheckBefore: (inputParams) => {
                     console.log("[*] 바로 이벤트 스토밍 생성 실행", {inputParams})
-                    this.generateFromDraftWithXAI(inputParams.draftOptions)
+                    this.generateAggregatesFromDraft(inputParams.draftOptions)
                     return {stop: true}
                 }
             }
@@ -3993,7 +3993,7 @@
             },
 
 
-            generateFromDraftWithXAI(draftOptions) {
+            generateAggregatesFromDraft(draftOptions) {
                 console.log("[*] 유저가 선택한 초안 옵션들을 이용해서 모델 생성 로직이 실행됨",
                     {prevDraftOptions: JSON.parse(JSON.stringify(draftOptions))}
                 )

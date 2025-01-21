@@ -10,6 +10,9 @@ class DraftGeneratorByFunctionsTest {
         const inputs = structuredClone(inputsDic[inputType])
 
         const generator = new DraftGeneratorByFunctions({
+            onModelCreated: (returnObj) => {
+                console.log("[*] 생성중인 초안 내용 : ", returnObj.modelValue.output)
+            },
             onGenerationSucceeded: (returnObj) => {
                 console.log("[*] 생성된 초안 내용 : ", returnObj.modelValue.output)
                 generator.generateIfInputExists()

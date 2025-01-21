@@ -87,7 +87,7 @@ DEFAULT_CONFIG.MODEL_INPUT_TOKEN_LIMIT = (DEFAULT_CONFIG.MODEL_CONTEXT_TOKEN_LIM
  * - checkInputParamsKeys로 지정된 모든 필수 파라미터가 전달되어야 합니다.
  * - progressCheckStrings를 통해 생성 진행률을 추적할 수 있습니다.
  * - 토큰 제한을 초과하는 경우 isCreatedPromptWithinTokenLimit()로 확인할 수 있습니다.
- * - 생성 중 오류 발생시 MAX_RETRY_COUNT만큼 자동으로 재시도합니다.
+ * - 생성 중 오류 발생시 MAX_RETRY_COUNT만큼 자동으로 재시도합니다.(Json 파싱 에러는 재시도 횟수를 차감시키지 않음)
  * - 모든 JSON 응답은 압축된 형식으로 반환됩니다.
  * - 상속받는 클래스는 최소한 __buildAgentRolePrompt(), __buildTaskGuidelinesPrompt(), 
  *   __buildJsonResponseFormat() 메서드를 구현해야 합니다.
@@ -499,11 +499,15 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
             returnObj = {
                 ...returnObj,
                 isError: true,
-                isDied: this.leftRetryCount <= 0,
                 errorMessage: e.message,
                 leftRetryCount: this.leftRetryCount,
-                directMessage: `An error occurred during creation,` + (this.leftRetryCount <= 0 ? ' the model has died. please try again.' : ' retrying...(' + this.leftRetryCount + ' retries left)')
+                isJsonParsingError: e.message.includes("JSON 파싱")
             }
+            returnObj.isDied = returnObj.leftRetryCount <= 0 && !returnObj.isJsonParsingError
+            if(returnObj.isJsonParsingError)
+                returnObj.directMessage = "Json parsing error occurred, retrying..."
+            else
+                returnObj.directMessage = `An error occurred during creation,` + (returnObj.leftRetryCount <= 0 ? ' the model has died. please try again.' : ' retrying...(' + returnObj.leftRetryCount + ' retries left)')
 
             this.onError(returnObj)
             if(this.client.onError) this.client.onError(returnObj)
@@ -513,7 +517,10 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
                 if(this.client.onRetry) this.client.onRetry(returnObj)
             }
         
-            if(this.leftRetryCount > 0) {
+            if(returnObj.isJsonParsingError) {
+                super.generate()
+            }
+            else if(this.leftRetryCount > 0) {
                 this.leftRetryCount--
                 super.generate()
             }

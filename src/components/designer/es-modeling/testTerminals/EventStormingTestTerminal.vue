@@ -93,7 +93,7 @@ export default {
 
         
         _directESGenerationByLibrary() {
-            this.generateFromDraftWithXAI(getEsDraft("libraryService"))
+            this.generateAggregatesFromDraft(getEsDraft("libraryService"))
         },
 
         async _TempTest() {

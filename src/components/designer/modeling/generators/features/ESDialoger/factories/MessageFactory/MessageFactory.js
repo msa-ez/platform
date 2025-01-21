@@ -1,8 +1,8 @@
-const { modelDraftDialogWithXAIDtoMessage, botMessage, userMessage } = require("./constants");
+const { aggregateDraftDialogDtoMessage, botMessage, userMessage } = require("./constants");
 
 class MessageFactory {
-    static createModelDraftDialogWithXAIDtoMessage() {
-      const baseMessage = structuredClone(modelDraftDialogWithXAIDtoMessage)
+    static createAggregateDraftDialogDtoMessage() {
+      const baseMessage = structuredClone(aggregateDraftDialogDtoMessage)
       baseMessage.uniqueId = Date.now().toString()
       return baseMessage
     }

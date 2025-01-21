@@ -4,6 +4,10 @@
   
 <script>
 import { JsonParsingUtilTest } from "../../../utils"
+import {
+    PreProcessingFunctionsGeneratorTest,
+    DraftGeneratorByFunctionsTest
+} from "../../../es-generators";
 
 export default {
     name: "es-dialoger-test-terminal",
@@ -43,7 +47,10 @@ export default {
                     command: () => this._TempTest(),
                     description: "임시 테스트"
                 },
-                JsonParsingUtilTest: {command: () => {JsonParsingUtilTest.test()}}
+                JsonParsingUtilTest: {command: () => {JsonParsingUtilTest.test()}},
+                PreProcessingFunctionsGeneratorTest: {command: async () => { await PreProcessingFunctionsGeneratorTest.test() }},
+                DraftGeneratorByFunctionsTest: {command: async () => { await DraftGeneratorByFunctionsTest.test("draftGeneratorByFunctionsInputs") }},
+                DraftGeneratorByFunctionsTestWithFeedback: {command: async () => { await DraftGeneratorByFunctionsTest.test("draftGeneratorByFunctionsInputsWithFeedback") }},
             }
             
 
@@ -351,7 +358,7 @@ export default {
         _showAggregateDraftUI() {
             this.messages.push(
                 {
-    "type": "modelDraftDialogWithXAIDto",
+    "type": "aggregateDraftDialogDto",
     "isShow": true,
     "draftOptions": [
         {
@@ -528,7 +535,204 @@ export default {
                 }
             ],
             "conclusions": "Option 1은 강한 트랜잭션 일관성을 유지하며 단순한 구조로 기본적인 도서 관리 요구사항을 충족시킬 수 있습니다. 반면 Option 2는 확장성과 유지보수성이 뛰어나며 도서 정보와 상태 관리를 분리하여 도메인 복잡성을 효과적으로 처리할 수 있습니다. 따라서 시스템 확장 및 성능 요구가 예상되는 경우 Option 2를 권장합니다.",
-            "defaultOptionIndex": 1
+            "defaultOptionIndex": 1,
+            "analysisResult": {
+                "overviewThoughts": {
+                    "summary": "A hotel reservation system requiring guest management and booking functionality with two main interfaces",
+                    "details": {
+                        "domainComplexity": "Medium complexity with interconnected booking and guest management processes",
+                        "stakeholderImpact": "Affects hotel staff, guests, and management with different access needs and workflows",
+                        "technicalFeasibility": "Implementable with standard web technologies and database systems"
+                    },
+                    "additionalConsiderations": "Need for real-time availability updates and concurrent booking handling"
+                },
+                "userStories": [
+                    {
+                        "userStoryThoughts": {
+                            "summary": "Core booking functionality for hotel guests",
+                            "details": {
+                                "businessValue": "High priority - direct impact on revenue generation",
+                                "implementationComplexity": "Medium - requires multiple form validations and real-time checks",
+                                "userExperience": "Must be intuitive and efficient for guests"
+                            },
+                            "additionalConsiderations": "Handle edge cases like last-minute bookings and VIP priorities"
+                        },
+                        "title": "Create New Room Booking",
+                        "description": "As a guest, I want to book a hotel room with my preferences so that I can secure my stay",
+                        "acceptance": [
+                            "All required guest information must be provided",
+                            "Room type must be selected through search popup",
+                            "Valid check-in and check-out dates must be selected",
+                            "Meal plan must be chosen from available options",
+                            "Booking button activates only when all required fields are filled"
+                        ]
+                    },
+                    {
+                        "userStoryThoughts": {
+                            "summary": "Reservation management functionality",
+                            "details": {
+                                "businessValue": "High - enables self-service and reduces staff workload",
+                                "implementationComplexity": "Medium - requires status tracking and modification handling",
+                                "userExperience": "Must provide clear visibility of booking status and actions"
+                            },
+                            "additionalConsiderations": "Consider cancellation policies and modification restrictions"
+                        },
+                        "title": "View Reservation Status",
+                        "description": "As a guest, I want to view my booking history and manage active reservations",
+                        "acceptance": [
+                            "Bookings are filterable by date range and status",
+                            "Detailed booking information shows in popup on row click",
+                            "Active bookings can be modified or cancelled",
+                            "All booking details are displayed in organized table format"
+                        ]
+                    }
+                ],
+                "entities": {
+                    "Guest": {
+                        "entityThoughts": {
+                            "summary": "Core entity for guest information management",
+                            "details": {
+                                "dataIntegrity": "Must maintain accurate guest profiles and prevent duplicates",
+                                "relationshipComplexity": "One-to-many relationship with bookings",
+                                "scalability": "Consider future guest profile extensions"
+                            },
+                            "additionalConsiderations": "Privacy and data protection requirements"
+                        },
+                        "properties": [
+                            {"name": "guestId", "type": "string", "required": true, "isPrimaryKey": true},
+                            {"name": "name", "type": "string", "required": true},
+                            {"name": "membershipLevel", "type": "enum", "required": true, "values": ["standard", "VIP"]},
+                            {"name": "phoneNumber", "type": "string", "required": true},
+                            {"name": "email", "type": "string", "required": true}
+                        ]
+                    },
+                    "Booking": {
+                        "entityThoughts": {
+                            "summary": "Central entity for reservation management",
+                            "details": {
+                                "dataIntegrity": "Must maintain booking consistency and prevent conflicts",
+                                "relationshipComplexity": "Connected to guests and room inventory",
+                                "scalability": "Consider high volume of historical bookings"
+                            },
+                            "additionalConsiderations": "Audit trail requirements for modifications"
+                        },
+                        "properties": [
+                            {"name": "bookingNumber", "type": "string", "required": true, "isPrimaryKey": true},
+                            {"name": "guestId", "type": "string", "required": true, "isForeignKey": true, "foreignEntity": "Guest"},
+                            {"name": "roomType", "type": "string", "required": true},
+                            {"name": "checkInDate", "type": "date", "required": true},
+                            {"name": "checkOutDate", "type": "date", "required": true},
+                            {"name": "numberOfGuests", "type": "integer", "required": true},
+                            {"name": "mealPlan", "type": "enum", "required": true, "values": ["No Meal", "Breakfast Only", "Half Board", "Full Board"]},
+                            {"name": "specialRequests", "type": "string", "required": false},
+                            {"name": "status", "type": "enum", "required": true, "values": ["Active", "Completed", "Cancelled"]},
+                            {"name": "totalAmount", "type": "decimal", "required": true}
+                        ]
+                    }
+                },
+                "businessRules": [
+                    {
+                        "businessRulesThoughts": {
+                            "summary": "Fundamental booking validation rule",
+                            "details": {
+                                "validationComplexity": "Simple date comparison",
+                                "businessImpact": "Critical for preventing invalid bookings",
+                                "maintainability": "Easy to maintain and modify"
+                            },
+                            "additionalConsiderations": "Consider timezone implications"
+                        },
+                        "name": "ValidBookingDates",
+                        "description": "Check-out date must be after check-in date"
+                    },
+                    {
+                        "businessRulesThoughts": {
+                            "summary": "Data completeness rule",
+                            "details": {
+                                "validationComplexity": "Simple field presence check",
+                                "businessImpact": "Ensures complete booking information",
+                                "maintainability": "Low maintenance needed"
+                            },
+                            "additionalConsiderations": "Consider field dependency rules"
+                        },
+                        "name": "RequiredFields",
+                        "description": "All fields except special requests are mandatory for booking"
+                    },
+                    {
+                        "businessRulesThoughts": {
+                            "summary": "Booking modification control",
+                            "details": {
+                                "validationComplexity": "Simple status check",
+                                "businessImpact": "Prevents invalid modifications",
+                                "maintainability": "May need updates for new statuses"
+                            },
+                            "additionalConsiderations": "Consider grace periods for modifications"
+                        },
+                        "name": "ActiveBookingModification",
+                        "description": "Only active bookings can be modified or cancelled"
+                    }
+                ],
+                "interfaces": {
+                    "RoomBooking": {
+                        "interfaceThoughts": {
+                            "summary": "Primary booking interface for guests",
+                            "details": {
+                                "usability": "Must be intuitive with clear section organization",
+                                "dataFlow": "Sequential form submission with validation",
+                                "responsiveness": "Quick response for room availability checks"
+                            },
+                            "additionalConsiderations": "Mobile-friendly layout requirements"
+                        },
+                        "sections": [
+                            {
+                                "name": "GuestInformation",
+                                "type": "form",
+                                "fields": [
+                                    {"name": "name", "type": "text", "required": true},
+                                    {"name": "guestId", "type": "text", "required": true},
+                                    {"name": "membershipLevel", "type": "select", "required": true},
+                                    {"name": "phoneNumber", "type": "text", "required": true},
+                                    {"name": "email", "type": "email", "required": true}
+                                ]
+                            },
+                            {
+                                "name": "BookingDetails",
+                                "type": "form",
+                                "fields": [
+                                    {"name": "roomType", "type": "search", "required": true},
+                                    {"name": "checkInDate", "type": "date", "required": true},
+                                    {"name": "checkOutDate", "type": "date", "required": true},
+                                    {"name": "numberOfGuests", "type": "number", "required": true},
+                                    {"name": "mealPlan", "type": "select", "required": true},
+                                    {"name": "specialRequests", "type": "textarea", "required": false}
+                                ],
+                                "actions": ["Submit", "Clear"]
+                            }
+                        ]
+                    },
+                    "ReservationStatus": {
+                        "interfaceThoughts": {
+                            "summary": "Booking management interface",
+                            "details": {
+                                "usability": "Easy filtering and clear status display",
+                                "dataFlow": "Real-time status updates",
+                                "responsiveness": "Quick loading of booking history"
+                            },
+                            "additionalConsiderations": "Pagination for large booking histories"
+                        },
+                        "sections": [
+                            {
+                                "name": "BookingHistory",
+                                "type": "table",
+                                "filters": ["dateRange", "bookingStatus"],
+                                "resultTable": {
+                                    "columns": ["bookingNumber", "roomType", "checkInDate", "checkOutDate", "totalAmount", "status"],
+                                    "actions": ["viewDetails", "modify", "cancel"]
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
         },
         {
             "boundedContext": "LoanManagement",

@@ -1,5 +1,5 @@
-export const modelDraftDialogWithXAIDtoMessage = {
-    type: "modelDraftDialogWithXAIDto",
+export const aggregateDraftDialogDtoMessage = {
+    type: "aggregateDraftDialogDto",
     uniqueId: "",
     isShow: false,
     draftOptions: [],

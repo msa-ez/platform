@@ -204,7 +204,8 @@
     "createEventStormingModelCanvas": "이벤트스토밍 모델 생성",
     "reconstructionDraft": "바운디드 컨텍스트 재구성 초안",
     "reconstructionAggregateDraft": "어그리거트 디자인 초안",
-    "reGenerate": "재생성"
+    "reGenerate": "재생성",
+    "requirementAnalysisResult": "요구사항 분석 결과"
   },
   "RuleExampleDialog": {
     "generateExamples": "예제 생성",
