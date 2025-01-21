@@ -94,7 +94,14 @@
     "relationType": "관계 유형",
     "reason": "이유",
     "interactionPattern": "상호작용 패턴",
-    "summarizedResult": "요약 결과"
+    "summarizedResult": "요약 결과",
+    "descriptionOfEditBoundedContext": "각 필드는 클릭하여 수정 가능합니다.",
+    "edit": {
+      "boundedContextName": "Bounded Context 이름",
+      "boundedContextAlias": "별칭",
+      "importance": "중요도",
+      "implementationStrategy": "구현 전략"
+    }
   },
   "ViewDefinitionPanel" : {
     "readModelAttributes": "Read Model 속성",

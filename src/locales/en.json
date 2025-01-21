@@ -94,7 +94,14 @@
     "relationType": "Relation Type", 
     "reason": "Reason",
     "interactionPattern": "Interaction Pattern",
-    "summarizedResult": "Summarized Result"
+    "summarizedResult": "Summarized Result",
+    "descriptionOfEditBoundedContext": "Each field can be edited by clicking on the field.",
+    "edit": {
+      "boundedContextName": "Bounded Context 이름",
+      "boundedContextAlias": "별칭",
+      "importance": "중요도",
+      "implementationStrategy": "구현 전략"
+    }
   },
   "ViewDefinitionPanel" : {
     "readModelAttributes": "Read Model Attributes",

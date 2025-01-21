@@ -47,7 +47,7 @@ The format must be as follows:
             "name":"name of Bounded Context in PascalCase",
             "alias":"alias of Bounded Context in language of Requirements",
             "importance": "Core Domain" || "Supporting Domain" || "Generic Domain",
-            "implementationStrategy": "Rich Domain Model" || "Domain Service" || "Transaction Script" || "CQRS",
+            "implementationStrategy": "Event Sourcing" || "Rich Domain Model" || "Transaction Script" || "Active Record",
             "aggregates":[ // Aggregates that can be extracted from this Bounded Context.
                 {
                     "name":"name of Aggregate in PascalCase",

@@ -68,10 +68,11 @@
                             <v-card-title class="text-subtitle-1 pa-0 pb-4">{{ $t('DevideBoundedContextDialog.reasonOfSeparation') }}</v-card-title>
                             <v-card-text class="pa-0 pb-4" align="left">{{ resultDevideBoundedContext[devisionAspect].thoughts }}</v-card-text>
 
-                            <v-card-title class="pa-0 pb-0 text-subtitle-1">{{ $t('DevideBoundedContextDialog.summarizedResult') }}</v-card-title>
-                            <v-card-text class="pa-0 pb-4" align="left">{{ summarizedResult }}</v-card-text>
+                            <v-card-title v-if="summarizedResult.length > 0" class="pa-0 pb-0 text-subtitle-1">{{ $t('DevideBoundedContextDialog.summarizedResult') }}</v-card-title>
+                            <v-card-text v-if="summarizedResult.length > 0" class="pa-0 pb-4" align="left">{{ summarizedResult }}</v-card-text>
 
                             <v-card-title class="pa-0 pb-0 text-subtitle-1">{{ $t('DevideBoundedContextDialog.descriptionOfEachBoundedContext') }}</v-card-title>
+                            <v-card-text class="pa-0 pb-4" align="left">* {{ $t('DevideBoundedContextDialog.descriptionOfEditBoundedContext') }}</v-card-text>
                             <v-card class="pa-0 ma-0 mt-4" outlined>
                                 <v-data-table
                                     :items="getGroupedBoundedContextRequirements(resultDevideBoundedContext[devisionAspect])"
@@ -82,7 +83,88 @@
                                     :expand-icon="expandIcon"
                                     :single-expand="false"
                                     item-key="name"
+                                    :key="tableRenderKey"
                                 >
+                                    <template v-slot:item.actions="{ item }">
+                                        <v-icon 
+                                            small 
+                                            color="error"
+                                            @click="deleteBoundedContext(item)"
+                                        >
+                                            mdi-delete
+                                        </v-icon>
+                                    </template>
+
+                                    <template v-slot:item.name="{ item }">
+                                        <v-edit-dialog
+                                            :return-value.sync="item.name"
+                                            @save="saveItemEdit(item, 'name')"
+                                            @open="initializeEditFields(item)"
+                                            @cancel="cancelEdit(item)"
+                                            large
+                                            persistent
+                                        >
+                                            <template v-slot:input>
+                                                <v-text-field
+                                                    v-model="editedFields.name"
+                                                    :label="$t('DevideBoundedContextDialog.edit.boundedContextName')"
+                                                    :rules="[v => !!v || $t('validation.required')]"
+                                                    single-line
+                                                    class="mb-2"
+                                                ></v-text-field>
+                                                <v-text-field
+                                                    v-model="editedFields.alias"
+                                                    :label="$t('DevideBoundedContextDialog.edit.boundedContextAlias')"
+                                                    :rules="[v => !!v || $t('validation.required')]"
+                                                    single-line
+                                                ></v-text-field>
+                                            </template>
+                                            <span>{{ item.name }}</span>
+                                        </v-edit-dialog>
+                                    </template>
+
+                                    <template v-slot:item.importance="{ item }">
+                                        <v-edit-dialog
+                                            :return-value.sync="item.importance"
+                                            @save="saveItemEdit(item, 'importance')"
+                                            @open="initializeEditFields(item)"
+                                            @cancel="cancelEdit(item)"
+                                            large
+                                            persistent
+                                        >
+                                            <template v-slot:input>
+                                                <v-select
+                                                    v-model="editedFields.importance"
+                                                    :items="importances"
+                                                    :label="$t('DevideBoundedContextDialog.edit.importance')"
+                                                    single-line
+                                                ></v-select>
+                                            </template>
+                                            <span>{{ item.importance }}</span>
+                                        </v-edit-dialog>
+                                    </template>
+
+                                    <template v-slot:item.implementationStrategy="{ item }">
+                                        <v-edit-dialog
+                                            :return-value.sync="item.implementationStrategy"
+                                            @save="saveItemEdit(item, 'implementationStrategy')"
+                                            @open="initializeEditFields(item)"
+                                            @cancel="cancelEdit(item)"
+                                            large
+                                            persistent
+                                        >
+                                            <template v-slot:input>
+                                                <v-select
+                                                    v-model="editedFields.implementationStrategy"
+                                                    :items="implementationStrategies"
+                                                    :label="$t('DevideBoundedContextDialog.edit.implementationStrategy')"
+                                                    single-line
+                                                ></v-select>
+                                            </template>
+                                            <span>{{ item.implementationStrategy }}</span>
+                                        </v-edit-dialog>
+                                    </template>
+
                                     <template v-slot:expanded-item="{ headers, item }">
                                         <td class="pl-0" :colspan="headers.length">
                                             <v-simple-table dense class="requirement-subtable">
@@ -201,7 +283,8 @@
                     { text: this.$t('DevideBoundedContextDialog.boundedContextName'), value: 'name' },
                     { text: this.$t('DevideBoundedContextDialog.importance'), value: 'importance' },
                     { text: this.$t('DevideBoundedContextDialog.implementationStrategy'), value: 'implementationStrategy' },
-                    { text: '', value: 'data-table-expand' }
+                    { text: '', value: 'data-table-expand' },
+                    { text: '', value: 'actions' },
                 ],
                 requirementHeaders: [
                     { text: this.$t('DevideBoundedContextDialog.boundedContextName'), value: 'name' },
@@ -214,7 +297,28 @@
                     { text: this.$t('DevideBoundedContextDialog.reason'), value: 'reason' },
                     { text: this.$t('DevideBoundedContextDialog.interactionPattern'), value: 'interactionPattern' }
                 ],
-                aspectRenderKey: {}
+                aspectRenderKey: {},
+                tableRenderKey: 0,
+
+                editedFields: {
+                    name: '',
+                    alias: '',
+                    importance: '',
+                    implementationStrategy: ''
+                },
+                currentEditItem: null,
+
+                importances: [
+                    { text: 'Core Domain', value: 'Core Domain' },
+                    { text: 'Supporting Domain', value: 'Supporting Domain' },
+                    { text: 'Generic Domain', value: 'Generic Domain' }
+                ],
+                implementationStrategies: [
+                    { text: 'Event Sourcing', value: 'Event Sourcing' },
+                    { text: 'Rich Domain Model', value: 'Rich Domain Model' },
+                    { text: 'Transaction Script', value: 'Transaction Script' },
+                    { text: 'Active Record', value: 'Active Record' }
+                ]
             }
         },
         mounted() {
@@ -309,6 +413,7 @@
                 
                 return nodes;
             },
+
             generateAllNodes(data) {
                 const aspects = [
                     'Domain',
@@ -328,25 +433,31 @@
                 
                 return allNodes;
             },
+
             editNode(node) {
                 console.log("node clicked: ", node);
             },
+
             createModel(){
                 this.$emit("createModel", this.selectedResultDevideBoundedContext);
             },
+
             selectAspect(aspect) {
                 this.selectedAspect = aspect;
                 this.selectedResultDevideBoundedContext = this.resultDevideBoundedContext[aspect];
             },
+
             closeDialog(){
                 this.$emit("closeDialog");
             },
+
             stop(){
                 this.isGenerating = false;
                 this.mermaidNodes = {};
                 this.incrementRenderKey('all');
                 this.$emit("stop");
             },
+
             reGenerate(){
                 this.isGenerating = true;
                 this.feedback = '';
@@ -354,6 +465,7 @@
                 this.incrementRenderKey('all');
                 this.$emit("reGenerate");
             },
+
             reGenerateAspect(aspect){
                 this.isGenerating = true;
                 this.isGeneratingAspect = true;
@@ -361,10 +473,12 @@
                 this.incrementRenderKey(aspect);
                 this.$emit("reGenerateAspect", aspect, this.feedback);
             },
+
             getGroupedBoundedContextRequirements(aspectData) {
                 if (!aspectData || !aspectData.boundedContexts) return [];
                 return aspectData.boundedContexts.map(bc => ({
                     name: bc.alias,
+                    originalName: bc.alias,
                     importance: bc.importance,
                     implementationStrategy: bc.implementationStrategy,
                     requirements: bc.requirements.map(req => ({
@@ -373,6 +487,7 @@
                     }))
                 }));
             },
+
             getBoundedContextRequirements(aspectData) {
                 if (!aspectData || !aspectData.boundedContexts) return [];
                 return aspectData.boundedContexts.flatMap(bc => {
@@ -386,9 +501,11 @@
                     return rows;
                 });
             },
+
             getRenderKey(aspect) {
                 return this.aspectRenderKey[aspect] || 0;
             },
+
             incrementRenderKey(aspect) {
                 const aspects = [
                     'Domain',
@@ -405,7 +522,134 @@
                 }else{
                     this.$set(this.aspectRenderKey, aspect, (this.aspectRenderKey[aspect] || 0) + 1);
                 }
-            }
+            },
+
+            saveItemEdit(item, field) {
+                const boundedContextIndex = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts
+                    .findIndex(bc => bc.alias === item.originalName || bc.alias === item.name);
+                
+                if (boundedContextIndex > -1) {
+                    const boundedContext = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts[boundedContextIndex];
+                    const oldName = boundedContext.name;
+                    const oldAlias = boundedContext.alias;
+                    
+                    switch(field) {
+                        case 'name':
+                            if (!this.editedFields.name || !this.editedFields.alias) {
+                                return;
+                            }
+
+                            // First update all references in relations
+                            this.resultDevideBoundedContext[this.selectedAspect].relations = 
+                                this.resultDevideBoundedContext[this.selectedAspect].relations.map(relation => {
+                                    if (relation.upStream.name === oldName || relation.upStream.alias === oldAlias) {
+                                        relation.upStream.name = this.editedFields.name;
+                                        relation.upStream.alias = this.editedFields.alias;
+                                    }
+                                    if (relation.downStream.name === oldName || relation.downStream.alias === oldAlias) {
+                                        relation.downStream.name = this.editedFields.name;
+                                        relation.downStream.alias = this.editedFields.alias;
+                                    }
+                                    return relation;
+                                });
+
+                            // Update explanations if they exist
+                            if (this.resultDevideBoundedContext[this.selectedAspect].explanations) {
+                                this.resultDevideBoundedContext[this.selectedAspect].explanations = 
+                                    this.resultDevideBoundedContext[this.selectedAspect].explanations.map(explanation => {
+                                        if (explanation.sourceContext === oldAlias) {
+                                            explanation.sourceContext = this.editedFields.alias;
+                                        }
+                                        if (explanation.targetContext === oldAlias) {
+                                            explanation.targetContext = this.editedFields.alias;
+                                        }
+                                        return explanation;
+                                    });
+                            }
+
+                            // Then update the bounded context
+                            boundedContext.name = this.editedFields.name;
+                            boundedContext.alias = this.editedFields.alias;
+                            break;
+
+                        // ... rest of the cases ...
+                    }
+
+                    // Finally regenerate mermaid diagram
+                    this.$set(this.mermaidNodes, this.selectedAspect, 
+                        this.generateNodes(this.resultDevideBoundedContext[this.selectedAspect]));
+                    this.incrementRenderKey(this.selectedAspect);
+                }
+            },
+
+            validateAndSave(item) {
+                if (!this.editedFields.name) {
+                    return;
+                }
+                
+                this.saveItemEdit(item, 'name');
+                this.currentEditItem = null;
+            },
+
+            initializeEditFields(item) {
+                const boundedContext = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts
+                    .find(bc => bc.alias === item.name);
+                
+                this.editedFields = {
+                    name: boundedContext.name || item.name,
+                    alias: boundedContext.alias || item.name,
+                    importance: item.importance,
+                    implementationStrategy: item.implementationStrategy
+                };
+                this.currentEditItem = item;
+            },
+
+            cancelEdit(item) {
+                const boundedContext = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts
+                    .find(bc => bc.alias === item.name);
+                    
+                this.editedFields = {
+                    name: boundedContext.name || item.name,
+                    alias: boundedContext.alias || item.name,
+                    importance: item.importance,
+                    implementationStrategy: item.implementationStrategy
+                };
+                this.currentEditItem = null;
+            },
+
+            deleteBoundedContext(item) {
+                if (confirm(this.$t(item.name+'를 삭제하시겠습니까?'))) {
+                    // Find and remove the bounded context
+                    const boundedContexts = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts;
+                    const index = boundedContexts.findIndex(bc => bc.alias === item.name);
+                    
+                    if (index > -1) {
+                        // Remove the bounded context
+                        boundedContexts.splice(index, 1);
+                        
+                        // Remove any relations that involve this bounded context
+                        this.resultDevideBoundedContext[this.selectedAspect].relations = 
+                            this.resultDevideBoundedContext[this.selectedAspect].relations.filter(relation => 
+                                relation.upStream.name !== item.name && 
+                                relation.downStream.name !== item.name
+                            );
+
+                        // Update explanations if they exist
+                        if (this.resultDevideBoundedContext[this.selectedAspect].explanations) {
+                            this.resultDevideBoundedContext[this.selectedAspect].explanations = 
+                                this.resultDevideBoundedContext[this.selectedAspect].explanations.filter(explanation => 
+                                    explanation.sourceContext !== item.name && 
+                                    explanation.targetContext !== item.name
+                                );
+                        }
+
+                        // Regenerate mermaid diagram
+                        this.$set(this.mermaidNodes, this.selectedAspect, 
+                            this.generateNodes(this.resultDevideBoundedContext[this.selectedAspect]));
+                        this.incrementRenderKey(this.selectedAspect);
+                    }
+                }
+            },
         }
     }
 </script>
