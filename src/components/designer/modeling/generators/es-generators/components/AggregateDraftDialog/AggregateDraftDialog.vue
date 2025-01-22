@@ -252,30 +252,16 @@
             },
 
             updateSelectionByDraftOptions(draftOptions) {
-                if(draftOptions.length === 0) return
-                if(draftOptions.length === Object.keys(this.selectedCardIndex).length) return
-
-                Object.keys(this.selectedCardIndex).forEach(key => {
-                    if(!draftOptions.some(option => option.boundedContext && option.boundedContext === key)) {
-                        delete this.selectedCardIndex[key];
-                    }
-                });
-                Object.keys(this.selectedOptionItem).forEach(key => {
-                    if(!draftOptions.some(option => option.boundedContext && option.boundedContext === key)) {
-                        delete this.selectedOptionItem[key];
-                    }
-                });
+                this.selectedCardIndex = {}
+                this.selectedOptionItem = {}
                 
-
-                draftOptions.map(option => {  
-                    if(!option.boundedContext || !option.defaultOptionIndex) return
-
-                    if(!this.selectedCardIndex[option.boundedContext])
+                if(draftOptions && draftOptions.length > 0) {
+                    draftOptions.map(option => {  
+                        if(!option.boundedContext || !option.defaultOptionIndex) return
                         this.selectedCardIndex[option.boundedContext] = option.defaultOptionIndex
-
-                    if(!this.selectedOptionItem[option.boundedContext])
-                        this.selectedOptionItem[option.boundedContext] = option.options[option.defaultOptionIndex]
-                })
+                        this.selectedOptionItem[option.boundedContext] = option.options[option.defaultOptionIndex]                        
+                    })
+                }
             }
         }
     }
