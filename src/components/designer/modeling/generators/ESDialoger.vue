@@ -317,7 +317,7 @@
                         name: bc.name,
                         alias: bc.alias,
                         displayName: bc.alias,
-                        description: bc.requirements,
+                        description: JSON.stringify(bc.requirements),
                         aggregates: bc.aggregates
                     },
                     description: JSON.stringify(bc.requirements)
