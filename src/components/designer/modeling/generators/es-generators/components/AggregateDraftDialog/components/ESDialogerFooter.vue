@@ -52,7 +52,7 @@ export default {
         },
         activeTab: {
             type: Number,
-            required: true
+            required: false
         },
         feedback: {
             type: String,

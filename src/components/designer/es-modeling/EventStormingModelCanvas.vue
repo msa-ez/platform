@@ -1970,6 +1970,7 @@
                 @onRetry="AggregateDraftDialogDto.actions.retry()"
 
                 @generateFromDraft="generateAggregatesFromDraft"
+                @feedbackFromDraft="AggregateDraftDialogDto.actions.feedbackFromDraft"
             ></AggregateDraftDialog>
           </v-dialog>
 
@@ -2025,6 +2026,7 @@
     import ModelDraftDialog from "../modeling/ModelDraftDialog"
     import EventStormingTestTerminal from "./testTerminals/EventStormingTestTerminal.vue";
     import {
+        DraftGeneratorByFunctions,
         CreateAggregateActionsByFunctions, 
         CreateAggregateClassIdByDrafts,
         CreateCommandActionsByFunctions,
@@ -2523,7 +2525,8 @@
                     isGeneratorButtonEnabled: true,
                     actions: {
                         stop: () => {},
-                        retry: () => {}
+                        retry: () => {},
+                        feedbackFromDraft: (boundedContextInfo, feedback, draftOptions) => {}
                     }
                 },
 
@@ -2541,8 +2544,7 @@
                     CreateAggregateClassIdByDrafts: {generator: null},
                     CreateCommandActionsByFunctions: {generator: null},
                     CreatePolicyActionsByFunctions: {generator: null},
-                    CommandGWTGeneratorByFunctions: {generator: null},
-                    PreProcessingFunctionsGenerator: {generator: null}
+                    CommandGWTGeneratorByFunctions: {generator: null}
                 },
 
                 generatorsInGeneratorUI: {
@@ -2782,14 +2784,41 @@
                 {
                     ...byFunctionCallbacks,
                     onGenerationDone: () => {
+                        // 이미 기존에 생성한 다른 BC 내용이 있더라도 적절하게 클래스 ID를 생성시키기 위해서 임시 초안 생성
+                        const draftOptionsByEsValue = {}
+                        Object.entries(DraftGeneratorByFunctions.esValueToAccumulatedDrafts(
+                            this.value,
+                            {name: ""}
+                        )).forEach(([boundedContextName, draftOptions]) => {
+                            draftOptionsByEsValue[boundedContextName] = {
+                                structure: draftOptions
+                            }
+                        })
+
+                        Object.keys(this.selectedDraftOptions).forEach(boundedContextName => {
+                            draftOptionsByEsValue[boundedContextName] = this.selectedDraftOptions[boundedContextName]
+                        })
+                        
                         this.generators.CreateAggregateClassIdByDrafts.generator.initInputs(
-                            this.selectedDraftOptions,
+                            draftOptionsByEsValue,
                             this.value,
                             this.userInfo,
                             this.information
                         )
                         if(this.generators.CreateAggregateClassIdByDrafts.generator.generateIfInputsExist())
                             return
+
+
+                        // 별도로 추가시킬 클래스 ID가 없을 경우, 바로 커맨드 생성 단계로 이동
+                        this.generators.CreateCommandActionsByFunctions.generator.initInputs(
+                            this.selectedDraftOptions,
+                            this.value,
+                            this.userInfo,
+                            this.information
+                        )
+                        if(this.generators.CreateCommandActionsByFunctions.generator.generateIfInputsExist())
+                            return
+
 
                         byFunctionCallbacks.onGenerationDone()
                     }
@@ -4026,7 +4055,10 @@
                                         otherContext.structure.some(otherAggregateInfo =>
                                             otherAggregateInfo.aggregate.name === referencedAggregateName
                                         )
-                                    );
+                                    ) || Object.values(this.value.elements).some(element =>
+                                        element && element._type === "org.uengine.modeling.model.Aggregate" && element.name === referencedAggregateName
+                                    )
+                    
                                     if (!isValidReference) {
                                         delete valueObject.referencedAggregate;
                                         valueObject.name = valueObject.name.replace("Reference", "").trim()

@@ -24,7 +24,7 @@
                 </v-tab>
             </v-tabs>
 
-            <v-tabs-items v-model="activeTab" :key="selectedCardKey"
+            <v-tabs-items v-model="activeTab"
                 class="model-draft-dialog-tab-items"
             >
                 <v-tab-item v-for="(boundedContextInfo, index) in draftOptions" :key="index">
@@ -36,7 +36,7 @@
 
                     <v-row class="ma-0 pa-0">
                         <v-col v-for="(option, index) in boundedContextInfo.options" 
-                            :key="index"
+                            :key="`${selectedCardKey}_${index}`"
                             class="ma-0 pa-4 pr-4"
                         >
                             <AggregateDraftOptionCard 

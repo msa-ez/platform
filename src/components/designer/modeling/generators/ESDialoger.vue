@@ -501,7 +501,7 @@
                     },
                     accumulatedDrafts: accumulatedDrafts,
                     feedback: {
-                        previousDraftOutput: {options: boundedContextInfo.options},
+                        previousDraftOutput: {options: boundedContextInfo.options.map(option => option.structure)},
                         feedbacks: [
                             feedback
                         ]
