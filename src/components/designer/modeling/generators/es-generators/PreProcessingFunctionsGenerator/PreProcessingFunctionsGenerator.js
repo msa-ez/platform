@@ -122,7 +122,7 @@ Please follow these rules.
                 "sections": [
                     {
                         "name": "<name>",
-                        "type": "table",
+                        "type": "<form|table>",
                         "fields": [{"name": "<name>", "type": "<type>", ["required": <true|false>]}],
                         "actions": ["<actions>"],
                         "filters": ["<filters>"],
