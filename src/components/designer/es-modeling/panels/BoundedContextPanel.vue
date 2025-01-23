@@ -8,9 +8,13 @@
             :validation-lists="validationLists"
             :translate-obj="translateObj"
             :element-author-display="elementAuthorDisplay"
+            :isShowGenAITab="true"
+            :genAIDto="genAIDto"
             @close="closePanel"
             @changeTranslate="changeTranslate"
             @updateBCName="updateBCName()"
+            @generateWithDescription="handleGenerateWithDescription"
+            @onClickStopGenerateWithDescription="$emit('onClickStopGenerateWithDescription')"
             v-on:update:members="value.members = $event"
             class="pb-10"
     >
@@ -42,23 +46,6 @@
                         <div style="font-size: 12px;">( Click to edit )</div>
                     </v-row>
                 </v-chip>
-            </div>
-        </template>
-
-        <template slot="generateWithAi">
-            <div>
-                <span>
-                    <v-row class="ma-0 pa-0">
-                        <v-spacer></v-spacer>
-                        <v-btn v-if="generateDone" :disabled="!value.description" 
-                            class="auto-modeling-btn" color="primary" @click="onClickReGenerateInside">
-                            <v-icon>mdi-auto-fix</v-icon>(RE)Generate Inside
-                        </v-btn>
-                        <v-btn v-else class="auto-modeling-btn" color="primary" @click="$emit('onClickStopReGenerateInside')">
-                            <v-icon>mdi-auto-fix</v-icon>Stop Generation
-                        </v-btn>
-                    </v-row>
-                </span>
             </div>
         </template>
             
@@ -166,7 +153,7 @@
         mixins: [EventStormingModelPanel],
         name: 'boundedcontext-panel',
         props: {
-            generateDone: {type: Boolean, required: true, default: true}
+            genAIDto: {type: Object, required: true, default: {isGenerateWithDescriptionDone: true}}
         },
         components: {
             CommonPanel
@@ -263,6 +250,10 @@
                     ...this.value,
                     description: this.value.description
                 })
+            },
+
+            handleGenerateWithDescription(boundedContext) {
+                this.$emit('generateWithDescription', boundedContext);
             }
         }
     }
