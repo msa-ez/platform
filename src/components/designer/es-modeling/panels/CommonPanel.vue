@@ -82,7 +82,7 @@
                                                     </v-list-item>
                                                 </v-list-group>
                                             </div>
-                                            <v-row class="pa-0 ma-0" align="center">
+                                            <v-row class="pa-0 ma-0 mb-2" align="center">
                                                 <!-- <div class="panel-title">Basic Info</div> -->
                                                 <slot name="md-level-btn"></slot>
                                                 <slot name="md-title-side"></slot>

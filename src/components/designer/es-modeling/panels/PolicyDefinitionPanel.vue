@@ -11,8 +11,15 @@
             @close="closePanel"
             @changeTranslate="changeTranslate"
     >
+        <template slot="md-level-btn">
+            <v-chip @click="toggleDesignLevel" style="margin-right: 16px; cursor: pointer;" color="primary" outlined>
+                <v-icon left>{{ isDesignLevelVisible ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
+                {{ $t('CommandDefinitionPanel.implementationSettings') }}
+            </v-chip>
+        </template>
+
         <template slot="element">
-            <div>
+            <div v-show="isDesignLevelVisible">
                 <RuleExampleDialog v-if="openExample" v-model="value" @closeExampleDialog="closeExampleDialog()" />
                 <v-card flat class="ma-0 pa-4">
                     <v-card-text class="ma-0 pa-0">
@@ -89,7 +96,6 @@
                 </span>
             </v-tooltip>
         </template>
-
     </common-panel>
 </template>
 
