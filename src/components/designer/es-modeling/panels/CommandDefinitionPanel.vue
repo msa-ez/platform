@@ -72,7 +72,7 @@
         </template>
 
         <template slot="element">
-            <div>
+            <div v-show="isDesignLevelVisible">
                 <RuleExampleDialog v-if="openExample" v-model="value" @closeExampleDialog="closeExampleDialog()" />
                 <v-card flat>
                     <v-card-text>
@@ -86,7 +86,7 @@
                             ></v-text-field>
 
 
-                            <div v-show="isDesignLevelVisible">
+                            <div>
                                 <span class="panel-title">{{ $t('CommandDefinitionPanel.method') }}</span>
                                 <!-- <v-alert
                                     color="grey darken-1"

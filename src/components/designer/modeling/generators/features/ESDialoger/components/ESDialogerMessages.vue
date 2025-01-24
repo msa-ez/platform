@@ -1,8 +1,8 @@
 <template xmlns:v-on="http://www.w3.org/1999/xhtml">
     <div>
         <template v-for="(message, index) in messages">
-            <v-card v-if="message.type === 'modelDraftDialogWithXAIDto'" :key="index" class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
-                <ModelDraftDialogWithXAI
+            <v-card v-if="message.type === 'aggregateDraftDialogDto'" :key="index" class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
+                <AggregateDraftDialog
                     :draftOptions="message.draftOptions"
                     :draftUIInfos="message.draftUIInfos"
                     :isGeneratorButtonEnabled="message.isGeneratorButtonEnabled"
@@ -12,9 +12,9 @@
                     @onClose="message.actions.stop()"
                     @onRetry="message.actions.retry()"
 
-                    @generateFromDraft="generateFromDraftWithXAI"
+                    @generateFromDraft="generateFromDraft"
                     @feedbackFromDraft="feedbackFromDraft"
-                ></ModelDraftDialogWithXAI>
+                ></AggregateDraftDialog>
             </v-card>
 
             <v-card 
@@ -68,8 +68,8 @@
 </template>
   
 <script>
-import ModelDraftDialogWithXAI from '../../../../../context-mapping-modeling/dialogs/ModelDraftDialogWithXAI.vue'
-import DevideBoundedContextDialog from '../../../../generators/DevideBoundedContextDialog.vue'
+import { AggregateDraftDialog } from '../../../es-generators'
+import DevideBoundedContextDialog from '../../../es-generators'
 
 export default {
     name: "es-dialoger-messages",
@@ -81,11 +81,11 @@ export default {
         }
     },
     components: {
-        ModelDraftDialogWithXAI,
+        AggregateDraftDialog,
         DevideBoundedContextDialog
     },
     methods: {
-        generateFromDraftWithXAI(draftOptions) {
+        generateFromDraft(draftOptions) {
             this.$emit('generateFromAggregateDrafts', draftOptions)
         },
 

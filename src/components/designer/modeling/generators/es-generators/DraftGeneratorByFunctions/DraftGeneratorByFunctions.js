@@ -641,6 +641,15 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
 
 
     onCreateModelGenerating(returnObj) {
+        returnObj.modelValue.output = (returnObj.modelValue.aiOutput.result) ? returnObj.modelValue.aiOutput.result : {}
+
+        if(returnObj.modelValue.output) {
+            this._removeThoughts(returnObj.modelValue.output)
+            this._removeOptionsWithExistingAggregates(returnObj.modelValue.output)
+            this._linkValueObjectsToReferencedAggregates(returnObj.modelValue.output)
+            this._enrichValueObjectsWithAggregateDetails(returnObj.modelValue.output)
+        }
+
         if(this.client.input.feedback) {
             returnObj.directMessage = `Re-generating options for ${this.client.input.boundedContextDisplayName} Bounded Context based on user feedback... (${returnObj.modelRawValue.length} characters generated)`
             returnObj.isFeedbackBased = true
@@ -700,6 +709,7 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
 
             let hasExistingAggregate = false;
             for (const aggregateInfo of option.structure) {
+                if (!aggregateInfo.aggregate || !aggregateInfo.aggregate.name) continue;
                 if (this.client.input.existingAggregates.includes(aggregateInfo.aggregate.name)) {
                     hasExistingAggregate = true;
                     break;
@@ -708,9 +718,10 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
             if (hasExistingAggregate) continue;
 
             const aggregateCount = option.structure.length;
-            if (!optionsByAggregateCount[aggregateCount]) {
+            if(!aggregateCount) continue
+            if (!optionsByAggregateCount[aggregateCount])
                 optionsByAggregateCount[aggregateCount] = [];
-            }
+            
             optionsByAggregateCount[aggregateCount].push(option);
         }
 
@@ -735,6 +746,8 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
                 if(!aggregate.valueObjects) continue
 
                 for(const valueObject of aggregate.valueObjects) {
+                    if(!valueObject.name) continue
+
                     if(validAggregateNames.includes(valueObject.name)) {
                         valueObject.referencedAggregateName = valueObject.name
                         break
@@ -761,6 +774,8 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
                 if(!aggregate.valueObjects) continue
 
                 for(const valueObject of aggregate.valueObjects) {
+                    if(!valueObject.name || !valueObject.alias) continue
+
                     if(!valueObject.referencedAggregateName) {
                         valueObject.name = valueObject.name.replace("Reference", "").trim()
                         valueObject.alias = valueObject.alias.replace("Reference", "").replace("참조", "").trim()
@@ -792,13 +807,16 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
         for(const option of [usedOption]) {
             if(!option.structure) continue
             
-            for(const aggregate of option.structure)
+            for(const aggregate of option.structure) {
+                if(!aggregate.aggregate || !aggregate.aggregate.name) continue
                 if(!validAggregateNames.includes(aggregate.aggregate.name))
                     validAggregateNames.push(aggregate.aggregate.name)
+            }
         }
 
         for(const accumulatedDraft of Object.values(this.client.input.accumulatedDrafts)) {
             for(const aggregateInfo of accumulatedDraft) {
+                if(!aggregateInfo.aggregate || !aggregateInfo.aggregate.name) continue
                 if(!validAggregateNames.includes(aggregateInfo.aggregate.name))
                     validAggregateNames.push(aggregateInfo.aggregate.name)
             }
@@ -809,14 +827,17 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
 
     __findAggregateAliasByName(aggregateName, output) {
         for(const aggregateInfos of Object.values(this.client.input.accumulatedDrafts)) {
-            for(const aggregateInfo of aggregateInfos)
+            for(const aggregateInfo of aggregateInfos) {
+                if(!aggregateInfo.aggregate || !aggregateInfo.aggregate.name) continue
                 if(aggregateInfo.aggregate.name === aggregateName) return aggregateInfo.aggregate.alias
+            }
         }
 
         for(const option of output.options) {
             if(!option.structure) continue
 
             for(const aggregate of option.structure) {
+                if(!aggregate.aggregate || !aggregate.aggregate.name) continue
                 if(aggregate.aggregate.name === aggregateName) return aggregate.aggregate.alias
             }
         }

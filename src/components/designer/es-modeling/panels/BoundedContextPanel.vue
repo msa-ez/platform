@@ -14,6 +14,12 @@
             v-on:update:members="value.members = $event"
             class="pb-10"
     >
+        <template slot="md-level-btn">
+            <v-chip @click="toggleDesignLevel" style="margin-right: 16px; cursor: pointer;" color="primary" outlined>
+                <v-icon left>{{ isDesignLevelVisible ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
+                {{ $t('CommandDefinitionPanel.implementationSettings') }}
+            </v-chip>
+        </template>
 
         <template slot="t-description-text">
             {{ $t('panelInfo.BoundedContextCMPanel') }}
@@ -46,7 +52,7 @@
         </template>
 
         <template slot="generateWithAi">
-            <div>
+            <div v-show="isDesignLevelVisible">
                 <span>
                     <v-row class="ma-0 pa-0">
                         <v-spacer></v-spacer>
@@ -63,7 +69,7 @@
         </template>
             
         <template slot="element">
-            <div class="pa-4 pb-0">
+            <div v-show="isDesignLevelVisible" class="pa-4 pb-0">
                 <span class="panel-title">{{ $t('TitleText.readWriteAuthority') }}</span>
                 <!-- <v-alert
                     color="grey darken-1"
