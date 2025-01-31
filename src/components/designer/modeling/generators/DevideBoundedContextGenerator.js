@@ -14,7 +14,7 @@ class DevideBoundedContextGenerator extends JsonAIGenerator {
         return `
 Analyze the following requirements and divide them into multiple Bounded Contexts (minimum 2).
 
-Focus on this division aspect:
+Focus on these aspects:
 ${this.client.input['devisionAspect']}
 
 Generate Number of Bounded Contexts:

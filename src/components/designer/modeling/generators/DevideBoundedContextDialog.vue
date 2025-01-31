@@ -1,5 +1,5 @@
 <template>
-    <v-card :key="Object.keys(resultDevideBoundedContext).length" style="max-height: 2000px; overflow-y: auto;">
+    <v-card :key="`bounded-context-${messageId}`" style="max-height: 2000px; overflow-y: auto;">
         <v-card-title>
             {{ $t('DevideBoundedContextDialog.boundedContextDivisionResult') }}
             <!-- <v-btn v-if="isGenerating" text color="primary" @click="stop()">Stop</v-btn> -->
@@ -33,12 +33,6 @@
                     :disabled="(isGeneratingAspect && selectedAspect !== devisionAspect) || isStartMapping"
                 >
                     {{ devisionAspect }} {{ $t('DevideBoundedContextDialog.aspect') }}
-                    <v-icon v-if="selectedAspect === devisionAspect" 
-                        color="primary" 
-                        small 
-                        class="ml-2">
-                        mdi-check
-                    </v-icon>
                 </v-tab>
             </v-tabs>
 
@@ -54,8 +48,8 @@
                         <div style="text-align: center;">
                             <vue-mermaid
                                 v-if="mermaidNodes[devisionAspect]"
-                                :id="`mermaid-${devisionAspect}-${getRenderKey(devisionAspect)}`"
-                                :key="`mermaid-${devisionAspect}-${getRenderKey(devisionAspect)}`"
+                                :id="`mermaid-${messageId}-${devisionAspect}-${getRenderKey(devisionAspect)}`"
+                                :key="`mermaid-${messageId}-${devisionAspect}-${getRenderKey(devisionAspect)}`"
                                 :nodes="mermaidNodes[devisionAspect]"
                                 type="graph TD"
                                 @nodeClick="editNode"
@@ -253,6 +247,11 @@
                 required: false
             },
             summarizedResult: {
+                type: String,
+                default: () => "",
+                required: false
+            },
+            messageId: {
                 type: String,
                 default: () => "",
                 required: false
@@ -469,9 +468,10 @@
             reGenerateAspect(aspect){
                 this.isGenerating = true;
                 this.isGeneratingAspect = true;
-                this.mermaidNodes[aspect] = [];
+                // this.mermaidNodes[aspect] = [];
                 this.incrementRenderKey(aspect);
-                this.$emit("reGenerateAspect", aspect, this.feedback);
+                this.$emit("reGenerateAspect", aspect, this.feedback, this.messageId);
+                this.feedback = '';
             },
 
             getGroupedBoundedContextRequirements(aspectData) {

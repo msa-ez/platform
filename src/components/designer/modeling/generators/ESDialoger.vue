@@ -102,7 +102,7 @@
                 ></BCGenerationOption>
             </v-card>
 
-            <v-card v-if="showDevideBoundedContextDialog" class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
+            <!-- <v-card v-if="showDevideBoundedContextDialog" class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
                 <DevideBoundedContextDialog
                     :resultDevideBoundedContext="resultDevideBoundedContext"
                     :isStartMapping="isStartMapping"
@@ -117,12 +117,17 @@
                     @reGenerateAspect="reGenerateAspect"
                     @mappingRequirements="mappingRequirements"
                 ></DevideBoundedContextDialog>
-            </v-card>
+            </v-card> -->
 
             <ESDialogerMessages 
                 :messages="messages"
                 @generateFromAggregateDrafts="generateFromAggregateDrafts"
                 @feedbackFromAggregateDrafts="feedbackFromAggregateDrafts"
+                @createModel="generateAggregateDrafts"
+                @stop="stop"
+                @reGenerate="reGenerate"
+                @reGenerateAspect="reGenerateAspect"
+                @mappingRequirements="mappingRequirements"
             ></ESDialogerMessages>
         </div>
         <div
@@ -585,6 +590,7 @@
                 isStartMapping: false,
                 processingRate: 0,
                 currentProcessingBoundedContext: "",
+                reGenerateMessageId: null,
                 isGeneratingBoundedContext: false,
 
                 bcGenerationOption: {},
@@ -682,8 +688,24 @@
                     }
 
                     me.input['devisionAspect'] = me.devisionAspect[me.devisionAspectIndex];
-                    me.$set(me.resultDevideBoundedContext, model.devisionAspect, model)
-                    me.showDevideBoundedContextDialog = true
+                    // 현재 메시지의 result를 깊은 복사로 가져옴
+                    const currentMessage = me.messages[me.messages.length-1];
+                    const newResult = JSON.parse(JSON.stringify(currentMessage.result || {}));
+                    
+                    // 새로운 모델을 해당 aspect에 할당
+                    newResult[model.devisionAspect] = JSON.parse(JSON.stringify(model));
+                    
+                    // 메시지 업데이트 시 새로운 객체로 교체
+                    me.$set(me.messages, me.messages.length-1, {
+                        ...currentMessage,
+                        result: newResult,
+                        isStartMapping: this.isStartMapping,
+                        processingRate: this.processingRate,
+                        currentProcessingBoundedContext: this.currentProcessingBoundedContext,
+                    });
+
+                    // resultDevideBoundedContext도 독립적으로 업데이트
+                    me.resultDevideBoundedContext = JSON.parse(JSON.stringify(newResult));
                     console.log("output: ", model)
 
                     // 요약 결과가 있으면 요약 결과를 기반으로 매핑 진행
@@ -772,17 +794,54 @@
                 this.generateDevideBoundedContext();
             },
 
-            reGenerateAspect(aspect, feedback){
-                Object.keys(this.resultDevideBoundedContext).forEach(key => {
-                    this.resultDevideBoundedContext[key].boundedContexts.forEach(bc => {
-                        bc.requirements = [];
-                    });
+            reGenerateAspect(payload) {
+                const { aspect, feedback, messageId } = payload;
+
+                this.reGenerateMessageId = messageId;
+                
+                const targetMessageIndex = this.messages.findIndex(msg => msg.uniqueId === messageId);
+                if (targetMessageIndex === -1) return;
+                
+                const newResult = {};
+                const originalMessage = this.messages[targetMessageIndex];
+                
+                Object.keys(originalMessage.result).forEach(key => {
+                    if (key !== aspect) {
+                        newResult[key] = JSON.parse(JSON.stringify(originalMessage.result[key]));
+                    }
                 });
-                this.generateDevideBoundedContext(aspect, feedback);
+                
+                // const newMessage = {
+                //     uniqueId: this.uuid(),
+                //     type: 'boundedContextResult',
+                //     result: {},
+                //     isStartMapping: false,
+                //     processingRate: 0,
+                //     currentProcessingBoundedContext: "",
+                //     devisionAspect: [...this.devisionAspect],
+                //     summarizedResult: this.summarizedResult,
+                //     timestamp: new Date()
+                // };
+                
+                // 새 메시지를 기존 메시지 다음에 추가
+                this.messages.splice(targetMessageIndex + 1, 0, this.generateMessage("userMessage", {}, feedback));
+                this.messages.splice(targetMessageIndex + 2, 0, this.generateMessage("boundedContextResult", {}, feedback));
+                
+                // Generator 실행
+                this.input['devisionAspect'] = aspect;
+                this.input['previousAspectModel'] = {
+                    boundedContexts: this.resultDevideBoundedContext[aspect].boundedContexts,
+                    relations: this.resultDevideBoundedContext[aspect].relations
+                };
+                this.input['feedback'] = feedback;
+                this.generator = new DevideBoundedContextGenerator(this);
+                this.state.generator = "DevideBoundedContextGenerator";
+                this.generatorName = "DevideBoundedContextGenerator";
+                this.generator.generate();
             },
 
             setGenerateOption(option){
-                this.devisionAspect = option.selectedAspects;
+                this.devisionAspect.push(option.selectedAspects.join('+'));
                 this.bcGenerationOption = option;
                 this.generateDevideBoundedContext();
             },
@@ -836,17 +895,20 @@
                 this.generator = new DevideBoundedContextGenerator(this);
                 this.state.generator = "DevideBoundedContextGenerator";
                 this.generatorName = "DevideBoundedContextGenerator";
-                
+
                 if(!aspect){
-                    this.resultDevideBoundedContext = {};
                     this.devisionAspectIndex = 0;
                     this.input['devisionAspect'] = this.devisionAspect[this.devisionAspectIndex];
+                    this.messages.push(this.generateMessage("boundedContextResult", {}, feedback))
                 }else{
-                    this.input['previousAspectModel'] = this.resultDevideBoundedContext[aspect];
-                    this.resultDevideBoundedContext[aspect] = {};
-                    this.devisionAspectIndex = 5;
-                    this.input['devisionAspect'] = aspect;
-                    this.input['feedback'] = feedback;
+                    // copyResult[aspect] = {}
+                    // this.addBoundedContextResult(copyResult, feedback)
+
+                    // this.input['previousAspectModel'] = this.resultDevideBoundedContext[aspect];
+                    // this.resultDevideBoundedContext[aspect] = {};
+                    // this.devisionAspectIndex = 5;
+                    // this.input['devisionAspect'] = aspect;
+                    // this.input['feedback'] = feedback;
                 }
 
                 this.input['generateOption'] = this.bcGenerationOption;
@@ -1002,6 +1064,29 @@
 
                 const previousFeedbacks = this.messages.filter(message => message.type === "userMessage" && message.subType === "aggregateDraftDialogDtoUserFeedback" && message.metadatas.targetBoundedContextName === boundedContextInfo.name).map(message => message.message)
                 this.generators.DraftGeneratorByFunctions.generateWithFeedback(boundedContextInfo, previousFeedbacks, draftOptions)
+            },
+
+            generateMessage(type, result, feedback) {
+                if(type === "boundedContextResult"){
+                    return {
+                        uniqueId: this.uuid(),
+                        type: type,
+                        result: result,
+                        isStartMapping: this.isStartMapping,
+                        processingRate: this.processingRate,
+                        currentProcessingBoundedContext: this.currentProcessingBoundedContext,
+                        devisionAspect: this.devisionAspect,
+                        summarizedResult: this.summarizedResult,
+                        timestamp: new Date()
+                    };
+                }else if(type === "userMessage"){
+                    return {
+                        uniqueId: this.uuid(),
+                        type: type,
+                        message: feedback,
+                        timestamp: new Date()
+                    };
+                }
             }
         }
     }

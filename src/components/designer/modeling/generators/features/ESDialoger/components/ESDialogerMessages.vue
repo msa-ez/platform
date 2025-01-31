@@ -17,6 +17,33 @@
                 ></AggregateDraftDialog>
             </v-card>
 
+            <v-card 
+                v-if="message.type === 'boundedContextResult'" 
+                :key="`bounded-context-${message.uniqueId}`" 
+                class="auto-modeling-user-story-card" 
+                style="margin-top: 30px !important;"
+            >
+                <DevideBoundedContextDialog
+                    :resultDevideBoundedContext="deepCopy(message.result)"
+                    :isStartMapping="message.isStartMapping"
+                    :processingRate="message.processingRate"
+                    :currentProcessingBoundedContext="message.currentProcessingBoundedContext"
+                    :devisionAspect="message.devisionAspect"
+                    :summarizedResult="message.summarizedResult"
+                    :messageId="message.uniqueId"
+                    @createModel="$emit('createModel', $event)"
+                    @closeDialog="$emit('closeDialog')"
+                    @stop="$emit('stop')"
+                    @reGenerate="$emit('reGenerate')"
+                    @reGenerateAspect="(aspect, feedback, messageId) => $emit('reGenerateAspect', {
+                        aspect,
+                        feedback,
+                        messageId
+                    })"
+                    @mappingRequirements="$emit('mappingRequirements', $event)"
+                ></DevideBoundedContextDialog>
+            </v-card>
+
             <div v-if="message.type === 'botMessage'" :key="index" style="margin-top: 30px !important;">
                 <v-col class="auto-modeling-message-box">
                     <v-card class="auto-modeling-message-card">
@@ -42,6 +69,7 @@
   
 <script>
 import { AggregateDraftDialog } from '../../../es-generators'
+import DevideBoundedContextDialog from '../../../es-generators'
 
 export default {
     name: "es-dialoger-messages",
@@ -53,7 +81,8 @@ export default {
         }
     },
     components: {
-        AggregateDraftDialog
+        AggregateDraftDialog,
+        DevideBoundedContextDialog
     },
     methods: {
         generateFromDraft(draftOptions) {
@@ -62,6 +91,10 @@ export default {
 
         feedbackFromDraft(boundedContextInfo, feedback, draftOptions, messageUniqueId) {
             this.$emit('feedbackFromAggregateDrafts', boundedContextInfo, feedback, draftOptions, messageUniqueId)
+        },
+
+        deepCopy(obj) {
+            return JSON.parse(JSON.stringify(obj));
         }
     }
 }
