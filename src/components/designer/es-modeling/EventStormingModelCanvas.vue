@@ -1680,7 +1680,7 @@
                             scrollable
                     >
                         <v-card style="height: 100%">
-                            <v-card-title style="position: absolute; top: -10px">Select Model for PBC</v-card-title>
+                            <v-card-title>Select Model for PBC</v-card-title>
                             <!-- <v-card-actions style="justify-content: flex-end">
                                 <v-btn
                                     @click="closeModelingListsDialog()"
