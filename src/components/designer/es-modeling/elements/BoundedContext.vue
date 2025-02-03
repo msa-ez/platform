@@ -155,9 +155,9 @@
                 @close="closePanel"
                 @changedPanelValue="changedPanelValue"
                 @updateBCName="updateBCName()"
-                @onClickReGenerateInside="boundedContextPanelDto.actions.onClickReGenerateInside"
-                @onClickStopReGenerateInside="boundedContextPanelDto.actions.onClickStopReGenerateInside"
-                :generateDone="boundedContextPanelDto.generateDone"
+                @generateWithDescription="boundedContextPanelDto.actions.generateWithDescription"
+                @onClickStopGenerateWithDescription="boundedContextPanelDto.actions.onClickStopGenerateWithDescription"
+                :genAIDto="boundedContextPanelDto.genAIDto"
         ></bounded-context-panel>
 
     </div>
@@ -255,18 +255,21 @@
                 aggregateRoots: [],
 
                 boundedContextPanelDto: {
+                    genAIDto: {
+                        isGenerateWithDescriptionDone: true
+                    },
                     generateDone: true,
                     actions: {
-                        onClickReGenerateInside: () => {
+                        generateWithDescription: (boundedContext) => {
                         },
-                        onClickStopReGenerateInside: () => {
+                        onClickStopGenerateWithDescription: () => {
                         }
                     }
                 }
             };
         },
         created: function () {
-            this.boundedContextPanelDto.actions.onClickReGenerateInside = (boundedContext) => {
+            this.boundedContextPanelDto.actions.generateWithDescription = (boundedContext) => {
                 this.generateWithPreProcessingFunctionsGenerator(boundedContext)
             }
         },
@@ -425,15 +428,15 @@
             generateWithPreProcessingFunctionsGenerator(boundedContext){
                 const generator = new PreProcessingFunctionsGenerator({
                     input: {
-                        description: boundedContext.description,
+                        description: boundedContext.generateDescription,
                         boundedContext: boundedContext
                     },
                     
                     onFirstResponse: (returnObj) => {
                         this.closePanel()
 
-                        this.boundedContextPanelDto.generateDone = false
-                        this.boundedContextPanelDto.onClickStopReGenerateInside = () => {
+                        this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = false
+                        this.boundedContextPanelDto.onClickStopGenerateWithDescription = () => {
                             returnObj.actions.stopGeneration()
                         }
 
@@ -489,12 +492,12 @@
 
                     onRetry: (returnObj) => {
                         alert(`[!] An error occurred while analysing your requirements, please try again..\n* Error log \n${returnObj.errorMessage}`)
-                        this.boundedContextPanelDto.generateDone = true
+                        this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = true
                         this.canvas.AggregateDraftDialogDto.isShow = false
                     },
 
                     onStopped: () => {
-                        this.boundedContextPanelDto.generateDone = true
+                        this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = true
                         this.canvas.AggregateDraftDialogDto.isShow = false
                     }
                 })
@@ -516,8 +519,8 @@
                     onFirstResponse: (returnObj) => {
                         this.closePanel()
                         
-                        this.boundedContextPanelDto.generateDone = false
-                        this.boundedContextPanelDto.onClickStopReGenerateInside = () => {
+                        this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = false
+                        this.boundedContextPanelDto.onClickStopGenerateWithDescription = () => {
                             returnObj.actions.stopGeneration()
                         }
 
@@ -599,17 +602,17 @@
                                 directMessage: returnObj.directMessage,
                                 progress: 100
                             }
-                        this.boundedContextPanelDto.generateDone = true
+                        this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = true
                     },
 
                     onRetry: (returnObj) => {
                         alert(`[!] There was an error creating your draft, please try again.\n* Error log \n${returnObj.errorMessage}`)
-                        this.boundedContextPanelDto.generateDone = true
+                        this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = true
                         this.canvas.AggregateDraftDialogDto.isShow = false
                     },
 
                     onStopped: () => {
-                        this.boundedContextPanelDto.generateDone = true
+                        this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = true
                         this.canvas.AggregateDraftDialogDto.isShow = false
                     }
                 })
