@@ -951,6 +951,18 @@
                                 class="tools"
                                 style="top: 100px; text-align: center"
                             >
+
+                            <v-tooltip right>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <span v-on="on" v-bind="attrs" @click="toggleVisibility" style="cursor: pointer;">
+                                        <v-icon v-if="processMode">mdi-eye</v-icon>
+                                        <v-icon v-else color="primary">mdi-eye-off</v-icon>
+                                    </span>
+                                </template>
+                                <span v-if="processMode">{{ $t('modelingPanelTool.processModeOn') }}</span>
+                                <span v-else>{{ $t('modelingPanelTool.processModeOff') }}</span>
+                            </v-tooltip>
+
                                 <v-tooltip right>
                                     <template v-slot:activator="{ on, attrs }">
                                         <span
@@ -2553,7 +2565,9 @@
                     }
                 },
 
-                selectedDraftOptions: []
+                selectedDraftOptions: [],
+
+                processMode: true,
             };
         },
         computed: {
@@ -2963,7 +2977,9 @@
 
             me.$EventBus.$on('repairBoundedContext', function (boundedContext) {
                 me.repairBoundedContext(boundedContext)
-            })
+            });
+
+            me.updateDisplay();
         },
         beforeDestroy() {
             if (this.fetchEventInterval) {
@@ -3052,6 +3068,18 @@
 
         },
         methods: {
+            toggleVisibility() {
+                this.processMode = !this.processMode;
+                this.$nextTick(() => {
+                    this.updateDisplay();
+                });
+            },
+            updateDisplay() {
+                const elements = document.querySelectorAll('text[text-anchor="start"]');
+                elements.forEach(el => {
+                    el.style.display = this.processMode ? 'block' : 'none';
+                });
+            },
             attachedLists() {
                 var me = this;
                 let result = {};
