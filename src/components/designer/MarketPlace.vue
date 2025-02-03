@@ -541,10 +541,11 @@
                                 >{{ tag }}
                                 </v-chip>
                             </div>
-                            <v-btn @click="applyPBCElement(selectedPBC)" color="primary"
+                            <v-btn @click="applyPBCElement(selectedPBC)" color="primary" :disabled="!selectedPBC.pbcPath"
                                    class="marketplace-details-page-apply-btn"
                             >apply
                             </v-btn>
+                            <div v-if="!selectedPBC.pbcPath" style="color: red; margin-top: 24px;">Model 및 OpenAPI 정보가 없습니다</div>
                         </v-col>
                         <v-divider vertical />
                         <v-col cols="7" lg="9" md="8" sm="7">
@@ -567,6 +568,10 @@
     import PBCModelCard from "./es-modeling/PBCModelCard";
     import OpenAPIPBC from "./modeling/OpenAPIPBC";
 
+    import GitAPI from "../../utils/GitAPI";
+    import Github from "../../utils/Github";
+    import Gitlab from "../../utils/Gitlab";
+
     const axios = require('axios');
     export default {
         name: 'MarketPlace',
@@ -577,6 +582,7 @@
         mixins: [AlgoliaModelLists, OpenAPIPBC],
         data() {
             return {
+                git: null,
                 tab: "",
                 templateLists:[],
                 toppingLists:[],
@@ -743,6 +749,13 @@
             },
         },
         created(){
+            let git;
+            if(window.MODE == "onprem") {
+                git = new Gitlab();
+            } else {
+                git = new Github();
+            }
+            this.git = new GitAPI(git);
             this.tab = this.isPBCMarket ? "pbcs" : "templates"
             this.setGitHubHeader()
             this.loadAllRepoList()
@@ -878,19 +891,20 @@
                     if (pbcInfo.name.includes("pbc-") && !pbcInfo.name.includes("_pbc")) {
                         try {
                             var info = await axios.get(`https://api.github.com/repos/msa-ez/${pbcInfo.name}/contents/.template/metadata.yml`, { headers: me.githubHeaders });
-                            var pbcPath = `https://github.com/msa-ez/${pbcInfo.name}/blob/main/openapi.yaml`
+                            var mainTrees = await axios.get(`https://api.github.com/repos/msa-ez/${pbcInfo.name}/git/trees/main`, { headers: me.githubHeaders })
                             if (info && info.data.content) {
-                                var obj = YAML.parse(decodeURIComponent(escape(atob(info.data.content))));
+                                const modelTree = mainTrees.data.tree.find(tree => tree.path === 'model.json');
+                                const openApiTree = mainTrees.data.tree.find(tree => tree.path === 'openapi.yaml');
+                                const instruction = await axios.get(`https://api.github.com/repos/msa-ez/${pbcInfo.name}/contents/.template/instruction.md`, { headers: me.githubHeaders });
+                              
+                                let obj = YAML.parse(decodeURIComponent(escape(atob(info.data.content))));
+
+                                obj.instruction = instruction ? decodeURIComponent(escape(atob(instruction.data.content))) : null;
                                 obj.id = idx;
-                                obj.pbcPath = pbcPath
-                                try {
-                                    const instruction = await axios.get(`https://api.github.com/repos/msa-ez/${pbcInfo.name}/contents/.template/instruction.md`, { headers: me.githubHeaders });
-                                    if (instruction) {
-                                        obj.instruction = decodeURIComponent(escape(atob(instruction.data.content)));
-                                    }
-                                } catch (e) {
-                                    console.error(e);
-                                }
+                                obj.pbcPath = modelTree 
+                                    ? `https://github.com/msa-ez/${pbcInfo.name}/blob/main/model.json` 
+                                    : (openApiTree ? `https://github.com/msa-ez/${pbcInfo.name}/blob/main/openapi.yaml` : null);
+
                                 me.pbcLists.push(obj);
                             }
                         } catch (e) {

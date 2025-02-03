@@ -174,11 +174,154 @@
                 }
                 this.editMode = false;
             },
-            async convert(path, pbc, openAPIObj){
+            async convert(path, pbc, info){
                 const openAPIClass = new OpenAPIToPBC();
                 let resultObj = await openAPIClass.call(path);
 
-                return this.convertPBC(resultObj, pbc, openAPIObj);
+                if(resultObj.isModel) {
+                    return this.generatePBCByModel(resultObj, pbc, info);
+                } else {
+                    return this.generatePBCByOpenAPI(resultObj, pbc, info);
+                }
+            },
+            generatePBCByModel(convertValue, pbcElement, info){
+                console.log(convertValue, pbcElement);
+
+                pbcElement.name = convertValue.info.projectName ? convertValue.info.projectName : pbcElement.name;
+                pbcElement.description = ''
+                pbcElement.modelValue.modelPath = info.path;
+
+                 // common
+                 convertValue.aggregates.forEach(function(element){
+                    element.visibility = 'private'
+                    pbcElement.aggregates.push(element);
+                });
+                
+                // left sides
+                convertValue.views.forEach(function(element){
+                    element.visibility = 'private'
+                    if(element.aggregate && element.aggregate.id){
+                        element.aggregate = convertValue.aggregates.find(aggregate => aggregate.id == element.aggregate.id);
+                    }
+                    if(element.boundedContext && element.boundedContext.id){
+                        element.boundedContext = convertValue.boundedContextes.find(boundedContext => boundedContext.id == element.boundedContext.id);
+                    }
+
+                    pbcElement.views.push(element);
+                });
+                convertValue.commands.forEach(function(element){
+                    element.visibility = 'private'
+                    if(element.aggregate && element.aggregate.id){
+                        element.aggregate = convertValue.aggregates.find(aggregate => aggregate.id == element.aggregate.id);
+                    }
+                    if(element.boundedContext && element.boundedContext.id){
+                        element.boundedContext = convertValue.boundedContextes.find(boundedContext => boundedContext.id == element.boundedContext.id);
+                    }
+                    pbcElement.commands.push(element);
+                });
+
+                // right sides
+                convertValue.events.forEach(function(element){
+                    element.visibility = 'private'
+                    if(element.aggregate && element.aggregate.id){
+                        element.aggregate = convertValue.aggregates.find(aggregate => aggregate.id == element.aggregate.id);
+                    }
+                    if(element.boundedContext && element.boundedContext.id){
+                        element.boundedContext = convertValue.boundedContextes.find(boundedContext => boundedContext.id == element.boundedContext.id);
+                    }
+
+                    pbcElement.events.push(element);
+                });
+
+                convertValue.relations.forEach(function(element){
+                    element.visibility = 'private'
+                    pbcElement.relations.push(element);
+                });
+
+                return pbcElement;
+            },
+            generatePBCByOpenAPI(convertValue, pbcElement, openAPIObj){
+                var me = this
+                const readComponent = me.getComponentByName('view-definition');
+                const commandComponent = me.getComponentByName('command-definition');
+                const eventComponent = me.getComponentByName('domain-event-definition');
+                // const aggregateComponent = me.getComponentByName('aggregate-definition');
+
+                if(!pbcElement){
+                    const pbcComponent = me.getComponentByName('packaged-business-capabilities');
+                    pbcElement = pbcComponent.computed.createNew(null, me.canvas.uuid(), 500, 500, 500, 500);
+                }
+
+                // set info
+                pbcElement.name = convertValue.info.title ? convertValue.info.title : pbcElement.name;
+                pbcElement.description = convertValue.info.description ? convertValue.info.description : pbcElement.name;
+                pbcElement.modelValue.openAPI = openAPIObj.path;
+
+                // Agg
+                // Object.keys(openAPIObj.schemas).forEach(function (name) {
+                //     let element = aggregateComponent.computed.createNew(null, me.canvas.uuid(), 100, 100, 100, 100);
+                //
+                //     element.visibility = 'private'
+                //     element.name = name
+                //     element.aggregateRoot.fieldDescriptors = me.convertAttrByProperties(obj.schemas[name]);
+                //
+                //     pbcElement.aggregates.push(element);
+                // })
+
+                convertValue.read.forEach(function(obj){
+                    let element = readComponent.computed.createNew(null, me.canvas.uuid() ,100, 100, 100, 100);
+
+                    element.visibility = 'private'
+                    element.name = obj.summary ? obj.summary : obj.description; // temp code get 'obj.description'
+
+                    element.dataProjection = 'query-for-aggregate'
+                    element.queryParameters = me.convertAttrByParameters(obj.parameters);
+                    element.queryOption.apiPath = obj._path
+                    element.queryOption.useDefaultUri = false
+                    if(obj.responses){
+                        element.aggregate = me.convertAggregateByResponses(obj.responses, convertValue.schemas, pbcElement.aggregates)
+                    }
+
+                    pbcElement.views.push(element);
+                });
+
+                convertValue.command.forEach(function(obj){
+                    let element = commandComponent.computed.createNew(null, me.canvas.uuid(), 100, 100, 100, 100);
+
+                    element.visibility = 'private'
+                    element.name = obj.summary ? obj.summary : obj.description; // temp code get 'obj.description'
+
+                    if(obj.requestBody){
+                        element.isRestRepository = false
+                        element.controllerInfo.apiPath = obj._path
+                        element.controllerInfo.method = obj._method.toUpperCase()
+                        if( obj.requestBody.content['application/json'] ){
+                            element.fieldDescriptors = me.convertAttrByProperties(obj.requestBody.content['application/json'].schema);
+                        } else if(obj.requestBody.content['multipart/form-data'] ){
+                            element.fieldDescriptors =  me.convertAttrByProperties(obj.requestBody.content['multipart/form-data'].schema)
+                        }
+                    } else {
+                        element.isRestRepository = true
+                        element.restRepositoryInfo.method = obj._method.toUpperCase()
+                    }
+                    if(obj.responses){
+                        element.aggregate = me.convertAggregateByResponses(obj.responses, convertValue.schemas, pbcElement.aggregates)
+                    }
+
+                    pbcElement.commands.push(element);
+                });
+
+                convertValue.events.forEach(function(obj){
+                    let element = eventComponent.computed.createNew(null, me.canvas.uuid(), 100, 100, 100, 100);
+                
+                    element.visibility = 'private'
+                    element.name = obj.summary ? obj.summary : obj.description; // temp code get 'obj.description'
+                
+                    pbcElement.events.push(element);
+                });
+
+
+                return pbcElement;
             },
             convertPBC(convertValue, pbcElement, openAPIObj){
                 var me = this
@@ -214,7 +357,6 @@
                     element.visibility = 'private'
                     element.name = obj.summary ? obj.summary : obj.description; // temp code get 'obj.description'
 
-
                     element.dataProjection = 'query-for-aggregate'
                     element.queryParameters = me.convertAttrByParameters(obj.parameters);
                     element.queryOption.apiPath = obj._path
@@ -245,7 +387,6 @@
                         element.isRestRepository = true
                         element.restRepositoryInfo.method = obj._method.toUpperCase()
                     }
-
                     if(obj.responses){
                         element.aggregate = me.convertAggregateByResponses(obj.responses, convertValue.schemas, pbcElement.aggregates)
                     }
@@ -255,10 +396,10 @@
 
                 // convertValue.event.forEach(function(obj){
                 //     let element = eventComponent.computed.createNew(null, me.canvas.uuid(), 100, 100, 100, 100);
-                //
+                
                 //     element.visibility = 'private'
                 //     element.name = obj.summary ? obj.summary : obj.description; // temp code get 'obj.description'
-                //
+                
                 //     pbcElement.events.push(element);
                 // });
 
