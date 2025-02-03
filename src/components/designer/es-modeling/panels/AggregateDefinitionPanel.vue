@@ -15,7 +15,7 @@
             <aggregate-rules-panel :copy-value="value"  :givenItems="givenItems" :attachedPolicies="attachedPolicies" @close="closePanel" @left="left"></aggregate-rules-panel>
         </template> -->
         <template slot="md-level-btn">
-            <v-chip @click="toggleDesignLevel" style="margin-right: 16px; cursor: pointer;" color="primary" outlined>
+            <v-chip @click="toggleDesignLevel" style="margin-right: 16px; margin-bottom: 5px; cursor: pointer;" color="primary" outlined>
                 <v-icon left>{{ isDesignLevelVisible ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
                 {{ $t('CommandDefinitionPanel.implementationSettings') }}
             </v-chip>
