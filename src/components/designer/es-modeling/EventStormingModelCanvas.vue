@@ -951,6 +951,18 @@
                                 class="tools"
                                 style="top: 100px; text-align: center"
                             >
+
+                            <v-tooltip right>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <span v-on="on" v-bind="attrs" @click="toggleVisibility" style="cursor: pointer;">
+                                        <v-icon v-if="processMode">mdi-eye</v-icon>
+                                        <v-icon v-else color="primary">mdi-eye-off</v-icon>
+                                    </span>
+                                </template>
+                                <span v-if="processMode">{{ $t('modelingPanelTool.processModeOn') }}</span>
+                                <span v-else>{{ $t('modelingPanelTool.processModeOff') }}</span>
+                            </v-tooltip>
+
                                 <v-tooltip right>
                                     <template v-slot:activator="{ on, attrs }">
                                         <span
@@ -1680,7 +1692,7 @@
                             scrollable
                     >
                         <v-card style="height: 100%">
-                            <v-card-title style="position: absolute; top: -10px">Select Model for PBC</v-card-title>
+                            <v-card-title>Select Model for PBC</v-card-title>
                             <!-- <v-card-actions style="justify-content: flex-end">
                                 <v-btn
                                     @click="closeModelingListsDialog()"
@@ -1954,20 +1966,24 @@
           </v-dialog>
 
           <v-dialog
-                  v-model="modelDraftDialogWithXAIDto.isShow"
+                  v-model="AggregateDraftDialogDto.isShow"
                   persistent
                   max-width="1200"
                   max-height="800"
                   overflow="scroll"
           >
-            <ModelDraftDialogWithXAI
-                :draftOptions="modelDraftDialogWithXAIDto.draftOptions"
-                :draftUIInfos="modelDraftDialogWithXAIDto.draftUIInfos"
-                :isGeneratorButtonEnabled="modelDraftDialogWithXAIDto.isGeneratorButtonEnabled"
-                @generateFromDraft="generateFromDraftWithXAI"
-                @onClose="modelDraftDialogWithXAIDto.isShow = false; modelDraftDialogWithXAIDto.actions.stop()"
-                @onRetry="modelDraftDialogWithXAIDto.actions.retry()"
-            ></ModelDraftDialogWithXAI>
+            <AggregateDraftDialog
+                :draftOptions="AggregateDraftDialogDto.draftOptions"
+                :draftUIInfos="AggregateDraftDialogDto.draftUIInfos"
+                :isGeneratorButtonEnabled="AggregateDraftDialogDto.isGeneratorButtonEnabled"
+                :uiType="'EventStormingModelCanvas'"
+
+                @onClose="AggregateDraftDialogDto.isShow = false; AggregateDraftDialogDto.actions.stop()"
+                @onRetry="AggregateDraftDialogDto.actions.retry()"
+
+                @generateFromDraft="generateAggregatesFromDraft"
+                @feedbackFromDraft="AggregateDraftDialogDto.actions.feedbackFromDraft"
+            ></AggregateDraftDialog>
           </v-dialog>
 
           
@@ -2021,13 +2037,14 @@
     import BoundedContextRelocateActionsGenerator from "../modeling/generators/es-ddl-generators/BoundedContextRelocateActionsGenerator"
     import ModelDraftDialog from "../modeling/ModelDraftDialog"
     import EventStormingTestTerminal from "./testTerminals/EventStormingTestTerminal.vue";
-    import ModelDraftDialogWithXAI from "../context-mapping-modeling/dialogs/ModelDraftDialogWithXAI.vue"
     import {
+        DraftGeneratorByFunctions,
         CreateAggregateActionsByFunctions, 
         CreateAggregateClassIdByDrafts,
         CreateCommandActionsByFunctions,
         CreatePolicyActionsByFunctions,
-        CommandGWTGeneratorByFunctions
+        CommandGWTGeneratorByFunctions,
+        AggregateDraftDialog
     } from "../modeling/generators/es-generators";
     import GeneratorProgress from "./components/GeneratorProgress.vue"
     import ESActionsUtil from "../modeling/generators/es-ddl-generators/modules/ESActionsUtil"
@@ -2101,7 +2118,7 @@
             MouseCursorComponent,
             ModelDraftDialog,
             ModelDraftDialogForDistribution,
-            ModelDraftDialogWithXAI,
+            AggregateDraftDialog,
             GeneratorProgress
             // ModelCodeGenerator
         },
@@ -2511,7 +2528,7 @@
                 },
                 isDraftGeneratorButtonEnabledForRelocate: true,
 
-                modelDraftDialogWithXAIDto: {
+                AggregateDraftDialogDto: {
                     isShow: false,
                     draftOptions: [],
                     draftUIInfos: {
@@ -2520,7 +2537,8 @@
                     isGeneratorButtonEnabled: true,
                     actions: {
                         stop: () => {},
-                        retry: () => {}
+                        retry: () => {},
+                        feedbackFromDraft: (boundedContextInfo, feedback, draftOptions) => {}
                     }
                 },
 
@@ -2538,8 +2556,7 @@
                     CreateAggregateClassIdByDrafts: {generator: null},
                     CreateCommandActionsByFunctions: {generator: null},
                     CreatePolicyActionsByFunctions: {generator: null},
-                    CommandGWTGeneratorByFunctions: {generator: null},
-                    PreProcessingFunctionsGenerator: {generator: null}
+                    CommandGWTGeneratorByFunctions: {generator: null}
                 },
 
                 generatorsInGeneratorUI: {
@@ -2548,7 +2565,9 @@
                     }
                 },
 
-                selectedDraftOptions: []
+                selectedDraftOptions: [],
+
+                processMode: true,
             };
         },
         computed: {
@@ -2710,8 +2729,8 @@
 
             const byFunctionCallbacks = {
                 onFirstResponse: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
+                    this.AggregateDraftDialogDto = {
+                        ...this.AggregateDraftDialogDto,
                         isShow: false
                     }
 
@@ -2755,8 +2774,8 @@
 
                 onRetry: (returnObj) => {
                     alert(`[!] An error occurred during creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
+                    this.AggregateDraftDialogDto = {
+                        ...this.AggregateDraftDialogDto,
                         isShow: true,
                         draftUIInfos: {
                             leftBoundedContextCount: 0
@@ -2779,14 +2798,41 @@
                 {
                     ...byFunctionCallbacks,
                     onGenerationDone: () => {
+                        // 이미 기존에 생성한 다른 BC 내용이 있더라도 적절하게 클래스 ID를 생성시키기 위해서 임시 초안 생성
+                        const draftOptionsByEsValue = {}
+                        Object.entries(DraftGeneratorByFunctions.esValueToAccumulatedDrafts(
+                            this.value,
+                            {name: ""}
+                        )).forEach(([boundedContextName, draftOptions]) => {
+                            draftOptionsByEsValue[boundedContextName] = {
+                                structure: draftOptions
+                            }
+                        })
+
+                        Object.keys(this.selectedDraftOptions).forEach(boundedContextName => {
+                            draftOptionsByEsValue[boundedContextName] = this.selectedDraftOptions[boundedContextName]
+                        })
+                        
                         this.generators.CreateAggregateClassIdByDrafts.generator.initInputs(
-                            this.selectedDraftOptions,
+                            draftOptionsByEsValue,
                             this.value,
                             this.userInfo,
                             this.information
                         )
                         if(this.generators.CreateAggregateClassIdByDrafts.generator.generateIfInputsExist())
                             return
+
+
+                        // 별도로 추가시킬 클래스 ID가 없을 경우, 바로 커맨드 생성 단계로 이동
+                        this.generators.CreateCommandActionsByFunctions.generator.initInputs(
+                            this.selectedDraftOptions,
+                            this.value,
+                            this.userInfo,
+                            this.information
+                        )
+                        if(this.generators.CreateCommandActionsByFunctions.generator.generateIfInputsExist())
+                            return
+
 
                         byFunctionCallbacks.onGenerationDone()
                     }
@@ -2857,7 +2903,7 @@
                 // 공통 처리 루트로 들어가기 위한 작업
                 onInputParamsCheckBefore: (inputParams) => {
                     console.log("[*] 바로 이벤트 스토밍 생성 실행", {inputParams})
-                    this.generateFromDraftWithXAI(inputParams.draftOptions)
+                    this.generateAggregatesFromDraft(inputParams.draftOptions)
                     return {stop: true}
                 }
             }
@@ -2931,7 +2977,9 @@
 
             me.$EventBus.$on('repairBoundedContext', function (boundedContext) {
                 me.repairBoundedContext(boundedContext)
-            })
+            });
+
+            me.updateDisplay();
         },
         beforeDestroy() {
             if (this.fetchEventInterval) {
@@ -3020,6 +3068,18 @@
 
         },
         methods: {
+            toggleVisibility() {
+                this.processMode = !this.processMode;
+                this.$nextTick(() => {
+                    this.updateDisplay();
+                });
+            },
+            updateDisplay() {
+                const elements = document.querySelectorAll('text[text-anchor="start"]');
+                elements.forEach(el => {
+                    el.style.display = this.processMode ? 'block' : 'none';
+                });
+            },
             attachedLists() {
                 var me = this;
                 let result = {};
@@ -3990,7 +4050,7 @@
             },
 
 
-            generateFromDraftWithXAI(draftOptions) {
+            generateAggregatesFromDraft(draftOptions) {
                 console.log("[*] 유저가 선택한 초안 옵션들을 이용해서 모델 생성 로직이 실행됨",
                     {prevDraftOptions: JSON.parse(JSON.stringify(draftOptions))}
                 )
@@ -4023,7 +4083,10 @@
                                         otherContext.structure.some(otherAggregateInfo =>
                                             otherAggregateInfo.aggregate.name === referencedAggregateName
                                         )
-                                    );
+                                    ) || Object.values(this.value.elements).some(element =>
+                                        element && element._type === "org.uengine.modeling.model.Aggregate" && element.name === referencedAggregateName
+                                    )
+                    
                                     if (!isValidReference) {
                                         delete valueObject.referencedAggregate;
                                         valueObject.name = valueObject.name.replace("Reference", "").trim()

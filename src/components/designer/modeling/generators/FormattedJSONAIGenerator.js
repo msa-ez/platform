@@ -1,12 +1,5 @@
 const AIGenerator = require("./AIGenerator");
-const { TokenCounter } = require("./utils/TokenCounter")
-
-let partialParse;
-try{
-    partialParse = require('./partial-json-parser');
-}catch(e){
-    partialParse = function(text){return JSON.parse(text)}
-}
+const { TokenCounter, JsonParsingUtil } = require("./utils")
 
 const DEFAULT_CONFIG = {
     MODEL: "gpt-4o-2024-11-20",
@@ -94,7 +87,7 @@ DEFAULT_CONFIG.MODEL_INPUT_TOKEN_LIMIT = (DEFAULT_CONFIG.MODEL_CONTEXT_TOKEN_LIM
  * - checkInputParamsKeys로 지정된 모든 필수 파라미터가 전달되어야 합니다.
  * - progressCheckStrings를 통해 생성 진행률을 추적할 수 있습니다.
  * - 토큰 제한을 초과하는 경우 isCreatedPromptWithinTokenLimit()로 확인할 수 있습니다.
- * - 생성 중 오류 발생시 MAX_RETRY_COUNT만큼 자동으로 재시도합니다.
+ * - 생성 중 오류 발생시 MAX_RETRY_COUNT만큼 자동으로 재시도합니다.(Json 파싱 에러는 재시도 횟수를 차감시키지 않음)
  * - 모든 JSON 응답은 압축된 형식으로 반환됩니다.
  * - 상속받는 클래스는 최소한 __buildAgentRolePrompt(), __buildTaskGuidelinesPrompt(), 
  *   __buildJsonResponseFormat() 메서드를 구현해야 합니다.
@@ -120,6 +113,7 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
         this.checkInputParamsKeys = []
         this.progressCheckStrings = [] // AI 응답에서 특정 문자열들을 순차적으로 확인해서 진행률을 추적하기 위해서 사용
+        this.prevPartialAiOutput = {} // 중간에 부분 파싱이 실패 할 경우, 이전의 파싱 값을 반환하도록 만들어서 연속성 확보
     
         // onModelCreated가 없을 경우에는 onGenerationSucceeded가 구현되어도 제대로 동작하지 않기 때문에 디폴트 콜백을 작성함
         if(!this.client.onModelCreated)
@@ -421,11 +415,14 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
                 retryGeneration: () => {
                     this.generate()
                 }
-            }
+            },
+            modelValue: {}
         }
         if(!text) return returnObj
 
+
         if(this.isFirstResponse) {
+            this.prevPartialAiOutput = {}
             returnObj.isFirstResponse = this.isFirstResponse
             this.isFirstResponse = false
             this.onFirstResponse(returnObj)
@@ -437,6 +434,20 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
 
         if(this.progressCheckStrings.length > 0)
             returnObj.progress = this._getProcessPercentage(text)
+
+
+        if(this.state !== 'end') {
+            returnObj.modelValue.isPartialParse = true
+
+            try {
+                returnObj.modelValue.aiOutput = JsonParsingUtil.parseToJson(text)
+                this.prevPartialAiOutput = structuredClone(returnObj.modelValue.aiOutput)
+            } catch {
+                console.error(`[!] ${this.generatorName}에서 부분적인 결과 처리중에 오류 발생! 이전 값 활용`, {text})
+                returnObj.modelValue.aiOutput = this.prevPartialAiOutput
+            }
+        }
+
 
         // 중지 상태에 대한 별도 처리를 하지 않으면 예외로 인식해서 재시도를 하기 때문에 반드시 있어야 함
         if(returnObj.isStopped) {
@@ -463,17 +474,11 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
                 }
                 return returnObj
             }
-
-            
-            console.log(`[*] ${this.generatorName}에서 결과 파싱중...`, {text})
-
-            let aiOutput = this._parseToJson(text)
-
+ 
+            returnObj.modelValue.aiOutput = JsonParsingUtil.parseToJson(text)
+            returnObj.modelValue.isPartialParse = false
             returnObj = {
                 ...returnObj,
-                modelValue: {
-                    aiOutput: aiOutput // 상속시 해당 값을 활용해서 후속 처리를 수행
-                },
                 directMessage: `Generating Finished! (${text.length} characters generated)`
             }
 
@@ -494,11 +499,15 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
             returnObj = {
                 ...returnObj,
                 isError: true,
-                isDied: this.leftRetryCount <= 0,
                 errorMessage: e.message,
                 leftRetryCount: this.leftRetryCount,
-                directMessage: `An error occurred during creation,` + (this.leftRetryCount <= 0 ? ' the model has died. please try again.' : ' retrying...(' + this.leftRetryCount + ' retries left)')
+                isJsonParsingError: e.message.includes("JSON 파싱")
             }
+            returnObj.isDied = returnObj.leftRetryCount <= 0 && !returnObj.isJsonParsingError
+            if(returnObj.isJsonParsingError)
+                returnObj.directMessage = "Json parsing error occurred, retrying..."
+            else
+                returnObj.directMessage = `An error occurred during creation,` + (returnObj.leftRetryCount <= 0 ? ' the model has died. please try again.' : ' retrying...(' + returnObj.leftRetryCount + ' retries left)')
 
             this.onError(returnObj)
             if(this.client.onError) this.client.onError(returnObj)
@@ -508,7 +517,10 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
                 if(this.client.onRetry) this.client.onRetry(returnObj)
             }
         
-            if(this.leftRetryCount > 0) {
+            if(returnObj.isJsonParsingError) {
+                super.generate()
+            }
+            else if(this.leftRetryCount > 0) {
                 this.leftRetryCount--
                 super.generate()
             }
@@ -534,41 +546,6 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
         }
 
         return Math.round((foundCount / (this.progressCheckStrings.length+1)) * 100)
-    }
-
-    _parseToJson(aiTextResult){
-        let aiTextToParse = ""
-
-
-        if(aiTextResult.includes("```")) {
-            aiTextResult = aiTextResult.replace(/\`\`\`json/g, "```")
-            const aiTextResultParts = aiTextResult.split("```")
-            aiTextToParse = aiTextResultParts[aiTextResultParts.length - 2].trim()
-        } else
-            aiTextToParse = aiTextResult.trim()
-
-
-        // 최대한 다양한 경우를 고려해서 JSON 파싱을 시도함
-        let parseStrategies = [
-            (text) => JSON.parse(text),                              
-            (text) => partialParse(text),              
-            (text) => JSON.parse(
-                text.replace(/'/g, '"')
-                    .replace(/\n/g, '')
-                    .replace(/,(\s*[}\]])/g, '$1')
-                    .replace(/([{,]\s*)(\w+):/g, '$1"$2":')
-            )
-        ]
-
-        for(let strategy of parseStrategies) {
-            try {
-                return strategy(aiTextToParse)
-            } catch(e) {
-                continue
-            }
-        }
-
-        throw new Error(`[!] JSON 파싱 중에 오류 발생!`, {aiTextToParse})
     }
 }
 

@@ -17,7 +17,7 @@
         <template slot="element">
             <div>
                 <v-card flat v-if="value.circuitBreaker != undefined">
-                    <v-card-text class="panel-title">Associated Aggregate</v-card-text>
+                    <v-card-text class="panel-title">{{ $t('TitleText.associatedAggregate') }}</v-card-text>
                     <v-card-text style="margin-left: 20px; margin-top: -35px;">
                         <v-switch
                                 v-model="value.circuitBreaker"

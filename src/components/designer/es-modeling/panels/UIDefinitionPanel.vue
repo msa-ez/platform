@@ -108,7 +108,7 @@
                         <v-select
                                 v-model="value.chart.type"
                                 :items="chartList"
-                                label="Type"
+                                :label="$t('labelText.type')"
                                 outlined
                                 dense
                         ></v-select>

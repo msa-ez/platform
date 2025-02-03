@@ -24,9 +24,9 @@
                 <v-divider></v-divider>
                 <v-card outlined>
                     <v-card-text>
-                        <span class="headline">Basic Info</span>
+                        <!-- <span class="headline">Basic Info</span> -->
                         <v-text-field
-                                label="Name"
+                                :label="$t('labelText.name')"
                                 v-model="value.name"
                                 autofocus
                                 :disabled="isReadOnly"

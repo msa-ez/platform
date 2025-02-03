@@ -6,7 +6,7 @@ class DevideBoundedContextGenerator extends JsonAIGenerator {
         super(client);
 
         this.model = "gpt-4o"
-        this.temperature = 0.5
+        this.temperature = 0.3
         this.generatorName = 'DevideBoundedContextGenerator'
     }
 
@@ -14,8 +14,14 @@ class DevideBoundedContextGenerator extends JsonAIGenerator {
         return `
 Analyze the following requirements and divide them into multiple Bounded Contexts (minimum 2).
 
-Focus on this division aspect:
+Focus on these aspects:
 ${this.client.input['devisionAspect']}
+
+Generate Number of Bounded Contexts:
+${this.client.input['generateOption']['numberOfBCs']}
+
+Additional requirements:
+${this.client.input['generateOption']['additionalOptions']}
 
 Requirements:
 ${this.summaryRequirements()}
@@ -27,13 +33,6 @@ Key principles:
 - High cohesion, low coupling
 - Group related behaviors and data together
 - Minimize inter-context dependencies
-
-Define relationships between contexts using these types:
-1. Conformist: A relationship where the downstream system follows the upstream system's model exactly
-2. Share Kernel: A relationship where two systems share a common model
-3. Anti-corruption: A relationship where the downstream system transforms the upstream system's model for its use
-4. Separate Ways: A relationship where two systems are completely independent
-5. Customer-Supplier: A relationship where the upstream system provides services to the downstream system
 
 Language Instruction of Output:
 - Use the same national language as the Requirements at thoughts, context of explanations, alias, requirements.
@@ -47,22 +46,15 @@ The format must be as follows:
         {
             "name":"name of Bounded Context in PascalCase",
             "alias":"alias of Bounded Context in language of Requirements",
+            "importance": "Core Domain" || "Supporting Domain" || "Generic Domain",
+            "implementationStrategy": "Event Sourcing" || "Rich Domain Model" || "Transaction Script" || "Active Record",
             "aggregates":[ // Aggregates that can be extracted from this Bounded Context.
                 {
                     "name":"name of Aggregate in PascalCase",
                     "alias":"alias of Aggregate in language of Requirements"
                 }
             ],
-            "requirements":[ // Use all of the requirements(userStory, DDL) context that are relevant to this Bounded Context.
-                {
-                    "type":"userStory",
-                    "text":"Original requirements text, containing only the problem domain relevant to this Bounded Context, copied verbatim"
-                },
-                {
-                    "type":"ddl",
-                    "text":"Original requirements text, containing only the problem domain relevant to this Bounded Context, copied verbatim"
-                }
-            ]
+            ${this.requirementsPrompt()}
         }
       ],
       "relations":
@@ -127,6 +119,23 @@ Should be used all of the Bounded Contexts.
             return `
 - userStory: ${this.client.input['requirements']['userStory']}
             `;
+        }
+    }
+
+    requirementsPrompt(){
+        if(this.client.input['requirements']['summarizedResult']==""){
+            return `"requirements":[ // Use all of the requirements(userStory, DDL) context that are relevant to this Bounded Context.
+                    {
+                        "type":"userStory",
+                    "text":"Original requirements text, containing only the problem domain relevant to this Bounded Context, copied verbatim"
+                },
+                {
+                    "type":"ddl",
+                    "text":"Original requirements text, containing only the problem domain relevant to this Bounded Context, copied verbatim"
+                }
+            ]`;
+        }else{
+            return `"requirements":[ ] // must be empty`;
         }
     }
 

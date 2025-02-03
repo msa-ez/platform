@@ -7,7 +7,7 @@
                     <v-select
                             v-model="tmpField.className"
                             :items="entityTypeList"
-                            label="Type"
+                            :label="$t('labelText.type')"
                             class="ml-2"
                             style="width: 80px;"
                             :disabled="isReadOnly"
@@ -15,7 +15,7 @@
                     <v-text-field
                             v-model="tmpField.name"
                             required
-                            label="Name"
+                            :label="$t('labelText.name')"
                             class="mx-2"
                             @keydown.enter="addObject"
                     ></v-text-field>
@@ -35,7 +35,7 @@
                     ></v-checkbox>
                     <v-checkbox
                             v-model="tmpField.isName"
-                            label="Name"
+                            :label="$t('labelText.name')"
                             class="mr-8"
                             :disabled="isReadOnly"
                     ></v-checkbox>
@@ -58,7 +58,7 @@
                     <v-text-field
                             v-model="tmpMethod.name"
                             required
-                            label="Name"
+                            :label="$t('labelText.name')"
                             class="mr-2"
                             @keydown.enter="addObject"
                     ></v-text-field>

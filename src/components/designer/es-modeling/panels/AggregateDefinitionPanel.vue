@@ -14,7 +14,12 @@
         <!-- <template v-if="AggregateRulePanelStatus" slot="root">
             <aggregate-rules-panel :copy-value="value"  :givenItems="givenItems" :attachedPolicies="attachedPolicies" @close="closePanel" @left="left"></aggregate-rules-panel>
         </template> -->
-
+        <template slot="md-level-btn">
+            <v-chip @click="toggleDesignLevel" style="margin-right: 16px; margin-bottom: 5px; cursor: pointer;" color="primary" outlined>
+                <v-icon left>{{ isDesignLevelVisible ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
+                {{ $t('CommandDefinitionPanel.implementationSettings') }}
+            </v-chip>
+        </template>
         <template slot="t-description-text">
             {{ $t('panelInfo.AggregateDefinitionPanel') }}
         </template>
@@ -26,8 +31,8 @@
 
         <template slot="t-edit-user">
             <div
-                    v-if="newEditUserImg.length > 0 && isReadOnly && !value.mirrorElement"
-                    style="text-align:center"
+                v-if="newEditUserImg.length > 0 && isReadOnly && !value.mirrorElement"
+                style="text-align:center"
             >
                 <v-chip
                         small
@@ -60,7 +65,7 @@
         </template> -->
 
         <template slot="generateWithAi">
-            <div>
+            <div v-show="isDesignLevelVisible">
                 <span>
                     <v-row class="ma-0 pa-0">
                         <v-spacer></v-spacer>
@@ -103,7 +108,7 @@
         </template>
 
         <template slot="element">
-            <div>
+            <div v-show="isDesignLevelVisible">
                 <v-card flat>
                     <v-card-text>
                         <event-storming-attribute

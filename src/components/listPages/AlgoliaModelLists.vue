@@ -27,6 +27,7 @@
                             :value="hover"
                             :append-icon="null"
                             :class="isForeign ? 'isForeign-nav-storage-list' : 'isForeign-not-nav-storage-list'"
+                            style="background-color: transparent;"
                         >
                             <template v-slot:activator>
                                 <v-list-item-title style="margin:5px 0px 0px 10px; font-weight: 700;">

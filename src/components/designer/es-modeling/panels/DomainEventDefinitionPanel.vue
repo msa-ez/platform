@@ -12,6 +12,13 @@
             @changeTranslate="changeTranslate"
     >
 
+        <template slot="md-level-btn">
+            <v-chip @click="toggleDesignLevel" style="margin-right: 16px; margin-bottom: 5px; cursor: pointer;" color="primary" outlined>
+                <v-icon left>{{ isDesignLevelVisible ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
+                {{ $t('CommandDefinitionPanel.implementationSettings') }}
+            </v-chip>
+        </template>
+
         <template slot="t-description-text">
             {{ $t('panelInfo.DomainEventDefinitionPanel') }}
         </template>
@@ -44,8 +51,7 @@
         </template>
 
         <template slot="element">
-
-            <div>
+            <div v-show="isDesignLevelVisible">
                 <v-card flat>
                     <v-card-text>
                         <event-storming-attribute
@@ -60,7 +66,7 @@
                 </v-card>
 
                 <div class="pa-4">
-                    <v-card-text class="pa-0 ma-0 panel-title">Trigger By LifeCycle</v-card-text>
+                    <v-card-text class="pa-0 ma-0 panel-title">{{ $t('DomainEventDefinitionPanel.triggerByLifeCycle') }}</v-card-text>
                     <detail-component
                         :title="$t('DomainEventDefinitionPanel.triggerByLifeCycleDetailTitle')"
                         :details="triggerByLifeCycleDetailSubTitle"
@@ -84,7 +90,7 @@
                 </div>
 
                 <div class="pa-4">
-                    <v-card-text class="panel-title pa-0 ma-0">Trigger By Command</v-card-text>
+                    <v-card-text class="panel-title pa-0 ma-0">{{ $t('DomainEventDefinitionPanel.triggerByCommand') }}</v-card-text>
                     <detail-component
                         :title="$t('DomainEventDefinitionPanel.triggerByCommandDetailTitle')"
                         :details="triggerByCommandDetailSubTitle"
@@ -99,7 +105,7 @@
                 </div>
 
                 <div class="pa-4">
-                    <v-card-text class="panel-title pa-0 ma-0">Trigger By Policy</v-card-text>
+                    <v-card-text class="panel-title pa-0 ma-0">{{ $t('DomainEventDefinitionPanel.triggerByPolicy') }}</v-card-text>
                     <detail-component
                         :title="$t('DomainEventDefinitionPanel.triggerByPolicyDetailTitle')"
                         :details="triggerByPolicyDetailSubTitle"
@@ -114,7 +120,7 @@
                 </div>
 
                 <div class="pa-4">
-                    <v-card-text class="panel-title pa-0 ma-0">Associated Aggregate</v-card-text>
+                    <v-card-text class="panel-title pa-0 ma-0">{{ $t('TitleText.associatedAggregate') }}</v-card-text>
                     <detail-component
                         :title="$t('DomainEventDefinitionPanel.associatedAggregateTitle')"
                         :details="associatedAggregateTitle"
@@ -128,7 +134,6 @@
                 </div>
             </div>
         </template>
-
     </common-panel>
 </template>
 

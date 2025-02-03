@@ -5,7 +5,7 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
-        this.checkInputParamsKeys = ["description", "boundedContext", "accumulatedDrafts"]
+        this.checkInputParamsKeys = ["description", "boundedContext", "accumulatedDrafts"] // Optional ["feedback"]
         this.progressCheckStrings = ["overviewThoughts", "options", "analysis", "defaultOptionIndex"]
     }
 
@@ -101,7 +101,12 @@ Please adhere to the following guidelines:
 10. Do not include comments in the output JSON object.
 11. **Avoid creating bidirectional references between Aggregates. Aggregate references should be unidirectional. For example, if 'Order' references 'Customer', 'Customer' should not directly reference 'Order'.**
     * **When deciding which Aggregate should reference another, consider the ownership and immutability. Typically, the Aggregate that owns the other or has a lifecycle dependency on the other should hold the reference. For example, 'Order' should reference 'Customer' because an order is always associated with a customer, and the customer's lifecycle is independent of the order. Conversely, 'Customer' should not reference 'Order' because a customer can exist without any orders.**
-
+12. **Do not create Aggregates that already exist in other Bounded Contexts within accumulatedDrafts:**
+    * Check accumulatedDrafts for existing Aggregates before creating new ones
+    * If an Aggregate with the same core concept already exists (e.g., 'Customer', 'Order'), do not recreate it
+    * Instead, reference existing Aggregates through ValueObjects with foreign keys
+    * Example: If 'Customer' Aggregate exists in CustomerManagement Bounded Context, other Bounded Contexts should use CustomerReference ValueObject instead of creating a new Customer Aggregate
+    * This prevents duplicate Aggregates across different Bounded Contexts and maintains a single source of truth
 
 Proposal Writing Recommendations:
 1. Aggregates should represent complete business capabilities and maintain their invariants:
@@ -583,7 +588,7 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
     }
 
     __buildJsonUserQueryInputFormat() {
-        return {
+        let userInputQuery = {
             "Accumulated Drafts": this.client.input.accumulatedDrafts,
 
             "Target Bounded Context Name": this.client.input.boundedContext.name,
@@ -621,11 +626,36 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
 * The following Aggregate should not be created because it already exists, but should be made to reference a ValueObject.: ${(this.client.input.existingAggregates && this.client.input.existingAggregates.length > 0) ? this.client.input.existingAggregates.join(", ") : "None"}
 `
         }
+
+        if(this.client.input.feedback)
+            userInputQuery["Feedback"] = `
+You should recreate the content of the draft you created earlier, incorporating the user's feedback.
+* Previous Draft Output
+${JSON.stringify(this.client.input.feedback.previousDraftOutput)}
+
+* User Feedbacks
+${this.client.input.feedback.feedbacks.join("\n")}`
+
+        return userInputQuery
     }
 
 
     onCreateModelGenerating(returnObj) {
-        returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.modelValue.output = (returnObj.modelValue.aiOutput.result) ? returnObj.modelValue.aiOutput.result : {}
+
+        if(returnObj.modelValue.output) {
+            this._removeThoughts(returnObj.modelValue.output)
+            this._removeOptionsWithExistingAggregates(returnObj.modelValue.output)
+            this._linkValueObjectsToReferencedAggregates(returnObj.modelValue.output)
+            this._enrichValueObjectsWithAggregateDetails(returnObj.modelValue.output)
+        }
+
+        if(this.client.input.feedback) {
+            returnObj.directMessage = `Re-generating options for ${this.client.input.boundedContextDisplayName} Bounded Context based on user feedback... (${returnObj.modelRawValue.length} characters generated)`
+            returnObj.isFeedbackBased = true
+        } else {
+            returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        }
     }
 
     onCreateModelFinished(returnObj) {
@@ -634,6 +664,7 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
 
         this._removeThoughts(returnObj.modelValue.output)
         this._removeOptionsWithExistingAggregates(returnObj.modelValue.output)
+        returnObj.modelValue.output.defaultOptionIndex = Math.min(returnObj.modelValue.output.defaultOptionIndex, returnObj.modelValue.output.options.length - 1)
         if(returnObj.modelValue.output.options.length === 0) 
             throw new Error("No valid options found")
 
@@ -641,7 +672,12 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
         this._enrichValueObjectsWithAggregateDetails(returnObj.modelValue.output)
         this._markRecommendedOption(returnObj.modelValue.output)
 
-        returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        if(this.client.input.feedback) {
+            returnObj.directMessage = `Re-generating options for ${this.client.input.boundedContextDisplayName} Bounded Context based on user feedback... (${returnObj.modelRawValue.length} characters generated)`
+            returnObj.isFeedbackBased = true
+        } else {
+            returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        }
     }
 
     _removeThoughts(output) {
@@ -673,6 +709,7 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
 
             let hasExistingAggregate = false;
             for (const aggregateInfo of option.structure) {
+                if (!aggregateInfo.aggregate || !aggregateInfo.aggregate.name) continue;
                 if (this.client.input.existingAggregates.includes(aggregateInfo.aggregate.name)) {
                     hasExistingAggregate = true;
                     break;
@@ -681,9 +718,10 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
             if (hasExistingAggregate) continue;
 
             const aggregateCount = option.structure.length;
-            if (!optionsByAggregateCount[aggregateCount]) {
+            if(!aggregateCount) continue
+            if (!optionsByAggregateCount[aggregateCount])
                 optionsByAggregateCount[aggregateCount] = [];
-            }
+            
             optionsByAggregateCount[aggregateCount].push(option);
         }
 
@@ -708,6 +746,8 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
                 if(!aggregate.valueObjects) continue
 
                 for(const valueObject of aggregate.valueObjects) {
+                    if(!valueObject.name) continue
+
                     if(validAggregateNames.includes(valueObject.name)) {
                         valueObject.referencedAggregateName = valueObject.name
                         break
@@ -734,6 +774,8 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
                 if(!aggregate.valueObjects) continue
 
                 for(const valueObject of aggregate.valueObjects) {
+                    if(!valueObject.name || !valueObject.alias) continue
+
                     if(!valueObject.referencedAggregateName) {
                         valueObject.name = valueObject.name.replace("Reference", "").trim()
                         valueObject.alias = valueObject.alias.replace("Reference", "").replace("참조", "").trim()
@@ -765,13 +807,16 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
         for(const option of [usedOption]) {
             if(!option.structure) continue
             
-            for(const aggregate of option.structure)
+            for(const aggregate of option.structure) {
+                if(!aggregate.aggregate || !aggregate.aggregate.name) continue
                 if(!validAggregateNames.includes(aggregate.aggregate.name))
                     validAggregateNames.push(aggregate.aggregate.name)
+            }
         }
 
         for(const accumulatedDraft of Object.values(this.client.input.accumulatedDrafts)) {
             for(const aggregateInfo of accumulatedDraft) {
+                if(!aggregateInfo.aggregate || !aggregateInfo.aggregate.name) continue
                 if(!validAggregateNames.includes(aggregateInfo.aggregate.name))
                     validAggregateNames.push(aggregateInfo.aggregate.name)
             }
@@ -782,14 +827,17 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
 
     __findAggregateAliasByName(aggregateName, output) {
         for(const aggregateInfos of Object.values(this.client.input.accumulatedDrafts)) {
-            for(const aggregateInfo of aggregateInfos)
+            for(const aggregateInfo of aggregateInfos) {
+                if(!aggregateInfo.aggregate || !aggregateInfo.aggregate.name) continue
                 if(aggregateInfo.aggregate.name === aggregateName) return aggregateInfo.aggregate.alias
+            }
         }
 
         for(const option of output.options) {
             if(!option.structure) continue
 
             for(const aggregate of option.structure) {
+                if(!aggregate.aggregate || !aggregate.aggregate.name) continue
                 if(aggregate.aggregate.name === aggregateName) return aggregate.aggregate.alias
             }
         }

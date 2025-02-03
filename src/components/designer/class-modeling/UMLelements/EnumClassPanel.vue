@@ -21,7 +21,7 @@
                     <v-card-text>
                         <v-text-field 
                                 v-model="value.name" 
-                                label="Name"
+                                :label="$t('labelText.name')"
                                 required
                                 autofocus
                                 :disabled="isReadOnly"

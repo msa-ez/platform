@@ -155,9 +155,9 @@
                 @close="closePanel"
                 @changedPanelValue="changedPanelValue"
                 @updateBCName="updateBCName()"
-                @onClickReGenerateInside="boundedContextPanelDto.actions.onClickReGenerateInside"
-                @onClickStopReGenerateInside="boundedContextPanelDto.actions.onClickStopReGenerateInside"
-                :generateDone="boundedContextPanelDto.generateDone"
+                @generateWithDescription="boundedContextPanelDto.actions.generateWithDescription"
+                @onClickStopGenerateWithDescription="boundedContextPanelDto.actions.onClickStopGenerateWithDescription"
+                :genAIDto="boundedContextPanelDto.genAIDto"
         ></bounded-context-panel>
 
     </div>
@@ -255,18 +255,21 @@
                 aggregateRoots: [],
 
                 boundedContextPanelDto: {
+                    genAIDto: {
+                        isGenerateWithDescriptionDone: true
+                    },
                     generateDone: true,
                     actions: {
-                        onClickReGenerateInside: () => {
+                        generateWithDescription: (boundedContext) => {
                         },
-                        onClickStopReGenerateInside: () => {
+                        onClickStopGenerateWithDescription: () => {
                         }
                     }
                 }
             };
         },
         created: function () {
-            this.boundedContextPanelDto.actions.onClickReGenerateInside = (boundedContext) => {
+            this.boundedContextPanelDto.actions.generateWithDescription = (boundedContext) => {
                 this.generateWithPreProcessingFunctionsGenerator(boundedContext)
             }
         },
@@ -425,78 +428,83 @@
             generateWithPreProcessingFunctionsGenerator(boundedContext){
                 const generator = new PreProcessingFunctionsGenerator({
                     input: {
-                        description: boundedContext.description,
+                        description: boundedContext.generateDescription,
                         boundedContext: boundedContext
                     },
                     
                     onFirstResponse: (returnObj) => {
                         this.closePanel()
 
-                        this.boundedContextPanelDto = {
-                            ...this.boundedContextPanelDto,
-                            generateDone: false,
-                            actions: {
-                                ...this.boundedContextPanelDto.actions,
-                                onClickStopReGenerateInside: () => {
-                                    returnObj.actions.stopGeneration()
-                                }
-                            }
+                        this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = false
+                        this.boundedContextPanelDto.onClickStopGenerateWithDescription = () => {
+                            returnObj.actions.stopGeneration()
                         }
 
-                        this.canvas.modelDraftDialogWithXAIDto = {
-                            ...this.canvas.modelDraftDialogWithXAIDto,
-                            isShow: true,
-                            draftOptions: [],
-                            draftUIInfos: {
-                                leftBoundedContextCount: 1,
-                                directMessage: "",
-                                progress: 0
-                            },
-                            isGeneratorButtonEnabled: true,
-                            actions: {
-                                stop: () => {
-                                    returnObj.actions.stopGeneration()
-                                },
-                                retry: () => {
-                                    returnObj.actions.retryGeneration()
-                                }
-                            }
+                        this.canvas.AggregateDraftDialogDto.isShow = true
+                        this.canvas.AggregateDraftDialogDto.draftOptions = []
+                        this.canvas.AggregateDraftDialogDto.draftUIInfos = {
+                            leftBoundedContextCount: 1,
+                            directMessage: "Preprocessing for generating aggregate actions...",
+                            progress: 0
+                        }
+                        this.canvas.AggregateDraftDialogDto.isGeneratorButtonEnabled = true
+                        this.canvas.AggregateDraftDialogDto.actions.stop = () => {
+                            returnObj.actions.stopGeneration()
+                        }
+                        this.canvas.AggregateDraftDialogDto.actions.retry = () => {
+                            returnObj.actions.retryGeneration()
                         }
                     },
 
                     onModelCreated: (returnObj) => {
-                        this.canvas.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
-                        this.canvas.modelDraftDialogWithXAIDto.draftUIInfos.progress = returnObj.progress
-                    },
-
-                    onGenerationSucceeded: (returnObj) => {
-                        this.canvas.modelDraftDialogWithXAIDto = {
-                            ...this.canvas.modelDraftDialogWithXAIDto,
-                            draftUIInfos: {
-                                leftBoundedContextCount: 1,
-                                directMessage: returnObj.directMessage,
-                                progress: 100
+                        const getXAIDtoDraftOptions = (analysisResult, targetBoundedContext, description) => {
+                            return {
+                                boundedContext: targetBoundedContext.name,
+                                boundedContextAlias: targetBoundedContext.displayName,
+                                description: description,
+                                options: [],
+                                conclusions: "",
+                                defaultOptionIndex: null,
+                                analysisResult: analysisResult
                             }
                         }
 
-                        this.generateWithDraftGeneratorByFunctions(boundedContext, JSON.stringify(returnObj.modelValue.output))
+                        this.canvas.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
+                        this.canvas.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
+                        this.canvas.AggregateDraftDialogDto.draftOptions = [
+                            getXAIDtoDraftOptions(
+                                returnObj.modelValue.analysisResult,
+                                returnObj.inputParams.boundedContext,
+                                returnObj.inputParams.description
+                            )
+                        ]
+                    },
+
+                    onGenerationSucceeded: (returnObj) => {
+                        this.canvas.AggregateDraftDialogDto.draftUIInfos = {
+                            leftBoundedContextCount: 1,
+                            directMessage: returnObj.directMessage,
+                            progress: 100
+                        }
+
+                        this.generateWithDraftGeneratorByFunctions(boundedContext, JSON.stringify(returnObj.modelValue.output), returnObj.modelValue.analysisResult)
                     },
 
                     onRetry: (returnObj) => {
                         alert(`[!] An error occurred while analysing your requirements, please try again..\n* Error log \n${returnObj.errorMessage}`)
-                        this.boundedContextPanelDto.generateDone = true
-                        this.canvas.modelDraftDialogWithXAIDto.isShow = false
+                        this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = true
+                        this.canvas.AggregateDraftDialogDto.isShow = false
                     },
 
                     onStopped: () => {
-                        this.boundedContextPanelDto.generateDone = true
-                        this.canvas.modelDraftDialogWithXAIDto.isShow = false
+                        this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = true
+                        this.canvas.AggregateDraftDialogDto.isShow = false
                     }
                 })
                 generator.generate()
             },
 
-            generateWithDraftGeneratorByFunctions(boundedContext, structuredDescription){
+            generateWithDraftGeneratorByFunctions(boundedContext, structuredDescription, analysisResult){
                 const generator = new DraftGeneratorByFunctions({
                     input: {
                         description: structuredDescription,
@@ -504,92 +512,108 @@
                         accumulatedDrafts: DraftGeneratorByFunctions.esValueToAccumulatedDrafts(
                             this.canvas.value,
                             boundedContext
-                        )
+                        ),
+                        analysisResult: analysisResult
                     },
 
                     onFirstResponse: (returnObj) => {
                         this.closePanel()
-
-                        this.boundedContextPanelDto = {
-                            ...this.boundedContextPanelDto,
-                            generateDone: false,
-                            actions: {
-                                ...this.boundedContextPanelDto.actions,
-                                onClickStopReGenerateInside: () => {
-                                    returnObj.actions.stopGeneration()
-                                }
-                            }
+                        
+                        this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = false
+                        this.boundedContextPanelDto.onClickStopGenerateWithDescription = () => {
+                            returnObj.actions.stopGeneration()
                         }
 
-                        this.canvas.modelDraftDialogWithXAIDto = {
-                            ...this.canvas.modelDraftDialogWithXAIDto,
-                            isShow: true,
-                            draftOptions: [],
-                            draftUIInfos: {
-                                leftBoundedContextCount: 1,
-                                directMessage: "",
-                                progress: 0
-                            },
-                            isGeneratorButtonEnabled: true,
-                            actions: {
-                                ...this.canvas.modelDraftDialogWithXAIDto.actions,
-                                stop: () => {
-                                    returnObj.actions.stopGeneration()
+                        this.canvas.AggregateDraftDialogDto.isShow = true
+                        this.canvas.AggregateDraftDialogDto.draftUIInfos = {
+                            leftBoundedContextCount: 1,
+                            directMessage: "",
+                            progress: 0
+                        }
+                        this.canvas.AggregateDraftDialogDto.isGeneratorButtonEnabled = true
+                        this.canvas.AggregateDraftDialogDto.actions.stop = () => {
+                            returnObj.actions.stopGeneration()
+                        }
+                        this.canvas.AggregateDraftDialogDto.actions.retry = () => {
+                            returnObj.actions.retryGeneration()
+                        }
+                        this.canvas.AggregateDraftDialogDto.actions.feedbackFromDraft = (boundedContextInfo, feedback, draftOptions) => {
+                            console.log(`[*] Feedback from draft`, {boundedContextInfo, feedback, draftOptions})
+
+                            const passedAnalysisResult = draftOptions.find(option => option.boundedContext === boundedContextInfo.boundedContext).analysisResult
+                            const targetBoundedContext = boundedContextInfo.options[0].boundedContext
+                            
+                            generator.client.input = {
+                                description: boundedContextInfo.description,
+                                boundedContext: targetBoundedContext,
+                                accumulatedDrafts: DraftGeneratorByFunctions.esValueToAccumulatedDrafts(
+                                    this.canvas.value,
+                                    targetBoundedContext
+                                ),
+                                feedback: {
+                                    previousDraftOutput: {
+                                        options: boundedContextInfo.options.map(option => option.structure)
+                                    },
+                                    feedbacks: [
+                                        feedback
+                                    ]
                                 },
-                                retry: () => {
-                                    returnObj.actions.retryGeneration()
-                                }
+                                analysisResult: passedAnalysisResult
                             }
+                            generator.generate()
                         }
                     },
 
                     onModelCreated: (returnObj) => {
-                        this.canvas.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
-                        this.canvas.modelDraftDialogWithXAIDto.draftUIInfos.progress = returnObj.progress
-                    },
-
-                    onGenerationSucceeded: (returnObj) => {
-                        const getXAIDtoDraftOptions = (output, targetBoundedContext, description) => {
+                        const getXAIDtoDraftOptions = (output, targetBoundedContext, description, analysisResult) => {
                             return {
                                 boundedContext: targetBoundedContext.name,
                                 boundedContextAlias: targetBoundedContext.displayName,
                                 description: description,
-                                options: output.options.map(option => ({
+                                options: (output.options) ? output.options.map(option => ({
                                     ...option,
                                     boundedContext: targetBoundedContext,
                                     description: description
-                                })),
+                                })) : [],
                                 conclusions: output.conclusions,
-                                defaultOptionIndex: output.defaultOptionIndex
+                                defaultOptionIndex: output.defaultOptionIndex,
+                                analysisResult: analysisResult
                             }
                         }
 
-                        this.canvas.modelDraftDialogWithXAIDto = {
-                            ...this.canvas.modelDraftDialogWithXAIDto,
-                            draftOptions: [getXAIDtoDraftOptions(
+
+                        this.canvas.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
+                        this.canvas.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
+                        if(!returnObj.modelValue.output) return
+
+                        this.canvas.AggregateDraftDialogDto.draftOptions = [
+                            getXAIDtoDraftOptions(
                                 returnObj.modelValue.output,
                                 returnObj.inputParams.boundedContext,
-                                returnObj.inputParams.description
-                            )],
-                            draftUIInfos: {
+                                returnObj.inputParams.description,
+                                returnObj.inputParams.analysisResult
+                            )
+                        ]
+                    },
+
+                    onGenerationSucceeded: (returnObj) => {
+                        this.canvas.AggregateDraftDialogDto.draftUIInfos = {
                                 leftBoundedContextCount: 0,
                                 directMessage: returnObj.directMessage,
                                 progress: 100
                             }
-                        }
-
-                        this.boundedContextPanelDto.generateDone = true
+                        this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = true
                     },
 
                     onRetry: (returnObj) => {
                         alert(`[!] There was an error creating your draft, please try again.\n* Error log \n${returnObj.errorMessage}`)
-                        this.boundedContextPanelDto.generateDone = true
-                        this.canvas.modelDraftDialogWithXAIDto.isShow = false
+                        this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = true
+                        this.canvas.AggregateDraftDialogDto.isShow = false
                     },
 
                     onStopped: () => {
-                        this.boundedContextPanelDto.generateDone = true
-                        this.canvas.modelDraftDialogWithXAIDto.isShow = false
+                        this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = true
+                        this.canvas.AggregateDraftDialogDto.isShow = false
                     }
                 })
                 generator.generate()

@@ -122,7 +122,7 @@ Please follow these rules.
                 "sections": [
                     {
                         "name": "<name>",
-                        "type": "table",
+                        "type": "<form|table>",
                         "fields": [{"name": "<name>", "type": "<type>", ["required": <true|false>]}],
                         "actions": ["<actions>"],
                         "filters": ["<filters>"],
@@ -358,13 +358,24 @@ The 'Reservation Status' screen should show all booking history for guests. It s
 
 
     onCreateModelGenerating(returnObj) {
+        if(returnObj.modelValue.aiOutput.result)
+            this._makeOutputs(returnObj)
+
         returnObj.directMessage = `Analysing user requirements for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
     }
 
     onCreateModelFinished(returnObj) {
-        returnObj.modelValue.output = returnObj.modelValue.aiOutput.result
-        this._removeThoughts(returnObj.modelValue.output)
+        this._makeOutputs(returnObj)
         returnObj.directMessage = `Analysing user requirements for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+    }
+
+    _makeOutputs(returnObj) {
+        returnObj.modelValue.output = returnObj.modelValue.aiOutput.result
+        returnObj.modelValue.analysisResult = {
+            overviewThoughts: returnObj.modelValue.aiOutput.overviewThoughts,
+            ...returnObj.modelValue.output
+        }
+        this._removeThoughts(returnObj.modelValue.output)
     }
 
     _removeThoughts(output) {
