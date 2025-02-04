@@ -7,11 +7,15 @@
                 <v-icon>mdi-close</v-icon>
             </v-btn> -->
         </v-card-title>
+
+        <v-card-subtitle>
+            <div v-if="Object.keys(resultDevideBoundedContext).length > 0">
+                <p class="mb-0">{{ Object.keys(resultDevideBoundedContext)[0] }}</p>
+            </div>
+        </v-card-subtitle>
+
         <v-card-subtitle>
             <div class="d-flex align-center">
-                <div v-if="Object.keys(resultDevideBoundedContext).length > 0">
-                    <p>{{ Object.keys(resultDevideBoundedContext)[0] }}</p>
-                </div>
                 <div v-if="isGeneratingBoundedContext">
                     <p class="mb-0">{{ $t('DevideBoundedContextDialog.lodingMessage') }}</p>
                 </div>

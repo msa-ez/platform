@@ -73,7 +73,7 @@
     "personaAspect": "페르소나",
     "transactionPerformanceAspect": "트랜잭션/성능",
     "infrastructureAspect": "인프라",
-    "lodingMessage": "관점별 Bounded Context 생성 중...",
+    "lodingMessage": "Bounded Context 생성 중...",
     "mappingMessage": "요구사항 매핑 중...",
     "reasonOfSeparation": "분할 이유",
     "aspect" : "관점",
