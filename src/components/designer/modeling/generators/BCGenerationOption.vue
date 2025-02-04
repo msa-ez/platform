@@ -1,6 +1,5 @@
 <template>
     <v-card
-        v-model="show"
         persistent
     >
         <v-card>
@@ -79,7 +78,7 @@
                 <v-btn
                     color="primary"
                     @click="onConfirm"
-                    :disabled="!isValid || isSummarizedStarted || isGeneratingBoundedContext || isStartMapping"
+                    :disabled="!isValid || isSummarizeStarted || isGeneratingBoundedContext || isStartMapping"
                 >
                     Generate
                 </v-btn>
@@ -93,7 +92,7 @@ export default {
     name: 'bc-generation-options-dialog',
     
     props: {
-        isSummarizedStarted: {
+        isSummarizeStarted: {
             type: Boolean,
             default: false
         },
@@ -131,14 +130,7 @@ export default {
         }
     },
 
-    watch: {
-        show(newVal) {
-            if (newVal) {
-                // Dialog가 열릴 때 기본값으로 모든 aspect 선택
-                this.localOptions.selectedAspects = [...this.availableAspects];
-            }
-        }
-    },
+    watch: {},
 
     methods: {
         onConfirm() {

@@ -95,29 +95,12 @@
 
             <v-card v-if="showBCGenerationOption" class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
                 <BCGenerationOption
-                    :isSummarizedStarted="isSummarizedStarted"
+                    :isSummarizeStarted="isSummarizeStarted"
                     :isGeneratingBoundedContext="isGeneratingBoundedContext"
                     :isStartMapping="isStartMapping"
                     @setGenerateOption="setGenerateOption"
                 ></BCGenerationOption>
             </v-card>
-
-            <!-- <v-card v-if="showDevideBoundedContextDialog" class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
-                <DevideBoundedContextDialog
-                    :resultDevideBoundedContext="resultDevideBoundedContext"
-                    :isStartMapping="isStartMapping"
-                    :processingRate="processingRate"
-                    :currentProcessingBoundedContext="currentProcessingBoundedContext"
-                    :devisionAspect="devisionAspect"
-                    :summarizedResult="summarizedResult"
-                    @createModel="generateAggregateDrafts"
-                    @closeDialog="showDevideBoundedContextDialog = false"
-                    @stop="stop"
-                    @reGenerate="reGenerate"
-                    @reGenerateAspect="reGenerateAspect"
-                    @mappingRequirements="mappingRequirements"
-                ></DevideBoundedContextDialog>
-            </v-card> -->
 
             <ESDialogerMessages 
                 :messages="messages"
@@ -126,7 +109,7 @@
                 @createModel="generateAggregateDrafts"
                 @stop="stop"
                 @reGenerate="reGenerate"
-                @reGenerateAspect="reGenerateAspect"
+                @reGenerateWithFeedback="reGenerateWithFeedback"
                 @mappingRequirements="mappingRequirements"
             ></ESDialogerMessages>
         </div>
@@ -141,21 +124,6 @@
                 </div>
             </v-col>
         </div>
-
-        <!-- <v-dialog
-                v-model="showDevideBoundedContextDialog"
-                persistent
-                max-width="1200"
-                max-height="800"
-          >
-            <DevideBoundedContextDialog
-                :resultDevideBoundedContext="resultDevideBoundedContext"
-                @createModel="jump"
-                @closeDialog="showDevideBoundedContextDialog = false"
-                @stop="stop"
-                @reGenerate="reGenerate"
-            ></DevideBoundedContextDialog>
-        </v-dialog> -->
     </div>
 
 </template>
@@ -525,17 +493,6 @@
                         this.isCreatedModel = false
                     }
                 },1000)
-            },
-            "showDevideBoundedContextDialog": {
-                handler: function(newVal, oldVal) {
-                    if(newVal){
-                        if(newVal){
-                            this.state.generator = "DevideBoundedContextGenerator";
-                        }else{
-                            this.state.generator = "EventOnlyESGenerator";
-                        }
-                    }
-                }
             }
         },
         mounted(){
@@ -567,11 +524,9 @@
                 done: false,
                 generator: null,
                 generatorName: null,
-                showDevideBoundedContextDialog: false,
                 showBCGenerationOption: false,
                 resultDevideBoundedContext: {},
-                devisionAspect: [],
-                devisionAspectIndex: 0,
+                selectedAspect: "",
 
                 activeTab: null,
                 generatorInputTabs: ['UserStory', 'DDL'],
@@ -675,19 +630,16 @@
                 }
 
                 if(this.state.generator === "DevideBoundedContextGenerator"){
-                    if(me.devisionAspectIndex < me.devisionAspect.length - 1) {
-                        if(!me.generator) me.generator = new DevideBoundedContextGenerator(me);
-                        me.generator.generate();
-                        me.devisionAspectIndex++;
-                    }else{
-                        me.devisionAspectIndex = 0;
-                        me.isGeneratingBoundedContext = false;
-                        me.generator = new Generator(me);
-                        me.state.generator = "EventOnlyESGenerator";
-                        me.generatorName = "EventOnlyESGenerator";
-                    }
+                    me.devisionAspectIndex = 0;
+                    me.isGeneratingBoundedContext = false;
+                    me.updateMessageState(me.messages[me.messages.length-1].uniqueId, {
+                        isGeneratingBoundedContext: me.isGeneratingBoundedContext
+                    });
+                    me.generator = new Generator(me);
+                    me.state.generator = "EventOnlyESGenerator";
+                    me.generatorName = "EventOnlyESGenerator";
 
-                    me.input['devisionAspect'] = me.devisionAspect[me.devisionAspectIndex];
+                    me.input['devisionAspect'] = me.selectedAspect;
                     // 현재 메시지의 result를 깊은 복사로 가져옴
                     const currentMessage = me.messages[me.messages.length-1];
                     const newResult = JSON.parse(JSON.stringify(currentMessage.result || {}));
@@ -696,51 +648,52 @@
                     newResult[model.devisionAspect] = JSON.parse(JSON.stringify(model));
                     
                     // 메시지 업데이트 시 새로운 객체로 교체
-                    me.$set(me.messages, me.messages.length-1, {
-                        ...currentMessage,
-                        result: newResult,
-                        isStartMapping: this.isStartMapping,
-                        processingRate: this.processingRate,
-                        currentProcessingBoundedContext: this.currentProcessingBoundedContext,
+                    me.updateMessageState(currentMessage.uniqueId, {
+                        result: JSON.parse(JSON.stringify(newResult))
                     });
 
                     // resultDevideBoundedContext도 독립적으로 업데이트
                     me.resultDevideBoundedContext = JSON.parse(JSON.stringify(newResult));
                     console.log("output: ", model)
-
-                    // 요약 결과가 있으면 요약 결과를 기반으로 매핑 진행
-                    if(me.summarizedResult.length > 0 && me.userStoryChunks.length > 0 && me.devisionAspectIndex == 0){
-                        // me.mappingRequirements();
-                        return;
-                    }
                 }
 
                 if(me.state.generator === "RequirementsMappingGenerator"){
                     console.log("currentChunk: ", me.userStoryChunksIndex+1, "/", me.userStoryChunks.length);
-                    console.log("Aspect: ", me.devisionAspect[me.devisionAspectIndex]);
-                    console.log("BoundedContext: ", me.resultDevideBoundedContext[me.devisionAspect[me.devisionAspectIndex]].boundedContexts[me.bcInAspectIndex]);
+                    console.log("Aspect: ", me.selectedAspect);
+                    console.log("BoundedContext: ", me.resultDevideBoundedContext[me.selectedAspect].boundedContexts[me.bcInAspectIndex]);
                     console.log("Requirements: ", model.requirements);
 
                     me.processingRate = Math.round((me.userStoryChunksIndex+1) / me.userStoryChunks.length * 100);
-                    me.currentProcessingBoundedContext = me.resultDevideBoundedContext[me.devisionAspect[me.devisionAspectIndex]].boundedContexts[me.bcInAspectIndex].alias;
+                    me.currentProcessingBoundedContext = me.resultDevideBoundedContext[me.selectedAspect].boundedContexts[me.bcInAspectIndex].alias;
 
-                    me.resultDevideBoundedContext[me.devisionAspect[me.devisionAspectIndex]]
+                    // 현재 메시지의 result를 깊은 복사로 가져옴
+                    const currentMessage = me.messages[me.messages.length-1];
+                    me.updateMessageState(currentMessage.uniqueId, {
+                        result: JSON.parse(JSON.stringify(me.resultDevideBoundedContext)),
+                        processingRate: me.processingRate,
+                        currentProcessingBoundedContext: me.currentProcessingBoundedContext
+                    });
+                    
+                    me.resultDevideBoundedContext[me.selectedAspect]
                     .boundedContexts[me.bcInAspectIndex].requirements = [
-                        ...(me.resultDevideBoundedContext[me.devisionAspect[me.devisionAspectIndex]]
+                        ...(me.resultDevideBoundedContext[me.selectedAspect]
                             .boundedContexts[me.bcInAspectIndex].requirements || []),
                         ...model.requirements.filter(req => req.type != undefined)
                     ];
                     if(me.userStoryChunksIndex < me.userStoryChunks.length - 1){
                         me.userStoryChunksIndex++;
                     }else{
-                        if(me.bcInAspectIndex == me.resultDevideBoundedContext[me.devisionAspect[me.devisionAspectIndex]].boundedContexts.length-1){
+                        if(me.bcInAspectIndex == me.resultDevideBoundedContext[me.selectedAspect].boundedContexts.length-1){
                             me.bcInAspectIndex = 0;
                             me.userStoryChunksIndex = 0;
                             me.processingRate = 0;
                             me.currentProcessingBoundedContext = "";
                             me.isStartMapping = false;
+                            me.updateMessageState(me.messages[me.messages.length-1].uniqueId, {
+                                isStartMapping: me.isStartMapping
+                            });
 
-                            me.generateAggregateDrafts(me.resultDevideBoundedContext[me.devisionAspect[me.devisionAspectIndex]]);
+                            me.generateAggregateDrafts(me.resultDevideBoundedContext[me.selectedAspect]);
                             return;
                         }
                         me.userStoryChunksIndex = 0;
@@ -794,44 +747,25 @@
                 this.generateDevideBoundedContext();
             },
 
-            reGenerateAspect(payload) {
-                const { aspect, feedback, messageId } = payload;
+            reGenerateWithFeedback(payload) {
+                const { feedback, messageId } = payload;
 
                 this.reGenerateMessageId = messageId;
                 
                 const targetMessageIndex = this.messages.findIndex(msg => msg.uniqueId === messageId);
                 if (targetMessageIndex === -1) return;
                 
-                const newResult = {};
                 const originalMessage = this.messages[targetMessageIndex];
-                
-                Object.keys(originalMessage.result).forEach(key => {
-                    if (key !== aspect) {
-                        newResult[key] = JSON.parse(JSON.stringify(originalMessage.result[key]));
-                    }
-                });
-                
-                // const newMessage = {
-                //     uniqueId: this.uuid(),
-                //     type: 'boundedContextResult',
-                //     result: {},
-                //     isStartMapping: false,
-                //     processingRate: 0,
-                //     currentProcessingBoundedContext: "",
-                //     devisionAspect: [...this.devisionAspect],
-                //     summarizedResult: this.summarizedResult,
-                //     timestamp: new Date()
-                // };
                 
                 // 새 메시지를 기존 메시지 다음에 추가
                 this.messages.splice(targetMessageIndex + 1, 0, this.generateMessage("userMessage", {}, feedback));
                 this.messages.splice(targetMessageIndex + 2, 0, this.generateMessage("boundedContextResult", {}, feedback));
                 
                 // Generator 실행
-                this.input['devisionAspect'] = aspect;
+                this.input['devisionAspect'] = this.selectedAspect;
                 this.input['previousAspectModel'] = {
-                    boundedContexts: this.resultDevideBoundedContext[aspect].boundedContexts,
-                    relations: this.resultDevideBoundedContext[aspect].relations
+                    boundedContexts: this.resultDevideBoundedContext[this.selectedAspect].boundedContexts,
+                    relations: this.resultDevideBoundedContext[this.selectedAspect].relations
                 };
                 this.input['feedback'] = feedback;
                 this.generator = new DevideBoundedContextGenerator(this);
@@ -841,7 +775,7 @@
             },
 
             setGenerateOption(option){
-                this.devisionAspect.push(option.selectedAspects.join('+'));
+                this.selectedAspect = option.selectedAspects.join('+');
                 this.bcGenerationOption = option;
                 this.generateDevideBoundedContext();
             },
@@ -850,7 +784,9 @@
                 this.generator = new RecursiveRequirementsSummarizer(this);
                 this.state.generator = "RecursiveRequirementsSummarizer";
                 this.generatorName = "RecursiveRequirementsSummarizer";
+
                 this.isSummarizeStarted = true;
+
                 try {
                     const summarizedText = await this.generator.summarizeRecursively(this.value.userStory);
                     // 요약 결과 저장
@@ -858,7 +794,9 @@
                     this.userStoryChunksIndex = 0;
                     this.summarizedResult = summarizedText;
                     console.log("최종 요약 결과: ", this.summarizedResult);
+
                     this.isSummarizeStarted = false;
+
                     // BC 생성이 대기 중이었다면 진행
                     if (this.pendingBCGeneration) {
                         this.generateDevideBoundedContext();
@@ -871,20 +809,20 @@
             mappingRequirements(aspect){
                 // 요약 > 생성된 bc의 requirements 매핑
                 this.isStartMapping = true;
+                this.updateMessageState(this.messages[this.messages.length-1].uniqueId, {
+                    isStartMapping: this.isStartMapping
+                });
+
                 this.generator = new RequirementsMappingGenerator(this);
                 this.state.generator = "RequirementsMappingGenerator";
                 this.generatorName = "RequirementsMappingGenerator";
 
-                if(aspect){
-                    this.devisionAspectIndex = this.devisionAspect.findIndex(x => x == aspect);
-                    this.currentProcessingBoundedContext = this.resultDevideBoundedContext[this.devisionAspect[this.devisionAspectIndex]].boundedContexts[this.bcInAspectIndex].alias;
-                }
-                this.input['boundedContext'] = this.resultDevideBoundedContext[this.devisionAspect[this.devisionAspectIndex]].boundedContexts[this.bcInAspectIndex];
+                this.input['boundedContext'] = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts[this.bcInAspectIndex];
                 this.input['requirementChunk'] = this.userStoryChunks[this.userStoryChunksIndex];
                 this.generator.generate();
             },
 
-            generateDevideBoundedContext(aspect, feedback){
+            generateDevideBoundedContext(feedback){
                 // 현재 요약본이 너무 길면 먼저 요약 진행
                 if (this.value.userStory.length > 6000 && this.summarizedResult.length == 0) {
                     this.pendingBCGeneration = true;
@@ -896,21 +834,10 @@
                 this.state.generator = "DevideBoundedContextGenerator";
                 this.generatorName = "DevideBoundedContextGenerator";
 
-                if(!aspect){
-                    this.devisionAspectIndex = 0;
-                    this.input['devisionAspect'] = this.devisionAspect[this.devisionAspectIndex];
-                    this.messages.push(this.generateMessage("boundedContextResult", {}, feedback))
-                }else{
-                    // copyResult[aspect] = {}
-                    // this.addBoundedContextResult(copyResult, feedback)
-
-                    // this.input['previousAspectModel'] = this.resultDevideBoundedContext[aspect];
-                    // this.resultDevideBoundedContext[aspect] = {};
-                    // this.devisionAspectIndex = 5;
-                    // this.input['devisionAspect'] = aspect;
-                    // this.input['feedback'] = feedback;
-                }
-
+                this.devisionAspectIndex = 0;
+                this.input['devisionAspect'] = this.selectedAspect;
+                this.messages.push(this.generateMessage("boundedContextResult", {}))
+                
                 this.input['generateOption'] = this.bcGenerationOption;
                 
                 this.input['requirements'] = {
@@ -921,7 +848,9 @@
 
                 this.generator.generate();
                 this.isGeneratingBoundedContext = true;
-                this.showDevideBoundedContextDialog = true;
+                this.updateMessageState(this.messages[this.messages.length-1].uniqueId, {
+                    isGeneratingBoundedContext: this.isGeneratingBoundedContext
+                });
             },
 
             uuid: function () {
@@ -1073,9 +1002,10 @@
                         type: type,
                         result: result,
                         isStartMapping: this.isStartMapping,
+                        isGeneratingBoundedContext: this.isGeneratingBoundedContext,
                         processingRate: this.processingRate,
                         currentProcessingBoundedContext: this.currentProcessingBoundedContext,
-                        devisionAspect: this.devisionAspect,
+                        selectedAspect: this.selectedAspect,
                         summarizedResult: this.summarizedResult,
                         timestamp: new Date()
                     };
@@ -1087,7 +1017,17 @@
                         timestamp: new Date()
                     };
                 }
-            }
+            },
+
+            updateMessageState(messageId, updates) {
+                const messageIndex = this.messages.findIndex(msg => msg.uniqueId === messageId);
+                if (messageIndex !== -1) {
+                    this.$set(this.messages, messageIndex, {
+                        ...this.messages[messageIndex],
+                        ...updates
+                    });
+                }
+            },
         }
     }
 </script>
