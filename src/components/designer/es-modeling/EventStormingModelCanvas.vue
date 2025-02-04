@@ -5648,10 +5648,7 @@
             },
             applyModelingListsDialog(model) {
                 var me = this;
-                me.modelingPBCElement = me.generatePBC(
-                    me.modelingPBCElement,
-                    model
-                );
+                me.modelingPBCElement = me.generatePBC(me.modelingPBCElement, model);
                 me.addElementAction(me.modelingPBCElement);
                 me.closeModelingListsDialog();
             },
