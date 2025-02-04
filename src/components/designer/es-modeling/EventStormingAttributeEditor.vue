@@ -502,7 +502,9 @@
                         Object.values(me.entities.relations).forEach(function(item) {
                             if(item) {
                                 if(item.to == targetVo.elementView.id && item.from == me.elementId) {
-                                    me.entities.relations[item.relationView.id] = null
+                                    if(item.relationType != 'Generalization') {
+                                        me.entities.relations[item.relationView.id] = null
+                                    }
                                 }
                             }
                         })
