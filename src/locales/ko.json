@@ -101,7 +101,8 @@
       "boundedContextAlias": "별칭",
       "importance": "중요도",
       "implementationStrategy": "구현 전략"
-    }
+    },
+    "selectAspects": "관점 선택"
   },
   "ViewDefinitionPanel" : {
     "readModelAttributes": "Read Model 속성",

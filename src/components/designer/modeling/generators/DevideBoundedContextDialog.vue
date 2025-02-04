@@ -393,30 +393,18 @@
 
                 if (!this.resultDevideBoundedContext[key] || !this.resultDevideBoundedContext[key].boundedContexts) return [];
     
-                return this.resultDevideBoundedContext[key].boundedContexts.map(bc => ({
-                    name: bc.alias,
-                    originalName: bc.name,
-                    importance: bc.importance || '',
-                    implementationStrategy: bc.implementationStrategy || '',
-                    requirements: bc.requirements ? bc.requirements.map(req => ({
-                        type: req.type || '',
-                        text: req.text || req
-                    })) : [],
-                }));
-            },
-
-            getBoundedContextRequirements() {
-                let key = Object.keys(this.resultDevideBoundedContext)[0];
-
-                if (!this.resultDevideBoundedContext[key] || !this.resultDevideBoundedContext[key].boundedContexts) return [];
-    
-                return this.resultDevideBoundedContext[key].boundedContexts.flatMap(bc => {
-                    if (!bc.requirements) return [];
-                    
-                    return bc.requirements.map(req => ({
+                return this.resultDevideBoundedContext[key].boundedContexts.map(bc => {
+                    let requirementNumber = 1;
+                    return {
                         name: bc.alias,
-                        requirements: req.text || req
-                    }));
+                        originalName: bc.name,
+                        importance: bc.importance || '',
+                        implementationStrategy: bc.implementationStrategy || '',
+                        requirements: bc.requirements ? bc.requirements.map(req => ({
+                            type: requirementNumber++,
+                            text: req.text || req
+                        })) : [],
+                    };
                 });
             },
 
@@ -484,15 +472,6 @@
                     this.renderKey++;
                     this.tableRenderKey++;
                 }
-            },
-
-            validateAndSave(item) {
-                if (!this.editedFields.name) {
-                    return;
-                }
-                
-                this.saveItemEdit(item, 'name');
-                this.currentEditItem = null;
             },
 
             initializeEditFields(item) {
