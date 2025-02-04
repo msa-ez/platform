@@ -1,6 +1,8 @@
 <template>
     <div style="height:85vh; background-color:white;">
-        <v-row style="margin:0px; padding:0px; margin-top: 20px;">
+        <v-row class="ma-0 pa-0"
+            style="height:48px;"
+        >
             <v-col cols="auto">
                 <v-icon v-if="detailMarketMode" @click="closeDetailDialog()" class="marketplace-details-page-back-btn">mdi-arrow-left</v-icon>
             </v-col>
@@ -9,7 +11,9 @@
                 <v-icon @click="closeDialog()">mdi-close</v-icon>
             </v-col>
         </v-row>
-        <div v-if="!detailMarketMode">
+        <div v-if="!detailMarketMode"
+            style="height:calc(100% - 48px); overflow: auto;"
+        >
             <div v-if="isPBCMarket">
                 <!-- PBCs -->
                 <v-tabs
@@ -129,7 +133,7 @@
                                                 @click="clickFilteredPBC(i)"
                                         >
                                             <v-list-item-icon class="marketplace-list-icon-box">
-                                                <Icon class="gs-icon-style marketplace-list-icon"
+                                                <Icons class="gs-icon-style marketplace-list-icon"
                                                     :icon="item.icon"
                                                 />
                                             </v-list-item-icon>
@@ -302,7 +306,7 @@
                                                 @click="clickFilteredTemplate(i)"
                                         >
                                             <v-list-item-icon class="marketplace-list-icon-box">
-                                                <Icon class="gs-icon-style marketplace-list-icon"
+                                                <Icons class="gs-icon-style marketplace-list-icon"
                                                     :icon="item.icon"
                                                 />
                                             </v-list-item-icon>
@@ -366,7 +370,7 @@
                                                 @click="clickFilteredTopping(i)"
                                         >
                                             <v-list-item-icon class="marketplace-list-icon-box">
-                                                <Icon class="gs-icon-style marketplace-list-icon"
+                                                <Icons class="gs-icon-style marketplace-list-icon"
                                                     :icon="item.icon"
                                                 />
                                             </v-list-item-icon>
@@ -422,50 +426,64 @@
                 </v-tabs-items>
             </div>
         </div>
-        <div v-else class="marketplace-details-page-box">
-            <div v-if="selectedTemplate">
-                <div>
-                    <v-row class="marketplace-details-page-row">
-                        <v-col cols="5" lg="3" md="4" sm="5"
-                               class="marketplace-details-page-col"
+        <div v-else class="marketplace-details-page-box"
+            style="height:calc(100% - 48px); overflow: auto;"
+        >
+        <div v-if="selectedTemplate">
+            <div>
+                <v-row
+                    class="marketplace-details-page-row"
+                    align="start"
+                    justify="center"
+                >
+                    <!-- 왼쪽 컬럼 (이미지, 타이틀, 설명, 평점, 태그, 버튼) -->
+                    <v-col cols="12" md="4" lg="3" class="marketplace-details-page-col">
+                        <v-img :src="selectedTemplate.imageUrl"></v-img>
+                        <v-card-title>{{ selectedTemplate.name }}</v-card-title>
+                        <v-card-subtitle>{{ selectedTemplate.description }}</v-card-subtitle>
+
+                        <v-rating
+                            class="marketplace-details-page-rating"
+                            v-model="selectedTemplate.rating"
+                            bg-color="gray"
+                            color="#231813"
+                            half-increments
+                            readonly
+                            size="16"
                         >
-                            <v-img :src="selectedTemplate.imageUrl"></v-img>
-                            <v-card-title>{{ selectedTemplate.name }}</v-card-title>
-                            <v-card-subtitle>{{ selectedTemplate.description }}</v-card-subtitle>
-                            <v-rating
-                                    class="marketplace-details-page-rating"
-                                    v-model="selectedTemplate.rating"
-                                    bg-color="gray"
-                                    color="#231813"
-                                    half-increments
-                                    readonly
-                                    size="16"
-                            >
-                                Rating: {{ selectedTemplate.rating }}
-                            </v-rating>
-                            <div class="marketplace-chip-box">
-                                <div>tags:</div>
-                                <v-chip v-for="tag in selectedTemplate.tags" :key="tag"
-                                >{{ tag }}
-                                </v-chip>
-                            </div>
-                            <v-btn @click="applyTemplate(selectedTemplate)" color="primary"
-                                   class="marketplace-details-page-apply-btn"
-                            >apply
-                            </v-btn>
-                        </v-col>
-                        <v-divider vertical />
-                        <v-col cols="7" lg="9" md="8" sm="7">
-                            <vue-markdown
-                                    v-if="selectedTemplate && selectedTemplate.instruction"
-                                    class="markdown-body marketplace-markdown"
-                                    :source="selectedTemplate.instruction"
-                            >
-                            </vue-markdown>
-                        </v-col>
-                    </v-row>
-                </div>
+                            Rating: {{ selectedTemplate.rating }}
+                        </v-rating>
+
+                        <div class="marketplace-chip-box">
+                            <div>tags:</div>
+                            <v-chip v-for="tag in selectedTemplate.tags" :key="tag">
+                            {{ tag }}
+                            </v-chip>
+                        </div>
+
+                        <v-btn
+                            @click="applyTemplate(selectedTemplate)"
+                            color="primary"
+                            class="marketplace-details-page-apply-btn"
+                        >
+                            apply
+                        </v-btn>
+                    </v-col>
+
+                    <!-- 세로 구분선 (작은 화면에서는 숨김) -->
+                    <v-divider vertical class="d-none d-sm-flex" />
+
+                    <!-- 오른쪽 컬럼 (마크다운 설명) -->
+                    <v-col cols="12" md="8" lg="9">
+                        <vue-markdown
+                            v-if="selectedTemplate && selectedTemplate.instruction"
+                            class="markdown-body marketplace-markdown"
+                            :source="selectedTemplate.instruction"
+                        />
+                    </v-col>
+                </v-row>
             </div>
+        </div>
             <div v-else-if="selectedTopping">
                 <div>
                     <v-row class="marketplace-details-page-row">
@@ -541,10 +559,11 @@
                                 >{{ tag }}
                                 </v-chip>
                             </div>
-                            <v-btn @click="applyPBCElement(selectedPBC)" color="primary"
+                            <v-btn @click="applyPBCElement(selectedPBC)" color="primary" :disabled="!selectedPBC.pbcPath"
                                    class="marketplace-details-page-apply-btn"
                             >apply
                             </v-btn>
+                            <div v-if="!selectedPBC.pbcPath" style="color: red; margin-top: 24px;">Model 및 OpenAPI 정보가 없습니다</div>
                         </v-col>
                         <v-divider vertical />
                         <v-col cols="7" lg="9" md="8" sm="7">
@@ -567,6 +586,10 @@
     import PBCModelCard from "./es-modeling/PBCModelCard";
     import OpenAPIPBC from "./modeling/OpenAPIPBC";
 
+    import GitAPI from "../../utils/GitAPI";
+    import Github from "../../utils/Github";
+    import Gitlab from "../../utils/Gitlab";
+
     const axios = require('axios');
     export default {
         name: 'MarketPlace',
@@ -577,6 +600,7 @@
         mixins: [AlgoliaModelLists, OpenAPIPBC],
         data() {
             return {
+                git: null,
                 tab: "",
                 templateLists:[],
                 toppingLists:[],
@@ -589,7 +613,7 @@
                 allRepoList: null,
                 detailMarketMode: false,
                 pbcTags: [
-                    { name: 'All', icon: 'icon-park-solid:id-card' },
+                    { name: 'All', icon: 'id-card' },
                 ],
                 templateTags: [
                     { name: 'All', icon: 'id-card' },
@@ -743,6 +767,13 @@
             },
         },
         created(){
+            let git;
+            if(window.MODE == "onprem") {
+                git = new Gitlab();
+            } else {
+                git = new Github();
+            }
+            this.git = new GitAPI(git);
             this.tab = this.isPBCMarket ? "pbcs" : "templates"
             this.setGitHubHeader()
             this.loadAllRepoList()
@@ -878,19 +909,20 @@
                     if (pbcInfo.name.includes("pbc-") && !pbcInfo.name.includes("_pbc")) {
                         try {
                             var info = await axios.get(`https://api.github.com/repos/msa-ez/${pbcInfo.name}/contents/.template/metadata.yml`, { headers: me.githubHeaders });
-                            var pbcPath = `https://github.com/msa-ez/${pbcInfo.name}/blob/main/openapi.yaml`
+                            var mainTrees = await axios.get(`https://api.github.com/repos/msa-ez/${pbcInfo.name}/git/trees/main`, { headers: me.githubHeaders })
                             if (info && info.data.content) {
-                                var obj = YAML.parse(decodeURIComponent(escape(atob(info.data.content))));
+                                const modelTree = mainTrees.data.tree.find(tree => tree.path === 'model.json');
+                                const openApiTree = mainTrees.data.tree.find(tree => tree.path === 'openapi.yaml');
+                                const instruction = await axios.get(`https://api.github.com/repos/msa-ez/${pbcInfo.name}/contents/.template/instruction.md`, { headers: me.githubHeaders });
+                              
+                                let obj = YAML.parse(decodeURIComponent(escape(atob(info.data.content))));
+
+                                obj.instruction = instruction ? decodeURIComponent(escape(atob(instruction.data.content))) : null;
                                 obj.id = idx;
-                                obj.pbcPath = pbcPath
-                                try {
-                                    const instruction = await axios.get(`https://api.github.com/repos/msa-ez/${pbcInfo.name}/contents/.template/instruction.md`, { headers: me.githubHeaders });
-                                    if (instruction) {
-                                        obj.instruction = decodeURIComponent(escape(atob(instruction.data.content)));
-                                    }
-                                } catch (e) {
-                                    console.error(e);
-                                }
+                                obj.pbcPath = modelTree 
+                                    ? `https://github.com/msa-ez/${pbcInfo.name}/blob/main/model.json` 
+                                    : (openApiTree ? `https://github.com/msa-ez/${pbcInfo.name}/blob/main/openapi.yaml` : null);
+
                                 me.pbcLists.push(obj);
                             }
                         } catch (e) {
@@ -1115,7 +1147,7 @@
     }
     .marketplace-details-page-box {
         background-color:white;
-        padding:0px 10% 0px 10%;
+        padding:0px 16px 0px 16px;
     }
     .marketplace-details-page-back-btn {
         font-size: 25px !important;

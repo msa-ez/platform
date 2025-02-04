@@ -194,7 +194,9 @@
     "draggableOn": "화면 드래그 : on",
     "draggableOff": "화면 드래그 : off",
     "arrangeGuidanceOn": "화면 라인 가이드 : on",
-    "arrangeGuidanceOff": "화면 라인 가이드 : off"
+    "arrangeGuidanceOff": "화면 라인 가이드 : off",
+    "processModeOn": "디자인 레벨 : on",
+    "processModeOff": "디자인 레벨 : off"
   },
   "ModelDraftDialogForDistribution": {
     "pros": "장점:",

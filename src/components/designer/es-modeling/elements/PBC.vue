@@ -125,12 +125,12 @@
             <sub-controller
                     v-if="value.modelValue.projectId"
                     :image="'open-in-new.png'"
-                    @click="openProject(false)"
+                    @click="open(false)"
             ></sub-controller>
             <sub-controller
-                    v-if="value.modelValue.openAPI"
+                    v-if="value.modelValue.openAPI || value.modelValue.modelPath"
                     :image="'open-in-new.png'"
-                    @click="openProject(true)"
+                    @click="open(true)"
             ></sub-controller>
 
         </group-element>
@@ -335,16 +335,6 @@
                                             item.aggregate.elementView.y = item.elementView.y
                                             item.aggregate.elementView.height = item.elementView.height
                                             me.$set(pbcElements, item.aggregate.elementView.id, item.aggregate)
-
-                                            // let findAggreate = me.value.aggregates.find(agg => agg.id == item.aggregate.id)
-                                            // if(findAggreate){
-                                            //     findAggreate.pbcId = pbcId
-                                            //     findAggreate.elementView.id = findAggreate.id ? findAggreate.id + idx : findAggreate.elementView.id + idx
-                                            //     findAggreate.elementView.x = item.elementView.x + item.elementView.width
-                                            //     findAggreate.elementView.y = item.elementView.y
-                                            //     findAggreate.elementView.height = item.elementView.height
-                                            //     me.$set(pbcElements, findAggreate.elementView.id, findAggreate)
-                                            // }
                                         }
                                     });
                                 }
@@ -392,10 +382,11 @@
                     }
                 })
             },
-            openProject(isOpenAPI) {
+            open(isModelInfo) {
                 var me = this
-                if(isOpenAPI){
-                    window.open(me.value.modelValue.openAPI, '_blank')
+                if(isModelInfo){
+                    let path = me.value.modelValue.openAPI ? me.value.modelValue.openAPI : me.value.modelValue.modelPath
+                    window.open(path, '_blank')
                 } else {
                     if(me.value.modelValue.projectId.split('_').length == 3){
                         let info = me.value.modelValue.projectId.split('_');

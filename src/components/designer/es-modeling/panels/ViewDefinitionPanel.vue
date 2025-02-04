@@ -15,7 +15,7 @@
         <template slot="t-title-name">ReadModel</template>
 
         <template slot="md-level-btn">
-            <v-chip @click="toggleDesignLevel" style="margin-right: 16px; cursor: pointer;" color="primary" outlined>
+            <v-chip @click="toggleDesignLevel" style="margin-right: 16px; margin-bottom: 5px; cursor: pointer;" color="primary" outlined>
                 <v-icon left>{{ isDesignLevelVisible ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
                 {{ $t('CommandDefinitionPanel.implementationSettings') }}
             </v-chip>

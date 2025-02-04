@@ -951,6 +951,18 @@
                                 class="tools"
                                 style="top: 100px; text-align: center"
                             >
+
+                            <v-tooltip right>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <span v-on="on" v-bind="attrs" @click="toggleVisibility" style="cursor: pointer;">
+                                        <v-icon v-if="processMode">mdi-eye</v-icon>
+                                        <v-icon v-else color="primary">mdi-eye-off</v-icon>
+                                    </span>
+                                </template>
+                                <span v-if="processMode">{{ $t('modelingPanelTool.processModeOn') }}</span>
+                                <span v-else>{{ $t('modelingPanelTool.processModeOff') }}</span>
+                            </v-tooltip>
+
                                 <v-tooltip right>
                                     <template v-slot:activator="{ on, attrs }">
                                         <span
@@ -1680,7 +1692,7 @@
                             scrollable
                     >
                         <v-card style="height: 100%">
-                            <v-card-title style="position: absolute; top: -10px">Select Model for PBC</v-card-title>
+                            <v-card-title>Select Model for PBC</v-card-title>
                             <!-- <v-card-actions style="justify-content: flex-end">
                                 <v-btn
                                     @click="closeModelingListsDialog()"
@@ -2553,7 +2565,9 @@
                     }
                 },
 
-                selectedDraftOptions: []
+                selectedDraftOptions: [],
+
+                processMode: true,
             };
         },
         computed: {
@@ -2963,7 +2977,7 @@
 
             me.$EventBus.$on('repairBoundedContext', function (boundedContext) {
                 me.repairBoundedContext(boundedContext)
-            })
+            });
         },
         beforeDestroy() {
             if (this.fetchEventInterval) {
@@ -3052,6 +3066,15 @@
 
         },
         methods: {
+            toggleVisibility() {
+                this.processMode = !this.processMode;
+                this.$nextTick(() => {
+                    const elements = document.querySelectorAll('text[text-anchor="start"]');
+                    elements.forEach(el => {
+                        el.style.display = this.processMode ? 'block' : 'none';
+                    });
+                });
+            },
             attachedLists() {
                 var me = this;
                 let result = {};
@@ -5625,10 +5648,7 @@
             },
             applyModelingListsDialog(model) {
                 var me = this;
-                me.modelingPBCElement = me.generatePBC(
-                    me.modelingPBCElement,
-                    model
-                );
+                me.modelingPBCElement = me.generatePBC(me.modelingPBCElement, model);
                 me.addElementAction(me.modelingPBCElement);
                 me.closeModelingListsDialog();
             },
