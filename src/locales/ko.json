@@ -4,10 +4,21 @@
     "showBeta": "베타 보기",
     "hideBeta": "베타 숨기기"
   },
+  "ModelCanvas" : {
+    "notPermittedNeedLogin": "로그인이 필요한 서비스 입니다.",
+    "notPermittedNeedRequest": "접근 권한이 없습니다 (작성자에게 권한 요청이 필요합니다)", 
+    "requestPending": "권한 요청 후 승인 대기 중입니다",
+    "requestRejected": "권한 요청이 거절되었습니다",
+    "modelNotShared": "이 모델은 공유되지 않았습니다. 작성자에게 공유 요청을 보내주세요"
+  },
   "buttonText" : {
     "addAttribute" : "속성 추가",
     "syncAttributes" : "속성 동기화",
-    "editAggregateMembers" : "클래스 다이어그램으로 애그리거트 멤버 편집"
+    "editAggregateMembers" : "클래스 다이어그램으로 애그리거트 멤버 편집",
+    "requestPermission" : "권한요청",
+    "login" : "로그인",
+    "requestAgain" : "재요청",
+    "registerRequest": "공유요청"
   },
   "labelText" : {
     "attributes" : "속성",
