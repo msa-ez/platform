@@ -388,8 +388,6 @@
                                     >
                                         <v-row class="ma-0 pa-2">
                                             <v-card-sub-title class="pa-0">{{ $t(mainPublicModel.title) }}</v-card-sub-title>
-                                            <v-spacer></v-spacer>
-                                            <v-chip outlined color="gray" small>Sample</v-chip>
                                         </v-row>
                                         <div class="pa-2">
                                             <v-card style="height: 150px; overflow: hidden;" outlined>
@@ -911,22 +909,22 @@
                 mainPublicModeling: [
                     {
                         title: 'AlgoliaModelLists.pet',
-                        url: 'https://www.msaez.io/#/storming/e25a97f84aa34376697cc220496a9608',
+                        url: '/#/storming/e25a97f84aa34376697cc220496a9608',
                         imageUrl: 'static/image/mainPublicModling1.png'
                     },
                     {
                         title: 'AlgoliaModelLists.food',
-                        url: 'https://www.msaez.io/#/storming/2737b4f61c1ea85e3de602479ddc1e3a',
+                        url: '/#/storming/2737b4f61c1ea85e3de602479ddc1e3a',
                         imageUrl: 'static/image/mainPublicModling2.png'
                     },
                     {
                         title: 'AlgoliaModelLists.googleDrive',
-                        url: 'https://www.msaez.io/#/storming/d8525abb1acc3cf621b6aacf371fa4be',
+                        url: '/#/storming/d8525abb1acc3cf621b6aacf371fa4be',
                         imageUrl: 'static/image/mainPublicModling3.png'
                     },
                     {
                         title: 'AlgoliaModelLists.shop',
-                        url: 'https://www.msaez.io/#/storming/0f89dcccd80e9ec9fb6540c3236cfe2b',
+                        url: '/#/storming/0f89dcccd80e9ec9fb6540c3236cfe2b',
                         imageUrl: 'static/image/mainPublicModling2.png'
                     }
                 ]

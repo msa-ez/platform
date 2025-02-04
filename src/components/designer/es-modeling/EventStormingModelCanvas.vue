@@ -2978,8 +2978,6 @@
             me.$EventBus.$on('repairBoundedContext', function (boundedContext) {
                 me.repairBoundedContext(boundedContext)
             });
-
-            me.updateDisplay();
         },
         beforeDestroy() {
             if (this.fetchEventInterval) {
@@ -3071,13 +3069,10 @@
             toggleVisibility() {
                 this.processMode = !this.processMode;
                 this.$nextTick(() => {
-                    this.updateDisplay();
-                });
-            },
-            updateDisplay() {
-                const elements = document.querySelectorAll('text[text-anchor="start"]');
-                elements.forEach(el => {
-                    el.style.display = this.processMode ? 'block' : 'none';
+                    const elements = document.querySelectorAll('text[text-anchor="start"]');
+                    elements.forEach(el => {
+                        el.style.display = this.processMode ? 'block' : 'none';
+                    });
                 });
             },
             attachedLists() {
