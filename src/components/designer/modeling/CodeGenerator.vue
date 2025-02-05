@@ -679,6 +679,7 @@
                                                                 >
                                                                     <template v-slot:activator="{ on, attrs}" >
                                                                         <v-chip
+                                                                                v-if="!item.isPBCCode"
                                                                                 @mouseenter="showFullNameforSelectedTemplateKey = item.key"
                                                                                 @mouseleave="showFullNameforSelectedTemplateKey = null"
                                                                                 x-small
@@ -2811,68 +2812,55 @@
                 }
 
             },
-            async generateOpenAPI(value){
+            
+            async generateCodeOfPBC(){
                 var me = this
-                if(!value) return;
+                let pbcLists =  Object.values(me.value.elements).filter(ele => ele && ele._type.endsWith("PBC"));
+                for(let index = 0; index < pbcLists.length; index++) {
+                    let pbcElement = pbcLists[index];
 
-                let pbcLists =  Object.values(value.elements).filter(ele => ele && ele._type.endsWith("PBC") && ele.modelValue && ele.modelValue.openAPI);
-                if(pbcLists.length > 0){
-                    for(let pbc of pbcLists){
+                    if(pbcElement.modelValue.openAPI) {
+                        const openAPIUrl = pbcElement.modelValue.openAPI
                         const githubRegex = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/(.+)\/(.+)$/;
-                        const match = pbc.modelValue.openAPI.match(githubRegex);
+                        const match = openAPIUrl.match(githubRegex);
                         if (match) {
-                            // Extracted values
                             const org = match[1];
                             const repo = match[2];
-                            const branch = match[3].split('/').splice(0,1)[0]
                             const path = match[3].split('/').splice(1).join('/')
-
-                            if( branch == 'main'){
-                                try {
-                                    let fileNames = ['readme.md', 'docker-compose.yml', 'openapi.yaml']
-                                    let trees =  await me.gitAPI.getFolder(org, repo, path)
-                                    for(const tree of trees.data){
-                                        let fileName = tree.name
-                                        if( fileNames.includes(fileName.toLowerCase()) ){
-                                            let folder = path ? `${path}/` : ''
-                                            let res = await me.gitAPI.getFile(org, repo, `${folder}${fileName}`)
-
-                                            let options = {
-                                                element: pbc.elementView.id,
-                                                fullPath: `${changeCase.pascalCase(pbc.name)}/${folder}${fileName}`,
-                                                generatedType: 'MAIN'
-                                            }
-                                            me.codeLists.push(me.generateCodeObj(fileName, res.data, options));
-                                        }
-                                    }
-                                } catch(e){
-                                    // error
+                            let fileNames = ['.template']
+                            let trees = await me.gitAPI.getFolder(org, repo, path)
+                            for(const tree of trees.data){
+                                let fileName = tree.name
+                                if(!fileNames.includes(fileName.toLowerCase())){
+                                    let folder = path ? `${path}/` : ''
+                                    let res = await me.gitAPI.getFile(org, repo, `${folder}${fileName}`)
+                                    let formattedCode = me.generateCodeObj(fileName, res.data, {
+                                        element: pbcElement.elementView.id,
+                                        fullPath: `${changeCase.pascalCase(pbcElement.name)}/${folder}${fileName}`,
+                                        generatedType: 'MAIN'
+                                    })
+                                    formattedCode.isPBCCode=true
+                                    me.codeLists.push(formattedCode);
                                 }
-                            } else {
-                                // branch...
-
                             }
                         }
-                    }
-                }
-            },
-            generateCodeOfPBC(){
-                var me = this
-                me.$app.try({
-                    context: me,
-                    async action(me){
-                        let pbcLists =  Object.values(me.value.elements).filter(ele => ele && ele._type.endsWith("PBC"));
-                        for(let index = 0; index < pbcLists.length; index++) {
-                            let pbcElement = pbcLists[index];
-                            let pbcSCM = pbcElement.modelValue.scm
-                            if(pbcSCM){
-                                // README.md 파일 생성
-                                let codeOptions = {
-                                        element: pbcElement.elementView.id,
-                                        fullPath: `${changeCase.pascalCase(pbcElement.name)}/README.md`,
-                                        generatedType: 'MAIN'
-                                }
-                                let code = `
+                    } else if(pbcElement.modelValue.scm) {
+                        let pbcSCM = pbcElement.modelValue.scm
+                        let code = `
+## ${pbcElement.name}의 소스코드 사용방법
+
+1. **소스 다운로드**:
+
+- 소스코드 다운로드(Tag 정보가 없습니다.)
+\`\`\`sh
+git clone  https://github.com/${pbcSCM.org}/${pbcSCM.repo}.git
+\`\`\`
+
+해당 명령어를 사용하여 릴리스된 소스코드를 다운로드 하여 사용 할 수 있습니다.
+                                `
+
+                        if(pbcSCM.tag){
+                            code = `
 ## ${pbcElement.name}의 소스코드 사용방법
 
 1. **파일 다운로드**: 다음 명령어를 사용하여 ZIP 또는 TAR.GZ된 파일을 다운로드합니다.
@@ -2899,13 +2887,19 @@ tar -xzf ${pbcSCM.repo}-${pbcSCM.tag.replace(/v/g, '')}.tar.gz
 
 해당 명령어를 사용하여 릴리스된 소스코드를 다운로드 하여 사용 할 수 있습니다.
                                 `
-                                let codeFormat = me.generateCodeObj(`README.md`, code, codeOptions)
-                                
-                                me.codeLists.push(codeFormat);
-                            }
                         }
+                        let formattedCode = me.generateCodeObj(`README.md`, code, {
+                                element: pbcElement.elementView.id,
+                                fullPath: `${changeCase.pascalCase(pbcElement.name)}/README.md`,
+                                generatedType: 'MAIN'
+                            })
+                            formattedCode.isPBCCode=true
+                        me.codeLists.push(formattedCode);
+                    } else {
+                        // code Generator
                     }
-                })
+                }
+                   
             },
             jumpToActions(){
                 if(this.value.scm && this.value.scm.org && this.value.scm.repo){
@@ -6148,7 +6142,8 @@ jobs:
                                         fullPath: codeObj.fullPath,
                                         template: codeObj.template,
                                         generatedType: codeObj.generatedType,
-                                        isMirrorElement: codeObj.isMirrorElement
+                                        isMirrorElement: codeObj.isMirrorElement,
+                                        isPBCCode: codeObj.isPBCCode
                                     };
                                     if(codeObj.hash == fileObj.hash && codeObj.fileName != fileObj.name){
                                         fileObj.hash = fileObj.hash + 1

@@ -190,13 +190,14 @@
                 pbcElement.name = convertValue.info.projectName ? convertValue.info.projectName : pbcElement.name;
                 pbcElement.description = ''
                 pbcElement.modelValue.modelPath = info.path;
+                pbcElement.modelValue.scm = convertValue.info.scm
 
                  // common
                  convertValue.aggregates.forEach(function(element){
                     element.visibility = 'private'
                     pbcElement.aggregates.push(element);
                 });
-                
+
                 // left sides
                 convertValue.views.forEach(function(element){
                     element.visibility = 'private'
