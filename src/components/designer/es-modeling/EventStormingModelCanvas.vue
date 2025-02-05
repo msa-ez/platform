@@ -3063,6 +3063,7 @@
         methods: {
             toggleVisibility() {
                 this.processMode = !this.processMode;
+                localStorage.setItem('processMode', this.processMode); // processMode 값을 localStorage에 저장
                 this.$nextTick(() => {
                     const elements = document.querySelectorAll('text[text-anchor="start"]');
                     elements.forEach(el => {
