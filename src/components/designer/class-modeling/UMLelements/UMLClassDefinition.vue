@@ -486,6 +486,10 @@
                     }
                     return el.to === attr.classId || (className === toName && attr.name === el.name);
                 })
+
+                if(el.relationType.includes('Generalization')) {
+                    me.canvas.value.elements[el.from].fieldDescriptors = me.canvas.value.elements[el.from].fieldDescriptors.filter(field => field.className !== el.name)
+                }
                 
                 if(!isIncluded) {
                     var label = `- ${el.displayName ? el.displayName : changeCase.camelCase(name)}: ${toName}`
