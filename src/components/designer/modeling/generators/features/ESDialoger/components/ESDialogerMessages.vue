@@ -26,17 +26,17 @@
                 <DevideBoundedContextDialog
                     :resultDevideBoundedContext="deepCopy(message.result)"
                     :isStartMapping="message.isStartMapping"
+                    :isGeneratingBoundedContext="message.isGeneratingBoundedContext"
                     :processingRate="message.processingRate"
                     :currentProcessingBoundedContext="message.currentProcessingBoundedContext"
-                    :devisionAspect="message.devisionAspect"
+                    :selectedAspect="message.selectedAspect"
                     :summarizedResult="message.summarizedResult"
                     :messageId="message.uniqueId"
                     @createModel="$emit('createModel', $event)"
                     @closeDialog="$emit('closeDialog')"
                     @stop="$emit('stop')"
                     @reGenerate="$emit('reGenerate')"
-                    @reGenerateAspect="(aspect, feedback, messageId) => $emit('reGenerateAspect', {
-                        aspect,
+                    @reGenerateWithFeedback="(feedback, messageId) => $emit('reGenerateWithFeedback', {
                         feedback,
                         messageId
                     })"
@@ -69,7 +69,7 @@
   
 <script>
 import { AggregateDraftDialog } from '../../../es-generators'
-import DevideBoundedContextDialog from '../../../es-generators'
+import DevideBoundedContextDialog from '../../../../generators/DevideBoundedContextDialog.vue'
 
 export default {
     name: "es-dialoger-messages",

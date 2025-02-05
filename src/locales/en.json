@@ -4,10 +4,21 @@
     "showBeta": "Show Beta",
     "hideBeta": "Hide Beta"
   },
+  "ModelCanvas" : {
+    "notPermittedNeedLogin": "Login required to access this service.",
+    "notPermittedNeedRequest": "Access denied (Permission request to author required)", 
+    "requestPending": "Permission request pending approval",
+    "requestRejected": "Permission request was rejected",
+    "modelNotShared": "This model is not shared. Please request access from the author"
+  },
   "buttonText" : {
     "addAttribute" : "Add Attribute",
     "syncAttributes" : "Sync Attributes", 
-    "editAggregateMembers" : "Edit Aggregate Members in Class Diagram"
+    "editAggregateMembers" : "Edit Aggregate Members in Class Diagram",
+    "requestPermission" : "Request Permission",
+    "login" : "Login",
+    "requestAgain" : "Request Again",
+    "registerRequest": "Request Access"
   },
   "labelText" : {
     "attributes" : "Attributes",
@@ -101,7 +112,8 @@
       "boundedContextAlias": "별칭",
       "importance": "중요도",
       "implementationStrategy": "구현 전략"
-    }
+    },
+    "selectAspects": "Select Aspects"
   },
   "ViewDefinitionPanel" : {
     "readModelAttributes": "Read Model Attributes",

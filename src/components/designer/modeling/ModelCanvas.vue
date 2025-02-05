@@ -1281,7 +1281,7 @@
 
                                         if (me.information.permissions[me.userInfo.uid].request == false) {
                                             me.alertInfo.show = true
-                                            me.alertInfo.text = 'After requesting access permission, it was not accepted.'
+                                            me.alertInfo.text = me.$t('ModelCanvas.requestRejected')
                                             me.alertInfo.type = 'info'
                                             if (isPublic) {
                                                 me.isEditable = false
@@ -1289,12 +1289,12 @@
                                             } else {
                                                 me.isDisable = true
                                                 me.alertInfo.fnNum = 1
-                                                me.alertInfo.submit = 'Request again'
+                                                me.alertInfo.submit = me.$t('ModelCanvas.requestAgain')
                                             }
                                         } else if (me.information.permissions[me.userInfo.uid].request == true) {
                                             me.joinRequested = true
                                             me.alertInfo.show = true
-                                            me.alertInfo.text = 'After the request, the authority is unconfirmed.'
+                                            me.alertInfo.text = me.$t('ModelCanvas.requestPending')
                                             me.alertInfo.type = 'info'
 
                                             if (isPublic) {
@@ -1303,7 +1303,7 @@
                                             } else {
                                                 me.isDisable = true
                                                 me.alertInfo.fnNum = 1
-                                                me.alertInfo.submit = 'Request again'
+                                                me.alertInfo.submit = me.$t('ModelCanvas.requestAgain')
                                             }
                                         }
                                     } else if (me.information.permissions[me.userInfo.uid].write) {
@@ -1318,28 +1318,28 @@
                                         me.isDisable = true
 
                                         me.alertInfo.show = true
-                                        me.alertInfo.text = 'This model is not shared with you. Please send share request to the author.'
+                                        me.alertInfo.text = me.$t('ModelCanvas.modelNotShared')
                                         me.alertInfo.type = 'info'
                                         me.alertInfo.fnNum = 1
-                                        me.alertInfo.submit = 'Request'
+                                        me.alertInfo.submit = me.$t('buttonText.registerRequest')
                                     }
                                 }
                             } else {
                                 me.isDisable = true
 
                                 me.alertInfo.show = true
-                                me.alertInfo.text = 'You\'re not permitted to access. (Need to request acess right to the author)'
+                                me.alertInfo.text = me.$t('ModelCanvas.notPermittedNeedRequest')
                                 me.alertInfo.type = 'info'
                                 me.alertInfo.fnNum = 1
-                                me.alertInfo.submit = 'Request'
+                                me.alertInfo.submit = me.$t('buttonText.requestPermission')
                             }
                         } else {
                             me.isDisable = true
 
                             me.alertInfo.show = true
-                            me.alertInfo.text = 'You\'re not permitted to access (Need to logged in)'
+                            me.alertInfo.text = me.$t('ModelCanvas.notPermittedNeedLogin')
                             me.alertInfo.fnNum = 1
-                            me.alertInfo.submit = 'Request'
+                            me.alertInfo.submit = me.$t('buttonText.login')
 
                             // if (me.information && me.information.permissions && me.information.permissions['everyone']) {
                             //     me.readOnly = true

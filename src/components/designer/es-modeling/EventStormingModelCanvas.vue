@@ -92,70 +92,65 @@
                         </v-snackbar>
 
                         <v-snackbar
-                                v-model="snackbar.show"
-                                outlined
-                                :color="snackbar.color"
-                                :multi-line="snackbar.mode === 'multi-line'"
-                                :timeout="snackbar.timeout"
-                                :vertical="snackbar.mode === 'vertical'"
-                                :top="snackbar.top"
-                                :bottom="snackbar.bottom"
-                                :centered="snackbar.centered"
+                            v-model="snackbar.show"
+                            outlined
+                            :color="snackbar.color"
+                            :multi-line="snackbar.mode === 'multi-line'"
+                            :timeout="snackbar.timeout"
+                            :vertical="snackbar.mode === 'vertical'"
+                            :top="snackbar.top"
+                            :bottom="snackbar.bottom"
+                            :centered="snackbar.centered"
                         >
                             {{ snackbar.text }}
                             <v-btn
-                                    v-if="snackbar.closeBtn"
-                                    dark
-                                    @click="snackbar.show = false"
-                                    small
-                                    style="margin-left: 10px"
+                                v-if="snackbar.closeBtn"
+                                dark
+                                @click="snackbar.show = false"
+                                small
+                                style="margin-left: 10px"
                             >
                                 close
                             </v-btn>
                         </v-snackbar>
 
                         <v-alert
-                                dense
-                                elevation="6"
-                                colored-border
-                                :value="alertInfo.show"
-                                :border="alertInfo.border"
-                                :type="alertInfo.type"
-                                :max-width="alertInfo.maxWidth"
-                                :color="alertInfo.color"
-                                width="100%"
-                                style="
-                                position: absolute;
+                            dense
+                            elevation="6"
+                            colored-border
+                            :value="alertInfo.show" 
+                            :border="alertInfo.border"
+                            :type="alertInfo.type"
+                            :max-width="alertInfo.maxWidth"
+                            :color="alertInfo.color"
+                            width="100%"
+                            style="position: absolute;
                                 z-index: 999;
                                 left: 50%;
-                                transform: translate(-50%, 0%);
-                            "
+                                transform: translate(-50%, 0%);"
                         >
+                            <v-row class="pa-0 ma-0">
+                                <v-spacer></v-spacer>
+                                <v-icon @click="alertClose(alertInfo.fnNum)">mdi-close</v-icon>
+                            </v-row>
                             <div style="color: black">{{ alertInfo.text }}</div>
-                            <a
-                                    v-if="alertInfo.link"
-                                    target="_blank"
-                                    :href="alertInfo.link"
-                            >Github Persenal Access Token 발행 방법</a
-                            >
-                            <div style="text-align: right">
+                            <a v-if="alertInfo.link"
+                                target="_blank"
+                                :href="alertInfo.link"
+                            >Github Persenal Access Token 발행 방법
+                            </a>
+                            <v-row class="pa-0 ma-0 mt-2">
+                                <v-spacer></v-spacer>
                                 <v-btn
-                                        v-if="alertInfo.submit"
-                                        @click="alertSubmit(alertInfo.fnNum)"
-                                        small
-                                        color="green"
-                                        style="margin-right: 5px"
-                                        dark
+                                    v-if="alertInfo.submit"
+                                    @click="alertSubmit(alertInfo.fnNum)"
+                                    small
+                                    color="primary"
+                                    dark
                                 >
                                     {{ alertInfo.submit }}
                                 </v-btn>
-                                <v-btn
-                                        @click="alertClose(alertInfo.fnNum)"
-                                        small
-                                        text
-                                >{{ $t("word.close") }}</v-btn
-                                >
-                            </div>
+                            </v-row>
                         </v-alert>
 
                         <v-layout right>
@@ -2978,8 +2973,6 @@
             me.$EventBus.$on('repairBoundedContext', function (boundedContext) {
                 me.repairBoundedContext(boundedContext)
             });
-
-            me.updateDisplay();
         },
         beforeDestroy() {
             if (this.fetchEventInterval) {
@@ -3070,14 +3063,12 @@
         methods: {
             toggleVisibility() {
                 this.processMode = !this.processMode;
+                localStorage.setItem('processMode', this.processMode); // processMode 값을 localStorage에 저장
                 this.$nextTick(() => {
-                    this.updateDisplay();
-                });
-            },
-            updateDisplay() {
-                const elements = document.querySelectorAll('text[text-anchor="start"]');
-                elements.forEach(el => {
-                    el.style.display = this.processMode ? 'block' : 'none';
+                    const elements = document.querySelectorAll('text[text-anchor="start"]');
+                    elements.forEach(el => {
+                        el.style.display = this.processMode ? 'block' : 'none';
+                    });
                 });
             },
             attachedLists() {
