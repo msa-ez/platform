@@ -154,7 +154,7 @@
                                             :type="value._type"
                                             :dataProjection="value.dataProjection"
                                             :elementId="value.elementView.id"
-                                            @sync-attribute="syncFromAggregate"
+                                            @sync-attribute="syncFromAggregate('queryParameters')"
                                             :entities="relatedAggregate ? relatedAggregate.aggregateRoot.entities : null"
                                             :fields="relatedAggregate ? relatedAggregate.aggregateRoot.fieldDescriptors : null"
                                     ></event-storming-attribute>
@@ -203,7 +203,7 @@
                                             :isReadOnly="isReadOnly"
                                             :type="value._type"
                                             :elementId="value.elementView.id"
-                                            @sync-attribute="syncFromAggregate"
+                                            @sync-attribute="syncFromAggregate('fieldDescriptors')"
                                     ></event-storming-attribute>
                                 </v-card-text>
                             </v-card>
