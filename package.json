@@ -166,6 +166,7 @@
     "vue-markdown": "^2.2.4",
     "vue-material": "^1.0.0-beta-15",
     "vue-mermaid": "0.0.15",
+    "vue-mermaid-string": "^1.0.0",
     "vue-meta": "^2.4.0",
     "vue-monaco": "^1.2.2",
     "vue-moveable": "^1.8.9",
