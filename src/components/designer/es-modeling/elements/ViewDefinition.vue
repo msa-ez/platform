@@ -556,7 +556,10 @@
                     var validationResultIndex = me.elementValidationResults.findIndex(x=> (x.code == me.ESE_NOT_PK) )
                     if( validationResultIndex == -1 ){
                         me.elementValidationResults.push(me.validationFromCode(me.ESE_NOT_PK))
-
+                    }else{
+                        if(validateValue.dataProjection == 'query-for-aggregate'){
+                            me.elementValidationResults.splice(validationResultIndex, 1)
+                        }
                     }
                 }else{
                     var validationResultIndex = me.elementValidationResults.findIndex(x=> (x.code == me.ESE_NOT_PK))
