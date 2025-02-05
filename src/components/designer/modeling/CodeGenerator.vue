@@ -7541,10 +7541,10 @@ jobs:
                     let originValue = JSON.parse(JSON.stringify(value));
 
                     // add pbc Element.
-                    if( Object.values(value.elements).find(x => x && x._type.endsWith("PBC")) ) {
-                        value.elements = Object.assign(me.canvas.pbcValue.elements, value.elements);
-                        value.relations = Object.assign(me.canvas.pbcValue.relations, value.relations);
-                    }
+                    // if( Object.values(value.elements).find(x => x && x._type.endsWith("PBC")) ) {
+                    //     value.elements = Object.assign(me.canvas.pbcValue.elements, value.elements);
+                    //     value.relations = Object.assign(me.canvas.pbcValue.relations, value.relations);
+                    // }
 
                     let rootModelAndElement
                     if(me.reGenerateOnlyModifiedTemplate){
@@ -7559,21 +7559,21 @@ jobs:
                     let modelForElements = rootModelAndElement.modelForElements
 
                     // Generate BC Of PBC
-                    await me.settingBoundedContextsOfPBC(JSON.parse(JSON.stringify(value)));
+                    // await me.settingBoundedContextsOfPBC(JSON.parse(JSON.stringify(value)));
                     // let bcOfPBC = await me.extractBoundedContextsOfPBC(JSON.parse(JSON.stringify(value)));
                     // rootModel.boundedContexts = [...rootModel.boundedContexts, ...bcOfPBC];
                     // modelForElements.BoundedContext = rootModel.boundedContexts
 
 
                     // if(me.rootModelAndElementMap.modelForElements.BoundedContext.length === 1){
-                    if(
-                        modelForElements.BoundedContext.length === 1
-                        && Object.values(value.elements).filter(x => x && x._type.endsWith("PBC")).length == 0
-                    ){
+                    // if(
+                    //     modelForElements.BoundedContext.length === 1
+                    //     && Object.values(value.elements).filter(x => x && x._type.endsWith("PBC")).length == 0
+                    // ){
                         // 1 BC AND NO PBC.
                         // me.isOneBCModel = true
                         // me.onlyOneBcId = me.rootModelAndElementMap.modelForElements.BoundedContext[0].id
-                    }
+                    // }
 
 
                     let basePlatforms =  value.basePlatform ? value.basePlatform : ( options && options.baseTemplate ? options.baseTemplate : me.defaultTemplate )
