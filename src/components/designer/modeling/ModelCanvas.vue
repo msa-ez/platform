@@ -1670,47 +1670,28 @@
                 try {
                     var check = await me.validateStorageCondition(me.storageCondition, 'backup');
                     if(check){
-                        var originProjectId = me.projectId;
-                        var projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
+                        let originProjectId = me.projectId;
+                        let projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
                         let associatedProject = me.storageCondition.associatedProject
                                 
                         // set tag
                         if(me.value.scm.org && me.value.scm.repo){
                             me.value.scm.tag = me.storageCondition.version;
                         }
-
-                        let img = await me.$refs['modeler-image-generator'].save(me.projectName, me.canvas);
+                        const img = await me.$refs['modeler-image-generator'].save(me.projectName, me.canvas);
 
                         // input image storage.
                         await me.putString(`storage://definitions/${originProjectId}/information/image`, img);
 
-                        var putInformation = {
-                            lastVersionName: projectVersion,
-                            projectName: me.storageCondition.editProjectName,
-                            comment: me.storageCondition.comment,
-                        }
-
                         let valueUrl = await me.putString(`storage://definitions/${originProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(me.value));
                         let imagURL = await me.putString(`storage://definitions/${originProjectId}/versionLists/${projectVersion}/image`, img);
-                        // console.log(settingProjectId, originProjectId)
-                        // var versionInfoObj = {
-                        //     lastQueueKey: me.latestQueueKey,
-                        //     saveUser: me.userInfo.uid,
-                        //     saveUserEmail: me.userInfo.email,
-                        //     saveUserName: me.userInfo.name,
-                        //     projectName: me.storageCondition.editProjectName,
-                        //     img: imagURL,
-                        //     timeStamp: Date.now(),
-                        //     comment: me.storageCondition.comment,
-                        //     valueUrl: valueUrl
-                        // }
-
-                        if(associatedProject){
-                            // Sync connected associatedProject.
+                 
+                        if(associatedProject){ 
+                            // for project sync
                             await me.synchronizeAssociatedProject(associatedProject, originProjectId);
                         }
 
-                        me.projectName = putInformation.projectName
+                        me.projectName = me.storageCondition.editProjectName
                         me.onCreateGitTagName(me.storageCondition);
                         await me.putObject(`db://definitions/${originProjectId}/versionLists/${projectVersion}`, {
                             lastQueueKey: me.latestQueueKey,
@@ -1725,11 +1706,13 @@
                         })
                         // await me.putObject(`db://definitions/${originProjectId}/versionLists/${projectVersion}/versionValue`, versionValueObj)
 
-                        await me.putObject(`db://definitions/${originProjectId}/information`, putInformation)
-                        // console.log(settingProjectId, originProjectId)
-                        me.storageDialogCancel()
-                        //alert('Success: Saved model.')
+                        await me.putObject(`db://definitions/${originProjectId}/information`, {
+                            lastVersionName: projectVersion,
+                            projectName: me.storageCondition.editProjectName,
+                            comment: me.storageCondition.comment,
+                        })
 
+                        me.storageDialogCancel()
                     } else {
                         this.storageCondition.loading = false
                     }

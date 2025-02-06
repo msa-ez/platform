@@ -65,6 +65,7 @@
     import OpenAPIToPBC from './OpenAPIToPBC';
     import getParent from '../../../utils/getParent';
     const changeCase = require('change-case');
+    const pluralize = require('pluralize');
 
     export default {
         name: 'open-api-pbc',
@@ -184,22 +185,35 @@
                     return this.generatePBCByOpenAPI(resultObj, pbc, info);
                 }
             },
+            setElementName(element){
+                if(element && element.name){
+                    element.namePascalCase = changeCase.pascalCase(element.name)
+                    element.nameCamelCase = changeCase.camelCase(element.name)
+                    element.namePlural = pluralize(element.nameCamelCase);
+                }
+            },
             generatePBCByModel(convertValue, pbcElement, info){
+                var me = this
                 console.log(convertValue, pbcElement);
 
                 pbcElement.name = convertValue.info.projectName ? convertValue.info.projectName : pbcElement.name;
                 pbcElement.description = ''
                 pbcElement.modelValue.modelPath = info.path;
+                pbcElement.modelValue.scm = convertValue.info.scm
 
                  // common
                  convertValue.aggregates.forEach(function(element){
                     element.visibility = 'private'
+                    me.setElementName(element)
+
                     pbcElement.aggregates.push(element);
                 });
-                
+
                 // left sides
                 convertValue.views.forEach(function(element){
                     element.visibility = 'private'
+                    me.setElementName(element)
+
                     if(element.aggregate && element.aggregate.id){
                         element.aggregate = convertValue.aggregates.find(aggregate => aggregate.id == element.aggregate.id);
                     }
@@ -211,18 +225,23 @@
                 });
                 convertValue.commands.forEach(function(element){
                     element.visibility = 'private'
+                    me.setElementName(element)
+
                     if(element.aggregate && element.aggregate.id){
                         element.aggregate = convertValue.aggregates.find(aggregate => aggregate.id == element.aggregate.id);
                     }
                     if(element.boundedContext && element.boundedContext.id){
                         element.boundedContext = convertValue.boundedContextes.find(boundedContext => boundedContext.id == element.boundedContext.id);
                     }
+
                     pbcElement.commands.push(element);
                 });
 
                 // right sides
                 convertValue.events.forEach(function(element){
                     element.visibility = 'private'
+                    me.setElementName(element)
+
                     if(element.aggregate && element.aggregate.id){
                         element.aggregate = convertValue.aggregates.find(aggregate => aggregate.id == element.aggregate.id);
                     }

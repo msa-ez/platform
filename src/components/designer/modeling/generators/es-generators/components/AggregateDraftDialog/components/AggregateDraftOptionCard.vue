@@ -35,41 +35,12 @@
         
         <v-card-text class="pa-0">
             <div v-if="optionInfo.structure" class="mb-4">
-                <v-row class="ma-0 pa-0">
-                    <v-col v-for="(aggregate, index) in optionInfo.structure" :key="index"  
-                        class="pa-2 ma-2 rounded-lg draft-aggregate-box d-inline-block"
-                    >
-                        <div class="d-flex flex-column mb-2">
-                            <span style="margin-bottom:-5px;">&lt;&lt; Aggregate Root &gt;&gt;</span>
-                            <strong>{{ (aggregate.aggregate && aggregate.aggregate.alias) ? aggregate.aggregate.alias : '' }}</strong>
-                        </div>
-                        <div>
-                            <div v-if="aggregate.entities && aggregate.entities.length > 0" class="mb-2">
-                                <span>&lt;&lt; Entities &gt;&gt;</span>
-                                <div v-for="(entity, index) in aggregate.entities" :key="index"
-                                    class="draft-aggregate-box-text"
-                                >{{ (entity && entity.alias) ? entity.alias : '' }}</div>
-                            </div>
-                            <div v-if="aggregate.valueObjects && aggregate.valueObjects.length > 0">
-                                <span>&lt;&lt; Value Objects &gt;&gt;</span> 
-                                <div v-for="(valueObject, index) in aggregate.valueObjects" :key="index"
-                                    class="draft-aggregate-box-text">
-                                    {{ (valueObject && valueObject.alias) ? valueObject.alias : '' }}
-                                    <v-chip
-                                        v-if="valueObject.referencedAggregate"
-                                        x-small
-                                        class="ml-2"
-                                        color="info"
-                                        outlined
-                                    >
-                                        <v-icon x-small left>mdi-link-variant</v-icon>
-                                        {{ valueObject.referencedAggregate.alias }}
-                                    </v-chip>
-                                </div>
-                            </div>
-                        </div>
-                    </v-col>
-                </v-row>
+                <div v-for="(mermaidString, index) in mermaidDto.mermaidStrings" :key="`mermaid-${index}`" style="text-align: center;">
+                    <vue-mermaid-string 
+                        :key="mermaidDto.renderKey"
+                        :value="mermaidString"
+                    />
+                </div>
             </div>
 
             <div class="pl-4 pr-4 pb-4">
@@ -102,8 +73,13 @@
 </template>
 
 <script>
+    import VueMermaidString from 'vue-mermaid-string'
+
     export default {
         name: 'aggregate-draft-dialog',
+        components: {
+            VueMermaidString
+        },
         props: {
             boundedContextInfo: {
                 type: Object,
@@ -135,9 +111,96 @@
                 required: false
             }
         },
+        data(){
+            return {
+                mermaidDto: {
+                    mermaidStrings: '',
+                    renderKey: 0
+                }
+            }
+        },
+        watch: {
+            optionInfo: {
+                deep: true,
+                handler(newVal) {
+                    this.mermaidDto.mermaidStrings = this.toMermaidUMLDiagramStrings(newVal.structure, 2);
+                    this.mermaidDto.renderKey++;
+                }
+            }
+        },
+        created(){
+            this.mermaidDto.mermaidStrings = this.toMermaidUMLDiagramStrings(this.optionInfo.structure, 2);
+            this.mermaidDto.renderKey++;
+        },
         methods: {
             selectedCard(optionIndex, optionInfo, boundedContextName){
                 this.$emit('onCardSelected', optionIndex, optionInfo, boundedContextName);
+            },
+
+            toMermaidUMLDiagramStrings(structure, cutLength){
+                let mermaidStrings = [];
+                for(let i = 0; i < structure.length; i += cutLength){
+                    mermaidStrings.push(this.toMermaidUMLDiagramString(structure.slice(i, i + cutLength)));
+                }
+                return mermaidStrings;
+            },
+
+            toMermaidUMLDiagramString(structure){
+                const initConfig = {
+                    theme: "default",
+                    themeVariables: {
+                        fontSize: "14px",
+                        classFontSize: "14px",
+                        classBoxPadding: 10
+                    }
+                };
+                let config = "%%{init: " + JSON.stringify(initConfig) + "}%%\n";
+                let diagram = config + "classDiagram\n";
+                if (!structure || !Array.isArray(structure)) {
+                    diagram += "    class None {\n    }\n";
+                    return diagram;
+                }
+
+                structure.forEach(item => {
+                    if (item.aggregate || (item.entities && item.entities.length > 0) || (item.valueObjects && item.valueObjects.length > 0)) {
+                        let className, label;
+                        if (item.aggregate) {
+                            className = item.aggregate.alias || item.aggregate.name || "UnnamedAggregate";
+                        } else {
+                            className = "Unnamed";
+                        }
+                        diagram += `    class ${className} {\n`;
+                        diagram += item.aggregate ? `        <<Aggregate>>\n` : `        <<Unspecified>>\n`;
+                        
+                        if (item.entities && Array.isArray(item.entities) && item.entities.length > 0) {
+                            diagram += `        %% Entities\n`;
+                            item.entities.forEach(entity => {
+                                const entityAlias = entity.alias || entity.name || "UnnamedEntity";
+                                const entityName = entity.name || entity.alias || "UnnamedEntity";
+                                diagram += `        - ${entityAlias}: ${entityName}\n`;
+                            });
+                        }
+                        
+                        if (item.valueObjects && Array.isArray(item.valueObjects) && item.valueObjects.length > 0) {
+                            diagram += `        %% ValueObjects\n`;
+                            item.valueObjects.forEach(vo => {
+                                const voAlias = vo.alias || vo.name || "UnnamedValueObject";
+                                const voName = vo.name || vo.alias || "UnnamedValueObject";
+                                let fieldLine = `        - ${voAlias}: ${voName}`;
+                                // if (vo.referencedAggregate) {
+                                //     const refAggAlias = vo.referencedAggregate.alias || vo.referencedAggregate.name || "UnnamedAggregate";
+                                //     fieldLine += ` -> ${refAggAlias}`;
+                                // }
+                                fieldLine += "\n";
+                                diagram += fieldLine;
+                            });
+                        }
+                        diagram += "    }\n";
+                    } else {
+                        diagram += "    class None {\n    }\n";
+                    }
+                });
+                return diagram;
             }
         }
     }

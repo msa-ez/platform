@@ -563,7 +563,7 @@
                                    class="marketplace-details-page-apply-btn"
                             >apply
                             </v-btn>
-                            <div v-if="!selectedPBC.pbcPath" style="color: red; margin-top: 24px;">Model 및 OpenAPI 정보가 없습니다</div>
+                            <div v-if="selectedPBC.reason" style="color: red; margin-top: 24px;">{{selectedPBC.reason}}</div>
                         </v-col>
                         <v-divider vertical />
                         <v-col cols="7" lg="9" md="8" sm="7">
@@ -922,7 +922,9 @@
                                 obj.pbcPath = modelTree 
                                     ? `https://github.com/msa-ez/${pbcInfo.name}/blob/main/model.json` 
                                     : (openApiTree ? `https://github.com/msa-ez/${pbcInfo.name}/blob/main/openapi.yaml` : null);
-
+                                if(!obj.pbcPath){
+                                    obj.reason = 'Model 및 OpenAPI 정보가 없습니다'
+                                }
                                 me.pbcLists.push(obj);
                             }
                         } catch (e) {
