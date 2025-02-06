@@ -30,6 +30,13 @@
     "associatedAggregate": "Associated Aggregate",
     "readWriteAuthority": "Read/Write Authority"
   },
+  "BCGenerationOption" : {
+    "generationOption": "Generation Options",
+    "numberOfBCs": "Number of Bounded Contexts (15 or less recommended)",
+    "selectAspects": "Select Analysis Aspects",
+    "additionalRequirements": "Additional Requirements", 
+    "generate" : "Generate"
+  },
   "BoundedContextPanel" : {
     "name": "Name",
     "readable": "Readable",
