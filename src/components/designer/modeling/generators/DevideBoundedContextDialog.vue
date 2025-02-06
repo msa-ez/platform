@@ -45,14 +45,14 @@
             </div>
             
             <div>
-                <v-card-title class="text-subtitle-1 pa-0 pb-4">{{ $t('DevideBoundedContextDialog.reasonOfSeparation') }}</v-card-title>
+                <v-card-title class="text-subtitle-1 pa-0 font-weight-bold">{{ $t('DevideBoundedContextDialog.reasonOfSeparation') }}</v-card-title>
                 <v-card-text class="pa-0 pb-4" align="left">{{ resultDevideBoundedContext[selectedAspect].thoughts }}</v-card-text>
 
                 <v-card-title v-if="summarizedResult.length > 0" class="pa-0 pb-0 text-subtitle-1">{{ $t('DevideBoundedContextDialog.summarizedResult') }}</v-card-title>
                 <v-card-text v-if="summarizedResult.length > 0" class="pa-0 pb-4" align="left">{{ summarizedResult }}</v-card-text>
 
-                <v-card-title class="pa-0 pb-0 text-subtitle-1">{{ $t('DevideBoundedContextDialog.descriptionOfEachBoundedContext') }}</v-card-title>
-                <v-card-text class="pa-0 pb-4" align="left">* {{ $t('DevideBoundedContextDialog.descriptionOfEditBoundedContext') }}</v-card-text>
+                <v-card-title class="pa-0 pb-0 text-subtitle-1 font-weight-bold">{{ $t('DevideBoundedContextDialog.descriptionOfEachBoundedContext') }}</v-card-title>
+                <v-card-text class="pa-0" align="left">* {{ $t('DevideBoundedContextDialog.descriptionOfEditBoundedContext') }}</v-card-text>
                 <v-card class="pa-0 ma-0 mt-4" outlined>
                     <v-data-table
                         :items="getGroupedBoundedContextRequirements()"
@@ -85,15 +85,13 @@
                                 persistent
                             >
                                 <template v-slot:input>
-                                    <v-text-field
-                                        v-model="editedFields.name"
+                                    <v-text-field v-model="editedFields.name"
                                         :label="$t('DevideBoundedContextDialog.edit.boundedContextName')"
                                         :rules="[v => !!v || $t('validation.required')]"
                                         single-line
                                         class="mb-2"
                                     ></v-text-field>
-                                    <v-text-field
-                                        v-model="editedFields.alias"
+                                    <v-text-field v-model="editedFields.alias"
                                         :label="$t('DevideBoundedContextDialog.edit.boundedContextAlias')"
                                         :rules="[v => !!v || $t('validation.required')]"
                                         single-line
@@ -170,7 +168,13 @@
             </div>
 
             <v-card class="mt-4 pa-4" outlined>
-                <v-textarea :disabled="isGeneratingBoundedContext" v-model="feedback" label="Feedback" rows="3"></v-textarea>
+                <v-textarea v-model="feedback" 
+                    :disabled="isGeneratingBoundedContext" 
+                    :label="$t('DevideBoundedContextDialog.feedback')"
+                    rows="3"
+                    outlined
+                    auto-grow
+                ></v-textarea>
                 <v-row class="pa-0 ma-0">
                     <v-spacer></v-spacer>
                     <v-btn :disabled="feedback === '' || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" @click="reGenerateWithFeedback()">
