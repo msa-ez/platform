@@ -30,6 +30,13 @@
     "associatedAggregate": "연관된애그리거트",
     "readWriteAuthority": "읽기/쓰기 권한"
   },
+  "BCGenerationOption" : {
+    "generationOption": "생성 옵션",
+    "numberOfBCs": "바운디드 컨텍스트 개수 (15개 이하 권장)",
+    "selectAspects": "분석 관점 선택",
+    "additionalRequirements": "추가 요구사항",
+    "generate" : "생성"
+  },
   "BoundedContextPanel" : {
     "name": "이름",
     "readable": "읽기 가능",

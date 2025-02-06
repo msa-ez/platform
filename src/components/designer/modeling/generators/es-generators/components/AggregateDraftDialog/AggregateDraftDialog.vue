@@ -188,6 +188,15 @@
                     this.updateSelectionByDraftOptions(newVal)
                 },
                 deep: true
+            },
+            activeTab: {
+                handler() {
+                    // 항목 선택 후, 탭 전환시에 Mermaid 그래프가 제대로 렌더링이 안되는 이슈 해결을 위함
+                    this.$nextTick(() => {
+                        this.selectedCardKey++
+                    })
+                },
+                deep: true
             }
         },
         created() {
