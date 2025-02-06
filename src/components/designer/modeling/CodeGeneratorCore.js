@@ -619,6 +619,10 @@ class CodeGeneratorCore {
                 var sourceElement = elementByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
                 var targetElement = elementByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
 
+                // element in PBC
+                if(!sourceElement && item.sourceElement.pbcId) sourceElement = item.sourceElement
+                if(!targetElement && item.targetElement.pbcId) targetElement = item.targetElement
+                
                 if(sourceElement && targetElement){
                     var boundedContext = sourceElement.boundedContext && sourceElement.boundedContext.id ? elementByIds[sourceElement.boundedContext.id] : sourceElement.boundedContext
                     var targetBoundedContext = targetElement.boundedContext && targetElement.boundedContext.id ? elementByIds[targetElement.boundedContext.id] : targetElement.boundedContext

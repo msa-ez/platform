@@ -2284,7 +2284,9 @@
                             me.treeOpenLists = [];
 
                             if (selectedElement && selectedElement._type && selectedElement._type.endsWith("BoundedContext")) {
-                                returnArray = me.treeLists.filter(tree => tree.bcId == selectedId)
+                                returnArray = me.treeLists.filter(tree => tree && tree.bcId == selectedId)
+                            } else if (selectedElement && selectedElement._type && selectedElement._type.endsWith("PBC")) {
+                                returnArray = me.treeLists.filter(tree => tree && tree.elementId == selectedId)
                             } else {
                                 me.showTemplatePath = true
 
@@ -6127,15 +6129,16 @@ jobs:
                                 var fileObj = currentFolder.find(x => x.name === fileName.trim());
                                 if(!fileObj){
                                     fileObj = {
-                                        bcId: codeObj.bcId,
-                                        name: fileName.trim(),
-                                        key: codeObj.key,
-                                        file: codeObj.file,
-                                        code: codeObj.code,
-                                        hash: codeObj.hash,
-                                        path: codeObj.fullPath,
-                                        changed: 0,
-                                        children: isFolder ? [] : null,
+                                        elementId: codeObj.element, // element id
+                                        bcId: codeObj.bcId, // Included BC
+                                        name: fileName.trim(), // fileName
+                                        key: codeObj.key, // Duplicate prevention key
+                                        file: codeObj.file, // file Type
+                                        code: codeObj.code, // file Code
+                                        hash: codeObj.hash, // file Hash
+                                        path: codeObj.fullPath, // file Path
+                                        changed: 0, // file Changed
+                                        children: isFolder ? [] : null, // file Children
 
                                         // codeRef: codeObj,
                                         templatePath: codeObj.templatePath,
