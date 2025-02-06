@@ -2857,9 +2857,13 @@
 \`\`\`sh
 git clone https://github.com/${pbcSCM.org}/${pbcSCM.repo}.git
 \`\`\`
+
+해당 명령어를 사용하여 릴리스된 소스코드를 다운로드 하여 사용 할 수 있습니다.
 `
                         if(pbcSCM.tag){
-                            code = code + `
+                            code = `
+## ${pbcElement.name}의 소스코드 사용방법
+
 **소스 압축파일 다운로드**: ZIP 또는 TAR.GZ된 파일을 다운로드합니다.
 - zip 형식 파일 다운로드
 \`\`\`sh
