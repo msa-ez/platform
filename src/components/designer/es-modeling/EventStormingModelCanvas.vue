@@ -3290,9 +3290,11 @@
                 return elementValues;
             },
             convertNameForElement(item) {
-                item.namePascalCase = changeCase.pascalCase(item.name);
-                item.nameCamelCase = changeCase.camelCase(item.name);
-                item.namePlural = pluralize(item.nameCamelCase);
+                if(item && item.name){
+                    item.namePascalCase = changeCase.pascalCase(item.name);
+                    item.nameCamelCase = changeCase.camelCase(item.name);
+                    item.namePlural = pluralize(item.nameCamelCase);
+                }
             },
             getAttachedBoundedContext(element, boundedLists) {
                 var me = this;
@@ -5691,21 +5693,25 @@
                                 copyEl.isPBCModel = true;
 
                                 if (element._type.endsWith("Event")) {
+                                    me.convertNameForElement(copyEl);
                                     copyEl.isView = true;
                                     pbcElement.events.push(copyEl);
                                 } else if (element._type.endsWith("Command")) {
+                                    me.convertNameForElement(copyEl);
                                     copyEl.isView = true;
                                     pbcElement.commands.push(copyEl);
                                 } else if (element._type.endsWith("Policy")) {
+                                    me.convertNameForElement(copyEl);
                                     copyEl.isView = true;
                                     pbcElement.policies.push(copyEl);
-                                } else if (
-                                    element._type.endsWith("BoundedContext")
-                                ) {
+                                } else if (element._type.endsWith("BoundedContext")) {
+                                    me.convertNameForElement(copyEl);
                                     pbcElement.boundedContextes.push(copyEl);
                                 } else if (element._type.endsWith("Aggregate")) {
+                                    me.convertNameForElement(copyEl);
                                     pbcElement.aggregates.push(copyEl);
                                 } else if (element._type.endsWith("View")) {
+                                    me.convertNameForElement(copyEl);
                                     pbcElement.views.push(copyEl);
                                 }
                             }
