@@ -110,8 +110,8 @@
                         <v-tab v-for="tab in tabs" :key="tab.component" :disabled="hasElements&&(!tab.isAlwaysActivated)" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" 
                                @click="switchGenerator('tab', tab.isShowGenerateBtn, tab.isShowContinueBtn, tab.isShowStopBtn, tab.isShowRegenerateBtn)">{{tab.name}}</v-tab>
                         <v-tab v-show="(canvasType === 'event-storming-model-canvas' || canvasType === 'context-mapping-model-canvas') && !hasElements" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('DDL', false, false, false, false)">DDL</v-tab>
-                        <v-tab v-show="!hasElements" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('input', true, true, true, true)">Input</v-tab>
-                        <v-tab v-show="!hasElements" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('output', false, true, true, true)">Output</v-tab>
+                        <v-tab v-show="!isModelCreated" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('input', true, true, true, true)">Input</v-tab>
+                        <v-tab v-show="!isModelCreated" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('output', false, true, true, true)">Output</v-tab>
                         <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('chat', false, false, false, false)">Chat</v-tab>
                     </v-tabs>
 
@@ -191,7 +191,7 @@
                                         </v-card>
                                     </v-tab-item>
 
-                                    <v-tab-item v-show="!hasElements">
+                                    <v-tab-item v-show="!isModelCreated">
                                         <v-card flat>
                                             <v-textarea v-if="input"
                                                 v-model="input.userStory"
@@ -202,7 +202,7 @@
                                         </v-card>
                                     </v-tab-item>
 
-                                    <v-tab-item v-show="!hasElements">
+                                    <v-tab-item v-show="!isModelCreated">
                                         <v-card flat>
                                             <v-textarea
                                                 v-model="displayResult"
@@ -435,6 +435,7 @@
                 boundedContextLists: [],
                 boundedContextInput: "",
                 scenario: "",
+                isModelCreated: false
 
             }
         },
@@ -690,6 +691,7 @@
                             "action": "skipCreatePrompt"
                         }
                         if(this.generatorStep === 'aggregate'){
+                            this.isModelCreated = true
                             const removalStrings = [
                                 "Please create an event storming model in json for following service: 4",
                                 "The result must be in JSON format and the name of events must be in \"Adjectivalized Object\" that means In this structure, the object, which is used in verb form, is transformed into an adjective and comes first, followed by the past tense verb.\n        for example, \"OrderPlaced\", \"PaymentCompleted\", \"JobDone\". not \"Placed Order\", \"Complete Payment\", \"Do Job\".\n        Event Names must be less than 3 words.\n        : \n        \n        {\n            \"serviceName\": \"Service Name\",\n            \"actors\": [\"Actor Name\"],\n            \"events\": [\n\n                {\n                    \"actor\": \"Actor Name\",\n                    \"name\": \"Event Name\", // must be in Past tense. i.e. Order Placed (p.p.).  Less than 3 words.\n                    \"undefinedName\": \"name in undefined\", // must be in Past tense. i.e. 택시 호출됨. (p.p.).\n                }\n            ]\n        \n        }\n "

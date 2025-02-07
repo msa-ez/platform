@@ -4,7 +4,7 @@
     >
         <v-card>
             <v-card-title class="headline">
-                생성 옵션
+                {{ $t('BCGenerationOption.generationOption') }}
             </v-card-title>
             
             <v-card-text>
@@ -12,7 +12,7 @@
                     <v-row>
                         <v-col cols="12">
                             <div class="d-flex align-center">
-                                <span class="mr-4">Number of Bounded Contexts (Recommended under or equal to 15)</span>
+                                <span class="mr-4">{{ $t('BCGenerationOption.numberOfBCs') }}</span>
                             </div>
                             <v-text-field
                                 v-model="localOptions.numberOfBCs"
@@ -27,43 +27,54 @@
                         </v-col>
                         
                         <v-col cols="12">
-                            <p>{{ $t('DevideBoundedContextDialog.selectAspects') }}</p>
+                            <p>{{ $t('BCGenerationOption.selectAspects') }}</p>
                             <template v-for="(aspect, index) in availableAspects">
-                                <v-checkbox 
-                                    :key="`checkbox-${index}`"
-                                    class="font-weight-bold"
-                                    v-model="localOptions.selectedAspects"
-                                    :label="aspect"
-                                    :value="aspect"
-                                ></v-checkbox>
-                                <p :key="`description-${index}`" class="ml-4">
-                                    {{ getAspectDescription(index) }}
-                                </p>
+                                <v-card
+                                    :key="`card-${index}`"
+                                    class="mb-2"
+                                    outlined
+                                    @click="toggleAspect(aspect)"
+                                    :class="{ 'bcg-selected-card': localOptions.selectedAspects.includes(aspect) }"
+                                >
+                                    <v-card-text>
+                                        <v-row class="ma-0 pa-0">
+                                            <v-checkbox class="ma-0 pa-0"
+                                                :input-value="localOptions.selectedAspects.includes(aspect)"
+                                                @click.stop="toggleAspect(aspect)"
+                                            ></v-checkbox>
+                                            <span class="font-weight-bold">{{ aspect }}</span>
+                                        </v-row>
+                                        <p :key="`description-${index}`">
+                                            {{ getAspectDescription(index) }}
+                                        </p>
+                                    </v-card-text>
+                                </v-card>
                             </template>
                         </v-col>
 
                         <v-col cols="12">
                             <v-textarea
                                 v-model="localOptions.additionalOptions"
-                                label="Additional requirements"
+                                :label="$t('BCGenerationOption.additionalRequirements')"
                                 rows="3"
                                 outlined
+                                auto-grow
                             ></v-textarea>
                         </v-col>
                     </v-row>
                 </v-container>
-            </v-card-text>
             
-            <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn
-                    color="primary"
-                    @click="onConfirm"
-                    :disabled="!isValid || isSummarizeStarted || isGeneratingBoundedContext || isStartMapping"
-                >
-                    Generate
-                </v-btn>
-            </v-card-actions>
+                <v-row class="ma-0 pa-0">
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        color="primary"
+                        @click="onConfirm"
+                        :disabled="!isValid || isSummarizeStarted || isGeneratingBoundedContext || isStartMapping"
+                    >
+                        {{ $t('BCGenerationOption.generate') }}
+                    </v-btn>
+                </v-row>
+            </v-card-text>
         </v-card>
     </v-card>
 </template>
@@ -119,6 +130,19 @@ export default {
     watch: {},
 
     methods: {
+        toggleAspect(aspect) {
+            console.log('toggleAspect called with:', aspect); // 메서드 호출 확인
+            const index = this.localOptions.selectedAspects.indexOf(aspect);
+            if (index === -1) {
+                // aspect가 선택되지 않은 경우 추가
+                this.localOptions.selectedAspects.push(aspect);
+            } else {
+                // aspect가 이미 선택된 경우 제거
+                this.localOptions.selectedAspects.splice(index, 1);
+            }
+            console.log('Updated selectedAspects:', this.localOptions.selectedAspects); // 배열 업데이트 확인
+        },
+
         onConfirm() {
             if (this.localOptions.numberOfBCs <= 15) {
                 this.$emit('setGenerateOption', { ...this.localOptions });
@@ -140,3 +164,9 @@ export default {
     }
 }
 </script>
+<style>
+.bcg-selected-card {
+    background-color: #E3F2FD !important; /* 선택된 카드의 배경색 */
+    border-color: #2196F3 !important; /* 선택된 카드의 테두리 색 */
+}
+</style>
