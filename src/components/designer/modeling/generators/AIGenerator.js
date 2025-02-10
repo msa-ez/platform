@@ -280,6 +280,7 @@ class AIGenerator {
             }).catch(error => {
                 reject(error); 
             });
+        }
         });
 
     }
