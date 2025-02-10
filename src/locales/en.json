@@ -32,10 +32,12 @@
   },
   "BCGenerationOption" : {
     "generationOption": "Generation Options",
-    "numberOfBCs": "Number of Bounded Contexts (15 or less recommended)",
+    "numberOfBCs": "Number of Bounded Contexts (max 15)",
     "selectAspects": "Select Analysis Aspects",
-    "additionalRequirements": "Additional Requirements", 
-    "generate" : "Generate"
+    "additionalRequirements": "Additional Requirements",
+    "generate" : "Generate",
+    "bcNumberLimitError": "Must be 15 or less",
+    "invalidNumberError": "Numbers only"
   },
   "BoundedContextPanel" : {
     "name": "Name",
