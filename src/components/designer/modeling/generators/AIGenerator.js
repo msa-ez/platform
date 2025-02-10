@@ -13,6 +13,8 @@ class AIGenerator {
         this.responseLimit = this.model == 'gpt-4o' ? 0:15
         this.temperature = 1
         this.top_p = 1.0
+        this.reasoning_effort = undefined
+        this.response_format = undefined
 
         // API Strategy
         this.apiStrategy = 'openai'
@@ -252,21 +254,32 @@ class AIGenerator {
                         }
                     };
 
-                    const data = JSON.stringify({
-                        model: this.model,
-                        messages: messages,
-                        temperature: this.temperature,
-                        frequency_penalty: 0,
-                        presence_penalty: 0,
-                        top_p: this.top_p,
-                        stream: true,
-                    });
-
-                    xhr.send(data);
-                }).catch(error => {
-                    reject(error); 
+                const data = JSON.stringify({
+                    model: this.model,
+                    messages: messages,
+                    temperature: this.temperature,
+                    frequency_penalty: 0,
+                    presence_penalty: 0,
+                    top_p: this.top_p,
+                    reasoning_effort: this.reasoning_effort,
+                    response_format: this.response_format,
+                    stream: true
                 });
-            }
+
+                xhr.send(data);
+
+                // 추론 모델은 첫 응답을 받기까지 어느정도 시간이 걸리기 때문에 이에 대한 안내를 제공하기 위한 콜백을 추가
+                if(me.client.onSend) {
+                    me.client.onSend(this.client.input, () => {
+                        me.stop()
+                    })
+                    this.onSend(this.client.input, () => {
+                        me.stop()
+                    })
+                }
+            }).catch(error => {
+                reject(error); 
+            });
         });
 
     }
@@ -476,7 +489,7 @@ class AIGenerator {
         return text;
     }
 
-
+    onSend(input, stopCallback){}
 }
 
 

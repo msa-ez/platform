@@ -32,10 +32,12 @@
   },
   "BCGenerationOption" : {
     "generationOption": "생성 옵션",
-    "numberOfBCs": "바운디드 컨텍스트 개수 (15개 이하 권장)",
+    "numberOfBCs": "바운디드 컨텍스트 개수 (15개 이하)",
     "selectAspects": "분석 관점 선택",
     "additionalRequirements": "추가 요구사항",
-    "generate" : "생성"
+    "generate" : "생성",
+    "bcNumberLimitError": "15개 이하여야 합니다",
+    "invalidNumberError": "숫자만 입력 가능합니다."
   },
   "BoundedContextPanel" : {
     "name": "이름",
@@ -218,8 +220,8 @@
     "processModeOff": "디자인 레벨 : off"
   },
   "ModelDraftDialogForDistribution": {
-    "pros": "장점:",
-    "cons": "단점:",
+    "pros": "장점",
+    "cons": "단점",
     "conclusions": "결론:",
     "create": "생성",
     "createEventStormingModelCanvas": "이벤트스토밍 모델 생성",

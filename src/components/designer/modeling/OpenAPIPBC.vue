@@ -132,7 +132,8 @@
                     if(!openAPIObj.path) return;
 
                     let element = await this.convert(openAPIObj.path, this.pbc, openAPIObj);
-                    this.$set(this.canvas.value.elements, element.elementView.id, element);
+                    this.canvas.addElementAction(element);
+                    // this.$set(this.canvas.value.elements, element.elementView.id, element);
 
                     this.$emit('result', true)
                     return true;

@@ -57,7 +57,10 @@ class JsonParsingUtil {
 
         const parseStrategies = [
             (text) => JSON.parse(text),   
-            (text) => partialParse(text),         
+            (text) => partialParse(text),
+            (text) => partialParse(
+                text.replace(/[\]\}]+$/, '') // 끝 부분의 "]"와 "}"를 제거한 후 처리하여 마무리 오류 해결
+            ),   
             (text) => partialParse(
                 text.replace(/([{,]\s*)(?!true|false|null)(\w+):/g, '$1"$2":') // {user: {name: "John"}} > {"user": {"name": "John"}}
             ),

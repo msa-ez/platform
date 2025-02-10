@@ -2722,8 +2722,50 @@
             })
 
 
+            let thinkingUpdateInterval = undefined
+            const createThinkingUpdateInterval = (elapsedSeconds=0, subjectText) => {
+                clearThinkingUpdateInterval()
+
+                const updateMessage = (elapsedSeconds, subjectText) => {
+                    this.generatorProgressDto.displayMessage = `Thinking for ${elapsedSeconds} second${elapsedSeconds > 1 ? 's' : ''}... (Subject: ${subjectText})`
+                }
+
+                updateMessage(elapsedSeconds, subjectText)
+                thinkingUpdateInterval = setInterval(() => {
+                    elapsedSeconds += 1
+                    updateMessage(elapsedSeconds, subjectText)
+                }, 1000)
+            }
+            const clearThinkingUpdateInterval = () => {
+                if(thinkingUpdateInterval) {
+                    clearInterval(thinkingUpdateInterval)
+                    thinkingUpdateInterval = undefined
+                }
+            }
+
             const byFunctionCallbacks = {
+                onSend: (input, stopCallback) => {
+                    this.AggregateDraftDialogDto = {
+                        ...this.AggregateDraftDialogDto,
+                        isShow: false
+                    }
+
+                    this.generatorProgressDto = {
+                        generateDone: false,
+                        displayMessage: "",
+                        progress: null,
+                        actions: {
+                            stopGeneration: () => {
+                                stopCallback()
+                            }
+                        }
+                    }
+
+                    createThinkingUpdateInterval(0, input.subjectText)
+                },
+
                 onFirstResponse: (returnObj) => {
+                    clearThinkingUpdateInterval()
                     this.AggregateDraftDialogDto = {
                         ...this.AggregateDraftDialogDto,
                         isShow: false
@@ -2740,8 +2782,9 @@
                         }
                     }
                 },
-
+                
                 onModelCreated: (returnObj) => {
+                    clearThinkingUpdateInterval()
                     this.generatorProgressDto.displayMessage = returnObj.directMessage
                     this.generatorProgressDto.progress = returnObj.progress
 
@@ -2753,6 +2796,7 @@
                 },
 
                 onGenerationSucceeded: (returnObj) => {
+                    clearThinkingUpdateInterval()
                     if(returnObj.modelValue.removedElements && returnObj.modelValue.removedElements.length > 0) {
                         returnObj.modelValue.removedElements.forEach(element => {
                             if(this.value.elements[element.id])
@@ -2768,6 +2812,7 @@
                 },
 
                 onRetry: (returnObj) => {
+                    clearThinkingUpdateInterval()
                     alert(`[!] An error occurred during creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
                     this.AggregateDraftDialogDto = {
                         ...this.AggregateDraftDialogDto,
@@ -2781,10 +2826,12 @@
                 },
 
                 onStopped: () => {
+                    clearThinkingUpdateInterval()
                     this.generatorProgressDto.generateDone = true
                 },
 
                 onGenerationDone: () => {
+                    clearThinkingUpdateInterval()
                     this.generatorProgressDto.generateDone = true
                 }
             }
@@ -3290,9 +3337,11 @@
                 return elementValues;
             },
             convertNameForElement(item) {
-                item.namePascalCase = changeCase.pascalCase(item.name);
-                item.nameCamelCase = changeCase.camelCase(item.name);
-                item.namePlural = pluralize(item.nameCamelCase);
+                if(item && item.name){
+                    item.namePascalCase = changeCase.pascalCase(item.name);
+                    item.nameCamelCase = changeCase.camelCase(item.name);
+                    item.namePlural = pluralize(item.nameCamelCase);
+                }
             },
             getAttachedBoundedContext(element, boundedLists) {
                 var me = this;
@@ -5691,21 +5740,25 @@
                                 copyEl.isPBCModel = true;
 
                                 if (element._type.endsWith("Event")) {
+                                    me.convertNameForElement(copyEl);
                                     copyEl.isView = true;
                                     pbcElement.events.push(copyEl);
                                 } else if (element._type.endsWith("Command")) {
+                                    me.convertNameForElement(copyEl);
                                     copyEl.isView = true;
                                     pbcElement.commands.push(copyEl);
                                 } else if (element._type.endsWith("Policy")) {
+                                    me.convertNameForElement(copyEl);
                                     copyEl.isView = true;
                                     pbcElement.policies.push(copyEl);
-                                } else if (
-                                    element._type.endsWith("BoundedContext")
-                                ) {
+                                } else if (element._type.endsWith("BoundedContext")) {
+                                    me.convertNameForElement(copyEl);
                                     pbcElement.boundedContextes.push(copyEl);
                                 } else if (element._type.endsWith("Aggregate")) {
+                                    me.convertNameForElement(copyEl);
                                     pbcElement.aggregates.push(copyEl);
                                 } else if (element._type.endsWith("View")) {
+                                    me.convertNameForElement(copyEl);
                                     pbcElement.views.push(copyEl);
                                 }
                             }

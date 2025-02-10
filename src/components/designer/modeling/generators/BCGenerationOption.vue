@@ -7,74 +7,81 @@
                 {{ $t('BCGenerationOption.generationOption') }}
             </v-card-title>
             
-            <v-card-text>
-                <v-container>
-                    <v-row>
-                        <v-col cols="12">
-                            <div class="d-flex align-center">
-                                <span class="mr-4">{{ $t('BCGenerationOption.numberOfBCs') }}</span>
-                            </div>
+            <div>
+                <v-row class="ma-0 pa-0">
+                    <v-col class="pa-4" cols="12">
+                        <div class="d-flex align-center">
+                            <span class="mr-4">{{ $t('BCGenerationOption.numberOfBCs') }}</span>
+                        </div>
+                        <div class="d-flex align-center"
+                            style="max-width:200px;"
+                        >
+                            <v-btn icon color="primary" @click="decrementBCs" :disabled="localOptions.numberOfBCs <= 1">
+                                <v-icon>mdi-minus</v-icon>
+                            </v-btn>
                             <v-text-field
                                 v-model="localOptions.numberOfBCs"
                                 :min="1"
                                 :max="15"
-                                type="number"
-                                class="mt-4"
-                                cols="3"
+                                type="text"
+                                class="mx-2"
                                 :error-messages="bcNumberError"
                                 :error="!!bcNumberError"
+                                @input="validateNumber"
                             ></v-text-field>
-                        </v-col>
-                        
-                        <v-col cols="12">
-                            <p>{{ $t('BCGenerationOption.selectAspects') }}</p>
-                            <template v-for="(aspect, index) in availableAspects">
-                                <v-card
-                                    :key="`card-${index}`"
-                                    class="mb-2"
-                                    outlined
-                                    @click="toggleAspect(aspect)"
-                                    :class="{ 'bcg-selected-card': localOptions.selectedAspects.includes(aspect) }"
-                                >
-                                    <v-card-text>
-                                        <v-row class="ma-0 pa-0">
-                                            <v-checkbox class="ma-0 pa-0"
-                                                :input-value="localOptions.selectedAspects.includes(aspect)"
-                                                @click.stop="toggleAspect(aspect)"
-                                            ></v-checkbox>
-                                            <span class="font-weight-bold">{{ aspect }}</span>
-                                        </v-row>
-                                        <p :key="`description-${index}`">
-                                            {{ getAspectDescription(index) }}
-                                        </p>
-                                    </v-card-text>
-                                </v-card>
-                            </template>
-                        </v-col>
-
-                        <v-col cols="12">
-                            <v-textarea
-                                v-model="localOptions.additionalOptions"
-                                :label="$t('BCGenerationOption.additionalRequirements')"
-                                rows="3"
+                            <v-btn icon color="primary" @click="incrementBCs" :disabled="localOptions.numberOfBCs >= 15">
+                                <v-icon>mdi-plus</v-icon>
+                            </v-btn>
+                        </div>
+                    </v-col>
+                    
+                    <v-col class="pa-4 pt-0" cols="12">
+                        <p>{{ $t('BCGenerationOption.selectAspects') }}</p>
+                        <template v-for="(aspect, index) in availableAspects">
+                            <v-card
+                                :key="`card-${index}`"
+                                class="mb-2"
                                 outlined
-                                auto-grow
-                            ></v-textarea>
-                        </v-col>
-                    </v-row>
-                </v-container>
+                                @click="toggleAspect(aspect)"
+                                :class="{ 'bcg-selected-card': localOptions.selectedAspects.includes(aspect) }"
+                            >
+                                <v-card-text>
+                                    <v-row class="ma-0 pa-0">
+                                        <v-checkbox class="ma-0 pa-0"
+                                            :input-value="localOptions.selectedAspects.includes(aspect)"
+                                            @click.stop="toggleAspect(aspect)"
+                                        ></v-checkbox>
+                                        <span class="font-weight-bold">{{ aspect }}</span>
+                                    </v-row>
+                                    <p :key="`description-${index}`">
+                                        {{ getAspectDescription(index) }}
+                                    </p>
+                                </v-card-text>
+                            </v-card>
+                        </template>
+                    </v-col>
+
+                    <v-col class="pa-4 pt-0" cols="12">
+                        <v-textarea
+                            v-model="localOptions.additionalOptions"
+                            :label="$t('BCGenerationOption.additionalRequirements')"
+                            rows="3"
+                            outlined
+                            auto-grow
+                        ></v-textarea>
+                    </v-col>
+                </v-row>
             
-                <v-row class="ma-0 pa-0">
+                <v-row class="ma-0 pa-4 pt-0">
                     <v-spacer></v-spacer>
-                    <v-btn
+                    <v-btn @click="onConfirm"
                         color="primary"
-                        @click="onConfirm"
-                        :disabled="!isValid || isSummarizeStarted || isGeneratingBoundedContext || isStartMapping"
+                        :disabled="generateBtnDisabled"
                     >
                         {{ $t('BCGenerationOption.generate') }}
                     </v-btn>
                 </v-row>
-            </v-card-text>
+            </div>
         </v-card>
     </v-card>
 </template>
@@ -123,13 +130,45 @@ export default {
 
         bcNumberError() {
             const num = Number(this.localOptions.numberOfBCs);
-            return num > 15 ? 'Number must be less than or equal to 15' : '';
-        }
+            if (isNaN(num)) {
+                return this.$t('BCGenerationOption.invalidNumberError'); // 숫자가 아닐 때 오류 메시지
+            }
+            if (num > 15) {
+                return this.$t('BCGenerationOption.bcNumberLimitError'); // 숫자가 15보다 클 때 오류 메시지
+            }
+            return '';
+        },
+        generateBtnDisabled() {
+            return !this.isValid || 
+               this.isSummarizeStarted || 
+               this.isGeneratingBoundedContext || 
+               this.isStartMapping || 
+               this.localOptions.numberOfBCs >= 15;
+        },
     },
 
     watch: {},
 
     methods: {
+        incrementBCs() {
+            if (this.localOptions.numberOfBCs < 15) {
+                this.localOptions.numberOfBCs++;
+            }
+        },
+        decrementBCs() {
+            if (this.localOptions.numberOfBCs > 1) {
+                this.localOptions.numberOfBCs--;
+            }
+        },
+        validateNumber(event) {
+            const value = event.target.value;
+            const number = parseInt(value, 10);
+            if (!isNaN(number) && number >= 1 && number <= 15) {
+                this.localOptions.numberOfBCs = number;
+            } else {
+                this.localOptions.numberOfBCs = '';
+            }
+        },
         toggleAspect(aspect) {
             console.log('toggleAspect called with:', aspect); // 메서드 호출 확인
             const index = this.localOptions.selectedAspects.indexOf(aspect);

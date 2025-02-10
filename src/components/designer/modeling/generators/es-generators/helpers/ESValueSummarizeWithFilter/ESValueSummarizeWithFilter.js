@@ -135,7 +135,7 @@ The approximate structure is as follows.
                     {
                         "id": "<readModelId>",
                         "name": "<readModelName>",
-                        "properties": [
+                        "queryParameters": [
                             {
                                 "name": "<propertyName>",
                                 ["type": "<propertyType>"],
@@ -598,7 +598,7 @@ The approximate structure is as follows.
                     ),
                     ...getConditionalValue(
                         ["properties", "readModels.properties"],
-                        { properties: element.queryParameters ? 
+                        { queryParameters: element.queryParameters ? 
                             this._getSummarizedFieldDescriptors(element.queryParameters) : [] 
                         } // ReadModel인 경우에만 기존과 다르게 queryParameters로 참조
                     ),

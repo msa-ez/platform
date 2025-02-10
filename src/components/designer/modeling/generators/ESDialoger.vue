@@ -201,8 +201,41 @@
             });
 
 
+            let thinkingUpdateInterval = undefined
+            const createThinkingUpdateInterval = (elapsedSeconds=0, subjectText) => {
+                clearThinkingUpdateInterval()
+
+                const updateMessage = (elapsedSeconds, subjectText) => {
+                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = `Thinking for ${elapsedSeconds} second${elapsedSeconds > 1 ? 's' : ''}... (Subject: ${subjectText})`
+                }
+
+                updateMessage(elapsedSeconds, subjectText)
+                thinkingUpdateInterval = setInterval(() => {
+                    elapsedSeconds += 1
+                    updateMessage(elapsedSeconds, subjectText)
+                }, 1000)
+            }
+            const clearThinkingUpdateInterval = () => {
+                if(thinkingUpdateInterval) {
+                    clearInterval(thinkingUpdateInterval)
+                    thinkingUpdateInterval = undefined
+                }
+            }
+
             this.generators.PreProcessingFunctionsGenerator.generator = new PreProcessingFunctionsGenerator({
+                onSend: (input, stopCallback) => {
+                    this.workingMessages.AggregateDraftDialogDto.isShow = true
+                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
+                        leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length + 1,
+                        directMessage: "",
+                        progress: null
+                    }
+                    this.workingMessages.AggregateDraftDialogDto.actions.stop = stopCallback
+                    createThinkingUpdateInterval(0, input.subjectText)
+                },
+
                 onFirstResponse: (returnObj) => {
+                    clearThinkingUpdateInterval()
                     const messageUniqueId = this.workingMessages.AggregateDraftDialogDto.uniqueId
 
                     this.workingMessages.AggregateDraftDialogDto.isShow = true
@@ -245,6 +278,7 @@
                 },
 
                 onModelCreated: (returnObj) => {
+                    clearThinkingUpdateInterval()
                     const getXAIDtoDraftOptions = (analysisResult, targetBoundedContext, description) => {
                         return {
                             boundedContext: targetBoundedContext.name,
@@ -271,6 +305,7 @@
                 },
 
                 onGenerationSucceeded: (returnObj) => {
+                    clearThinkingUpdateInterval()
                     this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
                         leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length + 1,
                         directMessage: returnObj.directMessage,
@@ -281,6 +316,7 @@
                 },
 
                 onRetry: (returnObj) => {
+                    clearThinkingUpdateInterval()
                     alert(`[!] An error occurred while analysing your requirements, please try again..\n* Error log \n${returnObj.errorMessage}`)
                 }
             })
@@ -341,9 +377,19 @@
 
 
             this.generators.DraftGeneratorByFunctions.generator = new DraftGeneratorByFunctions({
-                input: null,
+                onSend: (input, stopCallback) => {
+                    this.workingMessages.AggregateDraftDialogDto.isShow = true
+                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
+                        leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length + 1,
+                        directMessage: "",
+                        progress: null
+                    }
+                    this.workingMessages.AggregateDraftDialogDto.actions.stop = stopCallback
+                    createThinkingUpdateInterval(0, input.subjectText)
+                },
 
                 onFirstResponse: (returnObj) => {
+                    clearThinkingUpdateInterval()
                     this.workingMessages.AggregateDraftDialogDto.isShow = true
                     this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
                         leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length + 1,
@@ -364,7 +410,8 @@
                 },
 
                 onModelCreated: (returnObj) => {
-                    const getXAIDtoDraftOptions = (output, targetBoundedContext, description, analysisResult) => {
+                    clearThinkingUpdateInterval()
+                    const getXAIDtoDraftOptions = (output, targetBoundedContext, description, analysisResult, inference) => {
                         return {
                             boundedContext: targetBoundedContext.name,
                             boundedContextAlias: targetBoundedContext.displayName,
@@ -376,7 +423,8 @@
                             })) : [],
                             conclusions: output.conclusions,
                             defaultOptionIndex: output.defaultOptionIndex,
-                            analysisResult: analysisResult
+                            analysisResult: analysisResult,
+                            inference: inference
                         }
                     }
 
@@ -392,8 +440,10 @@
                             returnObj.modelValue.output,
                             returnObj.inputParams.boundedContext,
                             returnObj.inputParams.description,
-                            returnObj.inputParams.analysisResult
+                            returnObj.inputParams.analysisResult,
+                            returnObj.modelValue.inference
                         ))
+
 
                         this.workingMessages.AggregateDraftDialogDto.draftOptions = draftOptions
                         return
@@ -405,12 +455,15 @@
                             returnObj.modelValue.output,
                             returnObj.inputParams.boundedContext,
                             returnObj.inputParams.description,
-                            returnObj.inputParams.analysisResult
+                            returnObj.inputParams.analysisResult,
+                            returnObj.modelValue.inference
+
                         )
                     ]
                 },
 
                 onGenerationSucceeded: (returnObj) => {
+                    clearThinkingUpdateInterval()
                     if(returnObj.isFeedbackBased) {
                         this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
                             leftBoundedContextCount: 0,
@@ -432,6 +485,7 @@
                 },
 
                 onRetry: (returnObj) => {
+                    clearThinkingUpdateInterval()
                     alert(`[!] There was an error creating your draft, please try again.\n* Error log \n${returnObj.errorMessage}`)
                 }
             })

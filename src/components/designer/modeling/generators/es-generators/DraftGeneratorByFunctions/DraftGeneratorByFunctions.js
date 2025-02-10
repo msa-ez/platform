@@ -1,12 +1,68 @@
 const FormattedJSONAIGenerator = require("../../FormattedJSONAIGenerator")
 const { ESValueSummarizeWithFilter } = require("../helpers")
+const { z } = require("zod")
+const { zodResponseFormat } = require("../../utils")
 
 class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
         this.checkInputParamsKeys = ["description", "boundedContext", "accumulatedDrafts"] // Optional ["feedback"]
-        this.progressCheckStrings = ["overviewThoughts", "options", "analysis", "defaultOptionIndex"]
+        this.progressCheckStrings = ["inference", "options", "analysis", "defaultOptionIndex"]
+        this.response_format = zodResponseFormat(
+            z.object({
+                inference: z.string(),
+                result: z.object({
+
+                    options: z.array(
+                        z.object({
+                            structure: z.array(
+                                z.object({
+                                    aggregate: z.object({
+                                        name: z.string(),
+                                        alias: z.string()
+                                    }).strict(),
+                                    entities: z.array(
+                                        z.object({
+                                            name: z.string(),
+                                            alias: z.string()
+                                        }).strict()
+                                    ),
+                                    valueObjects: z.array(
+                                        z.object({
+                                            name: z.string(),
+                                            alias: z.string(),
+                                            referencedAggregateName: z.string()
+                                        }).strict()
+                                    )
+                                }).strict()
+                            ),
+                            pros: z.object({
+                                cohesion: z.string(),
+                                coupling: z.string(),
+                                consistency: z.string(),
+                                encapsulation: z.string(),
+                                complexity: z.string(),
+                                independence: z.string(),
+                                performance: z.string()
+                            }).strict(),
+                            cons: z.object({
+                                cohesion: z.string(),
+                                coupling: z.string(),
+                                consistency: z.string(),
+                                encapsulation: z.string(),
+                                complexity: z.string(),
+                                independence: z.string(),
+                                performance: z.string()
+                            }).strict()
+                        }).strict()
+                    ),
+                    defaultOptionIndex: z.number(),
+                    conclusions: z.string()
+                }).strict()
+            }).strict(),
+            "instruction"
+        )
     }
 
     static outputToAccumulatedDrafts(output, targetBoundedContext){
@@ -69,6 +125,7 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
         }
         inputParams.existingAggregates = existingAggregates
         inputParams.boundedContextDisplayName = inputParams.boundedContext.displayName ? inputParams.boundedContext.displayName : inputParams.boundedContext.name
+        inputParams.subjectText = `Generating options for ${inputParams.boundedContextDisplayName} Bounded Context`
     }
 
 
@@ -83,155 +140,118 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     }
 
     __buildTaskGuidelinesPrompt(){
-        return `You are tasked with drafting a proposal for defining multiple Aggregates within a given Bounded Context based on provided functional requirements.
+        return `You are tasked with drafting a proposal to define multiple Aggregates within a specified Bounded Context based on provided functional requirements and business rules.
 
-Please adhere to the following guidelines:
-1. Ensure all suggestions align with the user's functional requirements.
-2. Maintain transactional consistency by keeping transaction-critical data within a single Aggregate:
-   - Do not split core transaction data (e.g., loan and loan details, order and order items)
-   - Keep data that must be updated atomically in the same Aggregate
-   - Consider business invariants when defining Aggregate boundaries
-3. Distribute properties across ValueObjects and Entities within an Aggregate to enhance maintainability.
-4. Avoid creating ValueObjects and Entities with only a single property unless they provide significant value.
-5. Object names should be in English, while aliases, pros, cons, conclusions, etc., should be in ${this.preferredLanguage} language for clarity.
-6. If an Aggregate already exists in another Bounded Context, avoid duplication. Instead, create a ValueObject that references the existing Aggregate via a foreign key.
-7. Aggregates that reference other Aggregates must include a ValueObject for the referenced Aggregate, using a foreign key.
-8. Ensure that any Aggregate referenced via a ValueObject exists in accumulatedDrafts or is created within the current option.
-9. If a similar Aggregate already exists in 'Accumulated Drafts' for an Entity analysed in 'Functional Requirements', you need to create a ValueObject reference to that Aggregate instead of creating it yourself.
-10. Do not include comments in the output JSON object.
-11. **Avoid creating bidirectional references between Aggregates. Aggregate references should be unidirectional. For example, if 'Order' references 'Customer', 'Customer' should not directly reference 'Order'.**
-    * **When deciding which Aggregate should reference another, consider the ownership and immutability. Typically, the Aggregate that owns the other or has a lifecycle dependency on the other should hold the reference. For example, 'Order' should reference 'Customer' because an order is always associated with a customer, and the customer's lifecycle is independent of the order. Conversely, 'Customer' should not reference 'Order' because a customer can exist without any orders.**
-12. **Do not create Aggregates that already exist in other Bounded Contexts within accumulatedDrafts:**
-    * Check accumulatedDrafts for existing Aggregates before creating new ones
-    * If an Aggregate with the same core concept already exists (e.g., 'Customer', 'Order'), do not recreate it
-    * Instead, reference existing Aggregates through ValueObjects with foreign keys
-    * Example: If 'Customer' Aggregate exists in CustomerManagement Bounded Context, other Bounded Contexts should use CustomerReference ValueObject instead of creating a new Customer Aggregate
-    * This prevents duplicate Aggregates across different Bounded Contexts and maintains a single source of truth
+Guidelines:
+
+1. Alignment with Functional Requirements and Business Rules  
+   - Ensure that all design proposals fully satisfy the given functional requirements.  
+   - Accurately address every business rule and constraint within your design.
+
+2. Transactional Consistency  
+   - Consolidate transaction-critical data within a single Aggregate to preserve atomicity.  
+   - Avoid splitting core transactional data (e.g., do not separate elements such as loan/loan details or order/order items).  
+   - Define Aggregate boundaries that respect the inherent business invariants.
+
+3. Design for Maintainability  
+   - Distribute properties across well-defined Value Objects and Entities to improve maintainability.  
+   - Avoid creating Value Objects or Entities with only one property unless they represent a significant domain concept.
+
+4. Naming and Language Conventions  
+   - Use English for all object names.  
+   - Utilize the user’s preferred language for aliases, pros, cons, conclusions, and other descriptive elements to ensure clarity.
+
+5. Reference Handling and Duplication Avoidance  
+   - Before creating an Aggregate, check if an Aggregate with the same core concept already exists in either accumulated drafts or other Bounded Contexts.  
+   - If it exists, reference it using a Value Object with a foreign key instead of duplicating its definition.  
+   - Ensure that any Aggregate referenced via a Value Object has a corresponding, pre-existing definition either in accumulated drafts or in the current design.
+
+6. Aggregate References  
+   - Aggregates that relate to other Aggregates should use Value Objects to hold these references.  
+   - Avoid bidirectional references: Ensure that references remain unidirectional by carefully determining which Aggregate owns the reference based on ownership and lifecycle dependencies.
+
+7. Output Requirements  
+   - The final JSON output must not include any inline comments.  
+   - Maintain clarity and conciseness in the JSON structure.
 
 Proposal Writing Recommendations:
-1. Aggregates should represent complete business capabilities and maintain their invariants:
-   - Keep transaction-critical data together
-   - Consider lifecycle dependencies
-   - Ensure business rules can be enforced within the Aggregate boundary
-2. Generate distinct options considering:
-   - Transactional consistency requirements
-   - Business invariants
-   - Performance implications
-   - Scalability needs
-3. Select the best option from the generated options and explain the rationale for its selection, marking it as the default choice.
 
-Best Option Selection Guidelines:
-1. Transactional Consistency
-   - Maintains atomic operations within aggregate boundaries
-   - Preserves business invariants effectively
-   - Handles concurrent operations safely
+- Design Proposals:  
+  - Each Aggregate should encapsulate a complete business capability and enforce its invariants.  
+  - Generate distinct design options that address transactional consistency, performance, scalability, and maintainability.  
+  - Clearly articulate the rationale for selecting a default option from your proposals.
 
-2. Performance & Scalability
-   - Minimizes cross-aggregate references
-   - Enables efficient querying patterns
-   - Supports independent scaling of components
+- Default Option Selection Criteria:  
+  - Transactional Consistency: Ensure atomic operations and safeguard business invariants.  
+  - Performance & Scalability: Minimize inter-Aggregate dependencies to optimize querying and support independent scaling.  
+  - Domain Alignment: Reflect natural business boundaries while maintaining semantic clarity.  
+  - Maintainability & Flexibility: Promote clear separation of concerns and allow for anticipated growth.
 
-3. Domain Alignment
-   - Reflects natural business boundaries
-   - Captures essential business rules
-   - Maintains semantic clarity
-
-4. Maintainability
-   - Clear separation of concerns
-   - Minimal duplication
-   - Sustainable complexity level
-
-5. Future Flexibility
-   - Accommodates expected changes
-   - Supports business growth
-   - Allows feature extensions
-
-Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexibility
+Priority Order:  
+Consistency > Domain Alignment > Performance > Maintainability > Flexibility
 `
+    }
+
+    __buildInferenceGuidelinesPrompt() {
+        return `
+Inference Guidelines:
+1. The process of reasoning should be directly related to the output result, not a reference to a general strategy.
+2. Thoroughly analyze the provided functional requirements, business rules, and the bounded context to understand the problem domain.
+3. Focus on determining aggregate boundaries and ensuring transactional consistency while grouping related entities and value objects.
+4. Evaluate multiple design options by considering key factors such as domain complexity, scalability, maintainability, and future flexibility.
+5. Assess the pros and cons of each option in terms of cohesion, coupling, consistency, performance, and encapsulation.
+6. Follow naming conventions strictly: all object names must be in English, while all aliases should be in the user's preferred language.
+`   
     }
 
     __buildJsonResponseFormat() {
         return `
 {
-    "overviewThoughts": {
-        "summary": "High-level analysis of the bounded context and its requirements",
-        "details": {
-            "domainComplexity": "Assessment of domain complexity and core business challenges",
-            "boundaryDefinition": "Analysis of bounded context boundaries and relationships",
-            "strategicFit": "Evaluation of how the design aligns with overall domain strategy"
-        },
-        "additionalConsiderations": "Other strategic factors affecting the bounded context design"
-    },
-
+    "inference": "<inference>",
     "result": {
         "options": [
             {
-                "optionThoughts": {
-                    "summary": "Analysis of specific design option and its implications",
-                    "details": {
-                        "consistencyModel": "Analysis of consistency requirements and transaction boundaries",
-                        "scalabilityFactors": "Evaluation of growth factors and performance requirements",
-                        "maintainabilityImpact": "Assessment of long-term maintenance and evolution considerations"
-                    },
-                    "additionalConsiderations": "Specific technical or business factors affecting this option"
-                },
                 "structure": [
                     {
-                        "structureThoughts": {
-                            "summary": "Detailed analysis of specific aggregate structure",
-                            "details": {
-                                "aggregateBoundaries": "Reasoning for chosen aggregate boundaries and composition",
-                                "invariantProtection": "How the structure maintains business rules and invariants",
-                                "relationshipPatterns": "Analysis of relationships with other aggregates and entities"
-                            },
-                            "additionalConsiderations": "Implementation-specific considerations for this structure"
-                        },
                         "aggregate": {
-                            "name": "aggregate-name",
-                            "alias": "aggregate-alias"
+                            "name": "<name>",
+                            "alias": "<alias>"
                         },
                         "entities": [{
-                            "name": "entity-name",
-                            "alias": "entity-alias"
+                            "name": "<name>",
+                            "alias": "<alias>"
                         }],
                         "valueObjects": [{
-                            "name": "value-object-name",
-                            "alias": "value-object-alias",
-                            ["referencedAggregateName": "aggregate-name"] // Optional. If there is a referencedAggregateName, it means that the ValueObject is used to reference the Aggregate. You can write the name of an Aggregate created from the same option, as well as an existing Aggregate.
+                            "name": "<name>",
+                            "alias": "<alias>",
+                            "referencedAggregateName?": "<name of aggregate>" // If there is a referencedAggregateName, it means that the ValueObject is used to reference the Aggregate. You can write the name of an Aggregate created from the same option, as well as an existing Aggregate.
                         }]
                     }
                 ],
-                "analysis": {
-                    "transactionalConsistency": "Transactional consistency for this option",
-                    "performanceScalability": "Performance & Scalability for this option",
-                    "domainAlignment": "Domain Alignment for this option",
-                    "maintainability": "Maintainability for this option",
-                    "futureFlexibility": "Future Flexibility for this option"
-                },
                 "pros": {
-                    "cohesion": "cohesion for this option",
-                    "coupling": "coupling for this option",
-                    "consistency": "consistency for this option",
-                    "encapsulation": "encapsulation for this option",
-                    "complexity": "complexity for this option",
-                    "independence": "independence for this option",
-                    "performance": "performance for this option"
+                    "cohesion": "<cohesion for this option>",
+                    "coupling": "<coupling for this option>",
+                    "consistency": "<consistency for this option>",
+                    "encapsulation": "<encapsulation for this option>",
+                    "complexity": "<complexity for this option>",
+                    "independence": "<independence for this option>",
+                    "performance": "<performance for this option>"
                 },
                 "cons": {
-                    "cohesion": "cohesion for this option",
-                    "coupling": "coupling for this option",
-                    "consistency": "consistency for this option",
-                    "encapsulation": "encapsulation for this option",
-                    "complexity": "complexity for this option",
-                    "independence": "independence for this option",
-                    "performance": "performance for this option"
+                    "cohesion": "<cohesion for this option>",
+                    "coupling": "<coupling for this option>",
+                    "consistency": "<consistency for this option>",
+                    "encapsulation": "<encapsulation for this option>",
+                    "complexity": "<complexity for this option>",
+                    "independence": "<independence for this option>",
+                    "performance": "<performance for this option>"
                 }
             }
         ],
-
+        
         // Based on our analysis of each option, we'll recommend a default option that's right for you.
-        "defaultOptionIndex": "The index of the option that is selected by default(starts from 1)",
-        "conclusions": "Write a conclusion for each option, explaining in which cases it would be best to choose that option."
+        "defaultOptionIndex": "<The index of the option that is selected by default(starts from 1)>",
+        "conclusions": "<Write a conclusion for each option, explaining in which cases it would be best to choose that option.>"
     }        
 }
 `
@@ -388,39 +408,18 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
 
     __buildJsonExampleOutputFormat() {
         return {
-            "overviewThoughts": {
-                "summary": "Comprehensive analysis of the hotel booking domain and its aggregate design requirements",
-                "details": {
-                    "domainComplexity": "Hotel booking system requires careful balance between transactional consistency and scalability",
-                    "boundaryDefinition": "Clear separation needed between core booking operations and supplementary features",
-                    "strategicFit": "Design must support both immediate booking needs and future expansion of hotel services"
-                },
-                "additionalConsiderations": "Integration with external systems and handling of peak booking periods"
-            },
-    
+            "inference": `After thoroughly reviewing the provided requirements and business rules, we deduced that the domain model must strictly enforce transactional consistency while also accommodating future scalability. The functional requirements—such as booking creation and reservation management—demand that all critical data are processed atomically within clearly defined aggregate boundaries. Two primary design options emerged:
+
+1. **Option 1:** A single consolidated Aggregate (i.e., "Booking") encapsulates both booking logic and associated details. This approach simplifies transaction management and guarantees atomicity, yet it may become less scalable as system complexity increases.
+
+2. **Option 2:** A decomposed model, where “Booking” and “BookingDetail” are managed as separate Aggregates. This design fosters scalability and flexibility through a clear division of concerns, though it also introduces added complexity in ensuring coordinated transactions.
+
+Considering the priority order—Consistency > Domain Alignment > Performance > Maintainability > Flexibility—we inferred that while Option 1 promises simplicity, Option 2 is more advantageous for environments anticipating growth. Therefore, Option 2 is recommended as it better aligns with long-term scalability and maintainability objectives without compromising transactional consistency.`,
             "result": {
                 "options": [
                     {
-                        "optionThoughts": {
-                            "summary": "Single aggregate approach focusing on strong consistency",
-                            "details": {
-                                "consistencyModel": "Maintains atomic operations within single aggregate boundary",
-                                "scalabilityFactors": "Simplified scaling with potential bottlenecks during peak periods",
-                                "maintainabilityImpact": "Straightforward maintenance with risk of growing complexity"
-                            },
-                            "additionalConsiderations": "Consider caching strategies for read-heavy operations"
-                        },
                         "structure": [
                             {
-                                "structureThoughts": {
-                                    "summary": "Unified booking aggregate with embedded details",
-                                    "details": {
-                                        "aggregateBoundaries": "Single aggregate maintaining complete booking lifecycle",
-                                        "invariantProtection": "Direct enforcement of booking rules and constraints",
-                                        "relationshipPatterns": "Value object references to Guest and Room aggregates"
-                                    },
-                                    "additionalConsiderations": "Consider impact on concurrent booking operations"
-                                },
                                 "aggregate": {
                                     "name": "Booking",
                                     "alias": "Room Reservation"
@@ -453,13 +452,6 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
                                 ]
                             }
                         ],
-                        "analysis": {
-                            "transactionalConsistency": "Strong consistency within single aggregate boundary ensures atomic operations for booking lifecycle",
-                            "performanceScalability": "Good performance for basic operations but may face scaling challenges with complex queries",
-                            "domainAlignment": "Closely aligned with core booking domain concepts and business rules",
-                            "maintainability": "Simple structure makes maintenance straightforward but may become complex as features grow",
-                            "futureFlexibility": "Limited flexibility for extensive feature additions without structural changes"
-                        },
                         "pros": {
                             "cohesion": "High cohesion with clear booking focus",
                             "coupling": "Minimal coupling through value object references",
@@ -480,26 +472,8 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
                         }
                     },
                     {
-                        "optionThoughts": {
-                            "summary": "Split aggregate approach prioritizing scalability",
-                            "details": {
-                                "consistencyModel": "Eventually consistent model between core booking and details",
-                                "scalabilityFactors": "Independent scaling of booking core and supplementary features",
-                                "maintainabilityImpact": "Separated concerns enable focused maintenance"
-                            },
-                            "additionalConsiderations": "Need for coordination between split aggregates"
-                        },
                         "structure": [
                             {
-                                "structureThoughts": {
-                                    "summary": "Core booking aggregate focused on essential reservation data",
-                                    "details": {
-                                        "aggregateBoundaries": "Minimal core booking data with separate details",
-                                        "invariantProtection": "Core booking rules maintained in primary aggregate",
-                                        "relationshipPatterns": "References to Guest and Room plus BookingDetail"
-                                    },
-                                    "additionalConsiderations": "Transaction coordination with details aggregate"
-                                },
                                 "aggregate": {
                                     "name": "Booking",
                                     "alias": "Room Reservation"
@@ -523,15 +497,6 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
                                 ]
                             },
                             {
-                                "structureThoughts": {
-                                    "summary": "Separate aggregate for booking details and preferences",
-                                    "details": {
-                                        "aggregateBoundaries": "Contains supplementary booking information",
-                                        "invariantProtection": "Maintains detail-specific rules independently",
-                                        "relationshipPatterns": "References primary booking aggregate"
-                                    },
-                                    "additionalConsiderations": "Eventually consistent with main booking"
-                                },
                                 "aggregate": {
                                     "name": "BookingDetail",
                                     "alias": "Reservation Details"
@@ -554,13 +519,6 @@ Priority: Consistency > Domain Alignment > Performance > Maintainability > Flexi
                                 ]
                             }
                         ],
-                        "analysis": {
-                            "transactionalConsistency": "Requires careful coordination between booking and detail aggregates but enables fine-grained consistency control",
-                            "performanceScalability": "Better scalability through separate scaling of booking and detail components",
-                            "domainAlignment": "Clear separation of core booking concepts from supplementary details reflects domain complexity",
-                            "maintainability": "Separated concerns enable focused maintenance and evolution of each component",
-                            "futureFlexibility": "High flexibility for adding new features to either booking core or details independently"
-                        },
                         "pros": {
                             "cohesion": "Separate concerns for booking and details",
                             "coupling": "Clear separation of core booking and details",
@@ -642,9 +600,9 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
 
     onCreateModelGenerating(returnObj) {
         returnObj.modelValue.output = (returnObj.modelValue.aiOutput.result) ? returnObj.modelValue.aiOutput.result : {}
+        returnObj.modelValue.inference = returnObj.modelValue.aiOutput.inference ? returnObj.modelValue.aiOutput.inference : ""
 
         if(returnObj.modelValue.output) {
-            this._removeThoughts(returnObj.modelValue.output)
             this._removeOptionsWithExistingAggregates(returnObj.modelValue.output)
             this._linkValueObjectsToReferencedAggregates(returnObj.modelValue.output)
             this._enrichValueObjectsWithAggregateDetails(returnObj.modelValue.output)
@@ -660,9 +618,9 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
 
     onCreateModelFinished(returnObj) {
         returnObj.modelValue.output = returnObj.modelValue.aiOutput.result
+        returnObj.modelValue.inference = returnObj.modelValue.aiOutput.inference ? returnObj.modelValue.aiOutput.inference : ""
         returnObj.modelValue.output.defaultOptionIndex = returnObj.modelValue.output.defaultOptionIndex - 1
 
-        this._removeThoughts(returnObj.modelValue.output)
         this._removeOptionsWithExistingAggregates(returnObj.modelValue.output)
         returnObj.modelValue.output.defaultOptionIndex = Math.min(returnObj.modelValue.output.defaultOptionIndex, returnObj.modelValue.output.options.length - 1)
         if(returnObj.modelValue.output.options.length === 0) 
@@ -677,24 +635,6 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
             returnObj.isFeedbackBased = true
         } else {
             returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
-        }
-    }
-
-    _removeThoughts(output) {
-        if(!output || !output.options) return;
-    
-        for(const option of output.options) {
-            if(option.optionThoughts) {
-                delete option.optionThoughts;
-            }
-            
-            if(option.structure) {
-                for(const structure of option.structure) {
-                    if(structure.structureThoughts) {
-                        delete structure.structureThoughts;
-                    }
-                }
-            }
         }
     }
 
