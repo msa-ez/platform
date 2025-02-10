@@ -10,8 +10,9 @@
 
             <v-expansion-panel-content>
                 <v-card-text class="requirements-analysis">
+                    <CoTToggle :inference="analysisResult.inference" />
+
                     <v-tabs v-model="analysisTab">
-                        <v-tab v-if="analysisResult.overviewThoughts">Overview</v-tab>
                         <v-tab v-if="analysisResult.userStories">User Stories</v-tab>
                         <v-tab v-if="analysisResult.entities">Entities</v-tab>
                         <v-tab v-if="analysisResult.businessRules">Business Rules</v-tab>
@@ -19,22 +20,6 @@
                     </v-tabs>
 
                     <v-tabs-items v-model="analysisTab">
-                        <!-- Overview -->
-                        <v-tab-item v-if="analysisResult.overviewThoughts">
-                            <div class="pa-4">
-                                <p>{{ analysisResult.overviewThoughts.summary }}</p>
-                                <v-list v-if="analysisResult.overviewThoughts.details">
-                                    <v-list-item v-for="(value, key) in analysisResult.overviewThoughts.details"
-                                                :key="key" two-line>
-                                        <v-list-item-content>
-                                            <v-list-item-title>{{ key }}</v-list-item-title>
-                                            <v-list-item-subtitle>{{ value }}</v-list-item-subtitle>
-                                        </v-list-item-content>
-                                    </v-list-item>
-                                </v-list>
-                            </div>
-                        </v-tab-item>
-
                         <!-- User Stories -->
                         <v-tab-item v-if="analysisResult.userStories">
                             <div class="pa-4">
@@ -245,8 +230,13 @@
 </template>
 
 <script>
+import CoTToggle from '../../CoTToggle.vue'
+
 export default {
     name: 'analysis-result-panel',
+    components: {
+        CoTToggle
+    },
     props: {
         analysisResult: {
             type: Object,

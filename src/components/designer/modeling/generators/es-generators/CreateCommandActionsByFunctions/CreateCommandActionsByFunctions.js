@@ -4,13 +4,91 @@ const ESActionsUtil = require("../../es-ddl-generators/modules/ESActionsUtil")
 const ESFakeActionsUtil = require("../../es-ddl-generators/modules/ESFakeActionsUtil")
 const { ESValueSummarizeWithFilter } = require("../helpers")
 const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTransManager")
+const { z } = require("zod")
+const { zodResponseFormat } = require("../../utils")
 
 class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
         this.checkInputParamsKeys = ["targetBoundedContext", "targetAggregate", "description", "esValue", "userInfo", "information"]
-        this.progressCheckStrings = ["overviewThoughts", "actions"]
+        this.progressCheckStrings = ["inference", "commandActions", "eventActions", "readModelActions"]
+        this.response_format = zodResponseFormat(
+            z.object({
+                inference: z.string(),
+                result: z.object({
+                    commandActions: z.array(
+                        z.object({
+                            actionName: z.string(),
+                            objectType: z.literal("Command"),
+                            ids: z.object({
+                                aggregateId: z.string(),
+                                commandId: z.string()
+                            }),
+                            args: z.object({
+                                commandName: z.string(),
+                                commandAlias: z.string(),
+                                api_verb: z.enum(["POST", "PUT", "PATCH", "DELETE"]),
+                                properties: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                        type: z.string(),
+                                        isKey: z.boolean()
+                                    })
+                                ),
+                                outputEventIds: z.array(z.string()),
+                                actor: z.string()
+                            })
+                        })
+                    ),
+                    eventActions: z.array(
+                        z.object({
+                            actionName: z.string(),
+                            objectType: z.literal("Event"),
+                            ids: z.object({
+                                aggregateId: z.string(),
+                                eventId: z.string()
+                            }),
+                            args: z.object({
+                                eventName: z.string(),
+                                eventAlias: z.string(),
+                                properties: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                        type: z.string(),
+                                        isKey: z.boolean()
+                                    })
+                                )
+                            })
+                        })
+                    ),
+                    readModelActions: z.array(
+                        z.object({
+                            actionName: z.string(),
+                            objectType: z.literal("ReadModel"),
+                            ids: z.object({
+                                aggregateId: z.string(),
+                                readModelId: z.string()
+                            }),
+                            args: z.object({
+                                readModelName: z.string(),
+                                readModelAlias: z.string(),
+                                isMultipleResult: z.boolean(),
+                                queryParameters: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                        type: z.string(),
+                                        isKey: z.boolean()
+                                    })
+                                ),
+                                actor: z.string()
+                            })
+                        })
+                    )
+                }).strict()
+            }).strict(),
+            "instruction"
+        )
     }
 
     /**
@@ -75,6 +153,11 @@ class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
     static createGeneratorByDraftOptions(callbacks){
         const generator = new CreateCommandActionsByFunctions({
             input: null,
+
+            onSend: (input, stopCallback) => {
+                if(callbacks.onSend)
+                    callbacks.onSend(input, stopCallback)
+            },
 
             onFirstResponse: (returnObj) => {
                 if(callbacks.onFirstResponse)
@@ -152,6 +235,7 @@ class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
         inputParams.summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(
             inputParams.esValue, [], inputParams.esAliasTransManager
         )
+        inputParams.subjectText = `Creating commands for ${inputParams.aggregateDisplayName} Aggregate`
         if(!this.isCreatedPromptWithinTokenLimit()) {
             const leftTokenCount = this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
             if(leftTokenCount <= 100)
@@ -279,6 +363,17 @@ Best Practices:
 `
     }
 
+    __buildInferenceGuidelinesPrompt() {
+        return `
+Inference Guidelines:
+1. The process of reasoning should be directly related to the output result, not a reference to a general strategy.
+2. Directional Focus: Prioritize key business objectives and ensure that the generated actions align with domain-driven design, CQRS, and event sourcing principles.
+3. Validation and Consistency: Carefully evaluate business rules, validation constraints, state transitions, and property specifications to ensure architectural consistency.
+4. Integration and Duplication Avoidance: Verify that new actions integrate with existing Commands, Events, and ReadModels without causing duplication.
+5. Edge Cases and Error Handling: Consider potential error scenarios and boundary conditions.
+`
+    }
+
     __buildRequestFormatPrompt(){
         return ESValueSummarizeWithFilter.getGuidePrompt()
     }
@@ -286,148 +381,89 @@ Best Practices:
     __buildJsonResponseFormat() {
         return `
 {
-    "overviewThoughts": {
-        "summary": "High-level overview of the entire action set being generated",
-        "details": {
-            "businessAlignment": "How the actions align with business requirements and domain model",
-            "architecturalConsiderations": "Key architectural decisions and patterns being applied",
-            "dataFlowAnalysis": "How data flows between commands, events, and read models"
-        },
-        "additionalConsiderations": "Any cross-cutting concerns or future considerations"
-    },
-
+    "inference": "<inference>",
     "result": {
-        "actions": [
+        // Generate commands in the aggregate to satisfy the given functional requirements.
+        "commandActions": [
             {
-                "actionThoughts": {
-                    "summary": "Specific reasoning for this particular action",
-                    "details": {
-                        "businessRules": "Business rules and validations specific to this action",
-                        "stateTransitions": "How this action affects aggregate state",
-                        "eventFlow": "Event sourcing considerations and event flow"
-                    },
-                    "additionalConsiderations": "Action-specific edge cases or special handling"
-                },
-
                 // Write the ActionName that you utilized in the previous steps
                 "actionName": "<actionName>",
-
-                // This attribute indicates what type of object information is being modified.
-                // Choose one from Command, Event, ReadModel
-                "objectType": "<objectType>",
-
-                // This attribute contains the ID information of the object on which the action is performed.
+                "objectType": "Command",
                 "ids": {
-                    "<idName>": "<idValue>"
+                    "aggregateId": "<aggregateId>",
+                    "commandId": "<commandId>"
                 },
-
-                // This attribute contains the parameters required for the action.
                 "args": {
-                    "<argName>": "<argValue>",
+                    "commandName": "<commandName>",
+                    "commandAlias": "<commandAlias>",
+                    "api_verb": <"POST" | "PUT" | "PATCH" | "DELETE">,
 
-                    "propertyThoughts": {
-                        "summary": "Property-level design considerations",
-                        "details": {
-                            "dataValidation": "Validation rules and constraints for properties",
-                            "typeSelection": "Reasoning for chosen data types and structures",
-                            "domainAlignment": "How properties reflect domain concepts"
-                        },
-                        "additionalConsiderations": "Property-specific concerns or future extensibility"
-                    },
-                    "properties": []
+                    "properties": [
+                        {
+                            "name": "<propertyName>",
+                            "type?": "<propertyType>" // If the type is String, do not specify the type.
+                            "isKey?": <true|false> // Write only if there is a primary key.
+                        }
+                    ],
+
+                    "outputEventIds": ["<outputEventId>"], // List of event IDs generated by this command. Must write existing event IDs.
+                    "actor": "<actorName>"
+                }
+            }
+        ],
+
+        // Generate events in the aggregate to satisfy the given functional requirements.
+        "eventActions": [
+            {
+                "actionName": "<actionName>",
+                "objectType": "Event",
+                "ids": {
+                    "aggregateId": "<aggregateId>",
+                    "eventId": "<eventId>"
+                },
+                "args": {
+                    "eventName": "<eventName>",
+                    "eventAlias": "<eventAlias>",
+
+                    "properties": [
+                        {
+                            "name": "<propertyName>",
+                            "type?": "<propertyType>",
+                            "isKey?": <true|false>
+                        }
+                    ]
+                }
+            }
+        ],
+
+        // Generate read models in the aggregate to satisfy the given functional requirements.
+        "readModelActions": [
+            {
+                "actionName": "<actionName>",
+                "objectType": "ReadModel",
+                "ids": {
+                    "aggregateId": "<aggregateId>",
+                    "readModelId": "<readModelId>"
+                },
+                "args": {
+                    "readModelName": "<readModelName>",
+                    "readModelAlias": "<readModelAlias>",
+                    "isMultipleResult": <true|false>,
+
+                    "queryParameters": [
+                        {
+                            "name": "<propertyName>",
+                            "type?": "<propertyType>",
+                            "isKey?": <true|false>
+                        }
+                    ],
+
+                    "actor": "<actorName>"
                 }
             }
         ]
     }
 }`
-    }
-
-    __buildAfterJsonResponseFormat() {
-        return `I will explain the ids and args used in each objectType.
-You cannot use any arbitrary parameters not described in this explanation in ids or args.
-
-# objectType: Command
-- Description
-Generate commands in the aggregate to satisfy the given functional requirements.
-
-- Return format
-{
-    "objectType": "Command",
-    "ids": {
-        "aggregateId": "<aggregateId>",
-        "commandId": "<commandId>"
-    },
-    "args": {
-        "commandName": "<commandName>",
-        "commandAlias": "<commandAlias>",
-        "api_verb": <"POST" | "PUT" | "PATCH" | "DELETE">,
-
-        "properties": [
-            {
-                "name": "<propertyName>",
-                ["type": "<propertyType>"], // If the type is String, do not specify the type.
-                ["isKey": true] // Write only if there is a primary key.
-            }
-        ],
-
-        "outputEventIds": ["<outputEventId>"], // List of event IDs generated by this command. Must write existing event IDs.
-        "actor": "<actorName>" // The name of the actor performing the action. Should include names like user, admin, system, etc.
-    }
-}
-
-# objectType: Event
-- Description
-Generate events in the aggregate to satisfy the given functional requirements.
-
-- Return format
-{
-    "objectType": "Event",
-    "ids": {
-        "aggregateId": "<aggregateId>",
-        "eventId": "<eventId>"
-    },
-    "args": {
-        "eventName": "<eventName>",
-        "eventAlias": "<eventAlias>",
-
-        "properties": [
-            {
-                "name": "<propertyName>",
-                ["type": "<propertyType>"], // If the type is String, do not specify the type.
-                ["isKey": true] // Write only if there is a primary key.
-            }
-        ]
-    }
-}
-
-# objectType: ReadModel
-- Description
-Generate read models in the aggregate to satisfy the given functional requirements.
-
-- Return format
-{
-    "objectType": "ReadModel",
-    "ids": {
-        "aggregateId": "<aggregateId>",
-        "readModelId": "<readModelId>"
-    },
-    "args": {
-        "readModelName": "<readModelName>",
-        "readModelAlias": "<readModelAlias>",
-        "isMultipleResult": <true|false>,
-
-        "properties": [
-            {
-                "name": "<propertyName>",
-                ["type": "<propertyType>"], // If the type is String, do not specify the type.
-                ["isKey": true] // Write only if there is a primary key.
-            }
-        ],
-
-        "actor": "<actorName>" // The name of the actor performing the action. Should include names like user, admin, system, etc.
-    }
-}
-`
     }
 
     __buildJsonExampleInputFormat() {
@@ -766,27 +802,10 @@ Generate read models in the aggregate to satisfy the given functional requiremen
 
     __buildJsonExampleOutputFormat() {
         return {
-            "overviewThoughts": {
-                "summary": "Creating a complete hotel booking management system with commands, events, and read models",
-                "details": {
-                    "businessAlignment": "Implements core booking operations including creation, confirmation, and cancellation while maintaining guest and room management",
-                    "architecturalConsiderations": "Uses CQRS pattern with separate command and query models, event sourcing for state changes, and read models for efficient querying",
-                    "dataFlowAnalysis": "Commands trigger state changes, events capture those changes, and read models provide optimized views of the data"
-                },
-                "additionalConsiderations": "System needs to handle concurrent bookings, maintain data consistency, and support future extensions like payment integration"
-            },
+            "inference": "In this solution, we analyzed the summarized event storming model and the functional requirements to identify 'Booking' as the critical aggregate. The analysis revealed that the business scenario mandates distinct actions for creating, confirming, and canceling a booking. Accordingly, each action is mapped to a specific command—CreateBooking, ConfirmBooking, and CancelBooking—with corresponding events (BookingCreated, BookingConfirmed, BookingCancelled) ensuring every command triggers a consistent state transition. The design further incorporates read models to support query operations, applying precise data types (e.g., Long, Date, and Enum) and enforcing strict validation rules such as valid booking dates and mandatory field presence. By aligning with domain-driven design, CQRS, and event sourcing principles, this approach minimizes duplication, assigns roles (e.g., Guest and System) appropriately, and maintains overall architectural consistency.",
             "result": {
-                "actions": [
+                "commandActions": [
                     {
-                        "actionThoughts": {
-                            "summary": "Implementing initial booking creation with all necessary guest and room details",
-                            "details": {
-                                "businessRules": "Validates guest information, room availability, and booking dates",
-                                "stateTransitions": "Creates new booking record in PENDING status",
-                                "eventFlow": "Triggers BookingCreated event for downstream processing"
-                            },
-                            "additionalConsiderations": "Must handle concurrent booking attempts for same room"
-                        },
                         "actionName": "CreateBookingCommand",
                         "objectType": "Command",
                         "ids": {
@@ -797,15 +816,6 @@ Generate read models in the aggregate to satisfy the given functional requiremen
                             "commandName": "CreateBooking",
                             "commandAlias": "Create New Booking",
                             "api_verb": "POST",
-                            "propertyThoughts": {
-                                "summary": "Capturing essential booking information",
-                                "details": {
-                                    "dataValidation": "All required fields must be present and valid",
-                                    "typeSelection": "Using appropriate types for dates and IDs",
-                                    "domainAlignment": "Properties reflect core booking concepts"
-                                },
-                                "additionalConsiderations": "May need to add more fields for future requirements"
-                            },
                             "properties": [
                                 {
                                     "name": "guestId",
@@ -841,15 +851,60 @@ Generate read models in the aggregate to satisfy the given functional requiremen
                         }
                     },
                     {
-                        "actionThoughts": {
-                            "summary": "Recording the successful creation of a new booking",
-                            "details": {
-                                "businessRules": "Captures complete initial booking state",
-                                "stateTransitions": "Establishes initial booking record",
-                                "eventFlow": "May trigger notifications or inventory updates"
-                            },
-                            "additionalConsiderations": "Event should contain all data needed for replay"
+                        "actionName": "ConfirmBookingCommand",
+                        "objectType": "Command",
+                        "ids": {
+                            "aggregateId": "agg-booking",
+                            "commandId": "cmd-confirm-booking"
                         },
+                        "args": {
+                            "commandName": "ConfirmBooking",
+                            "commandAlias": "Confirm Booking",
+                            "api_verb": "PATCH",
+                            "properties": [
+                                {
+                                    "name": "bookingId",
+                                    "type": "Long",
+                                    "isKey": true
+                                },
+                                {
+                                    "name": "paymentId",
+                                    "type": "String"
+                                }
+                            ],
+                            "outputEventIds": ["evt-booking-confirmed"],
+                            "actor": "System"
+                        }
+                    },
+                    {
+                        "actionName": "CancelBookingCommand",
+                        "objectType": "Command",
+                        "ids": {
+                            "aggregateId": "agg-booking",
+                            "commandId": "cmd-cancel-booking"
+                        },
+                        "args": {
+                            "commandName": "CancelBooking",
+                            "commandAlias": "Cancel Booking",
+                            "api_verb": "PATCH",
+                            "properties": [
+                                {
+                                    "name": "bookingId",
+                                    "type": "Long",
+                                    "isKey": true
+                                },
+                                {
+                                    "name": "cancellationReason",
+                                    "type": "String"
+                                }
+                            ],
+                            "outputEventIds": ["evt-booking-cancelled"],
+                            "actor": "Guest"
+                        }
+                    }
+                ],
+                "eventActions": [
+                    {
                         "actionName": "BookingCreatedEvent",
                         "objectType": "Event",
                         "ids": {
@@ -859,15 +914,6 @@ Generate read models in the aggregate to satisfy the given functional requiremen
                         "args": {
                             "eventName": "BookingCreated",
                             "eventAlias": "Booking Created",
-                            "propertyThoughts": {
-                                "summary": "Storing complete booking state",
-                                "details": {
-                                    "dataValidation": "All fields must be populated correctly",
-                                    "typeSelection": "Using domain-specific types where appropriate",
-                                    "domainAlignment": "Reflects complete booking state"
-                                },
-                                "additionalConsiderations": "Important for event sourcing replay"
-                            },
                             "properties": [
                                 {
                                     "name": "bookingId",
@@ -910,59 +956,6 @@ Generate read models in the aggregate to satisfy the given functional requiremen
                         }
                     },
                     {
-                        "actionThoughts": {
-                            "summary": "Handling booking confirmation after payment",
-                            "details": {
-                                "businessRules": "Validates payment completion",
-                                "stateTransitions": "Updates booking status to CONFIRMED",
-                                "eventFlow": "Triggers confirmation notifications"
-                            },
-                            "additionalConsiderations": "Must handle failed payment scenarios"
-                        },
-                        "actionName": "ConfirmBookingCommand",
-                        "objectType": "Command",
-                        "ids": {
-                            "aggregateId": "agg-booking",
-                            "commandId": "cmd-confirm-booking"
-                        },
-                        "args": {
-                            "commandName": "ConfirmBooking",
-                            "commandAlias": "Confirm Booking",
-                            "api_verb": "PATCH",
-                            "propertyThoughts": {
-                                "summary": "Minimal data needed for confirmation",
-                                "details": {
-                                    "dataValidation": "Payment ID must be valid",
-                                    "typeSelection": "Simple types for confirmation",
-                                    "domainAlignment": "Focuses on confirmation action"
-                                },
-                                "additionalConsiderations": "May need additional payment details"
-                            },
-                            "properties": [
-                                {
-                                    "name": "bookingId",
-                                    "type": "Long",
-                                    "isKey": true
-                                },
-                                {
-                                    "name": "paymentId",
-                                    "type": "String"
-                                }
-                            ],
-                            "outputEventIds": ["evt-booking-confirmed"],
-                            "actor": "System"
-                        }
-                    },
-                    {
-                        "actionThoughts": {
-                            "summary": "Recording successful booking confirmation",
-                            "details": {
-                                "businessRules": "Captures payment and confirmation details",
-                                "stateTransitions": "Finalizes booking confirmation",
-                                "eventFlow": "May trigger guest notifications"
-                            },
-                            "additionalConsiderations": "Important for audit trail"
-                        },
                         "actionName": "BookingConfirmedEvent",
                         "objectType": "Event",
                         "ids": {
@@ -972,15 +965,6 @@ Generate read models in the aggregate to satisfy the given functional requiremen
                         "args": {
                             "eventName": "BookingConfirmed",
                             "eventAlias": "Booking Confirmed",
-                            "propertyThoughts": {
-                                "summary": "Recording confirmation details",
-                                "details": {
-                                    "dataValidation": "All confirmation data must be valid",
-                                    "typeSelection": "Appropriate types for tracking",
-                                    "domainAlignment": "Captures confirmation state"
-                                },
-                                "additionalConsiderations": "Important for payment reconciliation"
-                            },
                             "properties": [
                                 {
                                     "name": "bookingId",
@@ -999,59 +983,6 @@ Generate read models in the aggregate to satisfy the given functional requiremen
                         }
                     },
                     {
-                        "actionThoughts": {
-                            "summary": "Processing booking cancellation request",
-                            "details": {
-                                "businessRules": "Validates cancellation eligibility",
-                                "stateTransitions": "Updates status to CANCELLED",
-                                "eventFlow": "Triggers refund process if applicable"
-                            },
-                            "additionalConsiderations": "Must handle refund policies"
-                        },
-                        "actionName": "CancelBookingCommand",
-                        "objectType": "Command",
-                        "ids": {
-                            "aggregateId": "agg-booking",
-                            "commandId": "cmd-cancel-booking"
-                        },
-                        "args": {
-                            "commandName": "CancelBooking",
-                            "commandAlias": "Cancel Booking",
-                            "api_verb": "PATCH",
-                            "propertyThoughts": {
-                                "summary": "Capturing cancellation details",
-                                "details": {
-                                    "dataValidation": "Reason must be provided",
-                                    "typeSelection": "Simple types for cancellation",
-                                    "domainAlignment": "Focuses on cancellation process"
-                                },
-                                "additionalConsiderations": "May need cancellation policy reference"
-                            },
-                            "properties": [
-                                {
-                                    "name": "bookingId",
-                                    "type": "Long",
-                                    "isKey": true
-                                },
-                                {
-                                    "name": "cancellationReason",
-                                    "type": "String"
-                                }
-                            ],
-                            "outputEventIds": ["evt-booking-cancelled"],
-                            "actor": "Guest"
-                        }
-                    },
-                    {
-                        "actionThoughts": {
-                            "summary": "Recording booking cancellation details",
-                            "details": {
-                                "businessRules": "Captures cancellation and refund information",
-                                "stateTransitions": "Finalizes cancellation state",
-                                "eventFlow": "May trigger room availability update"
-                            },
-                            "additionalConsiderations": "Important for cancellation analytics"
-                        },
                         "actionName": "BookingCancelledEvent",
                         "objectType": "Event",
                         "ids": {
@@ -1061,15 +992,6 @@ Generate read models in the aggregate to satisfy the given functional requiremen
                         "args": {
                             "eventName": "BookingCancelled",
                             "eventAlias": "Booking Cancelled",
-                            "propertyThoughts": {
-                                "summary": "Recording complete cancellation state",
-                                "details": {
-                                    "dataValidation": "All cancellation details must be valid",
-                                    "typeSelection": "Appropriate types for tracking",
-                                    "domainAlignment": "Reflects cancellation state"
-                                },
-                                "additionalConsiderations": "Important for refund tracking"
-                            },
                             "properties": [
                                 {
                                     "name": "bookingId",
@@ -1090,17 +1012,10 @@ Generate read models in the aggregate to satisfy the given functional requiremen
                                 }
                             ]
                         }
-                    },
+                    }
+                ],
+                "readModelActions": [
                     {
-                        "actionThoughts": {
-                            "summary": "Providing booking list view for users",
-                            "details": {
-                                "businessRules": "Shows relevant booking information",
-                                "stateTransitions": "Read-only view",
-                                "eventFlow": "Updated by booking events"
-                            },
-                            "additionalConsiderations": "Must be optimized for listing"
-                        },
                         "actionName": "BookingSummaryReadModel",
                         "objectType": "ReadModel",
                         "ids": {
@@ -1111,16 +1026,7 @@ Generate read models in the aggregate to satisfy the given functional requiremen
                             "readModelName": "BookingSummary",
                             "readModelAlias": "Booking Summary",
                             "isMultipleResult": true,
-                            "propertyThoughts": {
-                                "summary": "Optimized for listing view",
-                                "details": {
-                                    "dataValidation": "Derived from verified events",
-                                    "typeSelection": "Efficient types for querying",
-                                    "domainAlignment": "Shows key booking information"
-                                },
-                                "additionalConsiderations": "May need pagination support"
-                            },
-                            "properties": [
+                            "queryParameters": [
                                 {
                                     "name": "bookingId",
                                     "type": "Long",
@@ -1155,15 +1061,6 @@ Generate read models in the aggregate to satisfy the given functional requiremen
                         }
                     },
                     {
-                        "actionThoughts": {
-                            "summary": "Providing detailed booking information",
-                            "details": {
-                                "businessRules": "Shows complete booking details",
-                                "stateTransitions": "Read-only view",
-                                "eventFlow": "Updated by all booking events"
-                            },
-                            "additionalConsiderations": "Must handle complex relationships"
-                        },
                         "actionName": "BookingDetailsReadModel",
                         "objectType": "ReadModel",
                         "ids": {
@@ -1174,16 +1071,7 @@ Generate read models in the aggregate to satisfy the given functional requiremen
                             "readModelName": "BookingDetails",
                             "readModelAlias": "Booking Details",
                             "isMultipleResult": false,
-                            "propertyThoughts": {
-                                "summary": "Comprehensive booking view",
-                                "details": {
-                                    "dataValidation": "Maintains referential integrity",
-                                    "typeSelection": "Complex types for complete info",
-                                    "domainAlignment": "Full booking context"
-                                },
-                                "additionalConsiderations": "May need lazy loading"
-                            },
-                            "properties": [
+                            "queryParameters": [
                                 {
                                     "name": "bookingId",
                                     "type": "Long",
@@ -1272,7 +1160,7 @@ Best Practices:
 
 
     onCreateModelGenerating(returnObj){
-        returnObj.directMessage = `Generating commands for ${this.client.input.aggregateDisplayName} Aggregate... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Creating commands for ${this.client.input.aggregateDisplayName} Aggregate... (${returnObj.modelRawValue.length} characters generated)`
 
         // 실시간으로 진행을 보여주기 위해서 가능한 경우, 부분적인 액션이라도 반환함
         const particalActions = returnObj.modelRawValue.match(/({"actionName".*?"objectType".*?"ids".*?"args".*?)(?=,{"actionName")/g)
@@ -1300,7 +1188,11 @@ Best Practices:
     }
 
     onCreateModelFinished(returnObj){
-        let actions = returnObj.modelValue.aiOutput.result.actions
+        let actions = [
+            ...returnObj.modelValue.aiOutput.result.commandActions,
+            ...returnObj.modelValue.aiOutput.result.eventActions,
+            ...returnObj.modelValue.aiOutput.result.readModelActions
+        ]
         let {actions: appliedActions, createdESValue: createdESValue} = this._getActionAppliedESValue(actions, false)
 
         returnObj.modelValue = {
@@ -1308,7 +1200,7 @@ Best Practices:
             actions: appliedActions,
             createdESValue: createdESValue
         }
-        returnObj.directMessage = `Generating commands for ${this.client.input.aggregateDisplayName} Aggregate... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Creating commands for ${this.client.input.aggregateDisplayName} Aggregate... (${returnObj.modelRawValue.length} characters generated)`
     }
 
     _getActionAppliedESValue(actions, isAddFakeActions) {
@@ -1353,6 +1245,7 @@ Best Practices:
                         boundedContextId: targetBoundedContext.id,
                         ...action.ids
                     }
+                    action.args.properties = action.args.queryParameters
                     break
                 }
             }

@@ -8,7 +8,10 @@ class CommandGWTGeneratorByFunctions extends FormattedJSONAIGenerator{
         super(client);
 
         this.checkInputParamsKeys = ["targetBoundedContext", "targetCommandIds", "description", "esValue"]
-        this.progressCheckStrings = ["overviewThoughts", "targetCommandId"]
+        this.progressCheckStrings = ["inference", "targetCommandId"]
+
+        // 생성되는 gwt의 values 값에 대한 형식이 매우 자유롭기 때문에 고정된 구조를 정의할 수 없음
+        this.response_format = undefined
     }
 
     /**
@@ -51,6 +54,11 @@ class CommandGWTGeneratorByFunctions extends FormattedJSONAIGenerator{
     static createGeneratorByDraftOptions(callbacks){
         const generator = new CommandGWTGeneratorByFunctions({
             input: null,
+
+            onSend: (input, stopCallback) => {
+                if(callbacks.onSend)
+                    callbacks.onSend(input, stopCallback)
+            },
 
             onFirstResponse: (returnObj) => {
                 if(callbacks.onFirstResponse)
@@ -147,6 +155,7 @@ class CommandGWTGeneratorByFunctions extends FormattedJSONAIGenerator{
                 )
             ]
         }
+        inputParams.subjectText = `Creating GWTs for ${inputParams.targetAggregateNames.join(", ")} Aggregates`
         if(!this.isCreatedPromptWithinTokenLimit()) {
             const leftTokenCount = this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
             if(leftTokenCount <= 100)
@@ -237,6 +246,16 @@ Please follow these rules:
 `
     }
 
+    __buildInferenceGuidelinesPrompt() {
+        return `
+Inference Guidelines:
+1. The process of reasoning should be directly related to the output result, not a reference to a general strategy.
+2. Context Assessment: Evaluate the provided business requirements, domain context, and target command details to determine the core testing scenarios.
+3. Validation & Mapping: Ensure that the inferred GWT scenarios accurately map Aggregates, Commands, and Events based on the business rules and domain constraints.
+4. Synthesis & Decision Making: Integrate domain expertise to synthesize concise and precise GWT scenarios from the analyzed inputs, while considering edge cases, error handling, and consistency.
+`;
+    }
+
     __buildRequestFormatPrompt(){
         return ESValueSummarizeWithFilter.getGuidePrompt()
     }
@@ -244,40 +263,12 @@ Please follow these rules:
     __buildJsonResponseFormat() {
         return `
 {
-    "overviewThoughts": {
-        "summary": "High-level analysis of the business domain and system requirements",
-        "details": {
-            "domainComplexity": "Assessment of domain rules, constraints, and business logic complexity",
-            "systemBoundaries": "Definition of system scope, interfaces, and integration points",
-            "stakeholderImpact": "Analysis of how changes affect different stakeholders and system users"
-        },
-        "additionalConsiderations": "Long-term maintainability, scalability, and evolution aspects"
-    },
-
+   "inference": "<inference>",
    "result": [
         {
             "targetCommandId": "<targetCommandId>",
-            "commandThoughts": {
-                "summary": "Command-specific analysis focusing on behavior and validation",
-                "details": {
-                    "businessRules": "Specific business rules and validation requirements for the command",
-                    "stateTransitions": "Expected state changes and their implications",
-                    "errorScenarios": "Potential failure cases and error handling requirements"
-                },
-                "additionalConsiderations": "Performance implications and side effects"
-            },
             "gwts": [
                 {
-                    "gwtThoughts": {
-                        "summary": "Detailed analysis of specific test scenario requirements",
-                        "details": {
-                            "preconditions": "Required system state and data setup for the scenario",
-                            "expectedOutcomes": "Specific success criteria and verification points",
-                            "dataRequirements": "Test data characteristics and constraints"
-                        },
-                        "additionalConsiderations": "Edge cases and special conditions to consider"
-                    },
-
                     "given": {
                         "name": "<givenName>", // You can write the name of Aggregate
                         "values": {
@@ -506,39 +497,12 @@ Please follow these rules:
 
     __buildJsonExampleOutputFormat() {
         return {
-            "overviewThoughts": {
-                "summary": "Analysis of inventory management system focusing on stock control and product lifecycle",
-                "details": {
-                    "domainComplexity": "Medium complexity with stock management and product status transitions",
-                    "systemBoundaries": "Inventory management bounded context with stock and product lifecycle operations",
-                    "stakeholderImpact": "Affects inventory managers and product managers with distinct operational needs"
-                },
-                "additionalConsiderations": "Need for real-time stock tracking and audit trail maintenance"
-            },
-    
+            "inference": `The generated output scenarios are based on a detailed analysis of the provided aggregate, command, and event definitions within the current bounded context. For 'cmd-addStock', the inference emphasizes that the 'Product' aggregate starts with specific attributes (e.g., productId, name, initial quantity, and status) and reflects a successful stock update when the 'AddStock' command is executed, resulting in a 'StockAdded' event with an updated total quantity. For 'cmd-discontinueProduct', the scenario verifies that an appropriate state transition occurs by incorporating a valid discontinuation reason and recording a discontinuation date in the 'ProductDiscontinued' event. This systematic approach ensures that each command's GWT scenario correctly captures both the intended business logic and the underlying domain constraints, providing robust and comprehensive test coverage.`,
             "result": [
                 {
                     "targetCommandId": "cmd-addStock",
-                    "commandThoughts": {
-                        "summary": "Stock addition operation with quantity validation",
-                        "details": {
-                            "businessRules": "Stock quantity must be positive, product must exist in system",
-                            "stateTransitions": "Updates product quantity and may affect availability status",
-                            "errorScenarios": "Invalid quantity, non-existent product, system constraints"
-                        },
-                        "additionalConsiderations": "Concurrent stock updates handling"
-                    },
                     "gwts": [
                         {
-                            "gwtThoughts": {
-                                "summary": "Validate successful stock addition to available product",
-                                "details": {
-                                    "preconditions": "Product exists with initial stock level",
-                                    "expectedOutcomes": "Stock level increased, event generated with new total",
-                                    "dataRequirements": "Valid product ID and positive quantity value"
-                                },
-                                "additionalConsiderations": "Stock level boundaries and concurrent updates"
-                            },
                             "given": {
                                 "name": "Product",
                                 "values": {
@@ -568,26 +532,8 @@ Please follow these rules:
                 },
                 {
                     "targetCommandId": "cmd-discontinueProduct",
-                    "commandThoughts": {
-                        "summary": "Product discontinuation process with reason tracking",
-                        "details": {
-                            "businessRules": "Requires valid reason, affects product availability",
-                            "stateTransitions": "Changes product status to DISCONTINUED",
-                            "errorScenarios": "Already discontinued products, missing reason"
-                        },
-                        "additionalConsiderations": "Impact on related inventory operations"
-                    },
                     "gwts": [
                         {
-                            "gwtThoughts": {
-                                "summary": "Validate product discontinuation process",
-                                "details": {
-                                    "preconditions": "Active product in available state",
-                                    "expectedOutcomes": "Product marked as discontinued with reason",
-                                    "dataRequirements": "Valid product ID and discontinuation reason"
-                                },
-                                "additionalConsiderations": "Status transition validation"
-                            },
                             "given": {
                                 "name": "Product",
                                 "values": {
@@ -636,7 +582,7 @@ Please follow these rules:
 
 
     onCreateModelGenerating(returnObj) {
-        returnObj.directMessage = `Generating GWTs for ${this.client.input.targetAggregateNames.join(", ")} Aggregates... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Creating GWTs for ${this.client.input.targetAggregateNames.join(", ")} Aggregates... (${returnObj.modelRawValue.length} characters generated)`
     }
 
     onCreateModelFinished(returnObj) {
@@ -661,7 +607,7 @@ Please follow these rules:
         console.log("[*] commandsToReplace", JSON.parse(JSON.stringify(commandsToReplace)))
 
 
-        returnObj.directMessage = `Generating GWTs for ${this.client.input.targetAggregateNames.join(", ")} Aggregates... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Creating GWTs for ${this.client.input.targetAggregateNames.join(", ")} Aggregates... (${returnObj.modelRawValue.length} characters generated)`
     }
 
     _getExamples(gwts){
