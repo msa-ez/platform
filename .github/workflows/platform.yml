@@ -29,7 +29,9 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: npm install
       - name: Install additional packages
-        run: npm install zod@3.24.1 zod-to-json-schema@3.9.4
+        run: npm install zod@3.24.1
+      - name: Install additional packages
+        run: npm install zod-to-json-schema@3.9.4
       - name: npm build
         run: npm run build
       - name: Log in to the Container registry
