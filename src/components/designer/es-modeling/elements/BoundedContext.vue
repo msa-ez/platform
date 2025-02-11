@@ -265,9 +265,11 @@
                         onClickStopGenerateWithDescription: () => {
                         }
                     }
-                }
+                },
+                thinkingUpdateInterval: undefined
             };
         },
+
         created: function () {
             this.boundedContextPanelDto.actions.generateWithDescription = (boundedContext) => {
                 this.generateWithPreProcessingFunctionsGenerator(boundedContext)
@@ -425,6 +427,7 @@
                 this.value.name = this.value.name.toLowerCase();
             },
 
+
             generateWithPreProcessingFunctionsGenerator(boundedContext){
                 const generator = new PreProcessingFunctionsGenerator({
                     input: {
@@ -432,8 +435,20 @@
                         boundedContext: boundedContext
                     },
                     
-                    onFirstResponse: (returnObj) => {
+                    onSend: (input, stopCallback) => {
                         this.closePanel()
+                        this.canvas.AggregateDraftDialogDto.isShow = true
+                        this.canvas.AggregateDraftDialogDto.draftUIInfos = {
+                            leftBoundedContextCount: 1,
+                            directMessage: "",
+                            progress: null
+                        }
+                        this.canvas.AggregateDraftDialogDto.actions.stop = stopCallback
+                        this._createThinkingUpdateInterval(0, input.subjectText)
+                    },
+
+                    onFirstResponse: (returnObj) => {
+                        this._clearThinkingUpdateInterval()
 
                         this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = false
                         this.boundedContextPanelDto.onClickStopGenerateWithDescription = () => {
@@ -457,6 +472,7 @@
                     },
 
                     onModelCreated: (returnObj) => {
+                        this._clearThinkingUpdateInterval()
                         const getXAIDtoDraftOptions = (analysisResult, targetBoundedContext, description) => {
                             return {
                                 boundedContext: targetBoundedContext.name,
@@ -481,6 +497,7 @@
                     },
 
                     onGenerationSucceeded: (returnObj) => {
+                        this._clearThinkingUpdateInterval()
                         this.canvas.AggregateDraftDialogDto.draftUIInfos = {
                             leftBoundedContextCount: 1,
                             directMessage: returnObj.directMessage,
@@ -491,12 +508,14 @@
                     },
 
                     onRetry: (returnObj) => {
+                        this._clearThinkingUpdateInterval()
                         alert(`[!] An error occurred while analysing your requirements, please try again..\n* Error log \n${returnObj.errorMessage}`)
                         this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = true
                         this.canvas.AggregateDraftDialogDto.isShow = false
                     },
 
                     onStopped: () => {
+                        this._clearThinkingUpdateInterval()
                         this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = true
                         this.canvas.AggregateDraftDialogDto.isShow = false
                     }
@@ -516,9 +535,21 @@
                         analysisResult: analysisResult
                     },
 
+                    onSend: (input, stopCallback) => {
+                        this.canvas.AggregateDraftDialogDto.isShow = true
+                        this.canvas.AggregateDraftDialogDto.draftUIInfos = {
+                            leftBoundedContextCount: 1,
+                            directMessage: "",
+                            progress: null
+
+                        }
+                        this.canvas.AggregateDraftDialogDto.actions.stop = stopCallback
+                        this._createThinkingUpdateInterval(0, input.subjectText)
+                    },
+
                     onFirstResponse: (returnObj) => {
-                        this.closePanel()
-                        
+                        this._clearThinkingUpdateInterval()
+
                         this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = false
                         this.boundedContextPanelDto.onClickStopGenerateWithDescription = () => {
                             returnObj.actions.stopGeneration()
@@ -565,7 +596,8 @@
                     },
 
                     onModelCreated: (returnObj) => {
-                        const getXAIDtoDraftOptions = (output, targetBoundedContext, description, analysisResult) => {
+                        this._clearThinkingUpdateInterval()
+                        const getXAIDtoDraftOptions = (output, targetBoundedContext, description, analysisResult, inference) => {
                             return {
                                 boundedContext: targetBoundedContext.name,
                                 boundedContextAlias: targetBoundedContext.displayName,
@@ -577,9 +609,11 @@
                                 })) : [],
                                 conclusions: output.conclusions,
                                 defaultOptionIndex: output.defaultOptionIndex,
-                                analysisResult: analysisResult
+                                analysisResult: analysisResult,
+                                inference: inference
                             }
                         }
+
 
 
                         this.canvas.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
@@ -591,12 +625,14 @@
                                 returnObj.modelValue.output,
                                 returnObj.inputParams.boundedContext,
                                 returnObj.inputParams.description,
-                                returnObj.inputParams.analysisResult
+                                returnObj.inputParams.analysisResult,
+                                returnObj.modelValue.inference
                             )
                         ]
                     },
 
                     onGenerationSucceeded: (returnObj) => {
+                        this._clearThinkingUpdateInterval()
                         this.canvas.AggregateDraftDialogDto.draftUIInfos = {
                                 leftBoundedContextCount: 0,
                                 directMessage: returnObj.directMessage,
@@ -606,17 +642,40 @@
                     },
 
                     onRetry: (returnObj) => {
+                        this._clearThinkingUpdateInterval()
                         alert(`[!] There was an error creating your draft, please try again.\n* Error log \n${returnObj.errorMessage}`)
                         this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = true
                         this.canvas.AggregateDraftDialogDto.isShow = false
                     },
 
                     onStopped: () => {
+                        this._clearThinkingUpdateInterval()
                         this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = true
                         this.canvas.AggregateDraftDialogDto.isShow = false
                     }
                 })
                 generator.generate()
+            },
+
+            _createThinkingUpdateInterval(elapsedSeconds=0, subjectText) {
+                this._clearThinkingUpdateInterval()
+
+                const updateMessage = (elapsedSeconds, subjectText) => {
+                    this.canvas.AggregateDraftDialogDto.draftUIInfos.directMessage = `Thinking for ${elapsedSeconds} second${elapsedSeconds > 1 ? 's' : ''}... (Subject: ${subjectText})`
+                }
+
+                updateMessage(elapsedSeconds, subjectText)
+                this.thinkingUpdateInterval = setInterval(() => {
+                    elapsedSeconds += 1
+                    updateMessage(elapsedSeconds, subjectText)
+                }, 1000)
+            },
+
+            _clearThinkingUpdateInterval() {
+                if(this.thinkingUpdateInterval) {
+                    clearInterval(this.thinkingUpdateInterval)
+                    this.thinkingUpdateInterval = undefined
+                }
             }
         }
     }

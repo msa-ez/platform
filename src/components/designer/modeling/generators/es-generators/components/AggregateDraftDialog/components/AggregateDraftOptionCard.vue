@@ -1,10 +1,13 @@
 <template>
     <v-card
-        @click="selectedCard(optionIndex, optionInfo, boundedContextInfo.boundedContext)"
+        class="fill-height"
         :class="isSelectedCard ? 'model-draft-dialog-selected-card': ''"
-        :disabled="isDisabled"
     >
-        <v-card-title class="d-flex justify-space-between align-center pa-4 option-title">
+        <v-card-title 
+            :class="{ 'no-pointer': isDisabled }"
+            class="d-flex justify-space-between align-center pa-4 option-title pointer"
+            @click="handleCardClick"
+        >
             <div class="d-flex align-center">
                 <v-chip
                     color="primary"
@@ -33,39 +36,57 @@
             </v-chip>
         </v-card-title>
         
-        <v-card-text class="pa-0">
-            <div v-if="optionInfo.structure" class="mb-4">
-                <div v-for="(mermaidString, index) in mermaidDto.mermaidStrings" :key="`mermaid-${index}`" style="text-align: center;">
-                    <vue-mermaid-string 
-                        :key="mermaidDto.renderKey"
-                        :value="mermaidString"
-                    />
-                </div>
+        <v-card-text class="pa-0 flex-grow-1 d-flex flex-column">
+            <div 
+                v-if="optionInfo.structure" 
+                :class="{ 'no-pointer': isDisabled }"
+                class="mb-4 flex-grow-1 pointer" 
+                style="text-align: center;"
+                @click="handleCardClick"
+            >
+                <vue-mermaid-string 
+                    :key="mermaidDto.renderKey"
+                    :value="mermaidDto.mermaidString"
+                />
             </div>
 
-            <div class="pl-4 pr-4 pb-4">
-                <div v-if="optionInfo.pros && Object.keys(optionInfo.pros).length > 0">
-                    <h4>{{ $t('ModelDraftDialogForDistribution.pros') }}</h4>
-                    <v-simple-table dense class="analysis-table">
-                        <tbody>
-                            <tr v-for="(value, key) in optionInfo.pros" :key="`pros-${key}`">
-                                <td class="analysis-key text-capitalize">{{ key }}</td>
-                                <td class="analysis-value">{{ value }}</td>
-                            </tr>
-                        </tbody>
-                    </v-simple-table>
+            <div class="pl-4 pr-4 pb-4 mt-auto">
+                <div v-if="optionInfo.pros && Object.keys(optionInfo.pros).length > 0" class="text-center">
+                    <h4 @click="prosExpanded = !prosExpanded" style="cursor: pointer">
+                        {{ $t('ModelDraftDialogForDistribution.pros') }}
+                        <v-icon small>
+                            {{ prosExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
+                        </v-icon>
+                    </h4>
+                    <v-expand-transition>
+                        <v-simple-table v-show="prosExpanded" dense class="analysis-table mx-auto">
+                            <tbody>
+                                <tr v-for="(value, key) in optionInfo.pros" :key="`pros-${key}`">
+                                    <td class="analysis-key text-capitalize">{{ key }}</td>
+                                    <td class="analysis-value">{{ value }}</td>
+                                </tr>
+                            </tbody>
+                        </v-simple-table>
+                    </v-expand-transition>
                 </div>
 
-                <div v-if="optionInfo.cons && Object.keys(optionInfo.cons).length > 0">
-                    <h4 class="mt-4">{{ $t('ModelDraftDialogForDistribution.cons') }}</h4>
-                    <v-simple-table dense class="analysis-table">
-                        <tbody>
-                            <tr v-for="(value, key) in optionInfo.cons" :key="`cons-${key}`">
-                                <td class="analysis-key text-capitalize">{{ key }}</td>
-                                <td class="analysis-value">{{ value }}</td>
-                            </tr>
-                        </tbody>
-                    </v-simple-table>
+                <div v-if="optionInfo.cons && Object.keys(optionInfo.cons).length > 0" class="text-center">
+                    <h4 @click="consExpanded = !consExpanded" style="cursor: pointer">
+                        {{ $t('ModelDraftDialogForDistribution.cons') }}
+                        <v-icon small>
+                            {{ consExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
+                        </v-icon>
+                    </h4>
+                    <v-expand-transition>
+                        <v-simple-table v-show="consExpanded" dense class="analysis-table mx-auto">
+                            <tbody>
+                                <tr v-for="(value, key) in optionInfo.cons" :key="`cons-${key}`">
+                                    <td class="analysis-key text-capitalize">{{ key }}</td>
+                                    <td class="analysis-value">{{ value }}</td>
+                                </tr>
+                            </tbody>
+                        </v-simple-table>
+                    </v-expand-transition>
                 </div>
             </div>
         </v-card-text>
@@ -114,35 +135,33 @@
         data(){
             return {
                 mermaidDto: {
-                    mermaidStrings: '',
+                    mermaidString: '',
                     renderKey: 0
-                }
+                },
+                prosExpanded: false,
+                consExpanded: false
             }
         },
         watch: {
             optionInfo: {
                 deep: true,
                 handler(newVal) {
-                    this.mermaidDto.mermaidStrings = this.toMermaidUMLDiagramStrings(newVal.structure, 2);
+                    this.mermaidDto.mermaidString = this.toMermaidUMLDiagramString(newVal.structure);
                     this.mermaidDto.renderKey++;
                 }
             }
         },
         created(){
-            this.mermaidDto.mermaidStrings = this.toMermaidUMLDiagramStrings(this.optionInfo.structure, 2);
+            this.mermaidDto.mermaidString = this.toMermaidUMLDiagramString(this.optionInfo.structure);
             this.mermaidDto.renderKey++;
         },
         methods: {
+            handleCardClick() {
+                if (this.isDisabled) return
+                this.selectedCard(this.optionIndex, this.optionInfo, this.boundedContextInfo.boundedContext);
+            },
             selectedCard(optionIndex, optionInfo, boundedContextName){
                 this.$emit('onCardSelected', optionIndex, optionInfo, boundedContextName);
-            },
-
-            toMermaidUMLDiagramStrings(structure, cutLength){
-                let mermaidStrings = [];
-                for(let i = 0; i < structure.length; i += cutLength){
-                    mermaidStrings.push(this.toMermaidUMLDiagramString(structure.slice(i, i + cutLength)));
-                }
-                return mermaidStrings;
             },
 
             toMermaidUMLDiagramString(structure){
@@ -155,58 +174,101 @@
                     }
                 };
                 let config = "%%{init: " + JSON.stringify(initConfig) + "}%%\n";
-                let diagram = config + "classDiagram\n";
+                let mermaidString = config + "classDiagram\n";
                 if (!structure || !Array.isArray(structure)) {
-                    diagram += "    class None {\n    }\n";
-                    return diagram;
+                    mermaidString += "    class None {\n    }\n";
+                    return mermaidString;
+                }
+                
+
+                const classes = {};
+                const addClass = (className, role) => {
+                    if (!className) return;
+                    if (!classes[className]) {
+                        classes[className] = role;
+                    } else if(role === "Aggregate Root" && classes[className] !== "Aggregate Root"){
+                        classes[className] = role;
+                    }
+                };
+
+                const getValidAlias = (alias) => {
+                    return alias.replace(/[^a-zA-Z0-9가-힣_]/g, '');
                 }
 
+                const relationships = new Set();
+
                 structure.forEach(item => {
-                    if (item.aggregate || (item.entities && item.entities.length > 0) || (item.valueObjects && item.valueObjects.length > 0)) {
-                        let className, label;
-                        if (item.aggregate) {
-                            className = item.aggregate.alias || item.aggregate.name || "UnnamedAggregate";
-                        } else {
-                            className = "Unnamed";
-                        }
-                        diagram += `    class ${className} {\n`;
-                        diagram += item.aggregate ? `        <<Aggregate>>\n` : `        <<Unspecified>>\n`;
-                        
-                        if (item.entities && Array.isArray(item.entities) && item.entities.length > 0) {
-                            diagram += `        %% Entities\n`;
+                    if (item.aggregate && item.aggregate.alias) {
+                        const aggregateName = getValidAlias(item.aggregate.alias);
+                        addClass(aggregateName, "Aggregate Root");
+
+                        if (Array.isArray(item.entities)) {
                             item.entities.forEach(entity => {
-                                const entityAlias = entity.alias || entity.name || "UnnamedEntity";
-                                const entityName = entity.name || entity.alias || "UnnamedEntity";
-                                diagram += `        - ${entityAlias}: ${entityName}\n`;
+                                if (!entity.alias) return;
+                                const entityName = getValidAlias(entity.alias);
+                                addClass(entityName, "Entity");
+                                relationships.add(`    ${aggregateName} --> ${entityName}`);
+
+                                if (entity.referencedAggregate && entity.referencedAggregate.alias) {
+                                    const refAggName = entity.referencedAggregate.alias;
+                                    addClass(refAggName, "Aggregate Root");
+                                    relationships.add(`    ${entityName} --> ${refAggName}`);
+                                }
                             });
                         }
-                        
-                        if (item.valueObjects && Array.isArray(item.valueObjects) && item.valueObjects.length > 0) {
-                            diagram += `        %% ValueObjects\n`;
+
+                        if (Array.isArray(item.valueObjects)) {
                             item.valueObjects.forEach(vo => {
-                                const voAlias = vo.alias || vo.name || "UnnamedValueObject";
-                                const voName = vo.name || vo.alias || "UnnamedValueObject";
-                                let fieldLine = `        - ${voAlias}: ${voName}`;
-                                // if (vo.referencedAggregate) {
-                                //     const refAggAlias = vo.referencedAggregate.alias || vo.referencedAggregate.name || "UnnamedAggregate";
-                                //     fieldLine += ` -> ${refAggAlias}`;
-                                // }
-                                fieldLine += "\n";
-                                diagram += fieldLine;
+                                if (!vo.alias) return;
+                                const voName = getValidAlias(vo.alias);
+                                addClass(voName, "Value Object");
+                                relationships.add(`    ${aggregateName} --> ${voName}`);
+
+                                if (vo.referencedAggregate && vo.referencedAggregate.alias) {
+                                    const refAggName = vo.referencedAggregate.alias;
+                                    addClass(refAggName, "Aggregate Root");
+                                    relationships.add(`    ${voName} --> ${refAggName}`);
+                                }
                             });
                         }
-                        diagram += "    }\n";
-                    } else {
-                        diagram += "    class None {\n    }\n";
                     }
                 });
-                return diagram;
+
+
+                let classesStr = "";
+                Object.entries(classes).forEach(([className, role]) => {
+                    classesStr += `    class ${className} {\n`;
+                    classesStr += `        <<${role}>>\n`;
+                    classesStr += `    }\n\n`;
+                });
+
+                mermaidString += classesStr;
+                relationships.forEach(rel => {
+                    mermaidString += rel + "\n";
+                });
+
+                return mermaidString;
             }
         }
     }
 </script>
 
 <style scoped>
+.no-pointer {
+    pointer-events: none;
+    opacity: 0.5;
+}
+.pointer {
+    cursor: pointer;
+}
+.fill-height {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.v-card-text {
+    overflow-y: auto;
+}
 .analysis-table {
     background-color: transparent !important;
 }

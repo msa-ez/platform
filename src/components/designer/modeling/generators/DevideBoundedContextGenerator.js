@@ -5,6 +5,8 @@ class DevideBoundedContextGenerator extends JsonAIGenerator {
     constructor(client){
         super(client);
 
+        // this.model = "deepseek-r1:7b"
+        // this.apiStrategy = 'ollama'
         this.model = "gpt-4o"
         this.temperature = 0.3
         this.generatorName = 'DevideBoundedContextGenerator'
@@ -35,9 +37,9 @@ Key principles:
 - Minimize inter-context dependencies
 
 Language Instruction of Output:
-- Use the same national language as the Requirements at thoughts, context of explanations, alias, requirements.
+- Use the "same national language" as the Requirements at thoughts, context of explanations, alias, requirements.
 - When referring to bounded context in explanations, use alias.
-- name must be written in English PascalCase.
+- name of Bounded Context must be written in English PascalCase.
 
 The format must be as follows:
 {
@@ -140,30 +142,55 @@ Should be used all of the Bounded Contexts.
     }
 
     createModel(text){
-        if (text.startsWith('```json')) {
-            text = text.slice(7);
+        try{
+            if (text.startsWith('```json')) {
+                text = text.slice(7);
+            }
+            if (text.endsWith('```')) {
+                text = text.slice(0, -3);
+            }
+
+            let model = super.createModel(text);
+
+            if(model){
+                model['devisionAspect'] = this.client.input['devisionAspect'];
+                
+                if(this.state === "end")
+                    console.log(`[*] ${this.client.input['devisionAspect']}의 모델 생성이 완료됨`, {model, text, input: this.client.input})
+                else
+                    console.log(`[*] ${this.client.input['devisionAspect']}의 모델 생성이 진행중임`, {textLength: text.length})
+
+                // 요약 결과가 있으면 요약 결과를 기반으로 매핑 진행하므로 제거
+                if(this.client.input['requirements']['summarizedResult']!=""){
+                    model['boundedContexts'].forEach(boundedContext => {
+                        boundedContext['requirements'] = []
+                    })
+                }
+
+                return model;
+            }else{
+                let model = {
+                    [this.client.input['devisionAspect']]:{
+                        "boundedContexts":[],
+                        "relations":[],
+                        "thoughts":"",
+                        "explanations":[]
+                    }
+                }
+                return model
+            }
+        }catch(e){
+            console.log(e)
+            let model = {
+                [this.client.input['devisionAspect']]:{
+                    "boundedContexts":[],
+                    "relations":[],
+                    "thoughts":"",
+                    "explanations":[]
+                }
+            }
+            return model
         }
-        if (text.endsWith('```')) {
-            text = text.slice(0, -3);
-        }
-
-        let model = super.createModel(text + '"');
-
-        model['devisionAspect'] = this.client.input['devisionAspect'];
-        
-        if(this.state === "end")
-            console.log(`[*] ${this.client.input['devisionAspect']}의 모델 생성이 완료됨`, {model, text, input: this.client.input})
-        else
-            console.log(`[*] ${this.client.input['devisionAspect']}의 모델 생성이 진행중임`, {textLength: text.length})
-
-        // 요약 결과가 있으면 요약 결과를 기반으로 매핑 진행하므로 제거
-        if(this.client.input['requirements']['summarizedResult']!=""){
-            model['boundedContexts'].forEach(boundedContext => {
-                boundedContext['requirements'] = []
-            })
-        }
-
-        return model;
     }
 
 }

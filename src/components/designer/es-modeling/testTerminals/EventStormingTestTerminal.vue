@@ -46,8 +46,8 @@ export default {
                 },
 
                 TokenCounterTest: { command: () => {TokenCounterTest.test()} },
-                ESValueSummaryGeneratorTest: {command: async () => { await ESValueSummaryGeneratorTest.test(this.value) }},
-                ESValueSummarizeWithFilterTest: {command: async () => { await ESValueSummarizeWithFilterTest.test(this.value) }},
+                ESValueSummaryGeneratorTest: {command: async () => { await ESValueSummaryGeneratorTest.test() }},
+                ESValueSummarizeWithFilterTest: {command: async () => { await ESValueSummarizeWithFilterTest.test() }},
                 PreProcessingFunctionsGeneratorTest: {command: async () => { await PreProcessingFunctionsGeneratorTest.test() }},
                 DraftGeneratorByFunctionsTest: {command: async () => { await DraftGeneratorByFunctionsTest.test("draftGeneratorByFunctionsInputs") }},
                 DraftGeneratorByFunctionsTestWithFeedback: {command: async () => { await DraftGeneratorByFunctionsTest.test("draftGeneratorByFunctionsInputsWithFeedback") }},

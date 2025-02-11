@@ -221,8 +221,8 @@
     "processModeOff": "Design Level : off"
   },
   "ModelDraftDialogForDistribution": {
-    "pros": "Pros:",
-    "cons": "Cons:",
+    "pros": "Pros",
+    "cons": "Cons",
     "conclusions": "Conclusions:",
     "create": "Create",
     "createEventStormingModelCanvas": "Create EventStorming Model",

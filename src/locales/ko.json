@@ -220,8 +220,8 @@
     "processModeOff": "디자인 레벨 : off"
   },
   "ModelDraftDialogForDistribution": {
-    "pros": "장점:",
-    "cons": "단점:",
+    "pros": "장점",
+    "cons": "단점",
     "conclusions": "결론:",
     "create": "생성",
     "createEventStormingModelCanvas": "이벤트스토밍 모델 생성",
