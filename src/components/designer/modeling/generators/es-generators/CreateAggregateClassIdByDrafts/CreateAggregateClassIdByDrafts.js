@@ -5,13 +5,44 @@ const { ESValueSummarizeWithFilter } = require("../helpers")
 const ActionsProcessorUtils = require("../../es-ddl-generators/modules/ESActionsUtilProcessors/ActionsProcessorUtils")
 const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTransManager")
 const changeCase = require('change-case');
+const { z } = require("zod")
+const { zodResponseFormat } = require("../../utils")
 
 class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
         this.checkInputParamsKeys = ["draftOption", "targetReferences", "esValue", "userInfo", "information"]
-        this.progressCheckStrings = ["overviewThoughts", "actions"]
+        this.progressCheckStrings = ["inference", "actions"]
+        this.response_format = zodResponseFormat(
+            z.object({
+                inference: z.string(),
+                result: z.object({
+                    actions: z.array(
+                        z.object({
+                            objectType: z.literal("ValueObject"),
+                            ids: z.object({
+                                boundedContextId: z.string(),
+                                aggregateId: z.string(),
+                                valueObjectId: z.string()
+                            }).strict(),
+                            args: z.object({
+                                valueObjectName: z.string(),
+                                referenceClass: z.string(),
+                                properties: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                        type: z.string(),
+                                        isKey: z.boolean()
+                                    }).strict()
+                                )
+                            }).strict()
+                        }).strict()
+                    )
+                }).strict()
+            }).strict(),
+            "instruction"
+        )
     }
 
     /**
@@ -77,6 +108,11 @@ class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
     static createGeneratorByDraftOptions(callbacks){
         const generator = new CreateAggregateClassIdByDrafts({
             input: null,
+
+            onSend: (input, stopCallback) => {
+                if(callbacks.onSend)
+                    callbacks.onSend(input, stopCallback)
+            },
 
             onFirstResponse: (returnObj) => {
                 if(callbacks.onFirstResponse)
@@ -188,6 +224,7 @@ class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
             inputParams.esAliasTransManager
         )
 
+        inputParams.subjectText = `Creating Class IDs for ${inputParams.targetReferences.join(', ')}`
         if(!this.isCreatedPromptWithinTokenLimit()) {
             const leftTokenCount = this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
             if(leftTokenCount <= 100)
@@ -314,6 +351,18 @@ Please follow these rules:
 `
     }
 
+    __buildInferenceGuidelinesPrompt() {
+        return `
+Inference Guidelines:
+1. The process of reasoning should be directly related to the output result, not a reference to a general strategy.
+2. Begin by comprehensively analyzing the provided aggregate relationships and domain context.
+3. Focus on key aspects:
+   - **Domain Alignment:** Assess how the value object and its references integrate into the broader business domain.
+   - **Unidirectional Relationship:** Ensure that references are implemented in a strictly unidirectional manner; choose the direction based on aggregate dependency, lifecycle, and stability.
+   - **Property Considerations:** Identify and replicate only those properties that are immutable and critical for maintaining referential integrity.
+`;
+    }
+
     __buildRequestFormatPrompt(){
         return ESValueSummarizeWithFilter.getGuidePrompt()
     }
@@ -321,29 +370,10 @@ Please follow these rules:
     __buildJsonResponseFormat() {
         return `
 {
-    "overviewThoughts": {
-        "summary": "High-level strategic analysis of the value object's role in the domain",
-        "details": {
-            "domainAlignment": "How the value object fits into the broader domain model and business rules",
-            "boundaryDecisions": "Key decisions about aggregate boundaries and relationships",
-            "technicalImpact": "Major technical implications and architectural considerations"
-        },
-        "additionalConsiderations": "Any cross-cutting concerns or special cases to be aware of"
-    },
-
+    "inference": "<inference>",
     "result": {
         "actions": [
             {
-                "actionThoughts": {
-                    "summary": "Tactical design decisions for implementing the value object",
-                    "details": {
-                        "relationshipPattern": "Chosen relationship pattern and its justification",
-                        "invariantProtection": "How the design maintains domain invariants",
-                        "dataConsistency": "Strategy for maintaining data consistency"
-                    },
-                    "additionalConsiderations": "Implementation-specific concerns or limitations"
-                },
-
                 "objectType": "ValueObject",
                 "ids": {
                     "boundedContextId": "<boundedContextId>",
@@ -353,16 +383,6 @@ Please follow these rules:
                 "args": {
                     "valueObjectName": "<valueObjectName>",
                     "referenceClass": "<referenceClassName>",
-
-                    "propertyThoughts": {
-                        "summary": "Property-level design considerations",
-                        "details": {
-                            "immutability": "Analysis of property immutability and lifecycle",
-                            "referentialIntegrity": "How references maintain integrity across aggregates",
-                            "performanceImpact": "Performance implications of property choices"
-                        },
-                        "additionalConsiderations": "Special handling requirements for specific properties"
-                    },
                     "properties": [
                         {
                             "name": "<propertyName>",
@@ -480,29 +500,13 @@ Please follow these rules:
 
     __buildJsonExampleOutputFormat() {
         return {
-            "overviewThoughts": {
-                "summary": "Strategic analysis of Order-Customer relationship in the domain model",
-                "details": {
-                    "domainAlignment": "Order aggregate requires essential Customer information for business operations",
-                    "boundaryDecisions": "Implementing unidirectional relationship from Order to Customer to maintain clear boundaries",
-                    "technicalImpact": "Optimizing for query performance while ensuring data consistency"
-                },
-                "additionalConsiderations": "Need to carefully manage cached Customer properties in Order context"
-            },
-    
+            "inference": `- Unidirectional Reference Selection: Among the aggregates in the model (Order and Customer), the decision was made to establish a one-way reference from the Order aggregate to the Customer aggregate. This aligns with the requirement to avoid bidirectional references, ensuring that only one direction is implemented.
+- Domain & Lifecycle Considerations: The Customer aggregate is recognized as the stable, independent entity, making it the ideal candidate for being referenced by the Order. This approach addresses lifecycle dependencies and reflects real-world business invariants.
+- Property Replication: Only properties that are immutable and critical for maintaining referential integrity—namely, the primary key (customerId), alongside near-immutable properties such as gender and birthDate—are replicated. This minimizes redundancy and avoids the pitfalls of copying volatile data.
+Overall, this inference ensures that the generated ValueObject adheres to the design rules, maintains domain clarity, and promotes referential integrity without creating unwanted bidirectional dependencies.`,
             "result": {
                 "actions": [
                     {
-                        "actionThoughts": {
-                            "summary": "Implementing Customer reference within Order aggregate",
-                            "details": {
-                                "relationshipPattern": "Unidirectional reference from Order to Customer with selective property replication",
-                                "invariantProtection": "Ensuring Customer existence through foreign key constraint",
-                                "dataConsistency": "Caching only immutable Customer properties"
-                            },
-                            "additionalConsiderations": "Regular validation of cached property immutability"
-                        },
-    
                         "objectType": "ValueObject",
                         "ids": {
                             "boundedContextId": "bc-order",
@@ -512,16 +516,6 @@ Please follow these rules:
                         "args": {
                             "valueObjectName": "CustomerReference",
                             "referenceClass": "Customer",
-    
-                            "propertyThoughts": {
-                                "summary": "Careful selection of Customer properties to include",
-                                "details": {
-                                    "immutability": "Selected properties (gender, birthDate) are naturally immutable",
-                                    "referentialIntegrity": "CustomerId ensures proper reference maintenance",
-                                    "performanceImpact": "Cached properties reduce cross-aggregate queries"
-                                },
-                                "additionalConsiderations": "Regular monitoring of property usage patterns"
-                            },
                             "properties": [
                                 {
                                     "name": "customerId",

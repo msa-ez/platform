@@ -85,6 +85,14 @@
             </sub-elements>
 
             <sub-elements v-else>
+                <text-element v-if="pbcDescription"
+                    :sub-width="'100%'"
+                    :sub-height="60"
+                    :sub-top="elementCoordinate.height / 2 - 30"
+                    :sub-left="0"
+                    :text="'해당 PBC를 더블 클릭하여, 사용할 API나 참조할 도메인 이벤트를 선택하여 활성화하시기 바랍니다.'"
+                >
+                </text-element>
                 <geometry-rect
                         v-if="movingElement"
                         :_style="{
@@ -221,6 +229,7 @@
                 reference: this.value.classReference != null,
                 referenceClassName: this.value.classReference,
                 panelValue: null,
+                pbcDescription: true
             };
         },
         created: function () {
@@ -315,6 +324,7 @@
                                 leftSideElement = leftSideElement.concat(element.commands, element.views)
                                 leftSideElement = leftSideElement.filter(ele => ele && (!ele.visibility || ele.visibility == 'public'))
                                 if(leftSideElement.length > 0) {
+                                    me.pbcDescription = false
                                     let leftElementLen = leftSideElement.length;
                                     let leftElementH = (pbcHeight/leftElementLen) - 5 ;
                                     leftElementH = leftElementH > 100 ? 100 : leftElementH
@@ -343,6 +353,7 @@
                                 rightSideElement = rightSideElement.concat(element.events);
                                 rightSideElement = rightSideElement.filter(ele => ele && (!ele.visibility || ele.visibility == 'public'));
                                 if(rightSideElement.length > 0) {
+                                    me.pbcDescription = false
                                     let rightElementLen = rightSideElement.length;
                                     let rightElementH = (pbcHeight/rightElementLen) - 5 ;
                                     rightElementH = rightElementH > 100 ? 100 : rightElementH

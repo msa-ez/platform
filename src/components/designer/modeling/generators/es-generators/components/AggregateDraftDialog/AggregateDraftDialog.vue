@@ -24,38 +24,38 @@
                 </v-tab>
             </v-tabs>
 
-            <v-tabs-items v-model="activeTab"
-                class="model-draft-dialog-tab-items"
-            >
-                <v-tab-item v-for="(boundedContextInfo, index) in draftOptions" :key="index">
-                    <AnalysisResultPanel
-                        class="ml-4 mr-4 mt-4"
-                        :analysisResult="boundedContextInfo.analysisResult"
-                        :key="index"
-                    />
+            <div v-if="activeContext">
+                <AnalysisResultPanel
+                    class="ml-4 mr-4 mt-4"
+                    :analysisResult="activeContext.analysisResult"
+                />
 
-                    <v-row class="ma-0 pa-0">
-                        <v-col v-for="(option, index) in boundedContextInfo.options" 
-                            :key="`${selectedCardKey}_${index}`"
-                            class="ma-0 pa-4 pr-4"
-                        >
-                            <AggregateDraftOptionCard 
-                                :boundedContextInfo="boundedContextInfo"
-                                :optionIndex="index"
-                                :optionInfo="option"
-                                :isSelectedCard="isSelectedCard(boundedContextInfo, index)"
-                                :isDisabled="!isGeneratorButtonEnabled || draftUIInfos.leftBoundedContextCount > 0 || (!selectedOptionItem || Object.keys(selectedOptionItem).length !== draftOptions.length)"
-                                @onCardSelected="selectedCard"
-                            ></AggregateDraftOptionCard>
-                        </v-col>
-                    </v-row>
+                <div class="mt-4 pl-4 pr-4">
+                    <CoTToggle :inference="activeContext.inference"/>
+                </div>
 
-                    <div v-if="boundedContextInfo.conclusions" class="mt-4 pl-4 pr-4">
-                        <h4>{{ $t('ModelDraftDialogForDistribution.conclusions') }}</h4>
-                        <p>{{ boundedContextInfo.conclusions }}</p>
-                    </div>
-                </v-tab-item>
-            </v-tabs-items>
+                <v-row class="ma-0 pa-0">
+                    <v-col v-for="(option, index) in activeContext.options" 
+                        :key="`${selectedCardKey}_${index}`"
+                        class="ma-0 pa-4 pr-4 d-flex"
+                    >
+                        <AggregateDraftOptionCard 
+                            class="flex-grow-1"
+                            :boundedContextInfo="activeContext"
+                            :optionIndex="index"
+                            :optionInfo="option"
+                            :isSelectedCard="isSelectedCard(activeContext, index)"
+                            :isDisabled="!isGeneratorButtonEnabled || draftUIInfos.leftBoundedContextCount > 0 || (!selectedOptionItem || Object.keys(selectedOptionItem).length !== draftOptions.length)"
+                            @onCardSelected="selectedCard"
+                        ></AggregateDraftOptionCard>
+                    </v-col>
+                </v-row>
+
+                <div v-if="activeContext.conclusions" class="mt-4 pl-4 pr-4">
+                    <h4>{{ $t('ModelDraftDialogForDistribution.conclusions') }}</h4>
+                    <p>{{ activeContext.conclusions }}</p>
+                </div>
+            </div>
 
             <component 
                 :is="currentFooterComponent"
@@ -81,6 +81,7 @@
         ESDialogerFooter,
         AnalysisResultPanel
     } from './components'
+    import CoTToggle from '../CoTToggle.vue'
 
     /**
      * @description 
@@ -136,10 +137,12 @@
             ProgressInfo,
             EventStormingFooter,
             ESDialogerFooter,
-            AnalysisResultPanel
+            AnalysisResultPanel,
+            CoTToggle
         },
         props: {
             draftOptions: {
+
                 type: Array,
                 default: () => ([]),
                 required: false
@@ -211,6 +214,12 @@
                 }
             },
 
+            activeContext() {
+                return (this.draftOptions && this.draftOptions.length > 0) 
+                       ? this.draftOptions[this.activeTab] 
+                       : null;
+            },
+
             isGenerateButtonDisabled() {
                 return !this.isGeneratorButtonEnabled || this.draftUIInfos.leftBoundedContextCount > 0 || (!this.selectedOptionItem || Object.keys(this.selectedOptionItem).length !== this.draftOptions.length)
             },
@@ -260,13 +269,13 @@
                 return (boundedContextInfo.boundedContextAlias) ? boundedContextInfo.boundedContextAlias : (boundedContextInfo.boundedContext.charAt(0).toUpperCase() + boundedContextInfo.boundedContext.slice(1))
             },
 
-            updateSelectionByDraftOptions(draftOptions) {
+            updateSelectionByDraftOptions(draftOptions) {      
                 this.selectedCardIndex = {}
                 this.selectedOptionItem = {}
                 
                 if(draftOptions && draftOptions.length > 0) {
                     draftOptions.map(option => {  
-                        if(!option.boundedContext || !option.defaultOptionIndex) return
+                        if(!option.boundedContext || option.defaultOptionIndex === undefined) return
                         this.selectedCardIndex[option.boundedContext] = option.defaultOptionIndex
                         this.selectedOptionItem[option.boundedContext] = option.options[option.defaultOptionIndex]                        
                     })

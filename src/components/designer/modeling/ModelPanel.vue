@@ -143,8 +143,12 @@
             },
 
             updateElementVisibility() {
-                // localStorage에서 processMode 값을 불러와 처리
-                const storedProcessMode = localStorage.getItem('processMode');
+                // localStorage에서 processMode 값을 불러오고, 없으면 true로 설정
+                let storedProcessMode = localStorage.getItem('processMode');
+                if (storedProcessMode === null) {
+                    storedProcessMode = 'true';
+                    localStorage.setItem('processMode', storedProcessMode);
+                }
                 const processMode = storedProcessMode === 'true'; // 문자열 'true'를 불리언 true로 변환
 
                 // processMode에 따라 요소의 표시 여부를 설정

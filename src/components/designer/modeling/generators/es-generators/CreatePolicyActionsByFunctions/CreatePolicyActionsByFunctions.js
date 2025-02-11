@@ -3,16 +3,35 @@ const { ESValueSummaryGenerator } = require("..")
 const ESActionsUtil = require("../../es-ddl-generators/modules/ESActionsUtil")
 const { ESValueSummarizeWithFilter } = require("../helpers")
 const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTransManager")
+const { z } = require("zod")
+const { zodResponseFormat } = require("../../utils")
 
 class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
         this.checkInputParamsKeys = ["targetBoundedContext", "description", "esValue", "userInfo", "information"]
-        this.progressCheckStrings = ["overviewThoughts", "extractedPolicies"]
+        this.progressCheckStrings = ["inference", "extractedPolicies"]
+        this.response_format = zodResponseFormat(
+            z.object({
+                inference: z.string(),
+                result: z.object({
+                    extractedPolicies: z.array(
+                        z.object({
+                            name: z.string(),
+                            alias: z.string(),
+                            reason: z.string(),
+                            fromEventId: z.string(),
+                            toCommandId: z.string()
+                        }).strict()
+                    )
+                }).strict()
+            }).strict(),
+            "instruction"
+        )
     }
 
-    /**
+    /** 
      * @description 이벤트 스토밍 모델에서 정책을 생성하고 관리하기 위한 제너레이터를 생성합니다.
      * 정책 생성 프로세스의 각 단계(첫 응답, 모델 생성, 생성 성공, 재시도, 중지)에서 
      * 콜백을 통해 처리할 수 있습니다.
@@ -72,6 +91,11 @@ class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
     static createGeneratorByDraftOptions(callbacks){
         const generator = new CreatePolicyActionsByFunctions({
             input: null,
+
+            onSend: (input, stopCallback) => {
+                if(callbacks.onSend)
+                    callbacks.onSend(input, stopCallback)
+            },
 
             onFirstResponse: (returnObj) => {
                 if(callbacks.onFirstResponse)
@@ -147,6 +171,7 @@ class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
             inputParams.esAliasTransManager
         )
 
+        inputParams.subjectText = `Creating policies for ${inputParams.boundedContextDisplayName} Bounded Context`
         if(!this.isCreatedPromptWithinTokenLimit()) {
             const leftTokenCount = this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
             if(leftTokenCount <= 100)
@@ -215,6 +240,16 @@ Please follow these rules:
 `
     }
 
+    __buildInferenceGuidelinesPrompt() {
+        return `
+Inference Guidelines:
+1. The process of reasoning should be directly related to the output result, not a reference to a general strategy.
+2. Context Analysis: Thoroughly analyze the provided event storming model and functional requirements to understand the business objectives, domain boundaries, and integration points.
+3. Policy Design: Derive clear and distinct policies that connect related events with appropriate commands, ensuring each policy delivers unique business value.
+4. Validation: Verify that policies avoid duplication, circular dependencies, and only span across aggregates or bounded contexts when necessary.
+`;   
+    }
+
     __buildRequestFormatPrompt(){
         return ESValueSummarizeWithFilter.getGuidePrompt()
     }
@@ -222,29 +257,10 @@ Please follow these rules:
     __buildJsonResponseFormat() {
         return `
 {
-    "overviewThoughts": {
-        "summary": "High-level analysis of the overall policy landscape and system requirements",
-        "details": {
-            "businessValue": "Assessment of how policies align with business goals and requirements",
-            "systemImpact": "Analysis of cross-cutting concerns and system-wide effects",
-            "riskFactors": "Identification of potential challenges and mitigation strategies"
-        },
-        "additionalConsiderations": "Any supplementary insights or future considerations for the overall system"
-    },
-
+    "inference": "<inference>",
     "result": {
         "extractedPolicies": [
             {
-                "policyThoughts": {
-                    "summary": "Specific reasoning behind individual policy design and implementation",
-                    "details": {
-                        "triggerLogic": "Analysis of event conditions and timing considerations",
-                        "domainAlignment": "How policy fits within domain boundaries and business rules",
-                        "implementationComplexity": "Technical considerations and resource requirements"
-                    },
-                    "additionalConsiderations": "Policy-specific edge cases or future enhancement possibilities"
-                },
-
                 "name": "<name>",
                 "alias": "<alias>",
                 "reason": "<reason>",
@@ -422,28 +438,10 @@ Please follow these rules:
 
     __buildJsonExampleOutputFormat() {
         return {
-            "overviewThoughts": {
-                "summary": "Restaurant reservation system requires coordinated policy management across multiple bounded contexts",
-                "details": {
-                    "businessValue": "Automated reservation flow improves customer experience and staff efficiency",
-                    "systemImpact": "Policies ensure proper coordination between reservation, table, and kitchen services",
-                    "riskFactors": "Resource conflicts, timing issues, and cross-context consistency challenges"
-                },
-                "additionalConsiderations": "Future scaling considerations for multiple restaurant locations and peak time management"
-            },
-    
+            "inference": `Based on the detailed analysis of the event storming model and functional requirements, three distinct policies have been derived. The "TableAssignmentPolicy" connects the "ReservationCreated" event to the "AssignTable" command, ensuring that table assignment is automatically triggered upon reservation creation. The "KitchenPreparationPolicy" links the "ReservationConfirmed" event to the "PrepareKitchen" command, initiating kitchen preparation as soon as the reservation is confirmed. Lastly, the "ReservationConfirmationPolicy" ties the "TableAssigned" event to the "ConfirmReservation" command, finalizing the reservation process through a status update. Each policy is carefully designed to span across aggregate boundaries while avoiding duplication and circular dependencies, thereby delivering clear and actionable business value.`,
             "result": {
                 "extractedPolicies": [
                     {
-                        "policyThoughts": {
-                            "summary": "Table assignment must be automated immediately after reservation creation",
-                            "details": {
-                                "triggerLogic": "ReservationCreated event triggers immediate table allocation",
-                                "domainAlignment": "Ensures proper resource management within restaurant domain",
-                                "implementationComplexity": "Requires table availability checking and optimization logic"
-                            },
-                            "additionalConsiderations": "Consider table preference and special seating requirements"
-                        },
                         "name": "TableAssignmentPolicy",
                         "alias": "Table Assignment Automation",
                         "reason": "Automatically assign appropriate table upon reservation creation",
@@ -451,15 +449,6 @@ Please follow these rules:
                         "toCommandId": "cmd-assign-table"
                     },
                     {
-                        "policyThoughts": {
-                            "summary": "Kitchen preparation must be initiated at the right time for confirmed reservations",
-                            "details": {
-                                "triggerLogic": "ReservationConfirmed event initiates timed kitchen preparation",
-                                "domainAlignment": "Coordinates kitchen operations with reservation timeline",
-                                "implementationComplexity": "Requires scheduling and kitchen capacity management"
-                            },
-                            "additionalConsiderations": "Handle special dietary requirements and preparation timing"
-                        },
                         "name": "KitchenPreparationPolicy",
                         "alias": "Kitchen Preparation Trigger",
                         "reason": "Initiate kitchen preparation process when reservation is confirmed",
@@ -467,15 +456,6 @@ Please follow these rules:
                         "toCommandId": "cmd-prepare-kitchen"
                     },
                     {
-                        "policyThoughts": {
-                            "summary": "Reservation status must be updated after successful table assignment",
-                            "details": {
-                                "triggerLogic": "TableAssigned event triggers reservation confirmation",
-                                "domainAlignment": "Maintains consistency between table and reservation states",
-                                "implementationComplexity": "Requires transaction management across contexts"
-                            },
-                            "additionalConsiderations": "Handle edge cases like table reassignment needs"
-                        },
                         "name": "ReservationConfirmationPolicy",
                         "alias": "Reservation Status Update",
                         "reason": "Update reservation status after successful table assignment",
@@ -504,7 +484,7 @@ Please follow these rules:
 
 
     onCreateModelGenerating(returnObj){
-        returnObj.directMessage = `Generating policies for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Creating policies for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
     }
 
     onCreateModelFinished(returnObj){
@@ -517,10 +497,10 @@ Please follow these rules:
             actions: appliedActions,
             createdESValue: createdESValue
         }
-        returnObj.directMessage = `Generating policies for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Creating policies for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
     }
 
-    _getActionAppliedESValue(policies) {
+    _getActionAppliedESValue(policies){
         let actions = this.__toEventUpdateActions(policies)
 
         let esValueToModify = JSON.parse(JSON.stringify(this.client.input.esValue))

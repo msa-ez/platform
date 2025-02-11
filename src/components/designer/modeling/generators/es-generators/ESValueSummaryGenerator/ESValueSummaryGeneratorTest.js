@@ -23,7 +23,7 @@ class ESValueSummaryGeneratorTest {
             esValue,
             [],
             800,
-            "gpt-4o",
+            "o3-mini-2025-01-31",
             esAliasTransManager
         )
         console.log("[*] 요약된 ESValue :", summary)

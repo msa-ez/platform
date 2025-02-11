@@ -3,13 +3,23 @@ const FormattedJSONAIGenerator = require("../../FormattedJSONAIGenerator");
 const { ESValueSummarizeWithFilter } = require("../helpers")
 const ESAliasTransManager = require("../../es-ddl-generators/modules/ESAliasTransManager")
 const { TokenCounter } = require("../../utils")
+const { z } = require("zod")
+const { zodResponseFormat } = require("../../utils")
 
 class ESValueSummaryGenerator extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
         this.checkInputParamsKeys = ["context", "esValue", "keysToFilter", "maxTokens", "tokenCalcModel", "esAliasTransManager"]
-        this.progressCheckStrings = ["overviewThoughts", "result"]
+        this.progressCheckStrings = ["result"]
+        this.response_format = zodResponseFormat(
+            z.object({
+                result: z.object({
+                    sortedElementIds: z.array(z.string())
+                }).strict()
+            }).strict(),
+            "instruction"
+        )
     }
 
     /**
@@ -125,16 +135,6 @@ For example, "bc-bookManagement" represents a Bounded Context named "bookManagem
     __buildJsonResponseFormat() {
         return `
 {
-    "overviewThoughts": {
-        "summary": "Analysis of element relationships and their contextual relevance",
-        "details": {
-            "contextualAnalysis": "Evaluation of how elements relate to the given context and business domain",
-            "elementRelationships": "Analysis of dependencies and connections between different elements",
-            "sortingStrategy": "Explanation of the prioritization and sorting approach used"
-        },
-        "additionalConsiderations": "Potential impact of element ordering on system understanding and documentation"
-    },
-
     "result": {
         "sortedElementIds": [
             "<id1>",
@@ -143,6 +143,34 @@ For example, "bc-bookManagement" represents a Bounded Context named "bookManagem
     }
 }        
 `
+    }
+
+    __buildInferenceGuidelinesPrompt() {
+        return `
+Inference Guidelines:
+1. The process of reasoning should be directly related to the output result, not a reference to a general strategy.
+
+2. Contextual Analysis:
+    - Analyze the given context to understand the primary business domain and the specific scenario.
+    - Identify the core elements and their relationships within the context.
+    - Determine how each element relates to the overall business process or user interaction.
+
+3. Element Relationships:
+    - Examine the dependencies and connections between different EventStorming elements.
+    - Identify direct relationships, such as commands triggering events or aggregates containing entities.
+    - Consider indirect relationships, such as read models being updated by events.
+
+4. Sorting Strategy:
+    - Prioritize elements that are directly involved in the main process or scenario described in the context.
+    - Place elements with direct relationships closer together in the sorted list.
+    - Consider the order of operations or the flow of data when determining the sequence.
+    - Elements with less direct relevance should be placed lower in the priority.
+
+5. Additional Considerations:
+    - Think about any potential side effects or downstream impacts of the main process.
+    - Consider how the ordering of elements might affect system understanding, documentation, or future development.
+    - Identify any elements that might have implications for other parts of the system.
+`   
     }
 
     __buildJsonExampleInputFormat() {
@@ -175,16 +203,6 @@ For example, "bc-bookManagement" represents a Bounded Context named "bookManagem
 
     __buildJsonExampleOutputFormat() {
         return {
-            "overviewThoughts": {
-                "summary": "Analyzing elements related to order cancellation functionality",
-                "details": {
-                    "contextualAnalysis": "Focus on order management bounded context and order cancellation process",
-                    "elementRelationships": "Direct relationships between order aggregate, cancel command, and resulting event",
-                    "sortingStrategy": "Prioritizing elements directly involved in order cancellation, followed by related order management elements, then peripheral elements"
-                },
-                "additionalConsiderations": "Order cancellation may trigger inventory updates and affect order history views"
-            },
-    
             "result": {
                 "sortedElementIds": [
                     "bc-orderManagement",

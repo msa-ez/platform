@@ -2,16 +2,28 @@ const AIGenerator = require("./AIGenerator");
 const { TokenCounter, JsonParsingUtil } = require("./utils")
 
 const DEFAULT_CONFIG = {
-    MODEL: "gpt-4o-2024-11-20",
-    MODEL_CONTEXT_TOKEN_LIMIT: 128000,
-    MODEL_OUTPUT_TOKEN_LIMIT: 16384,
+    MODEL: "o3-mini-2025-01-31",
+    IS_INFERENCE_MODEL: true,
+    MODEL_CONTEXT_TOKEN_LIMIT: 200000,
+    MODEL_OUTPUT_TOKEN_LIMIT: 100000,
     MODEL_INPUT_TOKEN_LIMIT_MARGIN: 1000,
     MAX_RETRY_COUNT: 3,
-    TEMPERATURE: 1.0,
-    TOP_P: 0.9,
-    DEFAULT_LANGUAGE: "English"
+    REASONING_EFFORT: "medium", // o3-mini에서만 지원하는 속성
+    TEMPERATURE: undefined, // o3-mini는 지원하지 않는 속성
+    TOP_P: undefined, // o3-mini는 지원하지 않는 속성
+    DEFAULT_LANGUAGE: "English",
+    REASONING_MAX_SECONDS: 120 // 추론 모델 전용. 해당 추론 시간이 넘어갈 경우, 유효하지 않은 것으로 판단
 };
 DEFAULT_CONFIG.MODEL_INPUT_TOKEN_LIMIT = (DEFAULT_CONFIG.MODEL_CONTEXT_TOKEN_LIMIT - DEFAULT_CONFIG.MODEL_OUTPUT_TOKEN_LIMIT) - DEFAULT_CONFIG.MODEL_INPUT_TOKEN_LIMIT_MARGIN
+
+// JSON 파싱 에러가 발생했을 경우, 해당 텍스트를 전달시켜서 파싱 에러를 해결시킬 모델에 대한 설정
+const JSON_RESTORE_CONFIG = {
+    MODEL: "gpt-4o-2024-11-20",
+    IS_INFERENCE_MODEL: false,
+    REASONING_EFFORT: undefined,
+    TEMPERATURE: 0.7,
+    TOP_P: undefined
+}
 
 /**
  * @description AI 응답을 JSON 형식으로 처리하고 포맷팅하는 기본 생성기 클래스입니다.
@@ -98,12 +110,14 @@ class FormattedJSONAIGenerator extends AIGenerator {
         super(client)
 
         this.model = DEFAULT_CONFIG.MODEL
+        this.isInferenceModel = DEFAULT_CONFIG.IS_INFERENCE_MODEL
         this.modelInputTokenLimit = DEFAULT_CONFIG.MODEL_INPUT_TOKEN_LIMIT
         this.modelOutputTokenLimit = DEFAULT_CONFIG.MODEL_OUTPUT_TOKEN_LIMIT
         this.generatorName = this.constructor.name
         this.isFirstResponse = true // 스트리밍시에 첫번째 메세지 도착시 로직들(다이얼로그 오픈 등)을 수행하기 위해서 추적함
 
         this.preferredLanguage = this.preferredLanguage ? this.preferredLanguage : DEFAULT_CONFIG.DEFAULT_LANGUAGE
+        this.reasoning_effort = DEFAULT_CONFIG.REASONING_EFFORT
         this.temperature = DEFAULT_CONFIG.TEMPERATURE
         this.top_p = DEFAULT_CONFIG.TOP_P
 
@@ -121,6 +135,22 @@ class FormattedJSONAIGenerator extends AIGenerator {
                 if(returnObj.modelValue)
                 console.log(`[*] ${this.generatorName}에 대한 생성된 모델 정보 : `, returnObj.modelValue)
             }
+        
+        this._addOnsendCallback()
+        this.reasoningMaxSeconds = DEFAULT_CONFIG.REASONING_MAX_SECONDS
+
+        // 이것이 true인 경우, AI의 기존 응답에서 Json 파싱 문제가 일어난 부분을 복원하는 프롬프트로 전환시킴
+        this.useJsonRestoreStrategy = false
+        this.jsonOutputTextToRestore = undefined
+        this.savedOnSendCallback = undefined
+        this.createdPrompt = ""
+    }
+
+    _addOnsendCallback(){
+        if(!this.client.onSend && this.isInferenceModel)
+            this.client.onSend = () => {
+                console.log(`[*] ${this.model}-${this.reasoning_effort} 모델이 추론중...`)
+            }
     }
 
 
@@ -135,7 +165,10 @@ class FormattedJSONAIGenerator extends AIGenerator {
         for(let key of this.checkInputParamsKeys)
             if(this.client.input[key] === undefined)
                 throw new Error(`${key} 파라미터가 전달되지 않았습니다.`)
-        console.log(`[*] ${this.generatorName}에 대한 입력 파라미터 전달중...`, this.client.input)
+        console.log(`[*] ${this.generatorName}에 대한 입력 파라미터 전달중...`, {
+            inputParams: this.client.input,
+            response_format: this.response_format
+        })
 
         this.leftRetryCount = this.MAX_RETRY_COUNT
 
@@ -150,12 +183,43 @@ class FormattedJSONAIGenerator extends AIGenerator {
     async onGenerateBefore(inputParams, generatorName){}
 
     createPrompt(){
+        if(this.useJsonRestoreStrategy && this.jsonOutputTextToRestore) {
+            const prompt = this._getJsonRestorePrompt(this.jsonOutputTextToRestore)
+            this.useJsonRestoreStrategy = false
+            this.jsonOutputTextToRestore = undefined
+
+            this.model = JSON_RESTORE_CONFIG.MODEL
+            this.isInferenceModel = JSON_RESTORE_CONFIG.IS_INFERENCE_MODEL
+            this.reasoning_effort = JSON_RESTORE_CONFIG.REASONING_EFFORT
+            this.temperature = JSON_RESTORE_CONFIG.TEMPERATURE
+            this.top_p = JSON_RESTORE_CONFIG.TOP_P
+
+            this.savedOnSendCallback = this.client.onSend
+            this.client.onSend = undefined
+
+            this.createdPrompt = prompt
+            return prompt
+        }
+        else {
+            this.model = DEFAULT_CONFIG.MODEL
+            this.isInferenceModel = DEFAULT_CONFIG.IS_INFERENCE_MODEL
+            this.reasoning_effort = DEFAULT_CONFIG.REASONING_EFFORT
+            this.temperature = DEFAULT_CONFIG.TEMPERATURE
+            this.top_p = DEFAULT_CONFIG.TOP_P
+            
+            if(this.isInferenceModel && !this.client.onSend && this.savedOnSendCallback)
+                this.client.onSend = this.savedOnSendCallback
+        }
+
+
         try {
 
             const prompt = this._assembleSystemContext() + this._buildUserQueryPrompt()
 
             console.log(`[*] LLM에게 ${this.generatorName}에서 생성된 프롬프트 전달중...`, {prompt})
             this.isFirstResponse = true
+
+            this.createdPrompt = prompt
             return prompt
 
         } catch(e) {
@@ -165,6 +229,22 @@ class FormattedJSONAIGenerator extends AIGenerator {
             throw e
 
         }
+    }
+
+    _getJsonRestorePrompt(jsonOutputText){
+        return `The given JSON object is not grammatically valid.
+Please fix this JSON object and return a valid JSON object.
+
+Rules:
+1. Output only the modified JSON object.
+2. Do not include any additional text or comments.
+
+[INPUT]
+${jsonOutputText}
+
+[OUTPUT]
+\`\`\`json
+`
     }
 
     /**
@@ -297,14 +377,20 @@ class FormattedJSONAIGenerator extends AIGenerator {
     }
 
     _assembleSystemContext(){
-        return [
+        const prompts = [
             this.__buildAgentRolePrompt(),
             this.__buildTaskGuidelinesPrompt(),
+            this.__buildInferenceGuidelinesPrompt(),
             this.__buildRequestFormatPrompt(),
             this.__buildResponseFormatPrompt(),
-            this.__buildExamplePrompt(),
-            this.__getJsonCompressGuidePrompt()
-        ].join("\n\n")
+            this.__buildExamplePrompt()
+        ]
+
+        // 응답 포멧이 있는 경우에는 지시와 상관없이 공백을 반드시 포함해서 Json을 출력하기 때문에 없는 경우에만 추가
+        if(!this.response_format)
+            prompts.push(this.__getJsonCompressGuidePrompt())
+
+        return prompts.join("\n\n")
     }
 
     /**
@@ -326,6 +412,13 @@ class FormattedJSONAIGenerator extends AIGenerator {
      * ...
      */
     __buildTaskGuidelinesPrompt(){
+        return ``
+    }
+
+    /**
+     * 추론 모델인 경우, CoT를 사용하지 않고, 별도의 추론 가이드를 제공하기 위해서 사용
+     */
+    __buildInferenceGuidelinesPrompt(){
         return ``
     }
 
@@ -399,7 +492,6 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
     }
     __buildJsonUserQueryInputFormat(){ return {} }
 
-
     createModel(text){     
         let returnObj = {
             generatorName: this.generatorName,
@@ -416,7 +508,8 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
                     this.generate()
                 }
             },
-            modelValue: {}
+            modelValue: {},
+            createdPrompt: this.createdPrompt
         }
         if(!text) return returnObj
 
@@ -435,6 +528,28 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
         if(this.progressCheckStrings.length > 0)
             returnObj.progress = this._getProcessPercentage(text)
 
+
+        if (this.hasExcessiveRepeatingPattern(text, 200, 100)) {
+            returnObj = {
+                ...returnObj,
+                isError: true,
+                errorMessage: `[!] ${this.generatorName} 출력에서 반복되는 문자열 감지됨(JSON 파싱 예외 유형)`,
+                leftRetryCount: this.leftRetryCount,
+                isJsonParsingError: true,
+                isDied: false,
+                directMessage: "Json parsing error occurred, retrying..."
+            }
+
+            console.error(returnObj.errorMessage)
+            console.log("[*] 오류가 발생한 관련 반환값 정보", returnObj)
+
+            this.onError(returnObj)
+            if(this.client.onError) this.client.onError(returnObj)
+
+            this.stop()
+            this._retryByError()
+            return returnObj
+        }
 
         if(this.state !== 'end') {
             returnObj.modelValue.isPartialParse = true
@@ -494,7 +609,7 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
 
         } catch(e) {
 
-            console.error(`[!] ${this.generatorName}에서 결과 파싱중에 오류 발생!`, {text, error:e})
+            console.error(`[!] ${this.generatorName}에서 결과 파싱중에 오류 발생!`, {returnObj, error:e})
             console.error(e)
             returnObj = {
                 ...returnObj,
@@ -518,11 +633,13 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
             }
         
             if(returnObj.isJsonParsingError) {
-                super.generate()
+                this.jsonOutputTextToRestore = returnObj.modelRawValue
+                this.useJsonRestoreStrategy = true
+                this._retryByError()
             }
             else if(this.leftRetryCount > 0) {
                 this.leftRetryCount--
-                super.generate()
+                this._retryByError()
             }
 
             return returnObj
@@ -546,6 +663,45 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
         }
 
         return Math.round((foundCount / (this.progressCheckStrings.length+1)) * 100)
+    }
+    
+    /**
+     * @description 입력된 문자열(text)의 마지막 부분(tail)을 검사하여, 
+     * 특정 문자(공백 제외)가 설정된 반복 횟수(repeatLimit) 이상 반복되는지를 확인하는 함수입니다.
+     * 이 함수는 주로 AI 모델의 응답 처리 시, 모델이 동일한 문자를 반복적으로 생성하여 발생할 수 있는 
+     * 잘못된 JSON 형식이나 파싱 오류를 미리 감지하는 데 사용됩니다.
+     * 예를 들어, JSON 응답에서 "!!!!!!"과 같이 동일한 문자가 과도하게 반복될 경우, 
+     * 이를 오류 신호로 감지하여 재시도 로직을 활성화할 수 있습니다.
+     * 
+     * @example 기본 사용 예시
+     * // 주의: 이 예시는 tail에 '!' 문자가 6번 반복되어 repeatLimit인 5를 초과하는 경우 true를 반환합니다.
+     * const text1 = "안녕하세요!!!!!!";  // "!"가 6번 반복됨
+     * const result1 = hasExcessiveRepeatingPattern(text1, 10, 5);
+     * console.log(result1);  // true
+     * 
+     * @example JSON 출력 검증에서의 활용
+     * // 주의: JSON 출력에 공백은 반드시 포함되어야 하므로, 공백 문자는 검사 대상에서 제외됩니다.
+     * const text2 = '{"key": "value", "number": 123}    ';  // 문자열 끝에 여분의 공백이 있음
+     * const result2 = hasExcessiveRepeatingPattern(text2, 10, 5);
+     * console.log(result2);  // false, 공백은 검사하지 않음
+     *
+     * @note
+     * - 파라미터 tailLength는 검사할 문자열의 끝부분 길이를 지정합니다.
+     * - 파라미터 repeatLimit은 단일 문자가 허용되는 최대 반복 횟수를 정의하며,
+     *   해당 한계를 초과하면 true를 반환합니다.
+     * - JSON 포맷의 정상 출력을 위해 공백(' ')은 반복 검사에서 제외됩니다.
+     */
+    hasExcessiveRepeatingPattern(text, tailLength, repeatLimit) {
+        const tail = text.replaceAll(" ", "").slice(-tailLength)
+        for(const searchChar of new Set(tail))
+            if(tail.split(searchChar).length-1 >= repeatLimit) return true
+        return false;
+    }
+
+    _retryByError(){
+        // 일부 경우에는 response_format이 정의되어 있어서 끝없이 동일한 예외가 발생하는 경우가 있기 때문에 재시도시에는 제거해서 재시도 하도록 함
+        this.response_format = undefined
+        super.generate()
     }
 }
 
