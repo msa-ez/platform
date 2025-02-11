@@ -72,10 +72,10 @@
             </div>
             <div>
                 <v-card flat>
-                    <v-card-title style="color: #757575;">Select Visibility Element</v-card-title>
+                    <v-card-title style="color: #757575;">{{ $t('PBCPanel.selectVisibilityElement') }}</v-card-title>
                     <v-card-text>
                         <div>
-                            Read Element
+                            {{ $t('PBCPanel.readElement') }}
                             <v-autocomplete
                                     v-model="selectedReads"
                                     :items="value.views"
@@ -87,7 +87,7 @@
                             ></v-autocomplete>
                         </div>
                         <div>
-                            Command Element
+                            {{ $t('PBCPanel.commandElement') }}
                             <v-autocomplete
                                     v-model="selectedCommands"
                                     :items="value.commands"
@@ -99,7 +99,7 @@
                             ></v-autocomplete>
                         </div>
                         <div>
-                            Event Element
+                            {{ $t('PBCPanel.eventElement') }}
                             <v-autocomplete
                                     v-model="selectedEvents"
                                     :items="value.events"
