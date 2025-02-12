@@ -841,7 +841,7 @@ class CodeGeneratorCore {
                     if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
                     if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
 
-                    if (srcElement && aggregateByIds[aggId]) {
+                    if (srcElement && tarElement) {
                         let relationCommandInfo = {
                             commandValue: srcElement,
                             relationId: item.relationView.id,
