@@ -2816,6 +2816,7 @@
             },
             
             async generateCodeOfPBC(){
+                // !!!PBC
                 var me = this
                 let pbcLists =  Object.values(me.value.elements).filter(ele => ele && ele._type.endsWith("PBC"));
                 for(let index = 0; index < pbcLists.length; index++) {

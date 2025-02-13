@@ -62,7 +62,6 @@ class CodeGeneratorCore {
         }
         var selectedTemplate = []
         let elementByIds = {};
-        let relatedElementByIds = {};
 
         let elementValues = Object.values(JSON.parse(JSON.stringify(flatModel.elements)));
         let relationValues = Object.values(JSON.parse(JSON.stringify(flatModel.relations)));
@@ -100,8 +99,8 @@ class CodeGeneratorCore {
                 } else if (item._type == 'org.uengine.modeling.model.Event') {
                     modelForElements.Event.push(item)
                 } else if (item._type == 'org.uengine.modeling.model.Policy') {
-                    modelForElements.Policy.push(item)
                     item.relationEventInfo = null;
+                    modelForElements.Policy.push(item)
                 } else if (item._type == 'org.uengine.modeling.model.Command') {
                     modelForElements.Command.push(item)
                 } else if (item._type == 'org.uengine.modeling.model.Actor') {
@@ -609,6 +608,10 @@ class CodeGeneratorCore {
             }
         })
 
+        /** 
+         * !!!PBC 의 내부 element는 relation의 연결된 정보를 가지고 코드를 생성.
+         * relation의 문제가 있을때는 PBC.vue에서 그려질때 내부 연결 정보를 확인.
+         * **/
         relationValues.forEach(item => {
             if(!me.canvas.validateRelationFormat(item)) return;
             if (item != null) {
@@ -616,10 +619,9 @@ class CodeGeneratorCore {
                     return
                 }
 
+                // !!!PBC 
                 var sourceElement = elementByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
                 var targetElement = elementByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
-
-                // element in PBC
                 if(!sourceElement && item.sourceElement.pbcId) sourceElement = item.sourceElement
                 if(!targetElement && item.targetElement.pbcId) targetElement = item.targetElement
                 
@@ -650,12 +652,10 @@ class CodeGeneratorCore {
 
                 if (item.sourceElement._type == "org.uengine.modeling.model.Event" &&
                     item.targetElement._type == "org.uengine.modeling.model.Policy") {
-                    // var eventId = item.sourceElement.elementView.id
-                    // var policyId = item.targetElement.elementView.id
+
+                    // !!!PBC
                     let srcElement = eventByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
                     let tarElement = policyByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
-    
-                    // element in PBC
                     if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
                     if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
 
@@ -692,12 +692,10 @@ class CodeGeneratorCore {
                     }
                 } else if (item.sourceElement._type == "org.uengine.modeling.model.Policy" &&
                     item.targetElement._type == "org.uengine.modeling.model.Event") {
-                    // var policyId = item.sourceElement.elementView.id
-                    // var eventId = item.targetElement.elementView.id
+                   
+                    // !!!PBC
                     let srcElement = policyByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
                     let tarElement = eventByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
-    
-                    // element in PBC
                     if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
                     if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
 
@@ -727,12 +725,10 @@ class CodeGeneratorCore {
                     }
                 } else if (item.sourceElement._type == "org.uengine.modeling.model.Command" &&
                     item.targetElement._type == "org.uengine.modeling.model.Event") {
-                    // var commandId = item.sourceElement.elementView.id
-                    // var eventId = item.targetElement.elementView.id
+                  
+                    // !!!PBC
                     let srcElement = commandByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
                     let tarElement = eventByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
-    
-                    // element in PBC
                     if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
                     if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
 
@@ -769,10 +765,10 @@ class CodeGeneratorCore {
                     }
                 } else if (item.sourceElement._type == "org.uengine.modeling.model.Event" &&
                     item.targetElement._type == "org.uengine.modeling.model.Command") {
+
+                    // !!!PBC
                     let srcElement = eventByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
                     let tarElement = commandByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
-    
-                    // element in PBC
                     if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
                     if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
 
@@ -801,10 +797,10 @@ class CodeGeneratorCore {
                     }
                 } else if (item.sourceElement._type == "org.uengine.modeling.model.Command" &&
                     item.targetElement._type == "org.uengine.modeling.model.View") {
+
+                    // !!!PBC
                     let srcElement = commandByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
                     let tarElement = viewByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
-    
-                    // element in PBC
                     if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
                     if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
     
@@ -833,10 +829,10 @@ class CodeGeneratorCore {
                     }
                 } else if (item.sourceElement._type == "org.uengine.modeling.model.Command" &&
                     item.targetElement._type == "org.uengine.modeling.model.Aggregate") {
+
+                    // !!!PBC
                     let srcElement = commandByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
                     let tarElement = aggregateByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
-    
-                    // element in PBC
                     if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
                     if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
 
@@ -864,10 +860,10 @@ class CodeGeneratorCore {
                     }
                 } else if (item.sourceElement._type == "org.uengine.modeling.model.Policy" &&
                     item.targetElement._type == "org.uengine.modeling.model.Aggregate") {
+
+                    // !!!PBC
                     let srcElement = policyByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
                     let tarElement = aggregateByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
-    
-                    // element in PBC
                     if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
                     if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
 
@@ -911,10 +907,9 @@ class CodeGeneratorCore {
                     }
                 } else if (item.sourceElement._type == "org.uengine.modeling.model.Policy" &&
                     item.targetElement._type == "org.uengine.modeling.model.View") {
+                    // !!!PBC
                     let srcElement = policyByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
                     let tarElement = viewByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
-    
-                    // element in PBC
                     if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
                     if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
 
@@ -955,10 +950,10 @@ class CodeGeneratorCore {
                     }
                 } else if (item.sourceElement._type == "org.uengine.modeling.model.Policy" &&
                     item.targetElement._type == "org.uengine.modeling.model.Command") {
+                        
+                    // !!!PBC
                     let srcElement = policyByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
                     let tarElement = commandByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
-    
-                    // element in PBC
                     if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
                     if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
 
