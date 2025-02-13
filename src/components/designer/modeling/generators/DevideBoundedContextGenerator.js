@@ -5,7 +5,7 @@ class DevideBoundedContextGenerator extends JsonAIGenerator {
     constructor(client){
         super(client);
 
-        // this.model = "deepseek-r1:7b"
+        // this.model = "deepseek-r1:14b"
         // this.apiStrategy = 'ollama'
         this.model = "gpt-4o"
         this.temperature = 0.3
@@ -14,10 +14,13 @@ class DevideBoundedContextGenerator extends JsonAIGenerator {
 
     createPrompt(){
         return `
-Analyze the following requirements and divide them into multiple Bounded Contexts (minimum 2).
+Analyze the following requirements and divide them into multiple Bounded Contexts.
+${this.ollamaPrompt()}
 
 Focus on these aspects:
 ${this.client.input['devisionAspect']}
+
+${this.aspectDetails()}
 
 Generate Number of Bounded Contexts:
 ${this.client.input['generateOption']['numberOfBCs']}
@@ -138,6 +141,61 @@ Should be used all of the Bounded Contexts.
             ]`;
         }else{
             return `"requirements":[ ] // must be empty`;
+        }
+    }
+
+    ollamaPrompt(){
+        if(this.apiStrategy === 'ollama'){
+            return `
+Focus directly on generating the required JSON output with minimal intermediate thinking.
+Always use the extact keys specified in the JSON format.
+Must not be missing information that is required in the JSON format.
+
+1. Required JSON Structure:
+{
+    "boundedContexts": [...],
+    "relations": [...],
+    "thoughts": "...",
+    "explanations": [...]
+}
+
+2. For "relations" array, each object must have:
+{
+    "name": "...",
+    "type": "Confirmist" || "Share Kernel" || "Anti-corruption" || "Seperate Ways" || "Customer-Supplier",
+    "upStream": {
+        "name": "...",
+        "alias": "..."
+    },
+    "downStream": {
+        "name": "...",
+        "alias": "..."
+    }
+}
+        
+        `;
+        }else{
+            return '';
+        }
+    }
+
+    aspectDetails(){
+        if (this.client.input['generateOption']['aspectDetails']) {
+            return `Details of the aspect:
+When determining and explaining the bounded contexts to be separated, please consider and reflect the following specific requirements for each aspect:
+
+${this.client.input['generateOption']['aspectDetails']['organizationalAspect'] ? 
+`- Organization Structure: ${this.client.input['generateOption']['aspectDetails']['organizationalAspect']}
+    (Please reflect this team structure when separating bounded contexts)` : ''}
+
+${this.client.input['generateOption']['aspectDetails']['infrastructureAspect'] ? 
+`- Infrastructure Environment: ${this.client.input['generateOption']['aspectDetails']['infrastructureAspect']}
+    (Please consider these technical requirements when defining bounded contexts)` : ''}
+
+Important: In the "thoughts" section of your response, please explicitly explain how these specific organizational and infrastructure requirements influenced your bounded context separation decisions.
+`;
+        } else {
+            return '';
         }
     }
 
