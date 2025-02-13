@@ -493,8 +493,10 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
             modelInfo: this.modelInfo,
             parsedTexts: this.parsedTexts
         }
-        if(!text) return returnObj
-
+        if(!text) {
+            console.log("[*] 별도의 처리할 텍스트가 없음", { returnObj }) 
+            return returnObj
+        }
 
         if(this.isFirstResponse) {
             this.prevPartialAiOutput = {}
@@ -558,7 +560,7 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
         try {
 
             if(this.state !== 'end') {
-                console.log(`[*] ${this.generatorName}에서 결과 생성중... (현재 출력된 문자 수: ${text.length})`)
+                console.log(`[*] ${this.generatorName}에서 결과 생성중...`, {textLength: text.length, returnObj})
                 returnObj.directMessage = `Generating... (${text.length} characters generated)`
     
                 // 실시간으로 진행중인 결과값을 처리하는 도중에 예외 발생시에는 예외 처리를 하지 않고 그냥 넘어감
