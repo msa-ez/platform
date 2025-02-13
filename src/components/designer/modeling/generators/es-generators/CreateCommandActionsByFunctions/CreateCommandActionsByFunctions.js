@@ -13,82 +13,6 @@ class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
 
         this.checkInputParamsKeys = ["targetBoundedContext", "targetAggregate", "description", "esValue", "userInfo", "information"]
         this.progressCheckStrings = ["inference", "commandActions", "eventActions", "readModelActions"]
-        this.response_format = zodResponseFormat(
-            z.object({
-                inference: z.string(),
-                result: z.object({
-                    commandActions: z.array(
-                        z.object({
-                            actionName: z.string(),
-                            objectType: z.literal("Command"),
-                            ids: z.object({
-                                aggregateId: z.string(),
-                                commandId: z.string()
-                            }),
-                            args: z.object({
-                                commandName: z.string(),
-                                commandAlias: z.string(),
-                                api_verb: z.enum(["POST", "PUT", "PATCH", "DELETE"]),
-                                properties: z.array(
-                                    z.object({
-                                        name: z.string(),
-                                        type: z.string(),
-                                        isKey: z.boolean()
-                                    })
-                                ),
-                                outputEventIds: z.array(z.string()),
-                                actor: z.string()
-                            })
-                        })
-                    ),
-                    eventActions: z.array(
-                        z.object({
-                            actionName: z.string(),
-                            objectType: z.literal("Event"),
-                            ids: z.object({
-                                aggregateId: z.string(),
-                                eventId: z.string()
-                            }),
-                            args: z.object({
-                                eventName: z.string(),
-                                eventAlias: z.string(),
-                                properties: z.array(
-                                    z.object({
-                                        name: z.string(),
-                                        type: z.string(),
-                                        isKey: z.boolean()
-                                    })
-                                )
-                            })
-                        })
-                    ),
-                    readModelActions: z.array(
-                        z.object({
-                            actionName: z.string(),
-                            objectType: z.literal("ReadModel"),
-                            ids: z.object({
-                                aggregateId: z.string(),
-                                readModelId: z.string()
-                            }),
-                            args: z.object({
-                                readModelName: z.string(),
-                                readModelAlias: z.string(),
-                                isMultipleResult: z.boolean(),
-                                queryParameters: z.array(
-                                    z.object({
-                                        name: z.string(),
-                                        type: z.string(),
-                                        isKey: z.boolean()
-                                    })
-                                ),
-                                actor: z.string()
-                            })
-                        })
-                    )
-                }).strict()
-            }).strict(),
-            "instruction"
-        )
     }
 
     /**
@@ -227,6 +151,85 @@ class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
     }
 
 
+    onApiClientChanged(){
+        this.modelInfo.requestArgs.response_format = zodResponseFormat(
+            z.object({
+                inference: z.string(),
+                result: z.object({
+                    commandActions: z.array(
+                        z.object({
+                            actionName: z.string(),
+                            objectType: z.literal("Command"),
+                            ids: z.object({
+                                aggregateId: z.string(),
+                                commandId: z.string()
+                            }),
+                            args: z.object({
+                                commandName: z.string(),
+                                commandAlias: z.string(),
+                                api_verb: z.enum(["POST", "PUT", "PATCH", "DELETE"]),
+                                properties: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                        type: z.string(),
+                                        isKey: z.boolean()
+                                    })
+                                ),
+                                outputEventIds: z.array(z.string()),
+                                actor: z.string()
+                            })
+                        })
+                    ),
+                    eventActions: z.array(
+                        z.object({
+                            actionName: z.string(),
+                            objectType: z.literal("Event"),
+                            ids: z.object({
+                                aggregateId: z.string(),
+                                eventId: z.string()
+                            }),
+                            args: z.object({
+                                eventName: z.string(),
+                                eventAlias: z.string(),
+                                properties: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                        type: z.string(),
+                                        isKey: z.boolean()
+                                    })
+                                )
+                            })
+                        })
+                    ),
+                    readModelActions: z.array(
+                        z.object({
+                            actionName: z.string(),
+                            objectType: z.literal("ReadModel"),
+                            ids: z.object({
+                                aggregateId: z.string(),
+                                readModelId: z.string()
+                            }),
+                            args: z.object({
+                                readModelName: z.string(),
+                                readModelAlias: z.string(),
+                                isMultipleResult: z.boolean(),
+                                queryParameters: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                        type: z.string(),
+                                        isKey: z.boolean()
+                                    })
+                                ),
+                                actor: z.string()
+                            })
+                        })
+                    )
+                }).strict()
+            }).strict(),
+            "instruction"
+        )
+    }
+
     async onGenerateBefore(inputParams){
         inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
         inputParams.aggregateDisplayName = inputParams.targetAggregate.displayName ? inputParams.targetAggregate.displayName : inputParams.targetAggregate.name
@@ -249,7 +252,7 @@ class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
                 inputParams.esValue,
                 [],
                 leftTokenCount,
-                this.model,
+                this.modelInfo.requestModelName,
                 inputParams.esAliasTransManager
             )
             console.log(`[*] 요약 이후 Summary`, inputParams.summarizedESValue)

@@ -6,7 +6,6 @@
 import { TokenCounterTest } from "../../modeling/generators/utils";
 import {
     getEsDraft,
-    getEsValue,
     ESValueSummaryGeneratorTest,
     ESValueSummarizeWithFilterTest,
     CreateAggregateActionsByFunctionsTest,
@@ -17,6 +16,7 @@ import {
     PreProcessingFunctionsGeneratorTest,
     DraftGeneratorByFunctionsTest
 } from "../../modeling/generators/es-generators";
+import { ModelInfoHelperTest } from "../../modeling/generators/features/AIGenerator/helpers"
 
 export default {
     name: "es-test-terminal",
@@ -55,7 +55,8 @@ export default {
                 CreateAggregateClassIdByDraftsTest: {command: async () => { await CreateAggregateClassIdByDraftsTest.test() }},
                 CreateCommandActionsByFunctionsTest: {command: async () => { await CreateCommandActionsByFunctionsTest.test() }},
                 CreatePolicyActionsByFunctionsTest: {command: async () => { await CreatePolicyActionsByFunctionsTest.test() }},
-                CommandGWTGeneratorByFunctionsTest: {command: async () => { await CommandGWTGeneratorByFunctionsTest.test() }}
+                CommandGWTGeneratorByFunctionsTest: {command: async () => { await CommandGWTGeneratorByFunctionsTest.test() }},
+                ModelInfoHelperTest: {command: async () => { await ModelInfoHelperTest.test() }}
             }
             
 
@@ -97,9 +98,6 @@ export default {
         },
 
         async _TempTest() {
-            console.log(getEsValue("libraryService"))
-            console.log(getEsValue("libraryService", ["command", "event"]))
-            console.log(getEsValue("libraryService", ["valueobject"]))
         }
     }
 }

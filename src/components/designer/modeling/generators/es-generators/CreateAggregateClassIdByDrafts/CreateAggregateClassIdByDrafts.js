@@ -14,35 +14,6 @@ class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
 
         this.checkInputParamsKeys = ["draftOption", "targetReferences", "esValue", "userInfo", "information"]
         this.progressCheckStrings = ["inference", "actions"]
-        this.response_format = zodResponseFormat(
-            z.object({
-                inference: z.string(),
-                result: z.object({
-                    actions: z.array(
-                        z.object({
-                            objectType: z.literal("ValueObject"),
-                            ids: z.object({
-                                boundedContextId: z.string(),
-                                aggregateId: z.string(),
-                                valueObjectId: z.string()
-                            }).strict(),
-                            args: z.object({
-                                valueObjectName: z.string(),
-                                referenceClass: z.string(),
-                                properties: z.array(
-                                    z.object({
-                                        name: z.string(),
-                                        type: z.string(),
-                                        isKey: z.boolean()
-                                    }).strict()
-                                )
-                            }).strict()
-                        }).strict()
-                    )
-                }).strict()
-            }).strict(),
-            "instruction"
-        )
     }
 
     /**
@@ -216,6 +187,38 @@ class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
     }
 
 
+    onApiClientChanged(){
+        this.modelInfo.requestArgs.response_format = zodResponseFormat(
+            z.object({
+                inference: z.string(),
+                result: z.object({
+                    actions: z.array(
+                        z.object({
+                            objectType: z.literal("ValueObject"),
+                            ids: z.object({
+                                boundedContextId: z.string(),
+                                aggregateId: z.string(),
+                                valueObjectId: z.string()
+                            }).strict(),
+                            args: z.object({
+                                valueObjectName: z.string(),
+                                referenceClass: z.string(),
+                                properties: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                        type: z.string(),
+                                        isKey: z.boolean()
+                                    }).strict()
+                                )
+                            }).strict()
+                        }).strict()
+                    )
+                }).strict()
+            }).strict(),
+            "instruction"
+        )
+    }
+
     async onGenerateBefore(inputParams){
         inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
         inputParams.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
@@ -238,7 +241,7 @@ class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
                 inputParams.esValue,
                 ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateOuterStickers,
                 leftTokenCount,
-                this.model,
+                this.modelInfo.requestModelName,
                 inputParams.esAliasTransManager
             )
             console.log(`[*] 요약 이후 Summary`, inputParams.summarizedESValue)

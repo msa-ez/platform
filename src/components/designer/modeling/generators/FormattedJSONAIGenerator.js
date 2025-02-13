@@ -2,27 +2,7 @@ const AIGenerator = require("./AIGenerator");
 const { TokenCounter, JsonParsingUtil } = require("./utils")
 
 const DEFAULT_CONFIG = {
-    MODEL: "o3-mini-2025-01-31",
-    IS_INFERENCE_MODEL: true,
-    MODEL_CONTEXT_TOKEN_LIMIT: 200000,
-    MODEL_OUTPUT_TOKEN_LIMIT: 100000,
-    MODEL_INPUT_TOKEN_LIMIT_MARGIN: 1000,
-    MAX_RETRY_COUNT: 3,
-    REASONING_EFFORT: "medium", // o3-mini에서만 지원하는 속성
-    TEMPERATURE: undefined, // o3-mini는 지원하지 않는 속성
-    TOP_P: undefined, // o3-mini는 지원하지 않는 속성
-    DEFAULT_LANGUAGE: "English",
-    REASONING_MAX_SECONDS: 120 // 추론 모델 전용. 해당 추론 시간이 넘어갈 경우, 유효하지 않은 것으로 판단
-};
-DEFAULT_CONFIG.MODEL_INPUT_TOKEN_LIMIT = (DEFAULT_CONFIG.MODEL_CONTEXT_TOKEN_LIMIT - DEFAULT_CONFIG.MODEL_OUTPUT_TOKEN_LIMIT) - DEFAULT_CONFIG.MODEL_INPUT_TOKEN_LIMIT_MARGIN
-
-// JSON 파싱 에러가 발생했을 경우, 해당 텍스트를 전달시켜서 파싱 에러를 해결시킬 모델에 대한 설정
-const JSON_RESTORE_CONFIG = {
-    MODEL: "gpt-4o-2024-11-20",
-    IS_INFERENCE_MODEL: false,
-    REASONING_EFFORT: undefined,
-    TEMPERATURE: 0.7,
-    TOP_P: undefined
+    MAX_RETRY_COUNT: 3
 }
 
 /**
@@ -105,21 +85,13 @@ const JSON_RESTORE_CONFIG = {
  *   __buildJsonResponseFormat() 메서드를 구현해야 합니다.
  */
 class FormattedJSONAIGenerator extends AIGenerator {
-    constructor(client){
+    constructor(client, options, modelType){
         if(!client) throw new Error(`[!] client 파라미터가 전달되지 않으면 제대로 동작하지 않습니다.`)
-        super(client)
+        super(client, options, modelType)
 
-        this.model = DEFAULT_CONFIG.MODEL
-        this.isInferenceModel = DEFAULT_CONFIG.IS_INFERENCE_MODEL
-        this.modelInputTokenLimit = DEFAULT_CONFIG.MODEL_INPUT_TOKEN_LIMIT
-        this.modelOutputTokenLimit = DEFAULT_CONFIG.MODEL_OUTPUT_TOKEN_LIMIT
+        this.usedModelType = modelType
         this.generatorName = this.constructor.name
         this.isFirstResponse = true // 스트리밍시에 첫번째 메세지 도착시 로직들(다이얼로그 오픈 등)을 수행하기 위해서 추적함
-
-        this.preferredLanguage = this.preferredLanguage ? this.preferredLanguage : DEFAULT_CONFIG.DEFAULT_LANGUAGE
-        this.reasoning_effort = DEFAULT_CONFIG.REASONING_EFFORT
-        this.temperature = DEFAULT_CONFIG.TEMPERATURE
-        this.top_p = DEFAULT_CONFIG.TOP_P
 
         this.MAX_RETRY_COUNT = DEFAULT_CONFIG.MAX_RETRY_COUNT
         this.leftRetryCount = this.MAX_RETRY_COUNT
@@ -137,7 +109,6 @@ class FormattedJSONAIGenerator extends AIGenerator {
             }
         
         this._addOnsendCallback()
-        this.reasoningMaxSeconds = DEFAULT_CONFIG.REASONING_MAX_SECONDS
 
         // 이것이 true인 경우, AI의 기존 응답에서 Json 파싱 문제가 일어난 부분을 복원하는 프롬프트로 전환시킴
         this.useJsonRestoreStrategy = false
@@ -147,9 +118,12 @@ class FormattedJSONAIGenerator extends AIGenerator {
     }
 
     _addOnsendCallback(){
-        if(!this.client.onSend && this.isInferenceModel)
+        if(!this.client.onSend && this.modelInfo.isInferenceModel)
             this.client.onSend = () => {
-                console.log(`[*] ${this.model}-${this.reasoning_effort} 모델이 추론중...`)
+                if(this.modelInfo.requestArgs.reasoning_effort)
+                    console.log(`[*] ${this.modelInfo.requestModelName}-${this.modelInfo.requestArgs.reasoning_effort} 모델이 추론중...`)
+                else
+                    console.log(`[*] ${this.modelInfo.requestModelName} 모델이 추론중...`)
             }
     }
 
@@ -167,7 +141,7 @@ class FormattedJSONAIGenerator extends AIGenerator {
                 throw new Error(`${key} 파라미터가 전달되지 않았습니다.`)
         console.log(`[*] ${this.generatorName}에 대한 입력 파라미터 전달중...`, {
             inputParams: this.client.input,
-            response_format: this.response_format
+            modelInfo: this.modelInfo
         })
 
         this.leftRetryCount = this.MAX_RETRY_COUNT
@@ -184,31 +158,32 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
     createPrompt(){
         if(this.useJsonRestoreStrategy && this.jsonOutputTextToRestore) {
+            this.changeToSimpleModel()
+
             const prompt = this._getJsonRestorePrompt(this.jsonOutputTextToRestore)
             this.useJsonRestoreStrategy = false
             this.jsonOutputTextToRestore = undefined
-
-            this.model = JSON_RESTORE_CONFIG.MODEL
-            this.isInferenceModel = JSON_RESTORE_CONFIG.IS_INFERENCE_MODEL
-            this.reasoning_effort = JSON_RESTORE_CONFIG.REASONING_EFFORT
-            this.temperature = JSON_RESTORE_CONFIG.TEMPERATURE
-            this.top_p = JSON_RESTORE_CONFIG.TOP_P
 
             this.savedOnSendCallback = this.client.onSend
             this.client.onSend = undefined
 
             this.createdPrompt = prompt
+
+            console.log("[*] Json 파싱에러가 난 데이터를 복구하는 전략으로 시도", {
+                prompt,
+                modelInfo: this.modelInfo
+            })
             return prompt
         }
         else {
-            this.model = DEFAULT_CONFIG.MODEL
-            this.isInferenceModel = DEFAULT_CONFIG.IS_INFERENCE_MODEL
-            this.reasoning_effort = DEFAULT_CONFIG.REASONING_EFFORT
-            this.temperature = DEFAULT_CONFIG.TEMPERATURE
-            this.top_p = DEFAULT_CONFIG.TOP_P
-            
-            if(this.isInferenceModel && !this.client.onSend && this.savedOnSendCallback)
+            this.changeModel(this.usedModelType)
+
+            if(this.modelInfo.isInferenceModel && !this.client.onSend && this.savedOnSendCallback)
                 this.client.onSend = this.savedOnSendCallback
+
+            console.log("[*] 일반적인 프롬프트 생성 전략으로 시도", {
+                modelInfo: this.modelInfo
+            })
         }
 
 
@@ -261,7 +236,7 @@ ${jsonOutputText}
      * // 대용량 데이터를 여러 번에 나누어 처리
      * if (!generator.isCreatedPromptWithinTokenLimit()) {
      *   // 1. 데이터를 더 작은 단위로 분할
-     *   const chunks = TokenCounter.splitByTokenLimit(inputData, this.model, this.modelInputTokenLimit);
+     *   const chunks = TokenCounter.splitByTokenLimit(inputData, this.modelInfo.requestModelName, this.modelInfo.inputTokenLimit);
      *   
      *   // 2. 각 청크별로 개별 처리
      *   for (const chunk of chunks) {
@@ -279,7 +254,9 @@ ${jsonOutputText}
      * - 모델의 컨텍스트 크기에 따라 제한이 다르므로 사용 중인 모델의 특성을 고려해야 합니다.
      */
     isCreatedPromptWithinTokenLimit(){
-        return TokenCounter.isWithinTokenLimit(this.createPrompt(), this.model, this.modelInputTokenLimit)
+        return TokenCounter.isWithinTokenLimit(
+            this.createPrompt(), this.modelInfo.requestModelName, this.modelInfo.inputTokenLimit
+        )
     }
 
     /**
@@ -304,7 +281,7 @@ ${jsonOutputText}
      * @example 토큰 제한 확인과 함께 사용
      * // 입력값 변경 전에 토큰 제한 초과 여부를 미리 확인
      * const newParams = { largeInput: "매우 긴 입력 텍스트..." };
-     * const wouldExceedLimit = generator.getCreatedPromptTokenCount(newParams) > generator.modelInputTokenLimit;
+     * const wouldExceedLimit = generator.getCreatedPromptTokenCount(newParams) > generator.modelInfo.inputTokenLimit;
      * 
      * if (wouldExceedLimit) {
      *   console.log("Warning: This input would exceed token limit");
@@ -321,7 +298,7 @@ ${jsonOutputText}
      */
     getCreatedPromptTokenCount(tempInputParams={}){
         if (Object.keys(tempInputParams).length === 0) {
-            return TokenCounter.getTokenCount(this.createPrompt(), this.model);
+            return TokenCounter.getTokenCount(this.createPrompt(), this.modelInfo.requestModelName);
         }
 
         const changedValues = {};
@@ -331,7 +308,7 @@ ${jsonOutputText}
         });
 
         try {
-            return TokenCounter.getTokenCount(this.createPrompt(), this.model);
+            return TokenCounter.getTokenCount(this.createPrompt(), this.modelInfo.requestModelName);
         } finally {
             Object.keys(changedValues).forEach(key => {
                 if (changedValues[key] === undefined) {
@@ -373,7 +350,7 @@ ${jsonOutputText}
      * - getCreatedPromptTokenCount()와 함께 사용하여 더 정확한 토큰 관리가 가능합니다
      */
     getCreatePromptLeftTokenCount(tempInputParams={}){
-        return this.modelInputTokenLimit - this.getCreatedPromptTokenCount(tempInputParams)
+        return this.modelInfo.inputTokenLimit - this.getCreatedPromptTokenCount(tempInputParams)
     }
 
     _assembleSystemContext(){
@@ -387,7 +364,7 @@ ${jsonOutputText}
         ]
 
         // 응답 포멧이 있는 경우에는 지시와 상관없이 공백을 반드시 포함해서 Json을 출력하기 때문에 없는 경우에만 추가
-        if(!this.response_format)
+        if(!this.modelInfo.requestArgs.response_format)
             prompts.push(this.__getJsonCompressGuidePrompt())
 
         return prompts.join("\n\n")
@@ -509,7 +486,8 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
                 }
             },
             modelValue: {},
-            createdPrompt: this.createdPrompt
+            createdPrompt: this.createdPrompt,
+            modelInfo: this.modelInfo
         }
         if(!text) return returnObj
 
@@ -620,7 +598,7 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
             }
             returnObj.isDied = returnObj.leftRetryCount <= 0 && !returnObj.isJsonParsingError
             if(returnObj.isJsonParsingError)
-                returnObj.directMessage = "Json parsing error occurred, retrying..."
+                returnObj.directMessage = "Json parsing error occurred, restoring..."
             else
                 returnObj.directMessage = `An error occurred during creation,` + (returnObj.leftRetryCount <= 0 ? ' the model has died. please try again.' : ' retrying...(' + returnObj.leftRetryCount + ' retries left)')
 
@@ -700,7 +678,7 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
 
     _retryByError(){
         // 일부 경우에는 response_format이 정의되어 있어서 끝없이 동일한 예외가 발생하는 경우가 있기 때문에 재시도시에는 제거해서 재시도 하도록 함
-        this.response_format = undefined
+        this.modelInfo.requestArgs.response_format = undefined
         super.generate()
     }
 }

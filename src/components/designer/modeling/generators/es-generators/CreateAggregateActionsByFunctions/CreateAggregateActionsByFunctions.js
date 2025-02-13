@@ -14,97 +14,6 @@ class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
 
         this.checkInputParamsKeys = ["targetBoundedContext", "description", "draftOption", "esValue", "userInfo", "information", "isAccumulated"]
         this.progressCheckStrings = ["inference", "aggregateActions", "entityActions", "valueObjectActions", "enumerationActions"]
-        this.response_format = zodResponseFormat(
-            z.object({
-                inference: z.string(),
-                result: z.object({
-                    aggregateActions: z.array(
-                        z.object({
-                            actionName: z.string(),
-                            objectType: z.literal("Aggregate"),
-                            ids: z.object({
-                                aggregateId: z.string(),
-                            }).strict(),
-                            args: z.object({
-                                aggregateName: z.string(),
-                                aggregateAlias: z.string(),
-                                properties: z.array(
-                                    z.object({
-                                        name: z.string(),
-                                        type: z.string(),
-                                        isKey: z.boolean(),
-                                    }).strict()
-                                ),
-                            }).strict(),
-                        }).strict()
-                    ),
-                    entityActions: z.array(
-                        z.object({
-                            actionName: z.string(),
-                            objectType: z.literal("Entity"),
-                            ids: z.object({
-                                aggregateId: z.string(),
-                                entityId: z.string(),
-                            }).strict(),
-                            args: z.object({
-                                entityName: z.string(),
-                                entityAlias: z.string(),
-                                properties: z.array(
-                                    z.object({
-                                        name: z.string(),
-                                        type: z.string(),
-                                        isKey: z.boolean(),
-                                        isForeignProperty: z.boolean(),
-                                    }).strict()
-                                ),
-                            }).strict(),
-                        }).strict()
-                    ),
-                    valueObjectActions: z.array(
-                        z.object({
-                            actionName: z.string(),
-                            objectType: z.literal("ValueObject"),
-                            ids: z.object({
-                                aggregateId: z.string(),
-                                valueObjectId: z.string(),
-                            }).strict(),
-                            args: z.object({
-                                valueObjectName: z.string(),
-                                valueObjectAlias: z.string(),
-                                properties: z.array(
-                                    z.object({
-                                        name: z.string(),
-                                        type: z.string(),
-                                        isKey: z.boolean(),
-                                        isForeignProperty: z.boolean(),
-                                    }).strict()
-                                ),
-                            }).strict(),
-                        }).strict()
-                    ),
-                    enumerationActions: z.array(
-                        z.object({
-                            actionName: z.string(),
-                            objectType: z.literal("Enumeration"),
-                            ids: z.object({
-                                aggregateId: z.string(),
-                                enumerationId: z.string(),
-                            }).strict(),
-                            args: z.object({
-                                enumerationName: z.string(),
-                                enumerationAlias: z.string(),
-                                properties: z.array(
-                                    z.object({
-                                        name: z.string(),
-                                    }).strict()
-                                ),
-                            }).strict(),
-                        }).strict()
-                    ),
-                }).strict()
-            }).strict(),
-            "instruction"
-        )
     }
 
     /**
@@ -247,6 +156,99 @@ class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
         return generator
     }
 
+    onApiClientChanged(){
+        this.modelInfo.requestArgs.response_format = zodResponseFormat(
+            z.object({
+                inference: z.string(),
+                result: z.object({
+                    aggregateActions: z.array(
+                        z.object({
+                            actionName: z.string(),
+                            objectType: z.literal("Aggregate"),
+                            ids: z.object({
+                                aggregateId: z.string(),
+                            }).strict(),
+                            args: z.object({
+                                aggregateName: z.string(),
+                                aggregateAlias: z.string(),
+                                properties: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                        type: z.string(),
+                                        isKey: z.boolean(),
+                                    }).strict()
+                                ),
+                            }).strict(),
+                        }).strict()
+                    ),
+                    entityActions: z.array(
+                        z.object({
+                            actionName: z.string(),
+                            objectType: z.literal("Entity"),
+                            ids: z.object({
+                                aggregateId: z.string(),
+                                entityId: z.string(),
+                            }).strict(),
+                            args: z.object({
+                                entityName: z.string(),
+                                entityAlias: z.string(),
+                                properties: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                        type: z.string(),
+                                        isKey: z.boolean(),
+                                        isForeignProperty: z.boolean(),
+                                    }).strict()
+                                ),
+                            }).strict(),
+                        }).strict()
+                    ),
+                    valueObjectActions: z.array(
+                        z.object({
+                            actionName: z.string(),
+                            objectType: z.literal("ValueObject"),
+                            ids: z.object({
+                                aggregateId: z.string(),
+                                valueObjectId: z.string(),
+                            }).strict(),
+                            args: z.object({
+                                valueObjectName: z.string(),
+                                valueObjectAlias: z.string(),
+                                properties: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                        type: z.string(),
+                                        isKey: z.boolean(),
+                                        isForeignProperty: z.boolean(),
+                                    }).strict()
+                                ),
+                            }).strict(),
+                        }).strict()
+                    ),
+                    enumerationActions: z.array(
+                        z.object({
+                            actionName: z.string(),
+                            objectType: z.literal("Enumeration"),
+                            ids: z.object({
+                                aggregateId: z.string(),
+                                enumerationId: z.string(),
+                            }).strict(),
+                            args: z.object({
+                                enumerationName: z.string(),
+                                enumerationAlias: z.string(),
+                                properties: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                    }).strict()
+                                ),
+                            }).strict(),
+                        }).strict()
+                    ),
+                }).strict()
+            }).strict(),
+            "instruction"
+        )
+    }
 
     async onGenerateBefore(inputParams){
         inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
@@ -279,7 +281,7 @@ class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
                 inputParams.esValue,
                 ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateOuterStickers,
                 leftTokenCount,
-                this.model,
+                this.modelInfo.requestModelName,
                 inputParams.esAliasTransManager
             )
             console.log(`[*] 요약 이후 Summary`, inputParams.summarizedESValue)

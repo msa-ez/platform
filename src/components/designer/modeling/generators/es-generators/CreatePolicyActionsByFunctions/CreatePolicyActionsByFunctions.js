@@ -8,27 +8,10 @@ const { zodResponseFormat } = require("../../utils")
 
 class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
-        super(client);
+        super(client, {}, "complexModel");
 
         this.checkInputParamsKeys = ["targetBoundedContext", "description", "esValue", "userInfo", "information"]
         this.progressCheckStrings = ["inference", "extractedPolicies"]
-        this.response_format = zodResponseFormat(
-            z.object({
-                inference: z.string(),
-                result: z.object({
-                    extractedPolicies: z.array(
-                        z.object({
-                            name: z.string(),
-                            alias: z.string(),
-                            reason: z.string(),
-                            fromEventId: z.string(),
-                            toCommandId: z.string()
-                        }).strict()
-                    )
-                }).strict()
-            }).strict(),
-            "instruction"
-        )
     }
 
     /** 
@@ -159,6 +142,26 @@ class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
     }
 
 
+    onApiClientChanged(){
+        this.modelInfo.requestArgs.response_format = zodResponseFormat(
+            z.object({
+                inference: z.string(),
+                result: z.object({
+                    extractedPolicies: z.array(
+                        z.object({
+                            name: z.string(),
+                            alias: z.string(),
+                            reason: z.string(),
+                            fromEventId: z.string(),
+                            toCommandId: z.string()
+                        }).strict()
+                    )
+                }).strict()
+            }).strict(),
+            "instruction"
+        )
+    }
+
     async onGenerateBefore(inputParams){
         inputParams.boundedContextDisplayName = inputParams.targetBoundedContext.displayName ? inputParams.targetBoundedContext.displayName : inputParams.targetBoundedContext.name
 
@@ -186,7 +189,7 @@ class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
                 ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateInnerStickers
                 .concat(ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.detailedProperties),
                 leftTokenCount,
-                this.model,
+                this.modelInfo.requestModelName,
                 inputParams.esAliasTransManager
             )
             console.log(`[*] 요약 이후 Summary`, inputParams.summarizedESValue)
