@@ -29,7 +29,10 @@ class JsonAIGenerator extends AIGenerator{
             // text = text.replace(/"[\w\s]+":\s*null,?/g, '');
             // text = text.replace(/"[\w\s]+":\s*null?/g, '');
 
-            if(this.apiStrategy == 'ollama') text = this.extractJSON(text);
+            if(this.apiStrategy == 'ollama') {
+                text = this.removeThinkBlocks(text);
+                text = this.extractJSON(text);
+            }
             model = partialParse(text);
 
             return model;
@@ -38,6 +41,10 @@ class JsonAIGenerator extends AIGenerator{
             return null;
             // throw e;
         }
+    }
+    removeThinkBlocks(text) {
+        // Remove content between <think> and </think> tags
+        return text.replace(/<think>[\s\S]*?<\/think>/g, '');
     }
     hasUnclosedTripleBackticks(inputString) {
         // 백틱 세 개의 시작과 끝을 찾는 정규 표현식
@@ -54,39 +61,36 @@ class JsonAIGenerator extends AIGenerator{
         // 마지막으로 찾은 백틱 세 개가 닫혀있지 않은 경우 true 반환
         return isOpen;
     }
-    extractJSON(inputString, checkFunction) {
+    extractJSON(text) {
         try {
-            JSON5.parse(inputString); // if no problem, just return the whole thing
-            return inputString;
-        } catch (e) {}
-
-        if (this.hasUnclosedTripleBackticks(inputString)) {
-            inputString = inputString + '\n```';
+            // 전체 텍스트가 유효한 JSON인지 먼저 확인
+            JSON.parse(text);
+            return text;
+        } catch (e) {
+            // 1. 코드 블록 내의 JSON 찾기
+            const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+            if (codeBlockMatch) {
+                return codeBlockMatch[1];
+            }
+    
+            // 2. 첫 번째 { 부터 마지막 } 까지 추출
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                const potentialJson = jsonMatch[0];
+                try {
+                    // 추출된 텍스트가 유효한 JSON인지 확인
+                    JSON.parse(potentialJson);
+                    return potentialJson;
+                } catch (e) {
+                    // 마지막 } 이후의 텍스트 제거
+                    const lastBraceIndex = text.lastIndexOf('}');
+                    if (lastBraceIndex !== -1) {
+                        return text.substring(0, lastBraceIndex + 1);
+                    }
+                }
+            }
+            return null;
         }
-
-        // 정규 표현식 정의
-        //const regex = /^.*?`{3}(?:json)?\n(.*?)`{3}.*?$/s;
-        let regex = /```(?:json)?\s*([\s\S]*?)\s*```/;
-        
-        // 정규 표현식을 사용하여 입력 문자열에서 JSON 부분 추출
-        let match = inputString.match(regex);
-        // 매치된 결과가 있다면, 첫 번째 캡쳐 그룹(즉, JSON 부분)을 반환
-        if (match) {
-            if (checkFunction)
-                match.forEach((shouldBeJson) => {
-                    const lastIndex = shouldBeJson.lastIndexOf('}');
-                    const result = shouldBeJson.slice(0, lastIndex + 1);
-                    if (checkFunction(result)) return result;
-                });
-            else return match[1];
-        } else {
-            regex = /\{[\s\S]*\}/
-            match = inputString.match(regex);
-            return match && match[0] ? match[0] : null;
-        }
-
-        // 매치된 결과가 없으면 null 반환
-        return null;
     }
 
 }
