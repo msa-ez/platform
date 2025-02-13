@@ -1,4 +1,5 @@
 const OpenAIClient = require('./OpenAIClient');
+const OllamaClient = require('./OllamaClient');
 const { ModelInfoHelper } = require('../helpers');
 const defaultOptions = require('./defaultOptions');
 
@@ -19,7 +20,8 @@ class APIClientFactory {
 }
 
 APIClientFactory.vendorApiClientMap = {
-    "openai": OpenAIClient
+    "openai": OpenAIClient,
+    "ollama": OllamaClient
 }
 
 module.exports = APIClientFactory;

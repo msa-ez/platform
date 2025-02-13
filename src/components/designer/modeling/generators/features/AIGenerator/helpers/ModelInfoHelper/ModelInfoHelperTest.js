@@ -6,7 +6,9 @@ class ModelInfoHelperTest {
             "unknown-model-name",
             "gpt-4o-2024-08-06",
             "o3-mini-2025-01-31",
-            "o3-mini-2025-01-31-high"
+            "o3-mini-2025-01-31-high",
+            "deepseek-r1:1.5b",
+            "deepseek-r1:14b"
         ]
 
         for(const modelName of modelNamesToTest) {

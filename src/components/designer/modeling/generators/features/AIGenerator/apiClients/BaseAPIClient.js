@@ -57,7 +57,8 @@ class BaseAPIClient {
             savedModel: null,
             stopSignaled: false,
             gptResponseId: null,
-            openaiToken: null
+            openaiToken: null,
+            parsedTexts: {}
         })
 
         if(options) {

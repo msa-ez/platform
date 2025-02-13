@@ -12,14 +12,6 @@ class ESValueSummaryGenerator extends FormattedJSONAIGenerator{
 
         this.checkInputParamsKeys = ["context", "esValue", "keysToFilter", "maxTokens", "tokenCalcModel", "esAliasTransManager"]
         this.progressCheckStrings = ["result"]
-        this.modelInfo.requestArgs.response_format = zodResponseFormat(
-            z.object({
-                result: z.object({
-                    sortedElementIds: z.array(z.string())
-                }).strict()
-            }).strict(),
-            "instruction"
-        )
     }
 
     /**
@@ -84,6 +76,18 @@ class ESValueSummaryGenerator extends FormattedJSONAIGenerator{
     
             esValueSummaryGenerator.generate()
         })
+    }
+
+
+    onApiClientChanged(){
+        this.modelInfo.requestArgs.response_format = zodResponseFormat(
+            z.object({
+                result: z.object({
+                    sortedElementIds: z.array(z.string())
+                }).strict()
+            }).strict(),
+            "instruction"
+        )
     }
 
     onInputParamsCheckBefore(inputParams) {

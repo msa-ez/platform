@@ -14,7 +14,8 @@ import {
     CreatePolicyActionsByFunctionsTest,
     CommandGWTGeneratorByFunctionsTest,
     PreProcessingFunctionsGeneratorTest,
-    DraftGeneratorByFunctionsTest
+    DraftGeneratorByFunctionsTest,
+    SanityCheckGeneratorTest
 } from "../../modeling/generators/es-generators";
 import { ModelInfoHelperTest } from "../../modeling/generators/features/AIGenerator/helpers"
 
@@ -45,6 +46,7 @@ export default {
                     description: "임시 테스트"
                 },
 
+                SanityCheckGeneratorTest: {command: async () => { await SanityCheckGeneratorTest.test() }},
                 TokenCounterTest: { command: () => {TokenCounterTest.test()} },
                 ESValueSummaryGeneratorTest: {command: async () => { await ESValueSummaryGeneratorTest.test() }},
                 ESValueSummarizeWithFilterTest: {command: async () => { await ESValueSummarizeWithFilterTest.test() }},

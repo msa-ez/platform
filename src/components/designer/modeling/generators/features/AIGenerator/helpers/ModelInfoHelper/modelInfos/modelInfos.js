@@ -1,5 +1,5 @@
 const { openaiModelInfos } = require("./openaiModelInfos");
-
+const { ollamaModelInfos } = require("./ollamaModelInfos");
 /**
  * @description 특정 모델에 대한 API 요청시에 활용되는 기반 정보
  * @example
@@ -29,7 +29,8 @@ const { openaiModelInfos } = require("./openaiModelInfos");
  *  }
  */
 const modelInfos = {
-    ...openaiModelInfos
+    ...openaiModelInfos,
+    ...ollamaModelInfos
 }
 
 const defaultModelInfos = {
@@ -43,6 +44,10 @@ const defaultModelInfos = {
 }
 
 Object.values(modelInfos).forEach((modelInfo) => {
+    // 컨텍스트 토큰 제한만 적혀져있고, 출력 토큰 제한 수를 알 수 없을 경우, 임시 방편으로 20%로 할당
+    if(modelInfo.contextWindowTokenLimit && !modelInfo.outputTokenLimit)
+        modelInfo.outputTokenLimit = modelInfo.contextWindowTokenLimit * 0.20
+
     for(const key of Object.keys(defaultModelInfos)){
         if(!modelInfo[key]) modelInfo[key] = defaultModelInfos[key]
     }

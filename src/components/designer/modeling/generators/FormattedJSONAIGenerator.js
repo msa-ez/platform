@@ -105,7 +105,10 @@ class FormattedJSONAIGenerator extends AIGenerator {
         if(!this.client.onModelCreated)
             this.client.onModelCreated = (returnObj) => {
                 if(returnObj.modelValue)
-                console.log(`[*] ${this.generatorName}에 대한 생성된 모델 정보 : `, returnObj.modelValue)
+                    console.log(`[*] ${this.generatorName}에 대한 생성된 모델 정보 : `, {
+                        modelValue: returnObj.modelValue,
+                        parsedTexts: returnObj.parsedTexts
+                    })
             }
         
         this._addOnsendCallback()
@@ -435,8 +438,8 @@ ${JSON.stringify(jsonOutput)}
 \`\`\`
 `
     }
-    __buildJsonExampleInputFormat(){ return {} }
-    __buildJsonExampleOutputFormat(){ return {} }
+    __buildJsonExampleInputFormat(){ return null }
+    __buildJsonExampleOutputFormat(){ return null }
 
     /**
      * JSON 응답을 압축시켜서 토큰 초과 문제 해소 및 출력 속도 개선
@@ -487,7 +490,8 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
             },
             modelValue: {},
             createdPrompt: this.createdPrompt,
-            modelInfo: this.modelInfo
+            modelInfo: this.modelInfo,
+            parsedTexts: this.parsedTexts
         }
         if(!text) return returnObj
 
