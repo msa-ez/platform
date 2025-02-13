@@ -472,7 +472,15 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
     }
     __buildJsonUserQueryInputFormat(){ return {} }
 
-    createModel(text){     
+    createModel(text){
+        const returnObjActions = {
+            stopGeneration: () => {
+                this.stop()
+            },
+            retryGeneration: () => {
+                this.generate()
+            }
+        }
         let returnObj = {
             generatorName: this.generatorName,
             inputParams: this.client.input,
@@ -480,21 +488,16 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
             isFirstResponse: this.isFirstResponse,
             leftRetryCount: this.leftRetryCount,
             isStopped: this.stopSignaled,
-            actions: {
-                stopGeneration: () => {
-                    this.stop()
-                },
-                retryGeneration: () => {
-                    this.generate()
-                }
-            },
             modelValue: {},
             createdPrompt: this.createdPrompt,
             modelInfo: this.modelInfo,
             parsedTexts: this.parsedTexts
         }
+
         if(!text) {
-            console.log("[*] 별도의 처리할 텍스트가 없음", { returnObj }) 
+            console.log("[*] 별도의 처리할 텍스트가 없음", { returnObj: structuredClone(returnObj) })
+             
+            returnObj.actions = returnObjActions
             return returnObj
         }
 
@@ -525,13 +528,15 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
             }
 
             console.error(returnObj.errorMessage)
-            console.log("[*] 오류가 발생한 관련 반환값 정보", returnObj)
+            console.log("[*] 오류가 발생한 관련 반환값 정보", {returnObj: structuredClone(returnObj)})
 
             this.onError(returnObj)
             if(this.client.onError) this.client.onError(returnObj)
 
             this.stop()
             this._retryByError()
+
+            returnObj.actions = returnObjActions
             return returnObj
         }
 
@@ -550,17 +555,19 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
 
         // 중지 상태에 대한 별도 처리를 하지 않으면 예외로 인식해서 재시도를 하기 때문에 반드시 있어야 함
         if(returnObj.isStopped) {
-            console.log(`[*] ${this.generatorName}에서 결과 생성 중지됨!`)
+            console.log(`[*] ${this.generatorName}에서 결과 생성 중지됨!`, {returnObj: structuredClone(returnObj)})
             returnObj.directMessage = `stopped!`
             this.onStopped(returnObj)
             if(this.client.onStopped) this.client.onStopped(returnObj)
+            
+            returnObj.actions = returnObjActions
             return returnObj
         }
         
         try {
 
             if(this.state !== 'end') {
-                console.log(`[*] ${this.generatorName}에서 결과 생성중...`, {textLength: text.length, returnObj})
+                console.log(`[*] ${this.generatorName}에서 결과 생성중...`, {textLength: text.length, returnObj: structuredClone(returnObj)})
                 returnObj.directMessage = `Generating... (${text.length} characters generated)`
     
                 // 실시간으로 진행중인 결과값을 처리하는 도중에 예외 발생시에는 예외 처리를 하지 않고 그냥 넘어감
@@ -571,6 +578,8 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
                     console.error(`[!] ${this.generatorName}에서 부분적인 결과 처리중에 오류 발생!`, {text, error:e})
                     console.error(e)
                 }
+
+                returnObj.actions = returnObjActions
                 return returnObj
             }
  
@@ -583,17 +592,19 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
 
             this.onCreateModelFinished(returnObj)
             if(this.client.onCreateModelFinished) this.client.onCreateModelFinished(returnObj)
-            console.log(`[*] ${this.generatorName}에서 결과 파싱 완료!`, {returnObj})
+            console.log(`[*] ${this.generatorName}에서 결과 파싱 완료!`, {returnObj: structuredClone(returnObj)})
 
             if(!returnObj.isStopped && !returnObj.isError) {
                 this.onGenerationSucceeded(returnObj)
                 if(this.client.onGenerationSucceeded) this.client.onGenerationSucceeded(returnObj)
             }
+
+            returnObj.actions = returnObjActions
             return returnObj
 
         } catch(e) {
 
-            console.error(`[!] ${this.generatorName}에서 결과 파싱중에 오류 발생!`, {returnObj, error:e})
+            console.error(`[!] ${this.generatorName}에서 결과 파싱중에 오류 발생!`, {error:e, returnObj: structuredClone(returnObj)})
             console.error(e)
             returnObj = {
                 ...returnObj,
@@ -626,6 +637,7 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
                 this._retryByError()
             }
 
+            returnObj.actions = returnObjActions
             return returnObj
 
         }
