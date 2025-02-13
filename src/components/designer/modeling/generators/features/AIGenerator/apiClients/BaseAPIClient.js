@@ -228,8 +228,7 @@ class BaseAPIClient {
             
             console.log("[*] 생성이 중단됨")
         }
-
-
+    
         const responseTextInfo = this._parseResponseText(event.target.responseText)
         if(responseTextInfo.error) {
             if(g.client.onError){
@@ -237,22 +236,21 @@ class BaseAPIClient {
             }
             reject(responseTextInfo.error)
         }
-
+    
         if(!g.gptResponseId)
             g.gptResponseId = responseTextInfo.id
-
+    
         if(responseTextInfo.finish_reason === "length")
             g.finish_reason = "length"
         
         g.modelJson = responseTextInfo.joinedText
-
-
+    
         if(g.client.onReceived){
             if(g.gptResponseId === responseTextInfo.id){
                 g.client.onReceived(g.modelJson);
             }
         }
-
+    
         if(g.client.onModelCreated){
             if(g.partedResponseCount >= g.responseLimit){
                 const createdModel = g.createModel(g.modelJson)
@@ -260,8 +258,7 @@ class BaseAPIClient {
                     g.savedModel = createdModel
                     g.client.onModelCreated(createdModel);
                     g.partedResponseCount = 0;
-                } else
-                    g.stop();
+                }
             } else
                 g.partedResponseCount++;
         }

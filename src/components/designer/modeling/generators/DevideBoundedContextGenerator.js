@@ -5,9 +5,6 @@ class DevideBoundedContextGenerator extends JsonAIGenerator {
     constructor(client){
         super(client);
 
-        // this.model = "deepseek-r1:14b"
-        // this.apiStrategy = 'ollama'
-        this.model = "gpt-4o"
         this.temperature = 0.3
         this.generatorName = 'DevideBoundedContextGenerator'
     }
@@ -145,7 +142,7 @@ Should be used all of the Bounded Contexts.
     }
 
     ollamaPrompt(){
-        if(this.apiStrategy === 'ollama'){
+        if(this.modelInfo.vendor === 'ollama'){
             return `
 Focus directly on generating the required JSON output with minimal intermediate thinking.
 Always use the extact keys specified in the JSON format.
