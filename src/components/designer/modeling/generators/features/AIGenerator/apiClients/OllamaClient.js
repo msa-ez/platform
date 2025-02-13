@@ -16,7 +16,7 @@ class OllamaClient extends BaseAPIClient {
       messages: messages,
       stream: true,
       options: {
-        temperature: modelInfo.temperature
+        temperature: modelInfo.requestArgs.temperature
       }
     }
 
