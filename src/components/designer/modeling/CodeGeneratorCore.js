@@ -674,8 +674,7 @@ class CodeGeneratorCore {
                             value: srcElement
                         });
 
-                        tarElement.relationEventInfo.push(relationEventInfo);
-
+                     
                         let relationEventInfo = {
                             eventValue: srcElement,
                             relationId: item.relationView.id,
@@ -684,11 +683,11 @@ class CodeGeneratorCore {
                                 id: srcElement.id
                             }
                         }
-
                         // add preferredPlatform
                         let getPreferredPlatform = relationEventInfo.boundedContext ? relationEventInfo.boundedContext.preferredPlatform : tarElement.preferredPlatform
                         relationEventInfo.preferredPlatform = getPreferredPlatform
 
+                        tarElement.relationEventInfo.push(relationEventInfo);
                         modelForElements.RelationEventInfo.push(relationEventInfo);
                     }
                 } else if (item.sourceElement._type == "org.uengine.modeling.model.Policy" &&
