@@ -29,10 +29,9 @@ class JsonAIGenerator extends AIGenerator{
             // text = text.replace(/"[\w\s]+":\s*null,?/g, '');
             // text = text.replace(/"[\w\s]+":\s*null?/g, '');
 
-            if(this.apiStrategy == 'ollama') {
-                text = this.removeThinkBlocks(text);
-                text = this.extractJSON(text);
-            }
+            text = this.removeThinkBlocks(text);
+            text = this.extractJSON(text);
+
             model = partialParse(text);
 
             return model;
@@ -64,6 +63,9 @@ class JsonAIGenerator extends AIGenerator{
     extractJSON(text) {
         try {
             // 전체 텍스트가 유효한 JSON인지 먼저 확인
+            text = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+            text = text.trim();
+
             JSON.parse(text);
             return text;
         } catch (e) {
