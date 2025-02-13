@@ -8,7 +8,10 @@ class PreProcessingFunctionsGenerator extends FormattedJSONAIGenerator{
 
         this.checkInputParamsKeys = ["description", "boundedContext"]
         this.progressCheckStrings = ["inference", "userStories", "entities", "businessRules", "interfaces"]
-        this.response_format = zodResponseFormat(
+    }
+
+    onApiClientChanged(){
+        this.modelInfo.requestArgs.response_format = zodResponseFormat(
             z.object({
                 inference: z.string(),
                 result: z.object({
@@ -69,7 +72,6 @@ class PreProcessingFunctionsGenerator extends FormattedJSONAIGenerator{
             ["entities", "interfaces"]
         )
     }
-
 
     onGenerateBefore(inputParams){
         inputParams.boundedContextDisplayName = inputParams.boundedContext.displayName ? inputParams.boundedContext.displayName : inputParams.boundedContext.name

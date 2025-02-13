@@ -975,7 +975,7 @@
                 }
                 catch(e) {
 
-                    console.log("[*] 생성 준비를 위한 입력값 구축과정에서 에러 발생", {error: e, state: this.state, selectedStructureOption})
+                    console.log("[*] 생성 준비를 위한 입력값 구축과정에서 에러 발생", {error: e, state: this.state})
 
                     if(e.name=="QuotaExceededError"){
                         var keys = Object.keys(localStorage);

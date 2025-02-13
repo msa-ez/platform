@@ -9,7 +9,61 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
 
         this.checkInputParamsKeys = ["description", "boundedContext", "accumulatedDrafts"] // Optional ["feedback"]
         this.progressCheckStrings = ["inference", "options", "analysis", "defaultOptionIndex"]
-        this.response_format = zodResponseFormat(
+    }
+
+    static outputToAccumulatedDrafts(output, targetBoundedContext){
+        return {
+            [targetBoundedContext.name]: output.options[output.defaultOptionIndex].structure
+        }
+    }
+
+    static esValueToAccumulatedDrafts(esValue, targetBoundedContext){
+        let accumulatedDrafts = {}
+
+        const summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(esValue)
+        for(const boundedContextInfo of summarizedESValue.boundedContexts){
+            let structure = []
+
+            if(boundedContextInfo.name !== targetBoundedContext.name) {
+                for(const aggregateInfo of boundedContextInfo.aggregates){
+                    let selectedOption = {}
+
+                    const targetAggregate = esValue.elements[aggregateInfo.id]
+                    selectedOption.aggregate = {
+                        name: aggregateInfo.name,
+                        alias: (targetAggregate && targetAggregate.displayName) ? targetAggregate.displayName : aggregateInfo.name
+                    }
+
+                    let aggregateElements = null
+                    if(targetAggregate && targetAggregate.aggregateRoot && targetAggregate.aggregateRoot.entities &&
+                    targetAggregate.aggregateRoot.entities.elements
+                    ){
+                        aggregateElements = targetAggregate.aggregateRoot.entities.elements
+                    }
+
+                    selectedOption.entities = aggregateInfo.entities.map(entityInfo => ({
+                        name: entityInfo.name,
+                        alias: (aggregateElements && aggregateElements[entityInfo.id]) ? aggregateElements[entityInfo.id].displayName : entityInfo.name
+                    }))
+
+                    selectedOption.valueObjects = aggregateInfo.valueObjects.map(valueObjectInfo => ({
+                        name: valueObjectInfo.name,
+                        alias: (aggregateElements && aggregateElements[valueObjectInfo.id]) ? aggregateElements[valueObjectInfo.id].displayName : valueObjectInfo.name
+                    }))
+
+                    structure.push(selectedOption)
+                }
+            }
+
+            accumulatedDrafts[boundedContextInfo.name] = structure
+        }
+
+        return accumulatedDrafts
+    }
+
+
+    onApiClientChanged(){
+        this.modelInfo.requestArgs.response_format = zodResponseFormat(
             z.object({
                 inference: z.string(),
                 result: z.object({
@@ -64,58 +118,7 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
             "instruction"
         )
     }
-
-    static outputToAccumulatedDrafts(output, targetBoundedContext){
-        return {
-            [targetBoundedContext.name]: output.options[output.defaultOptionIndex].structure
-        }
-    }
-
-    static esValueToAccumulatedDrafts(esValue, targetBoundedContext){
-        let accumulatedDrafts = {}
-
-        const summarizedESValue = ESValueSummarizeWithFilter.getSummarizedESValue(esValue)
-        for(const boundedContextInfo of summarizedESValue.boundedContexts){
-            let structure = []
-
-            if(boundedContextInfo.name !== targetBoundedContext.name) {
-                for(const aggregateInfo of boundedContextInfo.aggregates){
-                    let selectedOption = {}
-
-                    const targetAggregate = esValue.elements[aggregateInfo.id]
-                    selectedOption.aggregate = {
-                        name: aggregateInfo.name,
-                        alias: (targetAggregate && targetAggregate.displayName) ? targetAggregate.displayName : aggregateInfo.name
-                    }
-
-                    let aggregateElements = null
-                    if(targetAggregate && targetAggregate.aggregateRoot && targetAggregate.aggregateRoot.entities &&
-                    targetAggregate.aggregateRoot.entities.elements
-                    ){
-                        aggregateElements = targetAggregate.aggregateRoot.entities.elements
-                    }
-
-                    selectedOption.entities = aggregateInfo.entities.map(entityInfo => ({
-                        name: entityInfo.name,
-                        alias: (aggregateElements && aggregateElements[entityInfo.id]) ? aggregateElements[entityInfo.id].displayName : entityInfo.name
-                    }))
-
-                    selectedOption.valueObjects = aggregateInfo.valueObjects.map(valueObjectInfo => ({
-                        name: valueObjectInfo.name,
-                        alias: (aggregateElements && aggregateElements[valueObjectInfo.id]) ? aggregateElements[valueObjectInfo.id].displayName : valueObjectInfo.name
-                    }))
-
-                    structure.push(selectedOption)
-                }
-            }
-
-            accumulatedDrafts[boundedContextInfo.name] = structure
-        }
-
-        return accumulatedDrafts
-    }
-
-
+    
     onGenerateBefore(inputParams){
         const existingAggregates = []
         for(const aggregateInfos of Object.values(inputParams.accumulatedDrafts)) {

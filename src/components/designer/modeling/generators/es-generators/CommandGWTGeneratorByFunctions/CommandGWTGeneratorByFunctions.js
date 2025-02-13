@@ -9,9 +9,6 @@ class CommandGWTGeneratorByFunctions extends FormattedJSONAIGenerator{
 
         this.checkInputParamsKeys = ["targetBoundedContext", "targetCommandIds", "description", "esValue"]
         this.progressCheckStrings = ["inference", "targetCommandId"]
-
-        // 생성되는 gwt의 values 값에 대한 형식이 매우 자유롭기 때문에 고정된 구조를 정의할 수 없음
-        this.response_format = undefined
     }
 
     /**
@@ -169,7 +166,7 @@ class CommandGWTGeneratorByFunctions extends FormattedJSONAIGenerator{
                 inputParams.esValue,
                 [],
                 leftTokenCount,
-                this.model,
+                this.modelInfo.requestModelName,
                 inputParams.esAliasTransManager
             )
             console.log(`[*] 요약 이후 Summary`, inputParams.summarizedESValue)

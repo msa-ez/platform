@@ -8,7 +8,7 @@ class DebeziumLogsModificationGenerator extends JsonAIGenerator{
         super(client);
 
         this.model = "gpt-4o"
-        this.preferredLanguage = this.setPreferredLanguage();
+        this.preferredLanguage = this.getPreferredLanguage();
         this.originalLanguage = this.preferredLanguage.toLowerCase();
     }
     

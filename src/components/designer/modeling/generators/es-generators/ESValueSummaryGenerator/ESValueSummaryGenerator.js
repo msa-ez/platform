@@ -8,11 +8,11 @@ const { zodResponseFormat } = require("../../utils")
 
 class ESValueSummaryGenerator extends FormattedJSONAIGenerator{
     constructor(client){
-        super(client);
+        super(client, {}, "simpleModel");
 
         this.checkInputParamsKeys = ["context", "esValue", "keysToFilter", "maxTokens", "tokenCalcModel", "esAliasTransManager"]
         this.progressCheckStrings = ["result"]
-        this.response_format = zodResponseFormat(
+        this.modelInfo.requestArgs.response_format = zodResponseFormat(
             z.object({
                 result: z.object({
                     sortedElementIds: z.array(z.string())
