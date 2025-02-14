@@ -1,4 +1,5 @@
 const BaseAPIClient = require('./BaseAPIClient');
+const { TextParseHelper } = require('../helpers');
 
 class OpenAIClient extends BaseAPIClient {
   constructor(client, options, model, aiGenerator) {
@@ -31,41 +32,24 @@ class OpenAIClient extends BaseAPIClient {
   }
 
   _parseResponseText(responseText){
-    const jsonTexts = responseText.replace("data: [DONE]", "")
-                        .trim()
-                        .split('data: ')
-                        .filter(Boolean)
+    return TextParseHelper.parseResponseText(responseText, {
+      splitFunction: (text) => text.replace("data: [DONE]", "")
+          .trim()
+          .split("data: ")
+          .filter(Boolean),
 
-    let error = null
-    let responseId = ""
-    let finishReason = null
-    const parsedJsonTexts = jsonTexts.map((jsonText) => {
-        let parsed = ""
-        try {
-            parsed = JSON.parse(jsonText);
-        } catch(e) {
-            return ""
+      extractFunction: (parsed) => {
+        if(parsed.choices && parsed.choices[0]){
+          return {
+            content: parsed.choices[0].delta.content || "",
+            id: parsed.id,
+            finish_reason: parsed.choices[0].finish_reason === 'length' ? 'length' : null,
+            error: parsed.error || null
+          }
         }
-
-        if(parsed.error)
-            error = parsed.error
-        if(parsed.choices[0].finish_reason == 'length')
-            finishReason = 'length'
-        responseId = parsed.id
-
-        return parsed.choices[0].delta.content || '';
-    });
-
-    let joinedText = parsedJsonTexts.join('')
-    if(joinedText.includes(": null"))
-        joinedText.replaceAll(": null", ": 'null'")
-
-    return {
-      error: error,
-      id: responseId,
-      finish_reason: finishReason,
-      joinedText: joinedText
-    }
+        return { content: "", id: parsed.id, finish_reason: null, error: parsed.error || null }
+      }
+    })
   }
 }
 

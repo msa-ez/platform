@@ -1,4 +1,5 @@
 const BaseAPIClient = require('./BaseAPIClient');
+const { TextParseHelper } = require("../helpers");
 
 class OllamaClient extends BaseAPIClient {
   constructor(client, options, model, aiGenerator) {
@@ -30,70 +31,28 @@ class OllamaClient extends BaseAPIClient {
   }
 
   _parseResponseText(responseText){
-    let error = null;
-    let responseId = "Ollama";
-    let finishReason = null;
-    let joinedText = "";
-    
-    const jsonTexts = responseText
-                        .split("\n")
-                        .filter(line => line.trim() !== "")
+    const result = TextParseHelper.parseResponseText(responseText, {
+      splitFunction: (text) => text
+        .split("\n")
+        .filter(line => line.trim() !== ""),
 
-    const parsedJsonTexts = jsonTexts.map((jsonText) => {
-      let parsed = ""
-      try {
-          parsed = JSON.parse(jsonText);
-      } catch(e) {
-          return ""
+      extractFunction: (parsed) => {
+        return {
+          content: parsed.message && parsed.message.content ? parsed.message.content : "",
+          id: "Ollama",
+          finish_reason: null,
+          error: parsed.error || null
+        }
       }
-
-      if (parsed.error)
-          error = parsed.error
-
-      if(parsed.message && parsed.message.content)
-          return parsed.message.content
-      
-      return ""
     })
-
-    joinedText = parsedJsonTexts.join('').trim()
-    if(joinedText.includes(": null")){
-        joinedText = joinedText.replaceAll(": null", ": 'null'");
+    
+    if(this.aiGenerator.modelInfo.requestModelName.startsWith("deepseek-r1")) {
+      const tagParsedContents = TextParseHelper.parseFrontTagContents(result.joinedText, "think");
+      result.joinedText = tagParsedContents.restText;
+      this.aiGenerator.parsedTexts.think = tagParsedContents.tagContents;
     }
 
-    if(this.aiGenerator.modelInfo.requestModelName.startsWith("deepseek-r1"))
-      joinedText = this._extractThinkContent(joinedText)
-
-    return {
-      error: error,
-      id: responseId,
-      finish_reason: finishReason,
-      joinedText: joinedText
-    }
-  }
-
-  _extractThinkContent(joinedText){
-    const fullTag = "<think>";
-    if (joinedText.length < fullTag.length && fullTag.startsWith(joinedText)) {
-      return "";
-    }
-
-    const closingTag = "</think>";
-    const startIdx = joinedText.indexOf(fullTag);
-    if (startIdx === -1) {
-      return joinedText;
-    }
-
-    const endIdx = joinedText.indexOf(closingTag, startIdx);
-    if (endIdx !== -1) {
-      const thinkContent = joinedText.substring(startIdx + fullTag.length, endIdx)
-      this.aiGenerator.parsedTexts.think = thinkContent
-      return joinedText.substring(endIdx + closingTag.length)
-    } else {
-      const thinkContent = joinedText.substring(startIdx + fullTag.length)
-      this.aiGenerator.parsedTexts.think = thinkContent
-      return ""
-    }
+    return result;
   }
 }
 

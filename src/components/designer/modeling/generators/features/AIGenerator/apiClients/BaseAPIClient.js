@@ -166,6 +166,8 @@ class BaseAPIClient {
             g.gptResponseId = null;
 
             const requestParams = this._makeRequestParams(g.messages, g.modelInfo, g.token)
+
+            console.log("[*] 최종적으로 요청되는 정보", { requestParams })
             RequestUtil.sendPostRequest(
                 requestParams.requestUrl,
                 requestParams.requestData,
@@ -192,7 +194,7 @@ class BaseAPIClient {
     }
     /**
      * **상위 클래스에서 반드시 재정의해야하는 메소드**
-     * 각 모델에 따라서 적절한 POST 요청 파라미터를 반환해야 함함
+     * 각 모델에 따라서 적절한 POST 요청 파라미터를 반환해야 함
      */
     _makeRequestParams(messages, modelInfo, token){
         // return {
@@ -271,8 +273,8 @@ class BaseAPIClient {
         // return {
         //     error: null,
         //     id: "", // 각각의 스트리밍 요청마다 고유하게 전달되는 채팅 ID
-        //     finish_reason: null, // 토큰 초과인 경우, length 값을 전달할 것
-        //     joinedText: "" // 스트리밍으로 전달되는 각각의 조각 텍스트들을 결합시켜서 반환환
+        //     finish_reason: null, // 토큰 초과인 경우, "length"를 반환시킬 것
+        //     joinedText: "" // 스트리밍으로 전달되는 각각의 조각 텍스트들을 결합시켜서 반환
         // }
         throw new Error("_parseResponseText 메소드는 서브 클래스에서 구현되어야 합니다.")
     }
@@ -334,15 +336,8 @@ class BaseAPIClient {
         g.preferredLanguage = g.getPreferredLanguage();
         g.originalLanguage = g.preferredLanguage.toLowerCase();
 
-        let content
-        if(
-            g.client.generatorName == 'ESGenerator' || 
-            g.client.generatorName == 'EventOnlyESGenerator'
-        ){
-            content = g.createPrompt() + "\n please generate in English"
-        } else {
-            content = g.createPrompt() + (g.preferredLanguage ? "\n please generate in " + g.preferredLanguage : '')
-        }
+        const languageToUse = g.fixedLanguage || g.preferredLanguage || "English"
+        const content = g.createPrompt() + "\n[Please generate the response in " + languageToUse + " while ensuring that all code elements (e.g., variable names, function names) remain in English.]"
 
         if(g.client.openAiMessageList){
             g.client.openAiMessageList.push({

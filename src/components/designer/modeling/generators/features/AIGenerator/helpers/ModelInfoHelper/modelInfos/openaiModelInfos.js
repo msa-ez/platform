@@ -1,4 +1,5 @@
 export const openaiModelInfos = {
+    // 가능한 설정 옵션들: gpt-4o-2024-11-20, gpt-4o-2024-08-06, gpt-4o
     "gpt-4o": {
         vendor: "openai",
         contextWindowTokenLimit: 128000,
@@ -11,6 +12,7 @@ export const openaiModelInfos = {
         }
     },
 
+    // 가능한 설정 옵션들: o3-mini-2025-01-31, o3-mini, o3-mini-2025-01-31-medium, o3-mini-2025-01-31-high
     "o3-mini": { 
         vendor: "openai",
         contextWindowTokenLimit: 200000,

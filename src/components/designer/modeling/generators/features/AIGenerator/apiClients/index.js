@@ -1,2 +1,2 @@
 export const APIClientFactory = require("./APIClientFactory");
-export const defaultOptions = require("./defaultOptions");
+export const getDefaultOptions = require("./getDefaultOptions");

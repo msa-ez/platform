@@ -2,7 +2,7 @@ const {
     APIClientFactory
 } = require("./features/AIGenerator");
 
-// 사용하는 모델 변경시에는 apiClients/defaultOptions.js를 참고
+// 사용하는 모델 변경시에는 apiClients/getDefaultOptions.js를 참고
 class AIGenerator {
     constructor(client, options, modelType){
         this.apiClientParams = {

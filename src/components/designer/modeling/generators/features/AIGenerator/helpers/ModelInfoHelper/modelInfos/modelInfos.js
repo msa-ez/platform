@@ -1,5 +1,7 @@
 const { openaiModelInfos } = require("./openaiModelInfos");
 const { ollamaModelInfos } = require("./ollamaModelInfos");
+const { anthropicModelInfos } = require("./anthropicModelInfos");
+
 /**
  * @description 특정 모델에 대한 API 요청시에 활용되는 기반 정보
  * @example
@@ -30,7 +32,8 @@ const { ollamaModelInfos } = require("./ollamaModelInfos");
  */
 const modelInfos = {
     ...openaiModelInfos,
-    ...ollamaModelInfos
+    ...ollamaModelInfos,
+    ...anthropicModelInfos
 }
 
 const defaultModelInfos = {
