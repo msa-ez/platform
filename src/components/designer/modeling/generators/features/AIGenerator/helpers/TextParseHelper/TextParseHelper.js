@@ -126,7 +126,7 @@ class TextParseHelper {
     });
 
 
-    let joinedText = texts.join('').trim();
+    let joinedText = texts.join('')
     if (joinedText.includes(": null")) {
       joinedText = joinedText.replaceAll(": null", ": 'null'");
     }
