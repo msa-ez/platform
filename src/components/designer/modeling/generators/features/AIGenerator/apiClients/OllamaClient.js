@@ -30,45 +30,41 @@ class OllamaClient extends BaseAPIClient {
   }
 
   _parseResponseText(responseText){
-    let error = null;
-    let responseId = "Ollama";
-    let finishReason = null;
-    let joinedText = "";
-    
-    const jsonTexts = responseText
-                        .split("\n")
-                        .filter(line => line.trim() !== "")
+    try {
+        const response = JSON.parse(responseText);
+        let error = null;
+        let responseId = response.id || "Ollama";
+        let finishReason = null;
+        let joinedText = "";
 
-    const parsedJsonTexts = jsonTexts.map((jsonText) => {
-      let parsed = ""
-      try {
-          parsed = JSON.parse(jsonText);
-      } catch(e) {
-          return ""
-      }
+        if (response.choices && response.choices[0]) {
+            finishReason = response.choices[0].finish_reason || null;
+            if (response.choices[0].message) {
+                joinedText = response.choices[0].message.content || "";
+            }
+        }
 
-      if (parsed.error)
-          error = parsed.error
+        if(joinedText.includes(": null")){
+            joinedText = joinedText.replaceAll(": null", ": 'null'");
+        }
 
-      if(parsed.message && parsed.message.content)
-          return parsed.message.content
-      
-      return ""
-    })
+        if(this.aiGenerator.modelInfo.requestModelName.startsWith("deepseek-r1"))
+            joinedText = this._extractThinkContent(joinedText);
 
-    joinedText = parsedJsonTexts.join('').trim()
-    if(joinedText.includes(": null")){
-        joinedText = joinedText.replaceAll(": null", ": 'null'");
-    }
-
-    if(this.aiGenerator.modelInfo.requestModelName.startsWith("deepseek-r1"))
-      joinedText = this._extractThinkContent(joinedText)
-
-    return {
-      error: error,
-      id: responseId,
-      finish_reason: finishReason,
-      joinedText: joinedText
+        return {
+            error: error,
+            id: responseId,
+            finish_reason: finishReason,
+            joinedText: joinedText
+        }
+    } catch(e) {
+        console.error('Error parsing response:', e);
+        return {
+            error: e,
+            id: null,
+            finish_reason: null,
+            joinedText: ''
+        };
     }
   }
 
