@@ -12,6 +12,7 @@ class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
+        this.generatorName = "CreateAggregateActionsByFunctions"
         this.checkInputParamsKeys = ["targetBoundedContext", "description", "draftOption", "esValue", "userInfo", "information", "isAccumulated"]
         this.progressCheckStrings = ["inference", "aggregateActions", "entityActions", "valueObjectActions", "enumerationActions"]
     }

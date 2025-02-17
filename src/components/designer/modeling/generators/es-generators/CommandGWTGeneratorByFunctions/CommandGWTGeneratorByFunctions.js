@@ -7,6 +7,7 @@ class CommandGWTGeneratorByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
+        this.generatorName = "CommandGWTGeneratorByFunctions"
         this.checkInputParamsKeys = ["targetBoundedContext", "targetCommandIds", "description", "esValue"]
         this.progressCheckStrings = ["inference", "targetCommandId"]
     }

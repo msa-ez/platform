@@ -17,7 +17,10 @@ import {
     DraftGeneratorByFunctionsTest,
     SanityCheckGeneratorTest
 } from "../../modeling/generators/es-generators";
-import { ModelInfoHelperTest } from "../../modeling/generators/features/AIGenerator/helpers"
+import { 
+    ModelInfoHelperTest,
+    TextParseHelperTest
+} from "../../modeling/generators/features/AIGenerator"
 
 export default {
     name: "es-test-terminal",
@@ -58,7 +61,8 @@ export default {
                 CreateCommandActionsByFunctionsTest: {command: async () => { await CreateCommandActionsByFunctionsTest.test() }},
                 CreatePolicyActionsByFunctionsTest: {command: async () => { await CreatePolicyActionsByFunctionsTest.test() }},
                 CommandGWTGeneratorByFunctionsTest: {command: async () => { await CommandGWTGeneratorByFunctionsTest.test() }},
-                ModelInfoHelperTest: {command: async () => { await ModelInfoHelperTest.test() }}
+                ModelInfoHelperTest: {command: async () => { await ModelInfoHelperTest.test() }},
+                TextParseHelperTest: {command: async () => { await TextParseHelperTest.test() }}
             }
             
 

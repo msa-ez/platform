@@ -1,4 +1,5 @@
 const BaseAPIClient = require('./BaseAPIClient');
+const { TextParseHelper } = require("../helpers");
 
 class OllamaClient extends BaseAPIClient {
   constructor(client, options, model, aiGenerator) {
@@ -30,66 +31,28 @@ class OllamaClient extends BaseAPIClient {
   }
 
   _parseResponseText(responseText){
-    try {
-        const response = JSON.parse(responseText);
-        let error = null;
-        let responseId = response.id || "Ollama";
-        let finishReason = null;
-        let joinedText = "";
+    const result = TextParseHelper.parseResponseText(responseText, {
+      splitFunction: (text) => text
+        .split("\n")
+        .filter(line => line.trim() !== ""),
 
-        if (response.choices && response.choices[0]) {
-            finishReason = response.choices[0].finish_reason || null;
-            if (response.choices[0].message) {
-                joinedText = response.choices[0].message.content || "";
-            }
-        }
-
-        if(joinedText.includes(": null")){
-            joinedText = joinedText.replaceAll(": null", ": 'null'");
-        }
-
-        if(this.aiGenerator.modelInfo.requestModelName.startsWith("deepseek-r1"))
-            joinedText = this._extractThinkContent(joinedText);
-
+      extractFunction: (parsed) => {
         return {
-            error: error,
-            id: responseId,
-            finish_reason: finishReason,
-            joinedText: joinedText
+          content: parsed.message && parsed.message.content ? parsed.message.content : "",
+          id: "Ollama",
+          finish_reason: null,
+          error: parsed.error || null
         }
-    } catch(e) {
-        console.error('Error parsing response:', e);
-        return {
-            error: e,
-            id: null,
-            finish_reason: null,
-            joinedText: ''
-        };
-    }
-  }
-
-  _extractThinkContent(joinedText){
-    const fullTag = "<think>";
-    if (joinedText.length < fullTag.length && fullTag.startsWith(joinedText)) {
-      return "";
+      }
+    })
+    
+    if(this.aiGenerator.modelInfo.requestModelName.startsWith("deepseek-r1")) {
+      const tagParsedContents = TextParseHelper.parseFrontTagContents(result.joinedText, "think");
+      result.joinedText = tagParsedContents.restText;
+      this.aiGenerator.parsedTexts.think = tagParsedContents.tagContents;
     }
 
-    const closingTag = "</think>";
-    const startIdx = joinedText.indexOf(fullTag);
-    if (startIdx === -1) {
-      return joinedText;
-    }
-
-    const endIdx = joinedText.indexOf(closingTag, startIdx);
-    if (endIdx !== -1) {
-      const thinkContent = joinedText.substring(startIdx + fullTag.length, endIdx)
-      this.aiGenerator.parsedTexts.think = thinkContent
-      return joinedText.substring(endIdx + closingTag.length)
-    } else {
-      const thinkContent = joinedText.substring(startIdx + fullTag.length)
-      this.aiGenerator.parsedTexts.think = thinkContent
-      return ""
-    }
+    return result;
   }
 }
 

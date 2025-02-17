@@ -20,6 +20,7 @@ class ESGenerator extends JsonAIGenerator{
         // this.preferredLanguage = "English";
 
         this.generationOptions = {policy: true, ui: false, properties: true}
+        this.fixedLanguage = "English"
     }
     
     createPrompt(){

@@ -118,6 +118,8 @@ class FormattedJSONAIGenerator extends AIGenerator {
         this.jsonOutputTextToRestore = undefined
         this.savedOnSendCallback = undefined
         this.createdPrompt = ""
+        
+        this.startTime = Date.now()
     }
 
     _addOnsendCallback(){
@@ -472,15 +474,7 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
     }
     __buildJsonUserQueryInputFormat(){ return {} }
 
-    createModel(text){
-        const returnObjActions = {
-            stopGeneration: () => {
-                this.stop()
-            },
-            retryGeneration: () => {
-                this.generate()
-            }
-        }
+    createModel(text){ 
         let returnObj = {
             generatorName: this.generatorName,
             inputParams: this.client.input,
@@ -491,13 +485,22 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
             modelValue: {},
             createdPrompt: this.createdPrompt,
             modelInfo: this.modelInfo,
-            parsedTexts: this.parsedTexts
+            parsedTexts: this.parsedTexts,
+            startTime: this.startTime,
+            currentTime: Date.now(),
+            passedSeconds: (Date.now() - this.startTime) / 1000,
+            actions: {
+                stopGeneration: () => {
+                    this.stop()
+                },
+                retryGeneration: () => {
+                    this.generate()
+                }
+            }
         }
 
         if(!text) {
-            console.log("[*] 별도의 처리할 텍스트가 없음", { returnObj: structuredClone(returnObj) })
-             
-            returnObj.actions = returnObjActions
+            console.log("[*] 별도의 처리할 텍스트가 없음", { ...this._makeDebugObject(returnObj) })
             return returnObj
         }
 
@@ -516,7 +519,7 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
             returnObj.progress = this._getProcessPercentage(text)
 
 
-        if (this.hasExcessiveRepeatingPattern(text, 200, 100)) {
+        if (this.hasExcessiveRepeatingPattern(text, 250, 100)) {
             returnObj = {
                 ...returnObj,
                 isError: true,
@@ -528,7 +531,7 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
             }
 
             console.error(returnObj.errorMessage)
-            console.log("[*] 오류가 발생한 관련 반환값 정보", {returnObj: structuredClone(returnObj)})
+            console.log("[*] 오류가 발생한 관련 반환값 정보", { ...this._makeDebugObject(returnObj) })
 
             this.onError(returnObj)
             if(this.client.onError) this.client.onError(returnObj)
@@ -536,7 +539,6 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
             this.stop()
             this._retryByError()
 
-            returnObj.actions = returnObjActions
             return returnObj
         }
 
@@ -555,19 +557,18 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
 
         // 중지 상태에 대한 별도 처리를 하지 않으면 예외로 인식해서 재시도를 하기 때문에 반드시 있어야 함
         if(returnObj.isStopped) {
-            console.log(`[*] ${this.generatorName}에서 결과 생성 중지됨!`, {returnObj: structuredClone(returnObj)})
+            console.log(`[*] ${this.generatorName}에서 결과 생성 중지됨!`, { ...this._makeDebugObject(returnObj) })
             returnObj.directMessage = `stopped!`
             this.onStopped(returnObj)
             if(this.client.onStopped) this.client.onStopped(returnObj)
             
-            returnObj.actions = returnObjActions
             return returnObj
         }
         
         try {
 
             if(this.state !== 'end') {
-                console.log(`[*] ${this.generatorName}에서 결과 생성중...`, {textLength: text.length, returnObj: structuredClone(returnObj)})
+                console.log(`[*] ${this.generatorName}에서 결과 생성중...`, { ...this._makeDebugObject(returnObj) })
                 returnObj.directMessage = `Generating... (${text.length} characters generated)`
     
                 // 실시간으로 진행중인 결과값을 처리하는 도중에 예외 발생시에는 예외 처리를 하지 않고 그냥 넘어감
@@ -579,7 +580,6 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
                     console.error(e)
                 }
 
-                returnObj.actions = returnObjActions
                 return returnObj
             }
  
@@ -592,20 +592,17 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
 
             this.onCreateModelFinished(returnObj)
             if(this.client.onCreateModelFinished) this.client.onCreateModelFinished(returnObj)
-            console.log(`[*] ${this.generatorName}에서 결과 파싱 완료!`, {returnObj: structuredClone(returnObj)})
+            console.log(`[*] ${this.generatorName}에서 결과 파싱 완료!`, { ...this._makeDebugObject(returnObj) })
 
             if(!returnObj.isStopped && !returnObj.isError) {
                 this.onGenerationSucceeded(returnObj)
                 if(this.client.onGenerationSucceeded) this.client.onGenerationSucceeded(returnObj)
             }
 
-            returnObj.actions = returnObjActions
             return returnObj
 
         } catch(e) {
 
-            console.error(`[!] ${this.generatorName}에서 결과 파싱중에 오류 발생!`, {error:e, returnObj: structuredClone(returnObj)})
-            console.error(e)
             returnObj = {
                 ...returnObj,
                 isError: true,
@@ -618,6 +615,9 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
                 returnObj.directMessage = "Json parsing error occurred, restoring..."
             else
                 returnObj.directMessage = `An error occurred during creation,` + (returnObj.leftRetryCount <= 0 ? ' the model has died. please try again.' : ' retrying...(' + returnObj.leftRetryCount + ' retries left)')
+
+            console.error(`[!] ${this.generatorName}에서 결과 파싱중에 오류 발생!`, {error:e, ...this._makeDebugObject(returnObj)})
+            console.error(e)
 
             this.onError(returnObj)
             if(this.client.onError) this.client.onError(returnObj)
@@ -637,7 +637,6 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
                 this._retryByError()
             }
 
-            returnObj.actions = returnObjActions
             return returnObj
 
         }
@@ -698,6 +697,22 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
         // 일부 경우에는 response_format이 정의되어 있어서 끝없이 동일한 예외가 발생하는 경우가 있기 때문에 재시도시에는 제거해서 재시도 하도록 함
         this.modelInfo.requestArgs.response_format = undefined
         super.generate()
+    }
+
+    _makeDebugObject(returnObj) {
+        const lengthInfos = {}
+        if(returnObj.modelRawValue) lengthInfos.rawTextLength = returnObj.modelRawValue.length
+        if(returnObj.parsedTexts) {
+            for(const [key, value] of Object.entries(returnObj.parsedTexts))
+                if(value) lengthInfos[key + "Length"] = value.length
+        }
+
+        const debugObj = {
+            returnObj: structuredClone({...returnObj, actions: undefined}),
+            ...lengthInfos
+        }
+
+        return debugObj
     }
 }
 

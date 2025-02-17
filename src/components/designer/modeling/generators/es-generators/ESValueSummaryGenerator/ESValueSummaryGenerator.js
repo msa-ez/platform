@@ -10,6 +10,7 @@ class ESValueSummaryGenerator extends FormattedJSONAIGenerator{
     constructor(client){
         super(client, {}, "simpleModel");
 
+        this.generatorName = "ESValueSummaryGenerator"
         this.checkInputParamsKeys = ["context", "esValue", "keysToFilter", "maxTokens", "tokenCalcModel", "esAliasTransManager"]
         this.progressCheckStrings = ["result"]
     }

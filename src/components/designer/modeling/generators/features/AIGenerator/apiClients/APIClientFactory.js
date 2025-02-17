@@ -1,15 +1,16 @@
 const OpenAIClient = require('./OpenAIClient');
 const OllamaClient = require('./OllamaClient');
+const AnthropicClient = require('./AnthropicClient');
 const { ModelInfoHelper } = require('../helpers');
-const defaultOptions = require('./defaultOptions');
+const getDefaultOptions = require('./getDefaultOptions');
 
 class APIClientFactory {
   static createClient(client, options, modelType, aiGenerator) {
     let model = ""
     if(options.model) model = options.model
     else if(aiGenerator.model) model = aiGenerator.model
-    else if(modelType) model = defaultOptions[modelType]
-    else model = defaultOptions.standardModel
+    else if(modelType) model = getDefaultOptions()[modelType]
+    else model = getDefaultOptions().standardModel
 
     const vendor = ModelInfoHelper.getModelInfo(model).vendor
     if(APIClientFactory.vendorApiClientMap[vendor])
@@ -21,7 +22,8 @@ class APIClientFactory {
 
 APIClientFactory.vendorApiClientMap = {
     "openai": OpenAIClient,
-    "ollama": OllamaClient
+    "ollama": OllamaClient,
+    "anthropic": AnthropicClient
 }
 
 module.exports = APIClientFactory;
