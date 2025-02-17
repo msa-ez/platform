@@ -519,7 +519,7 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
             returnObj.progress = this._getProcessPercentage(text)
 
 
-        if (this.hasExcessiveRepeatingPattern(text, 200, 100)) {
+        if (this.hasExcessiveRepeatingPattern(text, 250, 100)) {
             returnObj = {
                 ...returnObj,
                 isError: true,
