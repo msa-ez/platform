@@ -10,6 +10,7 @@ class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
         super(client, {}, "complexModel");
 
+        this.generatorName = "CreatePolicyActionsByFunctions"
         this.checkInputParamsKeys = ["targetBoundedContext", "description", "esValue", "userInfo", "information"]
         this.progressCheckStrings = ["inference", "extractedPolicies"]
     }

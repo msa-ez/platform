@@ -4,6 +4,8 @@ const FormattedJSONAIGenerator = require("../../FormattedJSONAIGenerator");
 class SanityCheckGenerator extends FormattedJSONAIGenerator{
     constructor(client){
         super(client)
+
+        this.generatorName = "SanityCheckGenerator"
     }
 
 

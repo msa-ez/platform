@@ -12,6 +12,7 @@ class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
+        this.generatorName = "CreateAggregateClassIdByDrafts"
         this.checkInputParamsKeys = ["draftOption", "targetReferences", "esValue", "userInfo", "information"]
         this.progressCheckStrings = ["inference", "actions"]
     }
