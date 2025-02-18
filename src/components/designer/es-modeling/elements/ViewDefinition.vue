@@ -85,7 +85,7 @@
                 <text-element
                         v-if="value.dataProjection == 'query-for-aggregate' && getQueryParameterDescriptors && !value.queryOption.useDefaultUri && value.queryOption.apiPath"
                         :sub-width="'100%'"
-                        :sub-height="subjectHeight"
+                        :sub-height="detailHeight"
                         :sub-top="subjectTop"
                         :sub-left="0"
                         :subStyle="{'font-size': '16px', 'font-weight': 'bold'}"
@@ -216,14 +216,18 @@
                 if(this.value.elementView.height <= 270){
                     detailCnt = this.availableFieldCount
                 } else if(this.value.elementView.height > 270){
-                    detailCnt = this.value.fieldDescriptors.length
+                    if(this.value.dataProjection == 'cqrs') {
+                        detailCnt = this.value.fieldDescriptors.length
+                    } else {
+                        detailCnt = this.value.queryParameters.length
+                    }
                 }
                 return detailCnt;
 
                 // return this.subjectHeight + (detailCnt * 5)
             },
             detailLeft() {
-                var width = this.value.elementView.width * 0.1
+                var width = this.elementCoordinate.width * 0.1
                 return width
             },
             detailTop() {
@@ -287,28 +291,29 @@
                         && this.value.queryParameters[0].name == 'id') {
                         return false
                     }
-
+                    const prefix = 'ㆍ '
                     var text = ''
-                    var value = 0
+
                     if(this.value.elementView.height <= 100){
-                        value = 42
+                        this.fieldHeight = 42
                     } else if(this.value.elementView.height <= 150){
-                        value = 30
+                        this.fieldHeight = 30
                     } else if(this.value.elementView.height <= 270){
-                        value = 23
+                        this.fieldHeight = 23
                     } else if(this.value.elementView.height > 270){
-                        value = 17
+                        this.fieldHeight = 17
                     }
-                    var y = Math.ceil(this.value.elementView.height/value)
-                    this.viewfieldDescriptorsCount = y
-                    if(this.value.queryParameters.length > y){
-                        for(var i = 0; i <= y; i++){
-                            if(i == y) text = text + 'ㆍ ' + this.value.queryParameters[i].name + '  ...'
-                            else text = text + 'ㆍ ' + this.value.queryParameters[i].name + '\n'
+                    
+                    this.availableFieldCount = Math.ceil(this.value.elementView.height/this.fieldHeight) - 2 ;
+                    if(this.value.fieldDescriptors.length > this.availableFieldCount){
+                        for(var i = 0; i <= this.availableFieldCount; i++){
+                            let fd = this.value.queryParameters[i];
+                            if(i == this.availableFieldCount) text = `${text}${prefix} ${fd.name} ...`
+                            else text = `${text}${prefix} ${fd.name}` + '\n'
                         }
                     } else {
-                        this.value.queryParameters.forEach(function (field) {
-                            text = text + 'ㆍ ' + field.name + '\n'
+                        this.value.queryParameters.forEach(function (fd) {
+                            text = `${text}${prefix} ${fd.name}` + '\n'
                         })
                     }
                     return text
@@ -421,7 +426,6 @@
             return {
                 fieldHeight: 17,
                 availableFieldCount: 0,
-                viewfieldDescriptorsCount: 0,
                 itemH: 20,
                 titleH: (this.value.classReference ? 60 : 30),
                 reference: this.value.classReference != null,
