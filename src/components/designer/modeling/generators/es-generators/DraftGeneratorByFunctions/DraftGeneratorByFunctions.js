@@ -5,7 +5,7 @@ const { zodResponseFormat } = require("../../utils")
 
 class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
-        super(client);
+        super(client, {}, "complexModel");
 
         this.generatorName = "DraftGeneratorByFunctions"
         this.checkInputParamsKeys = ["description", "boundedContext", "accumulatedDrafts"] // Optional ["feedback"]
