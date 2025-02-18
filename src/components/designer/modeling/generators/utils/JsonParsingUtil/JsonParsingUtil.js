@@ -123,6 +123,38 @@ class JsonParsingUtil {
 
         return textToParse
     }
+
+    static applyTrimToAllStringProperties(jsonObj) {
+        if (Array.isArray(jsonObj)) {
+            return jsonObj.map(item => {
+                if (typeof item === 'string') {
+                    return item.trim();
+                } else if (item && typeof item === 'object') {
+                    return JsonParsingUtil.applyTrimToAllStringProperties(item);
+                }
+                return item;
+            });
+        } else if (jsonObj && typeof jsonObj === 'object') {
+            Object.keys(jsonObj).forEach(key => {
+                const value = jsonObj[key];
+                if (typeof value === 'string') {
+                    jsonObj[key] = value.trim();
+                } else if (Array.isArray(value)) {
+                    jsonObj[key] = value.map(item => {
+                        if (typeof item === 'string') {
+                            return item.trim();
+                        } else if (item && typeof item === 'object') {
+                            return JsonParsingUtil.applyTrimToAllStringProperties(item);
+                        }
+                        return item;
+                    });
+                } else if (value && typeof value === 'object') {
+                    jsonObj[key] = JsonParsingUtil.applyTrimToAllStringProperties(value);
+                }
+            });
+        }
+        return jsonObj;
+    }
 }
 
 module.exports = JsonParsingUtil
