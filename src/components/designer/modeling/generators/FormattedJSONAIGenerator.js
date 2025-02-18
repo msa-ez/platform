@@ -469,7 +469,6 @@ ${JSON.stringify(jsonOutput)}
 ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value === 'string' ? value.trim() : JSON.stringify(value)}`).join("\n\n")}
 
 [OUTPUT]
-\`\`\`json
 `
     }
     __buildJsonUserQueryInputFormat(){ return {} }
