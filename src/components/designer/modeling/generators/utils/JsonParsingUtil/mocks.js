@@ -50,3 +50,11 @@ export const particalTexts = [
     '{"name": "John", "age": 30, "address": {',
     '{"items": ["apple", "banana", "ora'
 ]
+
+export const jsonObjToTrim = {
+    a: "  abc  ",
+    b: [
+        "  def  ",
+        { c: "  ghi  " }
+    ]
+}

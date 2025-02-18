@@ -83,6 +83,12 @@ class BaseAPIClient {
             g.model,
             g.extraOptions
         )
+
+        g.roleNames = {
+            system: "system",
+            user: "user",
+            assistant: "assistant"
+        }
     }
        
     getPreferredLanguage(){
@@ -167,7 +173,15 @@ class BaseAPIClient {
 
             const requestParams = this._makeRequestParams(g.messages, g.modelInfo, g.token)
 
-            console.log("[*] 최종적으로 요청되는 정보", { requestParams })
+            try {
+                console.log("[*] 최종적으로 요청되는 정보", { 
+                    ...requestParams,
+                    requestData: requestParams.requestData ? JSON.parse(requestParams.requestData) : null
+                 })
+            } catch {
+                console.log("[*] 최종적으로 요청되는 정보", { requestParams })
+            }
+
             RequestUtil.sendPostRequest(
                 requestParams.requestUrl,
                 requestParams.requestData,
@@ -336,25 +350,68 @@ class BaseAPIClient {
         g.preferredLanguage = g.getPreferredLanguage();
         g.originalLanguage = g.preferredLanguage.toLowerCase();
 
+
         const languageToUse = g.fixedLanguage || g.preferredLanguage || "English"
-        const content = g.createPrompt() + "\n[Please generate the response in " + languageToUse + " while ensuring that all code elements (e.g., variable names, function names) remain in English.]"
+        const contentToAppend = "\n[Please generate the response in " + languageToUse + " while ensuring that all code elements (e.g., variable names, function names) remain in English.]"
+
+
+        let promptsToBuild = {
+            "system": "",
+            "user": [],
+            "assistant": []
+        }
+        const createPromptWithRoles = g.createPromptWithRoles()
+
+        if(createPromptWithRoles) {
+            promptsToBuild.system = createPromptWithRoles.system
+            promptsToBuild.user = createPromptWithRoles.user
+            if(promptsToBuild.user && promptsToBuild.user.length > 0)
+                promptsToBuild.user[promptsToBuild.user.length - 1] += contentToAppend
+            
+            promptsToBuild.assistant = createPromptWithRoles.assistant
+        }
+        else {
+            promptsToBuild.user = [g.createPrompt() + contentToAppend]
+        }
+
+
+        const buildedMessages = this._buildMessages(promptsToBuild)
 
         if(g.client.openAiMessageList){
-            g.client.openAiMessageList.push({
-                role: 'user',
-                content: content
-            })
+            g.client.openAiMessageList = g.client.openAiMessageList.concat(buildedMessages)
             g.previousMessages = g.client.openAiMessageList;
-        } else {
-            g.previousMessages.push({
-                role: 'user',
-                content: content
-            })
-        }
+        } else
+            g.previousMessages = g.previousMessages.concat(buildedMessages)
         
         return g.previousMessages;
     }
 
+    _buildMessages(promptsToBuild) {
+        const g = this.aiGenerator
+        const messages = []
+        
+        if(promptsToBuild.system)
+            messages.push({
+                role: g.roleNames.system,
+                content: promptsToBuild.system
+            })
+
+        for(let i = 0; i < promptsToBuild.user.length; i++) {
+            messages.push({
+                role: g.roleNames.user,
+                content: promptsToBuild.user[i]
+            })
+            if(promptsToBuild.assistant[i])
+                messages.push({
+                    role: g.roleNames.assistant,
+                    content: promptsToBuild.assistant[i]
+                })
+        }
+
+        return messages
+    }
+
+    
     createModel(text) {
         return text
     }
