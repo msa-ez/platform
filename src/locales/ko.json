@@ -31,9 +31,9 @@
     "readWriteAuthority": "읽기/쓰기 권한"
   },
   "BCGenerationOption" : {
-    "generationOption": "생성 옵션",
-    "numberOfBCs": "바운디드 컨텍스트 개수 (15개 이하)",
-    "selectAspects": "분석 관점 선택",
+    "generationOption": "서비스 분리 목적",
+    "numberOfBCs": "서비스 분리 (바운디드 컨텍스트) 개수 (15개 이하)",
+    "selectAspects": "분리 목적 선택",
     "additionalRequirements": "추가 요구사항",
     "generate" : "생성",
     "bcNumberLimitError": "15개 이하여야 합니다",
@@ -86,13 +86,13 @@
     "summarizing": "요구사항을 분석 및 요약하고 있습니다..."
   },
   "DevideBoundedContextDialog" : {
-    "boundedContextDivisionResult": "문제영역(Bounded context) 생성(분할) 결과",
+    "boundedContextDivisionResult": "서비스 (Bounded Context) 분할 결과",
     "aspectsOfBoundedContexts": "Bounded Context 주요 관점",
-    "domainAspect": "도메인",
-    "organizationalAspect": "조직적",
-    "personaAspect": "페르소나",
-    "transactionPerformanceAspect": "트랜잭션/성능",
-    "infrastructureAspect": "인프라",
+    "domainAspect": "도메인 복잡도 분리",
+    "organizationalAspect": "조직 자율성(Autonomy) 증대",
+    "personaAspect": "페르소나(사용자) 관점의 분리",
+    "transactionPerformanceAspect": "트랜잭션/성능을 위한 분리 (장애전파 차단)",
+    "infrastructureAspect": "인프라 상이성에 의한 관리 효율화",
     "lodingMessage": "Bounded Context 생성 중...",
     "mappingMessage": "요구사항 매핑 중...",
     "reasonOfSeparation": "분할 이유",
