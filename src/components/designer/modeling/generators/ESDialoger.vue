@@ -43,7 +43,8 @@
                 <v-tabs-items v-model="activeTab">
                     <!-- UserStory -->
                     <v-tab-item>
-                        <v-card-subtitle>{{$t('autoModeling.explanation.userStory')}}</v-card-subtitle>
+                        <div class="gs-auto-modeling-userStory-text-pc">{{$t('autoModeling.explanation.userStory')}}</div>
+                        <div class="gs-auto-modeling-userStory-text-mobile">{{$t('autoModeling.explanation.userStory')}}</div>
                         <v-card-text class="auto-modling-textarea">
                             <v-textarea 
                                     v-model="value.userStory"
@@ -82,10 +83,14 @@
                     </v-tab-item>
                 </v-tabs-items>
                 <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
-                <v-row v-if="done" class="ma-0 pa-4">
+                <v-row v-if="done" class="ma-0 pa-4 button-row">
                     <v-spacer></v-spacer>
-                    <v-btn :disabled="isSummarizeStarted || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" @click="generate()"><v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}</v-btn>
-                    <v-btn :disabled="isSummarizeStarted || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" color="primary" @click="showBCGenerationOption = !showBCGenerationOption">{{ $t('ESDialoger.createBoundedContext') }}</v-btn>
+                    <v-btn :disabled="isSummarizeStarted || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" @click="generate()">
+                        <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}
+                    </v-btn>
+                    <v-btn :disabled="isSummarizeStarted || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" color="primary" @click="showBCGenerationOption = !showBCGenerationOption">
+                        {{ $t('ESDialoger.createBoundedContext') }}
+                    </v-btn>
                 </v-row>
                 <div v-if="isSummarizeStarted" style="margin-left: 2%; margin-bottom: 1%;">
                     <span>{{ $t('ESDialoger.summarizing') }}</span>
