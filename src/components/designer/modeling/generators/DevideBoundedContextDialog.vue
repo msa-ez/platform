@@ -233,7 +233,7 @@
 
                 <v-card-subtitle>
                     <div v-if="Object.keys(resultDevideBoundedContext).length > 0">
-                        <p class="mb-0">{{ Object.keys(resultDevideBoundedContext)[0] }}</p>
+                        <p class="mb-0">{{ resultDevideBoundedContext[aspect].devisionAspect }}</p>
                     </div>
                 </v-card-subtitle>
 
