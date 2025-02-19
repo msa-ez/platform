@@ -691,27 +691,28 @@
                 if(this.state.generator === "DevideBoundedContextGenerator"){
                     me.devisionAspectIndex = 0;
                     me.isGeneratingBoundedContext = false;
-                    me.updateMessageState(me.messages[me.messages.length-1].uniqueId, {
-                        isGeneratingBoundedContext: me.isGeneratingBoundedContext
-                    });
-                    me.generator = new Generator(me);
-                    me.state.generator = "EventOnlyESGenerator";
-                    me.generatorName = "EventOnlyESGenerator";
-
-                    me.input['devisionAspect'] = me.selectedAspect;
+                    
                     // 현재 메시지의 result를 깊은 복사로 가져옴
                     const currentMessage = me.messages[me.messages.length-1];
                     const newResult = JSON.parse(JSON.stringify(currentMessage.result || {}));
                     
                     // 새로운 모델을 해당 aspect에 할당
-                    newResult[model.devisionAspect] = JSON.parse(JSON.stringify(model));
+                    if (Object.keys(newResult).length > 0) {
+                        // 기존 결과가 있는 경우 새로운 선택지로 추가
+                        const baseKey = Object.keys(newResult)[0].split('_')[0];
+                        const choiceCount = Object.keys(newResult).length;
+                        const newKey = `${baseKey}_choice${choiceCount + 1}`;
+                        newResult[newKey] = model;
+                    } else {
+                        // 첫 번째 결과인 경우
+                        newResult[model.devisionAspect] = model;
+                    }
                     
-                    // 메시지 업데이트 시 새로운 객체로 교체
                     me.updateMessageState(currentMessage.uniqueId, {
-                        result: JSON.parse(JSON.stringify(newResult))
+                        result: newResult,
+                        isGeneratingBoundedContext: me.isGeneratingBoundedContext
                     });
 
-                    // resultDevideBoundedContext도 독립적으로 업데이트
                     me.resultDevideBoundedContext = JSON.parse(JSON.stringify(newResult));
                     console.log("output: ", model)
                 }
@@ -806,36 +807,73 @@
                 this.generateDevideBoundedContext();
             },
 
-            reGenerateWithFeedback(payload) {
-                const { feedback, messageId } = payload;
+            reGenerateWithFeedback(feedback, messageId) {
+                const targetMessage = this.messages.find(msg => msg.uniqueId === messageId);
+                if (!targetMessage) return;
 
-                this.reGenerateMessageId = messageId;
-                
-                const targetMessageIndex = this.messages.findIndex(msg => msg.uniqueId === messageId);
-                if (targetMessageIndex === -1) return;
-                
-                const originalMessage = this.messages[targetMessageIndex];
-                
-                // 새 메시지를 기존 메시지 다음에 추가
-                this.messages.splice(targetMessageIndex + 1, 0, this.generateMessage("userMessage", {}, feedback));
-                this.messages.splice(targetMessageIndex + 2, 0, this.generateMessage("boundedContextResult", {}, feedback));
-                
-                // Generator 실행
-                this.input['devisionAspect'] = this.selectedAspect;
-                this.input['previousAspectModel'] = {
-                    boundedContexts: this.resultDevideBoundedContext[this.selectedAspect].boundedContexts,
-                    relations: this.resultDevideBoundedContext[this.selectedAspect].relations
-                };
-                this.input['feedback'] = feedback;
+                // 새로운 메시지 생성 전에 상태 초기화
+                this.isGeneratingBoundedContext = true;
+                this.isStartMapping = false;
+                this.processingRate = 0;
+                this.currentProcessingBoundedContext = '';
+
+                // 피드백 메시지 추가
+                this.messages.push(
+                    this.generateMessage("userMessage", null, feedback)
+                );
+
+                // 새로운 boundedContext 결과 메시지 추가 (초기 상태로)
+                const newMessage = this.generateMessage("boundedContextResult");
+                this.messages.push(newMessage);
+
+                // 생성 시작
                 this.generator = new DevideBoundedContextGenerator(this);
                 this.state.generator = "DevideBoundedContextGenerator";
                 this.generatorName = "DevideBoundedContextGenerator";
-                this.generator.generate();
+                
+                this.input.devisionAspect = targetMessage.selectedAspect;
+                this.generator.generateWithFeedback(feedback);
             },
 
-            setGenerateOption(option){
+            setGenerateOption(option, isNewChoice) {
                 this.selectedAspect = option.selectedAspects.join('+');
                 this.bcGenerationOption = option;
+
+                if (isNewChoice && this.messages.length > 0) {
+                    // 마지막 boundedContextResult 메시지 찾기
+                    const lastBCResultIndex = [...this.messages].reverse().findIndex(msg => 
+                        msg.type === "boundedContextResult"
+                    );
+                    
+                    if (lastBCResultIndex !== -1) {
+                        const messageIndex = this.messages.length - 1 - lastBCResultIndex;
+                        const targetMessage = this.messages[messageIndex];
+                        
+                        // 기존 메시지를 사용하여 새로운 선택지 생성
+                        this.isGeneratingBoundedContext = true;
+                        this.updateMessageState(targetMessage.uniqueId, {
+                            isGeneratingBoundedContext: this.isGeneratingBoundedContext
+                        });
+
+                        this.generator = new DevideBoundedContextGenerator(this);
+                        this.state.generator = "DevideBoundedContextGenerator";
+                        this.generatorName = "DevideBoundedContextGenerator";
+
+                        this.devisionAspectIndex = 0;
+                        this.input['devisionAspect'] = this.selectedAspect;
+                        this.input['generateOption'] = this.bcGenerationOption;
+                        this.input['requirements'] = {
+                            userStory: this.value.userStory,
+                            summarizedResult: this.summarizedResult,
+                            ddl: this.inputDDL
+                        };
+
+                        this.generator.generate();
+                        return;
+                    }
+                }
+
+                // 첫 번째 생성이거나 기존 메시지를 찾지 못한 경우 새 메시지 생성
                 this.generateDevideBoundedContext();
             },
 
@@ -1059,9 +1097,9 @@
                     return {
                         uniqueId: this.uuid(),
                         type: type,
-                        result: result,
+                        result: result || {}, // 빈 객체로 초기화하여 생성 중 표시가 보이도록 함
                         isStartMapping: this.isStartMapping,
-                        isGeneratingBoundedContext: this.isGeneratingBoundedContext,
+                        isGeneratingBoundedContext: true, // 새 메시지 생성 시 true로 설정
                         processingRate: this.processingRate,
                         currentProcessingBoundedContext: this.currentProcessingBoundedContext,
                         selectedAspect: this.selectedAspect,
