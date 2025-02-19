@@ -8,202 +8,428 @@
             </v-btn> -->
         </v-card-title>
 
-        <v-card-subtitle>
-            <div v-if="Object.keys(resultDevideBoundedContext).length > 0">
-                <p class="mb-0">{{ Object.keys(resultDevideBoundedContext)[0] }}</p>
-            </div>
-        </v-card-subtitle>
+        <v-tabs 
+            v-model="activeTab" 
+            v-if="Object.keys(resultDevideBoundedContext).length > 1"
+        >
+            <v-tab 
+                v-for="(_, index) in Object.keys(resultDevideBoundedContext)" 
+                :key="index"
+            >
+                result {{ index + 1 }}
+            </v-tab>
+        </v-tabs>
 
-        <v-card-subtitle>
-            <div class="d-flex align-center">
-                <div v-if="isGeneratingBoundedContext">
-                    <p class="mb-0">{{ $t('DevideBoundedContextDialog.lodingMessage') }}</p>
+        <!-- 최초 1개 결과인 경우 -->
+        <template v-if="Object.keys(resultDevideBoundedContext).length === 1 || Object.keys(resultDevideBoundedContext).length === 0">
+            <v-card-subtitle>
+                <div v-if="Object.keys(resultDevideBoundedContext).length > 0">
+                    <p class="mb-0">{{ Object.keys(resultDevideBoundedContext)[0] }}</p>
                 </div>
-                <div v-if="isStartMapping">
-                    <p class="mb-0">{{ currentProcessingBoundedContext }} - {{ $t('DevideBoundedContextDialog.mappingMessage') }} ({{ processingRate }}%)</p>
+            </v-card-subtitle>
+
+            <v-card-subtitle>
+                <div class="d-flex align-center">
+                    <div v-if="isGeneratingBoundedContext">
+                        <p class="mb-0">{{ $t('DevideBoundedContextDialog.lodingMessage') }}</p>
+                    </div>
+                    <div v-if="isStartMapping">
+                        <p class="mb-0">{{ currentProcessingBoundedContext }} - {{ $t('DevideBoundedContextDialog.mappingMessage') }} ({{ processingRate }}%)</p>
+                    </div>
+                    <v-progress-circular
+                        v-if="isGeneratingBoundedContext || isStartMapping"
+                        color="primary"
+                        indeterminate
+                        size="24"
+                        class="ml-2"
+                    ></v-progress-circular>
                 </div>
-                <v-progress-circular
-                    v-if="isGeneratingBoundedContext || isStartMapping"
-                    color="primary"
-                    indeterminate
-                    size="24"
-                    class="ml-2"
-                ></v-progress-circular>
-            </div>
-        </v-card-subtitle>
+            </v-card-subtitle>
 
-        <v-card-text v-if="Object.keys(resultDevideBoundedContext).length > 0">
-            <div style="text-align: center;">
-                <vue-mermaid
-                    :id="`mermaid-${messageId}-${renderKey}`"
-                    :key="`mermaid-${messageId}-${renderKey}`"
-                    :nodes="mermaidNodes"
-                    type="graph TD"
-                    @nodeClick="editNode"
-                    :config="config"
-                ></vue-mermaid>
-            </div>
-            
-            <div>
-                <v-card-title class="text-subtitle-1 pa-0 font-weight-bold">{{ $t('DevideBoundedContextDialog.reasonOfSeparation') }}</v-card-title>
-                <v-card-text class="pa-0 pb-4" align="left">{{ resultDevideBoundedContext[selectedAspect].thoughts }}</v-card-text>
+            <v-card-text v-if="Object.keys(resultDevideBoundedContext).length > 0">
+                <div style="text-align: center;">
+                    <vue-mermaid
+                        :id="`mermaid-${messageId}-${renderKey}`"
+                        :key="`mermaid-${messageId}-${renderKey}`"
+                        :nodes="mermaidNodes"
+                        type="graph TD"
+                        @nodeClick="editNode"
+                        :config="config"
+                    ></vue-mermaid>
+                </div>
 
-                <v-card-title v-if="summarizedResult.length > 0" class="pa-0 pb-0 text-subtitle-1">{{ $t('DevideBoundedContextDialog.summarizedResult') }}</v-card-title>
-                <v-card-text v-if="summarizedResult.length > 0" class="pa-0 pb-4" align="left">{{ summarizedResult }}</v-card-text>
+                <div style="text-align: center;">
+                    <BoundedContextMatrix 
+                        :boundedContexts="resultDevideBoundedContext[selectedAspect].boundedContexts" 
+                    />
+                </div>
+                
+                <div>
+                    <v-card-title class="text-subtitle-1 pa-0 font-weight-bold">{{ $t('DevideBoundedContextDialog.reasonOfSeparation') }}</v-card-title>
+                    <v-card-text class="pa-0 pb-4" align="left">{{ resultDevideBoundedContext[selectedAspect].thoughts }}</v-card-text>
 
-                <v-card-title class="pa-0 pb-0 text-subtitle-1 font-weight-bold">{{ $t('DevideBoundedContextDialog.descriptionOfEachBoundedContext') }}</v-card-title>
-                <v-card-text class="pa-0" align="left">* {{ $t('DevideBoundedContextDialog.descriptionOfEditBoundedContext') }}</v-card-text>
-                <v-card class="pa-0 ma-0 mt-4" outlined>
-                    <v-data-table
-                        :items="getGroupedBoundedContextRequirements()"
-                        :headers="boundedContextHeaders"
-                        :hide-default-footer="true"
-                        :items-per-page="-1"
-                        show-expand
-                        :expand-icon="expandIcon"
-                        :single-expand="false"
-                        item-key="name"
-                        :key="tableRenderKey"
-                    >
-                        <template v-slot:item.actions="{ item }">
-                            <v-icon 
-                                small 
-                                color="error"
-                                @click="deleteBoundedContext(item)"
-                            >
-                                mdi-delete
-                            </v-icon>
-                        </template>
+                    <v-card-title v-if="summarizedResult.length > 0" class="pa-0 pb-0 text-subtitle-1">{{ $t('DevideBoundedContextDialog.summarizedResult') }}</v-card-title>
+                    <v-card-text v-if="summarizedResult.length > 0" class="pa-0 pb-4" align="left">{{ summarizedResult }}</v-card-text>
 
-                        <template v-slot:item.name="{ item }">
-                            <v-edit-dialog
-                                :return-value.sync="item.name"
-                                @save="saveItemEdit(item, 'name')"
-                                @open="initializeEditFields(item)"
-                                @cancel="cancelEdit(item)"
-                                large
-                                persistent
-                            >
-                                <template v-slot:input>
-                                    <v-text-field v-model="editedFields.name"
-                                        :label="$t('DevideBoundedContextDialog.edit.boundedContextName')"
-                                        :rules="[v => !!v || $t('validation.required')]"
-                                        single-line
-                                        class="mb-2"
-                                    ></v-text-field>
-                                    <v-text-field v-model="editedFields.alias"
-                                        :label="$t('DevideBoundedContextDialog.edit.boundedContextAlias')"
-                                        :rules="[v => !!v || $t('validation.required')]"
-                                        single-line
-                                    ></v-text-field>
-                                </template>
-                                <span>{{ item.name }}</span>
-                            </v-edit-dialog>
-                        </template>
+                    <v-card-title class="pa-0 pb-0 text-subtitle-1 font-weight-bold">{{ $t('DevideBoundedContextDialog.descriptionOfEachBoundedContext') }}</v-card-title>
+                    <v-card-text class="pa-0" align="left">* {{ $t('DevideBoundedContextDialog.descriptionOfEditBoundedContext') }}</v-card-text>
+                    <v-card class="pa-0 ma-0 mt-4" outlined>
+                        <v-data-table
+                            :items="getGroupedBoundedContextRequirements()"
+                            :headers="boundedContextHeaders"
+                            :hide-default-footer="true"
+                            :items-per-page="-1"
+                            show-expand
+                            :expand-icon="expandIcon"
+                            :single-expand="false"
+                            item-key="name"
+                            :key="tableRenderKey"
+                        >
+                            <template v-slot:item.actions="{ item }">
+                                <v-icon 
+                                    small 
+                                    color="error"
+                                    @click="deleteBoundedContext(item)"
+                                >
+                                    mdi-delete
+                                </v-icon>
+                            </template>
 
-                        <template v-slot:item.importance="{ item }">
-                            <v-edit-dialog
-                                :return-value.sync="item.importance"
-                                @save="saveItemEdit(item, 'importance')"
-                                @open="initializeEditFields(item)"
-                                @cancel="cancelEdit(item)"
-                                large
-                                persistent
-                            >
-                                <template v-slot:input>
-                                    <v-select
-                                        v-model="editedFields.importance"
-                                        :items="importances"
-                                        :label="$t('DevideBoundedContextDialog.edit.importance')"
-                                        single-line
-                                    ></v-select>
-                                </template>
-                                <span>{{ item.importance }}</span>
-                            </v-edit-dialog>
-                        </template>
+                            <template v-slot:item.name="{ item }">
+                                <v-edit-dialog
+                                    :return-value.sync="item.name"
+                                    @save="saveItemEdit(item, 'name')"
+                                    @open="initializeEditFields(item)"
+                                    @cancel="cancelEdit(item)"
+                                    large
+                                    persistent
+                                >
+                                    <template v-slot:input>
+                                        <v-text-field v-model="editedFields.name"
+                                            :label="$t('DevideBoundedContextDialog.edit.boundedContextName')"
+                                            :rules="[v => !!v || $t('validation.required')]"
+                                            single-line
+                                            class="mb-2"
+                                        ></v-text-field>
+                                        <v-text-field v-model="editedFields.alias"
+                                            :label="$t('DevideBoundedContextDialog.edit.boundedContextAlias')"
+                                            :rules="[v => !!v || $t('validation.required')]"
+                                            single-line
+                                        ></v-text-field>
+                                    </template>
+                                    <span>{{ item.name }}</span>
+                                </v-edit-dialog>
+                            </template>
 
-                        <template v-slot:item.implementationStrategy="{ item }">
-                            <v-edit-dialog
-                                :return-value.sync="item.implementationStrategy"
-                                @save="saveItemEdit(item, 'implementationStrategy')"
-                                @open="initializeEditFields(item)"
-                                @cancel="cancelEdit(item)"
-                                large
-                                persistent
-                            >
-                                <template v-slot:input>
-                                    <v-select
-                                        v-model="editedFields.implementationStrategy"
-                                        :items="implementationStrategies"
-                                        :label="$t('DevideBoundedContextDialog.edit.implementationStrategy')"
-                                        single-line
-                                    ></v-select>
-                                </template>
-                                <span>{{ item.implementationStrategy }}</span>
-                            </v-edit-dialog>
-                        </template>
+                            <template v-slot:item.importance="{ item }">
+                                <v-edit-dialog
+                                    :return-value.sync="item.importance"
+                                    @save="saveItemEdit(item, 'importance')"
+                                    @open="initializeEditFields(item)"
+                                    @cancel="cancelEdit(item)"
+                                    large
+                                    persistent
+                                >
+                                    <template v-slot:input>
+                                        <v-select
+                                            v-model="editedFields.importance"
+                                            :items="importances"
+                                            :label="$t('DevideBoundedContextDialog.edit.importance')"
+                                            single-line
+                                        ></v-select>
+                                    </template>
+                                    <span>{{ item.importance }}</span>
+                                </v-edit-dialog>
+                            </template>
 
-                        <template v-slot:expanded-item="{ headers, item }">
-                            <td class="pl-0" :colspan="headers.length">
-                                <v-simple-table dense class="requirement-subtable">
-                                    <tbody>
-                                        <tr v-for="req in item.requirements" :key="req.type">
-                                            <td class="requirement-type" width="100">{{ req.type }}</td>
-                                            <td class="requirement-text">{{ req.text }}</td>
-                                        </tr>
-                                    </tbody>
-                                </v-simple-table>
-                            </td>
-                        </template>
-                    </v-data-table>
+                            <template v-slot:item.implementationStrategy="{ item }">
+                                <v-edit-dialog
+                                    :return-value.sync="item.implementationStrategy"
+                                    @save="saveItemEdit(item, 'implementationStrategy')"
+                                    @open="initializeEditFields(item)"
+                                    @cancel="cancelEdit(item)"
+                                    large
+                                    persistent
+                                >
+                                    <template v-slot:input>
+                                        <v-select
+                                            v-model="editedFields.implementationStrategy"
+                                            :items="implementationStrategies"
+                                            :label="$t('DevideBoundedContextDialog.edit.implementationStrategy')"
+                                            single-line
+                                        ></v-select>
+                                    </template>
+                                    <span>{{ item.implementationStrategy }}</span>
+                                </v-edit-dialog>
+                            </template>
+
+                            <template v-slot:expanded-item="{ headers, item }">
+                                <td class="pl-0" :colspan="headers.length">
+                                    <v-simple-table dense class="requirement-subtable">
+                                        <tbody>
+                                            <tr v-for="req in item.requirements" :key="req.type">
+                                                <td class="requirement-type" width="100">{{ req.type }}</td>
+                                                <td class="requirement-text">{{ req.text }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </v-simple-table>
+                                </td>
+                            </template>
+                        </v-data-table>
+                    </v-card>
+                    <v-card class="pa-0 ma-0 mt-4" outlined>
+                        <v-card-title class="text-subtitle-1 pa-4">{{ $t('DevideBoundedContextDialog.relations') }}</v-card-title>
+                        <v-data-table 
+                            :items="resultDevideBoundedContext[selectedAspect].explanations" 
+                            :headers="explanationsHeaders" 
+                            :hide-default-footer="true"
+                        ></v-data-table>
+                    </v-card>
+                </div>
+
+                <v-card class="mt-4 pa-4" outlined>
+                    <v-textarea v-model="feedback" 
+                        :disabled="isGeneratingBoundedContext" 
+                        :label="$t('DevideBoundedContextDialog.feedback')"
+                        rows="3"
+                        outlined
+                        auto-grow
+                    ></v-textarea>
+                    <v-row class="pa-0 ma-0">
+                        <v-spacer></v-spacer>
+                        <v-btn :disabled="feedback === '' || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" @click="reGenerateWithFeedback()">
+                            {{ $t('DevideBoundedContextDialog.reGenerate') }} 
+                        </v-btn>
+                    </v-row>
                 </v-card>
-                <v-card class="pa-0 ma-0 mt-4" outlined>
-                    <v-card-title class="text-subtitle-1 pa-4">{{ $t('DevideBoundedContextDialog.relations') }}</v-card-title>
-                    <v-data-table 
-                        :items="resultDevideBoundedContext[selectedAspect].explanations" 
-                        :headers="explanationsHeaders" 
-                        :hide-default-footer="true"
-                    ></v-data-table>
-                </v-card>
-            </div>
-
-            <v-card class="mt-4 pa-4" outlined>
-                <v-textarea v-model="feedback" 
-                    :disabled="isGeneratingBoundedContext" 
-                    :label="$t('DevideBoundedContextDialog.feedback')"
-                    rows="3"
-                    outlined
-                    auto-grow
-                ></v-textarea>
-                <v-row class="pa-0 ma-0">
+                <v-row class="pa-0 ma-0 pt-4">
                     <v-spacer></v-spacer>
-                    <v-btn :disabled="feedback === '' || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" @click="reGenerateWithFeedback()">
-                        {{ $t('DevideBoundedContextDialog.reGenerate') }} 
+                    <!-- <v-btn @click="reGenerate()"
+                        :disabled="isGeneratingBoundedContext || isStartMapping"
+                    >
+                        <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('DevideBoundedContextDialog.reGenerate') }}
+                    </v-btn> -->
+                    <v-btn 
+                        :disabled="isGeneratingBoundedContext || isStartMapping" 
+                        class="auto-modeling-btn" 
+                        color="primary" 
+                        @click="createModel()"
+                    >
+                        {{ $t('DevideBoundedContextDialog.createAggregateDraft') }}
                     </v-btn>
                 </v-row>
-            </v-card>
-            <v-row class="pa-0 ma-0 pt-4">
-                <v-spacer></v-spacer>
-                <!-- <v-btn @click="reGenerate()"
-                    :disabled="isGeneratingBoundedContext || isStartMapping"
-                >
-                    <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('DevideBoundedContextDialog.reGenerate') }}
-                </v-btn> -->
-                <v-btn 
-                    :disabled="isGeneratingBoundedContext || isStartMapping" 
-                    class="auto-modeling-btn" 
-                    color="primary" 
-                    @click="createModel()"
-                >
-                    {{ $t('DevideBoundedContextDialog.createAggregateDraft') }}
-                </v-btn>
-            </v-row>
-        </v-card-text>
+            </v-card-text>
+        </template>
+
+        <!-- 여러 결과인 경우 -->
+        <v-tabs-items 
+            v-model="activeTab"
+            v-else-if="Object.keys(resultDevideBoundedContext).length > 1"
+        >
+            <v-tab-item 
+                v-for="(aspect, index) in Object.keys(resultDevideBoundedContext)"
+                :key="index"
+            >
+
+                <v-card-subtitle>
+                    <div v-if="Object.keys(resultDevideBoundedContext).length > 0">
+                        <p class="mb-0">{{ Object.keys(resultDevideBoundedContext)[0] }}</p>
+                    </div>
+                </v-card-subtitle>
+
+                <v-card-subtitle>
+                    <div class="d-flex align-center">
+                        <div v-if="isGeneratingBoundedContext">
+                            <p class="mb-0">{{ $t('DevideBoundedContextDialog.lodingMessage') }}</p>
+                        </div>
+                        <div v-if="isStartMapping">
+                            <p class="mb-0">{{ currentProcessingBoundedContext }} - {{ $t('DevideBoundedContextDialog.mappingMessage') }} ({{ processingRate }}%)</p>
+                        </div>
+                        <v-progress-circular
+                            v-if="isGeneratingBoundedContext || isStartMapping"
+                            color="primary"
+                            indeterminate
+                            size="24"
+                            class="ml-2"
+                        ></v-progress-circular>
+                    </div>
+                </v-card-subtitle>
+
+                <v-card-text v-if="Object.keys(resultDevideBoundedContext).length > 0">
+                    <div style="text-align: center;">
+                        <vue-mermaid
+                            :id="`mermaid-${messageId}-${index}-${renderKey}`"
+                            :key="`mermaid-${messageId}-${index}-${renderKey}`"
+                            :nodes="getMermaidNodesForAspect(aspect)"
+                            type="graph TD"
+                            @nodeClick="editNode"
+                            :config="config"
+                        ></vue-mermaid>
+                    </div>
+                    
+                    <div>
+                        <v-card-title class="text-subtitle-1 pa-0 font-weight-bold">{{ $t('DevideBoundedContextDialog.reasonOfSeparation') }}</v-card-title>
+                        <v-card-text class="pa-0 pb-4" align="left">{{ resultDevideBoundedContext[selectedAspect].thoughts }}</v-card-text>
+
+                        <v-card-title v-if="summarizedResult.length > 0" class="pa-0 pb-0 text-subtitle-1">{{ $t('DevideBoundedContextDialog.summarizedResult') }}</v-card-title>
+                        <v-card-text v-if="summarizedResult.length > 0" class="pa-0 pb-4" align="left">{{ summarizedResult }}</v-card-text>
+
+                        <v-card-title class="pa-0 pb-0 text-subtitle-1 font-weight-bold">{{ $t('DevideBoundedContextDialog.descriptionOfEachBoundedContext') }}</v-card-title>
+                        <v-card-text class="pa-0" align="left">* {{ $t('DevideBoundedContextDialog.descriptionOfEditBoundedContext') }}</v-card-text>
+                        <v-card class="pa-0 ma-0 mt-4" outlined>
+                            <v-data-table
+                                :items="getGroupedBoundedContextRequirements()"
+                                :headers="boundedContextHeaders"
+                                :hide-default-footer="true"
+                                :items-per-page="-1"
+                                show-expand
+                                :expand-icon="expandIcon"
+                                :single-expand="false"
+                                item-key="name"
+                                :key="tableRenderKey"
+                            >
+                                <template v-slot:item.actions="{ item }">
+                                    <v-icon 
+                                        small 
+                                        color="error"
+                                        @click="deleteBoundedContext(item)"
+                                    >
+                                        mdi-delete
+                                    </v-icon>
+                                </template>
+
+                                <template v-slot:item.name="{ item }">
+                                    <v-edit-dialog
+                                        :return-value.sync="item.name"
+                                        @save="saveItemEdit(item, 'name')"
+                                        @open="initializeEditFields(item)"
+                                        @cancel="cancelEdit(item)"
+                                        large
+                                        persistent
+                                    >
+                                        <template v-slot:input>
+                                            <v-text-field v-model="editedFields.name"
+                                                :label="$t('DevideBoundedContextDialog.edit.boundedContextName')"
+                                                :rules="[v => !!v || $t('validation.required')]"
+                                                single-line
+                                                class="mb-2"
+                                            ></v-text-field>
+                                            <v-text-field v-model="editedFields.alias"
+                                                :label="$t('DevideBoundedContextDialog.edit.boundedContextAlias')"
+                                                :rules="[v => !!v || $t('validation.required')]"
+                                                single-line
+                                            ></v-text-field>
+                                        </template>
+                                        <span>{{ item.name }}</span>
+                                    </v-edit-dialog>
+                                </template>
+
+                                <template v-slot:item.importance="{ item }">
+                                    <v-edit-dialog
+                                        :return-value.sync="item.importance"
+                                        @save="saveItemEdit(item, 'importance')"
+                                        @open="initializeEditFields(item)"
+                                        @cancel="cancelEdit(item)"
+                                        large
+                                        persistent
+                                    >
+                                        <template v-slot:input>
+                                            <v-select
+                                                v-model="editedFields.importance"
+                                                :items="importances"
+                                                :label="$t('DevideBoundedContextDialog.edit.importance')"
+                                                single-line
+                                            ></v-select>
+                                        </template>
+                                        <span>{{ item.importance }}</span>
+                                    </v-edit-dialog>
+                                </template>
+
+                                <template v-slot:item.implementationStrategy="{ item }">
+                                    <v-edit-dialog
+                                        :return-value.sync="item.implementationStrategy"
+                                        @save="saveItemEdit(item, 'implementationStrategy')"
+                                        @open="initializeEditFields(item)"
+                                        @cancel="cancelEdit(item)"
+                                        large
+                                        persistent
+                                    >
+                                        <template v-slot:input>
+                                            <v-select
+                                                v-model="editedFields.implementationStrategy"
+                                                :items="implementationStrategies"
+                                                :label="$t('DevideBoundedContextDialog.edit.implementationStrategy')"
+                                                single-line
+                                            ></v-select>
+                                        </template>
+                                        <span>{{ item.implementationStrategy }}</span>
+                                    </v-edit-dialog>
+                                </template>
+
+                                <template v-slot:expanded-item="{ headers, item }">
+                                    <td class="pl-0" :colspan="headers.length">
+                                        <v-simple-table dense class="requirement-subtable">
+                                            <tbody>
+                                                <tr v-for="req in item.requirements" :key="req.type">
+                                                    <td class="requirement-type" width="100">{{ req.type }}</td>
+                                                    <td class="requirement-text">{{ req.text }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </v-simple-table>
+                                    </td>
+                                </template>
+                            </v-data-table>
+                        </v-card>
+                        <v-card class="pa-0 ma-0 mt-4" outlined>
+                            <v-card-title class="text-subtitle-1 pa-4">{{ $t('DevideBoundedContextDialog.relations') }}</v-card-title>
+                            <v-data-table 
+                                :items="resultDevideBoundedContext[selectedAspect].explanations" 
+                                :headers="explanationsHeaders" 
+                                :hide-default-footer="true"
+                            ></v-data-table>
+                        </v-card>
+                    </div>
+
+                    <v-card class="mt-4 pa-4" outlined>
+                        <v-textarea v-model="feedback" 
+                            :disabled="isGeneratingBoundedContext" 
+                            :label="$t('DevideBoundedContextDialog.feedback')"
+                            rows="3"
+                            outlined
+                            auto-grow
+                        ></v-textarea>
+                        <v-row class="pa-0 ma-0">
+                            <v-spacer></v-spacer>
+                            <v-btn :disabled="feedback === '' || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" @click="reGenerateWithFeedback()">
+                                {{ $t('DevideBoundedContextDialog.reGenerate') }} 
+                            </v-btn>
+                        </v-row>
+                    </v-card>
+                    <v-row class="pa-0 ma-0 pt-4">
+                        <v-spacer></v-spacer>
+                        <!-- <v-btn @click="reGenerate()"
+                            :disabled="isGeneratingBoundedContext || isStartMapping"
+                        >
+                            <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('DevideBoundedContextDialog.reGenerate') }}
+                        </v-btn> -->
+                        <v-btn 
+                            :disabled="isGeneratingBoundedContext || isStartMapping" 
+                            class="auto-modeling-btn" 
+                            color="primary" 
+                            @click="createModel()"
+                        >
+                            {{ $t('DevideBoundedContextDialog.createAggregateDraft') }}
+                        </v-btn>
+                    </v-row>
+                </v-card-text>
+            </v-tab-item>
+        </v-tabs-items>
     </v-card>
 </template>
 
 <script>
     import VueMermaid from '@/components/VueMermaid.vue';
+    import BoundedContextMatrix from './BoundedContextMatrix.vue';
 
     export default {
         name: 'devide-bounded-context-dialog',
@@ -250,7 +476,8 @@
             }
         },
         components: {
-            VueMermaid
+            VueMermaid,
+            BoundedContextMatrix
         },
         data() {
             return {
@@ -306,7 +533,8 @@
                     { text: 'Rich Domain Model', value: 'Rich Domain Model' },
                     { text: 'Transaction Script', value: 'Transaction Script' },
                     { text: 'Active Record', value: 'Active Record' }
-                ]
+                ],
+                activeTab: 0
             }
         },
         mounted() {
@@ -327,6 +555,14 @@
                     }
                 },
                 deep: true
+            },
+
+            activeTab: {
+                handler() {
+                    this.$nextTick(() => {
+                        this.renderKey++;
+                    });
+                }
             }
         },
         methods: {
@@ -540,6 +776,26 @@
                     }
                 }
             },
+            addNewChoice(newResult) {
+                const existingKeys = Object.keys(this.resultDevideBoundedContext);
+                if (existingKeys.length > 0) {
+                    // 기존 첫 번째 메시지의 키를 기반으로 새로운 키 생성
+                    const baseKey = existingKeys[0].split('_')[0]; // 기본 키 추출
+                    const newKey = `${baseKey}_choice${existingKeys.length + 1}`;
+                    this.$set(this.resultDevideBoundedContext, newKey, newResult);
+                    this.activeTab = existingKeys.length; // 새로 추가된 탭으로 이동
+                } else {
+                    // 첫 번째 결과인 경우
+                    this.$set(this.resultDevideBoundedContext, Object.keys(newResult)[0], newResult[Object.keys(newResult)[0]]);
+                }
+            },
+            getMermaidNodesForAspect(aspect) {
+                if (!this.resultDevideBoundedContext[aspect]) return {};
+                return this.generateNodes({
+                    boundedContexts: this.resultDevideBoundedContext[aspect].boundedContexts || [],
+                    relations: this.resultDevideBoundedContext[aspect].relations || []
+                });
+            }
         }
     }
 </script>
