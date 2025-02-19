@@ -5,7 +5,7 @@ const { zodResponseFormat } = require("../../utils")
 
 class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
-        super(client, {}, "complexModel");
+        super(client);
 
         this.generatorName = "DraftGeneratorByFunctions"
         this.checkInputParamsKeys = ["description", "boundedContext", "accumulatedDrafts"] // Optional ["feedback"]
@@ -645,34 +645,21 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
     _removeOptionsWithExistingAggregates(output) {
         if(!output || !output.options) return;
 
-        const optionsByAggregateCount = {};
         const filteredOptions = [];
 
-        for (const option of output.options) {
+        for (const option of structuredClone(output.options)) {
             if (!option.structure) continue;
 
-            let hasExistingAggregate = false;
+            let validAggregateInfos = []
             for (const aggregateInfo of option.structure) {
                 if (!aggregateInfo.aggregate || !aggregateInfo.aggregate.name) continue;
-                if (this.client.input.existingAggregates.includes(aggregateInfo.aggregate.name)) {
-                    hasExistingAggregate = true;
-                    break;
-                }
+                if (this.client.input.existingAggregates.includes(aggregateInfo.aggregate.name)) continue
+                validAggregateInfos.push(aggregateInfo)
             }
-            if (hasExistingAggregate) continue;
+            if(validAggregateInfos.length === 0) continue
 
-            const aggregateCount = option.structure.length;
-            if(!aggregateCount) continue
-            if (!optionsByAggregateCount[aggregateCount])
-                optionsByAggregateCount[aggregateCount] = [];
-            
-            optionsByAggregateCount[aggregateCount].push(option);
-        }
-
-        for (const count in optionsByAggregateCount) {
-            if (optionsByAggregateCount[count].length > 0) {
-                filteredOptions.push(optionsByAggregateCount[count][0]);
-            }
+            option.structure = validAggregateInfos
+            filteredOptions.push(option)
         }
 
         output.options = filteredOptions;

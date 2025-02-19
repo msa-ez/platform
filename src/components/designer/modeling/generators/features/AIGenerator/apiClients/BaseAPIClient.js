@@ -89,6 +89,12 @@ class BaseAPIClient {
             user: "user",
             assistant: "assistant"
         }
+
+
+        // 생성된 생성기 인스턴스는 반드시 한번에 하나의 요청만을 수행해야 됨
+        // 동시에 요청 수행시에 state와 같은 속성이 공유되어서 의도치 않은 동작을 하게됨
+        // 따라서 lockKey와 같은 세마포어를 통해서 동시 요청을 방지함
+        g.lockKey = false
     }
        
     getPreferredLanguage(){
@@ -142,7 +148,18 @@ class BaseAPIClient {
 
     async generate(generateOption) {
         const g = this.aiGenerator
-        g.token = await g.getToken(g.modelInfo.vendor)
+
+        if(g.lockKey) {
+            return Promise.reject(new Error("현재 다른 요청이 진행 중입니다. 잠시 후 다시 시도해 주세요."));
+        }
+
+        g.lockKey = true
+        try {
+            g.token = await g.getToken(g.modelInfo.vendor);
+        } catch (err) {
+            g.lockKey = false
+            return Promise.reject(err);
+        }
 
         return new Promise(async (resolve, reject) => {
             g.state = 'running'
@@ -204,7 +221,9 @@ class BaseAPIClient {
                     g.stop()
                 })
             }
-        })
+        }).finally(() => {
+            g.lockKey = false;
+        });
     }
     /**
      * **상위 클래스에서 반드시 재정의해야하는 메소드**

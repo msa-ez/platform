@@ -494,6 +494,7 @@ ${JSON.stringify(exampleOutputs)}
             startTime: this.startTime,
             currentTime: Date.now(),
             passedSeconds: (Date.now() - this.startTime) / 1000,
+            currentState: this.state,
             actions: {
                 stopGeneration: () => {
                     this.stop()
@@ -504,11 +505,15 @@ ${JSON.stringify(exampleOutputs)}
             }
         }
 
+        if(returnObj.isStopped) 
+            return returnObj
+
         if(!text) {
             console.log("[*] 별도의 처리할 텍스트가 없음", { ...this._makeDebugObject(returnObj) })
             return returnObj
         }
 
+        
         if(this.isFirstResponse) {
             this.prevPartialAiOutput = {}
             returnObj.isFirstResponse = this.isFirstResponse
