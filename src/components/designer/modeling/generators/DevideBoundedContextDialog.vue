@@ -16,7 +16,7 @@
                 v-for="(_, index) in Object.keys(resultDevideBoundedContext)" 
                 :key="index"
             >
-                result {{ index + 1 }}
+                version {{ index + 1 }}
             </v-tab>
         </v-tabs>
 
@@ -266,10 +266,16 @@
                             :config="config"
                         ></vue-mermaid>
                     </div>
+
+                    <div style="text-align: center;">
+                        <BoundedContextMatrix 
+                            :boundedContexts="resultDevideBoundedContext[aspect].boundedContexts" 
+                        />
+                    </div>
                     
                     <div>
                         <v-card-title class="text-subtitle-1 pa-0 font-weight-bold">{{ $t('DevideBoundedContextDialog.reasonOfSeparation') }}</v-card-title>
-                        <v-card-text class="pa-0 pb-4" align="left">{{ resultDevideBoundedContext[selectedAspect].thoughts }}</v-card-text>
+                        <v-card-text class="pa-0 pb-4" align="left">{{ resultDevideBoundedContext[aspect].thoughts }}</v-card-text>
 
                         <v-card-title v-if="summarizedResult.length > 0" class="pa-0 pb-0 text-subtitle-1">{{ $t('DevideBoundedContextDialog.summarizedResult') }}</v-card-title>
                         <v-card-text v-if="summarizedResult.length > 0" class="pa-0 pb-4" align="left">{{ summarizedResult }}</v-card-text>
@@ -278,7 +284,7 @@
                         <v-card-text class="pa-0" align="left">* {{ $t('DevideBoundedContextDialog.descriptionOfEditBoundedContext') }}</v-card-text>
                         <v-card class="pa-0 ma-0 mt-4" outlined>
                             <v-data-table
-                                :items="getGroupedBoundedContextRequirements()"
+                                :items="getGroupedBoundedContextRequirements(aspect)"
                                 :headers="boundedContextHeaders"
                                 :hide-default-footer="true"
                                 :items-per-page="-1"
@@ -383,7 +389,7 @@
                         <v-card class="pa-0 ma-0 mt-4" outlined>
                             <v-card-title class="text-subtitle-1 pa-4">{{ $t('DevideBoundedContextDialog.relations') }}</v-card-title>
                             <v-data-table 
-                                :items="resultDevideBoundedContext[selectedAspect].explanations" 
+                                :items="resultDevideBoundedContext[aspect].explanations" 
                                 :headers="explanationsHeaders" 
                                 :hide-default-footer="true"
                             ></v-data-table>
@@ -632,8 +638,13 @@
                 this.feedback = '';
             },
 
-            getGroupedBoundedContextRequirements() {
-                let key = Object.keys(this.resultDevideBoundedContext)[0];
+            getGroupedBoundedContextRequirements(aspect) {
+                let key = null;
+                if(!aspect) {
+                    key = Object.keys(this.resultDevideBoundedContext)[0];
+                }else{
+                    key = aspect;
+                }
 
                 if (!this.resultDevideBoundedContext[key] || !this.resultDevideBoundedContext[key].boundedContexts) return [];
     
