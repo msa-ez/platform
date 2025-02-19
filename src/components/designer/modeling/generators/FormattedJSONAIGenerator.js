@@ -165,17 +165,18 @@ class FormattedJSONAIGenerator extends AIGenerator {
         if(this.useJsonRestoreStrategy && this.jsonOutputTextToRestore) {
             this.changeToSimpleModel()
 
+            this.createdPrompt = this._getJsonRestorePrompt(this.jsonOutputTextToRestore)
+            console.log("[*] Json 파싱에러가 난 데이터를 복구하는 전략으로 시도", {
+                prompt: structuredClone(this.createdPrompt),
+                modelInfo: this.modelInfo
+            })
+
             this.useJsonRestoreStrategy = false
             this.jsonOutputTextToRestore = undefined
 
             this.savedOnSendCallback = this.client.onSend
             this.client.onSend = undefined
 
-            this.createdPrompt = this._getJsonRestorePrompt(this.jsonOutputTextToRestore)
-            console.log("[*] Json 파싱에러가 난 데이터를 복구하는 전략으로 시도", {
-                prompt: structuredClone(this.createdPrompt),
-                modelInfo: this.modelInfo
-            })
             return this.createdPrompt
         }
         else {
