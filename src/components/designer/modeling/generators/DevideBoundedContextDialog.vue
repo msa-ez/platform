@@ -422,7 +422,7 @@
                             :disabled="isGeneratingBoundedContext || isStartMapping" 
                             class="auto-modeling-btn" 
                             color="primary" 
-                            @click="createModel()"
+                            @click="createModel(aspect)"
                         >
                             {{ $t('DevideBoundedContextDialog.createAggregateDraft') }}
                         </v-btn>
@@ -611,8 +611,11 @@
                 console.log("node clicked: ", node);
             },
 
-            createModel(){
-                this.$emit("createModel", this.resultDevideBoundedContext[Object.keys(this.resultDevideBoundedContext)[0]]);
+            createModel(aspect){
+                if(!aspect) {
+                    aspect = Object.keys(this.resultDevideBoundedContext)[0];
+                }
+                this.$emit("createModel", this.resultDevideBoundedContext[aspect]);
             },
 
             closeDialog(){
