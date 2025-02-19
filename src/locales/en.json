@@ -37,7 +37,8 @@
     "additionalRequirements": "Additional Requirements",
     "generate" : "Generate",
     "bcNumberLimitError": "Must be 15 or less",
-    "invalidNumberError": "Numbers only"
+    "invalidNumberError": "Numbers only",
+    "ContextMappingRelationType": "Context Mapping Relation Type"
   },
   "BoundedContextPanel" : {
     "name": "Name",

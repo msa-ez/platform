@@ -81,6 +81,16 @@
                     </v-col>
 
                     <v-col class="pa-4 pt-0" cols="12">
+                        <div class="d-flex align-center">
+                            <span class="mr-4">{{ $t('BCGenerationOption.ContextMappingRelationType') }}</span>
+                        </div>
+                        <v-switch
+                            v-model="localOptions.isProtocolMode"
+                            :label="getRelationTypeLabel()"
+                        ></v-switch>
+                    </v-col>
+
+                    <v-col class="pa-4 pt-0" cols="12">
                         <v-textarea
                             v-model="localOptions.additionalOptions"
                             :label="$t('BCGenerationOption.additionalRequirements')"
@@ -130,7 +140,8 @@ export default {
                 numberOfBCs: 3,
                 selectedAspects: [],
                 additionalOptions: '',
-                aspectDetails: {}
+                aspectDetails: {},
+                isProtocolMode: true
             },
             availableAspects: [
                 this.$t('DevideBoundedContextDialog.domainAspect'),
@@ -221,7 +232,7 @@ export default {
                     options.additionalOptions += (options.additionalOptions ? '\n\n' : '') + details;
                 }
                 
-                this.$emit('setGenerateOption', options);
+                this.$emit('setGenerateOption', options, true); 
             } else {
                 alert('Number of Bounded Contexts must be less than or equal to 15');
             }
@@ -263,6 +274,11 @@ export default {
             }else if(aspect === this.$t('DevideBoundedContextDialog.infrastructureAspect')){
                 return 'infrastructureAspect';
             }
+        },
+        getRelationTypeLabel() {
+            return this.localOptions.isProtocolMode
+                ? 'Protocol Mode (Request/Response and Pub/Sub)'
+                : 'Classic Mode (Confirmist, Share Kernel, Anti-corruption, Seperate Ways, Customer-Supplier)';
         }
     }
 }

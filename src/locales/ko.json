@@ -37,7 +37,8 @@
     "additionalRequirements": "추가 요구사항",
     "generate" : "생성",
     "bcNumberLimitError": "15개 이하여야 합니다",
-    "invalidNumberError": "숫자만 입력 가능합니다."
+    "invalidNumberError": "숫자만 입력 가능합니다.",
+    "ContextMappingRelationType": "컨텍스트 매핑 관계 유형"
   },
   "BoundedContextPanel" : {
     "name": "이름",

@@ -36,6 +36,16 @@ Key principles:
 - Group related behaviors and data together
 - Minimize inter-context dependencies
 
+Scoring Instructions:
+- complexity: Score from 0.0 to 1.0 indicating the technical and business complexity
+  - 0.0: Very simple, straightforward implementation
+  - 0.5: Moderate complexity with some business rules
+  - 1.0: Highly complex with many business rules and technical challenges
+- differentiation: Score from 0.0 to 1.0 indicating business differentiation value
+  - 0.0: Generic functionality, easily replaceable
+  - 0.5: Some unique business value
+  - 1.0: Core competitive advantage, highly unique
+
 Language Instruction of Output:
 - Use the "same national language" as the Requirements at thoughts, context of explanations, alias, requirements.
 - When referring to bounded context in explanations, use alias.
@@ -49,6 +59,8 @@ The format must be as follows:
             "name":"name of Bounded Context in PascalCase",
             "alias":"alias of Bounded Context in language of Requirements",
             "importance": "Core Domain" || "Supporting Domain" || "Generic Domain",
+            "complexity": "score of complexity", // 0.0 ~ 1.0
+            "differentiation": "score of differentiation", // 0.0 ~ 1.0
             "implementationStrategy": "Event Sourcing" || "Rich Domain Model" || "Transaction Script" || "Active Record",
             "aggregates":[ // Aggregates that can be extracted from this Bounded Context.
                 {
@@ -63,7 +75,7 @@ The format must be as follows:
       [
         {
             "name":"name of relation between Bounded Contexts",
-            "type": "Confirmist" || "Share Kernel" || "Anti-corruption" || "Seperate Ways" || "Customer-Supplier",
+            "type":${this.relationTypePrompt()},
             "upStream": {
                 "name":"name of upstream Bounded Context",
                 "alias":"alias of upstream Bounded Context in language of Requirements"
@@ -193,6 +205,14 @@ Important: In the "thoughts" section of your response, please explicitly explain
 `;
         } else {
             return '';
+        }
+    }
+
+    relationTypePrompt(){
+        if(this.client.input['generateOption']['isProtocolMode']){
+            return `"Request/Response || Pub/Sub"`;
+        }else{
+            return `"Confirmist" || "Share Kernel" || "Anti-corruption" || "Seperate Ways" || "Customer-Supplier"`;
         }
     }
 
