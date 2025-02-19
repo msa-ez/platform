@@ -54,9 +54,7 @@
                         </v-icon>
                     </v-row>
                     <v-card-text id="scroll-text"
-                        style="height:calc(100vh - 40px);
-                        overflow: auto;
-                        padding: 0px 100px 100px 100px !important;"
+                        class="gs-auto-modeling-box"
                     >
                         <v-row class="pt-2 pb-2">
                             <v-spacer></v-spacer>

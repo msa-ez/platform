@@ -9,6 +9,10 @@ class SanityCheckGenerator extends FormattedJSONAIGenerator{
     }
 
 
+    __buildAgentRolePrompt() {
+        return `You are a very useful assistant.`
+    }
+
     __buildTaskGuidelinesPrompt(){
         return `Please return the text entered by the user as-is in a JSON object.`
     }
@@ -19,6 +23,18 @@ class SanityCheckGenerator extends FormattedJSONAIGenerator{
     output: "<text entered by the user>"
 }
 `
+    }
+
+    __buildJsonExampleInputFormat() {
+        return {
+            "text": "Nice to meet you"
+        }
+    }
+
+    __buildJsonExampleOutputFormat() {
+        return {
+            "output": "Nice to meet you"
+        }
     }
 
     __buildJsonUserQueryInputFormat() {

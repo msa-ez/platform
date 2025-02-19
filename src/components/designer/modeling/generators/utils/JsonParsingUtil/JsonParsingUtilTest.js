@@ -1,5 +1,5 @@
 const JsonParsingUtil = require("./JsonParsingUtil")
-const { particalTexts, particalAITexts } = require("./mocks")
+const { particalTexts, particalAITexts, jsonObjToTrim } = require("./mocks")
 
 class JsonParsingUtilTest {
     static async test() {
@@ -28,6 +28,9 @@ class JsonParsingUtilTest {
                 console.error(`[!] 파싱 실패!`, {text})
             }
         }
+
+        console.log("[*] ### 모든 문자열 프로퍼티에 대해서 트리밍 테스트 ###")
+        console.log(JsonParsingUtil.applyTrimToAllStringProperties(jsonObjToTrim))
     }
 }
 

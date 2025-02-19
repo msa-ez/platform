@@ -866,6 +866,25 @@ code[class*=language-]:nth-child(1) {
     padding: 0px 5px 0px 5px;
 }
 
+.gs-auto-modeling-box {
+    height:calc(100vh - 40px) !important;
+    overflow: auto !important;
+    padding: 0px 100px 100px 100px !important;
+}
+
+.gs-auto-modeling-userStory-text-pc {
+    display: block !important;
+
+}.gs-auto-modeling-userStory-text-mobile {
+    display: none !important;
+}
+
+
+
+.button-row {
+    display: flex;
+    flex-direction: row;
+}
 @media only screen and (max-width:1409px) and (min-width:1298px){
     .gs-main-page-top-title {
         font-size: 36px;
@@ -1045,6 +1064,24 @@ code[class*=language-]:nth-child(1) {
     .gs-main-page-top-box-mobile {
         min-height:380px;
     }
+
+    .gs-auto-modeling-box {
+        height:calc(100vh - 40px) !important;
+        overflow: auto !important;
+        padding: 0px 10% 100px 2% !important;
+    }
+
+    .gs-auto-modeling-userStory-text-pc {
+        display: none !important;
+    }
+
+    .gs-auto-modeling-userStory-text-mobile {
+        display: block !important;
+        margin-top: 50px !important;
+        padding: 0px 0px 0px 16px !important;
+        white-space: normal !important;
+    }
+    
 }
 
 
@@ -1067,6 +1104,13 @@ code[class*=language-]:nth-child(1) {
         margin:10px 0px 0px 0px !important;
     }
 
+    .button-row {
+        flex-direction: column;
+        align-items: flex-end;
+    }
+    .auto-modeling-btn {
+        margin-bottom: 10px;
+    }
     
 }
 

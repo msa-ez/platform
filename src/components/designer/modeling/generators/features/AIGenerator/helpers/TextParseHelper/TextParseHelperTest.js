@@ -1,4 +1,4 @@
-const { promptWithThink, reponseTexts } = require("./mocks")
+const { promptWithThink, reponseTexts, errorResponseTexts } = require("./mocks")
 const TextParseHelper = require("./TextParseHelper")
 
 class TextParseHelperTest {
@@ -80,6 +80,33 @@ class TextParseHelperTest {
                 }
             })
         );
+    }
+
+    static testError() {
+        // 이 에러는 o3-mini에서 주로 일어나며, 끝 부분에 "\n"이나 공백이 끝없이 반복됨
+        console.log("### OpenAI O3 Overflow error test ###");
+        const resultText = TextParseHelper.parseResponseText(errorResponseTexts["o3-overflow"], {
+            splitFunction: (text) => text.replace("data: [DONE]", "")
+                .trim()
+                .split("data: ")
+                .filter(Boolean),
+
+            extractFunction: (parsed) => {
+                if(parsed.choices && parsed.choices[0]){
+                    return {
+                        content: parsed.choices[0].delta.content || "",
+                        id: parsed.id,
+                        finish_reason: parsed.choices[0].finish_reason === 'length' ? 'length' : null,
+                        error: parsed.error || null
+                    }
+                }
+                return { content: "", id: parsed.id, finish_reason: null, error: parsed.error || null }
+            }
+        })
+
+        console.log(resultText)
+        console.log(resultText.joinedText)
+        console.log(resultText.joinedText.length)
     }
 }
 

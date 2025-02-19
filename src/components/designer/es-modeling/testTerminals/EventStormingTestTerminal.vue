@@ -62,7 +62,8 @@ export default {
                 CreatePolicyActionsByFunctionsTest: {command: async () => { await CreatePolicyActionsByFunctionsTest.test() }},
                 CommandGWTGeneratorByFunctionsTest: {command: async () => { await CommandGWTGeneratorByFunctionsTest.test() }},
                 ModelInfoHelperTest: {command: async () => { await ModelInfoHelperTest.test() }},
-                TextParseHelperTest: {command: async () => { await TextParseHelperTest.test() }}
+                TextParseHelperTest: {command: async () => { await TextParseHelperTest.test() }},
+                TextParseHelperTestError: {command: async () => { await TextParseHelperTest.testError() }}
             }
             
 

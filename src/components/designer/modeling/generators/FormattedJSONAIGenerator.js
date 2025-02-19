@@ -117,7 +117,7 @@ class FormattedJSONAIGenerator extends AIGenerator {
         this.useJsonRestoreStrategy = false
         this.jsonOutputTextToRestore = undefined
         this.savedOnSendCallback = undefined
-        this.createdPrompt = ""
+        this.createdPrompt = {}
         
         this.startTime = Date.now()
     }
@@ -161,24 +161,22 @@ class FormattedJSONAIGenerator extends AIGenerator {
     async onInputParamsCheckBefore(inputParams, generatorName){}
     async onGenerateBefore(inputParams, generatorName){}
 
-    createPrompt(){
+    createPromptWithRoles(){
         if(this.useJsonRestoreStrategy && this.jsonOutputTextToRestore) {
             this.changeToSimpleModel()
 
-            const prompt = this._getJsonRestorePrompt(this.jsonOutputTextToRestore)
             this.useJsonRestoreStrategy = false
             this.jsonOutputTextToRestore = undefined
 
             this.savedOnSendCallback = this.client.onSend
             this.client.onSend = undefined
 
-            this.createdPrompt = prompt
-
+            this.createdPrompt = this._getJsonRestorePrompt(this.jsonOutputTextToRestore)
             console.log("[*] Json 파싱에러가 난 데이터를 복구하는 전략으로 시도", {
-                prompt,
+                prompt: structuredClone(this.createdPrompt),
                 modelInfo: this.modelInfo
             })
-            return prompt
+            return this.createdPrompt
         }
         else {
             this.changeModel(this.usedModelType)
@@ -194,13 +192,14 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
         try {
 
-            const prompt = this._assembleSystemContext() + this._buildUserQueryPrompt()
+            this.createdPrompt = this._assembleRolePrompt()
 
-            console.log(`[*] LLM에게 ${this.generatorName}에서 생성된 프롬프트 전달중...`, {prompt})
+            console.log(`[*] LLM에게 ${this.generatorName}에서 생성된 프롬프트 전달중...`, 
+                {prompt: structuredClone(this.createdPrompt)}
+            )
             this.isFirstResponse = true
 
-            this.createdPrompt = prompt
-            return prompt
+            return this.createdPrompt
 
         } catch(e) {
 
@@ -212,19 +211,16 @@ class FormattedJSONAIGenerator extends AIGenerator {
     }
 
     _getJsonRestorePrompt(jsonOutputText){
-        return `The given JSON object is not grammatically valid.
+        return {
+            system: `The given JSON object is not grammatically valid.
 Please fix this JSON object and return a valid JSON object.
 
 Rules:
 1. Output only the modified JSON object.
-2. Do not include any additional text or comments.
-
-[INPUT]
-${jsonOutputText}
-
-[OUTPUT]
-\`\`\`json
-`
+2. Do not include any additional text or comments.`,
+            user: [jsonOutputText],
+            assistant: []
+        }
     }
 
     /**
@@ -358,21 +354,29 @@ ${jsonOutputText}
         return this.modelInfo.inputTokenLimit - this.getCreatedPromptTokenCount(tempInputParams)
     }
 
-    _assembleSystemContext(){
-        const prompts = [
+    _assembleRolePrompt(){
+        return {
+            system: this.__buildSystemPrompt(),
+            user: this.__buildUserPrompt(),
+            assistant: this.__buildAssistantPrompt()
+        }
+    }
+
+
+    __buildSystemPrompt(){
+        const systemPrompts = [
             this.__buildAgentRolePrompt(),
             this.__buildTaskGuidelinesPrompt(),
             this.__buildInferenceGuidelinesPrompt(),
-            this.__buildRequestFormatPrompt(),
-            this.__buildResponseFormatPrompt(),
-            this.__buildExamplePrompt()
-        ]
+            this.__buildRequestFormatPrompt(),,
+            this.__buildResponseFormatPrompt()
+        ].filter(prompt => prompt !== "")
 
         // 응답 포멧이 있는 경우에는 지시와 상관없이 공백을 반드시 포함해서 Json을 출력하기 때문에 없는 경우에만 추가
         if(!this.modelInfo.requestArgs.response_format)
-            prompts.push(this.__getJsonCompressGuidePrompt())
+            systemPrompts.push(this.__getJsonCompressGuidePrompt())
 
-        return prompts.join("\n\n")
+        return systemPrompts.join("\n\n")
     }
 
     /**
@@ -425,24 +429,6 @@ ${afterJsonFormat.trim()}
     __buildJsonResponseFormat() { return "" }
     __buildAfterJsonResponseFormat() { return "" }
 
-    __buildExamplePrompt(){
-        const inputs = this.__buildJsonExampleInputFormat()
-        const jsonOutput = this.__buildJsonExampleOutputFormat()
-
-        if(!inputs || !jsonOutput) return ""
-        return `Let me give you an example.
-[INPUT]
-${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value === 'string' ? value.trim() : JSON.stringify(value)}`).join("\n\n")}
-
-[OUTPUT]
-\`\`\`json
-${JSON.stringify(jsonOutput)}
-\`\`\`
-`
-    }
-    __buildJsonExampleInputFormat(){ return null }
-    __buildJsonExampleOutputFormat(){ return null }
-
     /**
      * JSON 응답을 압축시켜서 토큰 초과 문제 해소 및 출력 속도 개선
      */
@@ -460,19 +446,38 @@ ${JSON.stringify(jsonOutput)}
 `
     }
 
-    _buildUserQueryPrompt(){
-        const inputs = this.__buildJsonUserQueryInputFormat()
 
-        if(!inputs) return ""
-        return `Now let's process the user's input.
-[INPUT]
-${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value === 'string' ? value.trim() : JSON.stringify(value)}`).join("\n\n")}
+    __buildUserPrompt(){
+        const inputsToString = (inputs) => {
+            return Object.entries(inputs)
+                .map(([key, value]) => `- ${key.trim()}\n${typeof value === 'string' ? value.trim() : JSON.stringify(value)}`).join("\n\n")
+        }
 
-[OUTPUT]
-\`\`\`json
-`
+        let userPrompts = []
+        const exampleInputs = this.__buildJsonExampleInputFormat()
+        if(exampleInputs) userPrompts.push(inputsToString(exampleInputs))
+        
+        const userInputs = this.__buildJsonUserQueryInputFormat()
+        if(userInputs) userPrompts.push(inputsToString(userInputs))
+
+        return userPrompts
     }
+
+    __buildJsonExampleInputFormat(){ return null }
     __buildJsonUserQueryInputFormat(){ return {} }
+
+
+    __buildAssistantPrompt(){
+        const exampleOutputs = this.__buildJsonExampleOutputFormat()
+        if(!exampleOutputs) return ""
+
+        return [`\`\`\`json
+${JSON.stringify(exampleOutputs)}
+\`\`\``]
+    }
+
+    __buildJsonExampleOutputFormat(){ return null }
+    
 
     createModel(text){ 
         let returnObj = {
@@ -546,7 +551,9 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
             returnObj.modelValue.isPartialParse = true
 
             try {
-                returnObj.modelValue.aiOutput = JsonParsingUtil.parseToJson(text)
+                returnObj.modelValue.aiOutput = JsonParsingUtil.applyTrimToAllStringProperties(
+                    JsonParsingUtil.parseToJson(text)
+                )
                 this.prevPartialAiOutput = structuredClone(returnObj.modelValue.aiOutput)
             } catch {
                 console.error(`[!] ${this.generatorName}에서 부분적인 결과 처리중에 오류 발생! 이전 값 활용`, {text})
@@ -583,7 +590,9 @@ ${Object.entries(inputs).map(([key, value]) => `- ${key.trim()}\n${typeof value 
                 return returnObj
             }
  
-            returnObj.modelValue.aiOutput = JsonParsingUtil.parseToJson(text)
+            returnObj.modelValue.aiOutput = JsonParsingUtil.applyTrimToAllStringProperties(
+                JsonParsingUtil.parseToJson(text)
+            )
             returnObj.modelValue.isPartialParse = false
             returnObj = {
                 ...returnObj,

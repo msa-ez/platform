@@ -4,6 +4,7 @@ const { TextParseHelper } = require('../helpers');
 class OpenAIClient extends BaseAPIClient {
   constructor(client, options, model, aiGenerator) {
     super(client, options, model, aiGenerator)
+    this.aiGenerator.roleNames.system = "developer"
   }
   
   _makeRequestParams(messages, modelInfo, token){

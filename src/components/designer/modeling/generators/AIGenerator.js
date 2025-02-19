@@ -52,10 +52,28 @@ class AIGenerator {
         return this.apiClient.getPreferredLanguage()
     }
 
+    /**
+     * 문자열을 반환해야하며, 반환된 문자열은 전부 {role: "user", content: "..."} 형식으로 최종 전달됨
+     */
     createPrompt(){
         return this.apiClient.createPrompt()
     }
 
+    /**
+     * {
+     *  "system": "...",
+     *  "user": ["...", "..."],
+     *  "assistant": ["...", "..."]
+     * }
+     * 
+     * 형식으로 반환해서 system > user[0] > assistant[0] > user[1] > assistant[1] > ... 형식으로 최종 전달됨
+     * createPromptWithRoles()가 구현되어 있을 경우, createPrompt()에서 반환된 문자열은 무시됨
+     */
+    createPromptWithRoles(){
+        return undefined
+    }
+
+    
     stop(){
         this.apiClient.stop()
     }
